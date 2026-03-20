@@ -1,0 +1,15 @@
+# Environment secrets
+backend/.env
+frontend/.env.local
+
+# Go
+backend/vendor/
+*.exe
+
+# Node
+frontend/node_modules/
+frontend/.next/
+
+# OS
+.DS_Store
+Thumbs.db
