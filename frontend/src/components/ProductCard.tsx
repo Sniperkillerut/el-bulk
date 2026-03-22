@@ -1,9 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { Product, FOIL_LABELS, TREATMENT_LABELS } from '@/lib/types';
 import { useCart } from '@/lib/CartContext';
 import CardImage from './CardImage';
+import { openProductModal } from './ProductModalManager';
 
 interface ProductCardProps {
   product: Product;
@@ -22,14 +24,28 @@ function FoilBadge({ foil }: { foil: string }) {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const outOfStock = product.stock === 0;
+
+  let href = `/product/${product.id}`;
+  if (pathname && searchParams) {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('productId', product.id);
+    href = `${pathname}?${params.toString()}`;
+  }
+
+  const handleOpenModal = (e: React.MouseEvent) => {
+    e.preventDefault();
+    openProductModal(product);
+  };
 
   return (
     <div className="card flex flex-col overflow-hidden animate-fade-up">
       {/* Image area */}
-      <Link href={`/product/${product.id}`} style={{ textDecoration: 'none' }}>
+      <a href={href} onClick={handleOpenModal} style={{ textDecoration: 'none' }}>
         <CardImage imageUrl={product.image_url} name={product.name} tcg={product.tcg} height={160} />
-      </Link>
+      </a>
 
       <div className="p-3 flex flex-col flex-1 gap-2">
         {/* Badges row */}
@@ -45,12 +61,12 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
 
         {/* Name */}
-        <Link href={`/product/${product.id}`} style={{ textDecoration: 'none' }}>
+        <a href={href} onClick={handleOpenModal} style={{ textDecoration: 'none' }}>
           <h3 className="text-sm font-semibold leading-snug hover:text-gold transition-colors line-clamp-2"
             style={{ color: 'var(--text-primary)' }}>
             {product.name}
           </h3>
-        </Link>
+        </a>
 
         {/* Set */}
         {product.set_name && (

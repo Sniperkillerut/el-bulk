@@ -46,8 +46,16 @@ export default function AdminDashboard() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [storageFilter, setStorageFilter] = useState('');
   const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   // Modal states
   const [showModal, setShowModal] = useState(false);
@@ -103,7 +111,7 @@ export default function AdminDashboard() {
     if (!token) return;
     setLoading(true);
     try {
-      const res = await adminFetchProducts(token, { search, storage_id: storageFilter, page, page_size: 25 });
+      const res = await adminFetchProducts(token, { search: debouncedSearch, storage_id: storageFilter, page, page_size: 25 });
       setProducts(res.products);
       setTotal(res.total);
     } catch (e: unknown) {
@@ -115,7 +123,7 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [token, search, storageFilter, page, router]);
+  }, [token, debouncedSearch, storageFilter, page, router]);
 
   const loadSettingsData = useCallback(async () => {
     if (!token) return;
@@ -138,9 +146,12 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     loadProducts();
+  }, [loadProducts]);
+
+  useEffect(() => {
     loadSettingsData();
     loadStorageLocations();
-  }, [loadProducts, loadSettingsData, loadStorageLocations]);
+  }, [loadSettingsData, loadStorageLocations]);
 
   // Sync Global locations into active Product form
   useEffect(() => {

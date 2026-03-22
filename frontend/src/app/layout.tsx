@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import { CartProvider } from '@/lib/CartContext';
+import ProductModalManager from '@/components/ProductModalManager';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body suppressHydrationWarning>
         <CartProvider>
           <Navbar />
+          <ProductModalManager />
           <main style={{ minHeight: 'calc(100vh - 64px)' }}>
             {children}
           </main>
