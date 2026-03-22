@@ -1,15 +1,68 @@
-# Environment secrets
-backend/.env
-frontend/.env.local
+# --- General Environment & Secrets ---
+**/.env
+**/.env.local
+**/.env.*.local
+**/config.json
+**/secret.json
+*.pem
 
-# Go
+# --- OS & Tooling ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs
+.vscode/
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# --- Backend (Go) ---
 backend/vendor/
-*.exe
+backend/tmp/
+backend/bin/
+backend/*.exe
+backend/*.test
+backend/coverage.txt
+backend/profile.out
 
-# Node
+# Air (Live Reload)
+backend/tmp/
+
+# --- Frontend (Next.js/Node) ---
 frontend/node_modules/
 frontend/.next/
+frontend/out/
+frontend/build/
+frontend/dist/
+frontend/coverage/
+frontend/.vercel
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts
 
-# OS
-.DS_Store
-Thumbs.db
+# Logs
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.pnpm-debug.log*
+
+# Yarn/PnP
+frontend/.pnp
+frontend/.pnp.*
+frontend/.yarn/*
+!frontend/.yarn/patches
+!frontend/.yarn/plugins
+!frontend/.yarn/releases
+!frontend/.yarn/versions
+
+# --- Docker & DB ---
+# Ignore any local data directories if you mount volumes
+# backend/data/
+# postgres-data/ or similar
