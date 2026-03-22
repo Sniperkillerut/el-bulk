@@ -21,6 +21,7 @@ export interface Product {
   price_source: PriceSource;   // which source/currency price_reference is in
   price_cop_override?: number; // admin's explicit COP override
   stock: number;
+  stored_in?: StorageLocation[];
   image_url?: string;
   description?: string;
   featured: boolean;

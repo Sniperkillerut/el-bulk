@@ -56,6 +56,7 @@ type Product struct {
 	Price            float64  `db:"-"                  json:"price"`
 
 	Stock       int       `db:"stock"        json:"stock"`
+	StoredIn    []StorageLocation `db:"-" json:"stored_in,omitempty"`
 	ImageURL    *string   `db:"image_url"    json:"image_url,omitempty"`
 	Description *string   `db:"description"  json:"description,omitempty"`
 	Featured    bool      `db:"featured"     json:"featured"`

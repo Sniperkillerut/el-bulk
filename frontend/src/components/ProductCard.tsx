@@ -44,7 +44,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     <div className="card flex flex-col overflow-hidden animate-fade-up">
       {/* Image area */}
       <a href={href} onClick={handleOpenModal} style={{ textDecoration: 'none' }}>
-        <CardImage imageUrl={product.image_url} name={product.name} tcg={product.tcg} height={160} />
+        <CardImage imageUrl={product.image_url} name={product.name} tcg={product.tcg} />
       </a>
 
       <div className="p-3 flex flex-col flex-1 gap-2">

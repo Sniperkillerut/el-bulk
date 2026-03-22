@@ -265,18 +265,6 @@ export async function adminDeleteStorage(token: string, id: string): Promise<voi
 // Admin: Product Storage Management
 // ---------------------------------------------------------------------------
 
-export async function adminFetchProductStorage(token: string, productId: string): Promise<import('./types').StorageLocation[]> {
-  const res = await fetch(`${API_BASE}/api/admin/products/${productId}/storage`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: 'no-store',
-  });
-  if (!res.ok) {
-    if (res.status === 401) throw new Error('401 Unauthorized');
-    throw new Error('Failed to fetch product storage');
-  }
-  return res.json();
-}
-
 export async function adminUpdateProductStorage(token: string, productId: string, updates: import('./types').ProductStorageInput[]): Promise<import('./types').StorageLocation[]> {
   const res = await fetch(`${API_BASE}/api/admin/products/${productId}/storage`, {
     method: 'PUT',

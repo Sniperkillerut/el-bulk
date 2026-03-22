@@ -16,6 +16,18 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  turbopack: {},
+  webpack: (config, context) => {
+    if (context.dev) {
+      // Force webpack to poll for changes in development mode
+      // Required for Windows/WSL Docker Desktop file sync
+      config.watchOptions = {
+        poll: 1000,
+        aggregateTimeout: 300,
+      };
+    }
+    return config;
+  },
 };
 
 export default nextConfig;

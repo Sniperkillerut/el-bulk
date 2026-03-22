@@ -33,6 +33,54 @@ func (h *ProductHandler) populatePrices(products []models.Product) {
 	}
 }
 
+func (h *ProductHandler) populateStorage(products []models.Product) {
+	if len(products) == 0 {
+		return
+	}
+	var pids []string
+	for _, p := range products {
+		pids = append(pids, p.ID)
+	}
+
+	query, args, err := sqlx.In(`
+		SELECT ps.product_id, s.id as stored_in_id, s.name, ps.quantity 
+		FROM product_stored_in ps 
+		JOIN stored_in s ON ps.stored_in_id = s.id 
+		WHERE ps.quantity > 0 AND ps.product_id IN (?)
+	`, pids)
+	if err != nil {
+		return
+	}
+	
+	query = h.DB.Rebind(query)
+	var storageRows []struct {
+		ProductID  string `db:"product_id"`
+		StoredInID string `db:"stored_in_id"`
+		Name       string `db:"name"`
+		Quantity   int    `db:"quantity"`
+	}
+	if err := h.DB.Select(&storageRows, query, args...); err != nil {
+		return
+	}
+
+	storageMap := make(map[string][]models.StorageLocation)
+	for _, r := range storageRows {
+		storageMap[r.ProductID] = append(storageMap[r.ProductID], models.StorageLocation{
+			StoredInID: r.StoredInID,
+			Name:       r.Name,
+			Quantity:   r.Quantity,
+		})
+	}
+
+	for i := range products {
+		if locs, ok := storageMap[products[i].ID]; ok {
+			products[i].StoredIn = locs
+		} else {
+			products[i].StoredIn = []models.StorageLocation{}
+		}
+	}
+}
+
 // GET /api/products
 func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
@@ -127,6 +175,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.populatePrices(products)
+	h.populateStorage(products)
 
 	jsonOK(w, models.ProductListResponse{
 		Products: products,
@@ -148,6 +197,7 @@ func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	
 	products := []models.Product{product}
 	h.populatePrices(products)
+	h.populateStorage(products)
 	jsonOK(w, products[0])
 }
 

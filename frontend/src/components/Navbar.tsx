@@ -36,8 +36,8 @@ export default function Navbar() {
               <Link
                 href="/singles"
                 onMouseEnter={() => setSinglesDropOpen(true)}
-                className="flex items-center gap-1 text-sm font-medium transition-colors hover:text-gold-dark"
-                style={{ color: 'var(--text-secondary)', textDecoration: 'none', background: 'none', border: 'none', cursor: 'pointer' }}
+                className="flex items-center gap-1 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--gold-dark)]"
+                style={{ textDecoration: 'none', background: 'none', border: 'none', cursor: 'pointer' }}
               >
                 Singles
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -56,8 +56,8 @@ export default function Navbar() {
                         key={tcg}
                         href={`/${tcg}/singles`}
                         onClick={() => setSinglesDropOpen(false)}
-                        className="block px-4 py-2 text-sm transition-colors hover:bg-neutral-100"
-                        style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}
+                        className="block px-4 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--kraft-light)] hover:text-[var(--ink-deep)]"
+                        style={{ textDecoration: 'none' }}
                       >
                         {TCG_SHORT[tcg]} Singles
                       </Link>
@@ -72,8 +72,8 @@ export default function Navbar() {
               <Link
                 href="/sealed"
                 onMouseEnter={() => setSealedDropOpen(true)}
-                className="flex items-center gap-1 text-sm font-medium transition-colors hover:text-gold-dark"
-                style={{ color: 'var(--text-secondary)', textDecoration: 'none', background: 'none', border: 'none', cursor: 'pointer' }}
+                className="flex items-center gap-1 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--gold-dark)]"
+                style={{ textDecoration: 'none', background: 'none', border: 'none', cursor: 'pointer' }}
               >
                 Sealed
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -92,8 +92,8 @@ export default function Navbar() {
                         key={tcg}
                         href={`/${tcg}/sealed`}
                         onClick={() => setSealedDropOpen(false)}
-                        className="block px-4 py-2 text-sm transition-colors hover:bg-neutral-100"
-                        style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}
+                        className="block px-4 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--kraft-light)] hover:text-[var(--ink-deep)]"
+                        style={{ textDecoration: 'none' }}
                       >
                         {TCG_SHORT[tcg]} Sealed
                       </Link>
@@ -103,12 +103,12 @@ export default function Navbar() {
               )}
             </div>
 
-            <Link href="/accessories" className="text-sm font-medium transition-colors hover:text-gold-dark"
-              style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>
+            <Link href="/accessories" className="text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--gold-dark)]"
+              style={{ textDecoration: 'none' }}>
               Accessories
             </Link>
-            <Link href="/contact" className="text-sm font-medium transition-colors hover:text-gold-dark"
-              style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>
+            <Link href="/contact" className="text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--gold-dark)]"
+              style={{ textDecoration: 'none' }}>
               Contact
             </Link>
             <Link href="/bulk" className="text-sm font-medium transition-colors hover:opacity-80"
@@ -186,11 +186,11 @@ export default function Navbar() {
             <hr style={{ borderColor: 'var(--ink-border)', margin: '1rem 0' }} />
             <div className="flex flex-col gap-2">
               <Link href="/accessories" onClick={() => setMobileOpen(false)}
-                className="block py-2 text-sm font-medium" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>
+                className="block py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--gold-dark)]" style={{ textDecoration: 'none' }}>
                 Accessories
               </Link>
               <Link href="/contact" onClick={() => setMobileOpen(false)}
-                className="block py-2 text-sm font-medium" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>
+                className="block py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--gold-dark)]" style={{ textDecoration: 'none' }}>
                 Contact
               </Link>
               <Link href="/bulk" onClick={() => setMobileOpen(false)}

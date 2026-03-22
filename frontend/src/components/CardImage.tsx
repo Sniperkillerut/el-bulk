@@ -6,7 +6,7 @@ interface CardImageProps {
   imageUrl?: string | null;
   name: string;
   tcg?: string;
-  height?: number;
+  height?: number | string;
 }
 
 const TCG_EMOJI: Record<string, string> = {
@@ -18,7 +18,7 @@ const TCG_EMOJI: Record<string, string> = {
   accessories: '🛡️',
 };
 
-export default function CardImage({ imageUrl, name, tcg, height = 180 }: CardImageProps) {
+export default function CardImage({ imageUrl, name, tcg, height }: CardImageProps) {
   const [imgError, setImgError] = useState(false);
   const showImage = imageUrl && !imgError;
 
@@ -26,7 +26,8 @@ export default function CardImage({ imageUrl, name, tcg, height = 180 }: CardIma
     <div
       style={{
         position: 'relative',
-        height,
+        height: height || 'auto',
+        aspectRatio: height ? undefined : '63/88',
         width: '100%',
         overflow: 'hidden',
         background: showImage ? 'var(--ink-deep)' : 'var(--ink-card)',

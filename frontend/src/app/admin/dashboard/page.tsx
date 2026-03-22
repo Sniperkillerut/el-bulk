@@ -6,7 +6,7 @@ import {
   adminFetchProducts, adminCreateProduct, adminUpdateProduct, adminDeleteProduct,
   getAdminSettings, updateAdminSettings, lookupMTGCard, CardLookupResult,
   adminFetchStorage, adminCreateStorage, adminUpdateStorage, adminDeleteStorage,
-  adminFetchProductStorage, adminUpdateProductStorage
+  adminUpdateProductStorage
 } from '@/lib/api';
 import { Product, FOIL_LABELS, TREATMENT_LABELS, KNOWN_TCGS, TCG_SHORT, FoilTreatment, CardTreatment, PriceSource, Settings, StoredIn, StorageLocation } from '@/lib/types';
 
@@ -192,8 +192,15 @@ export default function AdminDashboard() {
       collector_number: '', // Will be derived if we re-populate
       promo_type: 'none',
     });
-    setProductStorage([]);
-    adminFetchProductStorage(token, p.id).then(setProductStorage).catch(console.error);
+    const existingStorage = p.stored_in || [];
+    setProductStorage(storageLocations.map(s => {
+      const match = existingStorage.find(d => d.stored_in_id === s.id);
+      return {
+        stored_in_id: s.id,
+        name: s.name,
+        quantity: match ? match.quantity : 0
+      };
+    }));
     setFormError('');
     setScryfallPrints([]);
     setShowModal(true);
@@ -759,7 +766,7 @@ export default function AdminDashboard() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--ink-border)' }}>
-              {['Name', 'TCG', 'Category', 'Set', 'Condition', 'Final Price', 'Stock', 'Featured', ''].map(h => (
+              {['Name', 'TCG', 'Category', 'Set', 'Condition', 'Stored In', 'Final Price', 'Stock', 'Featured', ''].map(h => (
                 <th key={h} className="text-left px-4 py-3 text-xs font-mono-stack" style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                   {h}
                 </th>
@@ -770,7 +777,7 @@ export default function AdminDashboard() {
             {loading ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <tr key={i} style={{ borderBottom: '1px solid var(--ink-border)' }}>
-                  {Array.from({ length: 9 }).map((_, j) => (
+                  {Array.from({ length: 10 }).map((_, j) => (
                     <td key={j} className="px-4 py-3">
                       <div className="skeleton" style={{ height: 12, width: j === 0 ? 140 : 60 }} />
                     </td>
@@ -779,7 +786,7 @@ export default function AdminDashboard() {
               ))
             ) : products.length === 0 ? (
               <tr>
-                <td colSpan={9} className="text-center py-12 text-sm" style={{ color: 'var(--text-muted)' }}>
+                <td colSpan={10} className="text-center py-12 text-sm" style={{ color: 'var(--text-muted)' }}>
                   No products found. Create one to get started.
                 </td>
               </tr>
@@ -803,6 +810,19 @@ export default function AdminDashboard() {
                   </td>
                   <td className="px-4 py-3">
                     {p.condition ? <span className={`badge badge-${p.condition.toLowerCase()}`}>{p.condition}</span> : <span style={{ color: 'var(--text-muted)' }}>—</span>}
+                  </td>
+                  <td className="px-4 py-3 text-xs font-mono-stack" style={{ maxWidth: 150 }}>
+                    {p.stored_in && p.stored_in.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {p.stored_in.map(s => (
+                          <span key={s.stored_in_id} className="badge" style={{ background: 'var(--kraft-light)', color: 'var(--text-secondary)', border: '1px solid var(--kraft-dark)', padding: '0.1rem 0.3rem', fontSize: '0.65rem' }}>
+                            {s.name}: {s.quantity}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-text-muted italic">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 price text-sm" title={`Computed from: ${p.price_source}`}>
                     ${p.price.toLocaleString('en-US', { maximumFractionDigits: 0 })} COP
