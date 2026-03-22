@@ -240,8 +240,10 @@ func RunPriceRefresh(db *sqlx.DB) (updated int, errs int) {
 		var refPrice *float64
 		switch p.PriceSource {
 		case "tcgplayer":
+			// We use TCGplayer Market Price (standard Scryfall 'usd' fields)
 			refPrice = prices.tcgPlayerUSD
 		case "cardmarket":
+			// Scryfall's 'eur' already encapsulates Trend -> 1d -> 7d -> Avg fallback
 			refPrice = prices.cardmarketEUR
 		}
 

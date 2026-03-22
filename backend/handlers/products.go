@@ -40,6 +40,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	tcg := q.Get("tcg")
 	category := q.Get("category")
 	search := q.Get("search")
+	storageID := q.Get("storage_id")
 	foil := q.Get("foil")
 	treatment := q.Get("treatment")
 	condition := q.Get("condition")
@@ -58,6 +59,14 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	var conditions []string
 	var args []interface{}
 	idx := 1
+
+	fromClause := "FROM products"
+	if storageID != "" {
+		fromClause = "FROM products JOIN product_stored_in ps ON products.id = ps.product_id"
+		conditions = append(conditions, "ps.stored_in_id = $"+strconv.Itoa(idx), "ps.quantity > 0")
+		args = append(args, storageID)
+		idx++
+	}
 
 	if tcg != "" {
 		conditions = append(conditions, "tcg = $"+strconv.Itoa(idx))
@@ -99,12 +108,12 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var total int
-	if err := h.DB.Get(&total, "SELECT COUNT(*) FROM products "+where, args...); err != nil {
+	if err := h.DB.Get(&total, "SELECT COUNT(*) "+fromClause+" "+where, args...); err != nil {
 		jsonError(w, "Database error", http.StatusInternalServerError)
 		return
 	}
 
-	listQuery := "SELECT * FROM products " + where + " ORDER BY featured DESC, created_at DESC LIMIT $" + strconv.Itoa(idx) + " OFFSET $" + strconv.Itoa(idx+1)
+	listQuery := "SELECT products.* " + fromClause + " " + where + " ORDER BY products.featured DESC, products.created_at DESC LIMIT $" + strconv.Itoa(idx) + " OFFSET $" + strconv.Itoa(idx+1)
 	args = append(args, pageSize, offset)
 
 	var products []models.Product
@@ -136,8 +145,10 @@ func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		jsonError(w, "Product not found", http.StatusNotFound)
 		return
 	}
-	h.populatePrices([]models.Product{product})
-	jsonOK(w, product)
+	
+	products := []models.Product{product}
+	h.populatePrices(products)
+	jsonOK(w, products[0])
 }
 
 // GET /api/tcgs
@@ -193,9 +204,10 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.populatePrices([]models.Product{product})
+	products := []models.Product{product}
+	h.populatePrices(products)
 	w.WriteHeader(http.StatusCreated)
-	jsonOK(w, product)
+	jsonOK(w, products[0])
 }
 
 // PUT /api/admin/products/:id
@@ -232,8 +244,9 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.populatePrices([]models.Product{product})
-	jsonOK(w, product)
+	products := []models.Product{product}
+	h.populatePrices(products)
+	jsonOK(w, products[0])
 }
 
 // DELETE /api/admin/products/:id
@@ -253,6 +266,68 @@ func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jsonOK(w, map[string]string{"message": "Product deleted"})
+}
+
+// GET /api/admin/products/:id/storage
+func (h *ProductHandler) GetStorage(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var items []models.StorageLocation
+	err := h.DB.Select(&items, `
+		SELECT s.id as stored_in_id, s.name, COALESCE(ps.quantity, 0) as quantity
+		FROM stored_in s
+		LEFT JOIN product_stored_in ps ON s.id = ps.stored_in_id AND ps.product_id = $1
+		ORDER BY s.name
+	`, id)
+	if err != nil {
+		jsonError(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+	if items == nil {
+		items = []models.StorageLocation{}
+	}
+	jsonOK(w, items)
+}
+
+// PUT /api/admin/products/:id/storage
+func (h *ProductHandler) UpdateStorage(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var updates []models.ProductStorage
+	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
+		jsonError(w, "Invalid input", http.StatusBadRequest)
+		return
+	}
+
+	tx, err := h.DB.Beginx()
+	if err != nil {
+		jsonError(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+
+	// 1. Clear existing
+	_, err = tx.Exec(`DELETE FROM product_stored_in WHERE product_id = $1`, id)
+	if err != nil {
+		tx.Rollback()
+		jsonError(w, "Failed to clear existing storage", http.StatusInternalServerError)
+		return
+	}
+
+	// 2. Insert active
+	for _, u := range updates {
+		if u.Quantity > 0 {
+			_, err = tx.Exec(`
+				INSERT INTO product_stored_in (product_id, stored_in_id, quantity)
+				VALUES ($1, $2, $3)
+			`, id, u.StoredInID, u.Quantity)
+			if err != nil {
+				tx.Rollback()
+				jsonError(w, "Failed to update storage map", http.StatusInternalServerError)
+				return
+			}
+		}
+	}
+	tx.Commit()
+
+	h.GetStorage(w, r)
 }
 
 // Helpers

@@ -1,10 +1,5 @@
-export type FoilTreatment =
-  | 'non_foil' | 'foil' | 'holo_foil' | 'platinum_foil'
-  | 'ripple_foil' | 'etched_foil' | 'galaxy_foil';
-
-export type CardTreatment =
-  | 'normal' | 'full_art' | 'extended_art' | 'borderless' | 'showcase'
-  | 'legacy_border' | 'textless' | 'judge_promo' | 'promo' | 'alternate_art';
+export type FoilTreatment = string;
+export type CardTreatment = string;
 
 export type Condition = 'NM' | 'LP' | 'MP' | 'HP' | 'DMG';
 
@@ -37,6 +32,11 @@ export interface Product {
 export interface Settings {
   usd_to_cop_rate: number; // TCGPlayer prices
   eur_to_cop_rate: number; // Cardmarket prices
+  contact_address: string;
+  contact_phone: string;
+  contact_email: string;
+  contact_instagram: string;
+  contact_hours: string;
 }
 
 
@@ -52,27 +52,35 @@ export interface CartItem {
   quantity: number;
 }
 
-export const FOIL_LABELS: Record<FoilTreatment, string> = {
+export const FOIL_LABELS: Record<string, string> = {
   non_foil: 'Non-Foil',
   foil: 'Foil',
   holo_foil: 'Holo Foil',
   platinum_foil: 'Platinum Foil',
-  ripple_foil: 'Ripple Foil',
+  ripple_foil: 'Surge Foil',
   etched_foil: 'Etched Foil',
   galaxy_foil: 'Galaxy Foil',
+  galaxyfoil: 'Galaxy Foil',
+  textured_foil: 'Textured Foil',
+  glossy: 'Glossy',
+  confetti_foil: 'Confetti Foil',
+  invisible_ink: 'Invisible Ink',
 };
 
-export const TREATMENT_LABELS: Record<CardTreatment, string> = {
+export const TREATMENT_LABELS: Record<string, string> = {
   normal: 'Regular',
-  full_art: 'Full Art',
+  full_art: 'Full Art (Regular)',
   extended_art: 'Extended Art',
   borderless: 'Borderless',
   showcase: 'Showcase',
-  legacy_border: 'Legacy Border',
+  legacy_border: 'Classic Border',
+  retro_frame: 'Retro Frame',
   textless: 'Textless',
   judge_promo: 'Judge Promo',
   promo: 'Promo',
   alternate_art: 'Alternate Art',
+  step_and_compleat: 'Step-and-Compleat',
+  serialized: 'Serialized/Numbered',
 };
 
 export const TCG_LABELS: Record<string, string> = {
@@ -92,3 +100,20 @@ export const TCG_SHORT: Record<string, string> = {
 };
 
 export const KNOWN_TCGS = ['mtg', 'pokemon', 'lorcana', 'onepiece', 'yugioh'];
+
+export interface StoredIn {
+  id: string;
+  name: string;
+  item_count?: number;
+}
+
+export interface StorageLocation {
+  stored_in_id: string;
+  name: string;
+  quantity: number;
+}
+
+export interface ProductStorageInput {
+  stored_in_id: string;
+  quantity: number;
+}

@@ -9,7 +9,15 @@ interface PricingSettingsProps {
 }
 
 export default function PricingSettings({ token }: PricingSettingsProps) {
-  const [settings, setSettings] = useState<Settings>({ usd_to_cop_rate: 4200, eur_to_cop_rate: 4600 });
+  const [settings, setSettings] = useState<Settings>({ 
+    usd_to_cop_rate: 4200, 
+    eur_to_cop_rate: 4600,
+    contact_address: '',
+    contact_phone: '',
+    contact_email: '',
+    contact_instagram: '',
+    contact_hours: ''
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [refreshing, setRefreshing] = useState(false);

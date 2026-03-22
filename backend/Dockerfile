@@ -1,3 +1,13 @@
+FROM golang:1.23-alpine AS dev
+WORKDIR /app
+RUN apk add --no-cache git curl
+# Install Air via fixed version binary for stability
+RUN curl -sSfL https://github.com/air-verse/air/releases/download/v1.61.7/air_1.61.7_linux_amd64.tar.gz | tar -xz -C /usr/bin/
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+ENTRYPOINT ["air"]
+
 FROM golang:1.23-alpine AS builder
 
 WORKDIR /app

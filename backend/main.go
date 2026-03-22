@@ -15,8 +15,13 @@ import (
 )
 
 func main() {
-	database := db.Connect()
-	defer database.Close()
+	database, err := db.ConnectResilient()
+	if err != nil {
+		fmt.Printf("⚠️ WARNING: Could not connect to database on startup: %v\n", err)
+		fmt.Println("⚠️ Server starting in degraded mode (some features will be unavailable)")
+	} else {
+		defer database.Close()
+	}
 
 	productHandler := handlers.NewProductHandler(database)
 	adminHandler := handlers.NewAdminHandler(database)
@@ -45,6 +50,7 @@ func main() {
 		r.Get("/products", productHandler.List)
 		r.Get("/products/{id}", productHandler.GetByID)
 		r.Get("/tcgs", productHandler.ListTCGs)
+		r.Get("/settings", settingsHandler.Get)
 
 		// Admin routes (protected)
 		r.Route("/admin", func(r chi.Router) {
@@ -58,6 +64,17 @@ func main() {
 				r.Post("/products", productHandler.Create)
 				r.Put("/products/{id}", productHandler.Update)
 				r.Delete("/products/{id}", productHandler.Delete)
+
+				// Product Storage
+				r.Get("/products/{id}/storage", productHandler.GetStorage)
+				r.Put("/products/{id}/storage", productHandler.UpdateStorage)
+
+				// Storage Locations CRUD
+				storageHandler := handlers.NewStorageHandler(database)
+				r.Get("/storage", storageHandler.List)
+				r.Post("/storage", storageHandler.Create)
+				r.Put("/storage/{id}", storageHandler.Update)
+				r.Delete("/storage/{id}", storageHandler.Delete)
 
 				// Exchange rate settings
 				r.Get("/settings", settingsHandler.Get)

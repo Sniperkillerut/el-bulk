@@ -1,0 +1,103 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { fetchProducts } from '@/lib/api';
+import { Product, KNOWN_TCGS, TCG_LABELS, TCG_SHORT } from '@/lib/types';
+import ProductCard from '@/components/ProductCard';
+
+export default function SinglesLandingPage() {
+  const [featured, setFeatured] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function getFeatured() {
+      try {
+        const res = await fetchProducts({ category: 'singles', featured: true, page_size: 12 });
+        setFeatured(res.products);
+      } catch (err) {
+        console.error('Failed to fetch featured singles:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    getFeatured();
+  }, []);
+
+  return (
+    <div className="min-h-screen pb-20">
+      {/* Header Section */}
+      <section className="bg-kraft-mid border-b-4 border-kraft-dark py-10 md:py-12 px-4 relative overflow-hidden box-lid">
+        <div className="centered-container relative z-10 text-center px-4">
+          <div className="badge inline-flex mb-4" style={{ background: 'var(--kraft-light)', color: 'var(--ink-deep)', transform: 'rotate(-1deg)' }}>
+            CATEGORY // SINGLES
+          </div>
+          <h1 className="font-display text-5xl sm:text-6xl md:text-7xl mb-4" style={{ color: 'var(--ink-deep)' }}>
+            INDIVIDUAL <span style={{ color: 'var(--gold-dark)' }}>CARDS</span>
+          </h1>
+          <p className="text-base md:text-lg max-w-2xl mx-auto" style={{ color: 'var(--text-secondary)' }}>
+            Browse our collection of hundreds of singles across your favorite TCGs.
+            Pick your game to see the full inventory.
+          </p>
+        </div>
+      </section>
+
+      <div className="centered-container px-4 mt-12">
+        {/* TCG Selection Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
+          {KNOWN_TCGS.map((tcg) => (
+            <Link 
+              key={tcg} 
+              href={`/${tcg}/singles`}
+              className="group relative block transition-transform hover:-translate-y-1"
+            >
+              <div className="card h-full p-8 flex flex-col items-center justify-center text-center gap-4 border-2 border-kraft-dark transition-shadow hover:shadow-xl relative overflow-hidden">
+                {/* Decorative TCG logo placeholder/icon */}
+                <div className="w-16 h-16 rounded-full flex items-center justify-center font-display text-2xl mb-2" 
+                  style={{ background: 'var(--ink-surface)', border: '2px solid var(--gold)', color: 'var(--gold)' }}>
+                  {TCG_SHORT[tcg][0]}
+                </div>
+                <div>
+                  <h3 className="font-display text-2xl group-hover:text-gold-dark transition-colors">{TCG_LABELS[tcg]}</h3>
+                  <p className="text-xs font-mono-stack mt-1" style={{ color: 'var(--text-muted)' }}>VIEW ALL SINGLES →</p>
+                </div>
+                
+                {/* Visual design element */}
+                <div className="absolute -bottom-4 -right-4 opacity-5 rotate-12 group-hover:opacity-10 transition-opacity">
+                   <h2 className="text-8xl font-display">{TCG_SHORT[tcg]}</h2>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        {/* Featured across all TCGs */}
+        <section>
+          <div className="flex items-center gap-4 mb-8">
+            <h2 className="font-display text-4xl whitespace-nowrap" style={{ color: 'var(--ink-deep)' }}>
+              FEATURED <span style={{ color: 'var(--text-muted)' }}>SINGLES</span>
+            </h2>
+            <div className="h-[2px] w-full bg-kraft-dark" />
+          </div>
+
+          {loading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 animate-pulse">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-kraft-light h-64 rounded-sm" />
+              ))}
+            </div>
+          ) : featured.length === 0 ? (
+            <div className="stamp-border rounded-sm p-12 text-center" style={{ color: 'var(--text-muted)' }}>
+              <p className="font-display text-2xl mb-2">NO FEATURED SINGLES FOUND</p>
+              <p className="text-sm">Try selecting a specific TCG above.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {featured.map(p => <ProductCard key={p.id} product={p} />)}
+            </div>
+          )}
+        </section>
+      </div>
+    </div>
+  );
+}

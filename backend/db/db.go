@@ -31,19 +31,27 @@ func init() {
 }
 
 func Connect() *sqlx.DB {
+	db, err := ConnectResilient()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return db
+}
+
+func ConnectResilient() (*sqlx.DB, error) {
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
-		log.Fatal("DATABASE_URL environment variable is required")
+		return nil, fmt.Errorf("DATABASE_URL environment variable is required")
 	}
 
 	db, err := sqlx.Connect("postgres", dsn)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		return nil, fmt.Errorf("failed to connect to database: %v", err)
 	}
 
 	db.SetMaxOpenConns(25)
 	db.SetMaxIdleConns(5)
 
 	fmt.Println("✓ Database connected")
-	return db
+	return db, nil
 }

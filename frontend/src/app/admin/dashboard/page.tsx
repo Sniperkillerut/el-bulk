@@ -3,9 +3,12 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  adminFetchProducts, adminCreateProduct, adminUpdateProduct, adminDeleteProduct
+  adminFetchProducts, adminCreateProduct, adminUpdateProduct, adminDeleteProduct,
+  getAdminSettings, updateAdminSettings, lookupMTGCard, CardLookupResult,
+  adminFetchStorage, adminCreateStorage, adminUpdateStorage, adminDeleteStorage,
+  adminFetchProductStorage, adminUpdateProductStorage
 } from '@/lib/api';
-import { Product, FOIL_LABELS, TREATMENT_LABELS, KNOWN_TCGS, TCG_SHORT, FoilTreatment, CardTreatment } from '@/lib/types';
+import { Product, FOIL_LABELS, TREATMENT_LABELS, KNOWN_TCGS, TCG_SHORT, FoilTreatment, CardTreatment, PriceSource, Settings, StoredIn, StorageLocation } from '@/lib/types';
 
 interface FormState {
   name: string;
@@ -16,18 +19,24 @@ interface FormState {
   condition: string;
   foil_treatment: FoilTreatment;
   card_treatment: CardTreatment;
-  price: number;
+  price_source: PriceSource;
+  price_reference: number | '';
+  price_cop_override: number | '';
   stock: number;
   description: string;
   featured: boolean;
   image_url: string;
+  collector_number: string;
+  promo_type: string;
 }
 
 const EMPTY_FORM: FormState = {
   name: '', tcg: 'mtg', category: 'singles',
   set_name: '', set_code: '', condition: 'NM',
   foil_treatment: 'non_foil', card_treatment: 'normal',
-  price: 0, stock: 0, description: '', featured: false, image_url: '',
+  price_source: 'manual', price_reference: '', price_cop_override: '',
+  stock: 0, description: '', featured: false, image_url: '',
+  collector_number: '', promo_type: '',
 };
 
 export default function AdminDashboard() {
@@ -37,14 +46,51 @@ export default function AdminDashboard() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [storageFilter, setStorageFilter] = useState('');
   const [page, setPage] = useState(1);
 
-  // Modal state
+  // Modal states
   const [showModal, setShowModal] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
+  
+  // Lookup states
+  const [scryfallPrints, setScryfallPrints] = useState<any[]>([]);
+  const [lookingUp, setLookingUp] = useState(false);
+
+  // Storage Locations Global Modal
+  const [showStorageModal, setShowStorageModal] = useState(false);
+  const [storageLocations, setStorageLocations] = useState<StoredIn[]>([]);
+  const [newStorageName, setNewStorageName] = useState('');
+  const [editingStorageId, setEditingStorageId] = useState<string | null>(null);
+  const [editingStorageName, setEditingStorageName] = useState('');
+
+  // Product Storage State (inside Product Edit Modal)
+  const [productStorage, setProductStorage] = useState<StorageLocation[]>([]);
+
+  // Settings states
+  const [showSettings, setShowSettings] = useState(false);
+  const [settings, setSettings] = useState<Settings>({ 
+    usd_to_cop_rate: 4200, 
+    eur_to_cop_rate: 4600,
+    contact_address: '',
+    contact_phone: '',
+    contact_email: '',
+    contact_instagram: '',
+    contact_hours: ''
+  });
+  const [editingSettings, setEditingSettings] = useState<Settings>({ 
+    usd_to_cop_rate: 4200, 
+    eur_to_cop_rate: 4600,
+    contact_address: '',
+    contact_phone: '',
+    contact_email: '',
+    contact_instagram: '',
+    contact_hours: ''
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
 
   // Auth check
   useEffect(() => {
@@ -57,7 +103,7 @@ export default function AdminDashboard() {
     if (!token) return;
     setLoading(true);
     try {
-      const res = await adminFetchProducts(token, { search, page, page_size: 25 });
+      const res = await adminFetchProducts(token, { search, storage_id: storageFilter, page, page_size: 25 });
       setProducts(res.products);
       setTotal(res.total);
     } catch (e: unknown) {
@@ -69,14 +115,54 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [token, search, page, router]);
+  }, [token, search, storageFilter, page, router]);
 
-  useEffect(() => { loadProducts(); }, [loadProducts]);
+  const loadSettingsData = useCallback(async () => {
+    if (!token) return;
+    try {
+      const s = await getAdminSettings(token);
+      setSettings(s);
+      setEditingSettings(s);
+    } catch {
+      // ignore
+    }
+  }, [token]);
+
+  const loadStorageLocations = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await adminFetchStorage(token);
+      setStorageLocations(res);
+    } catch { }
+  }, [token]);
+
+  useEffect(() => {
+    loadProducts();
+    loadSettingsData();
+    loadStorageLocations();
+  }, [loadProducts, loadSettingsData, loadStorageLocations]);
+
+  // Sync Global locations into active Product form
+  useEffect(() => {
+    setProductStorage(prev => {
+      if (!showModal) return prev;
+      const existingIds = new Set(prev.map(p => p.stored_in_id));
+      const additions = storageLocations.filter(sl => !existingIds.has(sl.id)).map(sl => ({
+        stored_in_id: sl.id,
+        name: sl.name,
+        quantity: 0
+      }));
+      if (additions.length === 0) return prev;
+      return [...prev, ...additions].sort((a,b) => a.name.localeCompare(b.name));
+    });
+  }, [storageLocations, showModal]);
 
   const openCreate = () => {
     setEditProduct(null);
-    setForm(EMPTY_FORM);
+    setForm({ ...EMPTY_FORM });
+    setProductStorage(storageLocations.map(s => ({ stored_in_id: s.id, name: s.name, quantity: 0 })));
     setFormError('');
+    setScryfallPrints([]);
     setShowModal(true);
   };
 
@@ -87,11 +173,465 @@ export default function AdminDashboard() {
       set_name: p.set_name || '', set_code: p.set_code || '',
       condition: p.condition || 'NM',
       foil_treatment: p.foil_treatment, card_treatment: p.card_treatment,
-      price: p.price, stock: p.stock, description: p.description || '',
+      price_source: p.price_source || 'manual',
+      price_reference: p.price_reference ?? '',
+      price_cop_override: p.price_cop_override ?? '',
+      stock: p.stock, description: p.description || '',
       featured: p.featured, image_url: p.image_url || '',
+      collector_number: '', // Will be derived if we re-populate
+      promo_type: 'none',
     });
+    setProductStorage([]);
+    adminFetchProductStorage(token, p.id).then(setProductStorage).catch(console.error);
     setFormError('');
+    setScryfallPrints([]);
     setShowModal(true);
+  };
+
+  const extractPrices = (print: any, foil: FoilTreatment) => {
+    const isEtched = foil === 'etched_foil';
+    const isFoil = foil !== 'non_foil' && !isEtched;
+    // TCGplayer: We use Market Price exclusively (standard Scryfall 'usd' fields).
+    let usd = parseFloat(isEtched ? print?.prices?.usd_etched || print?.prices?.usd_foil || print?.prices?.usd : isFoil ? print?.prices?.usd_foil || print?.prices?.usd : print?.prices?.usd);
+    // Cardmarket: Scryfall's 'eur' already encapsulates Trend -> 1d -> 7d -> Avg fallback.
+    let eur = parseFloat(isFoil || isEtched ? print?.prices?.eur_foil || print?.prices?.eur : print?.prices?.eur);
+    return { usd: isNaN(usd) ? null : usd, eur: isNaN(eur) ? null : eur };
+  };
+
+  const applyPrintPrices = (print: any, foil: FoilTreatment, src: PriceSource) => {
+    const { usd, eur } = extractPrices(print, foil);
+    if (src === 'tcgplayer') return usd ?? 0;
+    if (src === 'cardmarket') return eur ?? 0;
+    return 0;
+  };
+
+  const extractDescription = (print: any) => {
+    let desc = '';
+    if (print.card_faces) {
+      const faces: string[] = [];
+      for (const face of print.card_faces) {
+        let fText = '';
+        if (face.name) fText += `**${face.name}**\n`;
+        if (face.type_line) fText += `${face.type_line}\n`;
+        if (face.oracle_text) fText += `${face.oracle_text}\n`;
+        if (face.flavor_text) fText += `\n_"${face.flavor_text}"_`;
+        faces.push(fText.trim());
+      }
+      desc = faces.join('\n\n//\n\n');
+    } else {
+      if (print.oracle_text) desc += print.oracle_text + '\n';
+      if (print.flavor_text) desc += `\n_"${print.flavor_text}"_`;
+    }
+    return desc.trim();
+  };
+
+  const handlePopulate = async () => {
+    if (!form.name.trim()) return;
+    setLookingUp(true);
+    setFormError('');
+    try {
+      const res = await fetch(`https://api.scryfall.com/cards/search?q=!"${encodeURIComponent(form.name.trim())}"+is:paper&unique=prints&order=released`);
+      const body = await res.json();
+      if (!body.data || body.data.length === 0) throw new Error('No printings found for that precise name.');
+      const prints = body.data;
+      setScryfallPrints(prints);
+      
+      const firstPrint = prints[0];
+      const initialTreatment = getTreatmentType(firstPrint);
+      const initialFoil = firstPrint.finishes?.includes('nonfoil') ? 'non_foil' : (firstPrint.finishes?.[0] === 'etched' ? 'etched_foil' : 'foil');
+
+      setForm(f => ({
+        ...f,
+        set_code: firstPrint.set,
+        set_name: firstPrint.set_name,
+        card_treatment: initialTreatment,
+        collector_number: firstPrint.collector_number,
+        promo_type: firstPrint.promo_types?.join(',') || 'none',
+        foil_treatment: initialFoil as FoilTreatment,
+        image_url: firstPrint.image_uris?.normal || firstPrint.image_uris?.large || f.image_url,
+        description: extractDescription(firstPrint) || f.description,
+        price_reference: applyPrintPrices(firstPrint, initialFoil as FoilTreatment, f.price_source)
+      }));
+    } catch (e: unknown) {
+      setFormError(e instanceof Error ? e.message : 'Scryfall fetch failed');
+    } finally {
+      setLookingUp(false);
+    }
+  };
+
+  const resolveLabel = (key: string, map: Record<string, string>) => {
+    if (map[key]) return map[key];
+    return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  const getTreatmentType = (print: any): CardTreatment => {
+    const fx = print.frame_effects || [];
+    const pt = print.promo_types || [];
+    
+    if (print.serialized) return 'serialized';
+    if (pt.includes('stepandcompleat')) return 'step_and_compleat';
+    if (pt.includes('galaxyfoil')) return 'galaxy_foil';
+    if (fx.includes('showcase')) return 'showcase';
+    if (fx.includes('extendedart')) return 'extended_art';
+    if (print.full_art) return 'full_art';
+    if (print.border_color === 'borderless') return 'borderless';
+    if (fx.includes('retro') || ['1993', '1997'].includes(print.frame)) return 'retro_frame';
+    if (print.frame === '2003') return 'legacy_border';
+    if (print.textless) return 'textless';
+    if (pt.includes('judgegift')) return 'judge_promo';
+    if (print.promo) return 'promo';
+    
+    // Dynamic Fallback for unrecognized treatments
+    const ignoredPromos = ['boosterfun', 'promopack', 'setpromo', 'buyabox'];
+    const validPt = pt.filter((p: string) => !ignoredPromos.includes(p) && !p.includes('foil'));
+    if (validPt.length > 0) return validPt[0];
+    if (fx.length > 0) return fx[0];
+    
+    return 'normal';
+  };
+
+  const getTreatmentOptions = (setCode?: string) => {
+    const targetSet = setCode || form.set_code;
+    if (scryfallPrints.length === 0) return [{ value: form.card_treatment, label: resolveLabel(form.card_treatment, TREATMENT_LABELS) }];
+    
+    const options = new Map<string, string>();
+    // Don't pre-set the current treatment as a ghost option if we are targeting a specific set
+    if (!setCode) {
+       options.set(form.card_treatment, resolveLabel(form.card_treatment, TREATMENT_LABELS));
+    }
+
+    scryfallPrints.forEach(p => {
+      if (p.set === targetSet || !targetSet) {
+        const type = getTreatmentType(p);
+        options.set(type, resolveLabel(type, TREATMENT_LABELS));
+      }
+    });
+    
+    return Array.from(options.entries()).map(([value, label]) => ({ value, label }));
+  };
+  const findMatchingPrint = (setCode: string, treatment: CardTreatment, collectorNumber: string, promoType: string, foil?: FoilTreatment) => {
+    // 1. Try to find a print that matches EVERYTHING
+    let match = scryfallPrints.find(p => {
+      const t = getTreatmentType(p);
+      const finishes = p.finishes || [];
+      const pt = p.promo_types || [];
+      const ptKey = pt.join(',') || 'none';
+      
+      const hasFoil = !foil || (foil === 'non_foil' && finishes.includes('nonfoil')) ||
+                      (foil === 'etched_foil' && finishes.includes('etched')) ||
+                      (foil === 'galaxy_foil' && pt.includes('galaxyfoil')) ||
+                      (finishes.includes('foil') || pt.includes(foil || ''));
+      
+      return p.set === setCode && t === treatment && p.collector_number === collectorNumber && ptKey === promoType && hasFoil;
+    });
+
+    if (match) return match;
+
+    // 2. Fall back to Art + Promo match
+    match = scryfallPrints.find(p => p.set === setCode && getTreatmentType(p) === treatment && p.collector_number === collectorNumber && (p.promo_types?.join(',') || 'none') === promoType);
+    if (match) return match;
+
+    // 3. Fall back to just Art match
+    match = scryfallPrints.find(p => p.set === setCode && getTreatmentType(p) === treatment && p.collector_number === collectorNumber);
+    if (match) return match;
+
+    // 4. Fall back to Treatment match
+    match = scryfallPrints.find(p => p.set === setCode && getTreatmentType(p) === treatment);
+    
+    return match || scryfallPrints.find(p => p.set === setCode) || scryfallPrints[0];
+  };
+
+  const getArtOptions = (treatment: CardTreatment, setCode?: string) => {
+    const targetSet = setCode || form.set_code;
+    const prints = scryfallPrints.filter(p => (p.set === targetSet || !targetSet) && getTreatmentType(p) === treatment);
+    const seen = new Set();
+    const results: { value: string, label: string }[] = [];
+    
+    prints.forEach(p => {
+      if (!seen.has(p.collector_number)) {
+        seen.add(p.collector_number);
+        results.push({ 
+          value: p.collector_number, 
+          label: `Art by ${p.artist} (#${p.collector_number})` 
+        });
+      }
+    });
+
+    if (results.length === 0 && form.collector_number) {
+       results.push({ value: form.collector_number, label: `Art #${form.collector_number}` });
+    }
+    
+    return results;
+  };
+
+  const getPromoOptions = (treatment: CardTreatment, setCode: string, collectorNumber: string) => {
+    const prints = scryfallPrints.filter(p => p.collector_number === collectorNumber && p.set === setCode && getTreatmentType(p) === treatment);
+    const seen = new Set();
+    const results: { value: string, label: string }[] = [];
+    
+    prints.forEach(p => {
+      const pt = p.promo_types || [];
+      const ptKey = pt.join(',') || 'none';
+      if (!seen.has(ptKey)) {
+        seen.add(ptKey);
+        results.push({ 
+          value: ptKey, 
+          label: pt.length > 0 ? pt.map((t: string) => resolveLabel(t, FOIL_LABELS)).join(', ') : 'Standard / Regular' 
+        });
+      }
+    });
+
+    if (results.length === 0 && form.promo_type) {
+       results.push({ value: form.promo_type, label: form.promo_type === 'none' ? 'Standard / Regular' : form.promo_type });
+    }
+    
+    return results;
+  };
+
+  const getFoilOptions = (treatment: CardTreatment, setCode?: string, collectorNumber?: string, promoType?: string) => {
+    const targetSet = setCode || form.set_code;
+    const targetNum = collectorNumber || form.collector_number;
+    const targetPromo = promoType || form.promo_type;
+
+    // Gather ALL finishes available for ALL prints that match granular filters
+    const matchingPrints = scryfallPrints.filter(p => 
+      getTreatmentType(p) === treatment && 
+      (p.set === targetSet || !targetSet) &&
+      (p.collector_number === targetNum || !targetNum) &&
+      ((p.promo_types?.join(',') || 'none') === targetPromo || !targetPromo)
+    );
+    if (matchingPrints.length === 0) return [{ value: form.foil_treatment, label: resolveLabel(form.foil_treatment, FOIL_LABELS) }];
+
+    const results: { value: FoilTreatment, label: string }[] = [];
+    const seen = new Set<string>();
+
+    const addOpt = (val: string, lbl?: string) => {
+      if (!seen.has(val)) {
+        seen.add(val);
+        results.push({ value: val as FoilTreatment, label: lbl || resolveLabel(val, FOIL_LABELS) });
+      }
+    };
+
+    matchingPrints.forEach(print => {
+      const finishes = print.finishes || [];
+      const pt = (print.promo_types || []) as string[];
+      
+      // 1. Map standard finishes
+      if (finishes.includes('nonfoil')) addOpt('non_foil', 'Non-Foil');
+      if (finishes.includes('etched')) addOpt('etched_foil', 'Etched Foil');
+      
+      let addedSpecializedFoil = false;
+      // 2. Map promo_types / specialized finishes
+      pt.forEach(p => {
+        if (p === 'galaxyfoil' || p === 'galaxy_foil') { addOpt('galaxy_foil', 'Galaxy Foil'); addedSpecializedFoil = true; }
+        else if (p === 'surgefoil') { addOpt('ripple_foil', 'Surge Foil'); addedSpecializedFoil = true; }
+        else if (p === 'halofoil') { addOpt('holo_foil', 'Halo Foil'); addedSpecializedFoil = true; }
+        else if (p === 'textured') { addOpt('textured_foil', 'Textured Foil'); addedSpecializedFoil = true; }
+        else if (p === 'confettifoil') { addOpt('confetti_foil', 'Confetti Foil'); addedSpecializedFoil = true; }
+        else if (p === 'invisibleink') { addOpt('invisible_ink', 'Invisible Ink'); addedSpecializedFoil = true; }
+        else if (p === 'glossy') { addOpt('glossy', 'Glossy'); addedSpecializedFoil = true; }
+        else if (p.endsWith('foil')) {
+          // Catch-all for other foils (e.g. rainbowfoil -> rainbow_foil)
+          const standardized = p.replace(/foil$/, '_foil');
+          addOpt(standardized);
+          addedSpecializedFoil = true;
+        }
+      });
+
+      // 3. Fallback for standard foil if 'foil' finish is present but no specialized promo_type was found
+      if (finishes.includes('foil') && !addedSpecializedFoil) {
+        addOpt('foil', 'Foil');
+      }
+    });
+
+    if (results.length === 0) addOpt('non_foil', 'Non-Foil');
+    
+    return results;
+  };
+
+  const handleSourceChange = (src: PriceSource) => {
+    setForm(f => {
+      let ref = f.price_reference;
+      const print = findMatchingPrint(f.set_code, f.card_treatment, f.collector_number, f.promo_type, f.foil_treatment);
+      if (print) {
+        ref = applyPrintPrices(print, f.foil_treatment, src);
+      }
+      return { ...f, price_source: src, price_reference: ref };
+    });
+  };
+
+  const handleSetChange = (newSet: string) => {
+     // 1. Treatment
+     const treatments = getTreatmentOptions(newSet);
+     const newTreatment = treatments.find(t => t.value === form.card_treatment)?.value || treatments[0]?.value || 'regular';
+     
+     // 2. Art Variant
+     const arts = getArtOptions(newTreatment as CardTreatment, newSet);
+     const newArt = arts[0]?.value || '';
+
+     // 3. Promo Version
+     const promos = getPromoOptions(newTreatment as CardTreatment, newSet, newArt);
+     const newPromo = promos[0]?.value || 'none';
+
+     // 4. Foil
+     const foils = getFoilOptions(newTreatment as CardTreatment, newSet, newArt, newPromo);
+     const newFoil = foils[0]?.value || 'non_foil';
+     
+     // 5. Final Print
+     const bestPrint = findMatchingPrint(newSet, newTreatment as CardTreatment, newArt, newPromo, newFoil as FoilTreatment);
+
+     setForm(f => ({
+       ...f,
+       set_code: newSet,
+       set_name: bestPrint.set_name,
+       card_treatment: newTreatment as CardTreatment,
+       collector_number: newArt,
+       promo_type: newPromo,
+       foil_treatment: newFoil as FoilTreatment,
+       image_url: bestPrint.image_uris?.normal || bestPrint.image_uris?.large || f.image_url,
+       description: extractDescription(bestPrint) || f.description,
+       price_reference: applyPrintPrices(bestPrint, newFoil as FoilTreatment, f.price_source)
+     }));
+  };
+
+  const handleTreatmentChange = (newTreatment: CardTreatment) => {
+    // 1. Art Variant
+    const arts = getArtOptions(newTreatment, form.set_code);
+    const newArt = arts[0]?.value || '';
+
+    // 2. Promo Version
+    const promos = getPromoOptions(newTreatment, form.set_code, newArt);
+    const newPromo = promos[0]?.value || 'none';
+
+    // 3. Foil
+    const foils = getFoilOptions(newTreatment, form.set_code, newArt, newPromo);
+    const newFoil = foils[0]?.value || 'non_foil';
+    
+    // 4. Final Print
+    const bestPrint = findMatchingPrint(form.set_code, newTreatment, newArt, newPromo, newFoil as FoilTreatment);
+
+    setForm(f => ({
+      ...f,
+      card_treatment: newTreatment,
+      collector_number: newArt,
+      promo_type: newPromo,
+      foil_treatment: newFoil as FoilTreatment,
+      image_url: bestPrint.image_uris?.normal || bestPrint.image_uris?.large || f.image_url,
+      description: extractDescription(bestPrint) || f.description,
+      price_reference: applyPrintPrices(bestPrint, newFoil as FoilTreatment, f.price_source)
+    }));
+  };
+
+  const handleArtChange = (newArt: string) => {
+    // 1. Promo Version
+    const promos = getPromoOptions(form.card_treatment, form.set_code, newArt);
+    const newPromo = promos[0]?.value || 'none';
+
+    // 2. Foil
+    const foils = getFoilOptions(form.card_treatment, form.set_code, newArt, newPromo);
+    const newFoil = foils[0]?.value || 'non_foil';
+    
+    // 3. Final Print
+    const bestPrint = findMatchingPrint(form.set_code, form.card_treatment, newArt, newPromo, newFoil as FoilTreatment);
+
+    setForm(f => ({
+      ...f,
+      collector_number: newArt,
+      promo_type: newPromo,
+      foil_treatment: newFoil as FoilTreatment,
+      image_url: bestPrint.image_uris?.normal || bestPrint.image_uris?.large || f.image_url,
+      description: extractDescription(bestPrint) || f.description,
+      price_reference: applyPrintPrices(bestPrint, newFoil as FoilTreatment, f.price_source)
+    }));
+  };
+
+  const handlePromoChange = (newPromo: string) => {
+    // 1. Foil
+    const foils = getFoilOptions(form.card_treatment, form.set_code, form.collector_number, newPromo);
+    const newFoil = foils[0]?.value || 'non_foil';
+    
+    // 2. Final Print
+    const bestPrint = findMatchingPrint(form.set_code, form.card_treatment, form.collector_number, newPromo, newFoil as FoilTreatment);
+
+    setForm(f => ({
+      ...f,
+      promo_type: newPromo,
+      foil_treatment: newFoil as FoilTreatment,
+      image_url: bestPrint.image_uris?.normal || bestPrint.image_uris?.large || f.image_url,
+      price_reference: applyPrintPrices(bestPrint, newFoil as FoilTreatment, f.price_source)
+    }));
+  };
+
+  const handleFoilChange = (newFoil: FoilTreatment) => {
+     const print = findMatchingPrint(form.set_code, form.card_treatment, form.collector_number, form.promo_type, newFoil);
+     setForm(f => ({
+       ...f,
+       foil_treatment: newFoil,
+       image_url: print?.image_uris?.normal || print?.image_uris?.large || f.image_url,
+       price_reference: print ? applyPrintPrices(print, newFoil, f.price_source) : f.price_reference
+     }));
+  };
+
+  const openSettings = () => {
+    setEditingSettings(settings);
+    setShowSettings(true);
+  };
+
+  const handleCreateStorage = async () => {
+    if (!newStorageName.trim()) return;
+    try {
+      await adminCreateStorage(token, newStorageName);
+      setNewStorageName('');
+      loadStorageLocations();
+    } catch (e: any) { alert(e.message); }
+  };
+
+  const handleUpdateStorage = async (id: string) => {
+    if (!editingStorageName.trim()) return;
+    try {
+      await adminUpdateStorage(token, id, editingStorageName);
+      setEditingStorageId(null);
+      loadStorageLocations();
+    } catch (e: any) { alert(e.message); }
+  };
+
+  const handleDeleteStorage = async (id: string, name: string, count: number = 0) => {
+    let msg = `Delete location "${name}"?`;
+    if (count > 0) {
+      msg = `WARNING: "${name}" currently holds ${count} items!\n\nDeleting this location will instantly and permanently erase these items from your global stock.\n\nAre you sure you want to delete it?`;
+    }
+    if (!confirm(msg)) return;
+    try {
+      await adminDeleteStorage(token, id);
+      loadStorageLocations();
+    } catch (e: any) { alert(e.message); }
+  };
+
+  const updateStoreQty = (id: string, delta: number) => {
+    setProductStorage(prev => prev.map(loc => 
+      loc.stored_in_id === id ? { ...loc, quantity: Math.max(0, loc.quantity + delta) } : loc
+    ));
+  };
+
+  const setStoreQty = (id: string, qty: number) => {
+    setProductStorage(prev => prev.map(loc => 
+      loc.stored_in_id === id ? { ...loc, quantity: Math.max(0, qty) } : loc
+    ));
+  };
+
+  const handleSaveSettings = async () => {
+    if (!token) return;
+    setSavingSettings(true);
+    try {
+      const updated = await updateAdminSettings(token, editingSettings);
+      setSettings(updated);
+      setShowSettings(false);
+      loadProducts(); // refresh prices natively without hard reload
+    } catch (e) {
+      alert('Failed to save settings: ' + (e instanceof Error ? e.message : 'Unknown error'));
+    } finally {
+      setSavingSettings(false);
+    }
   };
 
   const handleSave = async () => {
@@ -103,18 +643,36 @@ export default function AdminDashboard() {
     setFormError('');
     try {
       const payload: Partial<Product> = {
-        ...form,
+        name: form.name, tcg: form.tcg, category: form.category,
         set_name: form.set_name || undefined,
         set_code: form.set_code || undefined,
         condition: (form.condition || undefined) as Product['condition'],
+        foil_treatment: form.foil_treatment,
+        card_treatment: form.card_treatment,
+        price_source: form.price_source,
+        price_reference: form.price_reference === '' ? undefined : Number(form.price_reference),
+        price_cop_override: form.price_cop_override === '' ? undefined : Number(form.price_cop_override),
+        stock: form.stock,
         image_url: form.image_url || undefined,
         description: form.description || undefined,
+        featured: form.featured,
       };
+      
+      // Clean up irrelevant price fields depending on source
+      if (payload.price_source === 'manual') payload.price_reference = undefined;
+      else payload.price_cop_override = undefined;
+
+      let pid = editProduct ? editProduct.id : '';
       if (editProduct) {
         await adminUpdateProduct(token, editProduct.id, payload);
       } else {
-        await adminCreateProduct(token, payload);
+        const newP = await adminCreateProduct(token, payload);
+        pid = newP.id;
       }
+      
+      // Update storage mapping
+      await adminUpdateProductStorage(token, pid, productStorage.map(s => ({ stored_in_id: s.stored_in_id, quantity: s.quantity })));
+      
       setShowModal(false);
       loadProducts();
     } catch (e: unknown) {
@@ -142,42 +700,55 @@ export default function AdminDashboard() {
   const totalPages = Math.ceil(total / 25);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="centered-container px-4 py-8">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div>
-          <p className="text-xs font-mono-stack mb-1" style={{ color: 'var(--text-muted)' }}>EL BULK / ADMIN</p>
-          <h1 className="font-display text-5xl">PRODUCT MANAGEMENT</h1>
+          <p className="text-[10px] sm:text-xs font-mono-stack mb-1" style={{ color: 'var(--text-muted)' }}>EL BULK / ADMIN</p>
+          <h1 className="font-display text-4xl sm:text-5xl">PRODUCT MANAGEMENT</h1>
         </div>
-        <div className="flex gap-3">
-          <button id="admin-create-product" onClick={openCreate} className="btn-primary">+ NEW PRODUCT</button>
-          <button onClick={logout} className="btn-secondary" style={{ fontSize: '0.85rem' }}>LOG OUT</button>
+        <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto">
+          <button onClick={() => setShowStorageModal(true)} className="btn-secondary flex-1 sm:flex-none text-[10px] sm:text-[0.85rem] px-3 sm:px-4 py-2 sm:py-2.5">📦 STORAGE</button>
+          <button id="admin-settings" onClick={openSettings} className="btn-secondary flex-1 sm:flex-none text-[10px] sm:text-[0.85rem] px-3 sm:px-4 py-2 sm:py-2.5">⚙ SETTINGS</button>
+          <button id="admin-create-product" onClick={openCreate} className="btn-primary flex-1 sm:flex-none text-[10px] sm:text-[1.1rem] px-3 sm:px-6 py-2 sm:py-2.4">+ NEW PRODUCT</button>
+          <button onClick={logout} className="btn-secondary flex-1 sm:flex-none text-[10px] sm:text-[0.85rem] px-3 sm:px-4 py-2 sm:py-2.5">LOG OUT</button>
         </div>
       </div>
 
       <div className="gold-line mb-6" />
 
-      {/* Search */}
-      <div className="flex gap-3 mb-4">
+      {/* Search & Filters */}
+      <div className="flex flex-wrap gap-3 mb-4">
         <input
           id="admin-search"
           type="search"
           placeholder="Search products..."
           value={search}
           onChange={e => { setSearch(e.target.value); setPage(1); }}
-          style={{ maxWidth: 300 }}
+          style={{ maxWidth: 300, flex: 1 }}
         />
-        <span className="flex items-center text-sm font-mono-stack" style={{ color: 'var(--text-muted)' }}>
+        <select 
+          value={storageFilter} 
+          onChange={e => { setStorageFilter(e.target.value); setPage(1); }} 
+          className="px-3 py-2 border border-kraft-dark bg-white" 
+          style={{ fontSize: '0.9rem', flex: 1, maxWidth: 200, color: storageFilter ? 'var(--text-primary)' : 'var(--text-muted)' }}
+        >
+          <option value="">All Storage Locations</option>
+          {storageLocations.map(l => (
+            <option key={l.id} value={l.id}>{l.name}</option>
+          ))}
+        </select>
+        <span className="flex items-center text-sm font-mono-stack ml-auto" style={{ color: 'var(--text-muted)' }}>
           {total} product{total !== 1 ? 's' : ''}
         </span>
       </div>
 
       {/* Table */}
-      <div className="card overflow-x-auto">
+      <div className="card no-tilt overflow-x-auto">
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--ink-border)' }}>
-              {['Name', 'TCG', 'Category', 'Set', 'Condition', 'Price', 'Stock', 'Featured', ''].map(h => (
+              {['Name', 'TCG', 'Category', 'Set', 'Condition', 'Final Price', 'Stock', 'Featured', ''].map(h => (
                 <th key={h} className="text-left px-4 py-3 text-xs font-mono-stack" style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                   {h}
                 </th>
@@ -188,7 +759,7 @@ export default function AdminDashboard() {
             {loading ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <tr key={i} style={{ borderBottom: '1px solid var(--ink-border)' }}>
-                  {Array.from({ length: 8 }).map((_, j) => (
+                  {Array.from({ length: 9 }).map((_, j) => (
                     <td key={j} className="px-4 py-3">
                       <div className="skeleton" style={{ height: 12, width: j === 0 ? 140 : 60 }} />
                     </td>
@@ -222,7 +793,9 @@ export default function AdminDashboard() {
                   <td className="px-4 py-3">
                     {p.condition ? <span className={`badge badge-${p.condition.toLowerCase()}`}>{p.condition}</span> : <span style={{ color: 'var(--text-muted)' }}>—</span>}
                   </td>
-                  <td className="px-4 py-3 price text-sm">${p.price.toFixed(2)}</td>
+                  <td className="px-4 py-3 price text-sm" title={`Computed from: ${p.price_source}`}>
+                    ${p.price.toLocaleString('en-US', { maximumFractionDigits: 0 })} COP
+                  </td>
                   <td className="px-4 py-3 text-sm font-mono-stack"
                     style={{ color: p.stock === 0 ? 'var(--hp-color)' : p.stock < 3 ? 'var(--mp-color)' : 'var(--text-primary)' }}>
                     {p.stock}
@@ -261,11 +834,140 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center px-4"
+          style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)' }}>
+          <div className="card no-tilt max-w-4xl w-full p-8" style={{ background: 'var(--ink-surface)', border: '4px solid var(--kraft-dark)', position: 'relative' }}>
+             {/* Decorative Corner */}
+             <div className="absolute top-0 right-0 w-16 h-16 pointer-events-none opacity-20" style={{ borderTop: '8px solid var(--gold)', borderRight: '8px solid var(--gold)' }} />
+            
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="font-display text-4xl m-0">GLOBAL SETTINGS</h2>
+              <div className="px-3 py-1 bg-nm-color text-white text-xs font-mono-stack rounded shadow-sm">SYSTEM_CONFIG_V2</div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-10">
+              {/* Rates */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 border-b border-kraft-dark pb-2 mb-4">
+                  <span className="text-2xl">📈</span>
+                  <h4 className="text-lg font-display text-ink-deep m-0">EXCHANGE RATES</h4>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="cardbox p-4 bg-kraft-light/30">
+                    <label className="text-xs font-mono-stack mb-2 block uppercase tracking-tighter" style={{ color: 'var(--text-muted)' }}>USD TO COP (TCG)</label>
+                    <input type="number" className="font-bold text-lg" value={editingSettings.usd_to_cop_rate} onChange={e => setEditingSettings({ ...editingSettings, usd_to_cop_rate: parseFloat(e.target.value) })} />
+                  </div>
+                  <div className="cardbox p-4 bg-kraft-light/30">
+                    <label className="text-xs font-mono-stack mb-2 block uppercase tracking-tighter" style={{ color: 'var(--text-muted)' }}>EUR TO COP (MCK)</label>
+                    <input type="number" className="font-bold text-lg" value={editingSettings.eur_to_cop_rate} onChange={e => setEditingSettings({ ...editingSettings, eur_to_cop_rate: parseFloat(e.target.value) })} />
+                  </div>
+                </div>
+                <p className="text-[10px] font-mono-stack text-text-muted mt-2">
+                  * These rates are used to compute final COP prices from external sources.
+                </p>
+              </div>
+
+              {/* Contact Info */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 border-b border-kraft-dark pb-2 mb-4">
+                  <span className="text-2xl">📦</span>
+                  <h4 className="text-lg font-display text-ink-deep m-0">STORE IDENTITY</h4>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-mono-stack mb-1 block uppercase tracking-tighter" style={{ color: 'var(--text-muted)' }}>PHYSICAL ADDRESS</label>
+                    <input type="text" className="bg-white" value={editingSettings.contact_address} onChange={e => setEditingSettings({ ...editingSettings, contact_address: e.target.value })} />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-mono-stack mb-1 block uppercase tracking-tighter" style={{ color: 'var(--text-muted)' }}>WHATSAPP</label>
+                      <input type="text" className="bg-white" value={editingSettings.contact_phone} onChange={e => setEditingSettings({ ...editingSettings, contact_phone: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-mono-stack mb-1 block uppercase tracking-tighter" style={{ color: 'var(--text-muted)' }}>INSTAGRAM</label>
+                      <input type="text" className="bg-white" value={editingSettings.contact_instagram} onChange={e => setEditingSettings({ ...editingSettings, contact_instagram: e.target.value })} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-mono-stack mb-1 block uppercase tracking-tighter" style={{ color: 'var(--text-muted)' }}>STORE EMAIL</label>
+                      <input type="email" className="bg-white" value={editingSettings.contact_email} onChange={e => setEditingSettings({ ...editingSettings, contact_email: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-mono-stack mb-1 block uppercase tracking-tighter" style={{ color: 'var(--text-muted)' }}>BUSINESS HOURS</label>
+                      <input type="text" className="bg-white" value={editingSettings.contact_hours} onChange={e => setEditingSettings({ ...editingSettings, contact_hours: e.target.value })} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-4 mt-12 bg-kraft-light/20 p-4 -m-8 mt-8 border-t border-kraft-dark">
+              <button onClick={handleSaveSettings} className="btn-primary flex-1 shadow-md" disabled={savingSettings}>
+                {savingSettings ? 'SYNCING...' : 'SAVE ENTIRE DB CONFIG →'}
+              </button>
+              <button onClick={() => setShowSettings(false)} className="btn-secondary px-10">DISCARD</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Storage Locations Modal */}
+      {showStorageModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center px-4"
+          style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)' }}>
+          <div className="card no-tilt max-w-2xl w-full p-8" style={{ background: 'var(--ink-surface)', border: '4px solid var(--kraft-dark)' }}>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="font-display text-4xl m-0">STORAGE LOCATIONS</h2>
+              <button onClick={() => setShowStorageModal(false)} className="text-text-muted hover:text-text-primary text-xl">✕</button>
+            </div>
+            
+            <div className="flex gap-2 mb-6">
+              <input type="text" placeholder="New Location Name (e.g. Binder A)" value={newStorageName} onChange={e => setNewStorageName(e.target.value)} className="flex-1 bg-white" />
+              <button onClick={handleCreateStorage} className="btn-primary px-6">ADD</button>
+            </div>
+
+            <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+              {storageLocations.map(loc => (
+                <div key={loc.id} className="flex items-center justify-between p-3 border border-kraft-dark bg-kraft-light/10">
+                  {editingStorageId === loc.id ? (
+                    <div className="flex gap-2 flex-1 mr-4">
+                      <input type="text" value={editingStorageName} onChange={e => setEditingStorageName(e.target.value)} className="flex-1 py-1 bg-white" />
+                      <button onClick={() => handleUpdateStorage(loc.id)} className="btn-primary px-3 py-1 text-xs">SAVE</button>
+                      <button onClick={() => setEditingStorageId(null)} className="btn-secondary px-3 py-1 text-xs">CANCEL</button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <span className="font-semibold text-lg">{loc.name}</span>
+                        <span className="text-xs font-mono-stack text-text-muted bg-kraft-light px-2 py-0.5 rounded border border-kraft-dark">
+                          {loc.item_count || 0} items
+                        </span>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => { setEditingStorageId(loc.id); setEditingStorageName(loc.name); }} className="btn-secondary px-3 py-1 text-xs">EDIT</button>
+                        <button onClick={() => handleDeleteStorage(loc.id, loc.name, loc.item_count || 0)} className="px-3 py-1 text-xs border border-hp-color text-hp-color hover:bg-hp-color hover:text-white transition-colors" style={{ borderRadius: 4 }}>DELETE</button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+              {storageLocations.length === 0 && <p className="text-center text-text-muted py-8">No storage locations configured.</p>}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Product Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-8 px-4"
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-4 md:pt-8 px-2 md:px-4"
           style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(3px)', overflowY: 'auto' }}>
-          <div className="card p-6 w-full max-w-2xl mb-8" style={{ position: 'relative' }}>
+          <div className="card no-tilt p-4 md:p-6 w-full max-w-2xl mb-8" style={{ position: 'relative' }}>
             <div className="flex items-center justify-between mb-6">
               <h2 className="font-display text-3xl">{editProduct ? 'EDIT PRODUCT' : 'NEW PRODUCT'}</h2>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
@@ -275,10 +977,22 @@ export default function AdminDashboard() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="sm:col-span-2">
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>CARD / PRODUCT NAME *</label>
-                <input id="form-name" type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+            <div className="flex gap-6 flex-col md:flex-row">
+              <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2 flex items-end gap-2">
+                <div className="flex-1">
+                  <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>CARD / PRODUCT NAME *</label>
+                  <input id="form-name" type="text" value={form.name} onChange={e => {
+                    const val = e.target.value;
+                    setForm(f => ({ ...EMPTY_FORM, name: val, tcg: f.tcg, category: f.category }));
+                    setScryfallPrints([]);
+                  }} />
+                </div>
+                {form.tcg === 'mtg' && form.category === 'singles' && (
+                  <button type="button" onClick={handlePopulate} disabled={lookingUp || !form.name.trim()} className="btn-secondary px-4 transition-colors hover:text-gold" style={{ height: '42px', padding: '0 1rem', fontSize: '0.8rem' }} title="Lookup Scryfall Data">
+                    {lookingUp ? '⏳...' : '📥 POPULATE'}
+                  </button>
+                )}
               </div>
               <div>
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>TCG *</label>
@@ -296,12 +1010,20 @@ export default function AdminDashboard() {
                 </select>
               </div>
               <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>SET NAME</label>
-                <input id="form-set-name" type="text" value={form.set_name} onChange={e => setForm(f => ({ ...f, set_name: e.target.value }))} />
+                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>SET CODE</label>
+                {scryfallPrints.length > 0 ? (
+                  <select id="form-set-code" value={form.set_code} onChange={e => handleSetChange(e.target.value)}>
+                    {Array.from(new Map(scryfallPrints.map(c => [c.set, c.set_name])).entries()).map(([code, name]) => (
+                      <option key={code} value={code}>[{(code as string).toUpperCase()}] {name as string}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input id="form-set-code" type="text" value={form.set_code} onChange={e => handleSetChange(e.target.value)} placeholder="e.g. MH2" />
+                )}
               </div>
               <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>SET CODE</label>
-                <input id="form-set-code" type="text" value={form.set_code} onChange={e => setForm(f => ({ ...f, set_code: e.target.value }))} placeholder="e.g. MH2" />
+                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>SET NAME</label>
+                <input id="form-set-name" type="text" value={form.set_name} onChange={e => setForm(f => ({ ...f, set_name: e.target.value }))} readOnly={scryfallPrints.length > 0} style={{ opacity: scryfallPrints.length > 0 ? 0.7 : 1 }} />
               </div>
               <div>
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>CONDITION</label>
@@ -310,51 +1032,163 @@ export default function AdminDashboard() {
                 </select>
               </div>
               <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>FOIL TREATMENT</label>
-                <select id="form-foil" value={form.foil_treatment} onChange={e => setForm(f => ({ ...f, foil_treatment: e.target.value as typeof EMPTY_FORM['foil_treatment'] }))}>
-                  {Object.entries(FOIL_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                </select>
-              </div>
-              <div>
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>CARD TREATMENT / VERSION</label>
-                <select id="form-treatment" value={form.card_treatment} onChange={e => setForm(f => ({ ...f, card_treatment: e.target.value as typeof EMPTY_FORM['card_treatment'] }))}>
-                  {Object.entries(TREATMENT_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                <select id="form-treatment" 
+                  value={form.card_treatment} 
+                  disabled={scryfallPrints.length === 0}
+                  onChange={e => handleTreatmentChange(e.target.value as CardTreatment)}>
+                  {getTreatmentOptions().map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
                 </select>
               </div>
+              
               <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>PRICE ($) *</label>
-                <input id="form-price" type="number" step="0.01" min="0" value={form.price} onChange={e => setForm(f => ({ ...f, price: parseFloat(e.target.value) || 0 }))} />
+                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>ART VARIATION</label>
+                <select id="form-art" 
+                  value={form.collector_number} 
+                  disabled={scryfallPrints.length === 0 || !form.card_treatment}
+                  onChange={e => handleArtChange(e.target.value)}>
+                  {getArtOptions(form.card_treatment).map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
               </div>
+
               <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>STOCK</label>
-                <input id="form-stock" type="number" min="0" value={form.stock} onChange={e => setForm(f => ({ ...f, stock: parseInt(e.target.value) || 0 }))} />
+                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>PROMO VERSION</label>
+                <select id="form-promo" 
+                  value={form.promo_type} 
+                  disabled={scryfallPrints.length === 0 || !form.collector_number}
+                  onChange={e => handlePromoChange(e.target.value)}>
+                  {getPromoOptions(form.card_treatment, form.set_code, form.collector_number).map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
               </div>
-              <div className="sm:col-span-2">
+
+              <div>
+                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>FOIL TREATMENT</label>
+                <select id="form-foil" 
+                  value={form.foil_treatment} 
+                  disabled={scryfallPrints.length === 0 || !form.promo_type}
+                  onChange={e => handleFoilChange(e.target.value as FoilTreatment)}>
+                  {getFoilOptions(form.card_treatment, form.set_code, form.collector_number, form.promo_type).map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              
+              {/* Pricing section */}
+              <div className="sm:col-span-2 mt-2 pt-2" style={{ borderTop: '1px dashed var(--ink-border)' }}>
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-sm font-mono-stack" style={{ color: 'var(--text-primary)' }}>PRICING</h3>
+                  <div className="text-xs font-mono-stack px-2 py-1 rounded" style={{ background: 'var(--ink-surface)', color: 'var(--gold)' }}>
+                    {form.price_source === 'tcgplayer' && `(x ${settings.usd_to_cop_rate} COP)`}
+                    {form.price_source === 'cardmarket' && `(x ${settings.eur_to_cop_rate} COP)`}
+                    {form.price_source !== 'manual' && typeof form.price_reference === 'number' && (
+                       <span className="ml-2 font-bold text-sm" style={{ color: form.price_reference === 0 ? 'var(--hp-color)' : 'var(--gold)' }}>
+                         = ${(form.price_reference * (form.price_source === 'tcgplayer' ? settings.usd_to_cop_rate : settings.eur_to_cop_rate)).toLocaleString('en-US', { maximumFractionDigits: 0 })} COP
+                       </span>
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>PRICE SOURCE *</label>
+                    <select id="form-price-source" value={form.price_source} onChange={e => handleSourceChange(e.target.value as PriceSource)}>
+                      <option value="manual">Manual Override (COP)</option>
+                      <option value="tcgplayer">External: TCGPlayer (USD)</option>
+                      <option value="cardmarket">External: Cardmarket (EUR)</option>
+                    </select>
+                  </div>
+                  {form.price_source === 'manual' ? (
+                    <div>
+                      <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>PRICE (COP) *</label>
+                      <input id="form-price-override" type="number" step="100" min="0" value={form.price_cop_override} onChange={e => setForm(f => ({ ...f, price_cop_override: e.target.value ? parseFloat(e.target.value) : '' }))} />
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>
+                        REFERENCE PRICE ({form.price_source === 'tcgplayer' ? 'USD' : 'EUR'}) *
+                      </label>
+                       <input id="form-price-reference" type="number" step="0.01" min="0" value={form.price_reference} 
+                        onChange={e => setForm(f => ({ ...f, price_reference: e.target.value ? parseFloat(e.target.value) : '' }))} 
+                        style={{ color: form.price_reference === 0 ? 'var(--hp-color)' : 'inherit', borderColor: form.price_reference === 0 ? 'var(--hp-color)' : 'var(--ink-border)' }} />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>IMAGE URL</label>
                 <input id="form-image" type="text" value={form.image_url} onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))} />
               </div>
               <div className="sm:col-span-2">
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>DESCRIPTION</label>
-                <textarea id="form-description" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3} />
+                <textarea id="form-description" className="w-full" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3} />
               </div>
               <div className="sm:col-span-2 flex items-center gap-3">
                 <input id="form-featured" type="checkbox" checked={form.featured} onChange={e => setForm(f => ({ ...f, featured: e.target.checked }))}
                   style={{ width: 16, height: 16, accentColor: 'var(--gold)', cursor: 'pointer' }} />
-                <label htmlFor="form-featured" className="text-sm" style={{ cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                <label htmlFor="form-featured" className="text-sm border-none" style={{ cursor: 'pointer', color: 'var(--text-secondary)' }}>
                   Featured product (shows on homepage)
                 </label>
               </div>
             </div>
 
+            <div className="w-full md:w-64 flex-shrink-0">
+              <div className="sticky top-4">
+                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>IMAGE PREVIEW</label>
+                <div className="cardbox overflow-hidden" style={{ aspectRatio: '3/4', padding: '0.5rem', background: 'var(--kraft-light)' }}>
+                  <div className="w-full h-full bg-ink-card border border-ink-border relative flex items-center justify-center">
+                    {form.image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={form.image_url} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    ) : (
+                      <span className="text-5xl opacity-20">🃏</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* STORAGE TABLE */}
+                <div className="cardbox p-3 bg-kraft-light/30">
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="text-xs font-mono-stack uppercase text-text-muted m-0">STORAGE</label>
+                    <span className="text-xs font-bold bg-ink-surface px-2 py-1 text-gold rounded border border-ink-border">
+                      TOTAL: {productStorage.reduce((acc, l) => acc + l.quantity, 0)}
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {productStorage.length === 0 && <p className="text-xs text-text-muted italic text-center py-2">No storage locations available.</p>}
+                    {productStorage.map(loc => (
+                      <div key={loc.stored_in_id} className="flex items-center justify-between gap-2 text-sm border-b border-ink-border/50 pb-2">
+                        <span className="truncate flex-1 font-semibold" title={loc.name}>{loc.name}</span>
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => updateStoreQty(loc.stored_in_id, -1)} className="w-6 h-6 flex items-center justify-center bg-ink-surface border border-ink-border hover:text-hp-color transition-colors" disabled={loc.quantity <= 0}>-</button>
+                          <input type="number" value={loc.quantity === 0 ? '' : loc.quantity} min="0" 
+                            onChange={e => setStoreQty(loc.stored_in_id, parseInt(e.target.value) || 0)}
+                            className="w-12 px-1 py-0 text-center text-sm font-mono-stack" style={{ height: '24px' }} placeholder="0" />
+                          <button onClick={() => updateStoreQty(loc.stored_in_id, 1)} className="w-6 h-6 flex items-center justify-center bg-ink-surface border border-ink-border hover:text-gold transition-colors">+</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
             {formError && (
-              <p className="mt-3 text-sm" style={{ color: 'var(--hp-color)' }}>{formError}</p>
+              <p className="mt-4 text-sm font-mono-stack" style={{ color: 'var(--hp-color)' }}>{formError}</p>
             )}
 
             <div className="flex gap-3 mt-6">
-              <button id="admin-save-product" onClick={handleSave} className="btn-primary flex-1" disabled={saving}>
+              <button id="admin-save-product" onClick={handleSave} className="btn-primary flex-1 py-3 text-sm" disabled={saving}>
                 {saving ? 'SAVING...' : editProduct ? 'SAVE CHANGES' : 'CREATE PRODUCT'}
               </button>
-              <button onClick={() => setShowModal(false)} className="btn-secondary">CANCEL</button>
+              <button onClick={() => setShowModal(false)} className="btn-secondary py-3 text-sm">CANCEL</button>
             </div>
           </div>
         </div>

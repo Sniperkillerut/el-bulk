@@ -59,47 +59,48 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
   const totalPages = Math.ceil(total / 20);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="centered-container px-4 py-8">
       {/* Header */}
-      <div className="mb-8">
-        <p className="text-xs font-mono-stack mb-1" style={{ color: 'var(--text-muted)' }}>
+      <div className="mb-6 md:mb-8">
+        <p className="text-[10px] sm:text-xs font-mono-stack mb-1" style={{ color: 'var(--text-muted)' }}>
           {TCG_LABELS[tcg] || tcg.toUpperCase()} / {category.toUpperCase()}
         </p>
-        <h1 className="font-display text-6xl" style={{ color: 'var(--text-primary)' }}>
+        <h1 className="font-display text-4xl sm:text-5xl md:text-6xl" style={{ color: 'var(--text-primary)' }}>
           {title}
         </h1>
-        {subtitle && <p style={{ color: 'var(--text-secondary)' }} className="mt-2">{subtitle}</p>}
+        {subtitle && <p style={{ color: 'var(--text-secondary)' }} className="mt-2 text-sm md:text-base">{subtitle}</p>}
         <div className="gold-line mt-4" />
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 mb-6">
-        <input
-          type="search"
-          placeholder="Search cards..."
-          value={filters.search}
-          onChange={e => handleFilterChange('search', e.target.value)}
-          style={{ maxWidth: 240 }}
-          id={`search-${tcg}-${category}`}
-        />
+      <div className="flex flex-wrap gap-2 md:gap-3 mb-6">
+        <div className="w-full sm:w-auto sm:flex-1 sm:max-w-[240px]">
+          <input
+            type="search"
+            placeholder="Search cards..."
+            value={filters.search}
+            onChange={e => handleFilterChange('search', e.target.value)}
+            id={`search-${tcg}-${category}`}
+          />
+        </div>
 
         {category === 'singles' && (
-          <>
-            <select value={filters.condition} onChange={e => handleFilterChange('condition', e.target.value)} style={{ maxWidth: 140 }}>
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+            <select value={filters.condition} onChange={e => handleFilterChange('condition', e.target.value)} className="flex-1 sm:w-32 sm:flex-none">
               <option value="">All Conditions</option>
               {['NM', 'LP', 'MP', 'HP', 'DMG'].map(c => <option key={c} value={c}>{c}</option>)}
             </select>
 
-            <select value={filters.foil} onChange={e => handleFilterChange('foil', e.target.value)} style={{ maxWidth: 160 }}>
+            <select value={filters.foil} onChange={e => handleFilterChange('foil', e.target.value)} className="flex-1 sm:w-40 sm:flex-none">
               <option value="">All Treatments</option>
               {Object.entries(FOIL_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
 
-            <select value={filters.treatment} onChange={e => handleFilterChange('treatment', e.target.value)} style={{ maxWidth: 180 }}>
+            <select value={filters.treatment} onChange={e => handleFilterChange('treatment', e.target.value)} className="flex-1 sm:w-44 sm:flex-none">
               <option value="">All Versions</option>
               {Object.entries(TREATMENT_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
-          </>
+          </div>
         )}
 
         {(filters.search || filters.foil || filters.treatment || filters.condition) && (

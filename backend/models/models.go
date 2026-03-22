@@ -101,10 +101,17 @@ type ProductInput struct {
 	Featured    bool    `json:"featured"`
 }
 
-// Settings holds admin-configurable exchange rates.
+// Settings holds admin-configurable global settings and contact info.
 type Settings struct {
 	USDToCOPRate float64 `json:"usd_to_cop_rate"`
 	EURToCOPRate float64 `json:"eur_to_cop_rate"`
+
+	// Contact Info
+	ContactAddress   string `json:"contact_address"`
+	ContactPhone     string `json:"contact_phone"`
+	ContactEmail     string `json:"contact_email"`
+	ContactInstagram string `json:"contact_instagram"`
+	ContactHours     string `json:"contact_hours"`
 }
 
 type ProductListResponse struct {
@@ -132,4 +139,22 @@ type LoginResponse struct {
 
 type ErrorResponse struct {
 	Error string `json:"error"`
+}
+
+type StoredIn struct {
+	ID        string `db:"id"         json:"id"`
+	Name      string `db:"name"       json:"name"`
+	ItemCount int    `db:"item_count" json:"item_count"`
+}
+
+type ProductStorage struct {
+	ProductID  string `db:"product_id"   json:"product_id"`
+	StoredInID string `db:"stored_in_id" json:"stored_in_id"`
+	Quantity   int    `db:"quantity"     json:"quantity"`
+}
+
+type StorageLocation struct {
+	StoredInID string `db:"stored_in_id" json:"stored_in_id"`
+	Name       string `db:"name"         json:"name"`
+	Quantity   int    `db:"quantity"     json:"quantity"`
 }

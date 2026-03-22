@@ -2,15 +2,6 @@
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
-CREATE TYPE foil_treatment_type AS ENUM (
-  'non_foil', 'foil', 'holo_foil', 'platinum_foil', 'ripple_foil', 'etched_foil', 'galaxy_foil'
-);
-
-CREATE TYPE card_treatment_type AS ENUM (
-  'normal', 'full_art', 'extended_art', 'borderless', 'showcase',
-  'legacy_border', 'textless', 'judge_promo', 'promo', 'alternate_art'
-);
-
 -- Admin-configurable global settings (key/value)
 CREATE TABLE settings (
   key        TEXT PRIMARY KEY,
@@ -20,7 +11,12 @@ CREATE TABLE settings (
 
 INSERT INTO settings (key, value) VALUES
   ('usd_to_cop_rate', '4200'),   -- TCGPlayer prices
-  ('eur_to_cop_rate', '4600');   -- Cardmarket prices
+  ('eur_to_cop_rate', '4600'),   -- Cardmarket prices
+  ('contact_address', 'Calle Falsa 123, Bogotá, Colombia'),
+  ('contact_whatsapp', '+57 321 456 7890'),
+  ('contact_email', 'contacto@elbulk.com'),
+  ('contact_instagram', 'elbulk_tcg'),
+  ('contact_hours', 'Mon-Sat: 10am - 8pm');
 
 CREATE TABLE products (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -30,8 +26,8 @@ CREATE TABLE products (
   set_name         TEXT,
   set_code         TEXT,
   condition        TEXT CHECK (condition IN ('NM', 'LP', 'MP', 'HP', 'DMG')),
-  foil_treatment   foil_treatment_type NOT NULL DEFAULT 'non_foil',
-  card_treatment   card_treatment_type NOT NULL DEFAULT 'normal',
+  foil_treatment   TEXT NOT NULL DEFAULT 'non_foil',
+  card_treatment   TEXT NOT NULL DEFAULT 'normal',
 
   -- Pricing ------------------------------------------------------------------
   -- price_reference: raw price fetched from external source (USD or EUR)
@@ -84,3 +80,38 @@ FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER trg_settings_updated_at
 BEFORE UPDATE ON settings
 FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- Storage Locations ----------------------------------------------------------
+
+CREATE TABLE stored_in (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT UNIQUE NOT NULL
+);
+
+CREATE TABLE product_stored_in (
+  product_id UUID REFERENCES products(id) ON DELETE CASCADE,
+  stored_in_id UUID REFERENCES stored_in(id) ON DELETE CASCADE,
+  quantity INTEGER NOT NULL DEFAULT 0 CHECK (quantity >= 0),
+  PRIMARY KEY (product_id, stored_in_id)
+);
+
+CREATE INDEX idx_ps_stored_in_id ON product_stored_in(stored_in_id) WHERE quantity > 0;
+
+-- Sync product stock from product_stored_in sum
+CREATE OR REPLACE FUNCTION update_product_stock()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    UPDATE products SET stock = COALESCE((SELECT sum(quantity) FROM product_stored_in WHERE product_id = OLD.product_id), 0) WHERE id = OLD.product_id;
+    RETURN OLD;
+  END IF;
+  
+  UPDATE products SET stock = COALESCE((SELECT sum(quantity) FROM product_stored_in WHERE product_id = NEW.product_id), 0) WHERE id = NEW.product_id;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_sync_product_stock
+AFTER INSERT OR UPDATE OR DELETE ON product_stored_in
+FOR EACH ROW EXECUTE FUNCTION update_product_stock();
+

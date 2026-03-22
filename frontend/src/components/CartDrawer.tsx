@@ -2,6 +2,7 @@
 
 import { useCart } from '@/lib/CartContext';
 import Link from 'next/link';
+import CardImage from './CardImage';
 
 export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { items, totalItems, totalPrice, removeItem, updateQty } = useCart();
@@ -56,8 +57,8 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
             items.map(item => (
               <div key={item.product.id} className="card p-3 flex gap-3">
                 {/* Image */}
-                <div className="product-img-placeholder rounded" style={{ width: 56, height: 56, fontSize: '1.2rem', flexShrink: 0 }}>
-                  🃏
+                <div style={{ width: 48, flexShrink: 0 }}>
+                  <CardImage imageUrl={item.product.image_url} name={item.product.name} tcg={item.product.tcg} height={64} />
                 </div>
 
                 {/* Info */}
@@ -83,7 +84,7 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
 
                 {/* Price + remove */}
                 <div className="flex flex-col items-end justify-between">
-                  <span className="price text-sm">${(item.product.price * item.quantity).toFixed(2)}</span>
+                  <span className="price text-sm">${(item.product.price * item.quantity).toLocaleString('en-US', { maximumFractionDigits: 0 })} COP</span>
                   <button
                     onClick={() => removeItem(item.product.id)}
                     style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 2 }}
@@ -104,7 +105,7 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
           <div className="p-5" style={{ borderTop: '1px solid var(--ink-border)' }}>
             <div className="flex justify-between items-center mb-4">
               <span style={{ fontFamily: 'Bebas Neue, sans-serif', letterSpacing: '0.05em', fontSize: '1.1rem' }}>TOTAL</span>
-              <span className="price text-xl">${totalPrice.toFixed(2)}</span>
+               <span className="price text-xl">${totalPrice.toLocaleString('en-US', { maximumFractionDigits: 0 })} COP</span>
             </div>
             <div style={{ background: 'var(--ink-card)', border: '1px dashed var(--ink-border)', borderRadius: 6, padding: '0.75rem 1rem', marginBottom: '0.75rem' }}>
               <p className="text-xs text-center" style={{ color: 'var(--text-muted)' }}>

@@ -1,6 +1,9 @@
 import { Product, ProductListResponse } from './types';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const isServer = typeof window === 'undefined';
+const API_BASE = isServer 
+  ? (process.env.INTERNAL_API_URL || 'http://backend:8080')
+  : ''; // Use relative path in browser to trigger Next.js rewrites
 
 export interface ProductFilters {
   tcg?: string;
@@ -10,6 +13,7 @@ export interface ProductFilters {
   treatment?: string;
   condition?: string;
   featured?: boolean;
+  storage_id?: string;
   page?: number;
   page_size?: number;
 }
@@ -44,6 +48,12 @@ export async function fetchTCGs(): Promise<string[]> {
   return data.tcgs || [];
 }
 
+export async function fetchPublicSettings(): Promise<import('./types').Settings> {
+  const res = await fetch(`${API_BASE}/api/settings`, { cache: 'no-store' });
+  if (!res.ok) throw new Error('Failed to fetch settings');
+  return res.json();
+}
+
 // Admin API (requires token)
 export async function adminLogin(username: string, password: string): Promise<string> {
   const res = await fetch(`${API_BASE}/api/admin/login`, {
@@ -65,7 +75,10 @@ export async function adminFetchProducts(token: string, filters: ProductFilters 
     headers: { Authorization: `Bearer ${token}` },
     cache: 'no-store',
   });
-  if (!res.ok) throw new Error('Failed to fetch products');
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('401 Unauthorized');
+    throw new Error(`Failed to fetch products: ${res.statusText}`);
+  }
   return res.json();
 }
 
@@ -189,5 +202,91 @@ export async function triggerPriceRefresh(
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) throw new Error('Price refresh failed');
+  return res.json();
+}
+
+// ---------------------------------------------------------------------------
+// Admin: Storage Locations
+// ---------------------------------------------------------------------------
+
+export async function adminFetchStorage(token: string): Promise<import('./types').StoredIn[]> {
+  const res = await fetch(`${API_BASE}/api/admin/storage`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('401 Unauthorized');
+    throw new Error('Failed to fetch storage locations');
+  }
+  return res.json();
+}
+
+export async function adminCreateStorage(token: string, name: string): Promise<import('./types').StoredIn> {
+  const res = await fetch(`${API_BASE}/api/admin/storage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('401 Unauthorized');
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to create storage location');
+  }
+  return res.json();
+}
+
+export async function adminUpdateStorage(token: string, id: string, name: string): Promise<import('./types').StoredIn> {
+  const res = await fetch(`${API_BASE}/api/admin/storage/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('401 Unauthorized');
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to update storage location');
+  }
+  return res.json();
+}
+
+export async function adminDeleteStorage(token: string, id: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/admin/storage/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('401 Unauthorized');
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to delete storage location');
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Admin: Product Storage Management
+// ---------------------------------------------------------------------------
+
+export async function adminFetchProductStorage(token: string, productId: string): Promise<import('./types').StorageLocation[]> {
+  const res = await fetch(`${API_BASE}/api/admin/products/${productId}/storage`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('401 Unauthorized');
+    throw new Error('Failed to fetch product storage');
+  }
+  return res.json();
+}
+
+export async function adminUpdateProductStorage(token: string, productId: string, updates: import('./types').ProductStorageInput[]): Promise<import('./types').StorageLocation[]> {
+  const res = await fetch(`${API_BASE}/api/admin/products/${productId}/storage`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(updates),
+  });
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('401 Unauthorized');
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to update product storage');
+  }
   return res.json();
 }

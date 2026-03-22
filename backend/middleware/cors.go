@@ -16,15 +16,27 @@ func CORS(next http.Handler) http.Handler {
 		// Allow multiple origins
 		requestOrigin := r.Header.Get("Origin")
 		allowedOrigins := strings.Split(origin, ",")
+		
 		allowed := false
-		for _, o := range allowedOrigins {
-			if strings.TrimSpace(o) == requestOrigin {
+		if requestOrigin != "" {
+			for _, o := range allowedOrigins {
+				if strings.TrimSpace(o) == requestOrigin {
+					allowed = true
+					break
+				}
+			}
+			// Fallback for dev: allow 127.0.0.1 and localhost variations if not strictly matched
+			if !allowed && (strings.HasPrefix(requestOrigin, "http://localhost:") || strings.HasPrefix(requestOrigin, "http://127.0.0.1:")) {
 				allowed = true
-				break
 			}
 		}
-		if allowed {
-			w.Header().Set("Access-Control-Allow-Origin", requestOrigin)
+
+		if allowed || requestOrigin == "" {
+			if requestOrigin != "" {
+				w.Header().Set("Access-Control-Allow-Origin", requestOrigin)
+			} else {
+				w.Header().Set("Access-Control-Allow-Origin", "*")
+			}
 		}
 
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")

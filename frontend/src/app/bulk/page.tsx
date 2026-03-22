@@ -6,10 +6,10 @@ export const metadata: Metadata = {
 };
 
 const tiers = [
-  { label: 'BULK COMMONS & UNCOMMONS', price: '$5 per 1,000', desc: 'Any condition, any set. Sorted or unsorted. We take it all.', icon: '📦' },
-  { label: 'BULK RARES & MYTHICS', price: '$0.25 per card', desc: 'NM/LP only. Bulk rares from Standard and below.', icon: '💎' },
-  { label: 'JUNK RARE LOTS', price: '$3 per 100', desc: 'MP-DMG rares and mythics, or commons/uncommons in poor condition.', icon: '🗑️' },
-  { label: 'FOIL COMMONS & UNCOMMONS', price: '$10 per 500', desc: 'Any condition. Foil bulk sorted separately.', icon: '✨' },
+  { label: 'BULK COMMONS & UNCOMMONS', price: '$20.000 COP por 1.000', desc: 'Any condition, any set. Sorted or unsorted. We take it all.', icon: '📦' },
+  { label: 'BULK RARES & MYTHICS', price: '$1.000 COP por carta', desc: 'NM/LP only. Bulk rares from Standard and below.', icon: '💎' },
+  { label: 'JUNK RARE LOTS', price: '$12.000 COP por 100', desc: 'MP-DMG rares and mythics, or commons/uncommons in poor condition.', icon: '🗑️' },
+  { label: 'FOIL COMMONS & UNCOMMONS', price: '$40.000 COP por 500', desc: 'Any condition. Foil bulk sorted separately.', icon: '✨' },
 ];
 
 const accepts = [
@@ -17,15 +17,8 @@ const accepts = [
   'Pokémon TCG (English only)',
   'Disney Lorcana',
   'One Piece TCG',
-  'Basic lands (we pay $1 per 200)',
+  'Basic lands (we pay $4.000 COP per 200)',
   'Tokens and emblems ($0 value but we take them)',
-];
-
-const doesNotAccept = [
-  'Non-English cards (MTG foreign language)',
-  'Heavily played or water damaged bulk',
-  'World of Warcraft TCG or other discontinued games (ask us first)',
-  'Price-listed singles you want buylist prices for (see our buylist)',
 ];
 
 export default function BulkPage() {
@@ -70,29 +63,17 @@ export default function BulkPage() {
       </section>
 
       {/* What we accept */}
-      <div className="grid md:grid-cols-2 gap-6 mb-12">
-        <section className="card p-6">
-          <h2 className="font-display text-2xl mb-4" style={{ color: 'var(--nm-color)' }}>✓ WE ACCEPT</h2>
-          <ul className="flex flex-col gap-2">
+      <div className="mb-12">
+        <section className="card p-8 bg-surface border-gold" style={{ borderLeft: '4px solid var(--gold)' }}>
+          <h2 className="font-display text-4xl mb-6 text-gold-dark">✓ WE GLADLY ACCEPT</h2>
+          <div className="grid sm:grid-cols-2 gap-4">
             {accepts.map(item => (
-              <li key={item} className="flex items-start gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                <span style={{ color: 'var(--nm-color)', flexShrink: 0, marginTop: 2 }}>✓</span>
-                {item}
-              </li>
+              <div key={item} className="flex items-center gap-3 p-3 rounded-sm bg-kraft-light/30 border border-kraft-dark/10">
+                <span className="text-nm-color text-xl">⚓</span>
+                <span className="text-sm font-semibold text-ink-deep">{item}</span>
+              </div>
             ))}
-          </ul>
-        </section>
-
-        <section className="card p-6">
-          <h2 className="font-display text-2xl mb-4" style={{ color: 'var(--hp-color)' }}>✗ WE DON&#39;T ACCEPT</h2>
-          <ul className="flex flex-col gap-2">
-            {doesNotAccept.map(item => (
-              <li key={item} className="flex items-start gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                <span style={{ color: 'var(--hp-color)', flexShrink: 0, marginTop: 2 }}>✗</span>
-                {item}
-              </li>
-            ))}
-          </ul>
+          </div>
         </section>
       </div>
 

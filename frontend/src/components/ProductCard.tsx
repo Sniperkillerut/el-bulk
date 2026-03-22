@@ -61,7 +61,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         {/* Footer */}
         <div className="flex items-center justify-between mt-auto pt-2" style={{ borderTop: '1px solid var(--ink-border)' }}>
-          <span className="price text-base">${product.price.toFixed(2)}</span>
+          <span className="price text-base">${product.price.toLocaleString('en-US', { maximumFractionDigits: 0 })} COP</span>
           <div className="flex items-center gap-2">
             <span className="text-xs" style={{ color: 'var(--text-muted)', fontFamily: 'Space Mono' }}>
               {outOfStock ? '—' : `×${product.stock}`}
