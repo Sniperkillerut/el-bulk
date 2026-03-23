@@ -13,7 +13,7 @@ export default function SealedLandingPage() {
   useEffect(() => {
     async function getFeatured() {
       try {
-        const res = await fetchProducts({ category: 'sealed', featured: true, page_size: 12 });
+        const res = await fetchProducts({ category: 'sealed', collection: 'featured', page_size: 12 });
         setFeatured(res.products);
       } catch (err) {
         console.error('Failed to fetch featured sealed:', err);

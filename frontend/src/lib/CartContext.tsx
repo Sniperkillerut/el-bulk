@@ -46,7 +46,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setItems(prev => prev.filter(i => i.product.id !== productId));
     } else {
       setItems(prev => prev.map(i =>
-        i.product.id === productId ? { ...i, quantity: qty } : i
+        i.product.id === productId ? { ...i, quantity: Math.min(qty, i.product.stock) } : i
       ));
     }
   }, []);

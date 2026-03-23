@@ -25,6 +25,7 @@ func main() {
 
 	productHandler := handlers.NewProductHandler(database)
 	adminHandler := handlers.NewAdminHandler(database)
+	categoriesHandler := handlers.NewCategoriesHandler(database)
 	lookupHandler := handlers.NewLookupHandler()
 	settingsHandler := handlers.NewSettingsHandler(database)
 	refreshHandler := handlers.NewRefreshHandler(database)
@@ -50,6 +51,7 @@ func main() {
 		r.Get("/products", productHandler.List)
 		r.Get("/products/{id}", productHandler.GetByID)
 		r.Get("/tcgs", productHandler.ListTCGs)
+		r.Get("/categories", categoriesHandler.List)
 		r.Get("/settings", settingsHandler.Get)
 
 		// Admin routes (protected)
@@ -75,6 +77,12 @@ func main() {
 				r.Post("/storage", storageHandler.Create)
 				r.Put("/storage/{id}", storageHandler.Update)
 				r.Delete("/storage/{id}", storageHandler.Delete)
+
+				// Custom Categories CRUD
+				r.Get("/categories", categoriesHandler.List)
+				r.Post("/categories", categoriesHandler.Create)
+				r.Put("/categories/{id}", categoriesHandler.Update)
+				r.Delete("/categories/{id}", categoriesHandler.Delete)
 
 				// Exchange rate settings
 				r.Get("/settings", settingsHandler.Get)

@@ -57,11 +57,11 @@ type Product struct {
 
 	Stock       int       `db:"stock"        json:"stock"`
 	StoredIn    []StorageLocation `db:"-" json:"stored_in,omitempty"`
-	ImageURL    *string   `db:"image_url"    json:"image_url,omitempty"`
-	Description *string   `db:"description"  json:"description,omitempty"`
-	Featured    bool      `db:"featured"     json:"featured"`
-	CreatedAt   time.Time `db:"created_at"   json:"created_at"`
-	UpdatedAt   time.Time `db:"updated_at"   json:"updated_at"`
+	Categories  []CustomCategory  `db:"-" json:"categories,omitempty"`
+	ImageURL    *string           `db:"image_url"    json:"image_url,omitempty"`
+	Description *string           `db:"description"  json:"description,omitempty"`
+	CreatedAt   time.Time         `db:"created_at"   json:"created_at"`
+	UpdatedAt   time.Time         `db:"updated_at"   json:"updated_at"`
 }
 
 // ComputePrice calculates the COP price for this product given the exchange rates.
@@ -96,10 +96,10 @@ type ProductInput struct {
 	PriceSource      string   `json:"price_source,omitempty"`
 	PriceCOPOverride *float64 `json:"price_cop_override,omitempty"`
 
-	Stock       int     `json:"stock"`
-	ImageURL    *string `json:"image_url,omitempty"`
-	Description *string `json:"description,omitempty"`
-	Featured    bool    `json:"featured"`
+	Stock       int       `json:"stock"`
+	CategoryIDs []string  `json:"category_ids,omitempty"`
+	ImageURL    *string   `json:"image_url,omitempty"`
+	Description *string   `json:"description,omitempty"`
 }
 
 // Settings holds admin-configurable global settings and contact info.

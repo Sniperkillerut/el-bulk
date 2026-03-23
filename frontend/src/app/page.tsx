@@ -1,22 +1,21 @@
 import Link from 'next/link';
-import { fetchProducts } from '@/lib/api';
+import { fetchProducts, fetchCategories } from '@/lib/api';
 import ProductCard from '@/components/ProductCard';
-import { TCG_SHORT, KNOWN_TCGS } from '@/lib/types';
+import { TCG_SHORT, KNOWN_TCGS, CustomCategory } from '@/lib/types';
 
 export default async function HomePage() {
-  let singles = { products: [] as any[] };
-  let sealed = { products: [] as any[] };
-  let accessories = { products: [] as any[] };
+  let categories: CustomCategory[] = [];
+  let collections: { category: CustomCategory; products: import('@/lib/types').Product[] }[] = [];
   
   try {
-    const [singlesRes, sealedRes, accRes] = await Promise.all([
-      fetchProducts({ featured: true, category: 'singles', page_size: 4 }),
-      fetchProducts({ featured: true, category: 'sealed', page_size: 4 }),
-      fetchProducts({ featured: true, category: 'accessories', page_size: 4 })
-    ]);
-    singles = singlesRes;
-    sealed = sealedRes;
-    accessories = accRes;
+    categories = await fetchCategories();
+    // Fetch top 4 products for each category
+    collections = await Promise.all(
+      categories.map(async (cat) => {
+        const res = await fetchProducts({ page: 1, page_size: 4, collection: cat.slug });
+        return { category: cat, products: res.products };
+      })
+    );
   } catch {
     // DB not connected in dev — show empty state gracefully
   }
@@ -78,63 +77,45 @@ export default async function HomePage() {
               {TCG_SHORT[tcg]}
             </Link>
           ))}
+          {categories.map(cat => (
+            <Link key={cat.id} href={`/collection/${cat.slug}`}
+              className="text-xs sm:text-sm font-display tracking-widest transition-opacity hover:text-gold whitespace-nowrap"
+              style={{ color: 'var(--text-muted)' }}>
+              {cat.name.toUpperCase()}
+            </Link>
+          ))}
         </div>
       </section>
 
       <div className="centered-container px-4 py-8 space-y-16">
-        {/* Featured Singles */}
-        <section>
-          <div className="flex items-end gap-4 mb-6 border-b-2 border-kraft-dark pb-2">
-            <h2 className="font-display text-4xl" style={{ color: 'var(--ink-deep)' }}>
-              FEATURED <span style={{ color: 'var(--text-muted)' }}>SINGLES</span>
-            </h2>
-          </div>
-          {singles.products.length === 0 ? (
-            <div className="stamp-border rounded-sm p-8 text-center" style={{ color: 'var(--text-muted)' }}>
-              <p className="font-display text-2xl mb-2">BOX EMPTY</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {singles.products.map(p => <ProductCard key={p.id} product={p} />)}
-            </div>
-          )}
-        </section>
-
-        {/* Featured Sealed */}
-        <section>
-          <div className="flex items-end gap-4 mb-6 border-b-2 border-kraft-dark pb-2">
-            <h2 className="font-display text-4xl" style={{ color: 'var(--ink-deep)' }}>
-              FEATURED <span style={{ color: 'var(--text-muted)' }}>SEALED</span>
-            </h2>
-          </div>
-          {sealed.products.length === 0 ? (
-            <div className="stamp-border rounded-sm p-8 text-center" style={{ color: 'var(--text-muted)' }}>
-              <p className="font-display text-2xl mb-2">BOX EMPTY</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {sealed.products.map(p => <ProductCard key={p.id} product={p} />)}
-            </div>
-          )}
-        </section>
-
-        {/* Featured Accessories */}
-        <section>
-          <div className="flex items-end gap-4 mb-6 border-b-2 border-kraft-dark pb-2">
-            <h2 className="font-display text-4xl" style={{ color: 'var(--ink-deep)' }}>
-              FEATURED <span style={{ color: 'var(--text-muted)' }}>ACCESSORIES</span>
-            </h2>
-          </div>
-          {accessories.products.length === 0 ? (
-            <div className="stamp-border rounded-sm p-8 text-center" style={{ color: 'var(--text-muted)' }}>
-              <p className="font-display text-2xl mb-2">BOX EMPTY</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {accessories.products.map(p => <ProductCard key={p.id} product={p} />)}
-            </div>
-          )}
-        </section>
+        {collections.length === 0 ? (
+           <div className="stamp-border rounded-sm p-8 text-center" style={{ color: 'var(--text-muted)' }}>
+             <p className="font-display text-2xl mb-2">STORE IS EMPTY</p>
+             <p className="font-mono-stack text-sm">No collections have been populated yet.</p>
+           </div>
+        ) : (
+          collections.map(col => (
+              <section key={col.category.id}>
+                <div className="flex items-baseline justify-between gap-4 mb-6 border-b-2 border-kraft-dark pb-2">
+                  <h2 className="font-display text-4xl uppercase" style={{ color: 'var(--ink-deep)' }}>
+                    {col.category.name}
+                  </h2>
+                  <Link href={`/collection/${col.category.slug}`} className="text-sm font-bold font-mono-stack hover:text-gold transition-colors" style={{ color: 'var(--text-secondary)' }}>
+                    VIEW ALL →
+                  </Link>
+                </div>
+                {col.products.length === 0 ? (
+                  <div className="text-center p-8 bg-ink-surface border border-dashed border-ink-border rounded-sm">
+                    <p className="font-mono-stack text-sm text-text-muted">No items assigned to this collection yet.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {col.products.map(p => <ProductCard key={p.id} product={p} />)}
+                  </div>
+                )}
+              </section>
+          ))
+        )}
       </div>
 
       {/* Buy Bulk CTA Banner - Cardboard Package Style */}

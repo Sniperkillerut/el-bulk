@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -81,6 +82,71 @@ func (h *ProductHandler) populateStorage(products []models.Product) {
 	}
 }
 
+func (h *ProductHandler) saveProductCategories(productID string, categoryIDs []string) {
+	log.Printf("saveProductCategories called for Product: %s with categories: %v\n", productID, categoryIDs)
+	_, err := h.DB.Exec("DELETE FROM product_categories WHERE product_id = $1", productID)
+	if err != nil {
+		log.Printf("Error deleting product_categories: %v\n", err)
+	}
+	for _, cid := range categoryIDs {
+		_, err := h.DB.Exec("INSERT INTO product_categories (product_id, category_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", productID, cid)
+		if err != nil {
+			log.Printf("Error inserting product_categories (product=%s, cat=%s): %v\n", productID, cid, err)
+		}
+	}
+}
+
+func (h *ProductHandler) populateCategories(products []models.Product) {
+	if len(products) == 0 {
+		return
+	}
+	var pids []string
+	for _, p := range products {
+		pids = append(pids, p.ID)
+	}
+
+	query, args, err := sqlx.In(`
+		SELECT pc.product_id, c.id, c.name, c.slug
+		FROM product_categories pc
+		JOIN custom_categories c ON pc.category_id = c.id
+		WHERE pc.product_id IN (?)
+		ORDER BY c.name
+	`, pids)
+	if err != nil {
+		log.Printf("Error creating IN query for populateCategories: %v\n", err)
+		return
+	}
+	
+	query = h.DB.Rebind(query)
+	var catRows []struct {
+		ProductID string    `db:"product_id"`
+		ID        string    `db:"id"`
+		Name      string    `db:"name"`
+		Slug      string    `db:"slug"`
+	}
+	if err := h.DB.Select(&catRows, query, args...); err != nil {
+		log.Printf("Error selecting categories: %v\n", err)
+		return
+	}
+
+	catMap := make(map[string][]models.CustomCategory)
+	for _, r := range catRows {
+		catMap[r.ProductID] = append(catMap[r.ProductID], models.CustomCategory{
+			ID:   r.ID,
+			Name: r.Name,
+			Slug: r.Slug,
+		})
+	}
+
+	for i := range products {
+		if cats, ok := catMap[products[i].ID]; ok {
+			products[i].Categories = cats
+		} else {
+			products[i].Categories = []models.CustomCategory{}
+		}
+	}
+}
+
 // GET /api/products
 func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
@@ -92,7 +158,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	foil := q.Get("foil")
 	treatment := q.Get("treatment")
 	condition := q.Get("condition")
-	featuredOnly := q.Get("featured") == "true"
+	collection := q.Get("collection")
 
 	page, _ := strconv.Atoi(q.Get("page"))
 	if page < 1 {
@@ -141,8 +207,11 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 		args = append(args, strings.ToUpper(condition))
 		idx++
 	}
-	if featuredOnly {
-		conditions = append(conditions, "featured = TRUE")
+	if collection != "" {
+		fromClause += " JOIN product_categories pc_col ON products.id = pc_col.product_id JOIN custom_categories c_col ON pc_col.category_id = c_col.id"
+		conditions = append(conditions, "c_col.slug = $"+strconv.Itoa(idx))
+		args = append(args, collection)
+		idx++
 	}
 	if search != "" {
 		conditions = append(conditions, "to_tsvector('english', name || ' ' || COALESCE(set_name, '')) @@ plainto_tsquery('english', $"+strconv.Itoa(idx)+")")
@@ -161,7 +230,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	listQuery := "SELECT products.* " + fromClause + " " + where + " ORDER BY products.featured DESC, products.created_at DESC LIMIT $" + strconv.Itoa(idx) + " OFFSET $" + strconv.Itoa(idx+1)
+	listQuery := "SELECT products.* " + fromClause + " " + where + " ORDER BY products.created_at DESC LIMIT $" + strconv.Itoa(idx) + " OFFSET $" + strconv.Itoa(idx+1)
 	args = append(args, pageSize, offset)
 
 	var products []models.Product
@@ -176,6 +245,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	h.populatePrices(products)
 	h.populateStorage(products)
+	h.populateCategories(products)
 
 	jsonOK(w, models.ProductListResponse{
 		Products: products,
@@ -198,6 +268,7 @@ func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	products := []models.Product{product}
 	h.populatePrices(products)
 	h.populateStorage(products)
+	h.populateCategories(products)
 	jsonOK(w, products[0])
 }
 
@@ -240,13 +311,13 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		INSERT INTO products (name, tcg, category, set_name, set_code, condition,
 		                      foil_treatment, card_treatment,
 		                      price_reference, price_source, price_cop_override,
-		                      stock, image_url, description, featured)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+		                      stock, image_url, description)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
 		RETURNING *
 	`, input.Name, input.TCG, input.Category, input.SetName, input.SetCode, input.Condition,
 		input.FoilTreatment, input.CardTreatment,
 		input.PriceReference, input.PriceSource, input.PriceCOPOverride,
-		input.Stock, input.ImageURL, input.Description, input.Featured,
+		input.Stock, input.ImageURL, input.Description,
 	).StructScan(&product)
 
 	if err != nil {
@@ -254,8 +325,12 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.saveProductCategories(product.ID, input.CategoryIDs)
+
 	products := []models.Product{product}
 	h.populatePrices(products)
+	h.populateStorage(products)
+	h.populateCategories(products)
 	w.WriteHeader(http.StatusCreated)
 	jsonOK(w, products[0])
 }
@@ -280,13 +355,13 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 		SET name=$1, tcg=$2, category=$3, set_name=$4, set_code=$5, condition=$6,
 		    foil_treatment=$7, card_treatment=$8,
 		    price_reference=$9, price_source=$10, price_cop_override=$11,
-		    stock=$12, image_url=$13, description=$14, featured=$15
-		WHERE id=$16
+		    stock=$12, image_url=$13, description=$14
+		WHERE id=$15
 		RETURNING *
 	`, input.Name, input.TCG, input.Category, input.SetName, input.SetCode, input.Condition,
 		input.FoilTreatment, input.CardTreatment,
 		input.PriceReference, input.PriceSource, input.PriceCOPOverride,
-		input.Stock, input.ImageURL, input.Description, input.Featured, id,
+		input.Stock, input.ImageURL, input.Description, id,
 	).StructScan(&product)
 
 	if err != nil {
@@ -294,8 +369,12 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.saveProductCategories(product.ID, input.CategoryIDs)
+
 	products := []models.Product{product}
 	h.populatePrices(products)
+	h.populateStorage(products)
+	h.populateCategories(products)
 	jsonOK(w, products[0])
 }
 

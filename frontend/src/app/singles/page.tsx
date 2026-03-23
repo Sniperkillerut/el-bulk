@@ -13,7 +13,7 @@ export default function SinglesLandingPage() {
   useEffect(() => {
     async function getFeatured() {
       try {
-        const res = await fetchProducts({ category: 'singles', featured: true, page_size: 12 });
+        const res = await fetchProducts({ category: 'singles', collection: 'featured', page_size: 12 });
         setFeatured(res.products);
       } catch (err) {
         console.error('Failed to fetch featured singles:', err);

@@ -6,9 +6,10 @@ import {
   adminFetchProducts, adminCreateProduct, adminUpdateProduct, adminDeleteProduct,
   getAdminSettings, updateAdminSettings, lookupMTGCard, CardLookupResult,
   adminFetchStorage, adminCreateStorage, adminUpdateStorage, adminDeleteStorage,
-  adminUpdateProductStorage
+  adminUpdateProductStorage,
+  adminFetchCategories, adminCreateCategory, adminUpdateCategory, adminDeleteCategory
 } from '@/lib/api';
-import { Product, FOIL_LABELS, TREATMENT_LABELS, KNOWN_TCGS, TCG_SHORT, FoilTreatment, CardTreatment, PriceSource, Settings, StoredIn, StorageLocation } from '@/lib/types';
+import { Product, FOIL_LABELS, TREATMENT_LABELS, KNOWN_TCGS, TCG_SHORT, FoilTreatment, CardTreatment, PriceSource, Settings, StoredIn, StorageLocation, CustomCategory } from '@/lib/types';
 
 interface FormState {
   name: string;
@@ -24,7 +25,7 @@ interface FormState {
   price_cop_override: number | '';
   stock: number;
   description: string;
-  featured: boolean;
+  category_ids: string[];
   image_url: string;
   collector_number: string;
   promo_type: string;
@@ -35,7 +36,7 @@ const EMPTY_FORM: FormState = {
   set_name: '', set_code: '', condition: 'NM',
   foil_treatment: 'non_foil', card_treatment: 'normal',
   price_source: 'manual', price_reference: '', price_cop_override: '',
-  stock: 0, description: '', featured: false, image_url: '',
+  stock: 0, description: '', category_ids: [], image_url: '',
   collector_number: '', promo_type: '',
 };
 
@@ -77,6 +78,15 @@ export default function AdminDashboard() {
 
   // Product Storage State (inside Product Edit Modal)
   const [productStorage, setProductStorage] = useState<StorageLocation[]>([]);
+
+  // Categories Global Modal
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [categories, setCategories] = useState<CustomCategory[]>([]);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryIsActive, setNewCategoryIsActive] = useState(true);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editingCategoryName, setEditingCategoryName] = useState('');
+  const [editingCategoryIsActive, setEditingCategoryIsActive] = useState(true);
 
   // Settings states
   const [showSettings, setShowSettings] = useState(false);
@@ -144,6 +154,14 @@ export default function AdminDashboard() {
     } catch { }
   }, [token]);
 
+  const loadCategoriesData = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await adminFetchCategories(token);
+      setCategories(res);
+    } catch { }
+  }, [token]);
+
   useEffect(() => {
     loadProducts();
   }, [loadProducts]);
@@ -151,7 +169,8 @@ export default function AdminDashboard() {
   useEffect(() => {
     loadSettingsData();
     loadStorageLocations();
-  }, [loadSettingsData, loadStorageLocations]);
+    loadCategoriesData();
+  }, [loadSettingsData, loadStorageLocations, loadCategoriesData]);
 
   // Sync Global locations into active Product form
   useEffect(() => {
@@ -188,7 +207,8 @@ export default function AdminDashboard() {
       price_reference: p.price_reference ?? '',
       price_cop_override: p.price_cop_override ?? '',
       stock: p.stock, description: p.description || '',
-      featured: p.featured, image_url: p.image_url || '',
+      category_ids: p.categories?.map(c => c.id) || [], 
+      image_url: p.image_url || '',
       collector_number: '', // Will be derived if we re-populate
       promo_type: 'none',
     });
@@ -625,6 +645,33 @@ export default function AdminDashboard() {
     } catch (e: any) { alert(e.message); }
   };
 
+  const handleCreateCategory = async () => {
+    if (!newCategoryName.trim()) return;
+    try {
+      await adminCreateCategory(token, newCategoryName, undefined, newCategoryIsActive);
+      setNewCategoryName('');
+      setNewCategoryIsActive(true);
+      loadCategoriesData();
+    } catch (e: any) { alert(e.message); }
+  };
+
+  const handleUpdateCategory = async (id: string, slug: string) => {
+    if (!editingCategoryName.trim()) return;
+    try {
+      await adminUpdateCategory(token, id, editingCategoryName, slug, editingCategoryIsActive);
+      setEditingCategoryId(null);
+      loadCategoriesData();
+    } catch (e: any) { alert(e.message); }
+  };
+
+  const handleDeleteCategory = async (id: string, name: string) => {
+    if (!confirm(`Delete custom category "${name}"?\nThis won't delete products, only remove the grouping.`)) return;
+    try {
+      await adminDeleteCategory(token, id);
+      loadCategoriesData();
+    } catch (e: any) { alert(e.message); }
+  };
+
   const updateStoreQty = (id: string, delta: number) => {
     setProductStorage(prev => prev.map(loc => 
       loc.stored_in_id === id ? { ...loc, quantity: Math.max(0, loc.quantity + delta) } : loc
@@ -660,7 +707,7 @@ export default function AdminDashboard() {
     setSaving(true);
     setFormError('');
     try {
-      const payload: Partial<Product> = {
+      const payload: Partial<Product> & { category_ids?: string[] } = {
         name: form.name, tcg: form.tcg, category: form.category,
         set_name: form.set_name || undefined,
         set_code: form.set_code || undefined,
@@ -673,7 +720,7 @@ export default function AdminDashboard() {
         stock: form.stock,
         image_url: form.image_url || undefined,
         description: form.description || undefined,
-        featured: form.featured,
+        category_ids: form.category_ids,
       };
       
       // Clean up irrelevant price fields depending on source
@@ -726,6 +773,7 @@ export default function AdminDashboard() {
           <h1 className="font-display text-4xl sm:text-5xl">PRODUCT MANAGEMENT</h1>
         </div>
         <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto">
+          <button onClick={() => setShowCategoryModal(true)} className="btn-secondary flex-1 sm:flex-none text-[10px] sm:text-[0.85rem] px-3 sm:px-4 py-2 sm:py-2.5" style={{ borderColor: 'var(--gold)', color: 'var(--gold)' }}>📋 COLLECTIONS</button>
           <button onClick={() => setShowStorageModal(true)} className="btn-secondary flex-1 sm:flex-none text-[10px] sm:text-[0.85rem] px-3 sm:px-4 py-2 sm:py-2.5">📦 STORAGE</button>
           <button id="admin-settings" onClick={openSettings} className="btn-secondary flex-1 sm:flex-none text-[10px] sm:text-[0.85rem] px-3 sm:px-4 py-2 sm:py-2.5">⚙ SETTINGS</button>
           <button id="admin-create-product" onClick={openCreate} className="btn-primary flex-1 sm:flex-none text-[10px] sm:text-[1.1rem] px-3 sm:px-6 py-2 sm:py-2.4">+ NEW PRODUCT</button>
@@ -766,7 +814,7 @@ export default function AdminDashboard() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--ink-border)' }}>
-              {['Name', 'TCG', 'Category', 'Set', 'Condition', 'Stored In', 'Final Price', 'Stock', 'Featured', ''].map(h => (
+              {['Name', 'TCG', 'Category', 'Set', 'Condition', 'Stored In', 'Final Price', 'Stock', 'Collections', ''].map(h => (
                 <th key={h} className="text-left px-4 py-3 text-xs font-mono-stack" style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                   {h}
                 </th>
@@ -832,7 +880,15 @@ export default function AdminDashboard() {
                     {p.stock}
                   </td>
                   <td className="px-4 py-3 text-center">
-                    {p.featured ? <span className="featured-star text-base">★</span> : <span style={{ color: 'var(--ink-border)' }}>—</span>}
+                    {p.categories && p.categories.length > 0 ? (
+                      <div className="flex flex-wrap justify-center gap-1 max-w-[120px]">
+                        {p.categories.map(c => (
+                          <span key={c.id} className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'var(--gold)', color: 'var(--ink-deep)' }} title={c.name}>{c.name}</span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span style={{ color: 'var(--ink-border)' }}>—</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
@@ -989,6 +1045,68 @@ export default function AdminDashboard() {
                 </div>
               ))}
               {storageLocations.length === 0 && <p className="text-center text-text-muted py-8">No storage locations configured.</p>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Category Management Modal */}
+      {showCategoryModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center px-4"
+          style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)' }}>
+          <div className="card no-tilt max-w-2xl w-full p-8" style={{ background: 'var(--ink-surface)', border: '4px solid var(--gold)' }}>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="font-display text-4xl m-0">CUSTOM COLLECTIONS</h2>
+              <button onClick={() => setShowCategoryModal(false)} className="text-text-muted hover:text-text-primary text-xl">✕</button>
+            </div>
+            
+            <div className="flex flex-col gap-3 mb-6 p-4 bg-kraft-light/10 border border-kraft-dark rounded">
+              <div className="flex gap-2">
+                <input type="text" placeholder="New Collection Name (e.g. Staples)" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} className="flex-1 bg-white" />
+                <button onClick={handleCreateCategory} className="btn-primary px-6 border-gold text-gold">ADD</button>
+              </div>
+              <label className="flex items-center gap-2 text-xs font-mono-stack cursor-pointer">
+                <input type="checkbox" checked={newCategoryIsActive} onChange={e => setNewCategoryIsActive(e.target.checked)} />
+                SHOW ON STOREFRONT (ACTIVE)
+              </label>
+            </div>
+
+            <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+              {categories.map(cat => (
+                <div key={cat.id} className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border ${cat.is_active ? 'border-kraft-dark bg-kraft-light/10' : 'border-ink-border bg-ink-surface opacity-60'} gap-2`}>
+                  {editingCategoryId === cat.id ? (
+                    <div className="flex flex-col gap-3 flex-1 w-full">
+                      <div className="flex gap-2">
+                        <input type="text" value={editingCategoryName} onChange={e => setEditingCategoryName(e.target.value)} className="flex-1 py-1 bg-white" />
+                        <button onClick={() => handleUpdateCategory(cat.id, cat.slug)} className="btn-primary px-3 py-1 text-xs">SAVE</button>
+                        <button onClick={() => setEditingCategoryId(null)} className="btn-secondary px-3 py-1 text-xs">CANCEL</button>
+                      </div>
+                      <label className="flex items-center gap-2 text-[10px] font-mono-stack cursor-pointer">
+                        <input type="checkbox" checked={editingCategoryIsActive} onChange={e => setEditingCategoryIsActive(e.target.checked)} />
+                        ACTIVE ON STOREFRONT
+                      </label>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-3">
+                          <span className="font-semibold text-lg">{cat.name}</span>
+                          {!cat.is_active && <span className="text-[10px] px-1.5 py-0.5 bg-ink-border text-text-muted rounded border border-ink-border">HIDDEN</span>}
+                          <span className="text-xs font-mono-stack text-text-muted bg-kraft-light px-2 py-0.5 rounded border border-kraft-dark">
+                            {cat.item_count || 0} items
+                          </span>
+                        </div>
+                        <span className="text-xs font-mono-stack" style={{ color: 'var(--text-muted)' }}>/collection/{cat.slug}</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => { setEditingCategoryId(cat.id); setEditingCategoryName(cat.name); setEditingCategoryIsActive(cat.is_active); }} className="btn-secondary px-3 py-1 text-xs">EDIT</button>
+                        <button onClick={() => handleDeleteCategory(cat.id, cat.name)} className="px-3 py-1 text-xs border border-hp-color text-hp-color hover:bg-hp-color hover:text-white transition-colors" style={{ borderRadius: 4 }}>DELETE</button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+              {categories.length === 0 && <p className="text-center text-text-muted py-8">No collections created.</p>}
             </div>
           </div>
         </div>
@@ -1159,12 +1277,31 @@ export default function AdminDashboard() {
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>DESCRIPTION</label>
                 <textarea id="form-description" className="w-full" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3} />
               </div>
-              <div className="sm:col-span-2 flex items-center gap-3">
-                <input id="form-featured" type="checkbox" checked={form.featured} onChange={e => setForm(f => ({ ...f, featured: e.target.checked }))}
-                  style={{ width: 16, height: 16, accentColor: 'var(--gold)', cursor: 'pointer' }} />
-                <label htmlFor="form-featured" className="text-sm border-none" style={{ cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                  Featured product (shows on homepage)
-                </label>
+              <div className="sm:col-span-2 mt-4 pt-4" style={{ borderTop: '1px dashed var(--ink-border)' }}>
+                <label className="text-xs font-mono-stack mb-2 block" style={{ color: 'var(--text-muted)' }}>CUSTOM COLLECTIONS / CATEGORIES</label>
+                <div className="flex flex-wrap gap-2">
+                  {categories.length === 0 && <span className="text-sm text-text-muted italic">No categories created yet. Create them from the dashboard header.</span>}
+                  {categories.map(c => {
+                    const isSelected = form.category_ids.includes(c.id);
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => setForm(f => ({
+                          ...f,
+                          category_ids: isSelected ? f.category_ids.filter(id => id !== c.id) : [...f.category_ids, c.id]
+                        }))}
+                        className={`badge transition-colors cursor-pointer ${isSelected ? 'border-gold' : 'bg-ink-surface text-text-secondary border-ink-border hover:border-gold/50'}`}
+                        style={{
+                           background: isSelected ? 'var(--gold)' : '',
+                           color: isSelected ? 'var(--ink-deep)' : ''
+                        }}
+                      >
+                        {c.name}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 

@@ -22,9 +22,9 @@ export interface Product {
   price_cop_override?: number; // admin's explicit COP override
   stock: number;
   stored_in?: StorageLocation[];
+  categories?: CustomCategory[];
   image_url?: string;
   description?: string;
-  featured: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -117,4 +117,19 @@ export interface StorageLocation {
 export interface ProductStorageInput {
   stored_in_id: string;
   quantity: number;
+}
+
+export interface CustomCategory {
+  id: string;
+  name: string;
+  slug: string;
+  is_active: boolean;
+  item_count?: number;
+  created_at?: string;
+}
+
+export interface CustomCategoryInput {
+  name: string;
+  slug?: string;
+  is_active?: boolean;
 }

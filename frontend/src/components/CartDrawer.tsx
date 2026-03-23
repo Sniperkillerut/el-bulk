@@ -77,7 +77,15 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
                     <span className="text-sm w-6 text-center" style={{ fontFamily: 'Space Mono, monospace' }}>{item.quantity}</span>
                     <button
                       onClick={() => updateQty(item.product.id, item.quantity + 1)}
-                      style={{ width: 24, height: 24, background: 'var(--ink-border)', border: 'none', borderRadius: 3, color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      disabled={item.quantity >= item.product.stock}
+                      style={{ 
+                        width: 24, height: 24, 
+                        background: 'var(--ink-border)', border: 'none', borderRadius: 3, 
+                        color: 'var(--text-primary)', 
+                        cursor: item.quantity >= item.product.stock ? 'not-allowed' : 'pointer', 
+                        opacity: item.quantity >= item.product.stock ? 0.5 : 1,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center' 
+                      }}
                     >+</button>
                   </div>
                 </div>

@@ -52,12 +52,16 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="flex flex-wrap gap-1">
           <ConditionBadge condition={product.condition} />
           <FoilBadge foil={product.foil_treatment} />
-          {product.card_treatment !== 'normal' && (
+          {product.card_treatment && product.card_treatment !== 'normal' && TREATMENT_LABELS[product.card_treatment] && (
             <span className="badge" style={{ background: 'rgba(100,130,200,0.12)', color: '#8ba4d0', border: '1px solid rgba(100,130,200,0.25)' }}>
               {TREATMENT_LABELS[product.card_treatment]}
             </span>
           )}
-          {product.featured && <span className="featured-star">★</span>}
+          {product.categories?.map(c => (
+            <span key={c.id} className="badge" style={{ background: 'var(--gold)', color: 'var(--ink-deep)', border: '1px solid rgba(212,175,55,0.3)' }}>
+              {c.name}
+            </span>
+          ))}
         </div>
 
         {/* Name */}

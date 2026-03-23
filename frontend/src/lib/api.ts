@@ -12,7 +12,7 @@ export interface ProductFilters {
   foil?: string;
   treatment?: string;
   condition?: string;
-  featured?: boolean;
+  collection?: string;
   storage_id?: string;
   page?: number;
   page_size?: number;
@@ -38,6 +38,12 @@ export async function fetchProducts(filters: ProductFilters = {}): Promise<Produ
 export async function fetchProduct(id: string): Promise<Product> {
   const res = await fetch(`${API_BASE}/api/products/${id}`, { cache: 'no-store' });
   if (!res.ok) throw new Error('Product not found');
+  return res.json();
+}
+
+export async function fetchCategories(): Promise<import('./types').CustomCategory[]> {
+  const res = await fetch(`${API_BASE}/api/categories`, { cache: 'no-store' });
+  if (!res.ok) return [];
   return res.json();
 }
 
@@ -258,6 +264,62 @@ export async function adminDeleteStorage(token: string, id: string): Promise<voi
     if (res.status === 401) throw new Error('401 Unauthorized');
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error || 'Failed to delete storage location');
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Admin: Custom Categories
+// ---------------------------------------------------------------------------
+
+export async function adminFetchCategories(token: string): Promise<import('./types').CustomCategory[]> {
+  const res = await fetch(`${API_BASE}/api/admin/categories`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('401 Unauthorized');
+    throw new Error('Failed to fetch custom categories');
+  }
+  return res.json();
+}
+
+export async function adminCreateCategory(token: string, name: string, slug?: string, is_active: boolean = true): Promise<import('./types').CustomCategory> {
+  const res = await fetch(`${API_BASE}/api/admin/categories`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ name, slug, is_active }),
+  });
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('401 Unauthorized');
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to create custom category');
+  }
+  return res.json();
+}
+
+export async function adminUpdateCategory(token: string, id: string, name: string, slug?: string, is_active?: boolean): Promise<import('./types').CustomCategory> {
+  const res = await fetch(`${API_BASE}/api/admin/categories/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ name, slug, is_active }),
+  });
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('401 Unauthorized');
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to update custom category');
+  }
+  return res.json();
+}
+
+export async function adminDeleteCategory(token: string, id: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/admin/categories/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('401 Unauthorized');
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to delete custom category');
   }
 }
 

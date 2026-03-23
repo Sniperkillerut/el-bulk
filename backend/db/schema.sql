@@ -47,15 +47,34 @@ CREATE TABLE products (
   stock            INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
   image_url        TEXT,
   description      TEXT,
-  featured         BOOLEAN NOT NULL DEFAULT FALSE,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_products_tcg      ON products(tcg);
 CREATE INDEX idx_products_category ON products(category);
-CREATE INDEX idx_products_featured ON products(featured);
 CREATE INDEX idx_products_search   ON products USING gin(to_tsvector('english', name || ' ' || COALESCE(set_name, '')));
+
+-- Custom Categories (Collections) --------------------------------------------
+CREATE TABLE custom_categories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT UNIQUE NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Default "Featured" category
+INSERT INTO custom_categories (name, slug) VALUES ('Featured', 'featured');
+
+CREATE TABLE product_categories (
+  product_id UUID REFERENCES products(id) ON DELETE CASCADE,
+  category_id UUID REFERENCES custom_categories(id) ON DELETE CASCADE,
+  PRIMARY KEY (product_id, category_id)
+);
+
+CREATE INDEX idx_pc_category_id ON product_categories(category_id);
+-- ----------------------------------------------------------------------------
 
 CREATE TABLE admins (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
