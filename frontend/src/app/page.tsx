@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { fetchProducts, fetchCategories } from '@/lib/api';
 import ProductCard from '@/components/ProductCard';
 import { TCG_SHORT, KNOWN_TCGS, CustomCategory } from '@/lib/types';
+import HomeSearchBar from '@/components/HomeSearchBar';
 
 export default async function HomePage() {
   let categories: CustomCategory[] = [];
@@ -56,6 +57,11 @@ export default async function HomePage() {
               Singles, sealed product, and accessories. 
               And we pay <strong style={{ color: 'var(--gold-dark)' }}>cash for your bulk.</strong>
             </p>
+
+            <div className="mb-8 max-w-lg">
+              <HomeSearchBar />
+            </div>
+
             <div className="responsive-stack gap-3">
               <Link href="/mtg/singles" className="btn-primary text-center">SHOP MTG</Link>
               <Link href="/bulk" className="btn-secondary text-center">SELL YOUR BULK →</Link>

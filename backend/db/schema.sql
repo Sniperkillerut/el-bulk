@@ -1,6 +1,7 @@
 -- El Bulk TCG Store Schema
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 
 -- Admin-configurable global settings (key/value)
 CREATE TABLE settings (

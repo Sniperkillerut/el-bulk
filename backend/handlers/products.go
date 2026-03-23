@@ -213,10 +213,13 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 		args = append(args, collection)
 		idx++
 	}
+	orderBy := "products.created_at DESC"
 	if search != "" {
-		conditions = append(conditions, "to_tsvector('english', name || ' ' || COALESCE(set_name, '')) @@ plainto_tsquery('english', $"+strconv.Itoa(idx)+")")
-		args = append(args, search)
-		idx++
+		// Fuzzy search using pg_trgm % operator and ILIKE fallback for partials
+		conditions = append(conditions, "(products.name % $"+strconv.Itoa(idx)+" OR products.name ILIKE $"+strconv.Itoa(idx+1)+" OR COALESCE(products.set_name, '') ILIKE $"+strconv.Itoa(idx+1)+")")
+		args = append(args, search, "%"+search+"%")
+		orderBy = "similarity(products.name, $"+strconv.Itoa(idx)+") DESC, products.created_at DESC"
+		idx += 2
 	}
 
 	where := ""
@@ -230,7 +233,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	listQuery := "SELECT products.* " + fromClause + " " + where + " ORDER BY products.created_at DESC LIMIT $" + strconv.Itoa(idx) + " OFFSET $" + strconv.Itoa(idx+1)
+	listQuery := "SELECT products.* " + fromClause + " " + where + " ORDER BY " + orderBy + " LIMIT $" + strconv.Itoa(idx) + " OFFSET $" + strconv.Itoa(idx+1)
 	args = append(args, pageSize, offset)
 
 	var products []models.Product
