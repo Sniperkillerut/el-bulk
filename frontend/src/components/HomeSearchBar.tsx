@@ -34,7 +34,7 @@ export default function HomeSearchBar() {
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await fetchProducts({ search: query, page_size: 6 });
+        const res = await fetchProducts({ search: query, page_size: 10 });
         setResults(res.products);
         setShowResults(true);
       } catch (err) {
@@ -70,13 +70,13 @@ export default function HomeSearchBar() {
       </div>
 
       {showResults && query.trim() && (
-        <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-surface border-2 border-kraft-dark shadow-2xl rounded-sm overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200" style={{ width: 'min(640px, 95vw)', left: '0' }}>
+        <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-surface border-2 border-kraft-dark shadow-2xl rounded-sm animate-in fade-in slide-in-from-top-2 duration-200" style={{ width: 'min(640px, 95vw)', left: '0' }}>
           <div className="max-h-[500px] overflow-y-auto">
             {results.length > 0 ? (
               <div className="divide-y divide-kraft-light">
                 {results.map((product) => (
-                  <div key={product.id} className="p-4 flex items-center gap-5 hover:bg-kraft-light/30 transition-colors group">
-                    <div className="w-14 flex-shrink-0">
+                  <div key={product.id} className="p-4 flex items-center gap-5 hover:bg-kraft-light/30 transition-colors group" style={{ overflow: 'visible' }}>
+                    <div className="w-14 flex-shrink-0 thumb-hover-wrap">
                       <CardImage imageUrl={product.image_url} name={product.name} tcg={product.tcg} height={70} />
                     </div>
                     <div className="flex-1 min-w-0">

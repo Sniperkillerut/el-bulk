@@ -362,6 +362,15 @@ func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 		if item.Quantity < 0 {
 			item.Quantity = 0
 		}
+
+		// Verify stock limit
+		var stock int
+		err = tx.Get(&stock, `SELECT p.stock FROM products p JOIN order_items oi ON p.id = oi.product_id WHERE oi.id = $1`, item.ID)
+		if err == nil && item.Quantity > stock {
+			jsonError(w, fmt.Sprintf("Quantity %d exceeds available stock %d", item.Quantity, stock), http.StatusBadRequest)
+			return
+		}
+
 		_, err = tx.Exec(`UPDATE order_items SET quantity = $1 WHERE id = $2 AND order_id = $3`,
 			item.Quantity, item.ID, id)
 		if err != nil {

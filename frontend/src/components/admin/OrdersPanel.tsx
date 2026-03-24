@@ -335,9 +335,9 @@ export default function OrdersPanel({ token, onClose }: Props) {
 
                     return (
                       <div key={item.id} className="flex gap-3 p-3 border border-ink-border rounded transition-opacity"
-                        style={{ opacity: isZero ? 0.4 : 1, background: isZero ? 'var(--ink-surface)' : 'var(--ink-card)' }}>
+                        style={{ opacity: isZero ? 0.4 : 1, background: isZero ? 'var(--ink-surface)' : 'var(--ink-card)', overflow: 'visible' }}>
                         {/* Thumbnail */}
-                        <div style={{ width: 44, flexShrink: 0 }}>
+                        <div className="thumb-hover-wrap" style={{ width: 44, flexShrink: 0, overflow: 'visible', zIndex: 10 }}>
                           <CardImage imageUrl={item.image_url} name={item.product_name} tcg="mtg" height={60} />
                         </div>
 
@@ -385,16 +385,26 @@ export default function OrdersPanel({ token, onClose }: Props) {
                               type="number"
                               value={qty}
                               min={0}
-                              onChange={e => setItemEdits(prev => ({ ...prev, [item.id]: Math.max(0, parseInt(e.target.value) || 0) }))}
+                              max={item.stock}
+                              onChange={e => {
+                                const val = parseInt(e.target.value) || 0;
+                                setItemEdits(prev => ({ ...prev, [item.id]: Math.min(item.stock, Math.max(0, val)) }));
+                              }}
+                              onBlur={e => {
+                                const val = parseInt(e.target.value) || 0;
+                                if (val > item.stock) {
+                                  setItemEdits(prev => ({ ...prev, [item.id]: item.stock }));
+                                }
+                              }}
                               disabled={detail.order.status === 'completed'}
                               className="w-10 text-center text-sm font-mono-stack"
                               style={{ height: 20, padding: '0 2px' }}
                             />
                             <button
-                              onClick={() => setItemEdits(prev => ({ ...prev, [item.id]: (prev[item.id] ?? item.quantity) + 1 }))}
-                              disabled={detail.order.status === 'completed'}
+                              onClick={() => setItemEdits(prev => ({ ...prev, [item.id]: Math.min(item.stock, (prev[item.id] ?? item.quantity) + 1) }))}
+                              disabled={detail.order.status === 'completed' || qty >= item.stock}
                               className="w-5 h-5 flex items-center justify-center text-xs"
-                              style={{ background: 'var(--ink-border)', border: 'none', borderRadius: 2, cursor: detail.order.status === 'completed' ? 'not-allowed' : 'pointer' }}>+</button>
+                              style={{ background: 'var(--ink-border)', border: 'none', borderRadius: 2, cursor: (detail.order.status === 'completed' || qty >= item.stock) ? 'not-allowed' : 'pointer' }}>+</button>
                           </div>
                           {isZero && <span className="text-[8px] font-mono-stack" style={{ color: 'var(--hp-color)' }}>REMOVIDO</span>}
                         </div>

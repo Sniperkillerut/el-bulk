@@ -29,7 +29,6 @@ export default async function HomePage() {
         borderBottom: '4px solid var(--kraft-dark)',
         padding: '3rem 1rem 3rem',
         position: 'relative',
-        overflow: 'hidden',
         minHeight: 'min-content'
       }} className="box-lid">
         <div style={{

@@ -43,7 +43,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <div className="card flex flex-col overflow-hidden animate-fade-up">
       {/* Image area */}
-      <a href={href} onClick={handleOpenModal} style={{ textDecoration: 'none' }}>
+      <a href={href} onClick={handleOpenModal} style={{ textDecoration: 'none' }} className="thumb-hover-wrap">
         <CardImage imageUrl={product.image_url} name={product.name} tcg={product.tcg} />
       </a>
 

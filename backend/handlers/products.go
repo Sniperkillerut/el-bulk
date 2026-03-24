@@ -174,51 +174,51 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	var args []interface{}
 	idx := 1
 
-	fromClause := "FROM products"
+	fromClause := "FROM products p"
 	if storageID != "" {
-		fromClause = "FROM products JOIN product_stored_in ps ON products.id = ps.product_id"
+		fromClause = "FROM products p JOIN product_stored_in ps ON p.id = ps.product_id"
 		conditions = append(conditions, "ps.stored_in_id = $"+strconv.Itoa(idx), "ps.quantity > 0")
 		args = append(args, storageID)
 		idx++
 	}
 
 	if tcg != "" {
-		conditions = append(conditions, "tcg = $"+strconv.Itoa(idx))
+		conditions = append(conditions, "p.tcg = $"+strconv.Itoa(idx))
 		args = append(args, strings.ToLower(tcg))
 		idx++
 	}
 	if category != "" {
-		conditions = append(conditions, "category = $"+strconv.Itoa(idx))
+		conditions = append(conditions, "p.category = $"+strconv.Itoa(idx))
 		args = append(args, strings.ToLower(category))
 		idx++
 	}
 	if foil != "" {
-		conditions = append(conditions, "foil_treatment = $"+strconv.Itoa(idx))
+		conditions = append(conditions, "p.foil_treatment = $"+strconv.Itoa(idx))
 		args = append(args, foil)
 		idx++
 	}
 	if treatment != "" {
-		conditions = append(conditions, "card_treatment = $"+strconv.Itoa(idx))
+		conditions = append(conditions, "p.card_treatment = $"+strconv.Itoa(idx))
 		args = append(args, treatment)
 		idx++
 	}
 	if condition != "" {
-		conditions = append(conditions, "condition = $"+strconv.Itoa(idx))
+		conditions = append(conditions, "p.condition = $"+strconv.Itoa(idx))
 		args = append(args, strings.ToUpper(condition))
 		idx++
 	}
 	if collection != "" {
-		fromClause += " JOIN product_categories pc_col ON products.id = pc_col.product_id JOIN custom_categories c_col ON pc_col.category_id = c_col.id"
+		fromClause += " JOIN product_categories pc_col ON p.id = pc_col.product_id JOIN custom_categories c_col ON pc_col.category_id = c_col.id"
 		conditions = append(conditions, "c_col.slug = $"+strconv.Itoa(idx))
 		args = append(args, collection)
 		idx++
 	}
-	orderBy := "products.created_at DESC"
+	orderBy := "p.created_at DESC"
 	if search != "" {
 		// Fuzzy search using pg_trgm % operator and ILIKE fallback for partials
-		conditions = append(conditions, "(products.name % $"+strconv.Itoa(idx)+" OR products.name ILIKE $"+strconv.Itoa(idx+1)+" OR COALESCE(products.set_name, '') ILIKE $"+strconv.Itoa(idx+1)+")")
+		conditions = append(conditions, "(p.name % $"+strconv.Itoa(idx)+" OR p.name ILIKE $"+strconv.Itoa(idx+1)+" OR COALESCE(p.set_name, '') ILIKE $"+strconv.Itoa(idx+1)+")")
 		args = append(args, search, "%"+search+"%")
-		orderBy = "similarity(products.name, $"+strconv.Itoa(idx)+") DESC, products.created_at DESC"
+		orderBy = "similarity(p.name, $"+strconv.Itoa(idx)+") DESC, p.created_at DESC"
 		idx += 2
 	}
 
@@ -229,15 +229,20 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	var total int
 	if err := h.DB.Get(&total, "SELECT COUNT(*) "+fromClause+" "+where, args...); err != nil {
+		log.Printf("Error counting products: %v. Query: SELECT COUNT(*) %s %s", err, fromClause, where)
 		jsonError(w, "Database error", http.StatusInternalServerError)
 		return
 	}
 
-	listQuery := "SELECT products.* " + fromClause + " " + where + " ORDER BY " + orderBy + " LIMIT $" + strconv.Itoa(idx) + " OFFSET $" + strconv.Itoa(idx+1)
+	listQuery := `SELECT p.id, p.name, p.tcg, p.category, p.set_name, p.set_code, p.collector_number, p.condition, 
+	                    p.foil_treatment, p.card_treatment, p.promo_type, p.price_reference, p.price_source, 
+	                    p.price_cop_override, p.stock, p.image_url, p.description, p.created_at, p.updated_at ` + 
+	              fromClause + " " + where + " ORDER BY " + orderBy + " LIMIT $" + strconv.Itoa(idx) + " OFFSET $" + strconv.Itoa(idx+1)
 	args = append(args, pageSize, offset)
 
 	var products []models.Product
 	if err := h.DB.Select(&products, listQuery, args...); err != nil {
+		log.Printf("Error selecting products: %v. Query: %s", err, listQuery)
 		jsonError(w, "Database error", http.StatusInternalServerError)
 		return
 	}

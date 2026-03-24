@@ -11,6 +11,7 @@ import {
 } from '@/lib/api';
 import { Product, FOIL_LABELS, TREATMENT_LABELS, KNOWN_TCGS, TCG_SHORT, FoilTreatment, CardTreatment, PriceSource, Settings, StoredIn, StorageLocation, CustomCategory } from '@/lib/types';
 import OrdersPanel from '@/components/admin/OrdersPanel';
+import CardImage from '@/components/CardImage';
 
 interface FormState {
   name: string;
@@ -817,9 +818,9 @@ export default function AdminDashboard() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--ink-border)' }}>
-              {['Name', 'TCG', 'Category', 'Set', 'Condition', 'Stored In', 'Final Price', 'Stock', 'Collections', ''].map(h => (
-                <th key={h} className="text-left px-4 py-3 text-xs font-mono-stack" style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                  {h}
+              {['', 'Name', 'TCG', 'Category', 'Set', 'Condition', 'Stored In', 'Final Price', 'Stock', 'Collections', 'Actions'].map((h, i) => (
+                <th key={`${h}-${i}`} className="text-left px-4 py-3 text-xs font-mono-stack" style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                  {h === 'Actions' ? '' : h}
                 </th>
               ))}
             </tr>
@@ -828,16 +829,16 @@ export default function AdminDashboard() {
             {loading ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <tr key={i} style={{ borderBottom: '1px solid var(--ink-border)' }}>
-                  {Array.from({ length: 10 }).map((_, j) => (
+                  {Array.from({ length: 11 }).map((_, j) => (
                     <td key={j} className="px-4 py-3">
-                      <div className="skeleton" style={{ height: 12, width: j === 0 ? 140 : 60 }} />
+                      <div className="skeleton" style={{ height: j === 0 ? 32 : 12, width: j === 0 ? 24 : j === 1 ? 140 : 60 }} />
                     </td>
                   ))}
                 </tr>
               ))
             ) : products.length === 0 ? (
               <tr>
-                <td colSpan={10} className="text-center py-12 text-sm" style={{ color: 'var(--text-muted)' }}>
+                <td colSpan={11} className="text-center py-12 text-sm" style={{ color: 'var(--text-muted)' }}>
                   No products found. Create one to get started.
                 </td>
               </tr>
@@ -847,22 +848,27 @@ export default function AdminDashboard() {
                   className="transition-colors"
                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--ink-surface)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                  <td className="px-4 py-3 text-sm font-semibold" style={{ maxWidth: 200 }}>
+                  <td key="thumb" className="px-2 py-2" style={{ width: 40, overflow: 'visible' }}>
+                    <div className="thumb-hover-wrap">
+                      <CardImage imageUrl={p.image_url} name={p.name} tcg={p.tcg} height={40} />
+                    </div>
+                  </td>
+                  <td key="name" className="px-4 py-3 text-sm font-semibold" style={{ maxWidth: 200 }}>
                     <span className="line-clamp-1">{p.name}</span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td key="tcg" className="px-4 py-3">
                     <span className="badge" style={{ background: 'var(--ink-surface)', color: 'var(--kraft-mid)', border: '1px solid var(--ink-border)' }}>
                       {TCG_SHORT[p.tcg] || p.tcg}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-xs font-mono-stack" style={{ color: 'var(--text-secondary)' }}>{p.category}</td>
-                  <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)', maxWidth: 120 }}>
+                  <td key="type" className="px-4 py-3 text-xs font-mono-stack" style={{ color: 'var(--text-secondary)' }}>{p.category}</td>
+                  <td key="set" className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)', maxWidth: 120 }}>
                     <span className="line-clamp-1">{p.set_name || '—'}</span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td key="cond" className="px-4 py-3">
                     {p.condition ? <span className={`badge badge-${p.condition.toLowerCase()}`}>{p.condition}</span> : <span style={{ color: 'var(--text-muted)' }}>—</span>}
                   </td>
-                  <td className="px-4 py-3 text-xs font-mono-stack" style={{ maxWidth: 150 }}>
+                  <td key="storage" className="px-4 py-3 text-xs font-mono-stack" style={{ maxWidth: 150 }}>
                     {p.stored_in && p.stored_in.length > 0 ? (
                       <div className="flex flex-wrap gap-1">
                         {p.stored_in.map(s => (
@@ -875,14 +881,14 @@ export default function AdminDashboard() {
                       <span className="text-text-muted italic">—</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 price text-sm" title={`Computed from: ${p.price_source}`}>
+                  <td key="price" className="px-4 py-3 price text-sm" title={`Computed from: ${p.price_source}`}>
                     ${p.price.toLocaleString('en-US', { maximumFractionDigits: 0 })} COP
                   </td>
-                  <td className="px-4 py-3 text-sm font-mono-stack"
+                  <td key="stock" className="px-4 py-3 text-sm font-mono-stack"
                     style={{ color: p.stock === 0 ? 'var(--hp-color)' : p.stock < 3 ? 'var(--mp-color)' : 'var(--text-primary)' }}>
                     {p.stock}
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td key="collections" className="px-4 py-3 text-center">
                     {p.categories && p.categories.length > 0 ? (
                       <div className="flex flex-wrap justify-center gap-1 max-w-[120px]">
                         {p.categories.map(c => (
@@ -893,7 +899,7 @@ export default function AdminDashboard() {
                       <span style={{ color: 'var(--ink-border)' }}>—</span>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td key="actions" className="px-4 py-3">
                     <div className="flex gap-2">
                       <button
                         id={`edit-product-${p.id}`}
