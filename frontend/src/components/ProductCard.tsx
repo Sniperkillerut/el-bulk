@@ -19,7 +19,9 @@ function ConditionBadge({ condition }: { condition?: string }) {
 
 function FoilBadge({ foil }: { foil: string }) {
   if (foil === 'non_foil') return null;
-  return <span className="badge badge-foil">✦ {FOIL_LABELS[foil as keyof typeof FOIL_LABELS]}</span>;
+  const label = FOIL_LABELS[foil as keyof typeof FOIL_LABELS];
+  if (!label) return null;
+  return <span className="badge badge-foil">✦ {label}</span>;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {

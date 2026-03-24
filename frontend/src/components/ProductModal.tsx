@@ -163,10 +163,10 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
                 {/* Badges */}
                 <div className="flex flex-wrap gap-2 mt-4 block">
                   {product.condition && <span className={`badge badge-${product.condition.toLowerCase()} border`}>{product.condition}</span>}
-                  {product.foil_treatment !== 'non_foil' && (
+                  {product.foil_treatment !== 'non_foil' && FOIL_LABELS[product.foil_treatment] && (
                     <span className="badge badge-foil">✦ {FOIL_LABELS[product.foil_treatment]}</span>
                   )}
-                  {product.card_treatment !== 'normal' && (
+                  {product.card_treatment !== 'normal' && TREATMENT_LABELS[product.card_treatment] && (
                     <span className="badge" style={{ background: 'var(--ink-surface)', color: 'var(--text-muted)', borderColor: 'var(--kraft-dark)' }}>
                       {TREATMENT_LABELS[product.card_treatment]}
                     </span>
