@@ -849,9 +849,7 @@ export default function AdminDashboard() {
                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--ink-surface)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                   <td key="thumb" className="px-2 py-2" style={{ width: 40, overflow: 'visible' }}>
-                    <div className="thumb-hover-wrap">
-                      <CardImage imageUrl={p.image_url} name={p.name} tcg={p.tcg} height={40} />
-                    </div>
+                    <CardImage imageUrl={p.image_url} name={p.name} tcg={p.tcg} height={40} enableHover={true} />
                   </td>
                   <td key="name" className="px-4 py-3 text-sm font-semibold" style={{ maxWidth: 200 }}>
                     <span className="line-clamp-1">{p.name}</span>

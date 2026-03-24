@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import ImageModal from './ImageModal';
 
 interface CardImageProps {
   imageUrl?: string | null;
   name: string;
   tcg?: string;
   height?: number | string;
+  enableHover?: boolean;
 }
 
 const TCG_EMOJI: Record<string, string> = {
@@ -18,12 +21,35 @@ const TCG_EMOJI: Record<string, string> = {
   accessories: '🛡️',
 };
 
-export default function CardImage({ imageUrl, name, tcg, height }: CardImageProps) {
+export default function CardImage({ imageUrl, name, tcg, height, enableHover = false }: CardImageProps) {
   const [imgError, setImgError] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [rect, setRect] = useState<DOMRect | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const showImage = imageUrl && !imgError;
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (showImage) {
+      e.stopPropagation();
+      setShowModal(true);
+      setIsHovered(false);
+    }
+  };
+
+  const handleMouseEnter = () => {
+    if (enableHover && showImage && containerRef.current) {
+      setRect(containerRef.current.getBoundingClientRect());
+      setIsHovered(true);
+    }
+  };
 
   return (
     <div
+      ref={containerRef}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={handleClick}
       style={{
         position: 'relative',
         height: height || 'auto',
@@ -34,6 +60,7 @@ export default function CardImage({ imageUrl, name, tcg, height }: CardImageProp
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        cursor: showImage ? 'pointer' : 'default',
       }}
     >
       {showImage ? (
@@ -47,9 +74,8 @@ export default function CardImage({ imageUrl, name, tcg, height }: CardImageProp
             height: '100%',
             objectFit: 'contain',
             objectPosition: 'center',
-            transition: 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
           }}
-          className="card-image-hover"
+          className="card-image-static"
         />
       ) : (
         /* Placeholder — shown when no image or image fails to load */
@@ -90,11 +116,58 @@ export default function CardImage({ imageUrl, name, tcg, height }: CardImageProp
         </div>
       )}
 
-      <style jsx>{`
-        .card-image-hover:hover {
-          transform: scale(1.06);
-        }
-      `}</style>
+      {isHovered && imageUrl && rect && (
+        <HoverPortal imageUrl={imageUrl} name={name} startRect={rect} />
+      )}
+
+      {showModal && imageUrl && (
+        <ImageModal 
+          imageUrl={imageUrl} 
+          name={name} 
+          onClose={() => setShowModal(false)} 
+        />
+      )}
     </div>
+  );
+}
+
+function HoverPortal({ imageUrl, name, startRect }: { imageUrl: string; name: string; startRect: DOMRect }) {
+  const [isMounted, setIsMounted] = useState(false);
+  const [portalNode, setPortalNode] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setPortalNode(document.body);
+    // Tiny delay to trigger transition after mount
+    const timer = setTimeout(() => setIsMounted(true), 10);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!portalNode) return null;
+
+  // Calculate destination (centered, 50% of screen)
+  const destSize = Math.min(window.innerWidth * 0.5, window.innerHeight * 0.8);
+  const destTop = (window.innerHeight - destSize) / 2;
+  const destLeft = (window.innerWidth - destSize) / 2;
+
+  const style: React.CSSProperties = isMounted ? {
+    top: destTop,
+    left: destLeft,
+    width: destSize,
+    height: destSize,
+    opacity: 1,
+  } : {
+    top: startRect.top,
+    left: startRect.left,
+    width: startRect.width,
+    height: startRect.height,
+    opacity: 0,
+  };
+
+  return createPortal(
+    <div className="hover-expand-portal" style={style}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={imageUrl} alt={name} className="hover-expand-image" />
+    </div>,
+    portalNode
   );
 }

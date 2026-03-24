@@ -337,8 +337,8 @@ export default function OrdersPanel({ token, onClose }: Props) {
                       <div key={item.id} className="flex gap-3 p-3 border border-ink-border rounded transition-opacity"
                         style={{ opacity: isZero ? 0.4 : 1, background: isZero ? 'var(--ink-surface)' : 'var(--ink-card)', overflow: 'visible' }}>
                         {/* Thumbnail */}
-                        <div className="thumb-hover-wrap" style={{ width: 44, flexShrink: 0, overflow: 'visible', zIndex: 10 }}>
-                          <CardImage imageUrl={item.image_url} name={item.product_name} tcg="mtg" height={60} />
+                        <div style={{ width: 44, flexShrink: 0 }}>
+                          <CardImage imageUrl={item.image_url} name={item.product_name} tcg="mtg" height={60} enableHover={true} />
                         </div>
 
                         {/* Product info */}

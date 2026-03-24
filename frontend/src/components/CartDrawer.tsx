@@ -58,7 +58,7 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
               <div key={item.product.id} className="card p-3 flex gap-3">
                 {/* Image */}
                 <div style={{ width: 48, flexShrink: 0 }}>
-                  <CardImage imageUrl={item.product.image_url} name={item.product.name} tcg={item.product.tcg} height={64} />
+                  <CardImage imageUrl={item.product.image_url} name={item.product.name} tcg={item.product.tcg} height={64} enableHover={true} />
                 </div>
 
                 {/* Info */}
