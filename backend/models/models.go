@@ -55,13 +55,15 @@ type Product struct {
 	// Price is the computed COP value injected by the handler (not a DB column)
 	Price            float64  `db:"-"                  json:"price"`
 
-	Stock       int       `db:"stock"        json:"stock"`
-	StoredIn    []StorageLocation `db:"-" json:"stored_in,omitempty"`
-	Categories  []CustomCategory  `db:"-" json:"categories,omitempty"`
-	ImageURL    *string           `db:"image_url"    json:"image_url,omitempty"`
-	Description *string           `db:"description"  json:"description,omitempty"`
-	CreatedAt   time.Time         `db:"created_at"   json:"created_at"`
-	UpdatedAt   time.Time         `db:"updated_at"   json:"updated_at"`
+	Stock           int               `db:"stock"              json:"stock"`
+	StoredIn        []StorageLocation `db:"-"                  json:"stored_in,omitempty"`
+	Categories      []CustomCategory  `db:"-"                  json:"categories,omitempty"`
+	ImageURL        *string           `db:"image_url"          json:"image_url,omitempty"`
+	Description     *string           `db:"description"        json:"description,omitempty"`
+	CollectorNumber *string           `db:"collector_number"   json:"collector_number,omitempty"`
+	PromoType       *string           `db:"promo_type"         json:"promo_type,omitempty"`
+	CreatedAt       time.Time         `db:"created_at"         json:"created_at"`
+	UpdatedAt       time.Time         `db:"updated_at"         json:"updated_at"`
 }
 
 // ComputePrice calculates the COP price for this product given the exchange rates.
@@ -96,10 +98,12 @@ type ProductInput struct {
 	PriceSource      string   `json:"price_source,omitempty"`
 	PriceCOPOverride *float64 `json:"price_cop_override,omitempty"`
 
-	Stock       int       `json:"stock"`
-	CategoryIDs []string  `json:"category_ids,omitempty"`
-	ImageURL    *string   `json:"image_url,omitempty"`
-	Description *string   `json:"description,omitempty"`
+	Stock           int      `json:"stock"`
+	CategoryIDs     []string `json:"category_ids,omitempty"`
+	ImageURL        *string  `json:"image_url,omitempty"`
+	Description     *string  `json:"description,omitempty"`
+	CollectorNumber *string  `json:"collector_number,omitempty"`
+	PromoType       *string  `json:"promo_type,omitempty"`
 }
 
 // Settings holds admin-configurable global settings and contact info.
