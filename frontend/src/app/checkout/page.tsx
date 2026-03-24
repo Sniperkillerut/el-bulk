@@ -154,7 +154,7 @@ export default function CheckoutPage() {
                 return (
                   <div key={p.id} className="flex gap-3 pb-3" style={{ borderBottom: '1px solid var(--ink-border)' }}>
                     <div style={{ width: 52, flexShrink: 0 }}>
-                      <CardImage imageUrl={p.image_url} name={p.name} tcg={p.tcg} height={70} enableHover={true} />
+                      <CardImage imageUrl={p.image_url} name={p.name} tcg={p.tcg} height={70} enableHover={true} enableModal={true} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold truncate">{p.name}</p>

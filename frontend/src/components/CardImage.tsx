@@ -10,6 +10,7 @@ interface CardImageProps {
   tcg?: string;
   height?: number | string;
   enableHover?: boolean;
+  enableModal?: boolean;
 }
 
 const TCG_EMOJI: Record<string, string> = {
@@ -21,7 +22,7 @@ const TCG_EMOJI: Record<string, string> = {
   accessories: '🛡️',
 };
 
-export default function CardImage({ imageUrl, name, tcg, height, enableHover = false }: CardImageProps) {
+export default function CardImage({ imageUrl, name, tcg, height, enableHover = false, enableModal = false }: CardImageProps) {
   const [imgError, setImgError] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -30,7 +31,8 @@ export default function CardImage({ imageUrl, name, tcg, height, enableHover = f
   const showImage = imageUrl && !imgError;
 
   const handleClick = (e: React.MouseEvent) => {
-    if (showImage) {
+    if (showModal) return; // Prevent re-opening if already open (bubbles from portal)
+    if (showImage && enableModal) {
       e.stopPropagation();
       setShowModal(true);
       setIsHovered(false);
@@ -49,7 +51,6 @@ export default function CardImage({ imageUrl, name, tcg, height, enableHover = f
       ref={containerRef}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={handleClick}
       style={{
         position: 'relative',
         height: height || 'auto',
@@ -60,7 +61,7 @@ export default function CardImage({ imageUrl, name, tcg, height, enableHover = f
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        cursor: showImage ? 'pointer' : 'default',
+        cursor: showImage && enableModal ? 'pointer' : 'default',
       }}
     >
       {showImage ? (
@@ -68,6 +69,7 @@ export default function CardImage({ imageUrl, name, tcg, height, enableHover = f
         <img
           src={imageUrl}
           alt={name}
+          onClick={handleClick}
           onError={() => setImgError(true)}
           style={{
             width: '100%',
@@ -120,12 +122,13 @@ export default function CardImage({ imageUrl, name, tcg, height, enableHover = f
         <HoverPortal imageUrl={imageUrl} name={name} startRect={rect} />
       )}
 
-      {showModal && imageUrl && (
+      {showModal && imageUrl && typeof document !== 'undefined' && createPortal(
         <ImageModal 
           imageUrl={imageUrl} 
           name={name} 
           onClose={() => setShowModal(false)} 
-        />
+        />,
+        document.body
       )}
     </div>
   );
