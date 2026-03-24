@@ -117,11 +117,11 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
             </div>
             <div style={{ background: 'var(--ink-card)', border: '1px dashed var(--ink-border)', borderRadius: 6, padding: '0.75rem 1rem', marginBottom: '0.75rem' }}>
               <p className="text-xs text-center" style={{ color: 'var(--text-muted)' }}>
-                🏪 Visit us in store or contact us to complete your order.
+                📦 Revisa tu orden y completa los datos de envío.
               </p>
             </div>
-            <Link href="/contact" onClick={onClose} className="btn-primary text-center w-full block">
-              CONTACT US TO ORDER
+            <Link href="/checkout" onClick={onClose} className="btn-primary text-center w-full block">
+              PROCEDER AL CHECKOUT →
             </Link>
           </div>
         )}

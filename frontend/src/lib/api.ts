@@ -340,3 +340,81 @@ export async function adminUpdateProductStorage(token: string, productId: string
   }
   return res.json();
 }
+
+// ---------------------------------------------------------------------------
+// Orders (Public)
+// ---------------------------------------------------------------------------
+
+export async function createOrder(data: import('./types').CreateOrderRequest): Promise<{ order_number: string; order_id: string; total_cop: number; status: string }> {
+  const res = await fetch(`${API_BASE}/api/orders`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || 'Failed to place order');
+  }
+  return res.json();
+}
+
+// ---------------------------------------------------------------------------
+// Admin: Orders
+// ---------------------------------------------------------------------------
+
+export async function adminFetchOrders(token: string, filters: { status?: string; search?: string; page?: number; page_size?: number } = {}): Promise<import('./types').OrderListResponse> {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, val]) => {
+    if (val !== undefined && val !== '') params.set(key, String(val));
+  });
+  const res = await fetch(`${API_BASE}/api/admin/orders?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('401 Unauthorized');
+    throw new Error('Failed to fetch orders');
+  }
+  return res.json();
+}
+
+export async function adminFetchOrderDetail(token: string, id: string): Promise<import('./types').OrderDetail> {
+  const res = await fetch(`${API_BASE}/api/admin/orders/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('401 Unauthorized');
+    throw new Error('Failed to fetch order detail');
+  }
+  return res.json();
+}
+
+export async function adminUpdateOrder(token: string, id: string, data: { status?: string; items?: { id: string; quantity: number }[] }): Promise<import('./types').OrderDetail> {
+  const res = await fetch(`${API_BASE}/api/admin/orders/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('401 Unauthorized');
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to update order');
+  }
+  return res.json();
+}
+
+export async function adminCompleteOrder(token: string, id: string, decrements: { product_id: string; stored_in_id: string; quantity: number }[]): Promise<import('./types').OrderDetail> {
+  const res = await fetch(`${API_BASE}/api/admin/orders/${id}/complete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ decrements }),
+  });
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('401 Unauthorized');
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to complete order');
+  }
+  return res.json();
+}
+

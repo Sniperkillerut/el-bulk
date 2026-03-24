@@ -117,11 +117,12 @@ CREATE TABLE orders (
   order_number   TEXT UNIQUE NOT NULL,
   customer_id    UUID REFERENCES customers(id) ON DELETE RESTRICT,
   status         TEXT NOT NULL DEFAULT 'pending'
-                 CHECK (status IN ('pending', 'confirmed', 'cancelled')),
+                 CHECK (status IN ('pending', 'confirmed', 'completed', 'cancelled')),
   payment_method TEXT NOT NULL,
   total_cop      NUMERIC(14, 2) NOT NULL,
   notes          TEXT,
-  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  completed_at   TIMESTAMPTZ
 );
 
 CREATE TABLE order_items (

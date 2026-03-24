@@ -133,3 +133,93 @@ export interface CustomCategoryInput {
   slug?: string;
   is_active?: boolean;
 }
+
+// ── Orders ──────────────────────────────────────────────
+
+export interface Customer {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email?: string;
+  phone: string;
+  id_number?: string;
+  address?: string;
+  created_at: string;
+}
+
+export interface Order {
+  id: string;
+  order_number: string;
+  customer_id: string;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  payment_method: string;
+  total_cop: number;
+  notes?: string;
+  created_at: string;
+  completed_at?: string;
+}
+
+export interface OrderItem {
+  id: string;
+  order_id: string;
+  product_id?: string;
+  product_name: string;
+  product_set?: string;
+  foil_treatment?: string;
+  card_treatment?: string;
+  condition?: string;
+  unit_price_cop: number;
+  quantity: number;
+  stored_in_snapshot?: string;
+}
+
+export interface OrderItemDetail extends OrderItem {
+  image_url?: string;
+  stock: number;
+  stored_in: StorageLocation[];
+}
+
+export interface OrderDetail {
+  order: Order;
+  customer: Customer;
+  items: OrderItemDetail[];
+}
+
+export interface OrderWithCustomer extends Order {
+  customer_name: string;
+  item_count: number;
+}
+
+export interface OrderListResponse {
+  orders: OrderWithCustomer[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface CreateOrderRequest {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  id_number: string;
+  address: string;
+  payment_method: string;
+  notes: string;
+  items: { product_id: string; quantity: number }[];
+}
+
+export const PAYMENT_METHODS: Record<string, string> = {
+  cash: 'Efectivo',
+  transfer: 'Transferencia',
+  nequi: 'Nequi',
+  daviplata: 'Daviplata',
+};
+
+export const ORDER_STATUS_LABELS: Record<string, string> = {
+  pending: 'Pendiente',
+  confirmed: 'Confirmado',
+  completed: 'Completado',
+  cancelled: 'Cancelado',
+};
+

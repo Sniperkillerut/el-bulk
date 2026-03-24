@@ -1,0 +1,524 @@
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+import {
+  adminFetchOrders, adminFetchOrderDetail, adminUpdateOrder, adminCompleteOrder
+} from '@/lib/api';
+import {
+  OrderWithCustomer, OrderDetail, OrderItemDetail,
+  ORDER_STATUS_LABELS, PAYMENT_METHODS, FOIL_LABELS, TREATMENT_LABELS, StorageLocation
+} from '@/lib/types';
+import CardImage from '@/components/CardImage';
+
+interface Props {
+  token: string;
+  onClose: () => void;
+}
+
+export default function OrdersPanel({ token, onClose }: Props) {
+  // List state
+  const [orders, setOrders] = useState<OrderWithCustomer[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  // Detail state
+  const [detail, setDetail] = useState<OrderDetail | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [itemEdits, setItemEdits] = useState<Record<string, number>>({});
+
+  // Complete modal state
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [decrements, setDecrements] = useState<Record<string, Record<string, number>>>({});
+  const [completing, setCompleting] = useState(false);
+  const [completeError, setCompleteError] = useState('');
+
+  const loadOrders = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await adminFetchOrders(token, { status: statusFilter, search, page, page_size: 20 });
+      setOrders(res.orders);
+      setTotal(res.total);
+    } catch { }
+    setLoading(false);
+  }, [token, statusFilter, search, page]);
+
+  useEffect(() => { loadOrders(); }, [loadOrders]);
+
+  const selectOrder = async (id: string) => {
+    setLoadingDetail(true);
+    setItemEdits({});
+    try {
+      const d = await adminFetchOrderDetail(token, id);
+      setDetail(d);
+      // Init item edits
+      const edits: Record<string, number> = {};
+      d.items.forEach(i => { edits[i.id] = i.quantity; });
+      setItemEdits(edits);
+    } catch { }
+    setLoadingDetail(false);
+  };
+
+  const handleSaveChanges = async () => {
+    if (!detail) return;
+    setSaving(true);
+    try {
+      const items = Object.entries(itemEdits).map(([id, quantity]) => ({ id, quantity }));
+      const updated = await adminUpdateOrder(token, detail.order.id, { items });
+      setDetail(updated);
+      loadOrders();
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Failed to save');
+    }
+    setSaving(false);
+  };
+
+  const handleStatusChange = async (status: string) => {
+    if (!detail) return;
+    setSaving(true);
+    try {
+      const updated = await adminUpdateOrder(token, detail.order.id, { status });
+      setDetail(updated);
+      loadOrders();
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Failed to update status');
+    }
+    setSaving(false);
+  };
+
+  const openCompleteModal = () => {
+    if (!detail) return;
+    const initial: Record<string, Record<string, number>> = {};
+    detail.items.forEach(item => {
+      if (item.quantity > 0 && item.product_id) {
+        initial[item.product_id] = {};
+        // Pre-fill: auto-assign from first storage location with enough stock
+        let remaining = item.quantity;
+        item.stored_in.forEach(loc => {
+          if (remaining > 0) {
+            const take = Math.min(remaining, loc.quantity);
+            initial[item.product_id!][loc.stored_in_id] = take;
+            remaining -= take;
+          }
+        });
+      }
+    });
+    setDecrements(initial);
+    setCompleteError('');
+    setShowCompleteModal(true);
+  };
+
+  const handleComplete = async () => {
+    if (!detail) return;
+    setCompleting(true);
+    setCompleteError('');
+
+    // Validate: total decrements per product must match order quantity
+    for (const item of detail.items) {
+      if (item.quantity <= 0 || !item.product_id) continue;
+      const productDecs = decrements[item.product_id] || {};
+      const totalDec = Object.values(productDecs).reduce((s, v) => s + v, 0);
+      if (totalDec !== item.quantity) {
+        setCompleteError(`${item.product_name}: asignaste ${totalDec} de ${item.quantity} necesarios.`);
+        setCompleting(false);
+        return;
+      }
+    }
+
+    // Build decrement array
+    const decArr: { product_id: string; stored_in_id: string; quantity: number }[] = [];
+    Object.entries(decrements).forEach(([pid, locs]) => {
+      Object.entries(locs).forEach(([sid, qty]) => {
+        if (qty > 0) {
+          decArr.push({ product_id: pid, stored_in_id: sid, quantity: qty });
+        }
+      });
+    });
+
+    try {
+      const updated = await adminCompleteOrder(token, detail.order.id, decArr);
+      setDetail(updated);
+      setShowCompleteModal(false);
+      loadOrders();
+    } catch (e: unknown) {
+      setCompleteError(e instanceof Error ? e.message : 'Error al completar');
+    }
+    setCompleting(false);
+  };
+
+  const setDecrement = (productId: string, storedInId: string, qty: number) => {
+    setDecrements(prev => ({
+      ...prev,
+      [productId]: { ...prev[productId], [storedInId]: Math.max(0, qty) }
+    }));
+  };
+
+  const totalPages = Math.ceil(total / 20);
+  const hasEdits = detail ? detail.items.some(i => itemEdits[i.id] !== i.quantity) : false;
+
+  return (
+    <div className="fixed inset-0 z-[60] flex" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)' }}>
+      <div className="flex flex-col w-full h-full max-w-7xl mx-auto p-4 md:p-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4 flex-shrink-0">
+          <div>
+            <p className="text-[10px] font-mono-stack" style={{ color: 'var(--text-muted)' }}>EL BULK / ADMIN</p>
+            <h2 className="font-display text-4xl" style={{ color: 'var(--ink-surface)' }}>GESTIÓN DE ÓRDENES</h2>
+          </div>
+          <button onClick={onClose} className="text-2xl" style={{ background: 'none', border: 'none', color: 'var(--kraft-mid)', cursor: 'pointer' }}>✕</button>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
+          {/* Left: Orders List */}
+          <div className="w-full lg:w-[420px] flex-shrink-0 flex flex-col card no-tilt overflow-hidden">
+            {/* Filters */}
+            <div className="p-3 flex flex-col gap-2" style={{ borderBottom: '1px solid var(--ink-border)' }}>
+              <input
+                type="search"
+                placeholder="Buscar por # orden, nombre, teléfono..."
+                value={search}
+                onChange={e => { setSearch(e.target.value); setPage(1); }}
+                style={{ fontSize: '0.85rem' }}
+              />
+              <div className="flex gap-1 flex-wrap">
+                {['', 'pending', 'confirmed', 'completed', 'cancelled'].map(s => (
+                  <button
+                    key={s}
+                    onClick={() => { setStatusFilter(s); setPage(1); }}
+                    className="badge cursor-pointer transition-colors"
+                    style={{
+                      padding: '3px 8px',
+                      background: statusFilter === s ? 'var(--ink-deep)' : 'transparent',
+                      color: statusFilter === s ? '#fff' : 'var(--text-secondary)',
+                      border: `1px solid ${statusFilter === s ? 'var(--ink-deep)' : 'var(--ink-border)'}`,
+                    }}
+                  >
+                    {s ? (ORDER_STATUS_LABELS[s] || s) : 'Todas'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Orders list */}
+            <div className="flex-1 overflow-y-auto">
+              {loading ? (
+                <div className="p-6 text-center" style={{ color: 'var(--text-muted)' }}>Cargando...</div>
+              ) : orders.length === 0 ? (
+                <div className="p-6 text-center" style={{ color: 'var(--text-muted)' }}>No se encontraron órdenes.</div>
+              ) : (
+                orders.map(o => (
+                  <div
+                    key={o.id}
+                    onClick={() => selectOrder(o.id)}
+                    className="p-3 cursor-pointer transition-colors"
+                    style={{
+                      borderBottom: '1px solid var(--ink-border)',
+                      background: detail?.order.id === o.id ? 'var(--kraft-light)' : 'transparent',
+                    }}
+                    onMouseEnter={e => { if (detail?.order.id !== o.id) e.currentTarget.style.background = 'var(--ink-surface)'; }}
+                    onMouseLeave={e => { if (detail?.order.id !== o.id) e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="font-mono-stack text-sm font-bold">{o.order_number}</span>
+                        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{o.customer_name}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className={`badge ${o.status === 'completed' ? 'badge-nm' : o.status === 'cancelled' ? 'badge-hp' : o.status === 'confirmed' ? 'badge-lp' : ''}`}
+                          style={{ fontSize: '0.6rem' }}>
+                          {ORDER_STATUS_LABELS[o.status] || o.status}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center mt-1">
+                      <span className="text-[10px] font-mono-stack" style={{ color: 'var(--text-muted)' }}>
+                        {new Date(o.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: '2-digit' })}
+                        {' · '}{o.item_count} item{o.item_count !== 1 ? 's' : ''}
+                      </span>
+                      <span className="price text-sm">${o.total_cop.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center gap-2 p-2" style={{ borderTop: '1px solid var(--ink-border)' }}>
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="btn-secondary" style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem', opacity: page === 1 ? 0.4 : 1 }}>←</button>
+                <span className="text-xs font-mono-stack flex items-center" style={{ color: 'var(--text-muted)' }}>{page}/{totalPages}</span>
+                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="btn-secondary" style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem', opacity: page === totalPages ? 0.4 : 1 }}>→</button>
+              </div>
+            )}
+          </div>
+
+          {/* Right: Order Detail */}
+          <div className="flex-1 card no-tilt overflow-y-auto p-4 md:p-6">
+            {!detail && !loadingDetail && (
+              <div className="flex items-center justify-center h-full" style={{ color: 'var(--text-muted)' }}>
+                <div className="text-center">
+                  <div className="text-5xl opacity-30 mb-3">📋</div>
+                  <p className="font-display text-xl">Selecciona una orden</p>
+                </div>
+              </div>
+            )}
+
+            {loadingDetail && (
+              <div className="flex items-center justify-center h-full" style={{ color: 'var(--text-muted)' }}>Cargando...</div>
+            )}
+
+            {detail && !loadingDetail && (
+              <>
+                {/* Order header */}
+                <div className="flex flex-col sm:flex-row justify-between gap-3 mb-4">
+                  <div>
+                    <h3 className="font-display text-3xl">{detail.order.order_number}</h3>
+                    <p className="text-xs font-mono-stack" style={{ color: 'var(--text-muted)' }}>
+                      {new Date(detail.order.created_at).toLocaleString('es-CO')}
+                      {detail.order.completed_at && ` · Completada: ${new Date(detail.order.completed_at).toLocaleString('es-CO')}`}
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <select
+                      value={detail.order.status}
+                      onChange={e => handleStatusChange(e.target.value)}
+                      disabled={saving || detail.order.status === 'completed'}
+                      style={{ fontSize: '0.85rem', padding: '0.3rem 0.6rem', minWidth: 120 }}
+                    >
+                      {Object.entries(ORDER_STATUS_LABELS).map(([k, v]) => (
+                        <option key={k} value={k}>{v}</option>
+                      ))}
+                    </select>
+                    {detail.order.status !== 'completed' && detail.order.status !== 'cancelled' && (
+                      <button onClick={openCompleteModal} className="btn-primary" style={{ fontSize: '0.85rem', padding: '0.35rem 1rem' }}>
+                        ✓ COMPLETAR
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Customer + Payment info */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                  <div className="cardbox p-3">
+                    <h4 className="text-xs font-mono-stack mb-2" style={{ color: 'var(--text-muted)' }}>CLIENTE</h4>
+                    <p className="font-semibold">{detail.customer.first_name} {detail.customer.last_name}</p>
+                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>📱 {detail.customer.phone}</p>
+                    {detail.customer.email && <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>✉ {detail.customer.email}</p>}
+                    {detail.customer.address && <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>📍 {detail.customer.address}</p>}
+                    {detail.customer.id_number && <p className="text-xs font-mono-stack mt-1" style={{ color: 'var(--text-muted)' }}>CC: {detail.customer.id_number}</p>}
+                  </div>
+                  <div className="cardbox p-3">
+                    <h4 className="text-xs font-mono-stack mb-2" style={{ color: 'var(--text-muted)' }}>PAGO</h4>
+                    <p className="font-semibold">{PAYMENT_METHODS[detail.order.payment_method] || detail.order.payment_method}</p>
+                    <p className="price text-xl mt-1">${detail.order.total_cop.toLocaleString('en-US', { maximumFractionDigits: 0 })} COP</p>
+                    {detail.order.notes && (
+                      <p className="text-xs mt-2" style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>📝 {detail.order.notes}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="divider" />
+
+                {/* Items */}
+                <h4 className="font-display text-xl mb-3">PRODUCTOS ({detail.items.length})</h4>
+                <div className="space-y-2">
+                  {detail.items.map(item => {
+                    const qty = itemEdits[item.id] ?? item.quantity;
+                    const isZero = qty === 0;
+                    const badges: string[] = [];
+                    if (item.condition) badges.push(item.condition);
+                    if (item.foil_treatment && item.foil_treatment !== 'non_foil') badges.push(FOIL_LABELS[item.foil_treatment] || item.foil_treatment);
+                    if (item.card_treatment && item.card_treatment !== 'normal') badges.push(TREATMENT_LABELS[item.card_treatment] || item.card_treatment);
+
+                    return (
+                      <div key={item.id} className="flex gap-3 p-3 border border-ink-border rounded transition-opacity"
+                        style={{ opacity: isZero ? 0.4 : 1, background: isZero ? 'var(--ink-surface)' : 'var(--ink-card)' }}>
+                        {/* Thumbnail */}
+                        <div style={{ width: 44, flexShrink: 0 }}>
+                          <CardImage imageUrl={item.image_url} name={item.product_name} tcg="mtg" height={60} />
+                        </div>
+
+                        {/* Product info */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold truncate">{item.product_name}</p>
+                          {item.product_set && <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{item.product_set}</p>}
+                          {badges.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {badges.map((b, i) => <span key={i} className="badge" style={{ fontSize: '0.5rem', padding: '0 3px' }}>{b}</span>)}
+                            </div>
+                          )}
+                          {/* Storage info */}
+                          {item.stored_in.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {item.stored_in.map((s: StorageLocation) => (
+                                <span key={s.stored_in_id} className="text-[9px] px-1.5 py-0.5 rounded"
+                                  style={{ background: 'var(--kraft-light)', border: '1px solid var(--kraft-dark)', color: 'var(--text-secondary)' }}>
+                                  📦 {s.name}: {s.quantity}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Stock info */}
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="text-[9px] font-mono-stack" style={{ color: 'var(--text-muted)' }}>STOCK</span>
+                          <span className="text-sm font-mono-stack font-bold"
+                            style={{ color: item.stock === 0 ? 'var(--hp-color)' : item.stock < 3 ? 'var(--mp-color)' : 'var(--text-primary)' }}>
+                            {item.stock}
+                          </span>
+                        </div>
+
+                        {/* Quantity controls */}
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="text-[9px] font-mono-stack" style={{ color: 'var(--text-muted)' }}>QTY</span>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => setItemEdits(prev => ({ ...prev, [item.id]: Math.max(0, (prev[item.id] ?? item.quantity) - 1) }))}
+                              disabled={detail.order.status === 'completed'}
+                              className="w-5 h-5 flex items-center justify-center text-xs"
+                              style={{ background: 'var(--ink-border)', border: 'none', borderRadius: 2, cursor: detail.order.status === 'completed' ? 'not-allowed' : 'pointer' }}>−</button>
+                            <input
+                              type="number"
+                              value={qty}
+                              min={0}
+                              onChange={e => setItemEdits(prev => ({ ...prev, [item.id]: Math.max(0, parseInt(e.target.value) || 0) }))}
+                              disabled={detail.order.status === 'completed'}
+                              className="w-10 text-center text-sm font-mono-stack"
+                              style={{ height: 20, padding: '0 2px' }}
+                            />
+                            <button
+                              onClick={() => setItemEdits(prev => ({ ...prev, [item.id]: (prev[item.id] ?? item.quantity) + 1 }))}
+                              disabled={detail.order.status === 'completed'}
+                              className="w-5 h-5 flex items-center justify-center text-xs"
+                              style={{ background: 'var(--ink-border)', border: 'none', borderRadius: 2, cursor: detail.order.status === 'completed' ? 'not-allowed' : 'pointer' }}>+</button>
+                          </div>
+                          {isZero && <span className="text-[8px] font-mono-stack" style={{ color: 'var(--hp-color)' }}>REMOVIDO</span>}
+                        </div>
+
+                        {/* Price */}
+                        <div className="text-right flex-shrink-0">
+                          <span className="text-[9px] font-mono-stack block" style={{ color: 'var(--text-muted)' }}>
+                            ${item.unit_price_cop.toLocaleString('en-US', { maximumFractionDigits: 0 })} c/u
+                          </span>
+                          <span className="price text-sm">
+                            ${(item.unit_price_cop * qty).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Save changes button */}
+                {hasEdits && detail.order.status !== 'completed' && (
+                  <div className="mt-4 flex gap-3">
+                    <button onClick={handleSaveChanges} disabled={saving} className="btn-primary flex-1" style={{ fontSize: '0.9rem' }}>
+                      {saving ? 'GUARDANDO...' : 'GUARDAR CAMBIOS'}
+                    </button>
+                    <button onClick={() => {
+                      const edits: Record<string, number> = {};
+                      detail.items.forEach(i => { edits[i.id] = i.quantity; });
+                      setItemEdits(edits);
+                    }} className="btn-secondary" style={{ fontSize: '0.9rem' }}>DESCARTAR</button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Complete Order Modal */}
+      {showCompleteModal && detail && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center px-4"
+          style={{ background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(3px)' }}>
+          <div className="card no-tilt max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="font-display text-3xl mb-1">COMPLETAR ORDEN</h3>
+            <p className="text-xs font-mono-stack mb-4" style={{ color: 'var(--text-muted)' }}>
+              Selecciona de qué ubicación descontar el stock para cada producto.
+            </p>
+
+            <div className="space-y-4">
+              {detail.items.filter(i => i.quantity > 0 && i.product_id).map(item => {
+                const productDecs = decrements[item.product_id!] || {};
+                const totalAssigned = Object.values(productDecs).reduce((s, v) => s + v, 0);
+                const isComplete = totalAssigned === item.quantity;
+
+                return (
+                  <div key={item.id} className="cardbox p-4" style={{ borderColor: isComplete ? 'var(--nm-color)' : 'var(--ink-border)' }}>
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <p className="font-semibold text-sm">{item.product_name}</p>
+                        {item.product_set && <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{item.product_set}</p>}
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs font-mono-stack" style={{ color: isComplete ? 'var(--nm-color)' : 'var(--mp-color)' }}>
+                          {totalAssigned} / {item.quantity}
+                        </span>
+                      </div>
+                    </div>
+
+                    {item.stored_in.length === 0 ? (
+                      <p className="text-xs italic" style={{ color: 'var(--hp-color)' }}>⚠ Sin ubicaciones de almacenamiento</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {item.stored_in.map((loc: StorageLocation) => {
+                          const val = productDecs[loc.stored_in_id] || 0;
+                          return (
+                            <div key={loc.stored_in_id} className="flex items-center justify-between gap-3">
+                              <div className="flex-1">
+                                <span className="text-sm font-semibold">{loc.name}</span>
+                                <span className="text-xs font-mono-stack ml-2" style={{ color: 'var(--text-muted)' }}>
+                                  (disponible: {loc.quantity})
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => setDecrement(item.product_id!, loc.stored_in_id, val - 1)}
+                                  className="w-6 h-6 flex items-center justify-center text-xs"
+                                  style={{ background: 'var(--ink-border)', border: 'none', borderRadius: 2, cursor: 'pointer' }}
+                                  disabled={val <= 0}>−</button>
+                                <input
+                                  type="number" min={0} max={loc.quantity}
+                                  value={val || ''}
+                                  onChange={e => setDecrement(item.product_id!, loc.stored_in_id, Math.min(parseInt(e.target.value) || 0, loc.quantity))}
+                                  className="w-12 text-center text-sm font-mono-stack"
+                                  style={{ height: 24, padding: '0 2px' }}
+                                  placeholder="0"
+                                />
+                                <button
+                                  onClick={() => setDecrement(item.product_id!, loc.stored_in_id, Math.min(val + 1, loc.quantity))}
+                                  className="w-6 h-6 flex items-center justify-center text-xs"
+                                  style={{ background: 'var(--ink-border)', border: 'none', borderRadius: 2, cursor: 'pointer' }}
+                                  disabled={val >= loc.quantity}>+</button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {completeError && (
+              <p className="text-sm font-mono-stack mt-3" style={{ color: 'var(--hp-color)' }}>{completeError}</p>
+            )}
+
+            <div className="flex gap-3 mt-6">
+              <button onClick={handleComplete} disabled={completing} className="btn-primary flex-1 py-3">
+                {completing ? 'PROCESANDO...' : '✓ CONFIRMAR COMPLETAR ORDEN'}
+              </button>
+              <button onClick={() => setShowCompleteModal(false)} className="btn-secondary px-6 py-3">CANCELAR</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

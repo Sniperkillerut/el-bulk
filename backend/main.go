@@ -29,6 +29,7 @@ func main() {
 	lookupHandler := handlers.NewLookupHandler()
 	settingsHandler := handlers.NewSettingsHandler(database)
 	refreshHandler := handlers.NewRefreshHandler(database)
+	orderHandler := handlers.NewOrderHandler(database)
 
 	// Start nightly price refresh at midnight
 	handlers.StartMidnightScheduler(database)
@@ -53,6 +54,9 @@ func main() {
 		r.Get("/tcgs", productHandler.ListTCGs)
 		r.Get("/categories", categoriesHandler.List)
 		r.Get("/settings", settingsHandler.Get)
+
+		// Public order creation
+		r.Post("/orders", orderHandler.Create)
 
 		// Admin routes (protected)
 		r.Route("/admin", func(r chi.Router) {
@@ -94,6 +98,12 @@ func main() {
 
 				// Price refresh (manual trigger + scheduled nightly)
 				r.Post("/prices/refresh", refreshHandler.Trigger)
+
+				// Order Management
+				r.Get("/orders", orderHandler.List)
+				r.Get("/orders/{id}", orderHandler.GetDetail)
+				r.Put("/orders/{id}", orderHandler.Update)
+				r.Post("/orders/{id}/complete", orderHandler.Complete)
 			})
 		})
 	})

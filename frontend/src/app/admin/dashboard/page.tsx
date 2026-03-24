@@ -10,6 +10,7 @@ import {
   adminFetchCategories, adminCreateCategory, adminUpdateCategory, adminDeleteCategory
 } from '@/lib/api';
 import { Product, FOIL_LABELS, TREATMENT_LABELS, KNOWN_TCGS, TCG_SHORT, FoilTreatment, CardTreatment, PriceSource, Settings, StoredIn, StorageLocation, CustomCategory } from '@/lib/types';
+import OrdersPanel from '@/components/admin/OrdersPanel';
 
 interface FormState {
   name: string;
@@ -90,6 +91,7 @@ export default function AdminDashboard() {
 
   // Settings states
   const [showSettings, setShowSettings] = useState(false);
+  const [showOrders, setShowOrders] = useState(false);
   const [settings, setSettings] = useState<Settings>({ 
     usd_to_cop_rate: 4200, 
     eur_to_cop_rate: 4600,
@@ -773,6 +775,7 @@ export default function AdminDashboard() {
           <h1 className="font-display text-4xl sm:text-5xl">PRODUCT MANAGEMENT</h1>
         </div>
         <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto">
+          <button onClick={() => setShowOrders(true)} className="btn-secondary flex-1 sm:flex-none text-[10px] sm:text-[0.85rem] px-3 sm:px-4 py-2 sm:py-2.5" style={{ borderColor: 'var(--nm-color)', color: 'var(--nm-color)' }}>📋 ÓRDENES</button>
           <button onClick={() => setShowCategoryModal(true)} className="btn-secondary flex-1 sm:flex-none text-[10px] sm:text-[0.85rem] px-3 sm:px-4 py-2 sm:py-2.5" style={{ borderColor: 'var(--gold)', color: 'var(--gold)' }}>📋 COLLECTIONS</button>
           <button onClick={() => setShowStorageModal(true)} className="btn-secondary flex-1 sm:flex-none text-[10px] sm:text-[0.85rem] px-3 sm:px-4 py-2 sm:py-2.5">📦 STORAGE</button>
           <button id="admin-settings" onClick={openSettings} className="btn-secondary flex-1 sm:flex-none text-[10px] sm:text-[0.85rem] px-3 sm:px-4 py-2 sm:py-2.5">⚙ SETTINGS</button>
@@ -1360,6 +1363,11 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Orders Panel */}
+      {showOrders && (
+        <OrdersPanel token={token} onClose={() => { setShowOrders(false); loadProducts(); }} />
       )}
     </div>
   );
