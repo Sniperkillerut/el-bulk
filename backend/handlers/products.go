@@ -96,7 +96,7 @@ func (h *ProductHandler) saveProductCategories(productID string, categoryIDs []s
 	}
 }
 
-func (h *ProductHandler) populateCategories(products []models.Product) {
+func (h *ProductHandler) populateCategories(products []models.Product, isAdmin bool) {
 	if len(products) == 0 {
 		return
 	}
@@ -105,13 +105,18 @@ func (h *ProductHandler) populateCategories(products []models.Product) {
 		pids = append(pids, p.ID)
 	}
 
-	query, args, err := sqlx.In(`
-		SELECT pc.product_id, c.id, c.name, c.slug
+	sql := `
+		SELECT pc.product_id, c.id, c.name, c.slug, c.show_badge, c.is_active, c.searchable
 		FROM product_categories pc
 		JOIN custom_categories c ON pc.category_id = c.id
 		WHERE pc.product_id IN (?)
-		ORDER BY c.name
-	`, pids)
+	`
+	if !isAdmin {
+		sql += " AND c.show_badge = true "
+	}
+	sql += " ORDER BY c.name "
+
+	query, args, err := sqlx.In(sql, pids)
 	if err != nil {
 		log.Printf("Error creating IN query for populateCategories: %v\n", err)
 		return
@@ -119,10 +124,13 @@ func (h *ProductHandler) populateCategories(products []models.Product) {
 	
 	query = h.DB.Rebind(query)
 	var catRows []struct {
-		ProductID string    `db:"product_id"`
-		ID        string    `db:"id"`
-		Name      string    `db:"name"`
-		Slug      string    `db:"slug"`
+		ProductID  string `db:"product_id"`
+		ID         string `db:"id"`
+		Name       string `db:"name"`
+		Slug       string `db:"slug"`
+		ShowBadge  bool   `db:"show_badge"`
+		IsActive   bool   `db:"is_active"`
+		Searchable bool   `db:"searchable"`
 	}
 	if err := h.DB.Select(&catRows, query, args...); err != nil {
 		log.Printf("Error selecting categories: %v\n", err)
@@ -132,9 +140,12 @@ func (h *ProductHandler) populateCategories(products []models.Product) {
 	catMap := make(map[string][]models.CustomCategory)
 	for _, r := range catRows {
 		catMap[r.ProductID] = append(catMap[r.ProductID], models.CustomCategory{
-			ID:   r.ID,
-			Name: r.Name,
-			Slug: r.Slug,
+			ID:         r.ID,
+			Name:       r.Name,
+			Slug:       r.Slug,
+			ShowBadge:  r.ShowBadge,
+			IsActive:   r.IsActive,
+			Searchable: r.Searchable,
 		})
 	}
 
@@ -253,7 +264,8 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	h.populatePrices(products)
 	h.populateStorage(products)
-	h.populateCategories(products)
+	isAdmin := strings.Contains(r.URL.Path, "/admin/")
+	h.populateCategories(products, isAdmin)
 
 	jsonOK(w, models.ProductListResponse{
 		Products: products,
@@ -276,7 +288,8 @@ func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	products := []models.Product{product}
 	h.populatePrices(products)
 	h.populateStorage(products)
-	h.populateCategories(products)
+	isAdmin := strings.Contains(r.URL.Path, "/admin/")
+	h.populateCategories(products, isAdmin)
 	jsonOK(w, products[0])
 }
 
@@ -338,7 +351,7 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 	products := []models.Product{product}
 	h.populatePrices(products)
 	h.populateStorage(products)
-	h.populateCategories(products)
+	h.populateCategories(products, true)
 	w.WriteHeader(http.StatusCreated)
 	jsonOK(w, products[0])
 }
@@ -382,7 +395,7 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 	products := []models.Product{product}
 	h.populatePrices(products)
 	h.populateStorage(products)
-	h.populateCategories(products)
+	h.populateCategories(products, true)
 	jsonOK(w, products[0])
 }
 

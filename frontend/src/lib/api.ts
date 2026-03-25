@@ -283,11 +283,18 @@ export async function adminFetchCategories(token: string): Promise<import('./typ
   return res.json();
 }
 
-export async function adminCreateCategory(token: string, name: string, slug?: string, is_active: boolean = true): Promise<import('./types').CustomCategory> {
+export async function adminCreateCategory(
+  token: string, 
+  name: string, 
+  slug?: string, 
+  is_active: boolean = true,
+  show_badge: boolean = true,
+  searchable: boolean = true
+): Promise<import('./types').CustomCategory> {
   const res = await fetch(`${API_BASE}/api/admin/categories`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ name, slug, is_active }),
+    body: JSON.stringify({ name, slug, is_active, show_badge, searchable }),
   });
   if (!res.ok) {
     if (res.status === 401) throw new Error('401 Unauthorized');
@@ -297,11 +304,19 @@ export async function adminCreateCategory(token: string, name: string, slug?: st
   return res.json();
 }
 
-export async function adminUpdateCategory(token: string, id: string, name: string, slug?: string, is_active?: boolean): Promise<import('./types').CustomCategory> {
+export async function adminUpdateCategory(
+  token: string, 
+  id: string, 
+  name: string, 
+  slug?: string, 
+  is_active?: boolean,
+  show_badge?: boolean,
+  searchable?: boolean
+): Promise<import('./types').CustomCategory> {
   const res = await fetch(`${API_BASE}/api/admin/categories/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ name, slug, is_active }),
+    body: JSON.stringify({ name, slug, is_active, show_badge, searchable }),
   });
   if (!res.ok) {
     if (res.status === 401) throw new Error('401 Unauthorized');

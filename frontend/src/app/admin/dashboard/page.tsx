@@ -86,9 +86,13 @@ export default function AdminDashboard() {
   const [categories, setCategories] = useState<CustomCategory[]>([]);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryIsActive, setNewCategoryIsActive] = useState(true);
+  const [newCategoryShowBadge, setNewCategoryShowBadge] = useState(true);
+  const [newCategorySearchable, setNewCategorySearchable] = useState(true);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editingCategoryName, setEditingCategoryName] = useState('');
   const [editingCategoryIsActive, setEditingCategoryIsActive] = useState(true);
+  const [editingCategoryShowBadge, setEditingCategoryShowBadge] = useState(true);
+  const [editingCategorySearchable, setEditingCategorySearchable] = useState(true);
 
   // Settings states
   const [showSettings, setShowSettings] = useState(false);
@@ -651,9 +655,11 @@ export default function AdminDashboard() {
   const handleCreateCategory = async () => {
     if (!newCategoryName.trim()) return;
     try {
-      await adminCreateCategory(token, newCategoryName, undefined, newCategoryIsActive);
+      await adminCreateCategory(token, newCategoryName, undefined, newCategoryIsActive, newCategoryShowBadge, newCategorySearchable);
       setNewCategoryName('');
       setNewCategoryIsActive(true);
+      setNewCategoryShowBadge(true);
+      setNewCategorySearchable(true);
       loadCategoriesData();
     } catch (e: any) { alert(e.message); }
   };
@@ -661,7 +667,7 @@ export default function AdminDashboard() {
   const handleUpdateCategory = async (id: string, slug: string) => {
     if (!editingCategoryName.trim()) return;
     try {
-      await adminUpdateCategory(token, id, editingCategoryName, slug, editingCategoryIsActive);
+      await adminUpdateCategory(token, id, editingCategoryName, slug, editingCategoryIsActive, editingCategoryShowBadge, editingCategorySearchable);
       setEditingCategoryId(null);
       loadCategoriesData();
     } catch (e: any) { alert(e.message); }
@@ -1072,15 +1078,25 @@ export default function AdminDashboard() {
                 <input type="text" placeholder="New Collection Name (e.g. Staples)" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} className="flex-1 bg-white" />
                 <button onClick={handleCreateCategory} className="btn-primary px-6 border-gold text-gold">ADD</button>
               </div>
-              <label className="flex items-center gap-2 text-xs font-mono-stack cursor-pointer">
-                <input type="checkbox" checked={newCategoryIsActive} onChange={e => setNewCategoryIsActive(e.target.checked)} />
-                SHOW ON STOREFRONT (ACTIVE)
-              </label>
+              <div className="flex flex-wrap gap-x-4 gap-y-2">
+                <label className="flex items-center gap-2 text-[10px] font-mono-stack cursor-pointer" title="HOME SECTION: Shows the collection as a dedicated row on the landing page.">
+                  <input type="checkbox" checked={newCategoryIsActive} onChange={e => setNewCategoryIsActive(e.target.checked)} />
+                  HOME SECTION
+                </label>
+                <label className="flex items-center gap-2 text-[10px] font-mono-stack cursor-pointer" title="NAVBAR/SEARCH: Includes the collection in navigation links and global search filters.">
+                  <input type="checkbox" checked={newCategorySearchable} onChange={e => setNewCategorySearchable(e.target.checked)} />
+                  NAVBAR/SEARCH
+                </label>
+                <label className="flex items-center gap-2 text-[10px] font-mono-stack cursor-pointer" title="SHOW BADGE: Displays the collection name as a tag on product cards.">
+                  <input type="checkbox" checked={newCategoryShowBadge} onChange={e => setNewCategoryShowBadge(e.target.checked)} />
+                  SHOW BADGE
+                </label>
+              </div>
             </div>
 
             <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
               {categories.map(cat => (
-                <div key={cat.id} className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border ${cat.is_active ? 'border-kraft-dark bg-kraft-light/10' : 'border-ink-border bg-ink-surface opacity-60'} gap-2`}>
+                <div key={cat.id} className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border ${cat.is_active ? 'border-kraft-dark bg-kraft-light/10' : 'border-ink-border bg-ink-surface'} gap-2`}>
                   {editingCategoryId === cat.id ? (
                     <div className="flex flex-col gap-3 flex-1 w-full">
                       <div className="flex gap-2">
@@ -1088,25 +1104,69 @@ export default function AdminDashboard() {
                         <button onClick={() => handleUpdateCategory(cat.id, cat.slug)} className="btn-primary px-3 py-1 text-xs">SAVE</button>
                         <button onClick={() => setEditingCategoryId(null)} className="btn-secondary px-3 py-1 text-xs">CANCEL</button>
                       </div>
-                      <label className="flex items-center gap-2 text-[10px] font-mono-stack cursor-pointer">
-                        <input type="checkbox" checked={editingCategoryIsActive} onChange={e => setEditingCategoryIsActive(e.target.checked)} />
-                        ACTIVE ON STOREFRONT
-                      </label>
+                      <div className="flex flex-wrap gap-x-4 gap-y-2">
+                        <label className="flex items-center gap-2 text-[10px] font-mono-stack cursor-pointer" title="HOME SECTION: Shows the collection as a dedicated row on the landing page.">
+                          <input type="checkbox" checked={editingCategoryIsActive} onChange={e => setEditingCategoryIsActive(e.target.checked)} />
+                          IS ACTIVE (HOME)
+                        </label>
+                        <label className="flex items-center gap-2 text-[10px] font-mono-stack cursor-pointer" title="NAVBAR/SEARCH: Includes the collection in navigation links and global search filters.">
+                          <input type="checkbox" checked={editingCategorySearchable} onChange={e => setEditingCategorySearchable(e.target.checked)} />
+                          SEARCHABLE
+                        </label>
+                        <label className="flex items-center gap-2 text-[10px] font-mono-stack cursor-pointer" title="SHOW BADGE: Displays the collection name as a tag on product cards.">
+                          <input type="checkbox" checked={editingCategoryShowBadge} onChange={e => setEditingCategoryShowBadge(e.target.checked)} />
+                          SHOW BADGE
+                        </label>
+                      </div>
                     </div>
                   ) : (
                     <>
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-3">
                           <span className="font-semibold text-lg">{cat.name}</span>
-                          {!cat.is_active && <span className="text-[10px] px-1.5 py-0.5 bg-ink-border text-text-muted rounded border border-ink-border">HIDDEN</span>}
-                          <span className="text-xs font-mono-stack text-text-muted bg-kraft-light px-2 py-0.5 rounded border border-kraft-dark">
+                          <div className="flex gap-1.5 items-center">
+                            <span 
+                              className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors ${cat.is_active ? 'font-bold' : ''}`}
+                              style={{ 
+                                backgroundColor: cat.is_active ? 'var(--gold)' : 'transparent',
+                                color: cat.is_active ? 'var(--ink-deep)' : 'var(--text-muted)',
+                                borderColor: cat.is_active ? 'var(--gold)' : 'var(--ink-border)',
+                                opacity: cat.is_active ? 1 : 0.4
+                              }}
+                            >HOME</span>
+                            <span 
+                              className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors ${cat.searchable ? 'font-bold' : ''}`}
+                              style={{ 
+                                backgroundColor: cat.searchable ? 'var(--hp-color)' : 'transparent',
+                                color: cat.searchable ? 'var(--ink-surface)' : 'var(--text-muted)',
+                                borderColor: cat.searchable ? 'var(--hp-color)' : 'var(--ink-border)',
+                                opacity: cat.searchable ? 1 : 0.4
+                              }}
+                            >SEARCH</span>
+                            <span 
+                              className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors ${cat.show_badge ? 'font-bold' : ''}`}
+                              style={{ 
+                                backgroundColor: cat.show_badge ? 'var(--kraft-dark)' : 'transparent',
+                                color: cat.show_badge ? 'var(--ink-surface)' : 'var(--text-muted)',
+                                borderColor: cat.show_badge ? 'var(--kraft-dark)' : 'var(--ink-border)',
+                                opacity: cat.show_badge ? 1 : 0.4
+                              }}
+                            >BADGE</span>
+                          </div>
+                          <span className="text-xs font-mono-stack text-text-muted border border-ink-border px-2 py-0.5 rounded">
                             {cat.item_count || 0} items
                           </span>
                         </div>
                         <span className="text-xs font-mono-stack" style={{ color: 'var(--text-muted)' }}>/collection/{cat.slug}</span>
                       </div>
                       <div className="flex gap-2">
-                        <button onClick={() => { setEditingCategoryId(cat.id); setEditingCategoryName(cat.name); setEditingCategoryIsActive(cat.is_active); }} className="btn-secondary px-3 py-1 text-xs">EDIT</button>
+                        <button onClick={() => { 
+                          setEditingCategoryId(cat.id); 
+                          setEditingCategoryName(cat.name); 
+                          setEditingCategoryIsActive(cat.is_active);
+                          setEditingCategoryShowBadge(cat.show_badge);
+                          setEditingCategorySearchable(cat.searchable);
+                        }} className="btn-secondary px-3 py-1 text-xs">EDIT</button>
                         <button onClick={() => handleDeleteCategory(cat.id, cat.name)} className="px-3 py-1 text-xs border border-hp-color text-hp-color hover:bg-hp-color hover:text-white transition-colors" style={{ borderRadius: 4 }}>DELETE</button>
                       </div>
                     </>
@@ -1114,6 +1174,24 @@ export default function AdminDashboard() {
                 </div>
               ))}
               {categories.length === 0 && <p className="text-center text-text-muted py-8">No collections created.</p>}
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-kraft-dark/30">
+              <p className="font-mono-stack text-[10px] uppercase text-hp-color font-bold mb-3 tracking-widest flex items-center gap-2">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                VISIBILITY GUIDE
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-[9px] font-mono-stack leading-relaxed opacity-70">
+                <div>
+                  <span className="text-gold font-bold">HOME SECTION:</span> Shows the collection as a dedicated row on the landing page.
+                </div>
+                <div>
+                  <span className="text-hp-color font-bold">NAVBAR/SEARCH:</span> Includes the collection in navigation links and global search filters.
+                </div>
+                <div>
+                  <span className="text-kraft-dark font-bold">SHOW BADGE:</span> Displays the collection name as a tag on product cards.
+                </div>
+              </div>
             </div>
           </div>
         </div>

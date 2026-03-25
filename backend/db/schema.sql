@@ -57,8 +57,10 @@ CREATE TABLE custom_categories (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name       TEXT UNIQUE NOT NULL,
   slug       TEXT UNIQUE NOT NULL,
-  is_active  BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  is_active   BOOLEAN NOT NULL DEFAULT true,
+  show_badge  BOOLEAN NOT NULL DEFAULT true,
+  searchable  BOOLEAN NOT NULL DEFAULT true,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- Default categories

@@ -12,7 +12,7 @@ export default async function HomePage() {
     categories = await fetchCategories();
     // Fetch top 4 products for each category
     collections = await Promise.all(
-      categories.map(async (cat) => {
+      categories.filter(cat => cat.is_active).map(async (cat) => {
         const res = await fetchProducts({ page: 1, page_size: 4, collection: cat.slug });
         return { category: cat, products: res.products };
       })
@@ -82,7 +82,7 @@ export default async function HomePage() {
               {TCG_SHORT[tcg]}
             </Link>
           ))}
-          {categories.map(cat => (
+          {categories.filter(cat => cat.searchable).map(cat => (
             <Link key={cat.id} href={`/collection/${cat.slug}`}
               className="text-xs sm:text-sm font-display tracking-widest transition-opacity hover:text-gold whitespace-nowrap"
               style={{ color: 'var(--text-muted)' }}>

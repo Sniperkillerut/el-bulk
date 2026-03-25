@@ -2,6 +2,29 @@
 
 @import "tailwindcss";
 
+@theme {
+  --color-kraft-light: var(--kraft-light);
+  --color-kraft-mid: var(--kraft-mid);
+  --color-kraft-base: var(--kraft-base);
+  --color-kraft-dark: var(--kraft-dark);
+  --color-kraft-shadow: var(--kraft-shadow);
+  --color-ink-navy: var(--ink-navy);
+  --color-ink-deep: var(--ink-deep);
+  --color-ink-surface: var(--ink-surface);
+  --color-ink-card: var(--ink-card);
+  --color-ink-border: var(--ink-border);
+  --color-gold: var(--gold);
+  --color-gold-dark: var(--gold-dark);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-hp-color: var(--hp-color);
+  --color-nm-color: var(--nm-color);
+  --color-lp-color: var(--lp-color);
+  --color-mp-color: var(--mp-color);
+  --color-dmg-color: var(--dmg-color);
+}
+
 :root {
   /* Layout constraints */
   --content-max-width: 1280px;

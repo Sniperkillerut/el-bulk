@@ -124,6 +124,8 @@ export interface CustomCategory {
   name: string;
   slug: string;
   is_active: boolean;
+  show_badge: boolean;
+  searchable: boolean;
   item_count?: number;
   created_at?: string;
 }
@@ -132,6 +134,8 @@ export interface CustomCategoryInput {
   name: string;
   slug?: string;
   is_active?: boolean;
+  show_badge?: boolean;
+  searchable?: boolean;
 }
 
 // ── Orders ──────────────────────────────────────────────

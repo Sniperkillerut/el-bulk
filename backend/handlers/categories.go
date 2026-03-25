@@ -28,15 +28,15 @@ func (h *CategoriesHandler) List(w http.ResponseWriter, r *http.Request) {
 	isAdmin := strings.Contains(r.URL.Path, "/admin/")
 	
 	query := `
-		SELECT c.id, c.name, c.slug, c.is_active, c.created_at, COUNT(pc.product_id) as item_count
+		SELECT c.id, c.name, c.slug, c.is_active, c.show_badge, c.searchable, c.created_at, COUNT(pc.product_id) as item_count
 		FROM custom_categories c
 		LEFT JOIN product_categories pc ON c.id = pc.category_id
 	`
 	if !isAdmin {
-		query += " WHERE c.is_active = true "
+		query += " WHERE c.is_active = true OR c.searchable = true OR c.show_badge = true "
 	}
 	query += `
-		GROUP BY c.id, c.name, c.slug, c.is_active, c.created_at
+		GROUP BY c.id, c.name, c.slug, c.is_active, c.show_badge, c.searchable, c.created_at
 		ORDER BY c.name
 	`
 	
@@ -79,11 +79,19 @@ func (h *CategoriesHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if input.IsActive != nil {
 		isActive = *input.IsActive
 	}
+	showBadge := true
+	if input.ShowBadge != nil {
+		showBadge = *input.ShowBadge
+	}
+	searchable := true
+	if input.Searchable != nil {
+		searchable = *input.Searchable
+	}
 
 	var cat models.CustomCategory
 	err := h.DB.QueryRowx(
-		"INSERT INTO custom_categories (name, slug, is_active) VALUES ($1, $2, $3) RETURNING *",
-		input.Name, slug, isActive,
+		"INSERT INTO custom_categories (name, slug, is_active, show_badge, searchable) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+		input.Name, slug, isActive, showBadge, searchable,
 	).StructScan(&cat)
 
 	if err != nil {
@@ -119,13 +127,25 @@ func (h *CategoriesHandler) Update(w http.ResponseWriter, r *http.Request) {
 	query := `UPDATE custom_categories SET name = $1, slug = $2`
 	args := []interface{}{input.Name, slug}
 	
+	idx := 3
 	if input.IsActive != nil {
-		query += `, is_active = $3 WHERE id = $4`
-		args = append(args, *input.IsActive, id)
-	} else {
-		query += ` WHERE id = $3`
-		args = append(args, id)
+		query += `, is_active = $` + strings.Repeat(" ", 0) + string(rune('0'+idx))
+		args = append(args, *input.IsActive)
+		idx++
 	}
+	if input.ShowBadge != nil {
+		query += `, show_badge = $` + strings.Repeat(" ", 0) + string(rune('0'+idx))
+		args = append(args, *input.ShowBadge)
+		idx++
+	}
+	if input.Searchable != nil {
+		query += `, searchable = $` + strings.Repeat(" ", 0) + string(rune('0'+idx))
+		args = append(args, *input.Searchable)
+		idx++
+	}
+
+	query += ` WHERE id = $` + string(rune('0'+idx))
+	args = append(args, id)
 	
 	query += ` RETURNING *`
 	
