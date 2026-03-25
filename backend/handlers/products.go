@@ -333,14 +333,16 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		                      foil_treatment, card_treatment,
 		                      price_reference, price_source, price_cop_override,
 		                      stock, image_url, description, collector_number, promo_type,
-		                      language, color_identity, rarity, cmc, is_legendary, is_historic, is_land, is_basic_land, art_variation)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25)
+		                      language, color_identity, rarity, cmc, is_legendary, is_historic, is_land, is_basic_land, art_variation,
+		                      oracle_text, flavor_text, artist, type_line, border_color, frame, full_art, textless)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33)
 		RETURNING *
 	`, input.Name, input.TCG, input.Category, input.SetName, input.SetCode, input.Condition,
 		input.FoilTreatment, input.CardTreatment,
 		input.PriceReference, input.PriceSource, input.PriceCOPOverride,
 		input.Stock, input.ImageURL, input.Description, input.CollectorNumber, input.PromoType,
 		input.Language, input.ColorIdentity, input.Rarity, input.CMC, input.IsLegendary, input.IsHistoric, input.IsLand, input.IsBasicLand, input.ArtVariation,
+		input.OracleText, input.FlavorText, input.Artist, input.TypeLine, input.BorderColor, input.Frame, input.FullArt, input.Textless,
 	).StructScan(&product)
 
 	if err != nil {
@@ -379,14 +381,17 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 		    foil_treatment=$7, card_treatment=$8,
 		    price_reference=$9, price_source=$10, price_cop_override=$11,
 		    stock=$12, image_url=$13, description=$14, collector_number=$15, promo_type=$16,
-		    language=$17, color_identity=$18, rarity=$19, cmc=$20, is_legendary=$21, is_historic=$22, is_land=$23, is_basic_land=$24, art_variation=$25
-		WHERE id=$26
+		    language=$17, color_identity=$18, rarity=$19, cmc=$20, is_legendary=$21, is_historic=$22, is_land=$23, is_basic_land=$24, art_variation=$25,
+		    oracle_text=$26, flavor_text=$27, artist=$28, type_line=$29, border_color=$30, frame=$31, full_art=$32, textless=$33
+		WHERE id=$34
 		RETURNING *
 	`, input.Name, input.TCG, input.Category, input.SetName, input.SetCode, input.Condition,
 		input.FoilTreatment, input.CardTreatment,
 		input.PriceReference, input.PriceSource, input.PriceCOPOverride,
 		input.Stock, input.ImageURL, input.Description, input.CollectorNumber, input.PromoType,
-		input.Language, input.ColorIdentity, input.Rarity, input.CMC, input.IsLegendary, input.IsHistoric, input.IsLand, input.IsBasicLand, input.ArtVariation, id,
+		input.Language, input.ColorIdentity, input.Rarity, input.CMC, input.IsLegendary, input.IsHistoric, input.IsLand, input.IsBasicLand, input.ArtVariation,
+		input.OracleText, input.FlavorText, input.Artist, input.TypeLine, input.BorderColor, input.Frame, input.FullArt, input.Textless,
+		id,
 	).StructScan(&product)
 
 	if err != nil {

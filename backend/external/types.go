@@ -20,5 +20,13 @@ type CardLookupResult struct {
 	IsLand       bool     `json:"is_land"`
 	IsBasicLand  bool     `json:"is_basic_land"`
 	ArtVariation *string  `json:"art_variation,omitempty"`
+	OracleText   *string  `json:"oracle_text,omitempty"`
+	FlavorText   *string  `json:"flavor_text,omitempty"`
+	Artist       *string  `json:"artist,omitempty"`
+	TypeLine     *string  `json:"type_line,omitempty"`
+	BorderColor  *string  `json:"border_color,omitempty"`
+	Frame        *string  `json:"frame,omitempty"`
+	FullArt      bool     `json:"full_art"`
+	Textless     bool     `json:"textless"`
 }
 

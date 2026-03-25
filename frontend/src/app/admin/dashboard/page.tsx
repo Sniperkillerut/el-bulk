@@ -40,18 +40,27 @@ interface FormState {
   is_land: boolean;
   is_basic_land: boolean;
   art_variation: string;
+  oracle_text: string;
+  flavor_text: string;
+  artist: string;
+  type_line: string;
+  border_color: string;
+  frame: string;
+  full_art: boolean;
+  textless: boolean;
 }
 
 const EMPTY_FORM: FormState = {
   name: '', tcg: 'mtg', category: 'singles',
   set_name: '', set_code: '', condition: 'NM',
   foil_treatment: 'non_foil', card_treatment: 'normal',
-  price_source: 'manual', price_reference: '', price_cop_override: '',
+  price_source: 'tcgplayer', price_reference: '', price_cop_override: '',
   stock: 0, description: '', category_ids: [], image_url: '',
   collector_number: '', promo_type: '',
-  language: 'en', color_identity: '', rarity: '', cmc: '',
+  language: 'en', color_identity: '', rarity: 'common', cmc: '',
   is_legendary: false, is_historic: false, is_land: false, is_basic_land: false,
-  art_variation: '',
+  art_variation: '', oracle_text: '', flavor_text: '', artist: '', type_line: '',
+  border_color: '', frame: '', full_art: false, textless: false,
 };
 
 export default function AdminDashboard() {
@@ -239,6 +248,14 @@ export default function AdminDashboard() {
       is_land: p.is_land,
       is_basic_land: p.is_basic_land,
       art_variation: p.art_variation || '',
+      oracle_text: p.oracle_text || '',
+      flavor_text: p.flavor_text || '',
+      artist: p.artist || '',
+      type_line: p.type_line || '',
+      border_color: p.border_color || '',
+      frame: p.frame || '',
+      full_art: p.full_art,
+      textless: p.textless,
     });
     const existingStorage = p.stored_in || [];
     setProductStorage(storageLocations.map(s => {
@@ -265,20 +282,30 @@ export default function AdminDashboard() {
   };
 
   const extractMTGMetadata = (card: CardLookupResult | any) => {
+    const isLegendary = card.is_legendary ?? (card.type_line?.toLowerCase().includes('legendary') || false);
+    const typeLine = card.type_line || '';
     return {
       language: card.language || card.lang || 'en',
-      color_identity: card.color_identity || (Array.isArray(card.color_identity) ? card.color_identity.join(',') : ''),
-      rarity: card.rarity || '',
+      color_identity: Array.isArray(card.color_identity) ? card.color_identity.join(',') : (card.color_identity || ''),
+      rarity: card.rarity || 'common',
       cmc: card.cmc ?? 0,
-      is_legendary: card.is_legendary ?? (card.type_line?.toLowerCase().includes('legendary') || false),
+      is_legendary: isLegendary,
       is_historic: card.is_historic ?? (
-        card.type_line?.toLowerCase().includes('legendary') || 
-        card.type_line?.toLowerCase().includes('artifact') || 
-        card.type_line?.toLowerCase().includes('saga') || false
+        isLegendary || 
+        typeLine.toLowerCase().includes('artifact') || 
+        typeLine.toLowerCase().includes('saga') || false
       ),
-      is_land: card.is_land ?? (card.type_line?.toLowerCase().includes('land') || false),
-      is_basic_land: card.is_basic_land ?? (card.type_line?.toLowerCase().includes('basic land') || false),
+      is_land: card.is_land ?? (typeLine.toLowerCase().includes('land') || false),
+      is_basic_land: card.is_basic_land ?? (typeLine.toLowerCase().includes('basic land') || false),
       art_variation: card.art_variation || (card.variation ? 'Variation' : ''),
+      oracle_text: card.oracle_text || '',
+      flavor_text: card.flavor_text || '',
+      artist: card.artist || '',
+      type_line: typeLine,
+      border_color: card.border_color || '',
+      frame: card.frame || '',
+      full_art: !!card.full_art,
+      textless: !!card.textless,
     };
   };
 
@@ -796,6 +823,14 @@ export default function AdminDashboard() {
         is_land: form.is_land,
         is_basic_land: form.is_basic_land,
         art_variation: form.art_variation || undefined,
+        oracle_text: form.oracle_text || undefined,
+        flavor_text: form.flavor_text || undefined,
+        artist: form.artist || undefined,
+        type_line: form.type_line || undefined,
+        border_color: form.border_color || undefined,
+        frame: form.frame || undefined,
+        full_art: form.full_art,
+        textless: form.textless,
       };
       
       // Clean up irrelevant price fields depending on source
@@ -1267,7 +1302,7 @@ export default function AdminDashboard() {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-start justify-center pt-4 md:pt-8 px-2 md:px-4"
           style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(3px)', overflowY: 'auto' }}>
-          <div className="card no-tilt p-4 md:p-6 w-full max-w-2xl mb-8" style={{ position: 'relative' }}>
+          <div className="card no-tilt p-4 md:p-6 w-full max-w-5xl mb-8" style={{ position: 'relative' }}>
             <div className="flex items-center justify-between mb-6">
               <h2 className="font-display text-3xl">{editProduct ? 'EDIT PRODUCT' : 'NEW PRODUCT'}</h2>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
@@ -1285,7 +1320,7 @@ export default function AdminDashboard() {
                     {scryfallPrints.length > 0 ? (
                       <select id="form-set-code-top" value={form.set_code} onChange={e => handleSetChange(e.target.value)} className="font-bold">
                         {Array.from(new Map(scryfallPrints.map(c => [c.set, c.set_name])).entries()).map(([code, name]) => (
-                          <option key={code} value={code}>[{code.toUpperCase()}]</option>
+                          <option key={code} value={code}>[{code.toUpperCase()}] {name}</option>
                         ))}
                       </select>
                     ) : (
@@ -1430,7 +1465,17 @@ export default function AdminDashboard() {
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
                     <div>
                       <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>LANGUAGE</label>
-                      <input type="text" value={form.language} onChange={e => setForm(f => ({ ...f, language: e.target.value }))} placeholder="en" />
+                      <select value={form.language} onChange={e => setForm(f => ({ ...f, language: e.target.value }))}>
+                        <option value="en">English (EN)</option>
+                        <option value="es">Spanish (ES)</option>
+                        <option value="fr">French (FR)</option>
+                        <option value="de">German (DE)</option>
+                        <option value="it">Italian (IT)</option>
+                        <option value="pt">Portuguese (PT)</option>
+                        <option value="ja">Japanese (JA)</option>
+                        <option value="ko">Korean (KO)</option>
+                        <option value="ru">Russian (RU)</option>
+                      </select>
                     </div>
                     <div>
                       <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>COLOR IDENTITY</label>
@@ -1438,14 +1483,50 @@ export default function AdminDashboard() {
                     </div>
                     <div>
                       <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>RARITY</label>
-                      <input type="text" value={form.rarity} onChange={e => setForm(f => ({ ...f, rarity: e.target.value }))} placeholder="rare" />
+                      <select value={form.rarity} onChange={e => setForm(f => ({ ...f, rarity: e.target.value }))}>
+                        <option value="common">Common</option>
+                        <option value="uncommon">Uncommon</option>
+                        <option value="rare">Rare</option>
+                        <option value="mythic">Mythic</option>
+                        <option value="special">Special</option>
+                        <option value="bonus">Bonus</option>
+                      </select>
                     </div>
                     <div>
                       <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>CMC</label>
-                      <input type="number" value={form.cmc} onChange={e => setForm(f => ({ ...f, cmc: e.target.value ? parseFloat(e.target.value) : '' }))} />
+                      <input type="number" step="0.5" value={form.cmc} onChange={e => setForm(f => ({ ...f, cmc: e.target.value ? parseFloat(e.target.value) : '' }))} />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>ARTIST</label>
+                      <input type="text" value={form.artist} onChange={e => setForm(f => ({ ...f, artist: e.target.value }))} />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>TYPE LINE</label>
+                      <input type="text" value={form.type_line} onChange={e => setForm(f => ({ ...f, type_line: e.target.value }))} />
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-x-6 gap-y-3 p-3 bg-kraft-light/10 border border-kraft-dark rounded">
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>ORACLE TEXT</label>
+                      <textarea 
+                        className="w-full text-[11px] font-mono-stack p-2 bg-transparent border border-ink-border rounded h-24"
+                        value={form.oracle_text} 
+                        onChange={e => setForm(f => ({ ...f, oracle_text: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>FLAVOR TEXT</label>
+                      <textarea 
+                        className="w-full text-[11px] font-mono-stack p-2 bg-transparent border border-ink-border rounded h-24 italic"
+                        style={{ color: 'var(--text-muted)' }}
+                        value={form.flavor_text} 
+                        onChange={e => setForm(f => ({ ...f, flavor_text: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-x-6 gap-y-3 p-3 bg-kraft-light/10 border border-kraft-dark rounded mb-4">
                     <label className="flex items-center gap-2 text-xs font-mono-stack cursor-pointer">
                       <input type="checkbox" checked={form.is_legendary} onChange={e => setForm(f => ({ ...f, is_legendary: e.target.checked }))} />
                       LEGENDARY
@@ -1462,10 +1543,14 @@ export default function AdminDashboard() {
                       <input type="checkbox" checked={form.is_basic_land} onChange={e => setForm(f => ({ ...f, is_basic_land: e.target.checked }))} />
                       BASIC LAND
                     </label>
-                  </div>
-                  <div className="mt-4">
-                    <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>ART VARIATION (SPECIFIC)</label>
-                    <input type="text" value={form.art_variation} onChange={e => setForm(f => ({ ...f, art_variation: e.target.value }))} placeholder="e.g. Borderless Art" />
+                    <label className="flex items-center gap-2 text-xs font-mono-stack cursor-pointer">
+                      <input type="checkbox" checked={form.full_art} onChange={e => setForm(f => ({ ...f, full_art: e.target.checked }))} />
+                      FULL ART
+                    </label>
+                    <label className="flex items-center gap-2 text-xs font-mono-stack cursor-pointer">
+                      <input type="checkbox" checked={form.textless} onChange={e => setForm(f => ({ ...f, textless: e.target.checked }))} />
+                      TEXTLESS
+                    </label>
                   </div>
                 </div>
               )}

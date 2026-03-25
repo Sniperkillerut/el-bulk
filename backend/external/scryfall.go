@@ -29,6 +29,11 @@ type scryfallCard struct {
 	} `json:"image_uris"`
 	// Two-faced cards store images per face
 	CardFaces []struct {
+		Name      string `json:"name"`
+		TypeLine  string `json:"type_line"`
+		OracleText string `json:"oracle_text"`
+		FlavorText string `json:"flavor_text"`
+		Artist     string `json:"artist"`
 		ImageURIs struct {
 			Normal string `json:"normal"`
 			Large  string `json:"large"`
@@ -48,9 +53,16 @@ type scryfallCard struct {
 	Lang          string   `json:"lang"`
 	ColorIdentity []string `json:"color_identity"`
 	Rarity        string   `json:"rarity"`
-	CMC       float64  `json:"cmc"`
-	TypeLine  string   `json:"type_line"`
-	Variation bool     `json:"variation"`
+	CMC           float64  `json:"cmc"`
+	TypeLine      string   `json:"type_line"`
+	OracleText    string   `json:"oracle_text"`
+	FlavorText    string   `json:"flavor_text"`
+	Artist        string   `json:"artist"`
+	Variation     bool     `json:"variation"`
+	BorderColor   string   `json:"border_color"`
+	Frame         string   `json:"frame"`
+	FullArt       bool     `json:"full_art"`
+	Textless      bool     `json:"textless"`
 }
 
 func (c *scryfallCard) bestImageURL() string {
@@ -200,6 +212,33 @@ func mapScryfallToResult(card *scryfallCard, foilTreatment string) *CardLookupRe
 		artVar = &v
 	}
 
+	oracle := card.OracleText
+	flavor := card.FlavorText
+	artist := card.Artist
+	typeLine := card.TypeLine
+
+	if oracle == "" && len(card.CardFaces) > 0 {
+		var oParts, fParts, aParts, tParts []string
+		for _, f := range card.CardFaces {
+			if f.OracleText != "" {
+				oParts = append(oParts, f.OracleText)
+			}
+			if f.FlavorText != "" {
+				fParts = append(fParts, f.FlavorText)
+			}
+			if f.Artist != "" {
+				aParts = append(aParts, f.Artist)
+			}
+			if f.TypeLine != "" {
+				tParts = append(tParts, f.TypeLine)
+			}
+		}
+		oracle = strings.Join(oParts, "\n\n---\n\n")
+		flavor = strings.Join(fParts, "\n\n---\n\n")
+		artist = strings.Join(aParts, " & ")
+		typeLine = strings.Join(tParts, " // ")
+	}
+
 	return &CardLookupResult{
 		ImageURL:        imageURL,
 		SetName:         card.SetName,
@@ -216,5 +255,13 @@ func mapScryfallToResult(card *scryfallCard, foilTreatment string) *CardLookupRe
 		IsLand:          strings.Contains(lowerType, "land"),
 		IsBasicLand:     strings.Contains(lowerType, "basic land"),
 		ArtVariation:    artVar,
+		OracleText:      &oracle,
+		FlavorText:      &flavor,
+		Artist:          &artist,
+		TypeLine:        &typeLine,
+		BorderColor:     &card.BorderColor,
+		Frame:           &card.Frame,
+		FullArt:         card.FullArt,
+		Textless:        card.Textless,
 	}
 }

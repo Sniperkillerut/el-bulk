@@ -73,6 +73,14 @@ type Product struct {
 	IsLand       bool     `db:"is_land"           json:"is_land"`
 	IsBasicLand  bool     `db:"is_basic_land"     json:"is_basic_land"`
 	ArtVariation *string  `db:"art_variation"     json:"art_variation,omitempty"`
+	OracleText   *string  `db:"oracle_text"       json:"oracle_text,omitempty"`
+	FlavorText   *string  `db:"flavor_text"       json:"flavor_text,omitempty"`
+	Artist       *string  `db:"artist"            json:"artist,omitempty"`
+	TypeLine     *string  `db:"type_line"         json:"type_line,omitempty"`
+	BorderColor  *string  `db:"border_color"      json:"border_color,omitempty"`
+	Frame        *string  `db:"frame"             json:"frame,omitempty"`
+	FullArt      bool     `db:"full_art"          json:"full_art"`
+	Textless     bool     `db:"textless"          json:"textless"`
 
 	CreatedAt       time.Time         `db:"created_at"         json:"created_at"`
 	UpdatedAt       time.Time         `db:"updated_at"         json:"updated_at"`
@@ -127,6 +135,14 @@ type ProductInput struct {
 	IsLand       bool     `json:"is_land"`
 	IsBasicLand  bool     `json:"is_basic_land"`
 	ArtVariation *string  `json:"art_variation,omitempty"`
+	OracleText   *string  `json:"oracle_text,omitempty"`
+	FlavorText   *string  `json:"flavor_text,omitempty"`
+	Artist       *string  `json:"artist,omitempty"`
+	TypeLine     *string  `json:"type_line,omitempty"`
+	BorderColor  *string  `json:"border_color,omitempty"`
+	Frame        *string  `json:"frame,omitempty"`
+	FullArt      bool     `json:"full_art"`
+	Textless     bool     `json:"textless"`
 }
 
 // Settings holds admin-configurable global settings and contact info.

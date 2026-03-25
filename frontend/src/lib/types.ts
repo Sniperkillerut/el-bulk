@@ -38,6 +38,14 @@ export interface Product {
   is_land: boolean;
   is_basic_land: boolean;
   art_variation?: string;
+  oracle_text?: string;
+  flavor_text?: string;
+  artist?: string;
+  type_line?: string;
+  border_color?: string;
+  frame?: string;
+  full_art: boolean;
+  textless: boolean;
 
   created_at: string;
   updated_at: string;
