@@ -5,6 +5,7 @@ import { fetchProducts } from '@/lib/api';
 import { Product, TCG_SHORT, FOIL_LABELS, TREATMENT_LABELS } from '@/lib/types';
 import { useCart } from '@/lib/CartContext';
 import CardImage from './CardImage';
+import { openProductModal } from './ProductModalManager';
 
 export default function HomeSearchBar() {
   const [query, setQuery] = useState('');
@@ -75,7 +76,15 @@ export default function HomeSearchBar() {
             {results.length > 0 ? (
               <div className="divide-y divide-kraft-light">
                 {results.map((product) => (
-                  <div key={product.id} className="p-4 flex items-center gap-5 hover:bg-kraft-light/30 transition-colors group" style={{ overflow: 'visible' }}>
+                  <div 
+                    key={product.id} 
+                    className="p-4 flex items-center gap-5 hover:bg-kraft-light/30 transition-colors group cursor-pointer" 
+                    style={{ overflow: 'visible' }}
+                    onClick={() => {
+                      openProductModal(product);
+                      setShowResults(false);
+                    }}
+                  >
                     <div className="w-14 flex-shrink-0 thumb-hover-wrap">
                       <CardImage imageUrl={product.image_url} name={product.name} tcg={product.tcg} height={70} />
                     </div>
@@ -112,7 +121,10 @@ export default function HomeSearchBar() {
                     <div className="flex flex-col items-end gap-2">
                       <p className="text-lg font-display text-gold-dark tracking-tighter">${product.price.toLocaleString()} COP</p>
                       <button
-                        onClick={() => addItem(product)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addItem(product);
+                        }}
                         disabled={product.stock <= 0}
                         className="btn-primary py-1 px-4 text-xs whitespace-nowrap shadow-sm hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
                         style={{ background: product.stock > 0 ? 'var(--ink-deep)' : 'var(--hp-color)', borderColor: 'transparent' }}

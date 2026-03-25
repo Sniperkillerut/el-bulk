@@ -13,7 +13,6 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [added, setAdded] = useState(false);
-  const [apiDescription, setApiDescription] = useState<string | null>(null);
   const { addItem } = useCart();
 
   useEffect(() => {
@@ -25,31 +24,6 @@ export default function ProductDetailPage() {
         setProduct(p);
         setError(false);
         
-        // Fetch external API descriptions for singles
-        if (p.category === 'singles' && !p.description && p.name) {
-          if (p.tcg === 'mtg') {
-            fetch(`https://api.scryfall.com/cards/named?exact=${encodeURIComponent(p.name)}`)
-              .then(res => res.json())
-              .then(data => {
-                let desc = '';
-                if (data.oracle_text) desc += data.oracle_text + '\n\n';
-                if (data.flavor_text) desc += `_"${data.flavor_text}"_`;
-                if (desc) setApiDescription(desc);
-              }).catch(() => {});
-          } else if (p.tcg === 'pokemon') {
-            fetch(`https://api.pokemontcg.io/v2/cards?q=name:"${encodeURIComponent(p.name)}"`)
-              .then(res => res.json())
-              .then(data => {
-                if (data.data && data.data.length > 0) {
-                  const card = data.data[0];
-                  let desc = '';
-                  if (card.flavorText) desc += `_"${card.flavorText}"_\n\n`;
-                  if (card.rules && card.rules.length > 0) desc += card.rules.join('\n');
-                  if (desc) setApiDescription(desc);
-                }
-              }).catch(() => {});
-          }
-        }
       })
       .catch((err) => {
         console.error("fetchProduct failed:", err);
@@ -89,7 +63,7 @@ export default function ProductDetailPage() {
   const outOfStock = product.stock === 0;
   const conditionClass = product.condition ? `badge-${product.condition.toLowerCase()}` : '';
 
-  const displayDescription = product.description || apiDescription;
+  const displayDescription = product.oracle_text || product.description;
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-12">
@@ -131,6 +105,16 @@ export default function ProductDetailPage() {
               <h1 className="font-display text-4xl md:text-5xl" style={{ color: 'var(--ink-deep)' }}>
                 {product.name}
               </h1>
+              {product.type_line && (
+                <p className="text-xs mt-2 font-mono-stack" style={{ color: 'var(--text-secondary)', fontWeight: 'bold' }}>
+                  {product.type_line}
+                </p>
+              )}
+              {product.artist && (
+                <p className="text-[10px] mt-1 font-mono-stack" style={{ color: 'var(--text-muted)' }}>
+                  Art by {product.artist}
+                </p>
+              )}
             </div>
 
             {/* Badges */}
@@ -174,11 +158,20 @@ export default function ProductDetailPage() {
               </span>
             </div>
 
-            {/* Description */}
+            {/* Description / Rules Text */}
             <div className="mt-6 flex-1">
               {displayDescription ? (
-                <div className="text-sm leading-relaxed whitespace-pre-wrap font-mono-stack p-4 rounded-sm" style={{ background: 'rgba(230, 218, 195, 0.4)', color: 'var(--text-secondary)', border: '1px dashed var(--kraft-dark)' }}>
-                  {displayDescription}
+                <div className="flex flex-col gap-4">
+                  {product.oracle_text && (
+                    <div className="text-sm leading-relaxed whitespace-pre-wrap font-mono-stack p-4 rounded-sm" style={{ background: 'rgba(230, 218, 195, 0.4)', color: 'var(--ink-deep)', border: '1px dashed var(--kraft-dark)' }}>
+                      {product.oracle_text}
+                    </div>
+                  )}
+                  {!product.oracle_text && product.description && (
+                     <div className="text-sm leading-relaxed whitespace-pre-wrap font-mono-stack p-4 rounded-sm" style={{ background: 'rgba(230, 218, 195, 0.4)', color: 'var(--text-secondary)', border: '1px dashed var(--kraft-dark)' }}>
+                       {product.description}
+                     </div>
+                  )}
                 </div>
               ) : (
                 <div className="text-sm italic" style={{ color: 'var(--text-muted)' }}>

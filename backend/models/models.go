@@ -74,7 +74,6 @@ type Product struct {
 	IsBasicLand  bool     `db:"is_basic_land"     json:"is_basic_land"`
 	ArtVariation *string  `db:"art_variation"     json:"art_variation,omitempty"`
 	OracleText   *string  `db:"oracle_text"       json:"oracle_text,omitempty"`
-	FlavorText   *string  `db:"flavor_text"       json:"flavor_text,omitempty"`
 	Artist       *string  `db:"artist"            json:"artist,omitempty"`
 	TypeLine     *string  `db:"type_line"         json:"type_line,omitempty"`
 	BorderColor  *string  `db:"border_color"      json:"border_color,omitempty"`
@@ -136,7 +135,6 @@ type ProductInput struct {
 	IsBasicLand  bool     `json:"is_basic_land"`
 	ArtVariation *string  `json:"art_variation,omitempty"`
 	OracleText   *string  `json:"oracle_text,omitempty"`
-	FlavorText   *string  `json:"flavor_text,omitempty"`
 	Artist       *string  `json:"artist,omitempty"`
 	TypeLine     *string  `json:"type_line,omitempty"`
 	BorderColor  *string  `json:"border_color,omitempty"`

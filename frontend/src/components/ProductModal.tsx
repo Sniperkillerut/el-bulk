@@ -17,7 +17,6 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
   const [loading, setLoading] = useState(!initialProduct);
   const [error, setError] = useState(false);
   const [added, setAdded] = useState(false);
-  const [apiDescription, setApiDescription] = useState<string | null>(null);
   const { addItem } = useCart();
 
   // Prevent scrolling on body when modal is open
@@ -28,38 +27,11 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
     };
   }, []);
 
-  const fetchExternalDesc = (p: Product) => {
-    if (p.category === 'singles' && !p.description && p.name) {
-      if (p.tcg === 'mtg') {
-        fetch(`https://api.scryfall.com/cards/named?exact=${encodeURIComponent(p.name)}`)
-          .then(res => res.json())
-          .then(data => {
-            let desc = '';
-            if (data.oracle_text) desc += data.oracle_text + '\n\n';
-            if (data.flavor_text) desc += `_"${data.flavor_text}"_`;
-            if (desc) setApiDescription(desc);
-          }).catch(() => {});
-      } else if (p.tcg === 'pokemon') {
-        fetch(`https://api.pokemontcg.io/v2/cards?q=name:"${encodeURIComponent(p.name)}"`)
-          .then(res => res.json())
-          .then(data => {
-            if (data.data && data.data.length > 0) {
-              const card = data.data[0];
-              let desc = '';
-              if (card.flavorText) desc += `_"${card.flavorText}"_\n\n`;
-              if (card.rules && card.rules.length > 0) desc += card.rules.join('\n');
-              if (desc) setApiDescription(desc);
-            }
-          }).catch(() => {});
-      }
-    }
-  };
 
   useEffect(() => {
     if (initialProduct) {
       setProduct(initialProduct);
       setLoading(false);
-      fetchExternalDesc(initialProduct);
       return;
     }
 
@@ -68,9 +40,8 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
     setLoading(true);
     fetchProduct(productId)
       .then(p => {
-        setProduct(p);
-        setError(false);
-        fetchExternalDesc(p);
+      setProduct(p);
+      setError(false);
       })
       .catch((err) => {
         console.error("fetchProduct failed:", err);
@@ -158,6 +129,16 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
                   <h1 className="font-display text-4xl md:text-5xl" style={{ color: 'var(--ink-deep)', lineHeight: 1 }}>
                     {product.name}
                   </h1>
+                  {product.type_line && (
+                    <p className="text-xs mt-2 font-mono-stack" style={{ color: 'var(--text-secondary)', fontWeight: 'bold' }}>
+                      {product.type_line}
+                    </p>
+                  )}
+                  {product.artist && (
+                    <p className="text-[10px] mt-1 font-mono-stack" style={{ color: 'var(--text-muted)' }}>
+                      Art by {product.artist}
+                    </p>
+                  )}
                 </div>
 
                 {/* Badges */}
@@ -201,11 +182,20 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
                   </span>
                 </div>
 
-                {/* Description */}
+                {/* Description / Rules Text */}
                 <div className="flex-1 min-h-[100px]">
-                  {(product.description || apiDescription) ? (
-                    <div className="text-sm leading-relaxed whitespace-pre-wrap font-mono-stack p-4 rounded-sm" style={{ background: 'rgba(230, 218, 195, 0.4)', color: 'var(--text-secondary)', border: '1px dashed var(--kraft-dark)' }}>
-                      {product.description || apiDescription}
+                  {(product.oracle_text || product.description) ? (
+                    <div className="flex flex-col gap-4">
+                      {product.oracle_text && (
+                        <div className="text-sm leading-relaxed whitespace-pre-wrap font-mono-stack p-4 rounded-sm" style={{ background: 'rgba(230, 218, 195, 0.4)', color: 'var(--ink-deep)', border: '1px dashed var(--kraft-dark)' }}>
+                          {product.oracle_text}
+                        </div>
+                      )}
+                      {!product.oracle_text && product.description && (
+                         <div className="text-sm leading-relaxed whitespace-pre-wrap font-mono-stack p-4 rounded-sm" style={{ background: 'rgba(230, 218, 195, 0.4)', color: 'var(--text-secondary)', border: '1px dashed var(--kraft-dark)' }}>
+                           {product.description}
+                         </div>
+                      )}
                     </div>
                   ) : (
                     <div className="text-sm italic" style={{ color: 'var(--text-muted)' }}>

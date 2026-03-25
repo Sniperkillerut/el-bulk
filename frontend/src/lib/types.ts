@@ -39,7 +39,6 @@ export interface Product {
   is_basic_land: boolean;
   art_variation?: string;
   oracle_text?: string;
-  flavor_text?: string;
   artist?: string;
   type_line?: string;
   border_color?: string;
@@ -83,10 +82,18 @@ export const FOIL_LABELS: Record<string, string> = {
   ripple_foil: 'Surge Foil',
   etched_foil: 'Etched Foil',
   galaxy_foil: 'Galaxy Foil',
-  galaxyfoil: 'Galaxy Foil',
+  surge_foil: 'Surge Foil',
   textured_foil: 'Textured Foil',
-  glossy: 'Glossy',
+  oil_slick_foil: 'Oil Slick Foil',
+  raised_foil: 'Raised Foil',
+  step_and_compleat_foil: 'Step-and-Compleat Foil',
+  double_rainbow_foil: 'Double Rainbow Foil',
   confetti_foil: 'Confetti Foil',
+  neon_ink_foil: 'Neon Ink Foil',
+  gilded_foil: 'Gilded Foil',
+  halo_foil: 'Halo Foil',
+  silver_foil: 'Silver Foil',
+  glossy: 'Glossy',
   invisible_ink: 'Invisible Ink',
 };
 

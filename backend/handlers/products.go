@@ -247,7 +247,11 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	listQuery := `SELECT p.id, p.name, p.tcg, p.category, p.set_name, p.set_code, p.collector_number, p.condition, 
 	                    p.foil_treatment, p.card_treatment, p.promo_type, p.price_reference, p.price_source, 
-	                    p.price_cop_override, p.stock, p.image_url, p.description, p.created_at, p.updated_at ` + 
+	                    p.price_cop_override, p.stock, p.image_url, p.description, p.created_at, p.updated_at,
+	                    p.language, p.color_identity, p.rarity, p.cmc, 
+	                    p.is_legendary, p.is_historic, p.is_land, p.is_basic_land, 
+	                    p.art_variation, p.oracle_text, p.artist, p.type_line, 
+	                    p.border_color, p.frame, p.full_art, p.textless ` + 
 	              fromClause + " " + where + " ORDER BY " + orderBy + " LIMIT $" + strconv.Itoa(idx) + " OFFSET $" + strconv.Itoa(idx+1)
 	args = append(args, pageSize, offset)
 
@@ -334,15 +338,15 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		                      price_reference, price_source, price_cop_override,
 		                      stock, image_url, description, collector_number, promo_type,
 		                      language, color_identity, rarity, cmc, is_legendary, is_historic, is_land, is_basic_land, art_variation,
-		                      oracle_text, flavor_text, artist, type_line, border_color, frame, full_art, textless)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33)
+		                      oracle_text, artist, type_line, border_color, frame, full_art, textless)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32)
 		RETURNING *
 	`, input.Name, input.TCG, input.Category, input.SetName, input.SetCode, input.Condition,
 		input.FoilTreatment, input.CardTreatment,
 		input.PriceReference, input.PriceSource, input.PriceCOPOverride,
 		input.Stock, input.ImageURL, input.Description, input.CollectorNumber, input.PromoType,
 		input.Language, input.ColorIdentity, input.Rarity, input.CMC, input.IsLegendary, input.IsHistoric, input.IsLand, input.IsBasicLand, input.ArtVariation,
-		input.OracleText, input.FlavorText, input.Artist, input.TypeLine, input.BorderColor, input.Frame, input.FullArt, input.Textless,
+		input.OracleText, input.Artist, input.TypeLine, input.BorderColor, input.Frame, input.FullArt, input.Textless,
 	).StructScan(&product)
 
 	if err != nil {
@@ -382,15 +386,15 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 		    price_reference=$9, price_source=$10, price_cop_override=$11,
 		    stock=$12, image_url=$13, description=$14, collector_number=$15, promo_type=$16,
 		    language=$17, color_identity=$18, rarity=$19, cmc=$20, is_legendary=$21, is_historic=$22, is_land=$23, is_basic_land=$24, art_variation=$25,
-		    oracle_text=$26, flavor_text=$27, artist=$28, type_line=$29, border_color=$30, frame=$31, full_art=$32, textless=$33
-		WHERE id=$34
+		    oracle_text=$26, artist=$27, type_line=$28, border_color=$29, frame=$30, full_art=$31, textless=$32
+		WHERE id=$33
 		RETURNING *
 	`, input.Name, input.TCG, input.Category, input.SetName, input.SetCode, input.Condition,
 		input.FoilTreatment, input.CardTreatment,
 		input.PriceReference, input.PriceSource, input.PriceCOPOverride,
 		input.Stock, input.ImageURL, input.Description, input.CollectorNumber, input.PromoType,
 		input.Language, input.ColorIdentity, input.Rarity, input.CMC, input.IsLegendary, input.IsHistoric, input.IsLand, input.IsBasicLand, input.ArtVariation,
-		input.OracleText, input.FlavorText, input.Artist, input.TypeLine, input.BorderColor, input.Frame, input.FullArt, input.Textless,
+		input.OracleText, input.Artist, input.TypeLine, input.BorderColor, input.Frame, input.FullArt, input.Textless,
 		id,
 	).StructScan(&product)
 

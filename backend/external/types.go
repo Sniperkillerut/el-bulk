@@ -12,7 +12,7 @@ type CardLookupResult struct {
 
 	// MTG Metadata
 	Language     string   `json:"language"`
-	Color        *string  `json:"color,omitempty"`
+	ColorIdentity *string  `json:"color_identity,omitempty"`
 	Rarity       *string  `json:"rarity,omitempty"`
 	CMC          *float64 `json:"cmc,omitempty"`
 	IsLegendary  bool     `json:"is_legendary"`
@@ -21,7 +21,6 @@ type CardLookupResult struct {
 	IsBasicLand  bool     `json:"is_basic_land"`
 	ArtVariation *string  `json:"art_variation,omitempty"`
 	OracleText   *string  `json:"oracle_text,omitempty"`
-	FlavorText   *string  `json:"flavor_text,omitempty"`
 	Artist       *string  `json:"artist,omitempty"`
 	TypeLine     *string  `json:"type_line,omitempty"`
 	BorderColor  *string  `json:"border_color,omitempty"`

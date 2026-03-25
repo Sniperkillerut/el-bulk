@@ -41,7 +41,6 @@ interface FormState {
   is_basic_land: boolean;
   art_variation: string;
   oracle_text: string;
-  flavor_text: string;
   artist: string;
   type_line: string;
   border_color: string;
@@ -59,7 +58,7 @@ const EMPTY_FORM: FormState = {
   collector_number: '', promo_type: '',
   language: 'en', color_identity: '', rarity: 'common', cmc: '',
   is_legendary: false, is_historic: false, is_land: false, is_basic_land: false,
-  art_variation: '', oracle_text: '', flavor_text: '', artist: '', type_line: '',
+  art_variation: '', oracle_text: '', artist: '', type_line: '',
   border_color: '', frame: '', full_art: false, textless: false,
 };
 
@@ -249,7 +248,6 @@ export default function AdminDashboard() {
       is_basic_land: p.is_basic_land,
       art_variation: p.art_variation || '',
       oracle_text: p.oracle_text || '',
-      flavor_text: p.flavor_text || '',
       artist: p.artist || '',
       type_line: p.type_line || '',
       border_color: p.border_color || '',
@@ -299,7 +297,6 @@ export default function AdminDashboard() {
       is_basic_land: card.is_basic_land ?? (typeLine.toLowerCase().includes('basic land') || false),
       art_variation: card.art_variation || (card.variation ? 'Variation' : ''),
       oracle_text: card.oracle_text || '',
-      flavor_text: card.flavor_text || '',
       artist: card.artist || '',
       type_line: typeLine,
       border_color: card.border_color || '',
@@ -317,23 +314,7 @@ export default function AdminDashboard() {
   };
 
   const extractDescription = (print: any) => {
-    let desc = '';
-    if (print.card_faces) {
-      const faces: string[] = [];
-      for (const face of print.card_faces) {
-        let fText = '';
-        if (face.name) fText += `**${face.name}**\n`;
-        if (face.type_line) fText += `${face.type_line}\n`;
-        if (face.oracle_text) fText += `${face.oracle_text}\n`;
-        if (face.flavor_text) fText += `\n_"${face.flavor_text}"_`;
-        faces.push(fText.trim());
-      }
-      desc = faces.join('\n\n//\n\n');
-    } else {
-      if (print.oracle_text) desc += print.oracle_text + '\n';
-      if (print.flavor_text) desc += `\n_"${print.flavor_text}"_`;
-    }
-    return desc.trim();
+    return '';
   };
 
   const handlePopulate = async () => {
@@ -359,7 +340,15 @@ export default function AdminDashboard() {
       }
 
       const initialTreatment = getTreatmentType(bestPrint);
-      const initialFoil = bestPrint.finishes?.includes('nonfoil') ? 'non_foil' : (bestPrint.finishes?.[0] === 'etched' ? 'etched_foil' : 'foil');
+      const initialFoil = bestPrint.finishes?.includes('nonfoil') ? 'non_foil' : 
+                          (bestPrint.promo_types?.includes('oilslick') ? 'oil_slick_foil' :
+                          (bestPrint.promo_types?.includes('raisedfoil') ? 'raised_foil' :
+                          (bestPrint.promo_types?.includes('stepandcompleat') ? 'step_and_compleat_foil' :
+                          (bestPrint.promo_types?.includes('galaxyfoil') ? 'galaxy_foil' :
+                          (bestPrint.promo_types?.includes('surgefoil') ? 'surge_foil' :
+                          (bestPrint.promo_types?.includes('halofoil') ? 'halo_foil' :
+                          (bestPrint.promo_types?.includes('textured') ? 'textured_foil' :
+                          (bestPrint.finishes?.includes('etched') ? 'etched_foil' : 'foil'))))))));
 
       setForm(f => ({
         ...f,
@@ -370,7 +359,7 @@ export default function AdminDashboard() {
         promo_type: bestPrint.promo_types?.join(',') || 'none',
         foil_treatment: initialFoil as FoilTreatment,
         image_url: bestPrint.image_uris?.normal || bestPrint.image_uris?.large || f.image_url,
-        description: extractDescription(bestPrint) || f.description,
+        description: '', 
         price_reference: applyPrintPrices(bestPrint, initialFoil as FoilTreatment, f.price_source),
         ...extractMTGMetadata(bestPrint)
       }));
@@ -551,6 +540,7 @@ export default function AdminDashboard() {
         else if (p === 'textured') { addOpt('textured_foil', 'Textured Foil'); addedSpecializedFoil = true; }
         else if (p === 'confettifoil') { addOpt('confetti_foil', 'Confetti Foil'); addedSpecializedFoil = true; }
         else if (p === 'invisibleink') { addOpt('invisible_ink', 'Invisible Ink'); addedSpecializedFoil = true; }
+        else if (p === 'oilslick') { addOpt('oil_slick_foil', 'Oil Slick'); addedSpecializedFoil = true; }
         else if (p === 'glossy') { addOpt('glossy', 'Glossy'); addedSpecializedFoil = true; }
         else if (p.endsWith('foil')) {
           // Catch-all for other foils (e.g. rainbowfoil -> rainbow_foil)
@@ -640,7 +630,7 @@ export default function AdminDashboard() {
       promo_type: newPromo,
       foil_treatment: newFoil as FoilTreatment,
       image_url: bestPrint.image_uris?.normal || bestPrint.image_uris?.large || f.image_url,
-      description: extractDescription(bestPrint) || f.description,
+      description: '',
       price_reference: applyPrintPrices(bestPrint, newFoil as FoilTreatment, f.price_source),
       ...extractMTGMetadata(bestPrint)
     }));
@@ -664,7 +654,7 @@ export default function AdminDashboard() {
       promo_type: newPromo,
       foil_treatment: newFoil as FoilTreatment,
       image_url: bestPrint.image_uris?.normal || bestPrint.image_uris?.large || f.image_url,
-      description: extractDescription(bestPrint) || f.description,
+      description: '',
       price_reference: applyPrintPrices(bestPrint, newFoil as FoilTreatment, f.price_source),
       ...extractMTGMetadata(bestPrint)
     }));
@@ -824,7 +814,6 @@ export default function AdminDashboard() {
         is_basic_land: form.is_basic_land,
         art_variation: form.art_variation || undefined,
         oracle_text: form.oracle_text || undefined,
-        flavor_text: form.flavor_text || undefined,
         artist: form.artist || undefined,
         type_line: form.type_line || undefined,
         border_color: form.border_color || undefined,
@@ -1513,15 +1502,6 @@ export default function AdminDashboard() {
                         className="w-full text-[11px] font-mono-stack p-2 bg-transparent border border-ink-border rounded h-24"
                         value={form.oracle_text} 
                         onChange={e => setForm(f => ({ ...f, oracle_text: e.target.value }))}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>FLAVOR TEXT</label>
-                      <textarea 
-                        className="w-full text-[11px] font-mono-stack p-2 bg-transparent border border-ink-border rounded h-24 italic"
-                        style={{ color: 'var(--text-muted)' }}
-                        value={form.flavor_text} 
-                        onChange={e => setForm(f => ({ ...f, flavor_text: e.target.value }))}
                       />
                     </div>
                   </div>

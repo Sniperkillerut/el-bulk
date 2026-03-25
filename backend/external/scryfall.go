@@ -32,7 +32,6 @@ type scryfallCard struct {
 		Name      string `json:"name"`
 		TypeLine  string `json:"type_line"`
 		OracleText string `json:"oracle_text"`
-		FlavorText string `json:"flavor_text"`
 		Artist     string `json:"artist"`
 		ImageURIs struct {
 			Normal string `json:"normal"`
@@ -56,7 +55,6 @@ type scryfallCard struct {
 	CMC           float64  `json:"cmc"`
 	TypeLine      string   `json:"type_line"`
 	OracleText    string   `json:"oracle_text"`
-	FlavorText    string   `json:"flavor_text"`
 	Artist        string   `json:"artist"`
 	Variation     bool     `json:"variation"`
 	BorderColor   string   `json:"border_color"`
@@ -213,18 +211,14 @@ func mapScryfallToResult(card *scryfallCard, foilTreatment string) *CardLookupRe
 	}
 
 	oracle := card.OracleText
-	flavor := card.FlavorText
 	artist := card.Artist
 	typeLine := card.TypeLine
 
 	if oracle == "" && len(card.CardFaces) > 0 {
-		var oParts, fParts, aParts, tParts []string
+		var oParts, aParts, tParts []string
 		for _, f := range card.CardFaces {
 			if f.OracleText != "" {
 				oParts = append(oParts, f.OracleText)
-			}
-			if f.FlavorText != "" {
-				fParts = append(fParts, f.FlavorText)
 			}
 			if f.Artist != "" {
 				aParts = append(aParts, f.Artist)
@@ -234,7 +228,6 @@ func mapScryfallToResult(card *scryfallCard, foilTreatment string) *CardLookupRe
 			}
 		}
 		oracle = strings.Join(oParts, "\n\n---\n\n")
-		flavor = strings.Join(fParts, "\n\n---\n\n")
 		artist = strings.Join(aParts, " & ")
 		typeLine = strings.Join(tParts, " // ")
 	}
@@ -247,7 +240,7 @@ func mapScryfallToResult(card *scryfallCard, foilTreatment string) *CardLookupRe
 		PriceTCGPlayer:  tcgUSD,
 		PriceCardmarket: cmEUR,
 		Language:        card.Lang,
-		Color:           colorStr,
+		ColorIdentity:   colorStr,
 		Rarity:          &card.Rarity,
 		CMC:             &card.CMC,
 		IsLegendary:     isLegendary,
@@ -256,7 +249,6 @@ func mapScryfallToResult(card *scryfallCard, foilTreatment string) *CardLookupRe
 		IsBasicLand:     strings.Contains(lowerType, "basic land"),
 		ArtVariation:    artVar,
 		OracleText:      &oracle,
-		FlavorText:      &flavor,
 		Artist:          &artist,
 		TypeLine:        &typeLine,
 		BorderColor:     &card.BorderColor,
