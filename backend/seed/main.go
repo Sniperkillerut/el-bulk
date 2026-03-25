@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/el-bulk/backend/db"
@@ -15,8 +16,17 @@ import (
 )
 
 type ScryfallResponse struct {
-	OracleText string `json:"oracle_text"`
-	FlavorText string `json:"flavor_text"`
+	Name       string   `json:"name"`
+	Set        string   `json:"set"`
+	SetName    string   `json:"set_name"`
+	Lang          string   `json:"lang"`
+	ColorIdentity []string `json:"color_identity"`
+	Rarity        string   `json:"rarity"`
+	CMC        float64  `json:"cmc"`
+	TypeLine   string   `json:"type_line"`
+	Variation  bool     `json:"variation"`
+	OracleText string   `json:"oracle_text"`
+	FlavorText string   `json:"flavor_text"`
 	ImageUris  struct {
 		Normal string `json:"normal"`
 	} `json:"image_uris"`
@@ -28,30 +38,56 @@ type ScryfallResponse struct {
 	} `json:"card_faces"`
 }
 
-func fetchScryfallData(name string) (string, string) {
+type MTGMetadata struct {
+	ImageURL      string
+	Description   string
+	Language      string
+	Color         string
+	Rarity        string
+	CMC           float64
+	IsLegendary   bool
+	IsHistoric    bool
+	IsLand        bool
+	IsBasicLand   bool
+	ArtVariation  string
+	SetCode       string
+	SetName       string
+}
+
+func fetchScryfallData(name string) *MTGMetadata {
 	apiURL := fmt.Sprintf("https://api.scryfall.com/cards/named?exact=%s", url.QueryEscape(name))
 	resp, err := http.Get(apiURL)
 	if err != nil {
-		return "", ""
+		return nil
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", ""
+		return nil
 	}
 
 	var data ScryfallResponse
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return "", ""
+		return nil
 	}
 
 	time.Sleep(100 * time.Millisecond) // Be polite to Scryfall
 
-	img := data.ImageUris.Normal
-	if img == "" && len(data.CardFaces) > 0 {
-		img = data.CardFaces[0].ImageUris.Normal
+	meta := &MTGMetadata{
+		Language: data.Lang,
+		Rarity:   data.Rarity,
+		CMC:      data.CMC,
+		SetCode:  data.Set,
+		SetName:  data.SetName,
 	}
 
+	// Image
+	meta.ImageURL = data.ImageUris.Normal
+	if meta.ImageURL == "" && len(data.CardFaces) > 0 {
+		meta.ImageURL = data.CardFaces[0].ImageUris.Normal
+	}
+
+	// Description
 	desc := data.OracleText
 	if desc == "" && len(data.CardFaces) > 0 {
 		desc = data.CardFaces[0].OracleText
@@ -62,8 +98,38 @@ func fetchScryfallData(name string) (string, string) {
 		}
 		desc += `_"` + data.FlavorText + `"_`
 	}
+	meta.Description = desc
 
-	return img, desc
+	// Type-based flags
+	lowerType := (data.TypeLine)
+	if lowerType == "" && len(data.CardFaces) > 0 {
+		lowerType = data.CardFaces[0].OracleText // fallback if type line missing? unlikely
+	}
+	// Better: Use type_line directly
+	typeLine := data.TypeLine
+	meta.IsLegendary = contains(typeLine, "Legendary")
+	meta.IsLand = contains(typeLine, "Land")
+	meta.IsBasicLand = contains(typeLine, "Basic Land")
+	meta.IsHistoric = meta.IsLegendary || contains(typeLine, "Artifact") || contains(typeLine, "Saga")
+	
+	if data.Variation {
+		meta.ArtVariation = "Variation"
+	}
+
+	colors := ""
+	for i, c := range data.ColorIdentity {
+		if i > 0 {
+			colors += ","
+		}
+		colors += c
+	}
+	meta.Color = colors
+
+	return meta
+}
+
+func contains(s, substr string) bool {
+	return strings.Contains(s, substr)
 }
 
 func main() {
@@ -129,7 +195,28 @@ func main() {
 		{"Lightning Bolt", "mtg", "singles", "Magic 2011", "M11", "NM", 25000, 12, []string{"sale"}, "Deals 3 damage.", "https://cards.scryfall.io/normal/front/f/2/f29ba16f-c8fb-42fe-aabf-074d4ee3032d.jpg", models.FoilNonFoil, models.TreatmentNormal},
 		{"Thoughtseize", "mtg", "singles", "Theros", "THS", "LP", 75000, 3, []string{"featured"}, "Target opponent discards a card.", "https://cards.scryfall.io/normal/front/1/2/12bb1514-6b83-42be-a178-574d6c4832be.jpg", models.FoilNonFoil, models.TreatmentNormal},
 		{"Sheoldred, the Apocalypse", "mtg", "singles", "Dominaria United", "DMU", "NM", 280000, 4, []string{"featured", "hot-items"}, "Whenever you draw a card, you gain 2 life.", "https://cards.scryfall.io/normal/front/d/6/d67be074-cdd4-41d9-ac89-0a0456c4e4b2.jpg", models.FoilNonFoil, models.TreatmentNormal},
-		{"The One Ring", "mtg", "singles", "The Lord of the Rings: Tales of Middle-earth", "LTR", "NM", 450000, 1, []string{"hot-items"}, "Indestructible. Protection from everything.", "https://cards.scryfall.io/normal/front/d/7/d772c30c-8c71-4ac9-93b2-4f70fa447e16.jpg", models.FoilNonFoil, models.TreatmentNormal},
+		{"The One Ring", "mtg", "singles", "The Lord of the Rings: Tales of Middle-earth", "LTR", "NM", 450000, 1, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
+		{"Orcish Bowmasters", "mtg", "singles", "The Lord of the Rings: Tales of Middle-earth", "LTR", "NM", 150000, 4, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
+		{"Delighted Halfling", "mtg", "singles", "The Lord of the Rings: Tales of Middle-earth", "LTR", "NM", 45000, 8, []string{"new-arrivals"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
+		{"Solitude", "mtg", "singles", "Modern Horizons 2", "MH2", "NM", 120000, 4, []string{"featured"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
+		{"Fury", "mtg", "singles", "Modern Horizons 2", "MH2", "NM", 80000, 4, []string{"sale"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
+		{"Grief", "mtg", "singles", "Modern Horizons 2", "MH2", "NM", 65000, 4, []string{"featured"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
+		{"Endurance", "mtg", "singles", "Modern Horizons 2", "MH2", "NM", 55000, 4, []string{"featured"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
+		{"Subtlety", "mtg", "singles", "Modern Horizons 2", "MH2", "NM", 35000, 4, []string{"sale"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
+		{"Tarmogoyf", "mtg", "singles", "Future Sight", "FUT", "NM", 45000, 4, []string{"featured"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
+		{"Force of Will", "mtg", "singles", "Alliances", "ALL", "NM", 350000, 2, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
+		{"Ancestral Recall", "mtg", "singles", "Unlimited Edition", "2ED", "HP", 15000000, 1, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
+		{"Time Walk", "mtg", "singles", "Unlimited Edition", "2ED", "HP", 12000000, 1, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
+		{"Mox Emerald", "mtg", "singles", "Unlimited Edition", "2ED", "HP", 8000000, 1, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
+		{"Mox Jet", "mtg", "singles", "Unlimited Edition", "2ED", "HP", 8000000, 1, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
+		{"Mox Pearl", "mtg", "singles", "Unlimited Edition", "2ED", "HP", 8000000, 1, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
+		{"Mox Ruby", "mtg", "singles", "Unlimited Edition", "2ED", "HP", 8000000, 1, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
+		{"Mox Sapphire", "mtg", "singles", "Unlimited Edition", "2ED", "HP", 9000000, 1, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
+		{"Time Vault", "mtg", "singles", "Unlimited Edition", "2ED", "HP", 5000000, 1, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
+		{"Urza's Saga", "mtg", "singles", "Modern Horizons 2", "MH2", "NM", 140000, 12, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
+		{"Black Market Connections", "mtg", "singles", "Battle for Baldur's Gate", "CLB", "NM", 85000, 6, []string{"new-arrivals"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
+		{"Ancient Tomb", "mtg", "singles", "Tempest", "TMP", "NM", 350000, 4, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
+		{"Cavern of Souls", "mtg", "singles", "Avacyn Restored", "AVR", "NM", 180000, 8, []string{"featured"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
 
 		// One Piece
 		{"Monkey D. Luffy", "onepiece", "singles", "Romance Dawn", "OP01", "NM", 550000, 1, []string{"featured", "hot-items"}, "Parallel rare Luffy Leader.", "https://limitlesstcg.s3.us-central-1.amazonaws.com/one-piece/OP01/OP01-001_p1.png", models.FoilNonFoil, models.TreatmentAlternateArt},
@@ -224,16 +311,55 @@ func main() {
 
 	for _, p := range products {
 		fmt.Printf("Seeding %s (%s)...\n", p.Name, p.TCG)
+		
+		desc := p.Description
+		img := p.ImageURL
+		
+		// Metadata defaults
+		lang := "en"
+		color := ""
+		rarity := ""
+		var cmc float64 = 0
+		isLegendary := false
+		isHistoric := false
+		isLand := false
+		isBasicLand := false
+		artVariation := ""
+		setCode := p.SetCode
+		setName := p.SetName
+
+		if p.TCG == "mtg" {
+			meta := fetchScryfallData(p.Name)
+			if meta != nil {
+				if desc == "" { desc = meta.Description }
+				if img == "" { img = meta.ImageURL }
+				lang = meta.Language
+				color = meta.Color
+				rarity = meta.Rarity
+				cmc = meta.CMC
+				isLegendary = meta.IsLegendary
+				isHistoric = meta.IsHistoric
+				isLand = meta.IsLand
+				isBasicLand = meta.IsBasicLand
+				artVariation = meta.ArtVariation
+				if setCode == "" || setCode == "N/A" { setCode = meta.SetCode }
+				if setName == "" || setName == "N/A" { setName = meta.SetName }
+			}
+		}
+
 		var newProductID string
 		err = database.QueryRow(`
 			INSERT INTO products (
 				name, tcg, category, set_name, set_code, condition,
 				foil_treatment, card_treatment,
-				price_cop_override, price_source, stock, description, image_url
-			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'manual', 0, $10, $11) RETURNING id
-		`, p.Name, p.TCG, p.Category, p.SetName, p.SetCode, p.Condition,
+				price_cop_override, price_source, stock, description, image_url,
+				language, color, rarity, cmc, is_legendary, is_historic, is_land, is_basic_land, art_variation
+			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'manual', 0, $10, $11, 
+			          $12, $13, $14, $15, $16, $17, $18, $19, $20) RETURNING id
+		`, p.Name, p.TCG, p.Category, setName, setCode, p.Condition,
 			p.Foil, p.Treatment,
-			p.PriceCOP, p.Description, p.ImageURL).Scan(&newProductID)
+			p.PriceCOP, desc, img,
+			lang, color, rarity, cmc, isLegendary, isHistoric, isLand, isBasicLand, artVariation).Scan(&newProductID)
 		
 		if err != nil {
 			log.Printf("Warning: failed to insert %s: %v", p.Name, err)

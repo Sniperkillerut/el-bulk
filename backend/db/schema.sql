@@ -43,6 +43,18 @@ CREATE TABLE products (
   stock             INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
   image_url         TEXT,
   description       TEXT,
+
+  -- MTG Metadata
+  language          TEXT NOT NULL DEFAULT 'en',
+  color             TEXT, -- comma-separated (W,U,B,R,G)
+  rarity            TEXT,
+  cmc               NUMERIC(5, 1),
+  is_legendary      BOOLEAN NOT NULL DEFAULT false,
+  is_historic       BOOLEAN NOT NULL DEFAULT false,
+  is_land           BOOLEAN NOT NULL DEFAULT false,
+  is_basic_land     BOOLEAN NOT NULL DEFAULT false,
+  art_variation     TEXT,
+
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );

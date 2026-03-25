@@ -1,15 +1,16 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { fetchProducts } from '@/lib/api';
+import { fetchProducts, fetchCategories } from '@/lib/api';
 import ProductCard from '@/components/ProductCard';
-import { Product, FOIL_LABELS, TREATMENT_LABELS, TCG_LABELS, FoilTreatment, CardTreatment } from '@/lib/types';
+import { Product, FOIL_LABELS, TREATMENT_LABELS, TCG_LABELS, CustomCategory } from '@/lib/types';
 
 interface FiltersState {
   search: string;
   foil: string;
   treatment: string;
   condition: string;
+  collection: string;
 }
 
 interface ProductGridProps {
@@ -24,7 +25,8 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState<FiltersState>({ search: '', foil: '', treatment: '', condition: '' });
+  const [availableCollections, setAvailableCollections] = useState<CustomCategory[]>([]);
+  const [filters, setFilters] = useState<FiltersState>({ search: '', foil: '', treatment: '', condition: '', collection: '' });
 
   const load = useCallback(async (p: number, f: FiltersState) => {
     setLoading(true);
@@ -38,6 +40,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
         foil: f.foil || undefined,
         treatment: f.treatment || undefined,
         condition: f.condition || undefined,
+        collection: f.collection || undefined,
       });
       setProducts(res.products);
       setTotal(res.total);
@@ -50,6 +53,19 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
   }, [tcg, category]);
 
   useEffect(() => { load(page, filters); }, [page, filters, load]);
+
+  useEffect(() => {
+    async function loadCats() {
+      try {
+        const cats = await fetchCategories();
+        // Only show collections that are searchable
+        setAvailableCollections(cats.filter(c => c.searchable));
+      } catch (err) {
+        console.error('Failed to load categories for grid:', err);
+      }
+    }
+    loadCats();
+  }, []);
 
   const handleFilterChange = (key: keyof FiltersState, value: string) => {
     setPage(1);
@@ -100,12 +116,19 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
               <option value="">All Versions</option>
               {Object.entries(TREATMENT_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
+
+            <select value={filters.collection} onChange={e => handleFilterChange('collection', e.target.value)} className="flex-1 sm:w-44 sm:flex-none">
+              <option value="">All Collections</option>
+              {availableCollections.map(c => (
+                <option key={c.id} value={c.slug}>{c.name}</option>
+              ))}
+            </select>
           </div>
         )}
 
-        {(filters.search || filters.foil || filters.treatment || filters.condition) && (
+        {(filters.search || filters.foil || filters.treatment || filters.condition || filters.collection) && (
           <button
-            onClick={() => { setFilters({ search: '', foil: '', treatment: '', condition: '' }); setPage(1); }}
+            onClick={() => { setFilters({ search: '', foil: '', treatment: '', condition: '', collection: '' }); setPage(1); }}
             className="btn-secondary"
             style={{ fontSize: '0.85rem', padding: '0.5rem 1rem' }}
           >

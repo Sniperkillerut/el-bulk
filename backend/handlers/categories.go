@@ -37,8 +37,11 @@ func (h *CategoriesHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 	query += `
 		GROUP BY c.id, c.name, c.slug, c.is_active, c.show_badge, c.searchable, c.created_at
-		ORDER BY c.name
 	`
+	if !isAdmin {
+		query += " HAVING COUNT(pc.product_id) > 0 "
+	}
+	query += ` ORDER BY c.name `
 	
 	err := h.DB.Select(&categories, query)
 	if err != nil {

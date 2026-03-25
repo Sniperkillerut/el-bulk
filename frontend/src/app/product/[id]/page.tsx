@@ -145,6 +145,24 @@ export default function ProductDetailPage() {
                 </span>
               )}
             </div>
+            
+            {/* MTG Metadata (Public) */}
+            {product.tcg === 'mtg' && product.category === 'singles' && (
+              <div className="mt-4 grid grid-cols-3 gap-2 py-3 border-t border-b border-dashed border-kraft-dark">
+                <div className="text-center">
+                  <p className="text-[10px] font-bold text-text-muted uppercase">Identity</p>
+                  <p className="text-sm font-mono-stack">{product.color_identity || 'C'}</p>
+                </div>
+                <div className="text-center border-l border-r border-dashed border-kraft-dark px-2">
+                  <p className="text-[10px] font-bold text-text-muted uppercase">Rarity</p>
+                  <p className="text-sm font-mono-stack capitalize">{product.rarity || 'Common'}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-[10px] font-bold text-text-muted uppercase">CMC</p>
+                  <p className="text-sm font-mono-stack">{product.cmc ?? 0}</p>
+                </div>
+              </div>
+            )}
 
             <hr className="divider w-full" />
 

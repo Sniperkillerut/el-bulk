@@ -62,6 +62,18 @@ type Product struct {
 	Description     *string           `db:"description"        json:"description,omitempty"`
 	CollectorNumber *string           `db:"collector_number"   json:"collector_number,omitempty"`
 	PromoType       *string           `db:"promo_type"         json:"promo_type,omitempty"`
+	
+	// MTG Metadata
+	Language      string   `db:"language"          json:"language"`
+	ColorIdentity *string  `db:"color_identity"   json:"color_identity,omitempty"`
+	Rarity        *string  `db:"rarity"            json:"rarity,omitempty"`
+	CMC           *float64 `db:"cmc"               json:"cmc,omitempty"`
+	IsLegendary  bool     `db:"is_legendary"      json:"is_legendary"`
+	IsHistoric   bool     `db:"is_historic"       json:"is_historic"`
+	IsLand       bool     `db:"is_land"           json:"is_land"`
+	IsBasicLand  bool     `db:"is_basic_land"     json:"is_basic_land"`
+	ArtVariation *string  `db:"art_variation"     json:"art_variation,omitempty"`
+
 	CreatedAt       time.Time         `db:"created_at"         json:"created_at"`
 	UpdatedAt       time.Time         `db:"updated_at"         json:"updated_at"`
 }
@@ -104,6 +116,17 @@ type ProductInput struct {
 	Description     *string  `json:"description,omitempty"`
 	CollectorNumber *string  `json:"collector_number,omitempty"`
 	PromoType       *string  `json:"promo_type,omitempty"`
+
+	// MTG Metadata
+	Language      string   `json:"language,omitempty"`
+	ColorIdentity *string  `json:"color_identity,omitempty"`
+	Rarity        *string  `json:"rarity,omitempty"`
+	CMC           *float64 `json:"cmc,omitempty"`
+	IsLegendary  bool     `json:"is_legendary"`
+	IsHistoric   bool     `json:"is_historic"`
+	IsLand       bool     `json:"is_land"`
+	IsBasicLand  bool     `json:"is_basic_land"`
+	ArtVariation *string  `json:"art_variation,omitempty"`
 }
 
 // Settings holds admin-configurable global settings and contact info.

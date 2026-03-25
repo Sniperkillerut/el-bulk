@@ -18,13 +18,14 @@ func (h *LookupHandler) MTG(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	setCode := r.URL.Query().Get("set")
 	foil := r.URL.Query().Get("foil") // e.g. "non_foil", "foil", "etched_foil"
+	cn := r.URL.Query().Get("cn")
 
 	if name == "" {
 		jsonError(w, "query param 'name' is required", http.StatusBadRequest)
 		return
 	}
 
-	result, err := external.LookupMTGCard(name, setCode, foil)
+	result, err := external.LookupMTGCard(name, setCode, cn, foil)
 	if err != nil {
 		if err.Error() == "card not found" {
 			jsonError(w, "card not found", http.StatusNotFound)

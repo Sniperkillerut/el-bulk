@@ -31,6 +31,15 @@ interface FormState {
   image_url: string;
   collector_number: string;
   promo_type: string;
+  language: string;
+  color_identity: string;
+  rarity: string;
+  cmc: number | '';
+  is_legendary: boolean;
+  is_historic: boolean;
+  is_land: boolean;
+  is_basic_land: boolean;
+  art_variation: string;
 }
 
 const EMPTY_FORM: FormState = {
@@ -40,6 +49,9 @@ const EMPTY_FORM: FormState = {
   price_source: 'manual', price_reference: '', price_cop_override: '',
   stock: 0, description: '', category_ids: [], image_url: '',
   collector_number: '', promo_type: '',
+  language: 'en', color_identity: '', rarity: '', cmc: '',
+  is_legendary: false, is_historic: false, is_land: false, is_basic_land: false,
+  art_variation: '',
 };
 
 export default function AdminDashboard() {
@@ -216,8 +228,17 @@ export default function AdminDashboard() {
       stock: p.stock, description: p.description || '',
       category_ids: p.categories?.map(c => c.id) || [], 
       image_url: p.image_url || '',
-      collector_number: '', // Will be derived if we re-populate
-      promo_type: 'none',
+      collector_number: p.collector_number || '',
+      promo_type: p.promo_type || '',
+      language: p.language || 'en',
+      color_identity: p.color_identity || '',
+      rarity: p.rarity || '',
+      cmc: p.cmc ?? '',
+      is_legendary: p.is_legendary,
+      is_historic: p.is_historic,
+      is_land: p.is_land,
+      is_basic_land: p.is_basic_land,
+      art_variation: p.art_variation || '',
     });
     const existingStorage = p.stored_in || [];
     setProductStorage(storageLocations.map(s => {
@@ -241,6 +262,24 @@ export default function AdminDashboard() {
     // Cardmarket: Scryfall's 'eur' already encapsulates Trend -> 1d -> 7d -> Avg fallback.
     let eur = parseFloat(isFoil || isEtched ? print?.prices?.eur_foil || print?.prices?.eur : print?.prices?.eur);
     return { usd: isNaN(usd) ? null : usd, eur: isNaN(eur) ? null : eur };
+  };
+
+  const extractMTGMetadata = (card: CardLookupResult | any) => {
+    return {
+      language: card.language || card.lang || 'en',
+      color_identity: card.color_identity || (Array.isArray(card.color_identity) ? card.color_identity.join(',') : ''),
+      rarity: card.rarity || '',
+      cmc: card.cmc ?? 0,
+      is_legendary: card.is_legendary ?? (card.type_line?.toLowerCase().includes('legendary') || false),
+      is_historic: card.is_historic ?? (
+        card.type_line?.toLowerCase().includes('legendary') || 
+        card.type_line?.toLowerCase().includes('artifact') || 
+        card.type_line?.toLowerCase().includes('saga') || false
+      ),
+      is_land: card.is_land ?? (card.type_line?.toLowerCase().includes('land') || false),
+      is_basic_land: card.is_basic_land ?? (card.type_line?.toLowerCase().includes('basic land') || false),
+      art_variation: card.art_variation || (card.variation ? 'Variation' : ''),
+    };
   };
 
   const applyPrintPrices = (print: any, foil: FoilTreatment, src: PriceSource) => {
@@ -271,7 +310,7 @@ export default function AdminDashboard() {
   };
 
   const handlePopulate = async () => {
-    if (!form.name.trim()) return;
+    if (!form.name.trim() && (!form.set_code.trim() || !form.collector_number.trim())) return;
     setLookingUp(true);
     setFormError('');
     try {
@@ -281,21 +320,32 @@ export default function AdminDashboard() {
       const prints = body.data;
       setScryfallPrints(prints);
       
-      const firstPrint = prints[0];
-      const initialTreatment = getTreatmentType(firstPrint);
-      const initialFoil = firstPrint.finishes?.includes('nonfoil') ? 'non_foil' : (firstPrint.finishes?.[0] === 'etched' ? 'etched_foil' : 'foil');
+      // Smart matching: try set+cn, then just set, then first result
+      let bestPrint = prints.find((p: any) => 
+        p.set === form.set_code && p.collector_number === form.collector_number
+      );
+      if (!bestPrint && form.set_code) {
+        bestPrint = prints.find((p: any) => p.set === form.set_code);
+      }
+      if (!bestPrint) {
+        bestPrint = prints[0];
+      }
+
+      const initialTreatment = getTreatmentType(bestPrint);
+      const initialFoil = bestPrint.finishes?.includes('nonfoil') ? 'non_foil' : (bestPrint.finishes?.[0] === 'etched' ? 'etched_foil' : 'foil');
 
       setForm(f => ({
         ...f,
-        set_code: firstPrint.set,
-        set_name: firstPrint.set_name,
+        set_code: bestPrint.set,
+        set_name: bestPrint.set_name,
         card_treatment: initialTreatment,
-        collector_number: firstPrint.collector_number,
-        promo_type: firstPrint.promo_types?.join(',') || 'none',
+        collector_number: bestPrint.collector_number,
+        promo_type: bestPrint.promo_types?.join(',') || 'none',
         foil_treatment: initialFoil as FoilTreatment,
-        image_url: firstPrint.image_uris?.normal || firstPrint.image_uris?.large || f.image_url,
-        description: extractDescription(firstPrint) || f.description,
-        price_reference: applyPrintPrices(firstPrint, initialFoil as FoilTreatment, f.price_source)
+        image_url: bestPrint.image_uris?.normal || bestPrint.image_uris?.large || f.image_url,
+        description: extractDescription(bestPrint) || f.description,
+        price_reference: applyPrintPrices(bestPrint, initialFoil as FoilTreatment, f.price_source),
+        ...extractMTGMetadata(bestPrint)
       }));
     } catch (e: unknown) {
       setFormError(e instanceof Error ? e.message : 'Scryfall fetch failed');
@@ -535,7 +585,8 @@ export default function AdminDashboard() {
        foil_treatment: newFoil as FoilTreatment,
        image_url: bestPrint.image_uris?.normal || bestPrint.image_uris?.large || f.image_url,
        description: extractDescription(bestPrint) || f.description,
-       price_reference: applyPrintPrices(bestPrint, newFoil as FoilTreatment, f.price_source)
+       price_reference: applyPrintPrices(bestPrint, newFoil as FoilTreatment, f.price_source),
+       ...extractMTGMetadata(bestPrint)
      }));
   };
 
@@ -563,7 +614,8 @@ export default function AdminDashboard() {
       foil_treatment: newFoil as FoilTreatment,
       image_url: bestPrint.image_uris?.normal || bestPrint.image_uris?.large || f.image_url,
       description: extractDescription(bestPrint) || f.description,
-      price_reference: applyPrintPrices(bestPrint, newFoil as FoilTreatment, f.price_source)
+      price_reference: applyPrintPrices(bestPrint, newFoil as FoilTreatment, f.price_source),
+      ...extractMTGMetadata(bestPrint)
     }));
   };
 
@@ -586,7 +638,8 @@ export default function AdminDashboard() {
       foil_treatment: newFoil as FoilTreatment,
       image_url: bestPrint.image_uris?.normal || bestPrint.image_uris?.large || f.image_url,
       description: extractDescription(bestPrint) || f.description,
-      price_reference: applyPrintPrices(bestPrint, newFoil as FoilTreatment, f.price_source)
+      price_reference: applyPrintPrices(bestPrint, newFoil as FoilTreatment, f.price_source),
+      ...extractMTGMetadata(bestPrint)
     }));
   };
 
@@ -603,7 +656,8 @@ export default function AdminDashboard() {
       promo_type: newPromo,
       foil_treatment: newFoil as FoilTreatment,
       image_url: bestPrint.image_uris?.normal || bestPrint.image_uris?.large || f.image_url,
-      price_reference: applyPrintPrices(bestPrint, newFoil as FoilTreatment, f.price_source)
+      price_reference: applyPrintPrices(bestPrint, newFoil as FoilTreatment, f.price_source),
+      ...extractMTGMetadata(bestPrint)
     }));
   };
 
@@ -613,8 +667,9 @@ export default function AdminDashboard() {
        ...f,
        foil_treatment: newFoil,
        image_url: print?.image_uris?.normal || print?.image_uris?.large || f.image_url,
-       price_reference: print ? applyPrintPrices(print, newFoil, f.price_source) : f.price_reference
-     }));
+       price_reference: print ? applyPrintPrices(print, newFoil, f.price_source) : f.price_reference,
+       ...(print ? extractMTGMetadata(print) : {})
+      }));
   };
 
   const openSettings = () => {
@@ -730,6 +785,17 @@ export default function AdminDashboard() {
         image_url: form.image_url || undefined,
         description: form.description || undefined,
         category_ids: form.category_ids,
+        collector_number: form.collector_number || undefined,
+        promo_type: form.promo_type || undefined,
+        language: form.language,
+        color_identity: form.color_identity || undefined,
+        rarity: form.rarity || undefined,
+        cmc: form.cmc === '' ? undefined : Number(form.cmc),
+        is_legendary: form.is_legendary,
+        is_historic: form.is_historic,
+        is_land: form.is_land,
+        is_basic_land: form.is_basic_land,
+        art_variation: form.art_variation || undefined,
       };
       
       // Clean up irrelevant price fields depending on source
@@ -1213,21 +1279,40 @@ export default function AdminDashboard() {
 
             <div className="flex gap-6 flex-col md:flex-row">
               <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="sm:col-span-2 flex items-end gap-2">
-                <div className="flex-1">
-                  <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>CARD / PRODUCT NAME *</label>
-                  <input id="form-name" type="text" value={form.name} onChange={e => {
-                    const val = e.target.value;
-                    setForm(f => ({ ...EMPTY_FORM, name: val, tcg: f.tcg, category: f.category }));
-                    setScryfallPrints([]);
-                  }} />
+                <div className="sm:col-span-2 flex items-end gap-3 flex-wrap sm:flex-nowrap">
+                  <div style={{ width: '100px' }}>
+                    <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>SET</label>
+                    {scryfallPrints.length > 0 ? (
+                      <select id="form-set-code-top" value={form.set_code} onChange={e => handleSetChange(e.target.value)} className="font-bold">
+                        {Array.from(new Map(scryfallPrints.map(c => [c.set, c.set_name])).entries()).map(([code, name]) => (
+                          <option key={code} value={code}>[{code.toUpperCase()}]</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input id="form-set-code-top" type="text" value={form.set_code} onChange={e => setForm(f => ({ ...f, set_code: e.target.value.toUpperCase() }))} placeholder="MH2" className="text-center font-bold uppercase" />
+                    )}
+                  </div>
+                  <div style={{ width: '80px' }}>
+                    <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}># CN</label>
+                    <input id="form-cn-top" type="text" value={form.collector_number} onChange={e => handleArtChange(e.target.value)} placeholder="e.g. 123" className="text-center font-bold" />
+                  </div>
+                  <div className="flex-1 min-w-[200px]">
+                    <div className="flex justify-between items-end mb-1">
+                      <label className="text-xs font-mono-stack" style={{ color: 'var(--text-muted)' }}>CARD / PRODUCT NAME *</label>
+                      {form.set_name && <span className="text-[10px] font-mono-stack truncate" style={{ color: 'var(--gold)', maxWidth: '200px' }}>{form.set_name}</span>}
+                    </div>
+                    <input id="form-name" type="text" value={form.name} onChange={e => {
+                      const val = e.target.value;
+                      setForm(f => ({ ...f, name: val }));
+                      setScryfallPrints([]);
+                    }} />
+                  </div>
+                  {form.tcg === 'mtg' && form.category === 'singles' && (
+                    <button type="button" onClick={handlePopulate} disabled={lookingUp || (!form.name.trim() && (!form.set_code.trim() || !form.collector_number.trim()))} className="btn-secondary px-4 transition-colors hover:text-gold" style={{ height: '42px', padding: '0 1rem', fontSize: '0.8rem' }} title="Lookup Scryfall Data">
+                      {lookingUp ? '⏳...' : '📥 POPULATE'}
+                    </button>
+                  )}
                 </div>
-                {form.tcg === 'mtg' && form.category === 'singles' && (
-                  <button type="button" onClick={handlePopulate} disabled={lookingUp || !form.name.trim()} className="btn-secondary px-4 transition-colors hover:text-gold" style={{ height: '42px', padding: '0 1rem', fontSize: '0.8rem' }} title="Lookup Scryfall Data">
-                    {lookingUp ? '⏳...' : '📥 POPULATE'}
-                  </button>
-                )}
-              </div>
               <div>
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>TCG *</label>
                 <select id="form-tcg" value={form.tcg} onChange={e => setForm(f => ({ ...f, tcg: e.target.value }))}>
@@ -1242,22 +1327,6 @@ export default function AdminDashboard() {
                   <option value="sealed">Sealed</option>
                   <option value="accessories">Accessories</option>
                 </select>
-              </div>
-              <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>SET CODE</label>
-                {scryfallPrints.length > 0 ? (
-                  <select id="form-set-code" value={form.set_code} onChange={e => handleSetChange(e.target.value)}>
-                    {Array.from(new Map(scryfallPrints.map(c => [c.set, c.set_name])).entries()).map(([code, name]) => (
-                      <option key={code} value={code}>[{(code as string).toUpperCase()}] {name as string}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <input id="form-set-code" type="text" value={form.set_code} onChange={e => handleSetChange(e.target.value)} placeholder="e.g. MH2" />
-                )}
-              </div>
-              <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>SET NAME</label>
-                <input id="form-set-name" type="text" value={form.set_name} onChange={e => setForm(f => ({ ...f, set_name: e.target.value }))} readOnly={scryfallPrints.length > 0} style={{ opacity: scryfallPrints.length > 0 ? 0.7 : 1 }} />
               </div>
               <div>
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>CONDITION</label>
@@ -1278,7 +1347,7 @@ export default function AdminDashboard() {
               </div>
               
               <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>ART VARIATION</label>
+                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>ARTIST / COLLECTOR #</label>
                 <select id="form-art" 
                   value={form.collector_number} 
                   disabled={scryfallPrints.length === 0 || !form.card_treatment}
@@ -1353,6 +1422,53 @@ export default function AdminDashboard() {
                   )}
                 </div>
               </div>
+
+              {/* MTG Metadata section */}
+              {form.tcg === 'mtg' && form.category === 'singles' && (
+                <div className="sm:col-span-2 mt-4 pt-4" style={{ borderTop: '1px dashed var(--ink-border)' }}>
+                  <h3 className="text-sm font-mono-stack mb-3" style={{ color: 'var(--text-primary)' }}>MTG METADATA</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                    <div>
+                      <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>LANGUAGE</label>
+                      <input type="text" value={form.language} onChange={e => setForm(f => ({ ...f, language: e.target.value }))} placeholder="en" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>COLOR IDENTITY</label>
+                      <input type="text" value={form.color_identity} onChange={e => setForm(f => ({ ...f, color_identity: e.target.value }))} placeholder="e.g. W,U" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>RARITY</label>
+                      <input type="text" value={form.rarity} onChange={e => setForm(f => ({ ...f, rarity: e.target.value }))} placeholder="rare" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>CMC</label>
+                      <input type="number" value={form.cmc} onChange={e => setForm(f => ({ ...f, cmc: e.target.value ? parseFloat(e.target.value) : '' }))} />
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-x-6 gap-y-3 p-3 bg-kraft-light/10 border border-kraft-dark rounded">
+                    <label className="flex items-center gap-2 text-xs font-mono-stack cursor-pointer">
+                      <input type="checkbox" checked={form.is_legendary} onChange={e => setForm(f => ({ ...f, is_legendary: e.target.checked }))} />
+                      LEGENDARY
+                    </label>
+                    <label className="flex items-center gap-2 text-xs font-mono-stack cursor-pointer">
+                      <input type="checkbox" checked={form.is_historic} onChange={e => setForm(f => ({ ...f, is_historic: e.target.checked }))} />
+                      HISTORIC
+                    </label>
+                    <label className="flex items-center gap-2 text-xs font-mono-stack cursor-pointer">
+                      <input type="checkbox" checked={form.is_land} onChange={e => setForm(f => ({ ...f, is_land: e.target.checked }))} />
+                      LAND
+                    </label>
+                    <label className="flex items-center gap-2 text-xs font-mono-stack cursor-pointer">
+                      <input type="checkbox" checked={form.is_basic_land} onChange={e => setForm(f => ({ ...f, is_basic_land: e.target.checked }))} />
+                      BASIC LAND
+                    </label>
+                  </div>
+                  <div className="mt-4">
+                    <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>ART VARIATION (SPECIFIC)</label>
+                    <input type="text" value={form.art_variation} onChange={e => setForm(f => ({ ...f, art_variation: e.target.value }))} placeholder="e.g. Borderless Art" />
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>IMAGE URL</label>

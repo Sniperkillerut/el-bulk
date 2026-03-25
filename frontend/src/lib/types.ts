@@ -25,6 +25,20 @@ export interface Product {
   categories?: CustomCategory[];
   image_url?: string;
   description?: string;
+  collector_number?: string;
+  promo_type?: string;
+
+  // MTG Metadata
+  language: string;
+  color_identity?: string;
+  rarity?: string;
+  cmc?: number;
+  is_legendary: boolean;
+  is_historic: boolean;
+  is_land: boolean;
+  is_basic_land: boolean;
+  art_variation?: string;
+
   created_at: string;
   updated_at: string;
 }

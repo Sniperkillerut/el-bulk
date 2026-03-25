@@ -133,16 +133,29 @@ export interface CardLookupResult {
   collector_number?: string;
   price_tcgplayer?: number;  // USD
   price_cardmarket?: number; // EUR
+
+  // MTG Metadata
+  language: string;
+  color_identity?: string;
+  rarity?: string;
+  cmc?: number;
+  is_legendary: boolean;
+  is_historic: boolean;
+  is_land: boolean;
+  is_basic_land: boolean;
+  art_variation?: string;
 }
 
 export async function lookupMTGCard(
   token: string,
   name: string,
   set?: string,
+  cn?: string,
   foil?: string,
 ): Promise<CardLookupResult> {
   const params = new URLSearchParams({ name });
   if (set) params.set('set', set);
+  if (cn) params.set('cn', cn);
   if (foil) params.set('foil', foil);
   const res = await fetch(`${API_BASE}/api/admin/lookup/mtg?${params.toString()}`, {
     headers: { Authorization: `Bearer ${token}` },
