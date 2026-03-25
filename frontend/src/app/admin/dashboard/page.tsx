@@ -340,15 +340,19 @@ export default function AdminDashboard() {
       }
 
       const initialTreatment = getTreatmentType(bestPrint);
-      const initialFoil = bestPrint.finishes?.includes('nonfoil') ? 'non_foil' : 
-                          (bestPrint.promo_types?.includes('oilslick') ? 'oil_slick_foil' :
-                          (bestPrint.promo_types?.includes('raisedfoil') ? 'raised_foil' :
-                          (bestPrint.promo_types?.includes('stepandcompleat') ? 'step_and_compleat_foil' :
-                          (bestPrint.promo_types?.includes('galaxyfoil') ? 'galaxy_foil' :
-                          (bestPrint.promo_types?.includes('surgefoil') ? 'surge_foil' :
-                          (bestPrint.promo_types?.includes('halofoil') ? 'halo_foil' :
-                          (bestPrint.promo_types?.includes('textured') ? 'textured_foil' :
-                          (bestPrint.finishes?.includes('etched') ? 'etched_foil' : 'foil'))))))));
+      const initialFoil = (() => {
+        if (bestPrint.finishes?.includes('nonfoil') && bestPrint.finishes?.length === 1) return 'non_foil';
+        
+        const pt = bestPrint.promo_types || [];
+        const specializedFoilKeywords = ['slick', 'compleat', 'galaxy', 'surge', 'textured', 'raised', 'rainbow', 'confetti', 'ink', 'gilded', 'halo', 'glossy'];
+        const bestPromo = pt.find((p: string) => specializedFoilKeywords.some(kw => p.toLowerCase().includes(kw)));
+        
+        if (bestPromo) return bestPromo;
+        if (bestPrint.finishes?.includes('etched')) return 'etched_foil';
+        if (bestPrint.finishes?.includes('glossy')) return 'glossy';
+        if (bestPrint.finishes?.includes('foil')) return 'foil';
+        return 'non_foil';
+      })();
 
       setForm(f => ({
         ...f,
@@ -372,7 +376,15 @@ export default function AdminDashboard() {
 
   const resolveLabel = (key: string, map: Record<string, string>) => {
     if (map[key]) return map[key];
-    return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    // Dynamic formatting for future-proofing
+    let label = key.replace(/([a-z])([A-Z])/g, '$1 $2'); // camelCase
+    label = label.replace(/oilslick/gi, 'Oil Slick');
+    label = label.replace(/stepandcompleat/gi, 'Step-and-Compleat');
+    label = label.replace(/silverfoil/gi, 'Silver Foil');
+    label = label.replace(/foil$/, ' Foil'); 
+    label = label.replace(/_foil$/, ' Foil');
+    label = label.replace(/_/g, ' '); 
+    return label.replace(/\b\w/g, l => l.toUpperCase()).trim();
   };
 
   const getTreatmentType = (print: any): CardTreatment => {
@@ -504,15 +516,13 @@ export default function AdminDashboard() {
     const targetNum = collectorNumber || form.collector_number;
     const targetPromo = promoType || form.promo_type;
 
-    // Gather ALL finishes available for ALL prints that match granular filters
     const matchingPrints = scryfallPrints.filter(p => 
       getTreatmentType(p) === treatment && 
       (p.set === targetSet || !targetSet) &&
       (p.collector_number === targetNum || !targetNum) &&
       ((p.promo_types?.join(',') || 'none') === targetPromo || !targetPromo)
     );
-    if (matchingPrints.length === 0) return [{ value: form.foil_treatment, label: resolveLabel(form.foil_treatment, FOIL_LABELS) }];
-
+    
     const results: { value: FoilTreatment, label: string }[] = [];
     const seen = new Set<string>();
 
@@ -527,37 +537,22 @@ export default function AdminDashboard() {
       const finishes = print.finishes || [];
       const pt = (print.promo_types || []) as string[];
       
-      // 1. Map standard finishes
-      if (finishes.includes('nonfoil')) addOpt('non_foil', 'Non-Foil');
-      if (finishes.includes('etched')) addOpt('etched_foil', 'Etched Foil');
+      // 1. Physical Finishes
+      finishes.forEach((f: string) => {
+        const key = f === 'nonfoil' ? 'non_foil' : (f === 'foil' ? 'foil' : (f === 'etched' ? 'etched_foil' : f));
+        addOpt(key);
+      });
       
-      let addedSpecializedFoil = false;
-      // 2. Map promo_types / specialized finishes
-      pt.forEach(p => {
-        if (p === 'galaxyfoil' || p === 'galaxy_foil') { addOpt('galaxy_foil', 'Galaxy Foil'); addedSpecializedFoil = true; }
-        else if (p === 'surgefoil') { addOpt('ripple_foil', 'Surge Foil'); addedSpecializedFoil = true; }
-        else if (p === 'halofoil') { addOpt('holo_foil', 'Halo Foil'); addedSpecializedFoil = true; }
-        else if (p === 'textured') { addOpt('textured_foil', 'Textured Foil'); addedSpecializedFoil = true; }
-        else if (p === 'confettifoil') { addOpt('confetti_foil', 'Confetti Foil'); addedSpecializedFoil = true; }
-        else if (p === 'invisibleink') { addOpt('invisible_ink', 'Invisible Ink'); addedSpecializedFoil = true; }
-        else if (p === 'oilslick') { addOpt('oil_slick_foil', 'Oil Slick'); addedSpecializedFoil = true; }
-        else if (p === 'glossy') { addOpt('glossy', 'Glossy'); addedSpecializedFoil = true; }
-        else if (p.endsWith('foil')) {
-          // Catch-all for other foils (e.g. rainbowfoil -> rainbow_foil)
-          const standardized = p.replace(/foil$/, '_foil');
-          addOpt(standardized);
-          addedSpecializedFoil = true;
+      // 2. Specialized Treatments (promo_types)
+      const specialFinishesKw = ['foil', 'ink', 'slick', 'textured', 'gilded', 'glossy', 'rainbow', 'compleat', 'galaxy', 'surge', 'halo', 'raised'];
+      pt.forEach((p: string) => {
+        if (specialFinishesKw.some(kw => p.toLowerCase().includes(kw))) {
+          addOpt(p); 
         }
       });
-
-      // 3. Fallback for standard foil if 'foil' finish is present but no specialized promo_type was found
-      if (finishes.includes('foil') && !addedSpecializedFoil) {
-        addOpt('foil', 'Foil');
-      }
     });
 
     if (results.length === 0) addOpt('non_foil', 'Non-Foil');
-    
     return results;
   };
 

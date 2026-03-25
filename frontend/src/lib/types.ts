@@ -77,24 +77,8 @@ export interface CartItem {
 export const FOIL_LABELS: Record<string, string> = {
   non_foil: 'Non-Foil',
   foil: 'Foil',
-  holo_foil: 'Holo Foil',
-  platinum_foil: 'Platinum Foil',
-  ripple_foil: 'Surge Foil',
   etched_foil: 'Etched Foil',
-  galaxy_foil: 'Galaxy Foil',
-  surge_foil: 'Surge Foil',
-  textured_foil: 'Textured Foil',
-  oil_slick_foil: 'Oil Slick Foil',
-  raised_foil: 'Raised Foil',
-  step_and_compleat_foil: 'Step-and-Compleat Foil',
-  double_rainbow_foil: 'Double Rainbow Foil',
-  confetti_foil: 'Confetti Foil',
-  neon_ink_foil: 'Neon Ink Foil',
-  gilded_foil: 'Gilded Foil',
-  halo_foil: 'Halo Foil',
-  silver_foil: 'Silver Foil',
   glossy: 'Glossy',
-  invisible_ink: 'Invisible Ink',
 };
 
 export const TREATMENT_LABELS: Record<string, string> = {
