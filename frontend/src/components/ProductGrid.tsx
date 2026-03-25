@@ -29,6 +29,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [availableCollections, setAvailableCollections] = useState<CustomCategory[]>([]);
+  const [facets, setFacets] = useState<any>(null);
   const [filters, setFilters] = useState<FiltersState>({ 
     search: '', 
     foil: [], 
@@ -59,9 +60,11 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
       });
       setProducts(res.products);
       setTotal(res.total);
+      setFacets(res.facets);
     } catch {
       setProducts([]);
       setTotal(0);
+      setFacets(null);
     } finally {
       setLoading(false);
     }
@@ -138,6 +141,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                   items={['NM', 'LP', 'MP', 'HP', 'DMG'].map(c => ({ id: c, label: c }))} 
                   selected={filters.condition}
                   onToggle={(val) => toggleFilter('condition', val)}
+                  counts={facets?.condition}
                 />
                 
                 <FilterSection 
@@ -145,6 +149,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                   items={Object.entries(FOIL_LABELS).map(([id, label]) => ({ id, label }))} 
                   selected={filters.foil}
                   onToggle={(val) => toggleFilter('foil', val)}
+                  counts={facets?.foil}
                 />
 
                 <FilterSection 
@@ -152,6 +157,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                   items={Object.entries(TREATMENT_LABELS).map(([id, label]) => ({ id, label }))} 
                   selected={filters.treatment}
                   onToggle={(val) => toggleFilter('treatment', val)}
+                  counts={facets?.treatment}
                 />
 
                 {tcg === 'mtg' && (
@@ -161,6 +167,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                       items={['Common', 'Uncommon', 'Rare', 'Mythic', 'Special', 'Bonus'].map(r => ({ id: r, label: r }))} 
                       selected={filters.rarity}
                       onToggle={(val) => toggleFilter('rarity', val)}
+                      counts={facets?.rarity}
                     />
                     
                     <FilterSection 
@@ -175,6 +182,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                       ]} 
                       selected={filters.color}
                       onToggle={(val) => toggleFilter('color', val)}
+                      counts={facets?.color}
                     />
 
                     <FilterSection 
@@ -194,6 +202,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                       ]} 
                       selected={filters.language}
                       onToggle={(val) => toggleFilter('language', val)}
+                      counts={facets?.language}
                     />
                   </>
                 )}
@@ -203,6 +212,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                   items={availableCollections.map(c => ({ id: c.slug, label: c.name }))} 
                   selected={filters.collection}
                   onToggle={(val) => toggleFilter('collection', val)}
+                  counts={facets?.collection}
                 />
 
                 {(filters.search || filters.foil.length > 0 || filters.treatment.length > 0 || filters.condition.length > 0 || filters.collection.length > 0 || filters.rarity.length > 0 || filters.language.length > 0 || filters.color.length > 0) && (
@@ -275,10 +285,31 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
 }
 
 // Sidebar Components
-function FilterSection({ title, items, selected, onToggle }: { title: string, items: { id: string, label: string }[], selected: string[], onToggle: (id: string) => void }) {
+function FilterSection({ 
+  title, 
+  items, 
+  selected, 
+  onToggle, 
+  counts 
+}: { 
+  title: string, 
+  items: { id: string, label: string }[], 
+  selected: string[], 
+  onToggle: (id: string) => void, 
+  counts?: Record<string, number> 
+}) {
   const [isOpen, setIsOpen] = useState(true);
   
   if (items.length === 0) return null;
+
+  // Hide items with 0 count, but keep currently selected ones visible so they can be uncollapsed
+  const visibleItems = items.filter(item => {
+    if (!counts) return true; // Show all if counts not loaded yet
+    const count = counts[item.id] ?? counts[item.id.toLowerCase()] ?? counts[item.id.toUpperCase()] ?? 0;
+    return selected.includes(item.id) || count > 0;
+  });
+
+  if (visibleItems.length === 0) return null;
 
   return (
     <div className="border-b border-dashed border-kraft-dark py-3">
@@ -292,7 +323,7 @@ function FilterSection({ title, items, selected, onToggle }: { title: string, it
       
       {isOpen && (
         <div className="mt-2 flex flex-col gap-1.5 max-h-[250px] overflow-y-auto">
-          {items.map(item => (
+          {visibleItems.map(item => (
             <label key={item.id} className="flex items-center gap-2 cursor-pointer group">
               <input 
                 type="checkbox" 
@@ -302,6 +333,11 @@ function FilterSection({ title, items, selected, onToggle }: { title: string, it
               />
               <span className="text-xs font-mono-stack text-text-secondary group-hover:text-ink-deep transition-colors truncate">
                 {item.label}
+                {counts && (
+                  <span className="ml-1 opacity-60 text-[10px]">
+                    ({counts[item.id] ?? counts[item.id.toLowerCase()] ?? counts[item.id.toUpperCase()] ?? 0})
+                  </span>
+                )}
               </span>
             </label>
           ))}

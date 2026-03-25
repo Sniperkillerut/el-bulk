@@ -62,11 +62,22 @@ export interface Settings {
 }
 
 
+export interface Facets {
+  condition: Record<string, number>;
+  foil: Record<string, number>;
+  treatment: Record<string, number>;
+  rarity: Record<string, number>;
+  language: Record<string, number>;
+  color: Record<string, number>;
+  collection: Record<string, number>;
+}
+
 export interface ProductListResponse {
   products: Product[];
   total: number;
   page: number;
   page_size: number;
+  facets: Facets;
 }
 
 export interface CartItem {

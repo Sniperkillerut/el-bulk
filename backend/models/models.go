@@ -161,6 +161,17 @@ type ProductListResponse struct {
 	Total    int       `json:"total"`
 	Page     int       `json:"page"`
 	PageSize int       `json:"page_size"`
+	Facets   Facets    `json:"facets"`
+}
+
+type Facets struct {
+	Condition  map[string]int `json:"condition"`
+	Foil       map[string]int `json:"foil"`
+	Treatment  map[string]int `json:"treatment"`
+	Rarity     map[string]int `json:"rarity"`
+	Language   map[string]int `json:"language"`
+	Color      map[string]int `json:"color"`
+	Collection map[string]int `json:"collection"`
 }
 
 type Admin struct {

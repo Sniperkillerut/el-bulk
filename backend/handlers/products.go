@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -184,113 +185,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 	offset := (page - 1) * pageSize
 
-	var conditions []string
-	var args []interface{}
-	idx := 1
-
-	fromClause := "FROM products p"
-	if storageID != "" {
-		fromClause = "FROM products p JOIN product_stored_in ps ON p.id = ps.product_id"
-		conditions = append(conditions, "ps.stored_in_id = $"+strconv.Itoa(idx), "ps.quantity > 0")
-		args = append(args, storageID)
-		idx++
-	}
-
-	if tcg != "" {
-		conditions = append(conditions, "p.tcg = $"+strconv.Itoa(idx))
-		args = append(args, strings.ToLower(tcg))
-		idx++
-	}
-	if category != "" {
-		conditions = append(conditions, "p.category = $"+strconv.Itoa(idx))
-		args = append(args, strings.ToLower(category))
-		idx++
-	}
-	if foil != "" {
-		vals := strings.Split(foil, ",")
-		placeholders := make([]string, len(vals))
-		for i, v := range vals {
-			placeholders[i] = "$" + strconv.Itoa(idx)
-			args = append(args, strings.ToLower(v))
-			idx++
-		}
-		conditions = append(conditions, "LOWER(p.foil_treatment) IN ("+strings.Join(placeholders, ",")+")")
-	}
-	if treatment != "" {
-		vals := strings.Split(treatment, ",")
-		placeholders := make([]string, len(vals))
-		for i, v := range vals {
-			placeholders[i] = "$" + strconv.Itoa(idx)
-			args = append(args, strings.ToLower(v))
-			idx++
-		}
-		conditions = append(conditions, "LOWER(p.card_treatment) IN ("+strings.Join(placeholders, ",")+")")
-	}
-	if condition != "" {
-		vals := strings.Split(condition, ",")
-		placeholders := make([]string, len(vals))
-		for i, v := range vals {
-			placeholders[i] = "$" + strconv.Itoa(idx)
-			args = append(args, strings.ToUpper(v))
-			idx++
-		}
-		conditions = append(conditions, "p.condition IN ("+strings.Join(placeholders, ",")+")")
-	}
-	if collection != "" {
-		fromClause += " JOIN product_categories pc_col ON p.id = pc_col.product_id JOIN custom_categories c_col ON pc_col.category_id = c_col.id"
-		conditions = append(conditions, "c_col.slug = $"+strconv.Itoa(idx))
-		args = append(args, collection)
-		idx++
-	}
-	if rarity != "" {
-		vals := strings.Split(rarity, ",")
-		placeholders := make([]string, len(vals))
-		for i, v := range vals {
-			placeholders[i] = "$" + strconv.Itoa(idx)
-			args = append(args, strings.ToLower(v))
-			idx++
-		}
-		conditions = append(conditions, "LOWER(p.rarity) IN ("+strings.Join(placeholders, ",")+")")
-	}
-	if language != "" {
-		vals := strings.Split(language, ",")
-		placeholders := make([]string, len(vals))
-		for i, v := range vals {
-			placeholders[i] = "$" + strconv.Itoa(idx)
-			args = append(args, strings.ToLower(v))
-			idx++
-		}
-		conditions = append(conditions, "LOWER(p.language) IN ("+strings.Join(placeholders, ",")+")")
-	}
-	if color != "" {
-		vals := strings.Split(color, ",")
-		colorConds := make([]string, len(vals))
-		for i, v := range vals {
-			colorConds[i] = "p.color_identity ILIKE $" + strconv.Itoa(idx)
-			args = append(args, "%"+strings.ToUpper(v)+"%")
-			idx++
-		}
-		conditions = append(conditions, "("+strings.Join(colorConds, " OR ")+")")
-	}
-	orderBy := "p.created_at DESC"
-	if search != "" {
-		// Fuzzy search for Name, ILIKE for metadata
-		searchPattern := "%" + search + "%"
-		conditions = append(conditions, `(
-			p.name % $`+strconv.Itoa(idx)+` OR 
-			p.name ILIKE $`+strconv.Itoa(idx+1)+` OR 
-			COALESCE(p.set_name, '') ILIKE $`+strconv.Itoa(idx+1)+` OR
-			COALESCE(p.set_code, '') ILIKE $`+strconv.Itoa(idx+1)+` OR
-			COALESCE(p.artist, '') ILIKE $`+strconv.Itoa(idx+1)+` OR
-			COALESCE(p.collector_number, '') ILIKE $`+strconv.Itoa(idx+1)+` OR
-			COALESCE(p.oracle_text, '') ILIKE $`+strconv.Itoa(idx+1)+` OR
-			COALESCE(p.type_line, '') ILIKE $`+strconv.Itoa(idx+1)+` OR
-			COALESCE(p.promo_type, '') ILIKE $`+strconv.Itoa(idx+1)+`
-		)`)
-		args = append(args, search, searchPattern)
-		orderBy = "similarity(p.name, $"+strconv.Itoa(idx)+") DESC, p.created_at DESC"
-		idx += 2
-	}
+	fromClause, conditions, args := h.buildFilters(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color)
 
 	where := ""
 	if len(conditions) > 0 {
@@ -299,9 +194,14 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	var total int
 	if err := h.DB.Get(&total, "SELECT COUNT(*) "+fromClause+" "+where, args...); err != nil {
-		log.Printf("Error counting products: %v. Query: SELECT COUNT(*) %s %s", err, fromClause, where)
+		log.Printf("Error counting products: %v.", err)
 		jsonError(w, "Database error", http.StatusInternalServerError)
 		return
+	}
+
+	orderBy := "p.created_at DESC"
+	if search != "" {
+		orderBy = "similarity(p.name, $" + strconv.Itoa(len(args)-1) + ") DESC, p.created_at DESC"
 	}
 
 	listQuery := `SELECT p.id, p.name, p.tcg, p.category, p.set_name, p.set_code, p.collector_number, p.condition, 
@@ -310,31 +210,32 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	                    p.language, p.color_identity, p.rarity, p.cmc, 
 	                    p.is_legendary, p.is_historic, p.is_land, p.is_basic_land, 
 	                    p.art_variation, p.oracle_text, p.artist, p.type_line, 
-	                    p.border_color, p.frame, p.full_art, p.textless ` + 
-	              fromClause + " " + where + " ORDER BY " + orderBy + " LIMIT $" + strconv.Itoa(idx) + " OFFSET $" + strconv.Itoa(idx+1)
-	args = append(args, pageSize, offset)
+	                    p.border_color, p.frame, p.full_art, p.textless ` +
+		fromClause + " " + where + " ORDER BY " + orderBy + " LIMIT $" + strconv.Itoa(len(args)+1) + " OFFSET $" + strconv.Itoa(len(args)+2)
+
+	listArgs := append([]interface{}{}, args...)
+	listArgs = append(listArgs, pageSize, offset)
 
 	var products []models.Product
-	if err := h.DB.Select(&products, listQuery, args...); err != nil {
-		log.Printf("Error selecting products: %v. Query: %s", err, listQuery)
+	if err := h.DB.Select(&products, listQuery, listArgs...); err != nil {
+		log.Printf("Error selecting products: %v", err)
 		jsonError(w, "Database error", http.StatusInternalServerError)
 		return
 	}
 
-	if products == nil {
-		products = []models.Product{}
-	}
-
-	h.populatePrices(products)
-	h.populateStorage(products)
 	isAdmin := strings.Contains(r.URL.Path, "/admin/")
-	h.populateCategories(products, isAdmin)
+	h.enrichProducts(products, isAdmin)
 
-	jsonOK(w, models.ProductListResponse{
+	// Calculate Facets
+	facets := h.getFacets(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(models.ProductListResponse{
 		Products: products,
 		Total:    total,
 		Page:     page,
 		PageSize: pageSize,
+		Facets:   facets,
 	})
 }
 
@@ -551,4 +452,223 @@ func (h *ProductHandler) UpdateStorage(w http.ResponseWriter, r *http.Request) {
 	tx.Commit()
 
 	h.GetStorage(w, r)
+}
+
+func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color string) models.Facets {
+	f := models.Facets{
+		Condition:  make(map[string]int),
+		Foil:       make(map[string]int),
+		Treatment:  make(map[string]int),
+		Rarity:     make(map[string]int),
+		Language:   make(map[string]int),
+		Color:      make(map[string]int),
+		Collection: make(map[string]int),
+	}
+
+	dimensions := []struct {
+		name string
+		col  string
+		val  string
+	}{
+		{"Condition", "p.condition", condition},
+		{"Foil", "p.foil_treatment", foil},
+		{"Treatment", "p.card_treatment", treatment},
+		{"Rarity", "p.rarity", rarity},
+		{"Language", "p.language", language},
+	}
+
+	for _, d := range dimensions {
+		from, conds, args := h.buildFilters(tcg, category, search, storageID, 
+			getFoil(d.name, foil), getTreatment(d.name, treatment), getCondition(d.name, condition), 
+			collection, getRarity(d.name, rarity), getLanguage(d.name, language), color)
+		
+		where := ""
+		if len(conds) > 0 {
+			where = "WHERE " + strings.Join(conds, " AND ")
+		}
+
+		query := fmt.Sprintf("SELECT COALESCE(%s, 'unknown') as val, COUNT(*) %s %s GROUP BY val", d.col, from, where)
+		rows, err := h.DB.Query(query, args...)
+		if err == nil {
+			for rows.Next() {
+				var v string
+				var c int
+				if err := rows.Scan(&v, &c); err == nil {
+					switch d.name {
+					case "Condition": f.Condition[v] = c
+					case "Foil": f.Foil[v] = c
+					case "Treatment": f.Treatment[v] = c
+					case "Rarity": f.Rarity[v] = c
+					case "Language": f.Language[v] = c
+					}
+				}
+			}
+			rows.Close()
+		}
+	}
+
+	from, conds, args := h.buildFilters(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, "")
+	where := ""
+	if len(conds) > 0 {
+		where = "WHERE " + strings.Join(conds, " AND ")
+	}
+	for _, c := range []string{"W", "U", "B", "R", "G", "C"} {
+		var count int
+		idx := len(args) + 1
+		q := fmt.Sprintf("SELECT COUNT(*) %s %s AND p.color_identity ILIKE $%d", from, where, idx)
+		if where == "" {
+			q = fmt.Sprintf("SELECT COUNT(*) %s WHERE p.color_identity ILIKE $%d", from, idx)
+		}
+		h.DB.Get(&count, q, append(args, "%"+c+"%")...)
+		f.Color[c] = count
+	}
+
+	from, conds, args = h.buildFilters(tcg, category, search, storageID, foil, treatment, condition, "", rarity, language, color)
+	where = ""
+	if len(conds) > 0 {
+		where = "WHERE " + strings.Join(conds, " AND ")
+	}
+	collQuery := fmt.Sprintf(`
+		SELECT c.slug, COUNT(*) 
+		%s 
+		JOIN product_categories pc ON p.id = pc.product_id 
+		JOIN custom_categories c ON pc.category_id = c.id 
+		%s 
+		GROUP BY c.slug`, from, where)
+	rows, err := h.DB.Query(collQuery, args...)
+	if err == nil {
+		for rows.Next() {
+			var s string
+			var c int
+			if err := rows.Scan(&s, &c); err == nil {
+				f.Collection[s] = c
+			}
+		}
+		rows.Close()
+	}
+
+	return f
+}
+
+func getFoil(d, v string) string { if d == "Foil" { return "" }; return v }
+func getTreatment(d, v string) string { if d == "Treatment" { return "" }; return v }
+func getCondition(d, v string) string { if d == "Condition" { return "" }; return v }
+func getRarity(d, v string) string { if d == "Rarity" { return "" }; return v }
+func getLanguage(d, v string) string { if d == "Language" { return "" }; return v }
+
+func (h *ProductHandler) enrichProducts(products []models.Product, isAdmin bool) {
+	if len(products) == 0 {
+		return
+	}
+	h.populatePrices(products)
+	h.populateStorage(products)
+	h.populateCategories(products, isAdmin)
+}
+
+func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color string) (string, []string, []interface{}) {
+	var conditions []string
+	var args []interface{}
+	idx := 1
+
+	fromClause := "FROM products p"
+	if storageID != "" {
+		fromClause = "FROM products p JOIN product_stored_in ps ON p.id = ps.product_id"
+		conditions = append(conditions, "ps.stored_in_id = $"+strconv.Itoa(idx), "ps.quantity > 0")
+		args = append(args, storageID)
+		idx++
+	}
+
+	if tcg != "" {
+		conditions = append(conditions, "p.tcg = $"+strconv.Itoa(idx))
+		args = append(args, strings.ToLower(tcg))
+		idx++
+	}
+	if category != "" {
+		conditions = append(conditions, "p.category = $"+strconv.Itoa(idx))
+		args = append(args, strings.ToLower(category))
+		idx++
+	}
+	if foil != "" {
+		vals := strings.Split(foil, ",")
+		placeholders := make([]string, len(vals))
+		for i, v := range vals {
+			placeholders[i] = "$" + strconv.Itoa(idx)
+			args = append(args, strings.ToLower(v))
+			idx++
+		}
+		conditions = append(conditions, "LOWER(p.foil_treatment) IN ("+strings.Join(placeholders, ",")+")")
+	}
+	if treatment != "" {
+		vals := strings.Split(treatment, ",")
+		placeholders := make([]string, len(vals))
+		for i, v := range vals {
+			placeholders[i] = "$" + strconv.Itoa(idx)
+			args = append(args, strings.ToLower(v))
+			idx++
+		}
+		conditions = append(conditions, "LOWER(p.card_treatment) IN ("+strings.Join(placeholders, ",")+")")
+	}
+	if condition != "" {
+		vals := strings.Split(condition, ",")
+		placeholders := make([]string, len(vals))
+		for i, v := range vals {
+			placeholders[i] = "$" + strconv.Itoa(idx)
+			args = append(args, strings.ToUpper(v))
+			idx++
+		}
+		conditions = append(conditions, "p.condition IN ("+strings.Join(placeholders, ",")+")")
+	}
+	if collection != "" {
+		fromClause += " JOIN product_categories pc_col ON p.id = pc_col.product_id JOIN custom_categories c_col ON pc_col.category_id = c_col.id"
+		conditions = append(conditions, "c_col.slug = $"+strconv.Itoa(idx))
+		args = append(args, collection)
+		idx++
+	}
+	if rarity != "" {
+		vals := strings.Split(rarity, ",")
+		placeholders := make([]string, len(vals))
+		for i, v := range vals {
+			placeholders[i] = "$" + strconv.Itoa(idx)
+			args = append(args, strings.ToLower(v))
+			idx++
+		}
+		conditions = append(conditions, "LOWER(p.rarity) IN ("+strings.Join(placeholders, ",")+")")
+	}
+	if language != "" {
+		vals := strings.Split(language, ",")
+		placeholders := make([]string, len(vals))
+		for i, v := range vals {
+			placeholders[i] = "$" + strconv.Itoa(idx)
+			args = append(args, strings.ToLower(v))
+			idx++
+		}
+		conditions = append(conditions, "LOWER(p.language) IN ("+strings.Join(placeholders, ",")+")")
+	}
+	if color != "" {
+		vals := strings.Split(color, ",")
+		colorConds := make([]string, len(vals))
+		for i, v := range vals {
+			colorConds[i] = "p.color_identity ILIKE $" + strconv.Itoa(idx)
+			args = append(args, "%"+strings.ToUpper(v)+"%")
+			idx++
+		}
+		conditions = append(conditions, "("+strings.Join(colorConds, " OR ")+")")
+	}
+	if search != "" {
+		searchPattern := "%" + search + "%"
+		conditions = append(conditions, `(
+			p.name % $`+strconv.Itoa(idx)+` OR 
+			p.name ILIKE $`+strconv.Itoa(idx+1)+` OR 
+			COALESCE(p.set_name, '') ILIKE $`+strconv.Itoa(idx+1)+` OR
+			COALESCE(p.set_code, '') ILIKE $`+strconv.Itoa(idx+1)+` OR
+			COALESCE(p.artist, '') ILIKE $`+strconv.Itoa(idx+1)+` OR
+			COALESCE(p.collector_number, '') ILIKE $`+strconv.Itoa(idx+1)+` OR
+			COALESCE(p.oracle_text, '') ILIKE $`+strconv.Itoa(idx+1)+` OR
+			COALESCE(p.type_line, '') ILIKE $`+strconv.Itoa(idx+1)+` OR
+			COALESCE(p.promo_type, '') ILIKE $`+strconv.Itoa(idx+1)+`
+		)`)
+		args = append(args, search, searchPattern)
+	}
+
+	return fromClause, conditions, args
 }
