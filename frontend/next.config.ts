@@ -17,13 +17,12 @@ const nextConfig: NextConfig = {
     ];
   },
   turbopack: {},
-  webpack: (config, context) => {
-    if (context.dev) {
-      // Force webpack to poll for changes in development mode
-      // Required for Windows/WSL Docker Desktop file sync
+  webpack: (config, { dev, isServer }) => {
+    if (dev) {
       config.watchOptions = {
-        poll: 1000,
+        poll: 800,
         aggregateTimeout: 300,
+        ignored: ['**/node_modules', '**/.next'],
       };
     }
     return config;
