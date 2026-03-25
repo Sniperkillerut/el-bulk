@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { fetchProduct } from '@/lib/api';
-import { Product, FOIL_LABELS, TREATMENT_LABELS } from '@/lib/types';
+import { Product, FOIL_LABELS, TREATMENT_LABELS, resolveLabel } from '@/lib/types';
 import { useCart } from '@/lib/CartContext';
 import Link from 'next/link';
 
@@ -136,14 +136,21 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
                   )}
                   {product.artist && (
                     <p className="text-[10px] mt-1 font-mono-stack" style={{ color: 'var(--text-muted)' }}>
-                      Art by {product.artist}
+                      Art by {product.artist} {product.collector_number ? `(#${product.collector_number})` : ''}
                     </p>
                   )}
                 </div>
 
-                {/* Badges */}
                 <div className="flex flex-wrap gap-2 mt-4 block">
+                  <span className="badge" style={{ background: 'var(--ink-surface)', color: 'var(--text-muted)', border: '1px solid var(--kraft-dark)' }}>
+                    {product.language?.toUpperCase() || 'EN'}
+                  </span>
                   {product.condition && <span className={`badge badge-${product.condition.toLowerCase()} border`}>{product.condition}</span>}
+                  {product.promo_type && product.promo_type !== 'none' && (
+                    <span className="badge" style={{ background: 'var(--hp-color)', color: '#fff', border: 'none' }}>
+                      {resolveLabel(product.promo_type, {})}
+                    </span>
+                  )}
                   {product.foil_treatment !== 'non_foil' && FOIL_LABELS[product.foil_treatment] && (
                     <span className="badge badge-foil">✦ {FOIL_LABELS[product.foil_treatment]}</span>
                   )}
@@ -154,18 +161,21 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
                   )}
                 </div>
 
-                {/* MTG Metadata (Public) */}
                 {product.tcg === 'mtg' && product.category === 'singles' && (
-                  <div className="mt-4 grid grid-cols-3 gap-2 py-3 border-t border-b border-dashed border-kraft-dark">
+                  <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 py-3 border-t border-b border-dashed border-kraft-dark">
                     <div className="text-center">
                       <p className="text-[10px] font-bold text-text-muted uppercase">Identity</p>
                       <p className="text-sm font-mono-stack">{product.color_identity || 'C'}</p>
                     </div>
-                    <div className="text-center border-l border-r border-dashed border-kraft-dark px-2">
+                    <div className="text-center border-l md:border-l border-dashed border-kraft-dark px-2">
                       <p className="text-[10px] font-bold text-text-muted uppercase">Rarity</p>
                       <p className="text-sm font-mono-stack capitalize">{product.rarity || 'Common'}</p>
                     </div>
-                    <div className="text-center">
+                    <div className="text-center border-l border-dashed border-kraft-dark px-2">
+                      <p className="text-[10px] font-bold text-text-muted uppercase">Art Var.</p>
+                      <p className="text-sm font-mono-stack truncate">{product.art_variation || 'Normal'}</p>
+                    </div>
+                    <div className="text-center border-l border-dashed border-kraft-dark px-2">
                       <p className="text-[10px] font-bold text-text-muted uppercase">CMC</p>
                       <p className="text-sm font-mono-stack">{product.cmc ?? 0}</p>
                     </div>

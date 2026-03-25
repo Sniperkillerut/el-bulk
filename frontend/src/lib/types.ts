@@ -97,6 +97,20 @@ export const TREATMENT_LABELS: Record<string, string> = {
   serialized: 'Serialized/Numbered',
 };
 
+export const resolveLabel = (key: string, map: Record<string, string>) => {
+  if (!key || key === 'none') return '';
+  if (map[key]) return map[key];
+  // Dynamic formatting for future-proofing
+  let label = key.replace(/([a-z])([A-Z])/g, '$1 $2'); // camelCase
+  label = label.replace(/oilslick/gi, 'Oil Slick');
+  label = label.replace(/stepandcompleat/gi, 'Step-and-Compleat');
+  label = label.replace(/silverfoil/gi, 'Silver Foil');
+  label = label.replace(/foil$/, ' Foil'); 
+  label = label.replace(/_foil$/, ' Foil');
+  label = label.replace(/_/g, ' '); 
+  return label.replace(/\b\w/g, l => l.toUpperCase()).trim();
+};
+
 export const TCG_LABELS: Record<string, string> = {
   mtg: 'Magic: The Gathering',
   pokemon: 'Pokémon',

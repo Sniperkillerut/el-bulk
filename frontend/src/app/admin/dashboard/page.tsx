@@ -375,6 +375,7 @@ export default function AdminDashboard() {
   };
 
   const resolveLabel = (key: string, map: Record<string, string>) => {
+    if (!key || key === 'none') return 'Standard / Regular';
     if (map[key]) return map[key];
     // Dynamic formatting for future-proofing
     let label = key.replace(/([a-z])([A-Z])/g, '$1 $2'); // camelCase
@@ -481,7 +482,10 @@ export default function AdminDashboard() {
     });
 
     if (results.length === 0 && form.collector_number) {
-       results.push({ value: form.collector_number, label: `Art #${form.collector_number}` });
+       results.push({ 
+         value: form.collector_number, 
+         label: form.artist ? `Art by ${form.artist} (#${form.collector_number})` : `Art #${form.collector_number}` 
+       });
     }
     
     return results;
@@ -504,8 +508,11 @@ export default function AdminDashboard() {
       }
     });
 
-    if (results.length === 0 && form.promo_type) {
-       results.push({ value: form.promo_type, label: form.promo_type === 'none' ? 'Standard / Regular' : form.promo_type });
+    if (results.length === 0) {
+       results.push({ 
+         value: form.promo_type || 'none', 
+         label: (!form.promo_type || form.promo_type === 'none') ? 'Standard / Regular' : resolveLabel(form.promo_type, FOIL_LABELS)
+       });
     }
     
     return results;
@@ -552,7 +559,9 @@ export default function AdminDashboard() {
       });
     });
 
-    if (results.length === 0) addOpt('non_foil', 'Non-Foil');
+    if (results.length === 0) {
+      addOpt(form.foil_treatment || 'non_foil');
+    }
     return results;
   };
 
