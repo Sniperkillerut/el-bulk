@@ -207,19 +207,34 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 		idx++
 	}
 	if foil != "" {
-		conditions = append(conditions, "p.foil_treatment = $"+strconv.Itoa(idx))
-		args = append(args, foil)
-		idx++
+		vals := strings.Split(foil, ",")
+		placeholders := make([]string, len(vals))
+		for i, v := range vals {
+			placeholders[i] = "$" + strconv.Itoa(idx)
+			args = append(args, strings.ToLower(v))
+			idx++
+		}
+		conditions = append(conditions, "LOWER(p.foil_treatment) IN ("+strings.Join(placeholders, ",")+")")
 	}
 	if treatment != "" {
-		conditions = append(conditions, "p.card_treatment = $"+strconv.Itoa(idx))
-		args = append(args, treatment)
-		idx++
+		vals := strings.Split(treatment, ",")
+		placeholders := make([]string, len(vals))
+		for i, v := range vals {
+			placeholders[i] = "$" + strconv.Itoa(idx)
+			args = append(args, strings.ToLower(v))
+			idx++
+		}
+		conditions = append(conditions, "LOWER(p.card_treatment) IN ("+strings.Join(placeholders, ",")+")")
 	}
 	if condition != "" {
-		conditions = append(conditions, "p.condition = $"+strconv.Itoa(idx))
-		args = append(args, strings.ToUpper(condition))
-		idx++
+		vals := strings.Split(condition, ",")
+		placeholders := make([]string, len(vals))
+		for i, v := range vals {
+			placeholders[i] = "$" + strconv.Itoa(idx)
+			args = append(args, strings.ToUpper(v))
+			idx++
+		}
+		conditions = append(conditions, "p.condition IN ("+strings.Join(placeholders, ",")+")")
 	}
 	if collection != "" {
 		fromClause += " JOIN product_categories pc_col ON p.id = pc_col.product_id JOIN custom_categories c_col ON pc_col.category_id = c_col.id"
@@ -228,19 +243,34 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 		idx++
 	}
 	if rarity != "" {
-		conditions = append(conditions, "p.rarity ILIKE $"+strconv.Itoa(idx))
-		args = append(args, rarity)
-		idx++
+		vals := strings.Split(rarity, ",")
+		placeholders := make([]string, len(vals))
+		for i, v := range vals {
+			placeholders[i] = "$" + strconv.Itoa(idx)
+			args = append(args, strings.ToLower(v))
+			idx++
+		}
+		conditions = append(conditions, "LOWER(p.rarity) IN ("+strings.Join(placeholders, ",")+")")
 	}
 	if language != "" {
-		conditions = append(conditions, "p.language = $"+strconv.Itoa(idx))
-		args = append(args, language)
-		idx++
+		vals := strings.Split(language, ",")
+		placeholders := make([]string, len(vals))
+		for i, v := range vals {
+			placeholders[i] = "$" + strconv.Itoa(idx)
+			args = append(args, strings.ToLower(v))
+			idx++
+		}
+		conditions = append(conditions, "LOWER(p.language) IN ("+strings.Join(placeholders, ",")+")")
 	}
 	if color != "" {
-		conditions = append(conditions, "p.color_identity ILIKE $"+strconv.Itoa(idx))
-		args = append(args, "%"+color+"%")
-		idx++
+		vals := strings.Split(color, ",")
+		colorConds := make([]string, len(vals))
+		for i, v := range vals {
+			colorConds[i] = "p.color_identity ILIKE $" + strconv.Itoa(idx)
+			args = append(args, "%"+strings.ToUpper(v)+"%")
+			idx++
+		}
+		conditions = append(conditions, "("+strings.Join(colorConds, " OR ")+")")
 	}
 	orderBy := "p.created_at DESC"
 	if search != "" {
