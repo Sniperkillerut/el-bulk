@@ -63,6 +63,20 @@ type scryfallCard struct {
 	Textless      bool     `json:"textless"`
 }
 
+type CardIdentifier struct {
+	Name            string `json:"name,omitempty"`
+	Set             string `json:"set,omitempty"`
+	CollectorNumber string `json:"collector_number,omitempty"`
+}
+
+type scryfallCollectionRequest struct {
+	Identifiers []CardIdentifier `json:"identifiers"`
+}
+
+type scryfallCollectionResponse struct {
+	Data []scryfallCard `json:"data"`
+}
+
 func (c *scryfallCard) bestImageURL() string {
 	for _, u := range []string{c.ImageURIs.PNG, c.ImageURIs.Large, c.ImageURIs.Normal} {
 		if u != "" {
@@ -157,6 +171,46 @@ func LookupMTGCard(name, setCode, collectorNumber, foilTreatment string) (*CardL
 	}
 
 	return nil, errors.New("card not found")
+}
+
+// BatchLookupMTGCard fetches multiple cards from Scryfall using the collection endpoint.
+func BatchLookupMTGCard(identifiers []CardIdentifier) ([]CardLookupResult, error) {
+	if len(identifiers) == 0 {
+		return nil, nil
+	}
+
+	reqBody, _ := json.Marshal(scryfallCollectionRequest{Identifiers: identifiers})
+	req, err := http.NewRequest(http.MethodPost, scryfallBase+"/cards/collection", strings.NewReader(string(reqBody)))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", "ElBulkTCGStore/1.0 (contact@elbulk.com)")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := scryfallClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("scryfall batch status %d", resp.StatusCode)
+	}
+
+	var batchResp scryfallCollectionResponse
+	if err := json.NewDecoder(resp.Body).Decode(&batchResp); err != nil {
+		return nil, err
+	}
+
+	results := make([]CardLookupResult, len(batchResp.Data))
+	for i, card := range batchResp.Data {
+		// Note: foil_treatment is tricky in batch, as it's per card.
+		// For now, we return all metadata and the caller can pick prices later.
+		results[i] = *mapScryfallToResult(&card, "non_foil")
+	}
+
+	return results, nil
 }
 
 func scryfallGet(reqURL string, foilTreatment string) (*CardLookupResult, error) {

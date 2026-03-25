@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/el-bulk/backend/external"
@@ -36,6 +37,25 @@ func (h *LookupHandler) MTG(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jsonOK(w, result)
+}
+
+// POST /api/admin/lookup/mtg/batch
+func (h *LookupHandler) BatchMTG(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		Identifiers []external.CardIdentifier `json:"identifiers"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		jsonError(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	results, err := external.BatchLookupMTGCard(input.Identifiers)
+	if err != nil {
+		jsonError(w, "scryfall batch lookup failed: "+err.Error(), http.StatusBadGateway)
+		return
+	}
+
+	jsonOK(w, results)
 }
 
 

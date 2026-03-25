@@ -265,3 +265,8 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
   cancelled: 'Cancelado',
 };
 
+export interface BulkProductInput extends Partial<Omit<Product, 'categories' | 'stored_in'>> {
+  category_ids?: string[];
+  storage_items?: StorageLocation[];
+}
+

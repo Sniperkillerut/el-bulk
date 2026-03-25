@@ -118,11 +118,12 @@ type ProductInput struct {
 	PriceCOPOverride *float64 `json:"price_cop_override,omitempty"`
 
 	Stock           int      `json:"stock"`
-	CategoryIDs     []string `json:"category_ids,omitempty"`
-	ImageURL        *string  `json:"image_url,omitempty"`
-	Description     *string  `json:"description,omitempty"`
-	CollectorNumber *string  `json:"collector_number,omitempty"`
-	PromoType       *string  `json:"promo_type,omitempty"`
+	CategoryIDs     []string          `json:"category_ids,omitempty"`
+	StorageItems    []StorageLocation `json:"storage_items,omitempty"`
+	ImageURL        *string           `json:"image_url,omitempty"`
+	Description     *string           `json:"description,omitempty"`
+	CollectorNumber *string           `json:"collector_number,omitempty"`
+	PromoType       *string           `json:"promo_type,omitempty"`
 
 	// MTG Metadata
 	Language      string   `json:"language,omitempty"`

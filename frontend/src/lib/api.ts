@@ -138,11 +138,22 @@ export async function adminDeleteProduct(token: string, id: string): Promise<voi
   if (!res.ok) await logAndThrow(res, 'Failed to delete product');
 }
 
+export async function adminBulkCreateProducts(token: string, products: import('./types').BulkProductInput[]): Promise<{ message: string; count: number }> {
+  const res = await fetch(`${API_BASE}/api/admin/products/bulk`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(products),
+  });
+  if (!res.ok) await logAndThrow(res, 'Failed to bulk create products');
+  return res.json();
+}
+
 // ---------------------------------------------------------------------------
 // External card lookup (Scryfall for MTG, Pokémon TCG API for Pokémon)
 // ---------------------------------------------------------------------------
 
 export interface CardLookupResult {
+  name?: string;
   image_url: string;
   set_name: string;
   set_code: string;
@@ -160,6 +171,13 @@ export interface CardLookupResult {
   is_land: boolean;
   is_basic_land: boolean;
   art_variation?: string;
+  oracle_text?: string;
+  artist?: string;
+  type_line?: string;
+  border_color?: string;
+  frame?: string;
+  full_art: boolean;
+  textless: boolean;
 }
 
 export async function lookupMTGCard(
@@ -177,6 +195,22 @@ export async function lookupMTGCard(
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) await logAndThrow(res, 'MTG lookup failed');
+  return res.json();
+}
+
+export async function adminBatchLookupMTG(
+  token: string,
+  identifiers: { name?: string; set?: string; cn?: string }[]
+): Promise<CardLookupResult[]> {
+  const res = await fetch(`${API_BASE}/api/admin/lookup/mtg/batch`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ identifiers }),
+  });
+  if (!res.ok) await logAndThrow(res, 'MTG batch lookup failed');
   return res.json();
 }
 

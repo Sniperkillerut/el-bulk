@@ -72,6 +72,7 @@ func main() {
 				// Products CRUD
 				r.Get("/products", productHandler.List)
 				r.Post("/products", productHandler.Create)
+				r.Post("/products/bulk", productHandler.BulkCreate)
 				r.Put("/products/{id}", productHandler.Update)
 				r.Delete("/products/{id}", productHandler.Delete)
 
@@ -98,6 +99,7 @@ func main() {
 
 				// External card lookup (Scryfall + Pokémon TCG API)
 				r.Get("/lookup/mtg", lookupHandler.MTG)
+				r.Post("/lookup/mtg/batch", lookupHandler.BatchMTG)
 				r.Get("/lookup/pokemon", lookupHandler.Pokemon)
 
 				// Price refresh (manual trigger + scheduled nightly)

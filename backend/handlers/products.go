@@ -97,6 +97,26 @@ func (h *ProductHandler) saveProductCategories(productID string, categoryIDs []s
 	}
 }
 
+func (h *ProductHandler) saveProductStorage(productID string, items []models.StorageLocation) {
+	// First clear existing storage for this product
+	_, err := h.DB.Exec("DELETE FROM product_stored_in WHERE product_id = $1", productID)
+	if err != nil {
+		logger.Error("Error clearing product_stored_in for %s: %v", productID, err)
+	}
+
+	for _, item := range items {
+		if item.Quantity > 0 {
+			_, err := h.DB.Exec(`
+				INSERT INTO product_stored_in (product_id, stored_in_id, quantity)
+				VALUES ($1, $2, $3)
+			`, productID, item.StoredInID, item.Quantity)
+			if err != nil {
+				logger.Error("Error inserting product_stored_in (product=%s, storage=%s): %v", productID, item.StoredInID, err)
+			}
+		}
+	}
+}
+
 func (h *ProductHandler) populateCategories(products []models.Product, isAdmin bool) {
 	if len(products) == 0 {
 		return
@@ -315,6 +335,7 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.saveProductCategories(product.ID, input.CategoryIDs)
+	h.saveProductStorage(product.ID, input.StorageItems)
 
 	products := []models.Product{product}
 	h.populatePrices(products)
@@ -365,6 +386,7 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.saveProductCategories(product.ID, input.CategoryIDs)
+	h.saveProductStorage(product.ID, input.StorageItems)
 
 	products := []models.Product{product}
 	h.populatePrices(products)
@@ -390,6 +412,98 @@ func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jsonOK(w, map[string]string{"message": "Product deleted"})
+}
+
+// POST /api/admin/products/bulk
+func (h *ProductHandler) BulkCreate(w http.ResponseWriter, r *http.Request) {
+	var inputs []models.ProductInput
+	if err := json.NewDecoder(r.Body).Decode(&inputs); err != nil {
+		jsonError(w, "Invalid request body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	tx, err := h.DB.Beginx()
+	if err != nil {
+		jsonError(w, "Failed to start transaction", http.StatusInternalServerError)
+		return
+	}
+
+	var createdCount int
+	for _, input := range inputs {
+		if input.Name == "" || input.TCG == "" || input.Category == "" {
+			continue // skip invalid entries or could return error
+		}
+
+		if input.FoilTreatment == "" {
+			input.FoilTreatment = models.FoilNonFoil
+		}
+		if input.CardTreatment == "" {
+			input.CardTreatment = models.TreatmentNormal
+		}
+		if input.PriceSource == "" {
+			input.PriceSource = models.PriceSourceManual
+		}
+
+		var productID string
+		err := tx.QueryRow(`
+			INSERT INTO products (name, tcg, category, set_name, set_code, condition,
+			                      foil_treatment, card_treatment,
+			                      price_reference, price_source, price_cop_override,
+			                      stock, image_url, description, collector_number, promo_type,
+			                      language, color_identity, rarity, cmc, is_legendary, is_historic, is_land, is_basic_land, art_variation,
+			                      oracle_text, artist, type_line, border_color, frame, full_art, textless)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32)
+			RETURNING id
+		`, input.Name, input.TCG, input.Category, input.SetName, input.SetCode, input.Condition,
+			input.FoilTreatment, input.CardTreatment,
+			input.PriceReference, input.PriceSource, input.PriceCOPOverride,
+			input.Stock, input.ImageURL, input.Description, input.CollectorNumber, input.PromoType,
+			input.Language, input.ColorIdentity, input.Rarity, input.CMC, input.IsLegendary, input.IsHistoric, input.IsLand, input.IsBasicLand, input.ArtVariation,
+			input.OracleText, input.Artist, input.TypeLine, input.BorderColor, input.Frame, input.FullArt, input.Textless,
+		).Scan(&productID)
+
+		if err != nil {
+			tx.Rollback()
+			jsonError(w, "Failed to create product during bulk: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Save Categories
+		for _, cid := range input.CategoryIDs {
+			_, err = tx.Exec("INSERT INTO product_categories (product_id, category_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", productID, cid)
+			if err != nil {
+				tx.Rollback()
+				jsonError(w, "Failed to save category during bulk: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
+		// Save Storage
+		for _, item := range input.StorageItems {
+			if item.Quantity > 0 {
+				_, err = tx.Exec(`
+					INSERT INTO product_stored_in (product_id, stored_in_id, quantity)
+					VALUES ($1, $2, $3)
+				`, productID, item.StoredInID, item.Quantity)
+				if err != nil {
+					tx.Rollback()
+					jsonError(w, "Failed to save storage during bulk: "+err.Error(), http.StatusInternalServerError)
+					return
+				}
+			}
+		}
+		createdCount++
+	}
+
+	if err := tx.Commit(); err != nil {
+		jsonError(w, "Failed to commit transaction", http.StatusInternalServerError)
+		return
+	}
+
+	jsonOK(w, map[string]interface{}{
+		"message": fmt.Sprintf("Successfully imported %d products", createdCount),
+		"count":   createdCount,
+	})
 }
 
 // GET /api/admin/products/:id/storage

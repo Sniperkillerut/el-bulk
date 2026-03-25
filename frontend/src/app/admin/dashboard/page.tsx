@@ -12,6 +12,7 @@ import {
 import { Product, FOIL_LABELS, TREATMENT_LABELS, KNOWN_TCGS, TCG_SHORT, FoilTreatment, CardTreatment, PriceSource, Settings, StoredIn, StorageLocation, CustomCategory } from '@/lib/types';
 import OrdersPanel from '@/components/admin/OrdersPanel';
 import CardImage from '@/components/CardImage';
+import CSVImportModal from '@/components/admin/CSVImportModal';
 
 interface FormState {
   name: string;
@@ -117,6 +118,7 @@ export default function AdminDashboard() {
   // Settings states
   const [showSettings, setShowSettings] = useState(false);
   const [showOrders, setShowOrders] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [settings, setSettings] = useState<Settings>({ 
     usd_to_cop_rate: 4200, 
     eur_to_cop_rate: 4600,
@@ -881,6 +883,7 @@ export default function AdminDashboard() {
           <button onClick={() => setShowStorageModal(true)} className="btn-secondary flex-1 sm:flex-none text-[10px] sm:text-[0.85rem] px-3 sm:px-4 py-2 sm:py-2.5">📦 STORAGE</button>
           <button id="admin-settings" onClick={openSettings} className="btn-secondary flex-1 sm:flex-none text-[10px] sm:text-[0.85rem] px-3 sm:px-4 py-2 sm:py-2.5">⚙ SETTINGS</button>
           <button id="admin-create-product" onClick={openCreate} className="btn-primary flex-1 sm:flex-none text-[10px] sm:text-[1.1rem] px-3 sm:px-6 py-2 sm:py-2.4">+ NEW PRODUCT</button>
+          <button onClick={() => setShowImportModal(true)} className="btn-primary flex-1 sm:flex-none text-[10px] sm:text-[1rem] px-3 sm:px-6 py-2 sm:py-2.4" style={{ background: 'var(--nm-color)' }}>📂 IMPORT CSV</button>
           <button onClick={logout} className="btn-secondary flex-1 sm:flex-none text-[10px] sm:text-[0.85rem] px-3 sm:px-4 py-2 sm:py-2.5">LOG OUT</button>
         </div>
       </div>
@@ -1635,6 +1638,16 @@ export default function AdminDashboard() {
       {/* Orders Panel */}
       {showOrders && (
         <OrdersPanel token={token} onClose={() => { setShowOrders(false); loadProducts(); }} />
+      )}
+
+      {showImportModal && (
+        <CSVImportModal 
+          token={token} 
+          storageLocations={storageLocations} 
+          categories={categories}
+          onClose={() => setShowImportModal(false)} 
+          onImported={() => loadProducts()} 
+        />
       )}
     </div>
   );
