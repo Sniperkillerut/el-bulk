@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/utils/logger"
 )
 
 type ProductHandler struct {
@@ -84,15 +84,15 @@ func (h *ProductHandler) populateStorage(products []models.Product) {
 }
 
 func (h *ProductHandler) saveProductCategories(productID string, categoryIDs []string) {
-	log.Printf("saveProductCategories called for Product: %s with categories: %v\n", productID, categoryIDs)
+	logger.Info("saveProductCategories called for Product: %s with categories: %v", productID, categoryIDs)
 	_, err := h.DB.Exec("DELETE FROM product_categories WHERE product_id = $1", productID)
 	if err != nil {
-		log.Printf("Error deleting product_categories: %v\n", err)
+		logger.Error("Error deleting product_categories: %v", err)
 	}
 	for _, cid := range categoryIDs {
 		_, err := h.DB.Exec("INSERT INTO product_categories (product_id, category_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", productID, cid)
 		if err != nil {
-			log.Printf("Error inserting product_categories (product=%s, cat=%s): %v\n", productID, cid, err)
+			logger.Error("Error inserting product_categories (product=%s, cat=%s): %v", productID, cid, err)
 		}
 	}
 }
@@ -119,7 +119,7 @@ func (h *ProductHandler) populateCategories(products []models.Product, isAdmin b
 
 	query, args, err := sqlx.In(sql, pids)
 	if err != nil {
-		log.Printf("Error creating IN query for populateCategories: %v\n", err)
+		logger.Error("Error creating IN query for populateCategories: %v", err)
 		return
 	}
 	
@@ -134,7 +134,7 @@ func (h *ProductHandler) populateCategories(products []models.Product, isAdmin b
 		Searchable bool   `db:"searchable"`
 	}
 	if err := h.DB.Select(&catRows, query, args...); err != nil {
-		log.Printf("Error selecting categories: %v\n", err)
+		logger.Error("Error selecting categories: %v", err)
 		return
 	}
 
@@ -194,7 +194,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	var total int
 	if err := h.DB.Get(&total, "SELECT COUNT(*) "+fromClause+" "+where, args...); err != nil {
-		log.Printf("Error counting products: %v.", err)
+		logger.Error("Error counting products: %v.", err)
 		jsonError(w, "Database error", http.StatusInternalServerError)
 		return
 	}
@@ -218,7 +218,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	var products []models.Product
 	if err := h.DB.Select(&products, listQuery, listArgs...); err != nil {
-		log.Printf("Error selecting products: %v", err)
+		logger.Error("Error selecting products: %v", err)
 		jsonError(w, "Database error", http.StatusInternalServerError)
 		return
 	}
@@ -359,7 +359,7 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 	).StructScan(&product)
 
 	if err != nil {
-		log.Printf("ERROR: Update product %s failed: %v", id, err)
+		logger.Error("Update product %s failed: %v", id, err)
 		jsonError(w, "Product not found or update failed", http.StatusNotFound)
 		return
 	}

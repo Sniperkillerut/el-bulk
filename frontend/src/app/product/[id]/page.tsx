@@ -23,10 +23,10 @@ export default function ProductDetailPage() {
       .then(p => {
         setProduct(p);
         setError(false);
-        
       })
-      .catch((err) => {
-        console.error("fetchProduct failed:", err);
+      .catch(() => {
+        // Error is already logged to the server via the API client's logAndThrow.
+        // We set local state to show the UI without triggering a red console error.
         setError(true);
       })
       .finally(() => setLoading(false));
@@ -62,7 +62,6 @@ export default function ProductDetailPage() {
 
   const outOfStock = product.stock === 0;
   const conditionClass = product.condition ? `badge-${product.condition.toLowerCase()}` : '';
-
   const displayDescription = product.oracle_text || product.description;
 
   return (

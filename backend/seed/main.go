@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/el-bulk/backend/db"
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/utils/logger"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -137,10 +137,11 @@ func main() {
 	defer database.Close()
 
 	// Clear products table
-	fmt.Println("Clearing products table...")
+	logger.Info("Clearing products table...")
 	_, err := database.Exec(`DELETE FROM products`)
 	if err != nil {
-		log.Fatalf("Failed to clear products: %v", err)
+		logger.Error("Failed to clear products: %v", err)
+		os.Exit(1)
 	}
 
 	// Create admin user
@@ -155,7 +156,8 @@ func main() {
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(adminPass), bcrypt.DefaultCost)
 	if err != nil {
-		log.Fatalf("Failed to hash password: %v", err)
+		logger.Error("Failed to hash password: %v", err)
+		os.Exit(1)
 	}
 
 	_, err = database.Exec(`
@@ -164,9 +166,10 @@ func main() {
 		ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash
 	`, adminUser, string(hash))
 	if err != nil {
-		log.Fatalf("Failed to create admin: %v", err)
+		logger.Error("Failed to create admin: %v", err)
+		os.Exit(1)
 	}
-	fmt.Printf("✓ Admin user '%s' created/updated\n", adminUser)
+	logger.Info("Admin user '%s' created/updated", adminUser)
 
 	// -------------------------------------------------------------------------
 	// PRODUCT SEEDING (diverse and verified images)
@@ -295,22 +298,23 @@ func main() {
 			RETURNING id
 		`, cat.Name, cat.Slug).Scan(&catID)
 		if err != nil {
-			log.Fatalf("Failed to seed category %s: %v", cat.Slug, err)
+			logger.Error("Failed to seed category %s: %v", cat.Slug, err)
+			os.Exit(1)
 		}
 		categoryMap[cat.Slug] = catID
-		fmt.Printf("✓ Category '%s' ready\n", cat.Slug)
+		logger.Info("Category '%s' ready", cat.Slug)
 	}
 
-	fmt.Println("Seeding storage locations...")
+	logger.Info("Seeding storage locations...")
 	var binderID, boxA_ID string
 	err = database.QueryRow(`INSERT INTO stored_in (name) VALUES ('Binder 1') ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id`).Scan(&binderID)
-	if err != nil { log.Fatalf("Failed to seed Binder 1: %v", err) }
+	if err != nil { logger.Error("Failed to seed Binder 1: %v", err); os.Exit(1) }
 	
 	err = database.QueryRow(`INSERT INTO stored_in (name) VALUES ('Box A') ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id`).Scan(&boxA_ID)
-	if err != nil { log.Fatalf("Failed to seed Box A: %v", err) }
+	if err != nil { logger.Error("Failed to seed Box A: %v", err); os.Exit(1) }
 
 	for _, p := range products {
-		fmt.Printf("Seeding %s (%s)...\n", p.Name, p.TCG)
+		logger.Info("Seeding %s (%s)...", p.Name, p.TCG)
 		
 		desc := p.Description
 		img := p.ImageURL
@@ -362,7 +366,7 @@ func main() {
 			lang, color, rarity, cmc, isLegendary, isHistoric, isLand, isBasicLand, artVariation).Scan(&newProductID)
 		
 		if err != nil {
-			log.Printf("Warning: failed to insert %s: %v", p.Name, err)
+			logger.Warn("failed to insert %s: %v", p.Name, err)
 			continue
 		}
 
@@ -389,5 +393,5 @@ func main() {
 		time.Sleep(10 * time.Millisecond)
 	}
 
-	fmt.Println("\n✅ Seed complete!")
+	logger.Info("Seed complete!")
 }

@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,6 +13,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/utils/logger"
 )
 
 type OrderHandler struct {
@@ -215,7 +215,7 @@ func (h *OrderHandler) List(w http.ResponseWriter, r *http.Request) {
 	var total int
 	countQ := `SELECT COUNT(*) FROM orders o JOIN customers c ON o.customer_id = c.id ` + where
 	if err := h.DB.Get(&total, countQ, args...); err != nil {
-		log.Printf("Order count error: %v", err)
+		logger.Error("Order count error: %v", err)
 		jsonError(w, "Database error", http.StatusInternalServerError)
 		return
 	}
@@ -235,7 +235,7 @@ func (h *OrderHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	var orders []models.OrderWithCustomer
 	if err := h.DB.Select(&orders, listQ, args...); err != nil {
-		log.Printf("Order list error: %v", err)
+		logger.Error("Order list error: %v", err)
 		jsonError(w, "Database error", http.StatusInternalServerError)
 		return
 	}
@@ -278,7 +278,7 @@ func (h *OrderHandler) GetDetail(w http.ResponseWriter, r *http.Request) {
 		       stored_in_snapshot::text as stored_in_snapshot
 		FROM order_items WHERE order_id = $1 ORDER BY product_name
 	`, id); err != nil {
-		log.Printf("Error loading order items for %s: %v", id, err)
+		logger.Error("Error loading order items for %s: %v", id, err)
 		jsonError(w, "Failed to load order items", http.StatusInternalServerError)
 		return
 	}

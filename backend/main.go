@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 
@@ -12,13 +11,14 @@ import (
 	"github.com/el-bulk/backend/db"
 	"github.com/el-bulk/backend/handlers"
 	"github.com/el-bulk/backend/middleware"
+	"github.com/el-bulk/backend/utils/logger"
 )
 
 func main() {
 	database, err := db.ConnectResilient()
 	if err != nil {
-		fmt.Printf("⚠️ WARNING: Could not connect to database on startup: %v\n", err)
-		fmt.Println("⚠️ Server starting in degraded mode (some features will be unavailable)")
+		logger.Warn("Could not connect to database on startup: %v", err)
+		logger.Warn("Server starting in degraded mode (some features will be unavailable)")
 	} else {
 		defer database.Close()
 	}
@@ -57,6 +57,10 @@ func main() {
 
 		// Public order creation
 		r.Post("/orders", orderHandler.Create)
+
+		// Frontend logging
+		logHandler := handlers.NewLogHandler()
+		r.Post("/logs", logHandler.Receive)
 
 		// Admin routes (protected)
 		r.Route("/admin", func(r chi.Router) {
@@ -113,6 +117,9 @@ func main() {
 		port = "8080"
 	}
 
-	fmt.Printf("🚀 El Bulk API running on :%s\n", port)
-	log.Fatal(http.ListenAndServe(":"+port, r))
+	logger.Info("🚀 El Bulk API running on :%s", port)
+	if err := http.ListenAndServe(":"+port, r); err != nil {
+		logger.Error("Server failed: %v", err)
+		os.Exit(1)
+	}
 }

@@ -4,6 +4,7 @@ import './globals.css';
 import Navbar from '@/components/Navbar';
 import { CartProvider } from '@/lib/CartContext';
 import ProductModalManager from '@/components/ProductModalManager';
+import RemoteLogManager from '@/components/RemoteLogManager';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         `}</style>
       </head>
       <body suppressHydrationWarning>
+        <RemoteLogManager />
         <CartProvider>
           <Navbar />
           <ProductModalManager />

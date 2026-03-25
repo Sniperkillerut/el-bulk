@@ -2,13 +2,13 @@ package db
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	"github.com/el-bulk/backend/utils/logger"
 )
 
 func init() {
@@ -33,7 +33,8 @@ func init() {
 func Connect() *sqlx.DB {
 	db, err := ConnectResilient()
 	if err != nil {
-		log.Fatal(err)
+		logger.Error("Database connection failed: %v", err)
+		os.Exit(1)
 	}
 	return db
 }
@@ -52,6 +53,6 @@ func ConnectResilient() (*sqlx.DB, error) {
 	db.SetMaxOpenConns(25)
 	db.SetMaxIdleConns(5)
 
-	fmt.Println("✓ Database connected")
+	logger.Info("Database connected successfully")
 	return db, nil
 }

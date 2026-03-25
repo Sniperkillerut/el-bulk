@@ -3,13 +3,13 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/el-bulk/backend/utils/logger"
 )
 
 // RefreshHandler handles on-demand and scheduled price refreshes.
@@ -104,7 +104,7 @@ func buildScryfallPriceMap() (map[priceKey]cardPrices, error) {
 		return nil, fmt.Errorf("default_cards bulk file not found in scryfall response")
 	}
 
-	log.Printf("[price-refresh] downloading scryfall bulk data from %s", downloadURL)
+	logger.Info("[price-refresh] downloading scryfall bulk data from %s", downloadURL)
 
 	// Step 2: stream the bulk card JSON array
 	dlReq, _ := http.NewRequest(http.MethodGet, downloadURL, nil)
@@ -166,7 +166,7 @@ func buildScryfallPriceMap() (map[priceKey]cardPrices, error) {
 		}
 	}
 
-	log.Printf("[price-refresh] bulk data loaded: %d card printings indexed", cardCount)
+	logger.Info("[price-refresh] bulk data loaded: %d card printings indexed", cardCount)
 	return priceMap, nil
 }
 
@@ -191,12 +191,12 @@ func RunPriceRefresh(db *sqlx.DB) (updated int, errs int) {
 		FROM products
 		WHERE price_source IN ('tcgplayer', 'cardmarket')
 	`); err != nil {
-		log.Printf("[price-refresh] failed to query products: %v", err)
+		logger.Error("[price-refresh] failed to query products: %v", err)
 		return 0, 1
 	}
 
 	if len(rows) == 0 {
-		log.Printf("[price-refresh] no products with external price source, skipping")
+		logger.Info("[price-refresh] no products with external price source, skipping")
 		return 0, 0
 	}
 
@@ -213,7 +213,7 @@ func RunPriceRefresh(db *sqlx.DB) (updated int, errs int) {
 		var err error
 		priceMap, err = buildScryfallPriceMap()
 		if err != nil {
-			log.Printf("[price-refresh] scryfall bulk download failed: %v", err)
+			logger.Error("[price-refresh] scryfall bulk download failed: %v", err)
 			return 0, len(mtgRows)
 		}
 	}
@@ -232,7 +232,7 @@ func RunPriceRefresh(db *sqlx.DB) (updated int, errs int) {
 			prices, ok = priceMap[priceKey{name: name, setCode: "", foil: foil}]
 		}
 		if !ok {
-			log.Printf("[price-refresh] no price found for %q set=%s foil=%s", p.Name, setCode, foil)
+			logger.Warn("[price-refresh] no price found for %q set=%s foil=%s", p.Name, setCode, foil)
 			errs++
 			continue
 		}
@@ -248,20 +248,20 @@ func RunPriceRefresh(db *sqlx.DB) (updated int, errs int) {
 		}
 
 		if refPrice == nil {
-			log.Printf("[price-refresh] source price nil for %q (source: %s)", p.Name, p.PriceSource)
+			logger.Warn("[price-refresh] source price nil for %q (source: %s)", p.Name, p.PriceSource)
 			errs++
 			continue
 		}
 
 		if _, err := db.Exec("UPDATE products SET price_reference=$1 WHERE id=$2", *refPrice, p.ID); err != nil {
-			log.Printf("[price-refresh] DB update failed for %s: %v", p.ID, err)
+			logger.Error("[price-refresh] DB update failed for %s: %v", p.ID, err)
 			errs++
 			continue
 		}
 		updated++
 	}
 
-	log.Printf("[price-refresh] complete: %d updated, %d errors", updated, errs)
+	logger.Info("[price-refresh] complete: %d updated, %d errors", updated, errs)
 	return updated, errs
 }
 
@@ -279,13 +279,13 @@ func StartMidnightScheduler(db *sqlx.DB) {
 			now := time.Now()
 			next := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
 			sleepDur := time.Until(next)
-			fmt.Printf("⏰ Next price refresh in %s (at %s)\n",
+			logger.Info("⏰ Next price refresh in %s (at %s)",
 				sleepDur.Round(time.Minute), next.Format("2006-01-02 15:04"))
 			time.Sleep(sleepDur)
 
-			log.Println("[price-refresh] Starting scheduled midnight refresh...")
+			logger.Info("[price-refresh] Starting scheduled midnight refresh...")
 			updated, errs := RunPriceRefresh(db)
-			log.Printf("[price-refresh] Done: %d updated, %d errors", updated, errs)
+			logger.Info("[price-refresh] Done: %d updated, %d errors", updated, errs)
 		}
 	}()
 }
