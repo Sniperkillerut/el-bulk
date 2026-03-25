@@ -99,6 +99,23 @@ CREATE TABLE admins (
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- TCGs (Trading Card Games)
+CREATE TABLE tcgs (
+  id         TEXT PRIMARY KEY, -- slug: mtg, pokemon, etc.
+  name       TEXT NOT NULL,
+  is_active  BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Default TCGs
+INSERT INTO tcgs (id, name) VALUES
+  ('mtg', 'Magic: The Gathering'),
+  ('pokemon', 'Pokémon'),
+  ('lorcana', 'Disney Lorcana'),
+  ('onepiece', 'One Piece'),
+  ('yugioh', 'Yu-Gi-Oh!')
+ON CONFLICT (id) DO NOTHING;
+
 -- Storage Locations
 CREATE TABLE stored_in (
   id   UUID PRIMARY KEY DEFAULT gen_random_uuid(),

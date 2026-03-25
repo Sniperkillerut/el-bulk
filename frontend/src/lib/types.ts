@@ -140,6 +140,13 @@ export const TCG_SHORT: Record<string, string> = {
 
 export const KNOWN_TCGS = ['mtg', 'pokemon', 'lorcana', 'onepiece', 'yugioh'];
 
+export interface TCG {
+  id: string;   // slug: mtg, pokemon, etc.
+  name: string;
+  is_active: boolean;
+  created_at?: string;
+}
+
 export interface StoredIn {
   id: string;
   name: string;

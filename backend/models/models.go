@@ -150,11 +150,24 @@ type Settings struct {
 	EURToCOPRate float64 `json:"eur_to_cop_rate"`
 
 	// Contact Info
-	ContactAddress   string `json:"contact_address"`
-	ContactPhone     string `json:"contact_phone"`
-	ContactEmail     string `json:"contact_email"`
-	ContactInstagram string `json:"contact_instagram"`
-	ContactHours     string `json:"contact_hours"`
+	ContactAddress   string   `json:"contact_address"`
+	ContactPhone     string   `json:"contact_phone"`
+	ContactEmail     string   `json:"contact_email"`
+	ContactInstagram string   `json:"contact_instagram"`
+	ContactHours     string   `json:"contact_hours"`
+}
+
+type TCG struct {
+	ID        string    `db:"id"         json:"id"`
+	Name      string    `db:"name"       json:"name"`
+	IsActive  bool      `db:"is_active"  json:"is_active"`
+	CreatedAt time.Time `db:"created_at" json:"created_at"`
+}
+
+type TCGInput struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	IsActive bool   `json:"is_active"`
 }
 
 type ProductListResponse struct {

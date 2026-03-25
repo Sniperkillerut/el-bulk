@@ -73,7 +73,7 @@ export default function HomeSearchBar() {
       {showResults && query.trim() && (
         <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-surface border-2 border-kraft-dark shadow-2xl rounded-sm animate-in fade-in slide-in-from-top-2 duration-200" style={{ width: 'min(640px, 95vw)', left: '0' }}>
           <div className="max-h-[500px] overflow-y-auto">
-            {results.length > 0 ? (
+            {results && results.length > 0 ? (
               <div className="divide-y divide-kraft-light">
                 {results.map((product) => (
                   <div 

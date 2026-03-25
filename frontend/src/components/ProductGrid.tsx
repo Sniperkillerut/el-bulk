@@ -247,7 +247,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                 </div>
               ))}
             </div>
-          ) : products.length === 0 ? (
+          ) : (!products || products.length === 0) ? (
             <div className="stamp-border rounded-lg p-16 text-center" style={{ color: 'var(--text-muted)' }}>
               <p className="font-display text-3xl mb-2">NO RESULTS</p>
               <p className="text-sm">Try clearing your filters or check back later.</p>

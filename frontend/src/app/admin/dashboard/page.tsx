@@ -7,10 +7,12 @@ import {
   getAdminSettings, updateAdminSettings, lookupMTGCard, CardLookupResult,
   adminFetchStorage, adminCreateStorage, adminUpdateStorage, adminDeleteStorage,
   adminUpdateProductStorage,
-  adminFetchCategories, adminCreateCategory, adminUpdateCategory, adminDeleteCategory
+  adminFetchCategories, adminCreateCategory, adminUpdateCategory, adminDeleteCategory,
+  adminFetchTCGs, adminCreateTCG, adminUpdateTCG, adminDeleteTCG
 } from '@/lib/api';
 import { Product, FOIL_LABELS, TREATMENT_LABELS, KNOWN_TCGS, TCG_SHORT, FoilTreatment, CardTreatment, PriceSource, Settings, StoredIn, StorageLocation, CustomCategory } from '@/lib/types';
 import OrdersPanel from '@/components/admin/OrdersPanel';
+import TCGManager from '@/components/admin/TCGManager';
 import CardImage from '@/components/CardImage';
 import CSVImportModal from '@/components/admin/CSVImportModal';
 
@@ -115,6 +117,10 @@ export default function AdminDashboard() {
   const [editingCategoryShowBadge, setEditingCategoryShowBadge] = useState(true);
   const [editingCategorySearchable, setEditingCategorySearchable] = useState(true);
 
+  // TCG Management Modal
+  const [showTCGModal, setShowTCGModal] = useState(false);
+  const [tcgs, setTcgs] = useState<import('@/lib/types').TCG[]>([]);
+
   // Settings states
   const [showSettings, setShowSettings] = useState(false);
   const [showOrders, setShowOrders] = useState(false);
@@ -191,6 +197,14 @@ export default function AdminDashboard() {
     } catch { }
   }, [token]);
 
+  const loadTCGsData = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await adminFetchTCGs(token);
+      setTcgs(res);
+    } catch { }
+  }, [token]);
+
   useEffect(() => {
     loadProducts();
   }, [loadProducts]);
@@ -199,7 +213,8 @@ export default function AdminDashboard() {
     loadSettingsData();
     loadStorageLocations();
     loadCategoriesData();
-  }, [loadSettingsData, loadStorageLocations, loadCategoriesData]);
+    loadTCGsData();
+  }, [loadSettingsData, loadStorageLocations, loadCategoriesData, loadTCGsData]);
 
   // Sync Global locations into active Product form
   useEffect(() => {
@@ -880,6 +895,7 @@ export default function AdminDashboard() {
         <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto">
           <button onClick={() => setShowOrders(true)} className="btn-secondary flex-1 sm:flex-none text-[10px] sm:text-[0.85rem] px-3 sm:px-4 py-2 sm:py-2.5" style={{ borderColor: 'var(--nm-color)', color: 'var(--nm-color)' }}>📋 ÓRDENES</button>
           <button onClick={() => setShowCategoryModal(true)} className="btn-secondary flex-1 sm:flex-none text-[10px] sm:text-[0.85rem] px-3 sm:px-4 py-2 sm:py-2.5" style={{ borderColor: 'var(--gold)', color: 'var(--gold)' }}>📋 COLLECTIONS</button>
+          <button onClick={() => setShowTCGModal(true)} className="btn-secondary flex-1 sm:flex-none text-[10px] sm:text-[0.85rem] px-3 sm:px-4 py-2 sm:py-2.5" style={{ borderColor: 'var(--kraft-dark)', color: 'var(--kraft-dark)' }}>🃏 TCG REGISTRY</button>
           <button onClick={() => setShowStorageModal(true)} className="btn-secondary flex-1 sm:flex-none text-[10px] sm:text-[0.85rem] px-3 sm:px-4 py-2 sm:py-2.5">📦 STORAGE</button>
           <button id="admin-settings" onClick={openSettings} className="btn-secondary flex-1 sm:flex-none text-[10px] sm:text-[0.85rem] px-3 sm:px-4 py-2 sm:py-2.5">⚙ SETTINGS</button>
           <button id="admin-create-product" onClick={openCreate} className="btn-primary flex-1 sm:flex-none text-[10px] sm:text-[1.1rem] px-3 sm:px-6 py-2 sm:py-2.4">+ NEW PRODUCT</button>
@@ -1347,7 +1363,8 @@ export default function AdminDashboard() {
               <div>
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>TCG *</label>
                 <select id="form-tcg" value={form.tcg} onChange={e => setForm(f => ({ ...f, tcg: e.target.value }))}>
-                  {KNOWN_TCGS.map(t => <option key={t} value={t}>{TCG_SHORT[t]}</option>)}
+                  {tcgs.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  {tcgs.length === 0 && KNOWN_TCGS.map(t => <option key={t} value={t}>{TCG_SHORT[t]}</option>)}
                   <option value="accessories">Accessories</option>
                 </select>
               </div>
@@ -1631,6 +1648,21 @@ export default function AdminDashboard() {
               </button>
               <button onClick={() => setShowModal(false)} className="btn-secondary py-3 text-sm">CANCEL</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* TCG Registry Modal */}
+      {showTCGModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center px-4"
+          style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)' }}>
+          <div className="card no-tilt max-w-2xl w-full p-8" style={{ background: 'var(--ink-surface', border: '4px solid var(--kraft-dark)' }}>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="font-display text-4xl m-0">TCG MANAGEMENT</h2>
+              <button onClick={() => { setShowTCGModal(false); loadTCGsData(); }} className="text-text-muted hover:text-text-primary text-xl">✕</button>
+            </div>
+            
+            <TCGManager token={token} />
           </div>
         </div>
       )}

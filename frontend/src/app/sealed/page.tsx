@@ -2,26 +2,31 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { fetchProducts } from '@/lib/api';
-import { Product, KNOWN_TCGS, TCG_LABELS, TCG_SHORT } from '@/lib/types';
+import { fetchProducts, fetchTCGs } from '@/lib/api';
+import { Product, TCG, TCG_SHORT, TCG_LABELS } from '@/lib/types';
 import ProductCard from '@/components/ProductCard';
 
 export default function SealedLandingPage() {
   const [featured, setFeatured] = useState<Product[]>([]);
+  const [tcgs, setTcgs] = useState<TCG[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function getFeatured() {
+    async function loadData() {
       try {
-        const res = await fetchProducts({ category: 'sealed', collection: 'featured', page_size: 12 });
-        setFeatured(res.products);
+        const [productsRes, tcgsRes] = await Promise.all([
+          fetchProducts({ category: 'sealed', collection: 'featured', page_size: 12 }),
+          fetchTCGs(true)
+        ]);
+        setFeatured(productsRes.products);
+        setTcgs(tcgsRes);
       } catch (err) {
-        console.error('Failed to fetch featured sealed:', err);
+        console.error('Failed to fetch data for sealed landing:', err);
       } finally {
         setLoading(false);
       }
     }
-    getFeatured();
+    loadData();
   }, []);
 
   return (
@@ -45,25 +50,24 @@ export default function SealedLandingPage() {
       <div className="centered-container px-4 mt-12">
         {/* TCG Selection Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
-          {KNOWN_TCGS.map((tcg) => (
+          {tcgs.map((t) => (
             <Link 
-              key={tcg} 
-              href={`/${tcg}/sealed`}
+              key={t.id} 
+              href={`/${t.id}/sealed`}
               className="group relative block transition-transform hover:-translate-y-1"
             >
               <div className="card h-full p-8 flex flex-col items-center justify-center text-center gap-4 border-2 border-kraft-dark transition-shadow hover:shadow-xl relative overflow-hidden">
                 <div className="w-16 h-16 rounded-full flex items-center justify-center font-display text-2xl mb-2" 
                   style={{ background: 'var(--ink-surface)', border: '2px solid var(--hp-color)', color: 'var(--hp-color)' }}>
-                  {TCG_SHORT[tcg][0]}
+                  {t.name[0]}
                 </div>
                 <div>
-                  <h3 className="font-display text-2xl group-hover:text-gold-dark transition-colors">{TCG_LABELS[tcg]}</h3>
+                  <h3 className="font-display text-2xl group-hover:text-gold-dark transition-colors">{t.name}</h3>
                   <p className="text-xs font-mono-stack mt-1" style={{ color: 'var(--text-muted)' }}>VIEW ALL SEALED →</p>
                 </div>
                 
-                {/* Visual design element */}
                 <div className="absolute -bottom-4 -left-4 opacity-5 -rotate-6 group-hover:opacity-10 transition-opacity">
-                   <h2 className="text-8xl font-display">{TCG_SHORT[tcg]}</h2>
+                   <h2 className="text-8xl font-display">{t.name.substring(0, 3).toUpperCase()}</h2>
                 </div>
               </div>
             </Link>

@@ -72,8 +72,8 @@ export async function fetchCategories(): Promise<import('./types').CustomCategor
   return res.json();
 }
 
-export async function fetchTCGs(): Promise<string[]> {
-  const res = await fetch(`${API_BASE}/api/tcgs`, { cache: 'no-store' });
+export async function fetchTCGs(activeOnly: boolean = true): Promise<import('./types').TCG[]> {
+  const res = await fetch(`${API_BASE}/api/tcgs?active_only=${activeOnly}`, { cache: 'no-store' });
   if (!res.ok) return [];
   const data = await res.json();
   return data.tcgs || [];
@@ -369,6 +369,47 @@ export async function adminDeleteCategory(token: string, id: string): Promise<vo
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) await logAndThrow(res, 'Failed to delete custom category');
+}
+
+// ---------------------------------------------------------------------------
+// Admin: TCG Management
+// ---------------------------------------------------------------------------
+
+export async function adminFetchTCGs(token: string): Promise<import('./types').TCG[]> {
+  const res = await fetch(`${API_BASE}/api/admin/tcgs`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  });
+  if (!res.ok) await logAndThrow(res, 'Failed to fetch TCGs');
+  return res.json();
+}
+
+export async function adminCreateTCG(token: string, id: string, name: string): Promise<import('./types').TCG> {
+  const res = await fetch(`${API_BASE}/api/admin/tcgs`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ id, name }),
+  });
+  if (!res.ok) await logAndThrow(res, 'Failed to create TCG');
+  return res.json();
+}
+
+export async function adminUpdateTCG(token: string, id: string, name: string, is_active: boolean): Promise<import('./types').TCG> {
+  const res = await fetch(`${API_BASE}/api/admin/tcgs/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ name, is_active }),
+  });
+  if (!res.ok) await logAndThrow(res, 'Failed to update TCG');
+  return res.json();
+}
+
+export async function adminDeleteTCG(token: string, id: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/admin/tcgs/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) await logAndThrow(res, 'Failed to delete TCG');
 }
 
 // ---------------------------------------------------------------------------

@@ -30,6 +30,7 @@ func main() {
 	settingsHandler := handlers.NewSettingsHandler(database)
 	refreshHandler := handlers.NewRefreshHandler(database)
 	orderHandler := handlers.NewOrderHandler(database)
+	tcgHandler := handlers.NewTCGHandler(database)
 
 	// Start nightly price refresh at midnight
 	handlers.StartMidnightScheduler(database)
@@ -92,6 +93,12 @@ func main() {
 				r.Post("/categories", categoriesHandler.Create)
 				r.Put("/categories/{id}", categoriesHandler.Update)
 				r.Delete("/categories/{id}", categoriesHandler.Delete)
+
+				// TCG Management
+				r.Get("/tcgs", tcgHandler.List)
+				r.Post("/tcgs", tcgHandler.Create)
+				r.Put("/tcgs/{id}", tcgHandler.Update)
+				r.Delete("/tcgs/{id}", tcgHandler.Delete)
 
 				// Exchange rate settings
 				r.Get("/settings", settingsHandler.Get)

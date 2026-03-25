@@ -205,7 +205,8 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 	offset := (page - 1) * pageSize
 
-	fromClause, conditions, args := h.buildFilters(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color)
+	isAdmin := strings.Contains(r.URL.Path, "/admin/")
+	fromClause, conditions, args := h.buildFilters(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color, isAdmin)
 
 	where := ""
 	if len(conditions) > 0 {
@@ -242,12 +243,13 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 		jsonError(w, "Database error", http.StatusInternalServerError)
 		return
 	}
-
-	isAdmin := strings.Contains(r.URL.Path, "/admin/")
+	if products == nil {
+		products = []models.Product{}
+	}
 	h.enrichProducts(products, isAdmin)
 
 	// Calculate Facets
-	facets := h.getFacets(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color)
+	facets := h.getFacets(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color, isAdmin)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(models.ProductListResponse{
@@ -263,29 +265,49 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var product models.Product
-	err := h.DB.Get(&product, "SELECT * FROM products WHERE id = $1", id)
+	
+	isAdmin := strings.Contains(r.URL.Path, "/admin/")
+	query := "SELECT p.* FROM products p"
+	if !isAdmin {
+		query += " LEFT JOIN tcgs t ON p.tcg = t.id WHERE p.id = $1 AND (t.is_active IS NULL OR t.is_active = true)"
+	} else {
+		query += " WHERE p.id = $1"
+	}
+
+	err := h.DB.Get(&product, query, id)
 	if err != nil {
-		jsonError(w, "Product not found", http.StatusNotFound)
+		jsonError(w, "Product not found or unavailable", http.StatusNotFound)
 		return
 	}
 	
 	products := []models.Product{product}
 	h.populatePrices(products)
 	h.populateStorage(products)
-	isAdmin := strings.Contains(r.URL.Path, "/admin/")
 	h.populateCategories(products, isAdmin)
 	jsonOK(w, products[0])
 }
 
 // GET /api/tcgs
 func (h *ProductHandler) ListTCGs(w http.ResponseWriter, r *http.Request) {
-	var tcgs []string
-	err := h.DB.Select(&tcgs, "SELECT DISTINCT tcg FROM products ORDER BY tcg")
+	activeOnly := r.URL.Query().Get("active_only") == "true"
+	
+	var tcgs []models.TCG
+	query := "SELECT * FROM tcgs ORDER BY name"
+	if activeOnly {
+		query = "SELECT * FROM tcgs WHERE is_active = true ORDER BY name"
+	}
+	
+	err := h.DB.Select(&tcgs, query)
 	if err != nil {
+		logger.Error("Error listing TCGs: %v", err)
 		jsonError(w, "Database error", http.StatusInternalServerError)
 		return
 	}
-	jsonOK(w, map[string][]string{"tcgs": tcgs})
+	
+	if tcgs == nil {
+		tcgs = []models.TCG{}
+	}
+	jsonOK(w, map[string]interface{}{"tcgs": tcgs})
 }
 
 // POST /api/admin/products
@@ -568,7 +590,7 @@ func (h *ProductHandler) UpdateStorage(w http.ResponseWriter, r *http.Request) {
 	h.GetStorage(w, r)
 }
 
-func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color string) models.Facets {
+func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color string, isAdmin bool) models.Facets {
 	f := models.Facets{
 		Condition:  make(map[string]int),
 		Foil:       make(map[string]int),
@@ -594,7 +616,7 @@ func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treat
 	for _, d := range dimensions {
 		from, conds, args := h.buildFilters(tcg, category, search, storageID, 
 			getFoil(d.name, foil), getTreatment(d.name, treatment), getCondition(d.name, condition), 
-			collection, getRarity(d.name, rarity), getLanguage(d.name, language), color)
+			collection, getRarity(d.name, rarity), getLanguage(d.name, language), color, isAdmin)
 		
 		where := ""
 		if len(conds) > 0 {
@@ -621,7 +643,7 @@ func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treat
 		}
 	}
 
-	from, conds, args := h.buildFilters(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, "")
+	from, conds, args := h.buildFilters(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, "", isAdmin)
 	where := ""
 	if len(conds) > 0 {
 		where = "WHERE " + strings.Join(conds, " AND ")
@@ -637,7 +659,7 @@ func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treat
 		f.Color[c] = count
 	}
 
-	from, conds, args = h.buildFilters(tcg, category, search, storageID, foil, treatment, condition, "", rarity, language, color)
+	from, conds, args = h.buildFilters(tcg, category, search, storageID, foil, treatment, condition, "", rarity, language, color, isAdmin)
 	where = ""
 	if len(conds) > 0 {
 		where = "WHERE " + strings.Join(conds, " AND ")
@@ -679,12 +701,17 @@ func (h *ProductHandler) enrichProducts(products []models.Product, isAdmin bool)
 	h.populateCategories(products, isAdmin)
 }
 
-func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color string) (string, []string, []interface{}) {
+func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color string, isAdmin bool) (string, []string, []interface{}) {
 	var conditions []string
 	var args []interface{}
 	idx := 1
 
 	fromClause := "FROM products p"
+	if !isAdmin {
+		fromClause += " LEFT JOIN tcgs t ON p.tcg = t.id"
+		conditions = append(conditions, "(t.is_active IS NULL OR t.is_active = true)")
+	}
+
 	if storageID != "" {
 		fromClause = "FROM products p JOIN product_stored_in ps ON p.id = ps.product_id"
 		conditions = append(conditions, "ps.stored_in_id = $"+strconv.Itoa(idx), "ps.quantity > 0")

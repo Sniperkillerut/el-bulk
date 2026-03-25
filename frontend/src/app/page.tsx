@@ -1,15 +1,22 @@
 import Link from 'next/link';
-import { fetchProducts, fetchCategories } from '@/lib/api';
+import { fetchProducts, fetchCategories, fetchTCGs } from '@/lib/api';
 import ProductCard from '@/components/ProductCard';
-import { TCG_SHORT, KNOWN_TCGS, CustomCategory } from '@/lib/types';
+import { TCG_SHORT, CustomCategory } from '@/lib/types';
 import HomeSearchBar from '@/components/HomeSearchBar';
 
 export default async function HomePage() {
   let categories: CustomCategory[] = [];
+  let tcgs: import('@/lib/types').TCG[] = [];
   let collections: { category: CustomCategory; products: import('@/lib/types').Product[] }[] = [];
   
   try {
-    categories = await fetchCategories();
+    const [catsRes, tcgsRes] = await Promise.all([
+      fetchCategories(),
+      fetchTCGs(true)
+    ]);
+    categories = catsRes;
+    tcgs = tcgsRes;
+    
     // Fetch top 4 products for each category
     collections = await Promise.all(
       categories.filter(cat => cat.is_active).map(async (cat) => {
@@ -62,7 +69,11 @@ export default async function HomePage() {
             </div>
 
             <div className="responsive-stack gap-3">
-              <Link href="/mtg/singles" className="btn-primary text-center">SHOP MTG</Link>
+              {tcgs.length > 0 ? (
+                <Link href={`/${tcgs[0].id}/singles`} className="btn-primary text-center">SHOP {tcgs[0].name.toUpperCase()}</Link>
+              ) : (
+                <Link href="/singles" className="btn-primary text-center">BROWSE SINGLES</Link>
+              )}
               <Link href="/bulk" className="btn-secondary text-center">SELL YOUR BULK →</Link>
             </div>
           </div>
@@ -75,11 +86,11 @@ export default async function HomePage() {
       {/* TCG Nav strips */}
       <section style={{ background: 'var(--ink-surface)', borderBottom: '1px dashed var(--kraft-dark)', padding: '1rem' }}>
         <div className="centered-container px-4 flex flex-wrap gap-x-6 gap-y-3 justify-center">
-          {KNOWN_TCGS.map(tcg => (
-            <Link key={tcg} href={`/${tcg}/singles`}
+          {tcgs.map(t => (
+            <Link key={t.id} href={`/${t.id}/singles`}
               className="text-xs sm:text-sm font-display tracking-widest transition-opacity hover:opacity-70 whitespace-nowrap"
               style={{ color: 'var(--text-primary)' }}>
-              {TCG_SHORT[tcg]}
+              {t.name.toUpperCase()}
             </Link>
           ))}
           {categories.filter(cat => cat.searchable).map(cat => (

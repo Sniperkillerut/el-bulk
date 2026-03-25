@@ -3,14 +3,21 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useCart } from '@/lib/CartContext';
-import { KNOWN_TCGS, TCG_SHORT } from '@/lib/types';
+import { TCG, TCG_SHORT } from '@/lib/types';
+import { fetchTCGs } from '@/lib/api';
 import CartDrawer from './CartDrawer';
+import { useEffect } from 'react';
 
 export default function Navbar() {
   const { totalItems, openCart, isOpen, closeCart } = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [singlesDropOpen, setSinglesDropOpen] = useState(false);
   const [sealedDropOpen, setSealedDropOpen] = useState(false);
+  const [tcgs, setTcgs] = useState<TCG[]>([]);
+
+  useEffect(() => {
+    fetchTCGs(true).then(setTcgs);
+  }, []);
 
   return (
     <>
@@ -51,15 +58,15 @@ export default function Navbar() {
                 >
                   <div className="rounded-sm shadow-xl" 
                     style={{ background: 'var(--ink-surface)', border: '1px solid var(--ink-border)' }}>
-                    {KNOWN_TCGS.map(tcg => (
+                    {tcgs.map(tcg => (
                       <Link
-                        key={tcg}
-                        href={`/${tcg}/singles`}
+                        key={tcg.id}
+                        href={`/${tcg.id}/singles`}
                         onClick={() => setSinglesDropOpen(false)}
                         className="block px-4 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--kraft-light)] hover:text-[var(--ink-deep)]"
                         style={{ textDecoration: 'none' }}
                       >
-                        {TCG_SHORT[tcg]} Singles
+                        {tcg.name} Singles
                       </Link>
                     ))}
                   </div>
@@ -87,15 +94,15 @@ export default function Navbar() {
                 >
                   <div className="rounded-sm shadow-xl" 
                     style={{ background: 'var(--ink-surface)', border: '1px solid var(--ink-border)' }}>
-                    {KNOWN_TCGS.map(tcg => (
+                    {tcgs.map(tcg => (
                       <Link
-                        key={tcg}
-                        href={`/${tcg}/sealed`}
+                        key={tcg.id}
+                        href={`/${tcg.id}/sealed`}
                         onClick={() => setSealedDropOpen(false)}
                         className="block px-4 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--kraft-light)] hover:text-[var(--ink-deep)]"
                         style={{ textDecoration: 'none' }}
                       >
-                        {TCG_SHORT[tcg]} Sealed
+                        {tcg.name} Sealed
                       </Link>
                     ))}
                   </div>
@@ -160,11 +167,11 @@ export default function Navbar() {
             <div className="mb-4">
               <p className="font-mono-stack text-[10px] text-hp-color font-bold mb-2 uppercase tracking-widest">Singles Inventory</p>
               <div className="grid grid-cols-2 gap-2">
-                {KNOWN_TCGS.map(tcg => (
-                  <Link key={`s-${tcg}`} href={`/${tcg}/singles`} onClick={() => setMobileOpen(false)}
+                {tcgs.map(tcg => (
+                  <Link key={`s-${tcg.id}`} href={`/${tcg.id}/singles`} onClick={() => setMobileOpen(false)}
                     className="block py-2 px-3 text-xs bg-kraft-light/30 rounded-sm border border-kraft-mid/20" 
                     style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>
-                    {TCG_SHORT[tcg]}
+                    {tcg.name}
                   </Link>
                 ))}
               </div>
@@ -173,11 +180,11 @@ export default function Navbar() {
             <div className="mb-4">
               <p className="font-mono-stack text-[10px] text-hp-color font-bold mb-2 uppercase tracking-widest">Sealed Product</p>
               <div className="grid grid-cols-2 gap-2">
-                {KNOWN_TCGS.map(tcg => (
-                  <Link key={`se-${tcg}`} href={`/${tcg}/sealed`} onClick={() => setMobileOpen(false)}
+                {tcgs.map(tcg => (
+                  <Link key={`se-${tcg.id}`} href={`/${tcg.id}/sealed`} onClick={() => setMobileOpen(false)}
                     className="block py-2 px-3 text-xs bg-kraft-light/30 rounded-sm border border-kraft-mid/20" 
                     style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>
-                    {TCG_SHORT[tcg]}
+                    {tcg.name}
                   </Link>
                 ))}
               </div>
