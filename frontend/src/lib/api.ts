@@ -16,6 +16,9 @@ export interface ProductFilters {
   storage_id?: string;
   page?: number;
   page_size?: number;
+  rarity?: string;
+  language?: string;
+  color?: string;
 }
 
 export async function fetchProducts(filters: ProductFilters = {}): Promise<ProductListResponse> {

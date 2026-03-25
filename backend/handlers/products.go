@@ -170,6 +170,9 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	treatment := q.Get("treatment")
 	condition := q.Get("condition")
 	collection := q.Get("collection")
+	rarity := q.Get("rarity")
+	language := q.Get("language")
+	color := q.Get("color")
 
 	page, _ := strconv.Atoi(q.Get("page"))
 	if page < 1 {
@@ -224,11 +227,37 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 		args = append(args, collection)
 		idx++
 	}
+	if rarity != "" {
+		conditions = append(conditions, "p.rarity ILIKE $"+strconv.Itoa(idx))
+		args = append(args, rarity)
+		idx++
+	}
+	if language != "" {
+		conditions = append(conditions, "p.language = $"+strconv.Itoa(idx))
+		args = append(args, language)
+		idx++
+	}
+	if color != "" {
+		conditions = append(conditions, "p.color_identity ILIKE $"+strconv.Itoa(idx))
+		args = append(args, "%"+color+"%")
+		idx++
+	}
 	orderBy := "p.created_at DESC"
 	if search != "" {
-		// Fuzzy search using pg_trgm % operator and ILIKE fallback for partials
-		conditions = append(conditions, "(p.name % $"+strconv.Itoa(idx)+" OR p.name ILIKE $"+strconv.Itoa(idx+1)+" OR COALESCE(p.set_name, '') ILIKE $"+strconv.Itoa(idx+1)+")")
-		args = append(args, search, "%"+search+"%")
+		// Fuzzy search for Name, ILIKE for metadata
+		searchPattern := "%" + search + "%"
+		conditions = append(conditions, `(
+			p.name % $`+strconv.Itoa(idx)+` OR 
+			p.name ILIKE $`+strconv.Itoa(idx+1)+` OR 
+			COALESCE(p.set_name, '') ILIKE $`+strconv.Itoa(idx+1)+` OR
+			COALESCE(p.set_code, '') ILIKE $`+strconv.Itoa(idx+1)+` OR
+			COALESCE(p.artist, '') ILIKE $`+strconv.Itoa(idx+1)+` OR
+			COALESCE(p.collector_number, '') ILIKE $`+strconv.Itoa(idx+1)+` OR
+			COALESCE(p.oracle_text, '') ILIKE $`+strconv.Itoa(idx+1)+` OR
+			COALESCE(p.type_line, '') ILIKE $`+strconv.Itoa(idx+1)+` OR
+			COALESCE(p.promo_type, '') ILIKE $`+strconv.Itoa(idx+1)+`
+		)`)
+		args = append(args, search, searchPattern)
 		orderBy = "similarity(p.name, $"+strconv.Itoa(idx)+") DESC, p.created_at DESC"
 		idx += 2
 	}

@@ -11,6 +11,9 @@ interface FiltersState {
   treatment: string;
   condition: string;
   collection: string;
+  rarity: string;
+  language: string;
+  color: string;
 }
 
 interface ProductGridProps {
@@ -26,7 +29,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [availableCollections, setAvailableCollections] = useState<CustomCategory[]>([]);
-  const [filters, setFilters] = useState<FiltersState>({ search: '', foil: '', treatment: '', condition: '', collection: '' });
+  const [filters, setFilters] = useState<FiltersState>({ search: '', foil: '', treatment: '', condition: '', collection: '', rarity: '', language: '', color: '' });
 
   const load = useCallback(async (p: number, f: FiltersState) => {
     setLoading(true);
@@ -41,6 +44,9 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
         treatment: f.treatment || undefined,
         condition: f.condition || undefined,
         collection: f.collection || undefined,
+        rarity: f.rarity || undefined,
+        language: f.language || undefined,
+        color: f.color || undefined,
       });
       setProducts(res.products);
       setTotal(res.total);
@@ -123,12 +129,50 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                 <option key={c.id} value={c.slug}>{c.name}</option>
               ))}
             </select>
+
+            {tcg === 'mtg' && (
+              <>
+                <select value={filters.rarity} onChange={e => handleFilterChange('rarity', e.target.value)} className="flex-1 sm:w-32 sm:flex-none">
+                  <option value="">All Rarities</option>
+                  {['Common', 'Uncommon', 'Rare', 'Mythic', 'Special', 'Bonus'].map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+
+                <select value={filters.color} onChange={e => handleFilterChange('color', e.target.value)} className="flex-1 sm:w-28 sm:flex-none">
+                  <option value="">All Colors</option>
+                  {[
+                    { v: 'W', n: 'White' },
+                    { v: 'U', n: 'Blue' },
+                    { v: 'B', n: 'Black' },
+                    { v: 'R', n: 'Red' },
+                    { v: 'G', n: 'Green' },
+                    { v: 'C', n: 'Colorless' }
+                  ].map(c => <option key={c.v} value={c.v}>{c.n}</option>)}
+                </select>
+
+                <select value={filters.language} onChange={e => handleFilterChange('language', e.target.value)} className="flex-1 sm:w-32 sm:flex-none">
+                  <option value="">All Languages</option>
+                  {[
+                    { v: 'en', n: 'English' },
+                    { v: 'es', n: 'Spanish' },
+                    { v: 'jp', n: 'Japanese' },
+                    { v: 'it', n: 'Italian' },
+                    { v: 'fr', n: 'French' },
+                    { v: 'de', n: 'German' },
+                    { v: 'pt', n: 'Portuguese' },
+                    { v: 'ru', n: 'Russian' },
+                    { v: 'kr', n: 'Korean' },
+                    { v: 'zhs', n: 'CH Simpl.' },
+                    { v: 'zht', n: 'CH Trad.' }
+                  ].map(l => <option key={l.v} value={l.v}>{l.n}</option>)}
+                </select>
+              </>
+            )}
           </div>
         )}
 
-        {(filters.search || filters.foil || filters.treatment || filters.condition || filters.collection) && (
+        {(filters.search || filters.foil || filters.treatment || filters.condition || filters.collection || filters.rarity || filters.language || filters.color) && (
           <button
-            onClick={() => { setFilters({ search: '', foil: '', treatment: '', condition: '', collection: '' }); setPage(1); }}
+            onClick={() => { setFilters({ search: '', foil: '', treatment: '', condition: '', collection: '', rarity: '', language: '', color: '' }); setPage(1); }}
             className="btn-secondary"
             style={{ fontSize: '0.85rem', padding: '0.5rem 1rem' }}
           >
