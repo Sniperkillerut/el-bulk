@@ -1,4 +1,0 @@
-# github.com/el-bulk/backend/handlers [github.com/el-bulk/backend/handlers.test]
-handlers\product_filter_test.go:34:3: mock.ExpectQuery("(?i)SELECT .* COUNT\\(\\*\\) FROM products p").WillReturnRows(sqlmock.NewRows([]string{ÔÇª}).AddRow("NM", 1)).AnyTimes undefined (type *sqlmock.ExpectedQuery has no field or method AnyTimes)
-FAIL	github.com/el-bulk/backend/handlers [build failed]
-FAIL

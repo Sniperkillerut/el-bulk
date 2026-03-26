@@ -1,8 +1,0 @@
-	github.com/el-bulk/backend		coverage: 0.0% of statements
-ok  	github.com/el-bulk/backend/db	(cached)	coverage: 60.0% of statements
-ok  	github.com/el-bulk/backend/external	(cached)	coverage: 83.3% of statements
-ok  	github.com/el-bulk/backend/handlers	1.511s	coverage: 66.0% of statements
-ok  	github.com/el-bulk/backend/middleware	(cached)	coverage: 88.2% of statements
-ok  	github.com/el-bulk/backend/models	(cached)	coverage: 100.0% of statements
-	github.com/el-bulk/backend/seed		coverage: 0.0% of statements
-ok  	github.com/el-bulk/backend/utils/logger	(cached)	coverage: 100.0% of statements
