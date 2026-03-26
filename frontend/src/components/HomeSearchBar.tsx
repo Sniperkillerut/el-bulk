@@ -140,7 +140,7 @@ export default function HomeSearchBar() {
                 No products found for "{query}"
               </div>
             )}
-            {results.length > 0 && (
+            {results && results.length > 0 && (
                <div className="p-2 bg-kraft-light/20 text-center border-t border-kraft-light">
                   <p className="text-[10px] font-mono-stack text-text-muted italic">Showing top results</p>
                </div>

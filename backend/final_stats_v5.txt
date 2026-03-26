@@ -1,0 +1,3 @@
+FAIL	go [setup failed]
+FAIL	cover [setup failed]
+FAIL

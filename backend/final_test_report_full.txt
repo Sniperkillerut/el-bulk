@@ -1,0 +1,8 @@
+	github.com/el-bulk/backend		coverage: 0.0% of statements
+ok  	github.com/el-bulk/backend/db	1.029s	coverage: 60.0% of statements
+ok  	github.com/el-bulk/backend/external	2.111s	coverage: 83.3% of statements
+ok  	github.com/el-bulk/backend/handlers	1.695s	coverage: 66.0% of statements
+ok  	github.com/el-bulk/backend/middleware	0.907s	coverage: 88.2% of statements
+ok  	github.com/el-bulk/backend/models	0.818s	coverage: 100.0% of statements
+	github.com/el-bulk/backend/seed		coverage: 0.0% of statements
+ok  	github.com/el-bulk/backend/utils/logger	0.686s	coverage: 100.0% of statements

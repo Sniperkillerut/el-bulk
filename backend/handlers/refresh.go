@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/el-bulk/backend/external"
 	"github.com/el-bulk/backend/utils/logger"
 )
 
@@ -78,7 +79,7 @@ func buildScryfallPriceMap() (map[priceKey]cardPrices, error) {
 	client := &http.Client{Timeout: 5 * time.Minute} // bulk file can be 600MB
 
 	// Step 1: discover today's bulk-data download URL
-	metaReq, _ := http.NewRequest(http.MethodGet, "https://api.scryfall.com/bulk-data", nil)
+	metaReq, _ := http.NewRequest(http.MethodGet, external.ScryfallBase+"/bulk-data", nil)
 	metaReq.Header.Set("User-Agent", "ElBulkTCGStore/1.0 (contact@elbulk.com)")
 	metaReq.Header.Set("Accept", "application/json")
 

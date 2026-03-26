@@ -1,0 +1,33 @@
+=== RUN   TestLookupPokemonCard
+=== RUN   TestLookupPokemonCard/Success
+=== RUN   TestLookupPokemonCard/No_Image_Error
+=== RUN   TestLookupPokemonCard/Not_Found
+    pokemon_test.go:69: 
+        	Error Trace:	D:/claude-test/el-bulk/backend/external/pokemon_test.go:69
+        	Error:      	"pok├®mon TCG API returned status 404" does not contain "card not found"
+        	Test:       	TestLookupPokemonCard/Not_Found
+=== RUN   TestLookupPokemonCard/Empty_Name
+--- FAIL: TestLookupPokemonCard (0.00s)
+    --- PASS: TestLookupPokemonCard/Success (0.00s)
+    --- PASS: TestLookupPokemonCard/No_Image_Error (0.00s)
+    --- FAIL: TestLookupPokemonCard/Not_Found (0.00s)
+    --- PASS: TestLookupPokemonCard/Empty_Name (0.00s)
+=== RUN   TestLookupMTGCard
+=== RUN   TestLookupMTGCard/Exact_Match
+=== RUN   TestLookupMTGCard/Fuzzy_Match
+=== RUN   TestLookupMTGCard/Not_Found
+=== RUN   TestLookupMTGCard/Empty_Input
+--- PASS: TestLookupMTGCard (0.61s)
+    --- PASS: TestLookupMTGCard/Exact_Match (0.10s)
+    --- PASS: TestLookupMTGCard/Fuzzy_Match (0.10s)
+    --- PASS: TestLookupMTGCard/Not_Found (0.40s)
+    --- PASS: TestLookupMTGCard/Empty_Input (0.00s)
+=== RUN   TestBatchLookupMTGCard
+=== RUN   TestBatchLookupMTGCard/Success
+=== RUN   TestBatchLookupMTGCard/Empty
+--- PASS: TestBatchLookupMTGCard (0.00s)
+    --- PASS: TestBatchLookupMTGCard/Success (0.00s)
+    --- PASS: TestBatchLookupMTGCard/Empty (0.00s)
+FAIL
+FAIL	github.com/el-bulk/backend/external	1.390s
+FAIL

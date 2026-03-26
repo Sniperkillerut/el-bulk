@@ -1,0 +1,33 @@
+	github.com/el-bulk/backend		coverage: 0.0% of statements
+ok  	github.com/el-bulk/backend/db	1.012s	coverage: 60.0% of statements
+ok  	github.com/el-bulk/backend/external	2.021s	coverage: 83.3% of statements
+[2026-03-25 19:46:15] [[32mINFO[0m] [frontend] Test message | context: {"user_id":"123"}
+[2026-03-25 19:46:15] [[31mERROR[0m] [frontend] Critical error
+[2026-03-25 19:46:15] [[32mINFO[0m] [frontend] [custom] Custom trace
+ÔÜá´©Å Settings table error: Query: could not match actual sql: "SELECT key, value FROM settings" with expected regexp "(?i)SELECT .* COUNT\(\*\) FROM products p" (using defaults)
+[2026-03-25 19:46:15] [[31mERROR[0m] Error selecting categories: Query: could not match actual sql: "SELECT pc.product_id, c.id, c.name, c.slug, c.show_badge, c.is_active, c.searchable FROM product_categories pc JOIN custom_categories c ON pc.category_id = c.id WHERE pc.product_id IN ($1) AND c.show_badge = true ORDER BY c.name" with expected regexp "(?i)SELECT .* COUNT\(\*\) FROM products p"
+[2026-03-25 19:46:15] [[31mERROR[0m] Error counting products: Query: could not match actual sql: "SELECT COUNT(*) FROM products p" with expected regexp "(?i)SELECT COUNT\(\*\) FROM products p WHERE".
+--- FAIL: TestProductHandler_AdminVsPublic (0.00s)
+    --- FAIL: TestProductHandler_AdminVsPublic/Admin_No_Joins (0.00s)
+        product_filters_comprehensive_test.go:102: 
+            	Error Trace:	D:/claude-test/el-bulk/backend/handlers/product_filters_comprehensive_test.go:102
+            	Error:      	Not equal: 
+            	            	expected: 200
+            	            	actual  : 500
+            	Test:       	TestProductHandler_AdminVsPublic/Admin_No_Joins
+[2026-03-25 19:46:15] [[32mINFO[0m] saveProductCategories called for Product: p-new with categories: []
+[2026-03-25 19:46:15] [[32mINFO[0m] saveProductCategories called for Product: p1 with categories: []
+[2026-03-25 19:46:15] [[32mINFO[0m] [price-refresh] downloading scryfall bulk data from http://127.0.0.1:58813/download/default_cards.json
+[2026-03-25 19:46:16] [[32mINFO[0m] [price-refresh] bulk data loaded: 2 card printings indexed
+[2026-03-25 19:46:16] [[32mINFO[0m] [price-refresh] complete: 2 updated, 0 errors
+[2026-03-25 19:46:16] [[32mINFO[0m] [price-refresh] no products with external price source, skipping
+[2026-03-25 19:46:16] [[32mINFO[0m] [price-refresh] no products with external price source, skipping
+ÔÜá´©Å Settings table error: assert.AnError general error for testing (using defaults)
+FAIL
+coverage: 72.6% of statements
+FAIL	github.com/el-bulk/backend/handlers	1.579s
+ok  	github.com/el-bulk/backend/middleware	0.822s	coverage: 88.2% of statements
+ok  	github.com/el-bulk/backend/models	0.799s	coverage: 100.0% of statements
+	github.com/el-bulk/backend/seed		coverage: 0.0% of statements
+ok  	github.com/el-bulk/backend/utils/logger	0.616s	coverage: 100.0% of statements
+FAIL

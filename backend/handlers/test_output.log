@@ -1,0 +1,4 @@
+FAIL	./handlers/... [setup failed]
+# ./handlers/...
+pattern ./handlers/...: GetFileAttributesEx .\handlers\: The system cannot find the file specified.
+FAIL

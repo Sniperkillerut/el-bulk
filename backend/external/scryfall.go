@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-const scryfallBase = "https://api.scryfall.com"
+var ScryfallBase = "https://api.scryfall.com"
 
 // scryfallClient is a shared HTTP client with a reasonable timeout.
 var scryfallClient = &http.Client{Timeout: 10 * time.Second}
@@ -135,7 +135,7 @@ func LookupMTGCard(name, setCode, collectorNumber, foilTreatment string) (*CardL
 
 	// Step 1: Exact Set + Collector Number
 	if setCode != "" && collectorNumber != "" {
-		res, err := scryfallGet(fmt.Sprintf("%s/cards/%s/%s", scryfallBase, url.PathEscape(setCode), url.PathEscape(collectorNumber)), foilTreatment)
+		res, err := scryfallGet(fmt.Sprintf("%s/cards/%s/%s", ScryfallBase, url.PathEscape(setCode), url.PathEscape(collectorNumber)), foilTreatment)
 		if err == nil {
 			return res, nil
 		}
@@ -146,7 +146,7 @@ func LookupMTGCard(name, setCode, collectorNumber, foilTreatment string) (*CardL
 		params := url.Values{}
 		params.Set("exact", name)
 		params.Set("set", setCode)
-		res, err := scryfallGet(fmt.Sprintf("%s/cards/named?%s", scryfallBase, params.Encode()), foilTreatment)
+		res, err := scryfallGet(fmt.Sprintf("%s/cards/named?%s", ScryfallBase, params.Encode()), foilTreatment)
 		if err == nil {
 			return res, nil
 		}
@@ -157,7 +157,7 @@ func LookupMTGCard(name, setCode, collectorNumber, foilTreatment string) (*CardL
 		params := url.Values{}
 		params.Set("fuzzy", name)
 		params.Set("set", setCode)
-		res, err := scryfallGet(fmt.Sprintf("%s/cards/named?%s", scryfallBase, params.Encode()), foilTreatment)
+		res, err := scryfallGet(fmt.Sprintf("%s/cards/named?%s", ScryfallBase, params.Encode()), foilTreatment)
 		if err == nil {
 			return res, nil
 		}
@@ -167,7 +167,7 @@ func LookupMTGCard(name, setCode, collectorNumber, foilTreatment string) (*CardL
 	if name != "" {
 		params := url.Values{}
 		params.Set("fuzzy", name)
-		return scryfallGet(fmt.Sprintf("%s/cards/named?%s", scryfallBase, params.Encode()), foilTreatment)
+		return scryfallGet(fmt.Sprintf("%s/cards/named?%s", ScryfallBase, params.Encode()), foilTreatment)
 	}
 
 	return nil, errors.New("card not found")
@@ -180,7 +180,7 @@ func BatchLookupMTGCard(identifiers []CardIdentifier) ([]CardLookupResult, error
 	}
 
 	reqBody, _ := json.Marshal(scryfallCollectionRequest{Identifiers: identifiers})
-	req, err := http.NewRequest(http.MethodPost, scryfallBase+"/cards/collection", strings.NewReader(string(reqBody)))
+	req, err := http.NewRequest(http.MethodPost, ScryfallBase+"/cards/collection", strings.NewReader(string(reqBody)))
 	if err != nil {
 		return nil, err
 	}
@@ -287,6 +287,7 @@ func mapScryfallToResult(card *scryfallCard, foilTreatment string) *CardLookupRe
 	}
 
 	return &CardLookupResult{
+		Name:            card.Name,
 		ImageURL:        imageURL,
 		SetName:         card.SetName,
 		SetCode:         card.Set,

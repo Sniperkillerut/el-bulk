@@ -1,0 +1,39 @@
+[2026-03-25 19:53:33] [[32mINFO[0m] [frontend] Test message | context: {"user_id":"123"}
+[2026-03-25 19:53:33] [[31mERROR[0m] [frontend] Critical error
+[2026-03-25 19:53:33] [[32mINFO[0m] [frontend] [custom] Custom trace
+--- FAIL: TestOrderHandler_Complete (0.00s)
+    --- FAIL: TestOrderHandler_Complete/Tx_Error (0.00s)
+panic: runtime error: invalid memory address or nil pointer dereference [recovered, repanicked]
+[signal 0xc0000005 code=0x0 addr=0x18 pc=0x7ff7c0768920]
+
+goroutine 145 [running]:
+testing.tRunner.func1.2({0x7ff7c0a8be80, 0x7ff7c0ea0490})
+	C:/Program Files/Go/src/testing/testing.go:1974 +0x239
+testing.tRunner.func1()
+	C:/Program Files/Go/src/testing/testing.go:1977 +0x349
+panic({0x7ff7c0a8be80?, 0x7ff7c0ea0490?})
+	C:/Program Files/Go/src/runtime/panic.go:860 +0x13a
+encoding/json.(*Decoder).refill(0x7be84b0d540)
+	C:/Program Files/Go/src/encoding/json/stream.go:167 +0x160
+encoding/json.(*Decoder).readValue(0x7be84b0d540)
+	C:/Program Files/Go/src/encoding/json/stream.go:142 +0x85
+encoding/json.(*Decoder).Decode(0x7be84b0d540, {0x7ff7c0a62040, 0x7be848c16e0})
+	C:/Program Files/Go/src/encoding/json/stream.go:65 +0x75
+github.com/el-bulk/backend/handlers.(*OrderHandler).Complete(0x7be84890478, {0x7ff7c0b46300, 0x7be8489d680}, 0x7be84b0d400)
+	D:/claude-test/el-bulk/backend/handlers/orders.go:402 +0x131
+net/http.HandlerFunc.ServeHTTP(0x7ff7c0a98980?, {0x7ff7c0b46300?, 0x7be8489d680?}, 0x2?)
+	C:/Program Files/Go/src/net/http/server.go:2286 +0x29
+github.com/go-chi/chi/v5.(*Mux).routeHTTP(0x7be848a2360, {0x7ff7c0b46300, 0x7be8489d680}, 0x7be84b0d400)
+	C:/Users/chris/go/pkg/mod/github.com/go-chi/chi/v5@v5.2.5/mux.go:479 +0x4ef
+net/http.HandlerFunc.ServeHTTP(0x7ff7c0b46d48?, {0x7ff7c0b46300?, 0x7be8489d680?}, 0x7ff7c0ea1310?)
+	C:/Program Files/Go/src/net/http/server.go:2286 +0x29
+github.com/go-chi/chi/v5.(*Mux).ServeHTTP(0x7be848a2360, {0x7ff7c0b46300, 0x7be8489d680}, 0x7be84b0d2c0)
+	C:/Users/chris/go/pkg/mod/github.com/go-chi/chi/v5@v5.2.5/mux.go:90 +0x322
+github.com/el-bulk/backend/handlers.TestOrderHandler_Complete.func3(0x7be84ae1000)
+	D:/claude-test/el-bulk/backend/handlers/orders_test.go:342 +0x551
+testing.tRunner(0x7be84ae1000, 0x7be84887c20)
+	C:/Program Files/Go/src/testing/testing.go:2036 +0xc3
+created by testing.(*T).Run in goroutine 137
+	C:/Program Files/Go/src/testing/testing.go:2101 +0x4a9
+FAIL	github.com/el-bulk/backend/handlers	3.996s
+FAIL

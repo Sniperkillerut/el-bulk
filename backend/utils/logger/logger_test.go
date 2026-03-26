@@ -53,3 +53,89 @@ func TestFormatting(t *testing.T) {
 		t.Errorf("expected formatted output, got %q", buf.String())
 	}
 }
+func TestLevelStrings(t *testing.T) {
+	tests := []struct {
+		level Level
+		want  string
+	}{
+		{DEBUG, "DEBUG"},
+		{INFO, "INFO"},
+		{WARN, "WARN"},
+		{ERROR, "ERROR"},
+		{Level(99), "UNKNOWN"},
+	}
+	for _, tt := range tests {
+		if got := tt.level.String(); got != tt.want {
+			t.Errorf("Level(%d).String() = %q, want %q", tt.level, got, tt.want)
+		}
+	}
+}
+
+func TestLevelColors(t *testing.T) {
+	tests := []struct {
+		level Level
+		want  string
+	}{
+		{DEBUG, "\033[36m"},
+		{INFO, "\033[32m"},
+		{WARN, "\033[33m"},
+		{ERROR, "\033[31m"},
+		{Level(99), "\033[0m"},
+	}
+	for _, tt := range tests {
+		if got := tt.level.Color(); got != tt.want {
+			t.Errorf("Level(%d).Color() = %q, want %q", tt.level, got, tt.want)
+		}
+	}
+}
+
+func TestLoggerMethods(t *testing.T) {
+	var buf bytes.Buffer
+	l := New(DEBUG)
+	l.Output = &buf
+	l.Color = false
+
+	l.Debug("d")
+	if !strings.Contains(buf.String(), "[DEBUG] d") {
+		t.Errorf("Debug() failed, got %q", buf.String())
+	}
+	buf.Reset()
+
+	l.Warn("w")
+	if !strings.Contains(buf.String(), "[WARN] w") {
+		t.Errorf("Warn() failed, got %q", buf.String())
+	}
+	buf.Reset()
+}
+
+func TestGlobalLoggers(t *testing.T) {
+	var buf bytes.Buffer
+	oldOutput := Default.Output
+	Default.Output = &buf
+	Default.Level = DEBUG
+	Default.Color = false
+	defer func() { Default.Output = oldOutput }()
+
+	Debug("dg")
+	if !strings.Contains(buf.String(), "[DEBUG] dg") {
+		t.Errorf("Global Debug() failed, got %q", buf.String())
+	}
+	buf.Reset()
+
+	Info("ig")
+	if !strings.Contains(buf.String(), "[INFO] ig") {
+		t.Errorf("Global Info() failed, got %q", buf.String())
+	}
+	buf.Reset()
+
+	Warn("wg")
+	if !strings.Contains(buf.String(), "[WARN] wg") {
+		t.Errorf("Global Warn() failed, got %q", buf.String())
+	}
+	buf.Reset()
+
+	Error("eg")
+	if !strings.Contains(buf.String(), "[ERROR] eg") {
+		t.Errorf("Global Error() failed, got %q", buf.String())
+	}
+}

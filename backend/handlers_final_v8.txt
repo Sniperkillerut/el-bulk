@@ -1,0 +1,1 @@
+ok  	github.com/el-bulk/backend/handlers	3.967s	coverage: 77.6% of statements

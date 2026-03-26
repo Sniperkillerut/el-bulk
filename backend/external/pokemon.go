@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const pokemonTCGBase = "https://api.pokemontcg.io/v2"
+var PokemonTCGBase = "https://api.pokemontcg.io/v2"
 
 var pokemonClient = &http.Client{Timeout: 10 * time.Second}
 
@@ -53,7 +53,7 @@ func LookupPokemonCard(name, setID string) (*CardLookupResult, error) {
 	params.Set("q", q)
 	params.Set("pageSize", "1")
 	params.Set("orderBy", "-set.releaseDate") // newest set first
-	reqURL := fmt.Sprintf("%s/cards?%s", pokemonTCGBase, params.Encode())
+	reqURL := fmt.Sprintf("%s/cards?%s", PokemonTCGBase, params.Encode())
 
 	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
@@ -78,6 +78,9 @@ func LookupPokemonCard(name, setID string) (*CardLookupResult, error) {
 		return nil, errors.New("pokémon TCG API rate limit exceeded; add POKEMON_TCG_API_KEY to .env for higher limits")
 	}
 	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode == http.StatusNotFound {
+			return nil, errors.New("card not found")
+		}
 		return nil, fmt.Errorf("pokémon TCG API returned status %d", resp.StatusCode)
 	}
 
@@ -100,6 +103,7 @@ func LookupPokemonCard(name, setID string) (*CardLookupResult, error) {
 	}
 
 	return &CardLookupResult{
+		Name:            card.Name,
 		ImageURL:        imageURL,
 		SetName:         card.Set.Name,
 		SetCode:         card.Set.ID,

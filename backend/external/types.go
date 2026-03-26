@@ -2,6 +2,7 @@ package external
 
 // CardLookupResult holds card metadata returned by external TCG APIs.
 type CardLookupResult struct {
+	Name            string   `json:"name"`
 	ImageURL        string   `json:"image_url"`
 	SetName         string   `json:"set_name"`
 	SetCode         string   `json:"set_code"`
