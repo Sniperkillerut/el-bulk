@@ -22,13 +22,22 @@ export default function OrdersPanel({ token, onClose }: Props) {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('');
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   // Detail state
   const [detail, setDetail] = useState<OrderDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [saving, setSaving] = useState(false);
   const [itemEdits, setItemEdits] = useState<Record<string, number>>({});
+  const [detailsCache, setDetailsCache] = useState<Record<string, OrderDetail>>({});
 
   // Complete modal state
   const [showCompleteModal, setShowCompleteModal] = useState(false);
@@ -39,21 +48,30 @@ export default function OrdersPanel({ token, onClose }: Props) {
   const loadOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await adminFetchOrders(token, { status: statusFilter, search, page, page_size: 20 });
+      const res = await adminFetchOrders(token, { status: statusFilter, search: debouncedSearch, page, page_size: 20 });
       setOrders(res.orders);
       setTotal(res.total);
     } catch { }
     setLoading(false);
-  }, [token, statusFilter, search, page]);
+  }, [token, statusFilter, debouncedSearch, page]);
 
   useEffect(() => { loadOrders(); }, [loadOrders]);
 
   const selectOrder = async (id: string) => {
-    setLoadingDetail(true);
     setItemEdits({});
+    if (detailsCache[id]) {
+      setDetail(detailsCache[id]);
+      const edits: Record<string, number> = {};
+      detailsCache[id].items.forEach(i => { edits[i.id] = i.quantity; });
+      setItemEdits(edits);
+      return;
+    }
+
+    setLoadingDetail(true);
     try {
       const d = await adminFetchOrderDetail(token, id);
       setDetail(d);
+      setDetailsCache(prev => ({ ...prev, [id]: d }));
       // Init item edits
       const edits: Record<string, number> = {};
       d.items.forEach(i => { edits[i.id] = i.quantity; });
@@ -69,7 +87,13 @@ export default function OrdersPanel({ token, onClose }: Props) {
       const items = Object.entries(itemEdits).map(([id, quantity]) => ({ id, quantity }));
       const updated = await adminUpdateOrder(token, detail.order.id, { items });
       setDetail(updated);
-      loadOrders();
+      setDetailsCache(prev => ({ ...prev, [updated.order.id]: updated }));
+      // Update list in-place
+      setOrders(prev => prev.map(o => o.id === updated.order.id ? { 
+        ...o, 
+        total_cop: updated.order.total_cop,
+        item_count: updated.items.length 
+      } : o));
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : 'Failed to save');
     }
@@ -82,7 +106,9 @@ export default function OrdersPanel({ token, onClose }: Props) {
     try {
       const updated = await adminUpdateOrder(token, detail.order.id, { status });
       setDetail(updated);
-      loadOrders();
+      setDetailsCache(prev => ({ ...prev, [updated.order.id]: updated }));
+      // Update list in-place
+      setOrders(prev => prev.map(o => o.id === updated.order.id ? { ...o, status: updated.order.status } : o));
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : 'Failed to update status');
     }
@@ -142,7 +168,8 @@ export default function OrdersPanel({ token, onClose }: Props) {
       const updated = await adminCompleteOrder(token, detail.order.id, decArr);
       setDetail(updated);
       setShowCompleteModal(false);
-      loadOrders();
+      // Update list in-place
+      setOrders(prev => prev.map(o => o.id === updated.order.id ? { ...o, status: updated.order.status } : o));
     } catch (e: unknown) {
       setCompleteError(e instanceof Error ? e.message : 'Error al completar');
     }

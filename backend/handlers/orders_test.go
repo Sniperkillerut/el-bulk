@@ -42,12 +42,14 @@ func TestOrderHandler_Create(t *testing.T) {
 		mock.ExpectQuery("INSERT INTO customers").
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("c1"))
 
-		// 2. Settings (mocked internally by loadSettings? No, h.DB is passed)
-		mock.ExpectQuery("SELECT .* FROM settings").
-			WillReturnRows(sqlmock.NewRows([]string{"usd_to_cop_rate", "eur_to_cop_rate"}).AddRow(4000, 4400))
+		// 2. Settings
+		mock.ExpectQuery("SELECT key, value FROM settings").
+			WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).
+				AddRow("usd_to_cop_rate", "4000").
+				AddRow("eur_to_cop_rate", "4400"))
 
 		// 3. Products fetch
-		mock.ExpectQuery("SELECT .* FROM products WHERE id = \\$1").
+		mock.ExpectQuery("SELECT .* FROM products WHERE id IN \\(\\$1\\)").
 			WithArgs("p1").
 			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "price_reference", "price_source", "stock"}).
 				AddRow("p1", "Product 1", 1.0, "tcgplayer", 10))
@@ -58,9 +60,9 @@ func TestOrderHandler_Create(t *testing.T) {
 				AddRow("o1", "EB-20260325-1234", "c1", "pending", "whatsapp", 8000.0, "", time.Now()))
 
 		// 5. Create Order Items
-		mock.ExpectQuery("SELECT .* FROM product_stored_in .*").
+		mock.ExpectQuery("SELECT ps.product_id as product_id_temp, .* FROM product_stored_in ps .* WHERE ps.product_id IN \\(\\$1\\)").
 			WithArgs("p1").
-			WillReturnRows(sqlmock.NewRows([]string{"stored_in_id", "name", "quantity"}).AddRow("loc1", "Box 1", 10))
+			WillReturnRows(sqlmock.NewRows([]string{"product_id_temp", "stored_in_id", "name", "quantity"}).AddRow("p1", "loc1", "Box 1", 10))
 
 		mock.ExpectExec("INSERT INTO order_items").
 			WillReturnResult(sqlmock.NewResult(0, 1))
@@ -190,13 +192,13 @@ func TestOrderHandler_GetDetail(t *testing.T) {
 			WithArgs("o1").
 			WillReturnRows(sqlmock.NewRows([]string{"id", "product_id", "product_name"}).AddRow("oi1", "p1", "Product 1"))
 
-		mock.ExpectQuery("SELECT .* FROM products WHERE id = \\$1").
+		mock.ExpectQuery("SELECT .* FROM products WHERE id IN \\(\\$1\\)").
 			WithArgs("p1").
 			WillReturnRows(sqlmock.NewRows([]string{"id", "stock"}).AddRow("p1", 10))
 
-		mock.ExpectQuery("SELECT .* FROM product_stored_in .*").
+		mock.ExpectQuery("SELECT ps.product_id as product_id_temp, .* FROM product_stored_in ps .* WHERE ps.product_id IN \\(\\$1\\)").
 			WithArgs("p1").
-			WillReturnRows(sqlmock.NewRows([]string{"stored_in_id", "name", "quantity"}).AddRow("loc1", "Box 1", 10))
+			WillReturnRows(sqlmock.NewRows([]string{"product_id_temp", "stored_in_id", "name", "quantity"}).AddRow("p1", "loc1", "Box 1", 10))
 
 		r := chi.NewRouter()
 		r.Get("/api/admin/orders/{id}", h.GetDetail)

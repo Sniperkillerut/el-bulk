@@ -6,10 +6,21 @@ import (
 	"net/http"
 	"strconv"
 
+	"sync"
+	"time"
+
 	"github.com/jmoiron/sqlx"
 
 	"github.com/el-bulk/backend/models"
 )
+
+var (
+	settingsCache models.Settings
+	cacheTime     time.Time
+	cacheMutex    sync.RWMutex
+)
+
+const cacheDuration = 60 * time.Second
 
 // SettingsHandler manages admin-configurable global settings.
 type SettingsHandler struct {
@@ -20,8 +31,16 @@ func NewSettingsHandler(db *sqlx.DB) *SettingsHandler {
 	return &SettingsHandler{DB: db}
 }
 
-// loadSettings reads the current exchange rates from the settings table.
+// loadSettings reads the current exchange rates from the settings table with a 60s cache.
 func loadSettings(db *sqlx.DB) (models.Settings, error) {
+	cacheMutex.RLock()
+	if time.Since(cacheTime) < cacheDuration {
+		s := settingsCache
+		cacheMutex.RUnlock()
+		return s, nil
+	}
+	cacheMutex.RUnlock()
+
 	s := models.Settings{
 		USDToCOPRate: 4200,
 		EURToCOPRate: 4600,
@@ -69,6 +88,12 @@ func loadSettings(db *sqlx.DB) (models.Settings, error) {
 			s.ContactHours = val
 		}
 	}
+
+	cacheMutex.Lock()
+	settingsCache = s
+	cacheTime = time.Now()
+	cacheMutex.Unlock()
+
 	return s, rows.Err()
 }
 
@@ -149,6 +174,18 @@ func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Invalidate cache
+	cacheMutex.Lock()
+	cacheTime = time.Time{}
+	cacheMutex.Unlock()
+
 	s, _ := loadSettings(h.DB)
 	jsonOK(w, s)
+}
+
+// ResetSettingsCache clears the global settings cache, primarily for testing.
+func ResetSettingsCache() {
+	cacheMutex.Lock()
+	cacheTime = time.Time{}
+	cacheMutex.Unlock()
 }

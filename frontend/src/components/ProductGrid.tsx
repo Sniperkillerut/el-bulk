@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import useSWR from 'swr';
 import { fetchProducts, fetchCategories } from '@/lib/api';
 import ProductCard from '@/components/ProductCard';
 import { Product, FOIL_LABELS, TREATMENT_LABELS, TCG_LABELS, CustomCategory } from '@/lib/types';
@@ -24,12 +25,8 @@ interface ProductGridProps {
 }
 
 export default function ProductGrid({ tcg, category, title, subtitle }: ProductGridProps) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
   const [availableCollections, setAvailableCollections] = useState<CustomCategory[]>([]);
-  const [facets, setFacets] = useState<any>(null);
+  const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<FiltersState>({ 
     search: '', 
     foil: [], 
@@ -40,37 +37,43 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
     language: [], 
     color: [] 
   });
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
-  const load = useCallback(async (p: number, f: FiltersState) => {
-    setLoading(true);
-    try {
-      const res = await fetchProducts({
-        tcg: tcg !== 'all' ? tcg : undefined,
-        category,
-        page: p,
-        page_size: 20,
-        search: f.search || undefined,
-        foil: f.foil.join(',') || undefined,
-        treatment: f.treatment.join(',') || undefined,
-        condition: f.condition.join(',') || undefined,
-        collection: f.collection.join(',') || undefined,
-        rarity: f.rarity.join(',') || undefined,
-        language: f.language.join(',') || undefined,
-        color: f.color.join(',') || undefined,
-      });
-      setProducts(res.products);
-      setTotal(res.total);
-      setFacets(res.facets);
-    } catch {
-      setProducts([]);
-      setTotal(0);
-      setFacets(null);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(filters.search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [filters.search]);
+
+  const fetcherArgs = useMemo(() => ({
+    tcg: tcg !== 'all' ? tcg : undefined,
+    category,
+    page,
+    page_size: 20,
+    search: debouncedSearch || undefined,
+    foil: filters.foil.join(',') || undefined,
+    treatment: filters.treatment.join(',') || undefined,
+    condition: filters.condition.join(',') || undefined,
+    collection: filters.collection.join(',') || undefined,
+    rarity: filters.rarity.join(',') || undefined,
+    language: filters.language.join(',') || undefined,
+    color: filters.color.join(',') || undefined,
+  }), [tcg, category, page, debouncedSearch, filters]);
+
+  const { data: res, error, isLoading: loadingResult } = useSWR(
+    ['/api/products', fetcherArgs],
+    ([, args]) => fetchProducts(args),
+    { 
+      keepPreviousData: true,
+      revalidateOnFocus: false,
     }
-  }, [tcg, category]);
+  );
 
-  useEffect(() => { load(page, filters); }, [page, filters, load]);
+  const products = res?.products || [];
+  const total = res?.total || 0;
+  const facets = res?.facets || null;
+  const loading = loadingResult && !res; // Only show main loading on first fetch
 
   useEffect(() => {
     async function loadCats() {

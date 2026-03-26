@@ -279,6 +279,54 @@ func main() {
 		{"Rayquaza VMAX", "pokemon", "singles", "Evolving Skies", "EVS", "NM", 850000, 1, []string{"hot-items"}, "Alternate Art Rayquaza.", "https://images.pokemontcg.io/swsh7/218_hires.png", models.FoilFoil, models.TreatmentAlternateArt},
 		{"Giratina V", "pokemon", "singles", "Lost Origin", "LOR", "NM", 750000, 1, []string{"hot-items"}, "Alternate Art Giratina.", "https://images.pokemontcg.io/swsh11/186_hires.png", models.FoilFoil, models.TreatmentAlternateArt},
 		{"Umbreon VMAX", "pokemon", "singles", "Evolving Skies", "EVS", "NM", 1500000, 1, []string{"hot-items", "featured"}, "Moonbreon Alt Art.", "https://images.pokemontcg.io/swsh7/215_hires.png", models.FoilFoil, models.TreatmentAlternateArt},
+
+		// --- BATCH 3: ADVANCED VARIATIONS & EDGE CASES ---
+		
+		// MTG Variations
+		{"Wrenn and Six", "mtg", "singles", "Double Masters 2022", "2X2", "NM", 280000, 2, []string{"hot-items"}, "Etched Foil variant.", "", models.FoilEtchedFoil, models.TreatmentNormal},
+		{"Uro, Titan of Nature's Wrath", "mtg", "singles", "Theros Beyond Death", "THB", "NM", 65000, 4, []string{"featured"}, "Borderless variant.", "", models.FoilNonFoil, models.TreatmentBorderless},
+		{"Brazen Borrower", "mtg", "singles", "Throne of Eldraine", "ELD", "NM", 35000, 8, []string{"sale"}, "Showcase variant.", "", models.FoilNonFoil, models.TreatmentShowcase},
+		{"Gaea's Cradle", "mtg", "singles", "Urza's Saga", "USG", "DMG", 2500000, 1, []string{"hot-items"}, "Damaged condition test.", "", models.FoilNonFoil, models.TreatmentNormal},
+		{"Aether Vial", "mtg", "singles", "Darksteel", "DST", "MP", 45000, 4, []string{"featured"}, "Moderately Played test.", "", models.FoilNonFoil, models.TreatmentNormal},
+		
+		// Lorcana & One Piece
+		{"Stitch - Carefree Surfer", "lorcana", "singles", "The First Chapter", "1ST", "NM", 180000, 2, []string{"hot-items"}, "Foil Stitch.", "https://lorcania.com/images/cards/1/stitch-carefree-surfer.png", models.FoilFoil, models.TreatmentNormal},
+		{"Portgas.D.Ace", "onepiece", "singles", "Paramount War", "OP02", "NM", 850000, 1, []string{"hot-items", "featured"}, "Manga Alt Art Ace.", "https://limitlesstcg.s3.us-central-1.amazonaws.com/one-piece/OP02/OP02-013_p1.png", models.FoilFoil, models.TreatmentAlternateArt},
+		
+		// Star Wars Unlimited (New TCG test)
+		{"Darth Vader - Commanding Presence", "starwars", "singles", "Spark of Rebellion", "SOR", "NM", 350000, 2, []string{"new-arrivals", "hot-items"}, "Legendary Vader.", "https://swu-cards.com/cards/SOR/010.png", models.FoilNonFoil, models.TreatmentNormal},
+		{"Luke Skywalker - Jedi Knight", "starwars", "singles", "Spark of Rebellion", "SOR", "NM", 280000, 3, []string{"featured"}, "Legendary Luke.", "https://swu-cards.com/cards/SOR/005.png", models.FoilNonFoil, models.TreatmentNormal},
+
+		// Weiss Schwarz
+		{"Miku Nakano", "weiss", "singles", "The Quintessential Quintuplets", "5HY", "NM", 950000, 1, []string{"hot-items"}, "SP Signed card.", "https://en.ws-tcg.com/wp/wp-content/uploads/5HY_W83_082SP.png", models.FoilFoil, models.TreatmentAlternateArt},
+
+		// Edge Cases
+		{"Out of Stock Card", "mtg", "singles", "Test Set", "TST", "NM", 10000, 0, []string{"sale"}, "Testing 0 stock UI.", "", models.FoilNonFoil, models.TreatmentNormal},
+		{"Multi-Collection Item", "mtg", "singles", "Test Set", "TST", "NM", 25000, 10, []string{"featured", "sale", "new-arrivals", "hot-items"}, "Testing many categories.", "", models.FoilNonFoil, models.TreatmentNormal},
+		{"No Image Card", "mtg", "singles", "Test Set", "TST", "NM", 5000, 5, []string{"featured"}, "Testing missing image fallback.", "https://invalid-image.url/none.png", models.FoilNonFoil, models.TreatmentNormal},
+	}
+
+	fmt.Println("Seeding TCGs...")
+	tcgsToSeed := []struct{ ID, Name string }{
+		{"mtg", "Magic: The Gathering"},
+		{"pokemon", "Pokémon"},
+		{"lorcana", "Disney Lorcana"},
+		{"onepiece", "One Piece"},
+		{"yugioh", "Yu-Gi-Oh!"},
+		{"starwars", "Star Wars Unlimited"},
+		{"weiss", "Weiss Schwarz"},
+	}
+	for _, t := range tcgsToSeed {
+		_, err = database.Exec(`
+			INSERT INTO tcgs (id, name) 
+			VALUES ($1, $2) 
+			ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name
+		`, t.ID, t.Name)
+		if err != nil {
+			logger.Error("Failed to seed TCG %s: %v", t.ID, err)
+			os.Exit(1)
+		}
+		logger.Info("TCG '%s' ready", t.ID)
 	}
 
 	fmt.Println("Seeding custom categories...")
@@ -329,6 +377,14 @@ func main() {
 		isLand := false
 		isBasicLand := false
 		artVariation := ""
+		oracleText := ""
+		artist := ""
+		typeLine := ""
+		borderColor := "black"
+		frame := "2015"
+		fullArt := false
+		textless := false
+		
 		setCode := p.SetCode
 		setName := p.SetName
 
@@ -348,6 +404,9 @@ func main() {
 				artVariation = meta.ArtVariation
 				if setCode == "" || setCode == "N/A" { setCode = meta.SetCode }
 				if setName == "" || setName == "N/A" { setName = meta.SetName }
+				// New fields
+				oracleText = meta.Description // reused for now
+				typeLine = "Card" // generic fallback
 			}
 		}
 
@@ -357,13 +416,15 @@ func main() {
 				name, tcg, category, set_name, set_code, condition,
 				foil_treatment, card_treatment,
 				price_cop_override, price_source, stock, description, image_url,
-				language, color, rarity, cmc, is_legendary, is_historic, is_land, is_basic_land, art_variation
+				language, color_identity, rarity, cmc, is_legendary, is_historic, is_land, is_basic_land, art_variation,
+				oracle_text, artist, type_line, border_color, frame, full_art, textless
 			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'manual', 0, $10, $11, 
-			          $12, $13, $14, $15, $16, $17, $18, $19, $20) RETURNING id
+			          $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27) RETURNING id
 		`, p.Name, p.TCG, p.Category, setName, setCode, p.Condition,
 			p.Foil, p.Treatment,
 			p.PriceCOP, desc, img,
-			lang, color, rarity, cmc, isLegendary, isHistoric, isLand, isBasicLand, artVariation).Scan(&newProductID)
+			lang, color, rarity, cmc, isLegendary, isHistoric, isLand, isBasicLand, artVariation,
+			oracleText, artist, typeLine, borderColor, frame, fullArt, textless).Scan(&newProductID)
 		
 		if err != nil {
 			logger.Warn("failed to insert %s: %v", p.Name, err)

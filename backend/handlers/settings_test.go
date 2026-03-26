@@ -23,6 +23,7 @@ func TestSettingsHandler_Get(t *testing.T) {
 	h := &SettingsHandler{DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
+		ResetSettingsCache()
 		rows := sqlmock.NewRows([]string{"key", "value"}).
 			AddRow("usd_to_cop_rate", "4500.5").
 			AddRow("contact_email", "test@example.com")
@@ -41,6 +42,7 @@ func TestSettingsHandler_Get(t *testing.T) {
 	})
 
 	t.Run("Defaults on Error", func(t *testing.T) {
+		ResetSettingsCache()
 		mock.ExpectQuery("SELECT key, value FROM settings").WillReturnError(assert.AnError)
 
 		req, _ := http.NewRequest("GET", "/api/admin/settings", nil)
@@ -63,6 +65,7 @@ func TestSettingsHandler_Update(t *testing.T) {
 	h := &SettingsHandler{DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
+		ResetSettingsCache()
 		rate := 4400.0
 		email := "new@example.com"
 		input := struct {
@@ -89,6 +92,7 @@ func TestSettingsHandler_Update(t *testing.T) {
 	})
 
 	t.Run("Update All Fields", func(t *testing.T) {
+		ResetSettingsCache()
 		usd := 4500.0
 		eur := 4900.0
 		addr := "Addr"
@@ -114,7 +118,8 @@ func TestSettingsHandler_Update(t *testing.T) {
 		for i := 0; i < 7; i++ {
 			mock.ExpectExec("INSERT INTO settings").WillReturnResult(sqlmock.NewResult(0, 1))
 		}
-		mock.ExpectQuery("SELECT key, value FROM settings").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}))
+		mock.ExpectQuery("SELECT key, value FROM settings").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).
+			AddRow("usd_to_cop_rate", "4500.0"))
 
 		req, _ := http.NewRequest("PUT", "/api/admin/settings", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()

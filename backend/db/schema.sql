@@ -46,7 +46,7 @@ CREATE TABLE products (
 
   -- MTG Metadata
   language          TEXT NOT NULL DEFAULT 'en',
-  color             TEXT, -- comma-separated (W,U,B,R,G)
+  color_identity    TEXT, -- comma-separated (W,U,B,R,G)
   rarity            TEXT,
   cmc               NUMERIC(5, 1),
   is_legendary      BOOLEAN NOT NULL DEFAULT false,
@@ -54,6 +54,13 @@ CREATE TABLE products (
   is_land           BOOLEAN NOT NULL DEFAULT false,
   is_basic_land     BOOLEAN NOT NULL DEFAULT false,
   art_variation     TEXT,
+  oracle_text       TEXT,
+  artist            TEXT,
+  type_line         TEXT,
+  border_color      TEXT,
+  frame             TEXT,
+  full_art          BOOLEAN NOT NULL DEFAULT false,
+  textless          BOOLEAN NOT NULL DEFAULT false,
 
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -63,6 +70,14 @@ CREATE INDEX idx_products_tcg      ON products(tcg);
 CREATE INDEX idx_products_category ON products(category);
 CREATE INDEX idx_products_search   ON products USING gin(to_tsvector('english', name || ' ' || COALESCE(set_name, '')));
 CREATE INDEX idx_products_trgm     ON products USING gin (name gin_trgm_ops);
+
+-- Facet Indices for Performance
+CREATE INDEX idx_products_condition      ON products(condition);
+CREATE INDEX idx_products_foil           ON products(foil_treatment);
+CREATE INDEX idx_products_treatment      ON products(card_treatment);
+CREATE INDEX idx_products_rarity         ON products(rarity);
+CREATE INDEX idx_products_language       ON products(language);
+CREATE INDEX idx_products_color_identity ON products(color_identity);
 
 -- Custom Categories (Collections)
 CREATE TABLE custom_categories (
@@ -113,7 +128,9 @@ INSERT INTO tcgs (id, name) VALUES
   ('pokemon', 'Pokémon'),
   ('lorcana', 'Disney Lorcana'),
   ('onepiece', 'One Piece'),
-  ('yugioh', 'Yu-Gi-Oh!')
+  ('yugioh', 'Yu-Gi-Oh!'),
+  ('starwars', 'Star Wars Unlimited'),
+  ('weiss', 'Weiss Schwarz')
 ON CONFLICT (id) DO NOTHING;
 
 -- Storage Locations

@@ -97,13 +97,37 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	var enrichedItems []itemWithPrice
 
+	// 3. Enrich items and calculate total in bulk
+	productIDs := make([]string, 0)
+	for _, item := range input.Items {
+		if item.Quantity > 0 {
+			productIDs = append(productIDs, item.ProductID)
+		}
+	}
+
+	productMap := make(map[string]models.Product)
+	if len(productIDs) > 0 {
+		query, args, err := sqlx.In(`SELECT * FROM products WHERE id IN (?)`, productIDs)
+		if err != nil {
+			jsonError(w, "Query preparation error", http.StatusInternalServerError)
+			return
+		}
+		var products []models.Product
+		if err := tx.Select(&products, tx.Rebind(query), args...); err != nil {
+			jsonError(w, "Failed to fetch products: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		for _, p := range products {
+			productMap[p.ID] = p
+		}
+	}
+
 	for _, item := range input.Items {
 		if item.Quantity <= 0 {
 			continue
 		}
-		var product models.Product
-		err := tx.Get(&product, `SELECT * FROM products WHERE id = $1`, item.ProductID)
-		if err != nil {
+		product, ok := productMap[item.ProductID]
+		if !ok {
 			jsonError(w, fmt.Sprintf("Product %s not found", item.ProductID), http.StatusBadRequest)
 			return
 		}
@@ -131,17 +155,33 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 5. Create order items with snapshotted prices and current storage info
+	// Bulk fetch all storage locations for snapshots
+	storageMap := make(map[string][]models.StorageLocation)
+	if len(productIDs) > 0 {
+		query, args, err := sqlx.In(`
+			SELECT ps.product_id as product_id_temp, ps.stored_in_id, s.name, ps.quantity 
+			FROM product_stored_in ps 
+			JOIN stored_in s ON ps.stored_in_id = s.id 
+			WHERE ps.product_id IN (?) AND ps.quantity > 0
+		`, productIDs)
+		if err == nil {
+			type storageWithPID struct {
+				models.StorageLocation
+				ProductID string `db:"product_id_temp"`
+			}
+			var rows []storageWithPID
+			if err := tx.Select(&rows, tx.Rebind(query), args...); err == nil {
+				for _, row := range rows {
+					storageMap[row.ProductID] = append(storageMap[row.ProductID], row.StorageLocation)
+				}
+			}
+		}
+	}
+
 	for _, ei := range enrichedItems {
 		// Get current storage snapshot
 		var storageJSON *string
-		var storageRows []models.StorageLocation
-		h.DB.Select(&storageRows, `
-			SELECT ps.stored_in_id, s.name, ps.quantity 
-			FROM product_stored_in ps 
-			JOIN stored_in s ON ps.stored_in_id = s.id 
-			WHERE ps.product_id = $1 AND ps.quantity > 0
-		`, ei.ProductID)
-		if len(storageRows) > 0 {
+		if storageRows, ok := storageMap[ei.ProductID]; ok {
 			b, _ := json.Marshal(storageRows)
 			str := string(b)
 			storageJSON = &str
@@ -258,7 +298,11 @@ func (h *OrderHandler) GetDetail(w http.ResponseWriter, r *http.Request) {
 	// Fetch order
 	var order models.Order
 	if err := h.DB.Get(&order, `SELECT * FROM orders WHERE id = $1`, id); err != nil {
-		jsonError(w, "Order not found", http.StatusNotFound)
+		if err.Error() == "sql: no rows in result set" {
+			jsonError(w, "Order not found", http.StatusNotFound)
+		} else {
+			jsonError(w, "Database error", http.StatusInternalServerError)
+		}
 		return
 	}
 
@@ -283,7 +327,56 @@ func (h *OrderHandler) GetDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Enrich items with current product info (stock, storage, image)
+	// Enrichment: Fetch all related products and storage locations in bulk
+	productIDs := make([]string, 0)
+	idMap := make(map[string]bool)
+	for _, item := range items {
+		if item.ProductID != nil {
+			if !idMap[*item.ProductID] {
+				productIDs = append(productIDs, *item.ProductID)
+				idMap[*item.ProductID] = true
+			}
+		}
+	}
+
+	productMap := make(map[string]models.Product)
+	storageMap := make(map[string][]models.StorageLocation)
+
+	if len(productIDs) > 0 {
+		// Bulk fetch products
+		query, args, err := sqlx.In(`SELECT * FROM products WHERE id IN (?)`, productIDs)
+		if err == nil {
+			var products []models.Product
+			if err := h.DB.Select(&products, h.DB.Rebind(query), args...); err == nil {
+				for _, p := range products {
+					productMap[p.ID] = p
+				}
+			}
+		}
+
+		// Bulk fetch storage locations
+		query, args, err = sqlx.In(`
+			SELECT ps.product_id as product_id_temp, ps.stored_in_id, s.name, ps.quantity
+			FROM product_stored_in ps
+			JOIN stored_in s ON ps.stored_in_id = s.id
+			WHERE ps.product_id IN (?) AND ps.quantity > 0
+		`, productIDs)
+		if err == nil {
+			// We need a temporary struct to capture product_id from the join
+			type storageWithPID struct {
+				models.StorageLocation
+				ProductID string `db:"product_id_temp"`
+			}
+			var rows []storageWithPID
+			if err := h.DB.Select(&rows, h.DB.Rebind(query), args...); err == nil {
+				for _, row := range rows {
+					storageMap[row.ProductID] = append(storageMap[row.ProductID], row.StorageLocation)
+				}
+			}
+		}
+	}
+
+	// Assemble detail items
 	var detailItems []models.OrderItemDetail
 	for _, item := range items {
 		detail := models.OrderItemDetail{
@@ -292,26 +385,14 @@ func (h *OrderHandler) GetDetail(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if item.ProductID != nil {
-			var product models.Product
-			err := h.DB.Get(&product, `SELECT * FROM products WHERE id = $1`, *item.ProductID)
-			if err == nil {
-				detail.Stock = product.Stock
-				detail.ImageURL = product.ImageURL
-
-				// Get current storage locations
-				var storage []models.StorageLocation
-				h.DB.Select(&storage, `
-					SELECT ps.stored_in_id, s.name, ps.quantity
-					FROM product_stored_in ps
-					JOIN stored_in s ON ps.stored_in_id = s.id
-					WHERE ps.product_id = $1 AND ps.quantity > 0
-				`, *item.ProductID)
-				if storage != nil {
-					detail.StoredIn = storage
-				}
+			if p, ok := productMap[*item.ProductID]; ok {
+				detail.Stock = p.Stock
+				detail.ImageURL = p.ImageURL
+			}
+			if locs, ok := storageMap[*item.ProductID]; ok {
+				detail.StoredIn = locs
 			}
 		}
-
 		detailItems = append(detailItems, detail)
 	}
 	if detailItems == nil {

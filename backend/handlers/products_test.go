@@ -24,6 +24,7 @@ func TestProductHandler_List(t *testing.T) {
 	h := &ProductHandler{DB: sqlxDB}
 
 	t.Run("Basic List", func(t *testing.T) {
+		ResetSettingsCache()
 		now := time.Now()
 		rows := sqlmock.NewRows([]string{"id", "name", "tcg", "category", "price_source", "price_reference", "stock", "created_at", "updated_at"}).
 			AddRow("p1", "Product 1", "mtg", "singles", "tcgplayer", 1.0, 10, now, now)
@@ -40,7 +41,7 @@ func TestProductHandler_List(t *testing.T) {
 		mock.ExpectQuery("(?i)SELECT card_treatment, COUNT.*").WillReturnRows(sqlmock.NewRows([]string{"card_treatment", "count"}).AddRow("normal", 1))
 		mock.ExpectQuery("(?i)SELECT rarity, COUNT.*").WillReturnRows(sqlmock.NewRows([]string{"rarity", "count"}).AddRow("rare", 1))
 		mock.ExpectQuery("(?i)SELECT language, COUNT.*").WillReturnRows(sqlmock.NewRows([]string{"language", "count"}).AddRow("en", 1))
-		mock.ExpectQuery("(?i)SELECT color_identity, COUNT.*").WillReturnRows(sqlmock.NewRows([]string{"color_identity", "count"}).AddRow("blue", 1))
+		mock.ExpectQuery("(?i)SELECT.*FILTER.*").WillReturnRows(sqlmock.NewRows([]string{"w", "u", "b", "r", "g", "c"}).AddRow(1, 0, 0, 0, 0, 0))
 		mock.ExpectQuery("(?i)SELECT c.slug, COUNT.*").WillReturnRows(sqlmock.NewRows([]string{"slug", "count"}).AddRow("cat1", 1))
 
 		req, _ := http.NewRequest("GET", "/api/products?page=1&pageSize=20", nil)
@@ -64,6 +65,7 @@ func TestProductHandler_GetByID(t *testing.T) {
 	h := &ProductHandler{DB: sqlxDB}
 
 	t.Run("Found", func(t *testing.T) {
+		ResetSettingsCache()
 		now := time.Now()
 		row := sqlmock.NewRows([]string{"id", "name", "tcg", "category", "price_source", "stock", "created_at", "updated_at"}).
 			AddRow("p1", "Product 1", "mtg", "singles", "tcgplayer", 10, now, now)
@@ -92,6 +94,7 @@ func TestProductHandler_GetByID(t *testing.T) {
 	})
 
 	t.Run("Not Found", func(t *testing.T) {
+		ResetSettingsCache()
 		mock.ExpectQuery("SELECT .* FROM products WHERE id = \\$1").
 			WithArgs("p99").
 			WillReturnError(http.ErrNoLocation)
@@ -115,6 +118,7 @@ func TestProductHandler_Create(t *testing.T) {
 	h := &ProductHandler{DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
+		ResetSettingsCache()
 		input := models.ProductInput{Name: "New Product", TCG: "mtg", Category: "singles", Stock: 10}
 		body, _ := json.Marshal(input)
 
@@ -151,6 +155,7 @@ func TestProductHandler_Update(t *testing.T) {
 	h := &ProductHandler{DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
+		ResetSettingsCache()
 		input := models.ProductInput{Name: "Updated Name"}
 		body, _ := json.Marshal(input)
 
@@ -212,6 +217,7 @@ func TestProductHandler_BulkCreate(t *testing.T) {
 	h := &ProductHandler{DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
+		ResetSettingsCache()
 		inputs := []models.ProductInput{
 			{Name: "Bulk 1", TCG: "mtg", Category: "singles"},
 			{Name: "Bulk 2", TCG: "mtg", Category: "singles"},
@@ -242,6 +248,7 @@ func TestProductHandler_GetStorage(t *testing.T) {
 	h := &ProductHandler{DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
+		ResetSettingsCache()
 		rows := sqlmock.NewRows([]string{"stored_in_id", "name", "quantity"}).
 			AddRow("loc1", "Box 1", 10).
 			AddRow("loc2", "Box 2", 0)
@@ -269,6 +276,7 @@ func TestProductHandler_UpdateStorage(t *testing.T) {
 	h := &ProductHandler{DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
+		ResetSettingsCache()
 		updates := []models.ProductStorage{
 			{StoredInID: "loc1", Quantity: 5},
 		}

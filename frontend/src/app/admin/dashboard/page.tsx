@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import useSWR, { useSWRConfig } from 'swr';
 import { useRouter } from 'next/navigation';
 import {
   adminFetchProducts, adminCreateProduct, adminUpdateProduct, adminDeleteProduct,
@@ -67,14 +68,12 @@ const EMPTY_FORM: FormState = {
 
 export default function AdminDashboard() {
   const router = useRouter();
+  const { mutate: globalMutate } = useSWRConfig();
   const [token, setToken] = useState('');
-  const [products, setProducts] = useState<Product[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [storageFilter, setStorageFilter] = useState('');
-  const [page, setPage] = useState(1);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -96,17 +95,16 @@ export default function AdminDashboard() {
 
   // Storage Locations Global Modal
   const [showStorageModal, setShowStorageModal] = useState(false);
-  const [storageLocations, setStorageLocations] = useState<StoredIn[]>([]);
+  // TCG Management Modal
+  const [showTCGModal, setShowTCGModal] = useState(false);
+
+  // Storage Locations Modal States
   const [newStorageName, setNewStorageName] = useState('');
   const [editingStorageId, setEditingStorageId] = useState<string | null>(null);
   const [editingStorageName, setEditingStorageName] = useState('');
 
-  // Product Storage State (inside Product Edit Modal)
-  const [productStorage, setProductStorage] = useState<StorageLocation[]>([]);
-
-  // Categories Global Modal
+  // Category Management Modal States
   const [showCategoryModal, setShowCategoryModal] = useState(false);
-  const [categories, setCategories] = useState<CustomCategory[]>([]);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryIsActive, setNewCategoryIsActive] = useState(true);
   const [newCategoryShowBadge, setNewCategoryShowBadge] = useState(true);
@@ -116,24 +114,14 @@ export default function AdminDashboard() {
   const [editingCategoryIsActive, setEditingCategoryIsActive] = useState(true);
   const [editingCategoryShowBadge, setEditingCategoryShowBadge] = useState(true);
   const [editingCategorySearchable, setEditingCategorySearchable] = useState(true);
-
-  // TCG Management Modal
-  const [showTCGModal, setShowTCGModal] = useState(false);
-  const [tcgs, setTcgs] = useState<import('@/lib/types').TCG[]>([]);
+  
+  // Product Storage State (inside Product Edit Modal)
+  const [productStorage, setProductStorage] = useState<StorageLocation[]>([]);
 
   // Settings states
   const [showSettings, setShowSettings] = useState(false);
   const [showOrders, setShowOrders] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
-  const [settings, setSettings] = useState<Settings>({ 
-    usd_to_cop_rate: 4200, 
-    eur_to_cop_rate: 4600,
-    contact_address: '',
-    contact_phone: '',
-    contact_email: '',
-    contact_instagram: '',
-    contact_hours: ''
-  });
   const [editingSettings, setEditingSettings] = useState<Settings>({ 
     usd_to_cop_rate: 4200, 
     eur_to_cop_rate: 4600,
@@ -152,72 +140,44 @@ export default function AdminDashboard() {
     setToken(t);
   }, [router]);
 
-  const loadProducts = useCallback(async () => {
-    if (!token) return;
-    setLoading(true);
-    try {
-      const res = await adminFetchProducts(token, { search: debouncedSearch, storage_id: storageFilter, page, page_size: 25 });
-      setProducts(res.products);
-      setTotal(res.total);
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      if (msg.includes('401') || msg.includes('unauthorized')) {
-        localStorage.removeItem('el_bulk_admin_token');
-        router.push('/admin/login');
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [token, debouncedSearch, storageFilter, page, router]);
+  const productKey = useMemo(() => 
+    token ? ['/api/admin/products', debouncedSearch, storageFilter, page] : null,
+    [token, debouncedSearch, storageFilter, page]
+  );
 
-  const loadSettingsData = useCallback(async () => {
-    if (!token) return;
-    try {
-      const s = await getAdminSettings(token);
-      setSettings(s);
-      setEditingSettings(s);
-    } catch {
-      // ignore
-    }
-  }, [token]);
+  const { data: productRes, error: productError, isLoading: productsLoading, mutate: mutateProducts } = useSWR(
+    productKey,
+    ([, s, st, p]: any) => adminFetchProducts(token, { search: s, storage_id: st, page: p, page_size: 25 }),
+    { keepPreviousData: true, revalidateOnFocus: false }
+  );
 
-  const loadStorageLocations = useCallback(async () => {
-    if (!token) return;
-    try {
-      const res = await adminFetchStorage(token);
-      setStorageLocations(res);
-    } catch { }
-  }, [token]);
+  const products = productRes?.products || [];
+  const total = productRes?.total || 0;
+  const loading = productsLoading && !productRes;
 
-  const loadCategoriesData = useCallback(async () => {
-    if (!token) return;
-    try {
-      const res = await adminFetchCategories(token);
-      setCategories(res);
-    } catch { }
-  }, [token]);
+  const { data: settings, mutate: mutateSettings } = useSWR(
+    token ? '/api/admin/settings' : null,
+    () => getAdminSettings(token)
+  );
 
-  const loadTCGsData = useCallback(async () => {
-    if (!token) return;
-    try {
-      const res = await adminFetchTCGs(token);
-      setTcgs(res);
-    } catch { }
-  }, [token]);
+  const { data: storageLocations = [] } = useSWR(
+    token ? '/api/admin/storage' : null,
+    () => adminFetchStorage(token)
+  );
 
-  useEffect(() => {
-    loadProducts();
-  }, [loadProducts]);
+  const { data: categories = [] } = useSWR(
+    token ? '/api/admin/categories' : null,
+    () => adminFetchCategories(token)
+  );
 
-  useEffect(() => {
-    loadSettingsData();
-    loadStorageLocations();
-    loadCategoriesData();
-    loadTCGsData();
-  }, [loadSettingsData, loadStorageLocations, loadCategoriesData, loadTCGsData]);
+  const { data: tcgs = [] } = useSWR(
+    token ? '/api/admin/tcgs' : null,
+    () => adminFetchTCGs(token)
+  );
 
   // Sync Global locations into active Product form
   useEffect(() => {
+    if (!storageLocations) return;
     setProductStorage(prev => {
       if (!showModal) return prev;
       const existingIds = new Set(prev.map(p => p.stored_in_id));
@@ -284,6 +244,11 @@ export default function AdminDashboard() {
     setFormError('');
     setScryfallPrints([]);
     setShowModal(true);
+  };
+
+  const openSettings = () => {
+    if (settings) setEditingSettings(settings);
+    setShowSettings(true);
   };
 
   const extractPrices = (print: any, foil: FoilTreatment) => {
@@ -710,17 +675,13 @@ export default function AdminDashboard() {
       }));
   };
 
-  const openSettings = () => {
-    setEditingSettings(settings);
-    setShowSettings(true);
-  };
 
   const handleCreateStorage = async () => {
     if (!newStorageName.trim()) return;
     try {
       await adminCreateStorage(token, newStorageName);
       setNewStorageName('');
-      loadStorageLocations();
+      globalMutate('/api/admin/storage');
     } catch (e: any) { alert(e.message); }
   };
 
@@ -729,7 +690,7 @@ export default function AdminDashboard() {
     try {
       await adminUpdateStorage(token, id, editingStorageName);
       setEditingStorageId(null);
-      loadStorageLocations();
+      globalMutate('/api/admin/storage');
     } catch (e: any) { alert(e.message); }
   };
 
@@ -741,7 +702,7 @@ export default function AdminDashboard() {
     if (!confirm(msg)) return;
     try {
       await adminDeleteStorage(token, id);
-      loadStorageLocations();
+      globalMutate('/api/admin/storage');
     } catch (e: any) { alert(e.message); }
   };
 
@@ -753,7 +714,7 @@ export default function AdminDashboard() {
       setNewCategoryIsActive(true);
       setNewCategoryShowBadge(true);
       setNewCategorySearchable(true);
-      loadCategoriesData();
+      globalMutate('/api/admin/categories');
     } catch (e: any) { alert(e.message); }
   };
 
@@ -762,7 +723,7 @@ export default function AdminDashboard() {
     try {
       await adminUpdateCategory(token, id, editingCategoryName, slug, editingCategoryIsActive, editingCategoryShowBadge, editingCategorySearchable);
       setEditingCategoryId(null);
-      loadCategoriesData();
+      globalMutate('/api/admin/categories');
     } catch (e: any) { alert(e.message); }
   };
 
@@ -770,7 +731,7 @@ export default function AdminDashboard() {
     if (!confirm(`Delete custom category "${name}"?\nThis won't delete products, only remove the grouping.`)) return;
     try {
       await adminDeleteCategory(token, id);
-      loadCategoriesData();
+      globalMutate('/api/admin/categories');
     } catch (e: any) { alert(e.message); }
   };
 
@@ -791,9 +752,9 @@ export default function AdminDashboard() {
     setSavingSettings(true);
     try {
       const updated = await updateAdminSettings(token, editingSettings);
-      setSettings(updated);
+      mutateSettings(); // refresh settings
       setShowSettings(false);
-      loadProducts(); // refresh prices natively without hard reload
+      mutateProducts(); // refresh prices natively without hard reload
     } catch (e) {
       alert('Failed to save settings: ' + (e instanceof Error ? e.message : 'Unknown error'));
     } finally {
@@ -849,17 +810,18 @@ export default function AdminDashboard() {
 
       let pid = editProduct ? editProduct.id : '';
       if (editProduct) {
-        await adminUpdateProduct(token, editProduct.id, payload);
+        const updated = await adminUpdateProduct(token, editProduct.id, payload);
+        const storage = await adminUpdateProductStorage(token, updated.id, productStorage.map(s => ({ stored_in_id: s.stored_in_id, quantity: s.quantity })));
+        
+        // Update list in-place
+        mutateProducts();
       } else {
         const newP = await adminCreateProduct(token, payload);
-        pid = newP.id;
+        await adminUpdateProductStorage(token, newP.id, productStorage.map(s => ({ stored_in_id: s.stored_in_id, quantity: s.quantity })));
+        mutateProducts(); // Re-fetch for new products to handle sorting/pagination
       }
       
-      // Update storage mapping
-      await adminUpdateProductStorage(token, pid, productStorage.map(s => ({ stored_in_id: s.stored_in_id, quantity: s.quantity })));
-      
       setShowModal(false);
-      loadProducts();
     } catch (e: unknown) {
       setFormError(e instanceof Error ? e.message : 'Failed to save product.');
     } finally {
@@ -871,7 +833,7 @@ export default function AdminDashboard() {
     if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
     try {
       await adminDeleteProduct(token, id);
-      loadProducts();
+      mutateProducts();
     } catch {
       alert('Failed to delete product.');
     }
@@ -1434,12 +1396,12 @@ export default function AdminDashboard() {
               <div className="sm:col-span-2 mt-2 pt-2" style={{ borderTop: '1px dashed var(--ink-border)' }}>
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="text-sm font-mono-stack" style={{ color: 'var(--text-primary)' }}>PRICING</h3>
-                  <div className="text-xs font-mono-stack px-2 py-1 rounded" style={{ background: 'var(--ink-surface)', color: 'var(--gold)' }}>
-                    {form.price_source === 'tcgplayer' && `(x ${settings.usd_to_cop_rate} COP)`}
-                    {form.price_source === 'cardmarket' && `(x ${settings.eur_to_cop_rate} COP)`}
+                   <div className="text-xs font-mono-stack px-2 py-1 rounded" style={{ background: 'var(--ink-surface)', color: 'var(--gold)' }}>
+                    {form.price_source === 'tcgplayer' && `(x ${settings?.usd_to_cop_rate || 0} COP)`}
+                    {form.price_source === 'cardmarket' && `(x ${settings?.eur_to_cop_rate || 0} COP)`}
                     {form.price_source !== 'manual' && typeof form.price_reference === 'number' && (
                        <span className="ml-2 font-bold text-sm" style={{ color: form.price_reference === 0 ? 'var(--hp-color)' : 'var(--gold)' }}>
-                         = ${(form.price_reference * (form.price_source === 'tcgplayer' ? settings.usd_to_cop_rate : settings.eur_to_cop_rate)).toLocaleString('en-US', { maximumFractionDigits: 0 })} COP
+                         = ${(form.price_reference * (form.price_source === 'tcgplayer' ? (settings?.usd_to_cop_rate || 0) : (settings?.eur_to_cop_rate || 0))).toLocaleString('en-US', { maximumFractionDigits: 0 })} COP
                        </span>
                     )}
                   </div>
@@ -1659,7 +1621,7 @@ export default function AdminDashboard() {
           <div className="card no-tilt max-w-2xl w-full p-8" style={{ background: 'var(--ink-surface', border: '4px solid var(--kraft-dark)' }}>
             <div className="flex items-center justify-between mb-8">
               <h2 className="font-display text-4xl m-0">TCG MANAGEMENT</h2>
-              <button onClick={() => { setShowTCGModal(false); loadTCGsData(); }} className="text-text-muted hover:text-text-primary text-xl">✕</button>
+              <button onClick={() => { setShowTCGModal(false); globalMutate('/api/admin/tcgs'); }} className="text-text-muted hover:text-text-primary text-xl">✕</button>
             </div>
             
             <TCGManager token={token} />
@@ -1669,7 +1631,7 @@ export default function AdminDashboard() {
 
       {/* Orders Panel */}
       {showOrders && (
-        <OrdersPanel token={token} onClose={() => { setShowOrders(false); loadProducts(); }} />
+        <OrdersPanel token={token} onClose={() => { setShowOrders(false); mutateProducts(); }} />
       )}
 
       {showImportModal && (
@@ -1678,7 +1640,7 @@ export default function AdminDashboard() {
           storageLocations={storageLocations} 
           categories={categories}
           onClose={() => setShowImportModal(false)} 
-          onImported={() => loadProducts()} 
+          onImported={() => mutateProducts()} 
         />
       )}
     </div>

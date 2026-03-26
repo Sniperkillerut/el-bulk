@@ -19,7 +19,7 @@ func TestProductHandler_BuildFilters_Comprehensive(t *testing.T) {
 	h := &ProductHandler{DB: sqlxDB}
 
 	// Helper to mock a List call with specific URL params
-	testFilters := func(name string, url string, expectedFilters []string) {
+	testFilters := func(name string, url string) {
 		t.Run(name, func(t *testing.T) {
 			// 1. Total count
 			mock.ExpectQuery("SELECT COUNT\\(\\*\\) FROM products p").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
@@ -47,11 +47,11 @@ func TestProductHandler_BuildFilters_Comprehensive(t *testing.T) {
 		})
 	}
 
-	testFilters("Multiple Filters", "?tcg=mtg&category=singles&foil=foil,non_foil&rarity=rare&condition=NM,LP&language=en&search=lotus", nil)
-	testFilters("Color Filter", "?color=W,U,B", nil)
-	testFilters("Storage Filter", "?storage_id=loc1", nil)
-	testFilters("Collection Filter", "?collection=my-deck", nil)
-	testFilters("Treatment Filter", "?treatment=borderless,extendedart", nil)
+	testFilters("Multiple Filters", "?tcg=mtg&category=singles&foil=foil,non_foil&rarity=rare&condition=NM,LP&language=en&search=lotus")
+	testFilters("Color Filter", "?color=W,U,B")
+	testFilters("Storage Filter", "?storage_id=loc1")
+	testFilters("Collection Filter", "?collection=my-deck")
+	testFilters("Treatment Filter", "?treatment=borderless,extendedart")
 }
 
 func TestProductHandler_AdminVsPublic(t *testing.T) {

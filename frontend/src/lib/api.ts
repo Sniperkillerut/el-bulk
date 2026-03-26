@@ -61,28 +61,58 @@ export async function fetchProducts(filters: ProductFilters = {}): Promise<Produ
 }
 
 export async function fetchProduct(id: string): Promise<Product> {
-  const res = await fetch(`${API_BASE}/api/products/${id}`, { cache: 'no-store' });
+  const res = await fetch(`${API_BASE}/api/products/${id}`, { cache: 'default' });
   if (!res.ok) await logAndThrow(res, 'Product not found');
   return res.json();
 }
 
+// Metadata caching (in-memory session)
+const metadataCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 300000; // 5 minutes
+
+function getCached(key: string) {
+  const entry = metadataCache.get(key);
+  if (entry && Date.now() - entry.timestamp < CACHE_TTL) return entry.data;
+  return null;
+}
+
+function setCached(key: string, data: any) {
+  metadataCache.set(key, { data, timestamp: Date.now() });
+}
+
 export async function fetchCategories(): Promise<import('./types').CustomCategory[]> {
-  const res = await fetch(`${API_BASE}/api/categories`, { cache: 'no-store' });
+  const cached = getCached('categories');
+  if (cached) return cached;
+
+  const res = await fetch(`${API_BASE}/api/categories`, { cache: 'default' });
   if (!res.ok) return [];
-  return res.json();
+  const data = await res.json();
+  setCached('categories', data);
+  return data;
 }
 
 export async function fetchTCGs(activeOnly: boolean = true): Promise<import('./types').TCG[]> {
-  const res = await fetch(`${API_BASE}/api/tcgs?active_only=${activeOnly}`, { cache: 'no-store' });
+  const key = `tcgs_${activeOnly}`;
+  const cached = getCached(key);
+  if (cached) return cached;
+
+  const res = await fetch(`${API_BASE}/api/tcgs?active_only=${activeOnly}`, { cache: 'default' });
   if (!res.ok) return [];
   const data = await res.json();
-  return data.tcgs || [];
+  const tcgs = Array.isArray(data) ? data : (data.tcgs || []);
+  setCached(key, tcgs);
+  return tcgs;
 }
 
 export async function fetchPublicSettings(): Promise<import('./types').Settings> {
-  const res = await fetch(`${API_BASE}/api/settings`, { cache: 'no-store' });
+  const cached = getCached('settings');
+  if (cached) return cached;
+
+  const res = await fetch(`${API_BASE}/api/settings`, { cache: 'default' });
   if (!res.ok) throw new Error('Failed to fetch settings');
-  return res.json();
+  const data = await res.json();
+  setCached('settings', data);
+  return data;
 }
 
 // Admin API (requires token)
@@ -233,11 +263,17 @@ export async function lookupPokemonCard(
 // ---------------------------------------------------------------------------
 
 export async function getAdminSettings(token: string): Promise<import('./types').Settings> {
+  const cached = getCached('admin_settings');
+  if (cached) return cached;
+
   const res = await fetch(`${API_BASE}/api/admin/settings`, {
     headers: { Authorization: `Bearer ${token}` },
+    cache: 'default',
   });
   if (!res.ok) throw new Error('Failed to load settings');
-  return res.json();
+  const data = await res.json();
+  setCached('admin_settings', data);
+  return data;
 }
 
 export async function updateAdminSettings(
@@ -273,15 +309,20 @@ export async function triggerPriceRefresh(
 // ---------------------------------------------------------------------------
 
 export async function adminFetchStorage(token: string): Promise<import('./types').StoredIn[]> {
+  const cached = getCached('admin_storage');
+  if (cached) return cached;
+
   const res = await fetch(`${API_BASE}/api/admin/storage`, {
     headers: { Authorization: `Bearer ${token}` },
-    cache: 'no-store',
+    cache: 'default',
   });
   if (!res.ok) {
     if (res.status === 401) throw new Error('401 Unauthorized');
     throw new Error('Failed to fetch storage locations');
   }
-  return res.json();
+  const data = await res.json();
+  setCached('admin_storage', data);
+  return data;
 }
 
 export async function adminCreateStorage(token: string, name: string): Promise<import('./types').StoredIn> {
@@ -317,15 +358,20 @@ export async function adminDeleteStorage(token: string, id: string): Promise<voi
 // ---------------------------------------------------------------------------
 
 export async function adminFetchCategories(token: string): Promise<import('./types').CustomCategory[]> {
+  const cached = getCached('admin_categories');
+  if (cached) return cached;
+
   const res = await fetch(`${API_BASE}/api/admin/categories`, {
     headers: { Authorization: `Bearer ${token}` },
-    cache: 'no-store',
+    cache: 'default',
   });
   if (!res.ok) {
     if (res.status === 401) throw new Error('401 Unauthorized');
     throw new Error('Failed to fetch custom categories');
   }
-  return res.json();
+  const data = await res.json();
+  setCached('admin_categories', data);
+  return data;
 }
 
 export async function adminCreateCategory(
@@ -376,12 +422,17 @@ export async function adminDeleteCategory(token: string, id: string): Promise<vo
 // ---------------------------------------------------------------------------
 
 export async function adminFetchTCGs(token: string): Promise<import('./types').TCG[]> {
+  const cached = getCached('admin_tcgs');
+  if (cached) return cached;
+
   const res = await fetch(`${API_BASE}/api/admin/tcgs`, {
     headers: { Authorization: `Bearer ${token}` },
-    cache: 'no-store',
+    cache: 'default',
   });
   if (!res.ok) await logAndThrow(res, 'Failed to fetch TCGs');
-  return res.json();
+  const data = await res.json();
+  setCached('admin_tcgs', data);
+  return data;
 }
 
 export async function adminCreateTCG(token: string, id: string, name: string): Promise<import('./types').TCG> {
@@ -485,7 +536,7 @@ export async function adminUpdateOrder(token: string, id: string, data: { status
 export async function adminCompleteOrder(token: string, id: string, decrements: { product_id: string; stored_in_id: string; quantity: number }[]): Promise<import('./types').OrderDetail> {
   const res = await fetch(`${API_BASE}/api/admin/orders/${id}/complete`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Rev bearer ${token}` },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ decrements }),
   });
   if (!res.ok) await logAndThrow(res, 'Failed to complete order');

@@ -643,24 +643,42 @@ func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treat
 		}
 	}
 
+	// 2. Color Facets (Combined into 1 query)
 	from, conds, args := h.buildFilters(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, "", isAdmin)
-	where := ""
+	colorWhere := ""
 	if len(conds) > 0 {
-		where = "WHERE " + strings.Join(conds, " AND ")
+		colorWhere = "WHERE " + strings.Join(conds, " AND ")
 	}
-	for _, c := range []string{"W", "U", "B", "R", "G", "C"} {
-		var count int
-		idx := len(args) + 1
-		q := fmt.Sprintf("SELECT COUNT(*) %s %s AND p.color_identity ILIKE $%d", from, where, idx)
-		if where == "" {
-			q = fmt.Sprintf("SELECT COUNT(*) %s WHERE p.color_identity ILIKE $%d", from, idx)
-		}
-		h.DB.Get(&count, q, append(args, "%"+c+"%")...)
-		f.Color[c] = count
+	colorQuery := fmt.Sprintf(`
+		SELECT 
+			COUNT(*) FILTER (WHERE p.color_identity ILIKE '%%W%%') as w,
+			COUNT(*) FILTER (WHERE p.color_identity ILIKE '%%U%%') as u,
+			COUNT(*) FILTER (WHERE p.color_identity ILIKE '%%B%%') as b,
+			COUNT(*) FILTER (WHERE p.color_identity ILIKE '%%R%%') as r,
+			COUNT(*) FILTER (WHERE p.color_identity ILIKE '%%G%%') as g,
+			COUNT(*) FILTER (WHERE p.color_identity ILIKE '%%C%%') as c
+		%s %s`, from, colorWhere)
+	
+	var colRes struct {
+		W int `db:"w"`
+		U int `db:"u"`
+		B int `db:"b"`
+		R int `db:"r"`
+		G int `db:"g"`
+		C int `db:"c"`
+	}
+	if err := h.DB.Get(&colRes, colorQuery, args...); err == nil {
+		f.Color["W"] = colRes.W
+		f.Color["U"] = colRes.U
+		f.Color["B"] = colRes.B
+		f.Color["R"] = colRes.R
+		f.Color["G"] = colRes.G
+		f.Color["C"] = colRes.C
 	}
 
+	// 3. Collection Facet
 	from, conds, args = h.buildFilters(tcg, category, search, storageID, foil, treatment, condition, "", rarity, language, color, isAdmin)
-	where = ""
+	where := ""
 	if len(conds) > 0 {
 		where = "WHERE " + strings.Join(conds, " AND ")
 	}
