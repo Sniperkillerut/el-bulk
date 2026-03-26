@@ -88,4 +88,55 @@ npm run dev                 # → :3000
 2. Add the TCG to `KNOWN_TCGS` in `frontend/src/lib/types.ts`
 3. Add labels to `TCG_LABELS` and `TCG_SHORT` in the same file
 
-No new page files needed — the `[tcg]` dynamic route handles it.
+---
+
+## Deployment (Self-Hosting on Orange Pi / Raspberry Pi)
+
+The **Orange Pi Zero 2W (4GB RAM)** is the recommended self-hosting target. 
+
+### 1. Production Docker Setup
+On your Pi, use the production-optimized compose file (not provided in dev, but follows this pattern):
+
+```yaml
+services:
+  db: { image: postgres:16-alpine, ... }
+  backend:
+    build: { context: ./backend, target: prod }
+    environment: { PORT: "8080", ... }
+  frontend:
+    build: { context: ./frontend, target: prod }
+    ports: ["80:3000"]
+```
+
+### 2. Cloudflare Tunnel (Zero Trust)
+To expose your store to the internet without opening ports:
+
+1.  **Install `cloudflared`** on the Orange Pi.
+2.  **Authenticate**: `cloudflared tunnel login`.
+3.  **Create Tunnel**: `cloudflared tunnel create el-bulk-tunnel`.
+4.  **Configure**: Create `config.yml`:
+    ```yaml
+    tunnel: <TUNNEL_ID>
+    credentials-file: /home/pi/.cloudflared/<TUNNEL_ID>.json
+    ingress:
+      - hostname: store.yourdomain.com
+        service: http://localhost:80
+      - service: http_status:404
+    ```
+5.  **Route DNS**: `cloudflared tunnel route dns el-bulk-tunnel store.yourdomain.com`.
+6.  **Run**: `cloudflared tunnel run el-bulk-tunnel`.
+
+### 3. Automated Backups (Crontab)
+To automate the daily database dump, add this to your Pi’s crontab (`crontab -e`):
+
+```bash
+# Backup every day at 3:00 AM
+00 03 * * * docker exec el_bulk_db pg_dump -U elbulk elbulk > /home/pi/backups/elbulk_$(date +\%Y\%m\%d).sql
+
+# (Optional) Delete backups older than 30 days
+00 04 * * * find /home/pi/backups/ -name "*.sql" -type f -mtime +30 -delete
+```
+
+### 4. Performance Tips for Pi
+- **Swap**: Ensure at least 2GB of swap space is enabled (`sudo fallocate -l 2G /swapfile`).
+- **Storage**: Boot from a USB SSD if possible to avoid MicroSD card wear from PostgreSQL writes.
