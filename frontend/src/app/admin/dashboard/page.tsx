@@ -224,26 +224,20 @@ export default function AdminDashboard() {
     () => adminFetchTCGs(token)
   );
 
-  // Sync Global locations into active Product form
-  useEffect(() => {
-    if (!storageLocations) return;
-    setProductStorage(prev => {
-      if (!showModal) return prev;
-      const existingIds = new Set(prev.map(p => p.stored_in_id));
-      const additions = storageLocations.filter(sl => !existingIds.has(sl.id)).map(sl => ({
-        stored_in_id: sl.id,
-        name: sl.name,
-        quantity: 0
-      }));
-      if (additions.length === 0) return prev;
-      return [...prev, ...additions].sort((a,b) => a.name.localeCompare(b.name));
-    });
-  }, [storageLocations, showModal]);
+
 
   const openCreate = () => {
     setEditProduct(null);
     setForm({ ...EMPTY_FORM });
-    setProductStorage(storageLocations.map(s => ({ stored_in_id: s.id, name: s.name, quantity: 0 })));
+    
+    // If we're filtering by a specific storage, pre-add it with 0 qty
+    const initialStorage = [];
+    if (storageFilter) {
+      const loc = storageLocations.find(l => l.id === storageFilter);
+      if (loc) initialStorage.push({ stored_in_id: loc.id, name: loc.name, quantity: 0 });
+    }
+    setProductStorage(initialStorage);
+    
     setFormError('');
     setScryfallPrints([]);
     setShowModal(true);
@@ -282,14 +276,12 @@ export default function AdminDashboard() {
       textless: p.textless,
     });
     const existingStorage = p.stored_in || [];
-    setProductStorage(storageLocations.map(s => {
-      const match = existingStorage.find(d => d.stored_in_id === s.id);
-      return {
-        stored_in_id: s.id,
-        name: s.name,
-        quantity: match ? match.quantity : 0
-      };
-    }));
+    // Only show locations that the product is actually in
+    setProductStorage(existingStorage.map(d => ({
+      stored_in_id: d.stored_in_id,
+      name: d.name,
+      quantity: d.quantity
+    })));
     setFormError('');
     setScryfallPrints([]);
     setShowModal(true);
@@ -1710,8 +1702,8 @@ export default function AdminDashboard() {
                     </span>
                   </div>
                   
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {productStorage.length === 0 && <p className="text-xs text-text-muted italic text-center py-2">No storage locations available.</p>}
+                  <div className="space-y-2 max-h-60 overflow-y-auto mb-4 border-b border-ink-border pb-4">
+                    {productStorage.length === 0 && <p className="text-xs text-text-muted italic text-center py-2">No storage assignments yet.</p>}
                     {productStorage.map(loc => (
                       <div key={loc.stored_in_id} className="flex items-center justify-between gap-2 text-sm border-b border-ink-border/50 pb-2">
                         <span className="truncate flex-1 font-semibold" title={loc.name}>{loc.name}</span>
@@ -1721,9 +1713,47 @@ export default function AdminDashboard() {
                             onChange={e => setStoreQty(loc.stored_in_id, parseInt(e.target.value) || 0)}
                             className="w-12 px-1 py-0 text-center text-sm font-mono-stack" style={{ height: '24px' }} placeholder="0" />
                           <button onClick={() => updateStoreQty(loc.stored_in_id, 1)} className="w-6 h-6 flex items-center justify-center bg-ink-surface border border-ink-border hover:text-gold transition-colors">+</button>
+                          <button onClick={() => setProductStorage(prev => prev.filter(p => p.stored_in_id !== loc.stored_in_id))} className="w-6 h-6 flex items-center justify-center hover:text-hp-color opacity-40 hover:opacity-100 transition-opacity" title="Remove assignment">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                          </button>
                         </div>
                       </div>
                     ))}
+                  </div>
+
+                  <div className="pt-2">
+                    <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">Quick Add Location</label>
+                    <div className="flex gap-1">
+                      <select 
+                        className="flex-1 text-xs px-2 h-10"
+                        style={{ padding: '0 8px' }}
+                        onChange={(e) => {
+                          const id = e.target.value;
+                          if (!id) return;
+                          const loc = storageLocations.find(l => l.id === id);
+                          if (!loc) return;
+                          if (productStorage.find(p => p.stored_in_id === id)) return;
+                          setProductStorage(prev => [...prev, { stored_in_id: loc.id, name: loc.name, quantity: 0 }]);
+                          e.target.value = "";
+                        }}
+                      >
+                        <option value="">-- Select Location --</option>
+                        {storageLocations
+                          .filter(sl => !productStorage.some(ps => ps.stored_in_id === sl.id))
+                          .sort((a,b) => a.name.localeCompare(b.name))
+                          .map(sl => (
+                            <option key={sl.id} value={sl.id}>{sl.name}</option>
+                          ))
+                        }
+                      </select>
+                      <button 
+                        onClick={() => setShowStorageModal(true)}
+                        className="btn-secondary w-10 h-10 p-0 flex items-center justify-center"
+                        title="New Global Location"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
