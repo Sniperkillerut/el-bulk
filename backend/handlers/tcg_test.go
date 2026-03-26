@@ -102,7 +102,7 @@ func TestTCGHandler_Update(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		input := models.TCGInput{Name: "New Name", IsActive: true}
 		body, _ := json.Marshal(input)
-		mock.ExpectQuery("UPDATE tcgs").WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow("mtg", "New Name"))
+		mock.ExpectQuery("UPDATE tcg").WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow("mtg", "New Name"))
 
 		r := chi.NewRouter()
 		r.Put("/api/admin/tcgs/{id}", h.Update)
@@ -115,7 +115,7 @@ func TestTCGHandler_Update(t *testing.T) {
 	t.Run("DB Error (Not Found)", func(t *testing.T) {
 		input := models.TCGInput{Name: "New Name", IsActive: true}
 		body, _ := json.Marshal(input)
-		mock.ExpectQuery("UPDATE tcgs").WillReturnError(fmt.Errorf("not found"))
+		mock.ExpectQuery("UPDATE tcg").WillReturnError(fmt.Errorf("not found"))
 
 		r := chi.NewRouter()
 		r.Put("/api/admin/tcgs/{id}", h.Update)

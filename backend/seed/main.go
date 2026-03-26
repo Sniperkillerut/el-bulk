@@ -134,7 +134,7 @@ func main() {
 		{"weiss", "Weiss Schwarz"},
 	}
 	for _, t := range tcgsToSeed {
-		database.Exec(`INSERT INTO tcgs (id, name) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name`, t.ID, t.Name)
+		database.Exec(`INSERT INTO tcg (id, name) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name`, t.ID, t.Name)
 	}
 
 	// Seed Categories

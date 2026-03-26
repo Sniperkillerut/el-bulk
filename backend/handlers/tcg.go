@@ -74,7 +74,7 @@ func (h *TCGHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	var tcg models.TCG
 	err := h.DB.QueryRowx(`
-		UPDATE tcgs
+		UPDATE tcg
 		SET name = $1, is_active = $2
 		WHERE id = $3
 		RETURNING *
