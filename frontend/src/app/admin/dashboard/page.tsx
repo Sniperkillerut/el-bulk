@@ -72,18 +72,12 @@ export default function AdminDashboard() {
   const [token, setToken] = useState('');
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [storageFilter, setStorageFilter] = useState('');
   const [adminSortBy, setAdminSortBy] = useState('created_at');
   const [adminSortDir, setAdminSortDir] = useState<'asc' | 'desc'>('desc');
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [search]);
+
 
   // Modal states
   const [showModal, setShowModal] = useState(false);
@@ -144,18 +138,70 @@ export default function AdminDashboard() {
   }, [router]);
 
   const productKey = useMemo(() => 
-    token ? ['/api/admin/products', debouncedSearch, storageFilter, page, adminSortBy, adminSortDir] : null,
-    [token, debouncedSearch, storageFilter, page, adminSortBy, adminSortDir]
+    token ? ['/api/admin/products/all'] : null,
+    [token]
   );
 
   const { data: productRes, error: productError, isLoading: productsLoading, mutate: mutateProducts } = useSWR(
     productKey,
-    ([, s, st, p, sb, sd]: any) => adminFetchProducts(token, { search: s, storage_id: st, page: p, page_size: 25, sort_by: sb, sort_dir: sd }),
+    () => adminFetchProducts(token, { page_size: 5000 }),
     { keepPreviousData: true, revalidateOnFocus: false }
   );
 
-  const products = productRes?.products || [];
-  const total = productRes?.total || 0;
+  const allProducts = useMemo(() => productRes?.products || [], [productRes]);
+
+  const filteredAndSortedProducts = useMemo(() => {
+    let result = [...allProducts];
+
+    // 1. Filter by Storage
+    if (storageFilter) {
+      result = result.filter(p => p.stored_in?.some(s => s.stored_in_id === storageFilter));
+    }
+
+    // 2. Filter by Search
+    if (search) {
+      const s = search.toLowerCase();
+      result = result.filter(p => 
+        p.name.toLowerCase().includes(s) ||
+        (p.set_name?.toLowerCase().includes(s)) ||
+        (p.set_code?.toLowerCase().includes(s)) ||
+        (p.artist?.toLowerCase().includes(s)) ||
+        (p.collector_number?.toLowerCase().includes(s)) ||
+        (p.oracle_text?.toLowerCase().includes(s)) ||
+        (p.type_line?.toLowerCase().includes(s)) ||
+        (p.promo_type?.toLowerCase().includes(s))
+      );
+    }
+
+    // 3. Sort
+    result.sort((a, b) => {
+      let valA: any, valB: any;
+      switch (adminSortBy) {
+        case 'name': valA = a.name; valB = b.name; break;
+        case 'tcg': valA = a.tcg; valB = b.tcg; break;
+        case 'category': valA = a.category; valB = b.category; break;
+        case 'set_name': valA = a.set_name || ''; valB = b.set_name || ''; break;
+        case 'condition': valA = a.condition || ''; valB = b.condition || ''; break;
+        case 'stock': valA = a.stock; valB = b.stock; break;
+        case 'price': valA = a.price || 0; valB = b.price || 0; break;
+        case 'created_at': valA = a.created_at || ''; valB = b.created_at || ''; break;
+        default: valA = a.created_at || ''; valB = b.created_at || '';
+      }
+
+      if (valA < valB) return adminSortDir === 'asc' ? -1 : 1;
+      if (valA > valB) return adminSortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return result;
+  }, [allProducts, search, storageFilter, adminSortBy, adminSortDir]);
+
+  const total = filteredAndSortedProducts.length;
+  const products = useMemo(() => {
+    const start = (page - 1) * 25;
+    return filteredAndSortedProducts.slice(start, start + 25);
+  }, [filteredAndSortedProducts, page]);
+
   const loading = productsLoading && !productRes;
 
   const { data: settings, mutate: mutateSettings } = useSWR(

@@ -334,6 +334,7 @@ export async function adminCreateStorage(token: string, name: string): Promise<i
     body: JSON.stringify({ name }),
   });
   if (!res.ok) await logAndThrow(res, 'Failed to create storage location');
+  metadataCache.delete('admin_storage');
   return res.json();
 }
 
@@ -344,6 +345,7 @@ export async function adminUpdateStorage(token: string, id: string, name: string
     body: JSON.stringify({ name }),
   });
   if (!res.ok) await logAndThrow(res, 'Failed to update storage location');
+  metadataCache.delete('admin_storage');
   return res.json();
 }
 
@@ -353,6 +355,7 @@ export async function adminDeleteStorage(token: string, id: string): Promise<voi
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) await logAndThrow(res, 'Failed to delete storage location');
+  metadataCache.delete('admin_storage');
 }
 
 // ---------------------------------------------------------------------------
@@ -390,6 +393,8 @@ export async function adminCreateCategory(
     body: JSON.stringify({ name, slug, is_active, show_badge, searchable }),
   });
   if (!res.ok) await logAndThrow(res, 'Failed to create custom category');
+  metadataCache.delete('admin_categories');
+  metadataCache.delete('categories');
   return res.json();
 }
 
@@ -408,6 +413,8 @@ export async function adminUpdateCategory(
     body: JSON.stringify({ name, slug, is_active, show_badge, searchable }),
   });
   if (!res.ok) await logAndThrow(res, 'Failed to update custom category');
+  metadataCache.delete('admin_categories');
+  metadataCache.delete('categories');
   return res.json();
 }
 
@@ -417,6 +424,8 @@ export async function adminDeleteCategory(token: string, id: string): Promise<vo
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) await logAndThrow(res, 'Failed to delete custom category');
+  metadataCache.delete('admin_categories');
+  metadataCache.delete('categories');
 }
 
 // ---------------------------------------------------------------------------
@@ -444,6 +453,9 @@ export async function adminCreateTCG(token: string, id: string, name: string): P
     body: JSON.stringify({ id, name }),
   });
   if (!res.ok) await logAndThrow(res, 'Failed to create TCG');
+  metadataCache.delete('admin_tcgs');
+  metadataCache.delete('tcgs_true');
+  metadataCache.delete('tcgs_false');
   return res.json();
 }
 
@@ -454,6 +466,9 @@ export async function adminUpdateTCG(token: string, id: string, name: string, is
     body: JSON.stringify({ name, is_active }),
   });
   if (!res.ok) await logAndThrow(res, 'Failed to update TCG');
+  metadataCache.delete('admin_tcgs');
+  metadataCache.delete('tcgs_true');
+  metadataCache.delete('tcgs_false');
   return res.json();
 }
 
@@ -463,6 +478,9 @@ export async function adminDeleteTCG(token: string, id: string): Promise<void> {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) await logAndThrow(res, 'Failed to delete TCG');
+  metadataCache.delete('admin_tcgs');
+  metadataCache.delete('tcgs_true');
+  metadataCache.delete('tcgs_false');
 }
 
 // ---------------------------------------------------------------------------

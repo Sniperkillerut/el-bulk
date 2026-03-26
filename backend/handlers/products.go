@@ -201,13 +201,18 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	if page < 1 {
 		page = 1
 	}
+	isAdmin := strings.Contains(r.URL.Path, "/admin/")
+
 	pageSize, _ := strconv.Atoi(q.Get("page_size"))
-	if pageSize < 1 || pageSize > 100 {
+	maxPageSize := 100
+	if isAdmin {
+		maxPageSize = 5000
+	}
+	if pageSize < 1 || pageSize > maxPageSize {
 		pageSize = 20
 	}
 	offset := (page - 1) * pageSize
 
-	isAdmin := strings.Contains(r.URL.Path, "/admin/")
 	fromClause, conditions, args := h.buildFilters(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color, isAdmin)
 
 	where := ""
@@ -851,9 +856,10 @@ func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, tr
 		hasFullArt := false
 		for _, v := range vals {
 			lv := strings.ToLower(v)
-			if lv == "textless" {
+			switch lv {
+			case "textless":
 				hasTextless = true
-			} else if lv == "full_art" {
+			case "full_art":
 				hasFullArt = true
 			}
 			// Always add the value to the IN list for card_treatment search
