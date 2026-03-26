@@ -13,8 +13,15 @@ const (
 	FoilHoloFoil     FoilTreatment = "holo_foil"
 	FoilPlatinumFoil FoilTreatment = "platinum_foil"
 	FoilRippleFoil   FoilTreatment = "ripple_foil"
-	FoilEtchedFoil   FoilTreatment = "etched_foil"
-	FoilGalaxyFoil   FoilTreatment = "galaxy_foil"
+	FoilEtchedFoil     FoilTreatment = "etched_foil"
+	FoilGalaxyFoil     FoilTreatment = "galaxy_foil"
+	FoilSurgeFoil      FoilTreatment = "surge_foil"
+	FoilTexturedFoil   FoilTreatment = "textured_foil"
+	FoilStepAndCompleat FoilTreatment = "step_and_compleat"
+	FoilOilSlick       FoilTreatment = "oil_slick"
+	FoilNeonInk        FoilTreatment = "neon_ink"
+	FoilConfettiFoil   FoilTreatment = "confetti_foil"
+	FoilDoubleRainbow  FoilTreatment = "double_rainbow"
 
 	TreatmentNormal       CardTreatment = "normal"
 	TreatmentFullArt      CardTreatment = "full_art"
@@ -26,6 +33,8 @@ const (
 	TreatmentJudgePromo   CardTreatment = "judge_promo"
 	TreatmentPromo        CardTreatment = "promo"
 	TreatmentAlternateArt CardTreatment = "alternate_art"
+	TreatmentSerialized   CardTreatment = "serialized"
+	TreatmentStepAndCompleat CardTreatment = "step_and_compleat"
 
 	// PriceSource values
 	PriceSourceTCGPlayer   = "tcgplayer"   // USD via Scryfall, use usd_to_cop_rate

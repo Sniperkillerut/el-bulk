@@ -131,8 +131,18 @@ export default function ProductDetailPage() {
                 <span className="badge badge-foil">✦ {FOIL_LABELS[product.foil_treatment]}</span>
               )}
               {product.card_treatment !== 'normal' && TREATMENT_LABELS[product.card_treatment] && (
-                <span className="badge" style={{ background: 'var(--ink-surface)', color: 'var(--text-muted)', borderColor: 'var(--kraft-dark)' }}>
+                <span className="badge" style={{ background: 'var(--ink-surface)', color: 'var(--text-secondary)', border: '1px solid var(--kraft-dark)' }}>
                   {TREATMENT_LABELS[product.card_treatment]}
+                </span>
+              )}
+              {product.textless && (
+                <span className="badge" style={{ background: 'rgba(248,113,113,0.1)', color: 'var(--hp-color)', border: '1px solid var(--hp-color)' }}>
+                  TEXTLESS
+                </span>
+              )}
+              {product.full_art && product.card_treatment !== 'full_art' && (
+                <span className="badge" style={{ background: 'rgba(120,180,120,0.1)', color: 'var(--nm-color)', border: '1px solid var(--nm-color)' }}>
+                  FULL ART
                 </span>
               )}
             </div>

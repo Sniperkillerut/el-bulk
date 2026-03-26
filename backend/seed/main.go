@@ -1,136 +1,15 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"net/url"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/el-bulk/backend/db"
+	"github.com/el-bulk/backend/external"
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/logger"
 	"golang.org/x/crypto/bcrypt"
 )
-
-type ScryfallResponse struct {
-	Name       string   `json:"name"`
-	Set        string   `json:"set"`
-	SetName    string   `json:"set_name"`
-	Lang          string   `json:"lang"`
-	ColorIdentity []string `json:"color_identity"`
-	Rarity        string   `json:"rarity"`
-	CMC        float64  `json:"cmc"`
-	TypeLine   string   `json:"type_line"`
-	Variation  bool     `json:"variation"`
-	OracleText string   `json:"oracle_text"`
-	FlavorText string   `json:"flavor_text"`
-	ImageUris  struct {
-		Normal string `json:"normal"`
-	} `json:"image_uris"`
-	CardFaces []struct {
-		OracleText string `json:"oracle_text"`
-		ImageUris  struct {
-			Normal string `json:"normal"`
-		} `json:"image_uris"`
-	} `json:"card_faces"`
-}
-
-type MTGMetadata struct {
-	ImageURL      string
-	Description   string
-	Language      string
-	Color         string
-	Rarity        string
-	CMC           float64
-	IsLegendary   bool
-	IsHistoric    bool
-	IsLand        bool
-	IsBasicLand   bool
-	ArtVariation  string
-	SetCode       string
-	SetName       string
-}
-
-func fetchScryfallData(name string) *MTGMetadata {
-	apiURL := fmt.Sprintf("https://api.scryfall.com/cards/named?exact=%s", url.QueryEscape(name))
-	resp, err := http.Get(apiURL)
-	if err != nil {
-		return nil
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil
-	}
-
-	var data ScryfallResponse
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return nil
-	}
-
-	time.Sleep(100 * time.Millisecond) // Be polite to Scryfall
-
-	meta := &MTGMetadata{
-		Language: data.Lang,
-		Rarity:   data.Rarity,
-		CMC:      data.CMC,
-		SetCode:  data.Set,
-		SetName:  data.SetName,
-	}
-
-	// Image
-	meta.ImageURL = data.ImageUris.Normal
-	if meta.ImageURL == "" && len(data.CardFaces) > 0 {
-		meta.ImageURL = data.CardFaces[0].ImageUris.Normal
-	}
-
-	// Description
-	desc := data.OracleText
-	if desc == "" && len(data.CardFaces) > 0 {
-		desc = data.CardFaces[0].OracleText
-	}
-	if data.FlavorText != "" {
-		if desc != "" {
-			desc += "\n\n"
-		}
-		desc += `_"` + data.FlavorText + `"_`
-	}
-	meta.Description = desc
-
-	// Type-based flags
-	lowerType := (data.TypeLine)
-	if lowerType == "" && len(data.CardFaces) > 0 {
-		lowerType = data.CardFaces[0].OracleText // fallback if type line missing? unlikely
-	}
-	// Better: Use type_line directly
-	typeLine := data.TypeLine
-	meta.IsLegendary = contains(typeLine, "Legendary")
-	meta.IsLand = contains(typeLine, "Land")
-	meta.IsBasicLand = contains(typeLine, "Basic Land")
-	meta.IsHistoric = meta.IsLegendary || contains(typeLine, "Artifact") || contains(typeLine, "Saga")
-	
-	if data.Variation {
-		meta.ArtVariation = "Variation"
-	}
-
-	colors := ""
-	for i, c := range data.ColorIdentity {
-		if i > 0 {
-			colors += ","
-		}
-		colors += c
-	}
-	meta.Color = colors
-
-	return meta
-}
-
-func contains(s, substr string) bool {
-	return strings.Contains(s, substr)
-}
 
 func main() {
 	database := db.Connect()
@@ -172,7 +51,7 @@ func main() {
 	logger.Info("Admin user '%s' created/updated", adminUser)
 
 	// -------------------------------------------------------------------------
-	// PRODUCT SEEDING (diverse and verified images)
+	// PRODUCT SEEDING
 	// -------------------------------------------------------------------------
 
 	type seedProduct struct {
@@ -189,124 +68,62 @@ func main() {
 		ImageURL      string
 		Foil          models.FoilTreatment
 		Treatment     models.CardTreatment
+		Language      string
+		FullArt       bool
+		Textless      bool
+		BorderColor   string
+		Frame         string
 	}
 
 	products := []seedProduct{
-		// MTG Singles
-		{"Snapcaster Mage", "mtg", "singles", "Innistrad", "ISD", "NM", 85000, 2, []string{"featured"}, "Gives a spell flashback.", "https://cards.scryfall.io/normal/front/7/e/7e41765e-43fe-461d-baeb-bb30d14d0096.jpg", models.FoilNonFoil, models.TreatmentNormal},
-		{"Mana Crypt", "mtg", "singles", "Special Guests", "SPG", "NM", 780000, 1, []string{"featured", "hot-items"}, "Zero-cost mana acceleration.", "https://cards.scryfall.io/normal/front/c/c/cc823a07-5bd0-4597-990e-2c2621e1066a.jpg", models.FoilNonFoil, models.TreatmentNormal},
-		{"Lightning Bolt", "mtg", "singles", "Magic 2011", "M11", "NM", 25000, 12, []string{"sale"}, "Deals 3 damage.", "https://cards.scryfall.io/normal/front/f/2/f29ba16f-c8fb-42fe-aabf-074d4ee3032d.jpg", models.FoilNonFoil, models.TreatmentNormal},
-		{"Thoughtseize", "mtg", "singles", "Theros", "THS", "LP", 75000, 3, []string{"featured"}, "Target opponent discards a card.", "https://cards.scryfall.io/normal/front/1/2/12bb1514-6b83-42be-a178-574d6c4832be.jpg", models.FoilNonFoil, models.TreatmentNormal},
-		{"Sheoldred, the Apocalypse", "mtg", "singles", "Dominaria United", "DMU", "NM", 280000, 4, []string{"featured", "hot-items"}, "Whenever you draw a card, you gain 2 life.", "https://cards.scryfall.io/normal/front/d/6/d67be074-cdd4-41d9-ac89-0a0456c4e4b2.jpg", models.FoilNonFoil, models.TreatmentNormal},
-		{"The One Ring", "mtg", "singles", "The Lord of the Rings: Tales of Middle-earth", "LTR", "NM", 450000, 1, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
-		{"Orcish Bowmasters", "mtg", "singles", "The Lord of the Rings: Tales of Middle-earth", "LTR", "NM", 150000, 4, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
-		{"Delighted Halfling", "mtg", "singles", "The Lord of the Rings: Tales of Middle-earth", "LTR", "NM", 45000, 8, []string{"new-arrivals"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
-		{"Solitude", "mtg", "singles", "Modern Horizons 2", "MH2", "NM", 120000, 4, []string{"featured"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
-		{"Fury", "mtg", "singles", "Modern Horizons 2", "MH2", "NM", 80000, 4, []string{"sale"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
-		{"Grief", "mtg", "singles", "Modern Horizons 2", "MH2", "NM", 65000, 4, []string{"featured"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
-		{"Endurance", "mtg", "singles", "Modern Horizons 2", "MH2", "NM", 55000, 4, []string{"featured"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
-		{"Subtlety", "mtg", "singles", "Modern Horizons 2", "MH2", "NM", 35000, 4, []string{"sale"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
-		{"Tarmogoyf", "mtg", "singles", "Future Sight", "FUT", "NM", 45000, 4, []string{"featured"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
-		{"Force of Will", "mtg", "singles", "Alliances", "ALL", "NM", 350000, 2, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
-		{"Ancestral Recall", "mtg", "singles", "Unlimited Edition", "2ED", "HP", 15000000, 1, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
-		{"Time Walk", "mtg", "singles", "Unlimited Edition", "2ED", "HP", 12000000, 1, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
-		{"Mox Emerald", "mtg", "singles", "Unlimited Edition", "2ED", "HP", 8000000, 1, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
-		{"Mox Jet", "mtg", "singles", "Unlimited Edition", "2ED", "HP", 8000000, 1, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
-		{"Mox Pearl", "mtg", "singles", "Unlimited Edition", "2ED", "HP", 8000000, 1, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
-		{"Mox Ruby", "mtg", "singles", "Unlimited Edition", "2ED", "HP", 8000000, 1, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
-		{"Mox Sapphire", "mtg", "singles", "Unlimited Edition", "2ED", "HP", 9000000, 1, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
-		{"Time Vault", "mtg", "singles", "Unlimited Edition", "2ED", "HP", 5000000, 1, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
-		{"Urza's Saga", "mtg", "singles", "Modern Horizons 2", "MH2", "NM", 140000, 12, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
-		{"Black Market Connections", "mtg", "singles", "Battle for Baldur's Gate", "CLB", "NM", 85000, 6, []string{"new-arrivals"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
-		{"Ancient Tomb", "mtg", "singles", "Tempest", "TMP", "NM", 350000, 4, []string{"hot-items"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
-		{"Cavern of Souls", "mtg", "singles", "Avacyn Restored", "AVR", "NM", 180000, 8, []string{"featured"}, "", "", models.FoilNonFoil, models.TreatmentNormal},
+		// Sheoldred, the Apocalypse
+		{"Sheoldred, the Apocalypse", "mtg", "singles", "Dominaria United", "DMU", "NM", 280000, 10, []string{"featured", "hot-items"}, "The Praetor of the Apocalypse.", "", models.FoilNonFoil, models.TreatmentNormal, "en", false, false, "", ""},
+		{"Sheoldred, the Apocalypse", "mtg", "singles", "Dominaria United", "DMU", "NM", 350000, 2, []string{"hot-items"}, "Showcase variant.", "", models.FoilFoil, models.TreatmentShowcase, "en", false, false, "", ""},
+		
+		// The One Ring
+		{"The One Ring", "mtg", "singles", "The Lord of the Rings: Tales of Middle-earth", "LTR", "NM", 450000, 5, []string{"hot-items"}, "Main set version.", "", models.FoilNonFoil, models.TreatmentNormal, "en", false, false, "", ""},
+		{"The One Ring", "mtg", "singles", "Tales of Middle-earth Bundle", "LTR", "NM", 550000, 2, []string{"featured"}, "Bundle alternate art.", "", models.FoilFoil, models.TreatmentAlternateArt, "en", false, false, "", ""},
+		{"The One Ring", "mtg", "singles", "LTR Extension", "LTR", "NM", 850000, 1, []string{"hot-items"}, "Borderless Poster variant.", "", models.FoilFoil, models.TreatmentBorderless, "en", true, false, "", ""},
 
-		// One Piece
-		{"Monkey D. Luffy", "onepiece", "singles", "Romance Dawn", "OP01", "NM", 550000, 1, []string{"featured", "hot-items"}, "Parallel rare Luffy Leader.", "https://limitlesstcg.s3.us-central-1.amazonaws.com/one-piece/OP01/OP01-001_p1.png", models.FoilNonFoil, models.TreatmentAlternateArt},
-		{"Roronoa Zoro", "onepiece", "singles", "Romance Dawn", "OP01", "NM", 250000, 2, []string{"featured"}, "Zoro Parallel Rare.", "https://limitlesstcg.s3.us-central-1.amazonaws.com/one-piece/OP01/OP01-025_p1.png", models.FoilNonFoil, models.TreatmentAlternateArt},
-		{"Trafalgar Law", "onepiece", "singles", "Romance Dawn", "OP01", "NM", 180000, 2, []string{"new-arrivals"}, "Law Parallel Rare.", "https://limitlesstcg.s3.us-central-1.amazonaws.com/one-piece/OP01/OP01-047_p1.png", models.FoilNonFoil, models.TreatmentAlternateArt},
+		// Mana Crypt
+		{"Mana Crypt", "mtg", "singles", "Special Guests", "SPG", "NM", 780000, 1, []string{"featured", "hot-items"}, "Special Guest version.", "", models.FoilNonFoil, models.TreatmentNormal, "en", false, false, "", ""},
+		{"Mana Crypt", "mtg", "singles", "Double Masters", "2XM", "NM", 950000, 1, []string{"hot-items"}, "Borderless variant.", "", models.FoilFoil, models.TreatmentBorderless, "en", true, false, "", ""},
 
-		// Yu-Gi-Oh!
-		{"Dark Magician", "yugioh", "singles", "Metal Raiders", "MRD", "NM", 45000, 5, []string{"featured"}, "The ultimate wizard.", "https://images.ygoprodeck.com/images/cards/46986414.jpg", models.FoilNonFoil, models.TreatmentNormal},
-		{"Blue-Eyes White Dragon", "yugioh", "singles", "Legend of Blue Eyes White Dragon", "LOB", "NM", 120000, 2, []string{"featured", "hot-items"}, "This legendary dragon is a powerful engine of destruction.", "https://images.ygoprodeck.com/images/cards/89631139.jpg", models.FoilNonFoil, models.TreatmentNormal},
-		{"Ash Blossom & Joyous Spring", "yugioh", "singles", "Duel Devastator", "DUDE", "NM", 35000, 8, []string{"sale"}, "Handtrap essential.", "https://images.ygoprodeck.com/images/cards/14558127.jpg", models.FoilFoil, models.TreatmentNormal},
+		// Specialty
+		{"Lightning Bolt", "mtg", "singles", "Judge Gift Cards", "PPRO", "NM", 250000, 2, []string{"featured"}, "Judge Promo Bolt.", "", models.FoilFoil, models.TreatmentPromo, "en", false, false, "", ""},
+		{"Force of Will", "mtg", "singles", "Judge Gift Cards", "PPRO", "NM", 1200000, 1, []string{"hot-items"}, "Judge Promo Force.", "", models.FoilFoil, models.TreatmentPromo, "en", false, false, "", ""},
+		{"Cryptic Command", "mtg", "singles", "Player Rewards 2009", "P09", "NM", 150000, 2, []string{"featured"}, "Textless Player Reward.", "", models.FoilFoil, models.TreatmentTextless, "en", true, true, "", ""},
+		{"Damnation", "mtg", "singles", "Player Rewards 2008", "P08", "NM", 180000, 1, []string{"hot-items"}, "Textless Player Reward.", "", models.FoilFoil, models.TreatmentTextless, "en", true, true, "", ""},
 
-		// Lorcana
-		{"Mickey Mouse - Tailor", "lorcana", "singles", "The First Chapter", "1ST", "NM", 65000, 4, []string{"featured"}, "Classic Mickey.", "https://lorcania.com/images/cards/1/mickey-mouse-brave-little-tailor.png", models.FoilNonFoil, models.TreatmentNormal},
-		{"Elsa - Spirit of Winter", "lorcana", "singles", "The First Chapter", "1ST", "NM", 150000, 2, []string{"featured", "hot-items"}, "Powerful Elsa.", "https://lorcania.com/images/cards/1/elsa-spirit-of-winter.png", models.FoilNonFoil, models.TreatmentNormal},
-		{"Maleficent - Monstrous Dragon", "lorcana", "singles", "The First Chapter", "1ST", "NM", 120000, 3, []string{"sale"}, "Maleficent Dragon.", "https://lorcania.com/images/cards/1/maleficent-monstrous-dragon.png", models.FoilNonFoil, models.TreatmentNormal},
+		// Languages
+		{"Snapcaster Mage", "mtg", "singles", "Innistrad", "ISD", "NM", 120000, 4, []string{"featured"}, "Japanese variant.", "", models.FoilFoil, models.TreatmentNormal, "jp", false, false, "", ""},
+		{"Thoughtseize", "mtg", "singles", "Theros", "THS", "LP", 55000, 8, []string{"sale"}, "Spanish variant.", "", models.FoilNonFoil, models.TreatmentNormal, "es", false, false, "", ""},
+		{"Tarmogoyf", "mtg", "singles", "Future Sight", "FUT", "NM", 85000, 2, []string{"featured"}, "German variant.", "", models.FoilNonFoil, models.TreatmentNormal, "de", false, false, "", ""},
 
-		// Pokemon
-		{"Charizard ex", "pokemon", "singles", "Obsidian Flames", "OBF", "NM", 350000, 2, []string{"featured", "hot-items"}, "Terastal Charizard.", "https://images.pokemontcg.io/sv3/125_hires.png", models.FoilFoil, models.TreatmentFullArt},
-		{"Mew VMAX", "pokemon", "singles", "Fusion Strike", "FST", "NM", 180000, 3, []string{"featured"}, "Mew VMAX Alternate Art.", "https://images.pokemontcg.io/swsh8/269_hires.png", models.FoilFoil, models.TreatmentAlternateArt},
-		{"Lugia VSTAR", "pokemon", "singles", "Silver Tempest", "SIT", "NM", 140000, 4, []string{"new-arrivals"}, "Lugia VSTAR Gold.", "https://images.pokemontcg.io/swsh12/211_hires.png", models.FoilFoil, models.TreatmentFullArt},
+		// Retro
+		{"Thalia, Guardian of Thraben", "mtg", "singles", "Modern Horizons 2", "MH2", "NM", 45000, 12, []string{"sale"}, "Retro Frame variant.", "", models.FoilNonFoil, models.TreatmentLegacyBorder, "en", false, false, "black", "old"},
+		{"Counterspell", "mtg", "singles", "Alpha", "LEA", "NM", 4500000, 1, []string{"hot-items"}, "Original Old Frame.", "", models.FoilNonFoil, models.TreatmentNormal, "en", false, false, "black", "old"},
 
-		// SEALED PRODUCT
-		{"MTG Duskmourn Box", "mtg", "sealed", "Duskmourn", "DSK", "NM", 680000, 5, []string{"featured", "new-arrivals"}, "36 Play Boosters.", "https://media.wizards.com/2024/wpn/Duskmourn_PlayBoosterBox.png", models.FoilNonFoil, models.TreatmentNormal},
-		{"Yu-Gi-Oh! Rarity Box", "yugioh", "sealed", "Rarity Collection", "RA01", "NM", 450000, 8, []string{"sale"}, "Luxury foil reprints.", "https://images.ygoprodeck.com/images/cards/25th_anniversary_rarity_collection.jpg", models.FoilNonFoil, models.TreatmentNormal},
-		{"Lorcana: Inklands Trove", "lorcana", "sealed", "Into the Inklands", "INK", "NM", 280000, 4, []string{"sale"}, "Collector chest.", "https://m.media-amazon.com/images/I/71M+B+B+L+L._AC_SL1500_.jpg", models.FoilNonFoil, models.TreatmentNormal},
-		{"Pokemon Prismatic ETB", "pokemon", "sealed", "Prismatic Evolutions", "PRV", "NM", 280000, 10, []string{"new-arrivals"}, "Elite Trainer Box.", "https://products.pokemoncenter.com/img/products/290-85614/290-85614_1.jpg", models.FoilNonFoil, models.TreatmentNormal},
+		// Exotic
+		{"Sol Ring", "mtg", "singles", "Warhammer 40,000", "40K", "NM", 125000, 3, []string{"featured"}, "Surge Foil Sol Ring.", "", models.FoilSurgeFoil, models.TreatmentNormal, "en", false, false, "black", "2015"},
+		{"Elesh Norn, Mother of Machines", "mtg", "singles", "Phyrexia: All Will Be One", "ONE", "NM", 850000, 1, []string{"featured", "hot-items"}, "Oil Slick Raised Foil.", "", models.FoilOilSlick, models.TreatmentBorderless, "en", true, false, "black", "2015"},
+		{"Mondrak, Glory Dominus", "mtg", "singles", "Phyrexia: All Will Be One", "ONE", "NM", 450000, 1, []string{"featured"}, "Step-and-Compleat Foil.", "", models.FoilStepAndCompleat, models.TreatmentShowcase, "en", false, false, "black", "2015"},
+		{"Ragavan, Nimble Pilferer", "mtg", "singles", "Multiverse Legends", "MUL", "NM", 9500000, 1, []string{"hot-items"}, "Serialized 001/500.", "", models.FoilDoubleRainbow, models.TreatmentSerialized, "en", false, false, "black", "2015"},
+		{"Brazen Borrower", "mtg", "singles", "Modern Horizons 2", "MH2", "NM", 85000, 5, []string{"sale"}, "Etched Foil Showcase.", "", models.FoilEtchedFoil, models.TreatmentShowcase, "en", false, false, "black", "2015"},
+		{"Liliana of the Veil", "mtg", "singles", "Double Masters 2022", "2X2", "NM", 1500000, 1, []string{"hot-items"}, "Textured Foil variant.", "", models.FoilTexturedFoil, models.TreatmentBorderless, "en", true, false, "black", "2015"},
+		{"Hidetsugu, Devouring Chaos", "mtg", "singles", "Kamigawa: Neon Dynasty", "NEO", "NM", 5500000, 1, []string{"hot-items"}, "Neon Ink Red Foil.", "", models.FoilNeonInk, models.TreatmentNormal, "en", false, false, "black", "2015"},
+		{"Smothering Tithe", "mtg", "singles", "Wilds of Eldraine Anime", "WOT", "NM", 650000, 1, []string{"featured"}, "Confetti Foil Anime Art.", "", models.FoilConfettiFoil, models.TreatmentAlternateArt, "en", false, false, "black", "2015"},
+		{"The Meathook Massacre", "mtg", "singles", "Innistrad: Midnight Hunt", "MID", "NM", 185000, 2, []string{"hot-items"}, "Extended Art variant.", "", models.FoilNonFoil, models.TreatmentExtendedArt, "en", false, false, "black", "2015"},
+		{"Comet, Stellar Pup", "mtg", "singles", "Unfinity", "UNF", "NM", 120000, 4, []string{"featured"}, "Galaxy Foil variant.", "", models.FoilGalaxyFoil, models.TreatmentNormal, "en", false, false, "black", "2015"},
+
+		// SEALED
+		{"MTG Duskmourn Box", "mtg", "sealed", "Duskmourn", "DSK", "NM", 680000, 5, []string{"featured", "new-arrivals"}, "36 Play Boosters.", "https://media.wizards.com/2024/wpn/Duskmourn_PlayBoosterBox.png", models.FoilNonFoil, models.TreatmentNormal, "en", false, false, "black", "2015"},
 
 		// ACCESSORIES
-		{"Dragon Shield Pink", "accessories", "accessories", "N/A", "N/A", "NM", 55000, 25, []string{"sale"}, "100 Matte sleeves.", "https://m.media-amazon.com/images/I/71Q+B+B+L+L._AC_SL1500_.jpg", models.FoilNonFoil, models.TreatmentNormal},
-		{"Lorcana: Hades Sleeves", "accessories", "accessories", "N/A", "N/A", "NM", 65000, 15, []string{"sale"}, "Character art sleeves.", "https://m.media-amazon.com/images/I/71Y+B+B+L+L._AC_SL1500_.jpg", models.FoilNonFoil, models.TreatmentNormal},
-		{"Pokemon: Pikachu Playmat", "accessories", "accessories", "N/A", "N/A", "NM", 110000, 5, []string{"featured"}, "Official playmat.", "https://m.media-amazon.com/images/I/71Z+B+B+L+L._AC_SL1500_.jpg", models.FoilNonFoil, models.TreatmentNormal},
-		{"Satin Tower: Jet", "accessories", "accessories", "N/A", "N/A", "NM", 65000, 14, []string{"sale"}, "Hard-shell storage.", "https://m.media-amazon.com/images/I/61V+B+B+L+L._AC_SL1500_.jpg", models.FoilNonFoil, models.TreatmentNormal},
-
-		// --- BATCH 2: ICONIC CARDS ---
-		
-		// MTG
-		{"Black Lotus", "mtg", "singles", "Unlimited Edition", "2ED", "HP", 99999999.99, 1, []string{"hot-items"}, "The most iconic card.", "https://cards.scryfall.io/normal/front/b/d/bd8fa327-dd41-4737-8f19-2cf5eb1f7cdd.jpg", models.FoilNonFoil, models.TreatmentNormal},
-		{"Sol Ring", "mtg", "singles", "Commander 2021", "C21", "NM", 5000, 50, []string{"sale"}, "Mana rock staple.", "https://cards.scryfall.io/normal/front/4/d/4df6b871-0c46-451a-8294-f25492158866.jpg", models.FoilNonFoil, models.TreatmentNormal},
-		{"Oko, Thief of Crowns", "mtg", "singles", "Throne of Eldraine", "ELD", "NM", 45000, 3, []string{"featured"}, "Elk master.", "https://cards.scryfall.io/normal/front/3/4/3462a3d0-5552-49fa-9eb7-100960c55891.jpg", models.FoilNonFoil, models.TreatmentNormal},
-		{"Ragavan, Nimble Pilferer", "mtg", "singles", "Modern Horizons 2", "MH2", "NM", 180000, 2, []string{"hot-items"}, "The monkey king.", "https://cards.scryfall.io/normal/front/a/9/a9738cda-adb1-47fb-9f4c-ecd930228c4d.jpg", models.FoilNonFoil, models.TreatmentNormal},
-
-		// One Piece
-		{"Nami", "onepiece", "singles", "Romance Dawn", "OP01", "NM", 450000, 1, []string{"featured", "hot-items"}, "Parallel Rare Nami.", "https://limitlesstcg.s3.us-central-1.amazonaws.com/one-piece/OP01/OP01-016_p1.png", models.FoilNonFoil, models.TreatmentAlternateArt},
-		{"Nico Robin", "onepiece", "singles", "Romance Dawn", "OP01", "NM", 150000, 2, []string{"new-arrivals"}, "Robin Parallel Rare.", "https://limitlesstcg.s3.us-central-1.amazonaws.com/one-piece/OP01/OP01-017_p1.png", models.FoilNonFoil, models.TreatmentAlternateArt},
-		{"Boa Hancock", "onepiece", "singles", "Romance Dawn", "OP01", "NM", 220000, 2, []string{"featured"}, "Hancock Parallel Rare.", "https://limitlesstcg.s3.us-central-1.amazonaws.com/one-piece/OP01/OP01-078_p1.png", models.FoilNonFoil, models.TreatmentAlternateArt},
-
-		// Yu-Gi-Oh!
-		{"Exodia the Forbidden One", "yugioh", "singles", "Legend of Blue Eyes White Dragon", "LOB", "NM", 250000, 1, []string{"hot-items"}, "If you have all 5 pieces, you win.", "https://images.ygoprodeck.com/images/cards/33396948.jpg", models.FoilNonFoil, models.TreatmentNormal},
-		{"Monster Reborn", "yugioh", "singles", "Legend of Blue Eyes White Dragon", "LOB", "NM", 15000, 20, []string{"sale"}, "Special summon from GY.", "https://images.ygoprodeck.com/images/cards/83764718.jpg", models.FoilNonFoil, models.TreatmentNormal},
-		{"Pot of Greed", "yugioh", "singles", "Legend of Blue Eyes White Dragon", "LOB", "NM", 25000, 15, []string{"sale"}, "Draw 2 cards.", "https://images.ygoprodeck.com/images/cards/55144522.jpg", models.FoilNonFoil, models.TreatmentNormal},
-
-		// Lorcana
-		{"Beast - Tragic Hero", "lorcana", "singles", "Rise of the Floodborn", "ROF", "NM", 180000, 2, []string{"hot-items"}, "Meta staple Beast.", "https://lorcania.com/images/cards/2/beast-tragic-hero.png", models.FoilNonFoil, models.TreatmentNormal},
-		{"Cinderella - Stouthearted", "lorcana", "singles", "Rise of the Floodborn", "ROF", "NM", 120000, 3, []string{"featured"}, "Knight Cinderella.", "https://lorcania.com/images/cards/2/cinderella-stouthearted.png", models.FoilNonFoil, models.TreatmentNormal},
-
-		// Pokemon
-		{"Rayquaza VMAX", "pokemon", "singles", "Evolving Skies", "EVS", "NM", 850000, 1, []string{"hot-items"}, "Alternate Art Rayquaza.", "https://images.pokemontcg.io/swsh7/218_hires.png", models.FoilFoil, models.TreatmentAlternateArt},
-		{"Giratina V", "pokemon", "singles", "Lost Origin", "LOR", "NM", 750000, 1, []string{"hot-items"}, "Alternate Art Giratina.", "https://images.pokemontcg.io/swsh11/186_hires.png", models.FoilFoil, models.TreatmentAlternateArt},
-		{"Umbreon VMAX", "pokemon", "singles", "Evolving Skies", "EVS", "NM", 1500000, 1, []string{"hot-items", "featured"}, "Moonbreon Alt Art.", "https://images.pokemontcg.io/swsh7/215_hires.png", models.FoilFoil, models.TreatmentAlternateArt},
-
-		// --- BATCH 3: ADVANCED VARIATIONS & EDGE CASES ---
-		
-		// MTG Variations
-		{"Wrenn and Six", "mtg", "singles", "Double Masters 2022", "2X2", "NM", 280000, 2, []string{"hot-items"}, "Etched Foil variant.", "", models.FoilEtchedFoil, models.TreatmentNormal},
-		{"Uro, Titan of Nature's Wrath", "mtg", "singles", "Theros Beyond Death", "THB", "NM", 65000, 4, []string{"featured"}, "Borderless variant.", "", models.FoilNonFoil, models.TreatmentBorderless},
-		{"Brazen Borrower", "mtg", "singles", "Throne of Eldraine", "ELD", "NM", 35000, 8, []string{"sale"}, "Showcase variant.", "", models.FoilNonFoil, models.TreatmentShowcase},
-		{"Gaea's Cradle", "mtg", "singles", "Urza's Saga", "USG", "DMG", 2500000, 1, []string{"hot-items"}, "Damaged condition test.", "", models.FoilNonFoil, models.TreatmentNormal},
-		{"Aether Vial", "mtg", "singles", "Darksteel", "DST", "MP", 45000, 4, []string{"featured"}, "Moderately Played test.", "", models.FoilNonFoil, models.TreatmentNormal},
-		
-		// Lorcana & One Piece
-		{"Stitch - Carefree Surfer", "lorcana", "singles", "The First Chapter", "1ST", "NM", 180000, 2, []string{"hot-items"}, "Foil Stitch.", "https://lorcania.com/images/cards/1/stitch-carefree-surfer.png", models.FoilFoil, models.TreatmentNormal},
-		{"Portgas.D.Ace", "onepiece", "singles", "Paramount War", "OP02", "NM", 850000, 1, []string{"hot-items", "featured"}, "Manga Alt Art Ace.", "https://limitlesstcg.s3.us-central-1.amazonaws.com/one-piece/OP02/OP02-013_p1.png", models.FoilFoil, models.TreatmentAlternateArt},
-		
-		// Star Wars Unlimited (New TCG test)
-		{"Darth Vader - Commanding Presence", "starwars", "singles", "Spark of Rebellion", "SOR", "NM", 350000, 2, []string{"new-arrivals", "hot-items"}, "Legendary Vader.", "https://swu-cards.com/cards/SOR/010.png", models.FoilNonFoil, models.TreatmentNormal},
-		{"Luke Skywalker - Jedi Knight", "starwars", "singles", "Spark of Rebellion", "SOR", "NM", 280000, 3, []string{"featured"}, "Legendary Luke.", "https://swu-cards.com/cards/SOR/005.png", models.FoilNonFoil, models.TreatmentNormal},
-
-		// Weiss Schwarz
-		{"Miku Nakano", "weiss", "singles", "The Quintessential Quintuplets", "5HY", "NM", 950000, 1, []string{"hot-items"}, "SP Signed card.", "https://en.ws-tcg.com/wp/wp-content/uploads/5HY_W83_082SP.png", models.FoilFoil, models.TreatmentAlternateArt},
-
-		// Edge Cases
-		{"Out of Stock Card", "mtg", "singles", "Test Set", "TST", "NM", 10000, 0, []string{"sale"}, "Testing 0 stock UI.", "", models.FoilNonFoil, models.TreatmentNormal},
-		{"Multi-Collection Item", "mtg", "singles", "Test Set", "TST", "NM", 25000, 10, []string{"featured", "sale", "new-arrivals", "hot-items"}, "Testing many categories.", "", models.FoilNonFoil, models.TreatmentNormal},
-		{"No Image Card", "mtg", "singles", "Test Set", "TST", "NM", 5000, 5, []string{"featured"}, "Testing missing image fallback.", "https://invalid-image.url/none.png", models.FoilNonFoil, models.TreatmentNormal},
+		{"Dragon Shield Pink", "accessories", "accessories", "N/A", "N/A", "NM", 55000, 25, []string{"sale"}, "100 Matte sleeves.", "https://m.media-amazon.com/images/I/71Q+B+B+L+L._AC_SL1500_.jpg", models.FoilNonFoil, models.TreatmentNormal, "en", false, false, "black", "N/A"},
 	}
 
-	fmt.Println("Seeding TCGs...")
+	// Seed TCGs
 	tcgsToSeed := []struct{ ID, Name string }{
 		{"mtg", "Magic: The Gathering"},
 		{"pokemon", "Pokémon"},
@@ -317,19 +134,10 @@ func main() {
 		{"weiss", "Weiss Schwarz"},
 	}
 	for _, t := range tcgsToSeed {
-		_, err = database.Exec(`
-			INSERT INTO tcgs (id, name) 
-			VALUES ($1, $2) 
-			ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name
-		`, t.ID, t.Name)
-		if err != nil {
-			logger.Error("Failed to seed TCG %s: %v", t.ID, err)
-			os.Exit(1)
-		}
-		logger.Info("TCG '%s' ready", t.ID)
+		database.Exec(`INSERT INTO tcgs (id, name) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name`, t.ID, t.Name)
 	}
 
-	fmt.Println("Seeding custom categories...")
+	// Seed Categories
 	categoryMap := make(map[string]string)
 	categoriesToSeed := []struct{ Name, Slug string }{
 		{"Featured", "featured"},
@@ -339,74 +147,52 @@ func main() {
 	}
 	for _, cat := range categoriesToSeed {
 		var catID string
-		err = database.QueryRow(`
-			INSERT INTO custom_categories (name, slug) 
-			VALUES ($1, $2) 
-			ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name 
-			RETURNING id
-		`, cat.Name, cat.Slug).Scan(&catID)
-		if err != nil {
-			logger.Error("Failed to seed category %s: %v", cat.Slug, err)
-			os.Exit(1)
-		}
+		database.QueryRow(`INSERT INTO custom_categories (name, slug) VALUES ($1, $2) ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id`, cat.Name, cat.Slug).Scan(&catID)
 		categoryMap[cat.Slug] = catID
-		logger.Info("Category '%s' ready", cat.Slug)
 	}
 
-	logger.Info("Seeding storage locations...")
+	// Seed Storage
 	var binderID, boxA_ID string
-	err = database.QueryRow(`INSERT INTO stored_in (name) VALUES ('Binder 1') ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id`).Scan(&binderID)
-	if err != nil { logger.Error("Failed to seed Binder 1: %v", err); os.Exit(1) }
-	
-	err = database.QueryRow(`INSERT INTO stored_in (name) VALUES ('Box A') ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id`).Scan(&boxA_ID)
-	if err != nil { logger.Error("Failed to seed Box A: %v", err); os.Exit(1) }
+	database.QueryRow(`INSERT INTO stored_in (name) VALUES ('Binder 1') ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id`).Scan(&binderID)
+	database.QueryRow(`INSERT INTO stored_in (name) VALUES ('Box A') ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id`).Scan(&boxA_ID)
 
 	for _, p := range products {
 		logger.Info("Seeding %s (%s)...", p.Name, p.TCG)
-		
+
 		desc := p.Description
 		img := p.ImageURL
-		
-		// Metadata defaults
-		lang := "en"
-		color := ""
-		rarity := ""
+		lang := p.Language
+		color, rarity := "", ""
 		var cmc float64 = 0
-		isLegendary := false
-		isHistoric := false
-		isLand := false
-		isBasicLand := false
-		artVariation := ""
-		oracleText := ""
-		artist := ""
-		typeLine := ""
-		borderColor := "black"
-		frame := "2015"
-		fullArt := false
-		textless := false
-		
-		setCode := p.SetCode
-		setName := p.SetName
+		isLegendary, isHistoric, isLand, isBasicLand := false, false, false, false
+		artVariation, oracleText, artist, typeLine := "", "", "", ""
+		borderColor, frame := p.BorderColor, p.Frame
+		fullArt, textless := p.FullArt, p.Textless
+		setCode, setName := p.SetCode, p.SetName
 
 		if p.TCG == "mtg" {
-			meta := fetchScryfallData(p.Name)
-			if meta != nil {
-				if desc == "" { desc = meta.Description }
+			meta, err := external.LookupMTGCard(p.Name, p.SetCode, "", string(p.Foil))
+			if err == nil {
+				if desc == "" && meta.OracleText != nil { desc = *meta.OracleText }
 				if img == "" { img = meta.ImageURL }
-				lang = meta.Language
-				color = meta.Color
-				rarity = meta.Rarity
-				cmc = meta.CMC
+				if lang == "" { lang = meta.Language }
+				if meta.ColorIdentity != nil { color = *meta.ColorIdentity }
+				if meta.Rarity != nil { rarity = *meta.Rarity }
+				if meta.CMC != nil { cmc = *meta.CMC }
 				isLegendary = meta.IsLegendary
 				isHistoric = meta.IsHistoric
 				isLand = meta.IsLand
 				isBasicLand = meta.IsBasicLand
-				artVariation = meta.ArtVariation
+				if meta.ArtVariation != nil { artVariation = *meta.ArtVariation }
 				if setCode == "" || setCode == "N/A" { setCode = meta.SetCode }
 				if setName == "" || setName == "N/A" { setName = meta.SetName }
-				// New fields
-				oracleText = meta.Description // reused for now
-				typeLine = "Card" // generic fallback
+				if meta.OracleText != nil { oracleText = *meta.OracleText }
+				if meta.Artist != nil { artist = *meta.Artist }
+				if meta.TypeLine != nil { typeLine = *meta.TypeLine }
+				if meta.BorderColor != nil { borderColor = *meta.BorderColor }
+				if meta.Frame != nil { frame = *meta.Frame }
+				fullArt = meta.FullArt
+				textless = meta.Textless
 			}
 		}
 
@@ -431,7 +217,6 @@ func main() {
 			continue
 		}
 
-		// Link categories
 		for _, slug := range p.CategorySlugs {
 			if id, ok := categoryMap[slug]; ok {
 				database.Exec(`INSERT INTO product_categories (product_id, category_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, newProductID, id)
@@ -439,19 +224,10 @@ func main() {
 		}
 
 		if p.Stock > 0 {
-			qtyBinder := p.Stock / 2
-			qtyBox := p.Stock - qtyBinder
-			
-			if qtyBinder > 0 {
-				database.Exec(`INSERT INTO product_stored_in (product_id, stored_in_id, quantity) VALUES ($1, $2, $3)`, newProductID, binderID, qtyBinder)
-			}
-			if qtyBox > 0 {
-				database.Exec(`INSERT INTO product_stored_in (product_id, stored_in_id, quantity) VALUES ($1, $2, $3)`, newProductID, boxA_ID, qtyBox)
-			}
+			database.Exec(`INSERT INTO product_stored_in (product_id, stored_in_id, quantity) VALUES ($1, $2, $3)`, newProductID, binderID, p.Stock/2)
+			database.Exec(`INSERT INTO product_stored_in (product_id, stored_in_id, quantity) VALUES ($1, $2, $3)`, newProductID, boxA_ID, p.Stock-(p.Stock/2))
 		}
-
-		// ensure slightly different timestamps
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond) // Respect rate limits
 	}
 
 	logger.Info("Seed complete!")

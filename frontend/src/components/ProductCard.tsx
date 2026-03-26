@@ -59,6 +59,16 @@ export default function ProductCard({ product }: ProductCardProps) {
               {TREATMENT_LABELS[product.card_treatment]}
             </span>
           )}
+          {product.textless && (
+            <span className="badge" style={{ background: 'rgba(248,113,113,0.15)', color: 'var(--hp-color)', border: '1px solid rgba(248,113,113,0.3)' }}>
+              TEXTLESS
+            </span>
+          )}
+          {product.full_art && product.card_treatment !== 'full_art' && (
+            <span className="badge" style={{ background: 'rgba(120,180,120,0.15)', color: 'var(--nm-color)', border: '1px solid rgba(120,180,120,0.3)' }}>
+              FULL ART
+            </span>
+          )}
           {product.categories?.map(c => (
             <span key={c.id} className="badge" style={{ background: 'var(--gold)', color: 'var(--ink-deep)', border: '1px solid rgba(212,175,55,0.3)' }}>
               {c.name}

@@ -28,6 +28,12 @@ export default function CardImage({ imageUrl, name, tcg, height, enableHover = f
   const [isHovered, setIsHovered] = useState(false);
   const [rect, setRect] = useState<DOMRect | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Critical: Reset error state when the URL changes (e.g., after an admin edit)
+  useEffect(() => {
+    setImgError(false);
+  }, [imageUrl]);
+
   const showImage = imageUrl && !imgError;
 
   const handleClick = (e: React.MouseEvent) => {
@@ -57,7 +63,7 @@ export default function CardImage({ imageUrl, name, tcg, height, enableHover = f
         aspectRatio: height ? undefined : '63/88',
         width: '100%',
         overflow: 'hidden',
-        background: showImage ? 'var(--ink-deep)' : 'var(--ink-card)',
+        background: showImage ? 'transparent' : 'var(--ink-card)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

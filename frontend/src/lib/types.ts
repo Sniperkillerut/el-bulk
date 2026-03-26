@@ -90,6 +90,14 @@ export const FOIL_LABELS: Record<string, string> = {
   foil: 'Foil',
   etched_foil: 'Etched Foil',
   glossy: 'Glossy',
+  surge_foil: 'Surge Foil',
+  textured_foil: 'Textured Foil',
+  galaxy_foil: 'Galaxy Foil',
+  step_and_compleat: 'Step-and-Compleat Foil',
+  oil_slick: 'Oil Slick Raised Foil',
+  neon_ink: 'Neon Ink Foil',
+  confetti_foil: 'Confetti Foil',
+  double_rainbow: 'Double Rainbow Foil',
 };
 
 export const TREATMENT_LABELS: Record<string, string> = {

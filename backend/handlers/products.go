@@ -623,7 +623,23 @@ func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treat
 			where = "WHERE " + strings.Join(conds, " AND ")
 		}
 
-		query := fmt.Sprintf("SELECT COALESCE(%s, 'unknown') as val, COUNT(*) %s %s GROUP BY val", d.col, from, where)
+		var query string
+		if d.name == "Treatment" {
+			// Special handling for Treatment facets to include boolean flags
+			query = fmt.Sprintf(`
+				WITH counts AS (
+					SELECT LOWER(p.card_treatment) as val %s %s
+				)
+				SELECT val, COUNT(*) FROM counts GROUP BY val
+				UNION ALL
+				SELECT 'textless', COUNT(*) %s %s AND p.textless = true AND LOWER(p.card_treatment) != 'textless'
+				UNION ALL
+				SELECT 'full_art', COUNT(*) %s %s AND p.full_art = true AND LOWER(p.card_treatment) != 'full_art'
+			`, from, where, from, where, from, where)
+		} else {
+			query = fmt.Sprintf("SELECT COALESCE(%s, 'unknown') as val, COUNT(*) %s %s GROUP BY val", d.col, from, where)
+		}
+
 		rows, err := h.DB.Query(query, args...)
 		if err == nil {
 			for rows.Next() {
@@ -633,7 +649,9 @@ func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treat
 					switch d.name {
 					case "Condition": f.Condition[v] = c
 					case "Foil": f.Foil[v] = c
-					case "Treatment": f.Treatment[v] = c
+					case "Treatment": 
+						// Accumulate counts since we might have UNION results
+						f.Treatment[v] += c
 					case "Rarity": f.Rarity[v] = c
 					case "Language": f.Language[v] = c
 					}
@@ -759,13 +777,31 @@ func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, tr
 	}
 	if treatment != "" {
 		vals := strings.Split(treatment, ",")
-		placeholders := make([]string, len(vals))
-		for i, v := range vals {
-			placeholders[i] = "$" + strconv.Itoa(idx)
-			args = append(args, strings.ToLower(v))
+		placeholders := make([]string, 0, len(vals))
+		hasTextless := false
+		hasFullArt := false
+		for _, v := range vals {
+			lv := strings.ToLower(v)
+			if lv == "textless" {
+				hasTextless = true
+			} else if lv == "full_art" {
+				hasFullArt = true
+			}
+			// Always add the value to the IN list for card_treatment search
+			placeholders = append(placeholders, "$"+strconv.Itoa(idx))
+			args = append(args, lv)
 			idx++
 		}
-		conditions = append(conditions, "LOWER(p.card_treatment) IN ("+strings.Join(placeholders, ",")+")")
+		
+		filter := "(LOWER(p.card_treatment) IN (" + strings.Join(placeholders, ",") + ")"
+		if hasTextless {
+			filter += " OR p.textless = true"
+		}
+		if hasFullArt {
+			filter += " OR p.full_art = true"
+		}
+		filter += ")"
+		conditions = append(conditions, filter)
 	}
 	if condition != "" {
 		vals := strings.Split(condition, ",")
