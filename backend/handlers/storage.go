@@ -26,7 +26,7 @@ func (h *StorageHandler) List(w http.ResponseWriter, r *http.Request) {
 			s.id, 
 			s.name, 
 			COALESCE(SUM(ps.quantity), 0) AS item_count 
-		FROM stored_in s 
+		FROM storage_location s 
 		LEFT JOIN product_stored_in ps ON s.id = ps.stored_in_id 
 		GROUP BY s.id, s.name 
 		ORDER BY s.name
@@ -82,7 +82,7 @@ func (h *StorageHandler) Update(w http.ResponseWriter, r *http.Request) {
 // DELETE /api/admin/storage/:id
 func (h *StorageHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	_, err := h.DB.Exec("DELETE FROM stored_in WHERE id = $1", id)
+	_, err := h.DB.Exec("DELETE FROM storage_location WHERE id = $1", id)
 	if err != nil {
 		jsonError(w, "Failed to delete location", http.StatusInternalServerError)
 		return

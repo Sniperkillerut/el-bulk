@@ -24,7 +24,7 @@ func TestStorageHandler_List(t *testing.T) {
 	h := &StorageHandler{DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
-		mock.ExpectQuery("SELECT .* FROM stored_in").WillReturnRows(sqlmock.NewRows([]string{"id", "name", "item_count"}).AddRow("1", "Shelf", 10))
+		mock.ExpectQuery("SELECT .* FROM storage_location").WillReturnRows(sqlmock.NewRows([]string{"id", "name", "item_count"}).AddRow("1", "Shelf", 10))
 		req, _ := http.NewRequest("GET", "/api/admin/storage", nil)
 		rr := httptest.NewRecorder()
 		h.List(rr, req)
@@ -32,7 +32,7 @@ func TestStorageHandler_List(t *testing.T) {
 	})
 
 	t.Run("DB Error", func(t *testing.T) {
-		mock.ExpectQuery("SELECT .* FROM stored_in").WillReturnError(fmt.Errorf("db error"))
+		mock.ExpectQuery("SELECT .* FROM storage_location").WillReturnError(fmt.Errorf("db error"))
 		req, _ := http.NewRequest("GET", "/api/admin/storage", nil)
 		rr := httptest.NewRecorder()
 		h.List(rr, req)
@@ -115,7 +115,7 @@ func TestStorageHandler_Delete(t *testing.T) {
 	h := &StorageHandler{DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
-		mock.ExpectExec("DELETE FROM stored_in").WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectExec("DELETE FROM storage_location").WillReturnResult(sqlmock.NewResult(0, 1))
 		r := chi.NewRouter()
 		r.Delete("/api/admin/storage/{id}", h.Delete)
 		req, _ := http.NewRequest("DELETE", "/api/admin/storage/1", nil)
@@ -125,7 +125,7 @@ func TestStorageHandler_Delete(t *testing.T) {
 	})
 
 	t.Run("DB Error", func(t *testing.T) {
-		mock.ExpectExec("DELETE FROM stored_in").WillReturnError(fmt.Errorf("db error"))
+		mock.ExpectExec("DELETE FROM storage_location").WillReturnError(fmt.Errorf("db error"))
 		r := chi.NewRouter()
 		r.Delete("/api/admin/storage/{id}", h.Delete)
 		req, _ := http.NewRequest("DELETE", "/api/admin/storage/1", nil)

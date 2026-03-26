@@ -36,38 +36,28 @@ func TestOrderHandler_Create(t *testing.T) {
 		}
 		body, _ := json.Marshal(input)
 
-		mock.ExpectBegin()
-		
-		// 1. Customer upsert
-		mock.ExpectQuery("INSERT INTO customers").
-			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("c1"))
-
-		// 2. Settings
-		mock.ExpectQuery("SELECT key, value FROM settings").
+		// 1. Settings
+		mock.ExpectQuery("SELECT key, value FROM setting").
 			WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).
 				AddRow("usd_to_cop_rate", "4000").
 				AddRow("eur_to_cop_rate", "4400"))
 
-		// 3. Products fetch
-		mock.ExpectQuery("SELECT .* FROM products WHERE id IN \\(\\$1\\)").
+		// 2. Products fetch
+		mock.ExpectQuery("SELECT .* FROM product WHERE id IN \\(\\$1\\)").
 			WithArgs("p1").
 			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "price_reference", "price_source", "stock"}).
 				AddRow("p1", "Product 1", 1.0, "tcgplayer", 10))
 
-		// 4. Create Order
-		mock.ExpectQuery("INSERT INTO orders").
-			WillReturnRows(sqlmock.NewRows([]string{"id", "order_number", "customer_id", "status", "payment_method", "total_cop", "notes", "created_at"}).
-				AddRow("o1", "EB-20260325-1234", "c1", "pending", "whatsapp", 8000.0, "", time.Now()))
-
-		// 5. Create Order Items
-		mock.ExpectQuery("SELECT ps.product_id as product_id_temp, .* FROM product_stored_in ps .* WHERE ps.product_id IN \\(\\$1\\)").
+		// 3. Storage fetch
+		mock.ExpectQuery("SELECT ps.product_id as product_id_temp, .* FROM product_storage ps .* WHERE ps.product_id IN \\(\\$1\\)").
 			WithArgs("p1").
 			WillReturnRows(sqlmock.NewRows([]string{"product_id_temp", "stored_in_id", "name", "quantity"}).AddRow("p1", "loc1", "Box 1", 10))
 
-		mock.ExpectExec("INSERT INTO order_items").
-			WillReturnResult(sqlmock.NewResult(0, 1))
-
-		mock.ExpectCommit()
+		// 4. Place Order via SP
+		mock.ExpectQuery("SELECT order_id, order_number FROM fn_place_order").
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnRows(sqlmock.NewRows([]string{"order_id", "order_number"}).
+				AddRow("o1", "EB-20260325-1234"))
 
 		req, _ := http.NewRequest("POST", "/api/orders", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
@@ -114,7 +104,7 @@ func TestOrderHandler_Create(t *testing.T) {
 		body, _ := json.Marshal(input)
 
 		mock.ExpectBegin()
-		mock.ExpectQuery("INSERT INTO customers").WillReturnError(fmt.Errorf("customer error"))
+		mock.ExpectQuery("INSERT INTO customer").WillReturnError(fmt.Errorf("customer error"))
 		mock.ExpectRollback()
 
 		req, _ := http.NewRequest("POST", "/api/orders", bytes.NewBuffer(body))
@@ -132,9 +122,9 @@ func TestOrderHandler_Create(t *testing.T) {
 		body, _ := json.Marshal(input)
 
 		mock.ExpectBegin()
-		mock.ExpectQuery("INSERT INTO customers").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("c1"))
-		mock.ExpectQuery("SELECT .* FROM settings").WillReturnRows(sqlmock.NewRows([]string{"usd_to_cop_rate", "eur_to_cop_rate"}).AddRow(4000, 4400))
-		mock.ExpectQuery("SELECT .* FROM products WHERE id = \\$1").WillReturnRows(sqlmock.NewRows([]string{"id", "name", "price_reference", "price_source", "stock"}).AddRow("p1", "Product 1", 1.0, "tcgplayer", 10))
+		mock.ExpectQuery("INSERT INTO customer").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("c1"))
+		mock.ExpectQuery("SELECT .* FROM setting").WillReturnRows(sqlmock.NewRows([]string{"usd_to_cop_rate", "eur_to_cop_rate"}).AddRow(4000, 4400))
+		mock.ExpectQuery("SELECT .* FROM product WHERE id = \\$1").WillReturnRows(sqlmock.NewRows([]string{"id", "name", "price_reference", "price_source", "stock"}).AddRow("p1", "Product 1", 1.0, "tcgplayer", 10))
 		mock.ExpectQuery("INSERT INTO orders").WillReturnError(fmt.Errorf("order error"))
 		mock.ExpectRollback()
 
@@ -155,13 +145,13 @@ func TestOrderHandler_List(t *testing.T) {
 	h := &OrderHandler{DB: sqlxDB}
 
 	t.Run("List Admin", func(t *testing.T) {
-		mock.ExpectQuery("SELECT COUNT\\(\\*\\) FROM orders").
+		mock.ExpectQuery("(?i)SELECT COUNT\\(\\*\\) FROM \"order\"").
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 
-		rows := sqlmock.NewRows([]string{"id", "order_number", "customer_id", "status", "payment_method", "total_cop", "created_at", "customer_name", "item_count"}).
-			AddRow("o1", "EB-1", "c1", "pending", "whatsapp", 1000.0, time.Now(), "John Doe", 1)
+		rows := sqlmock.NewRows([]string{"id", "order_number", "customer_id", "status", "payment_method", "total_cop", "notes", "created_at", "completed_at", "customer_name", "item_count"}).
+			AddRow("o1", "EB-1", "c1", "pending", "whatsapp", 1000.0, nil, time.Now(), nil, "John Doe", 1)
 
-		mock.ExpectQuery("SELECT o\\.*").WillReturnRows(rows)
+		mock.ExpectQuery("(?i)SELECT \\* FROM view_order_list o").WillReturnRows(rows)
 
 		req, _ := http.NewRequest("GET", "/api/admin/orders?page=1&page_size=20", nil)
 		rr := httptest.NewRecorder()
@@ -180,25 +170,19 @@ func TestOrderHandler_GetDetail(t *testing.T) {
 	h := &OrderHandler{DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
-		mock.ExpectQuery("SELECT .* FROM orders WHERE id = \\$1").
+		mock.ExpectQuery("(?i)SELECT .* FROM \"order\"").
 			WithArgs("o1").
 			WillReturnRows(sqlmock.NewRows([]string{"id", "customer_id"}).AddRow("o1", "c1"))
 
-		mock.ExpectQuery("SELECT .* FROM customers WHERE id = \\$1").
+		mock.ExpectQuery("(?i)SELECT .* FROM customer WHERE id = \\$1").
 			WithArgs("c1").
-			WillReturnRows(sqlmock.NewRows([]string{"id", "first_name"}).AddRow("c1", "John"))
+			WillReturnRows(sqlmock.NewRows([]string{"id", "first_name", "last_name", "email", "phone", "id_number", "address", "created_at"}).
+				AddRow("c1", "John", "Doe", "john@example.com", "123", "ID123", "Main St", time.Now()))
 
-		mock.ExpectQuery("SELECT .* FROM order_items WHERE order_id = \\$1").
+		mock.ExpectQuery("(?i)SELECT \\* FROM view_order_item_enriched").
 			WithArgs("o1").
-			WillReturnRows(sqlmock.NewRows([]string{"id", "product_id", "product_name"}).AddRow("oi1", "p1", "Product 1"))
-
-		mock.ExpectQuery("SELECT .* FROM products WHERE id IN \\(\\$1\\)").
-			WithArgs("p1").
-			WillReturnRows(sqlmock.NewRows([]string{"id", "stock"}).AddRow("p1", 10))
-
-		mock.ExpectQuery("SELECT ps.product_id as product_id_temp, .* FROM product_stored_in ps .* WHERE ps.product_id IN \\(\\$1\\)").
-			WithArgs("p1").
-			WillReturnRows(sqlmock.NewRows([]string{"product_id_temp", "stored_in_id", "name", "quantity"}).AddRow("p1", "loc1", "Box 1", 10))
+			WillReturnRows(sqlmock.NewRows([]string{"id", "order_id", "product_id", "product_name", "product_set", "foil_treatment", "card_treatment", "condition", "unit_price_cop", "quantity", "stored_in_snapshot", "image_url", "stock", "stored_in"}).
+				AddRow("oi1", "o1", "p1", "Product 1", "Set 1", "non_foil", "normal", "NM", 100.0, 1, "Box 1", "image.png", 10, []byte("[]")))
 
 		r := chi.NewRouter()
 		r.Get("/api/admin/orders/{id}", h.GetDetail)
@@ -210,7 +194,7 @@ func TestOrderHandler_GetDetail(t *testing.T) {
 	})
 
 	t.Run("DB Error GetDetail", func(t *testing.T) {
-		mock.ExpectQuery("SELECT .* FROM orders").WillReturnError(fmt.Errorf("db error"))
+		mock.ExpectQuery("SELECT .* FROM \"order\"").WillReturnError(fmt.Errorf("db error"))
 		r := chi.NewRouter()
 		r.Get("/api/admin/orders/{id}", h.GetDetail)
 		req, _ := http.NewRequest("GET", "/api/admin/orders/o1", nil)
@@ -233,21 +217,21 @@ func TestOrderHandler_Update(t *testing.T) {
 		body, _ := json.Marshal(input)
 
 		mock.ExpectBegin()
-		mock.ExpectExec("UPDATE orders SET status = \\$1 WHERE id = \\$2").
+		mock.ExpectExec("UPDATE \"order\" SET status = \\$1 WHERE id = \\$2").
 			WithArgs("shipped", "o1").
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
-		mock.ExpectQuery("SELECT COALESCE.* FROM order_items").
+		mock.ExpectQuery("SELECT COALESCE.* FROM order_item").
 			WillReturnRows(sqlmock.NewRows([]string{"total"}).AddRow(1000.0))
-		mock.ExpectExec("UPDATE orders SET total_cop = \\$1 WHERE id = \\$2").
+		mock.ExpectExec("UPDATE \"order\" SET total_cop = \\$1 WHERE id = \\$2").
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
 		mock.ExpectCommit()
 
 		// For GetDetail call inside Update
-		mock.ExpectQuery("SELECT .* FROM orders WHERE id = \\$1").WillReturnRows(sqlmock.NewRows([]string{"id", "customer_id"}).AddRow("o1", "c1"))
-		mock.ExpectQuery("SELECT .* FROM customers WHERE id = \\$1").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("c1"))
-		mock.ExpectQuery("SELECT .* FROM order_items").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("oi1"))
+		mock.ExpectQuery("SELECT .* FROM \"order\" WHERE id = \\$1").WillReturnRows(sqlmock.NewRows([]string{"id", "customer_id"}).AddRow("o1", "c1"))
+		mock.ExpectQuery("SELECT .* FROM customer WHERE id = \\$1").WillReturnRows(sqlmock.NewRows([]string{"id", "first_name", "last_name", "phone"}).AddRow("c1", "John", "Doe", "123"))
+		mock.ExpectQuery("SELECT \\* FROM view_order_item_enriched").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("oi1"))
 
 		r := chi.NewRouter()
 		r.Put("/api/admin/orders/{id}", h.Update)
@@ -280,32 +264,19 @@ func TestOrderHandler_Complete(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		input := models.CompleteOrderInput{
 			Decrements: []models.StockDecrement{
-				{ProductID: "p1", StoredInID: "loc1", Quantity: 2},
+				{ProductID: "p1", StorageID: "loc1", Quantity: 2},
 			},
 		}
 		body, _ := json.Marshal(input)
 
-		mock.ExpectQuery("SELECT .* FROM orders WHERE id = \\$1").
-			WillReturnRows(sqlmock.NewRows([]string{"id", "status"}).AddRow("o1", "pending"))
-
-		mock.ExpectBegin()
-		mock.ExpectQuery("SELECT COALESCE.* FROM product_stored_in").
-			WithArgs("p1", "loc1").
-			WillReturnRows(sqlmock.NewRows([]string{"quantity"}).AddRow(10))
-
-		mock.ExpectExec("UPDATE product_stored_in").
-			WithArgs(2, "p1", "loc1").
+		mock.ExpectExec("SELECT fn_complete_order").
+			WithArgs("o1", sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
-		mock.ExpectExec("UPDATE orders SET status = 'completed'").
-			WillReturnResult(sqlmock.NewResult(0, 1))
-
-		mock.ExpectCommit()
-
-		// For GetDetail
-		mock.ExpectQuery("SELECT .* FROM orders WHERE id = \\$1").WillReturnRows(sqlmock.NewRows([]string{"id", "customer_id"}).AddRow("o1", "c1"))
-		mock.ExpectQuery("SELECT .* FROM customers WHERE id = \\$1").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("c1"))
-		mock.ExpectQuery("SELECT .* FROM order_items").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("oi1"))
+		// For GetDetail follow-up
+		mock.ExpectQuery("SELECT .* FROM \"order\" WHERE id = \\$1").WillReturnRows(sqlmock.NewRows([]string{"id", "customer_id"}).AddRow("o1", "c1"))
+		mock.ExpectQuery("SELECT .* FROM customer WHERE id = \\$1").WillReturnRows(sqlmock.NewRows([]string{"id", "first_name", "last_name", "phone"}).AddRow("c1", "John", "Doe", "123"))
+		mock.ExpectQuery("SELECT \\* FROM view_order_item_enriched").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("oi1"))
 
 		r := chi.NewRouter()
 		r.Post("/api/admin/orders/{id}/complete", h.Complete)
@@ -319,20 +290,15 @@ func TestOrderHandler_Complete(t *testing.T) {
 	t.Run("Insufficient Stock", func(t *testing.T) {
 		input := models.CompleteOrderInput{
 			Decrements: []models.StockDecrement{
-				{ProductID: "p1", StoredInID: "loc1", Quantity: 20}, // More than 10
+				{ProductID: "p1", StorageID: "loc1", Quantity: 20}, // More than 10
 			},
 		}
 		body, _ := json.Marshal(input)
 
-		mock.ExpectQuery("SELECT .* FROM orders WHERE id = \\$1").
-			WillReturnRows(sqlmock.NewRows([]string{"id", "status"}).AddRow("o1", "pending"))
+		mock.ExpectExec("SELECT fn_complete_order").
+			WithArgs("o1", sqlmock.AnyArg()).
+			WillReturnError(fmt.Errorf("Insufficient stock"))
 
-		mock.ExpectBegin()
-		mock.ExpectQuery("SELECT COALESCE.* FROM product_stored_in").
-			WithArgs("p1", "loc1").
-			WillReturnRows(sqlmock.NewRows([]string{"quantity"}).AddRow(10))
-
-		mock.ExpectRollback()
 
 		r := chi.NewRouter()
 		r.Post("/api/admin/orders/{id}/complete", h.Complete)
@@ -344,9 +310,10 @@ func TestOrderHandler_Complete(t *testing.T) {
 	})
 
 	t.Run("Tx Error", func(t *testing.T) {
-		mock.ExpectQuery("SELECT .* FROM orders WHERE id = \\$1").
-			WillReturnRows(sqlmock.NewRows([]string{"id", "status"}).AddRow("o1", "pending"))
-		mock.ExpectBegin().WillReturnError(fmt.Errorf("tx error"))
+		mock.ExpectQuery("SELECT fn_complete_order").
+			WithArgs("EB-123", sqlmock.AnyArg()).
+			WillReturnError(fmt.Errorf("db error"))
+
 		r := chi.NewRouter()
 		r.Post("/api/admin/orders/{id}/complete", h.Complete)
 		req, _ := http.NewRequest("POST", "/api/admin/orders/EB-123/complete", bytes.NewBuffer([]byte(`{"items":[]}`)))

@@ -30,7 +30,7 @@ func TestCategoriesHandler_List(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id", "name", "slug", "is_active", "show_badge", "searchable", "created_at", "item_count"}).
 			AddRow("c1", "Cat 1", "cat-1", true, true, true, now, 5)
 
-		mock.ExpectQuery("(?i)SELECT .* FROM custom_categories c.*LEFT JOIN product_categories pc").WillReturnRows(rows)
+		mock.ExpectQuery("(?i)SELECT .* FROM custom_category c.*LEFT JOIN product_categories pc").WillReturnRows(rows)
 
 		req, _ := http.NewRequest("GET", "/api/admin/categories", nil)
 		rr := httptest.NewRecorder()
@@ -43,7 +43,7 @@ func TestCategoriesHandler_List(t *testing.T) {
 	})
 	t.Run("Public List", func(t *testing.T) {
 		now := time.Now()
-		mock.ExpectQuery("(?i)SELECT .* FROM custom_categories c.*LEFT JOIN product_categories pc.*WHERE .* HAVING COUNT.*").
+		mock.ExpectQuery("(?i)SELECT .* FROM custom_category c.*LEFT JOIN product_categories pc.*WHERE .* HAVING COUNT.*").
 			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "slug", "is_active", "show_badge", "searchable", "created_at", "item_count"}).
 				AddRow("c1", "Cat 1", "cat-1", true, true, true, now, 5))
 
@@ -138,7 +138,7 @@ func TestCategoriesHandler_Delete(t *testing.T) {
 	h := &CategoriesHandler{DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
-		mock.ExpectExec("DELETE FROM custom_categories").
+		mock.ExpectExec("DELETE FROM custom_category").
 			WithArgs("c1").
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
@@ -152,7 +152,7 @@ func TestCategoriesHandler_Delete(t *testing.T) {
 	})
 
 	t.Run("Error", func(t *testing.T) {
-		mock.ExpectExec("DELETE FROM custom_categories").WillReturnError(fmt.Errorf("db error"))
+		mock.ExpectExec("DELETE FROM custom_category").WillReturnError(fmt.Errorf("db error"))
 		r := chi.NewRouter()
 		r.Delete("/api/admin/categories/{id}", h.Delete)
 		req, _ := http.NewRequest("DELETE", "/api/admin/categories/c1", nil)

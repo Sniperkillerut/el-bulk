@@ -27,7 +27,7 @@ func TestTCGHandler_List(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id", "name", "is_active", "created_at"}).
 			AddRow("mtg", "Magic", true, time.Now())
-		mock.ExpectQuery("SELECT \\* FROM tcgs ORDER BY name").WillReturnRows(rows)
+		mock.ExpectQuery("SELECT \\* FROM tcg ORDER BY name").WillReturnRows(rows)
 
 		req, _ := http.NewRequest("GET", "/api/admin/tcgs", nil)
 		rr := httptest.NewRecorder()
@@ -36,7 +36,7 @@ func TestTCGHandler_List(t *testing.T) {
 	})
 
 	t.Run("Error", func(t *testing.T) {
-		mock.ExpectQuery("SELECT \\* FROM tcgs").WillReturnError(fmt.Errorf("db error"))
+		mock.ExpectQuery("SELECT \\* FROM tcg").WillReturnError(fmt.Errorf("db error"))
 		req, _ := http.NewRequest("GET", "/api/admin/tcgs", nil)
 		rr := httptest.NewRecorder()
 		h.List(rr, req)
@@ -55,7 +55,7 @@ func TestTCGHandler_Create(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		input := models.TCGInput{ID: "one", Name: "One Piece"}
 		body, _ := json.Marshal(input)
-		mock.ExpectQuery("INSERT INTO tcgs").WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow("one", "One Piece"))
+		mock.ExpectQuery("INSERT INTO tcg").WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow("one", "One Piece"))
 
 		req, _ := http.NewRequest("POST", "/api/admin/tcgs", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
@@ -82,7 +82,7 @@ func TestTCGHandler_Create(t *testing.T) {
 	t.Run("DB Error", func(t *testing.T) {
 		input := models.TCGInput{ID: "one", Name: "One Piece"}
 		body, _ := json.Marshal(input)
-		mock.ExpectQuery("INSERT INTO tcgs").WillReturnError(fmt.Errorf("conflict"))
+		mock.ExpectQuery("INSERT INTO tcg").WillReturnError(fmt.Errorf("conflict"))
 
 		req, _ := http.NewRequest("POST", "/api/admin/tcgs", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
@@ -135,8 +135,8 @@ func TestTCGHandler_Delete(t *testing.T) {
 	h := &TCGHandler{DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
-		mock.ExpectQuery("SELECT COUNT.* FROM products").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
-		mock.ExpectExec("DELETE FROM tcgs").WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectQuery("SELECT COUNT.* FROM product").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+		mock.ExpectExec("DELETE FROM tcg").WillReturnResult(sqlmock.NewResult(0, 1))
 
 		r := chi.NewRouter()
 		r.Delete("/api/admin/tcgs/{id}", h.Delete)
@@ -147,7 +147,7 @@ func TestTCGHandler_Delete(t *testing.T) {
 	})
 
 	t.Run("Conflict", func(t *testing.T) {
-		mock.ExpectQuery("SELECT COUNT.* FROM products").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+		mock.ExpectQuery("SELECT COUNT.* FROM product").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 
 		r := chi.NewRouter()
 		r.Delete("/api/admin/tcgs/{id}", h.Delete)
@@ -158,7 +158,7 @@ func TestTCGHandler_Delete(t *testing.T) {
 	})
 
 	t.Run("DB Error Checking", func(t *testing.T) {
-		mock.ExpectQuery("SELECT COUNT.* FROM products").WillReturnError(fmt.Errorf("db error"))
+		mock.ExpectQuery("SELECT COUNT.* FROM product").WillReturnError(fmt.Errorf("db error"))
 
 		r := chi.NewRouter()
 		r.Delete("/api/admin/tcgs/{id}", h.Delete)
@@ -169,8 +169,8 @@ func TestTCGHandler_Delete(t *testing.T) {
 	})
 
 	t.Run("DB Error Deleting", func(t *testing.T) {
-		mock.ExpectQuery("SELECT COUNT.* FROM products").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
-		mock.ExpectExec("DELETE FROM tcgs").WillReturnError(fmt.Errorf("db error"))
+		mock.ExpectQuery("SELECT COUNT.* FROM product").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+		mock.ExpectExec("DELETE FROM tcg").WillReturnError(fmt.Errorf("db error"))
 
 		r := chi.NewRouter()
 		r.Delete("/api/admin/tcgs/{id}", h.Delete)
@@ -181,8 +181,8 @@ func TestTCGHandler_Delete(t *testing.T) {
 	})
 
 	t.Run("Not Found", func(t *testing.T) {
-		mock.ExpectQuery("SELECT COUNT.* FROM products").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
-		mock.ExpectExec("DELETE FROM tcgs").WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectQuery("SELECT COUNT.* FROM product").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+		mock.ExpectExec("DELETE FROM tcg").WillReturnResult(sqlmock.NewResult(0, 0))
 
 		r := chi.NewRouter()
 		r.Delete("/api/admin/tcgs/{id}", h.Delete)

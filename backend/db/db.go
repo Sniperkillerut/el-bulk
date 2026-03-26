@@ -54,5 +54,41 @@ func ConnectResilient() (*sqlx.DB, error) {
 	db.SetMaxIdleConns(5)
 
 	logger.Info("Database connected successfully")
+
+	// Run migrations
+	if err := Migrate(db); err != nil {
+		logger.Error("Migration failure: %v", err)
+	}
+
 	return db, nil
+}
+
+func Migrate(db *sqlx.DB) error {
+	migrationsDir := filepath.Join("db", "migrations")
+	files, err := os.ReadDir(migrationsDir)
+	if err != nil {
+		// If directory doesn't exist, skip silently
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	// For simplicity in this demo, we'll just run all .sql files.
+	// In a production app, we should use a migrations table to track applied ones.
+	for _, f := range files {
+		if filepath.Ext(f.Name()) == ".sql" {
+			path := filepath.Join(migrationsDir, f.Name())
+			content, err := os.ReadFile(path)
+			if err != nil {
+				return fmt.Errorf("failed to read migration %s: %v", f.Name(), err)
+			}
+			_, err = db.Exec(string(content))
+			if err != nil {
+				return fmt.Errorf("failed to execute migration %s: %v", f.Name(), err)
+			}
+			logger.Info("Applied migration: %s", f.Name())
+		}
+	}
+	return nil
 }

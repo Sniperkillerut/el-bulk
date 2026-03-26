@@ -29,7 +29,7 @@ func (h *CategoriesHandler) List(w http.ResponseWriter, r *http.Request) {
 	
 	query := `
 		SELECT c.id, c.name, c.slug, c.is_active, c.show_badge, c.searchable, c.created_at, COUNT(pc.product_id) as item_count
-		FROM custom_categories c
+		FROM custom_category c
 		LEFT JOIN product_categories pc ON c.id = pc.category_id
 	`
 	if !isAdmin {
@@ -172,7 +172,7 @@ func (h *CategoriesHandler) Update(w http.ResponseWriter, r *http.Request) {
 // DELETE /api/admin/categories/:id
 func (h *CategoriesHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	res, err := h.DB.Exec("DELETE FROM custom_categories WHERE id = $1", id)
+	res, err := h.DB.Exec("DELETE FROM custom_category WHERE id = $1", id)
 	if err != nil {
 		jsonError(w, "Database error", http.StatusInternalServerError)
 		return

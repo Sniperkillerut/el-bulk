@@ -22,7 +22,7 @@ var (
 
 const cacheDuration = 60 * time.Second
 
-// SettingsHandler manages admin-configurable global settings.
+// SettingsHandler manages admin-configurable global setting.
 type SettingsHandler struct {
 	DB *sqlx.DB
 }
@@ -31,7 +31,7 @@ func NewSettingsHandler(db *sqlx.DB) *SettingsHandler {
 	return &SettingsHandler{DB: db}
 }
 
-// loadSettings reads the current exchange rates from the settings table with a 60s cache.
+// loadSettings reads the current exchange rates from the setting table with a 60s cache.
 func loadSettings(db *sqlx.DB) (models.Settings, error) {
 	cacheMutex.RLock()
 	if time.Since(cacheTime) < cacheDuration {
@@ -56,9 +56,9 @@ func loadSettings(db *sqlx.DB) (models.Settings, error) {
 		return s, nil
 	}
 
-	rows, err := db.Query("SELECT key, value FROM settings")
+	rows, err := db.Query("SELECT key, value FROM setting")
 	if err != nil {
-		fmt.Printf("⚠️ Settings table error: %v (using defaults)\n", err)
+		fmt.Printf("⚠️ Setting table error: %v (using defaults)\n", err)
 		return s, nil // Return defaults instead of error to prevent 500
 	}
 	defer rows.Close()
@@ -127,7 +127,7 @@ func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	upsert := func(key, val string) error {
-		_, err := h.DB.Exec("INSERT INTO settings(key,value) VALUES($1,$2) ON CONFLICT(key) DO UPDATE SET value=$2", key, val)
+		_, err := h.DB.Exec("INSERT INTO setting(key,value) VALUES($1,$2) ON CONFLICT(key) DO UPDATE SET value=$2", key, val)
 		return err
 	}
 

@@ -46,8 +46,8 @@ func (h *ProductHandler) populateStorage(products []models.Product) {
 
 	query, args, err := sqlx.In(`
 		SELECT ps.product_id, s.id as stored_in_id, s.name, ps.quantity 
-		FROM product_stored_in ps 
-		JOIN stored_in s ON ps.stored_in_id = s.id 
+		FROM product_storage ps 
+		JOIN storage_location s ON ps.storage_id = s.id 
 		WHERE ps.quantity > 0 AND ps.product_id IN (?)
 	`, pids)
 	if err != nil {
@@ -57,7 +57,7 @@ func (h *ProductHandler) populateStorage(products []models.Product) {
 	query = h.DB.Rebind(query)
 	var storageRows []struct {
 		ProductID  string `db:"product_id"`
-		StoredInID string `db:"stored_in_id"`
+		StorageID string `db:"stored_in_id"`
 		Name       string `db:"name"`
 		Quantity   int    `db:"quantity"`
 	}
@@ -68,7 +68,7 @@ func (h *ProductHandler) populateStorage(products []models.Product) {
 	storageMap := make(map[string][]models.StorageLocation)
 	for _, r := range storageRows {
 		storageMap[r.ProductID] = append(storageMap[r.ProductID], models.StorageLocation{
-			StoredInID: r.StoredInID,
+			StorageID: r.StorageID,
 			Name:       r.Name,
 			Quantity:   r.Quantity,
 		})
@@ -85,33 +85,33 @@ func (h *ProductHandler) populateStorage(products []models.Product) {
 
 func (h *ProductHandler) saveProductCategories(productID string, categoryIDs []string) {
 	logger.Info("saveProductCategories called for Product: %s with categories: %v", productID, categoryIDs)
-	_, err := h.DB.Exec("DELETE FROM product_categories WHERE product_id = $1", productID)
+	_, err := h.DB.Exec("DELETE FROM product_category WHERE product_id = $1", productID)
 	if err != nil {
-		logger.Error("Error deleting product_categories: %v", err)
+		logger.Error("Error deleting product_category: %v", err)
 	}
 	for _, cid := range categoryIDs {
-		_, err := h.DB.Exec("INSERT INTO product_categories (product_id, category_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", productID, cid)
+		_, err := h.DB.Exec("INSERT INTO product_category (product_id, category_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", productID, cid)
 		if err != nil {
-			logger.Error("Error inserting product_categories (product=%s, cat=%s): %v", productID, cid, err)
+			logger.Error("Error inserting product_category (product=%s, cat=%s): %v", productID, cid, err)
 		}
 	}
 }
 
 func (h *ProductHandler) saveProductStorage(productID string, items []models.StorageLocation) {
 	// First clear existing storage for this product
-	_, err := h.DB.Exec("DELETE FROM product_stored_in WHERE product_id = $1", productID)
+	_, err := h.DB.Exec("DELETE FROM product_storage WHERE product_id = $1", productID)
 	if err != nil {
-		logger.Error("Error clearing product_stored_in for %s: %v", productID, err)
+		logger.Error("Error clearing product_storage for %s: %v", productID, err)
 	}
 
 	for _, item := range items {
 		if item.Quantity > 0 {
 			_, err := h.DB.Exec(`
-				INSERT INTO product_stored_in (product_id, stored_in_id, quantity)
+				INSERT INTO product_storage (product_id, storage_id, quantity)
 				VALUES ($1, $2, $3)
-			`, productID, item.StoredInID, item.Quantity)
+			`, productID, item.StorageID, item.Quantity)
 			if err != nil {
-				logger.Error("Error inserting product_stored_in (product=%s, storage=%s): %v", productID, item.StoredInID, err)
+				logger.Error("Error inserting product_stored_in (product=%s, storage=%s): %v", productID, item.StorageID, err)
 			}
 		}
 	}
@@ -128,8 +128,8 @@ func (h *ProductHandler) populateCategories(products []models.Product, isAdmin b
 
 	sql := `
 		SELECT pc.product_id, c.id, c.name, c.slug, c.show_badge, c.is_active, c.searchable
-		FROM product_categories pc
-		JOIN custom_categories c ON pc.category_id = c.id
+		FROM product_category pc
+		JOIN custom_category c ON pc.category_id = c.id
 		WHERE pc.product_id IN (?)
 	`
 	if !isAdmin {
@@ -229,28 +229,47 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	orderBy := h.buildOrderBy(sortBy, sortDir, search, len(args))
 
-	listQuery := `SELECT p.id, p.name, p.tcg, p.category, p.set_name, p.set_code, p.collector_number, p.condition, 
-	                    p.foil_treatment, p.card_treatment, p.promo_type, p.price_reference, p.price_source, 
-	                    p.price_cop_override, p.stock, p.image_url, p.description, p.created_at, p.updated_at,
-	                    p.language, p.color_identity, p.rarity, p.cmc, 
-	                    p.is_legendary, p.is_historic, p.is_land, p.is_basic_land, 
-	                    p.art_variation, p.oracle_text, p.artist, p.type_line, 
-	                    p.border_color, p.frame, p.full_art, p.textless ` +
+	listQuery := `SELECT * FROM view_product_enriched p ` +
 		fromClause + " " + where + " ORDER BY " + orderBy + " LIMIT $" + strconv.Itoa(len(args)+1) + " OFFSET $" + strconv.Itoa(len(args)+2)
 
 	listArgs := append([]interface{}{}, args...)
 	listArgs = append(listArgs, pageSize, offset)
 
-	var products []models.Product
-	if err := h.DB.Select(&products, listQuery, listArgs...); err != nil {
+	var rows []struct {
+		models.Product
+		StoredInJSON   []byte `db:"stored_in_json"`
+		CategoriesJSON []byte `db:"categories_json"`
+	}
+
+	if err := h.DB.Select(&rows, listQuery, listArgs...); err != nil {
 		logger.Error("Error selecting products: %v", err)
 		jsonError(w, "Database error", http.StatusInternalServerError)
 		return
 	}
-	if products == nil {
-		products = []models.Product{}
+
+	products := make([]models.Product, len(rows))
+	s, _ := loadSettings(h.DB) // Load once for all products
+
+	for i, r := range rows {
+		products[i] = r.Product
+		if r.StoredInJSON != nil {
+			json.Unmarshal(r.StoredInJSON, &products[i].StoredIn)
+		}
+		if r.CategoriesJSON != nil {
+			json.Unmarshal(r.CategoriesJSON, &products[i].Categories)
+			if !isAdmin {
+				filtered := []models.CustomCategory{}
+				for _, c := range products[i].Categories {
+					if c.ShowBadge {
+						filtered = append(filtered, c)
+					}
+				}
+				products[i].Categories = filtered
+			}
+		}
+		// In-place price population
+		products[i].Price = products[i].ComputePrice(s.USDToCOPRate, s.EURToCOPRate)
 	}
-	h.enrichProducts(products, isAdmin)
 
 	// Calculate Facets
 	facets := h.getFacets(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color, isAdmin)
@@ -268,27 +287,36 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 // GET /api/products/:id
 func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	var product models.Product
 	
 	isAdmin := strings.Contains(r.URL.Path, "/admin/")
-	query := "SELECT p.* FROM products p"
+	
+	// Check TCG activity if not admin
 	if !isAdmin {
-		query += " LEFT JOIN tcgs t ON p.tcg = t.id WHERE p.id = $1 AND (t.is_active IS NULL OR t.is_active = true)"
-	} else {
-		query += " WHERE p.id = $1"
+		var active bool
+		err := h.DB.Get(&active, "SELECT COALESCE(t.is_active, true) FROM product p LEFT JOIN tcg t ON p.tcg = t.id WHERE p.id = $1", id)
+		if err != nil || !active {
+			jsonError(w, "Product not found or unavailable", http.StatusNotFound)
+			return
+		}
 	}
 
-	err := h.DB.Get(&product, query, id)
+	var jsonResult []byte
+	err := h.DB.Get(&jsonResult, "SELECT fn_get_product_detail($1)", id)
 	if err != nil {
-		jsonError(w, "Product not found or unavailable", http.StatusNotFound)
+		logger.Error("Error calling fn_get_product_detail: %v", err)
+		jsonError(w, "Product not found", http.StatusNotFound)
 		return
 	}
-	
-	products := []models.Product{product}
-	h.populatePrices(products)
-	h.populateStorage(products)
-	h.populateCategories(products, isAdmin)
-	jsonOK(w, products[0])
+
+	var product models.Product
+	if err := json.Unmarshal(jsonResult, &product); err != nil {
+		logger.Error("Error unmarshaling product detail: %v", err)
+		jsonError(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	h.populatePrices([]models.Product{product})
+	jsonOK(w, product)
 }
 
 // GET /api/tcgs
@@ -296,9 +324,9 @@ func (h *ProductHandler) ListTCGs(w http.ResponseWriter, r *http.Request) {
 	activeOnly := r.URL.Query().Get("active_only") == "true"
 	
 	var tcgs []models.TCG
-	query := "SELECT * FROM tcgs ORDER BY name"
+	query := "SELECT * FROM tcg ORDER BY name"
 	if activeOnly {
-		query = "SELECT * FROM tcgs WHERE is_active = true ORDER BY name"
+		query = "SELECT * FROM tcg WHERE is_active = true ORDER BY name"
 	}
 	
 	err := h.DB.Select(&tcgs, query)
@@ -339,7 +367,7 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	var product models.Product
 	err := h.DB.QueryRowx(`
-		INSERT INTO products (name, tcg, category, set_name, set_code, condition,
+		INSERT INTO product (name, tcg, category, set_name, set_code, condition,
 		                      foil_treatment, card_treatment,
 		                      price_reference, price_source, price_cop_override,
 		                      stock, image_url, description, collector_number, promo_type,
@@ -387,7 +415,7 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	var product models.Product
 	err := h.DB.QueryRowx(`
-		UPDATE products
+		UPDATE product
 		SET name=$1, tcg=$2, category=$3, set_name=$4, set_code=$5, condition=$6,
 		    foil_treatment=$7, card_treatment=$8,
 		    price_reference=$9, price_source=$10, price_cop_override=$11,
@@ -425,7 +453,7 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	result, err := h.DB.Exec("DELETE FROM products WHERE id = $1", id)
+	result, err := h.DB.Exec("DELETE FROM product WHERE id = $1", id)
 	if err != nil {
 		jsonError(w, "Database error", http.StatusInternalServerError)
 		return
@@ -448,87 +476,32 @@ func (h *ProductHandler) BulkCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tx, err := h.DB.Beginx()
-	if err != nil {
-		jsonError(w, "Failed to start transaction", http.StatusInternalServerError)
+	if len(inputs) == 0 {
+		jsonOK(w, map[string]interface{}{"message": "No products to import", "count": 0})
 		return
 	}
 
-	var createdCount int
-	for _, input := range inputs {
-		if input.Name == "" || input.TCG == "" || input.Category == "" {
-			continue // skip invalid entries or could return error
-		}
-
-		if input.FoilTreatment == "" {
-			input.FoilTreatment = models.FoilNonFoil
-		}
-		if input.CardTreatment == "" {
-			input.CardTreatment = models.TreatmentNormal
-		}
-		if input.PriceSource == "" {
-			input.PriceSource = models.PriceSourceManual
-		}
-
-		var productID string
-		err := tx.QueryRow(`
-			INSERT INTO products (name, tcg, category, set_name, set_code, condition,
-			                      foil_treatment, card_treatment,
-			                      price_reference, price_source, price_cop_override,
-			                      stock, image_url, description, collector_number, promo_type,
-			                      language, color_identity, rarity, cmc, is_legendary, is_historic, is_land, is_basic_land, art_variation,
-			                      oracle_text, artist, type_line, border_color, frame, full_art, textless)
-			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32)
-			RETURNING id
-		`, input.Name, input.TCG, input.Category, input.SetName, input.SetCode, input.Condition,
-			input.FoilTreatment, input.CardTreatment,
-			input.PriceReference, input.PriceSource, input.PriceCOPOverride,
-			input.Stock, input.ImageURL, input.Description, input.CollectorNumber, input.PromoType,
-			input.Language, input.ColorIdentity, input.Rarity, input.CMC, input.IsLegendary, input.IsHistoric, input.IsLand, input.IsBasicLand, input.ArtVariation,
-			input.OracleText, input.Artist, input.TypeLine, input.BorderColor, input.Frame, input.FullArt, input.Textless,
-		).Scan(&productID)
-
-		if err != nil {
-			tx.Rollback()
-			jsonError(w, "Failed to create product during bulk: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		// Save Categories
-		for _, cid := range input.CategoryIDs {
-			_, err = tx.Exec("INSERT INTO product_categories (product_id, category_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", productID, cid)
-			if err != nil {
-				tx.Rollback()
-				jsonError(w, "Failed to save category during bulk: "+err.Error(), http.StatusInternalServerError)
-				return
-			}
-		}
-
-		// Save Storage
-		for _, item := range input.StorageItems {
-			if item.Quantity > 0 {
-				_, err = tx.Exec(`
-					INSERT INTO product_stored_in (product_id, stored_in_id, quantity)
-					VALUES ($1, $2, $3)
-				`, productID, item.StoredInID, item.Quantity)
-				if err != nil {
-					tx.Rollback()
-					jsonError(w, "Failed to save storage during bulk: "+err.Error(), http.StatusInternalServerError)
-					return
-				}
-			}
-		}
-		createdCount++
+	// Prepare data for Stored Procedure
+	jsonData, err := json.Marshal(inputs)
+	if err != nil {
+		jsonError(w, "Failed to encode products for database", http.StatusInternalServerError)
+		return
 	}
 
-	if err := tx.Commit(); err != nil {
-		jsonError(w, "Failed to commit transaction", http.StatusInternalServerError)
+	// Call Stored Procedure
+	var ids []struct {
+		ID string `db:"product_id"`
+	}
+	err = h.DB.Select(&ids, "SELECT product_id FROM fn_bulk_upsert_product($1)", string(jsonData))
+	if err != nil {
+		logger.Error("Bulk upsert failed: %v", err)
+		jsonError(w, "Database failure during bulk import: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	jsonOK(w, map[string]interface{}{
-		"message": fmt.Sprintf("Successfully imported %d products", createdCount),
-		"count":   createdCount,
+		"message": fmt.Sprintf("Successfully imported %d products", len(ids)),
+		"count":   len(ids),
 	})
 }
 
@@ -537,9 +510,9 @@ func (h *ProductHandler) GetStorage(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var items []models.StorageLocation
 	err := h.DB.Select(&items, `
-		SELECT s.id as stored_in_id, s.name, COALESCE(ps.quantity, 0) as quantity
-		FROM stored_in s
-		LEFT JOIN product_stored_in ps ON s.id = ps.stored_in_id AND ps.product_id = $1
+		SELECT s.id as storage_id, s.name, COALESCE(ps.quantity, 0) as quantity
+		FROM storage_location s
+		LEFT JOIN product_storage ps ON s.id = ps.storage_id AND ps.product_id = $1
 		ORDER BY s.name
 	`, id)
 	if err != nil {
@@ -568,7 +541,7 @@ func (h *ProductHandler) UpdateStorage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 1. Clear existing
-	_, err = tx.Exec(`DELETE FROM product_stored_in WHERE product_id = $1`, id)
+	_, err = tx.Exec(`DELETE FROM product_storage WHERE product_id = $1`, id)
 	if err != nil {
 		tx.Rollback()
 		jsonError(w, "Failed to clear existing storage", http.StatusInternalServerError)
@@ -579,9 +552,9 @@ func (h *ProductHandler) UpdateStorage(w http.ResponseWriter, r *http.Request) {
 	for _, u := range updates {
 		if u.Quantity > 0 {
 			_, err = tx.Exec(`
-				INSERT INTO product_stored_in (product_id, stored_in_id, quantity)
+				INSERT INTO product_storage (product_id, storage_id, quantity)
 				VALUES ($1, $2, $3)
-			`, id, u.StoredInID, u.Quantity)
+			`, id, u.StorageID, u.Quantity)
 			if err != nil {
 				tx.Rollback()
 				jsonError(w, "Failed to update storage map", http.StatusInternalServerError)
@@ -707,8 +680,8 @@ func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treat
 	collQuery := fmt.Sprintf(`
 		SELECT c.slug, COUNT(*) 
 		%s 
-		JOIN product_categories pc ON p.id = pc.product_id 
-		JOIN custom_categories c ON pc.category_id = c.id 
+		JOIN product_category pc ON p.id = pc.product_id 
+		JOIN custom_category c ON pc.category_id = c.id 
 		%s 
 		GROUP BY c.slug`, from, where)
 	rows, err := h.DB.Query(collQuery, args...)
@@ -816,15 +789,15 @@ func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, tr
 	var args []interface{}
 	idx := 1
 
-	fromClause := "FROM products p"
+	fromClause := "FROM product p"
 	if !isAdmin {
-		fromClause += " LEFT JOIN tcgs t ON p.tcg = t.id"
+		fromClause += " LEFT JOIN tcg t ON p.tcg = t.id"
 		conditions = append(conditions, "(t.is_active IS NULL OR t.is_active = true)")
 	}
 
 	if storageID != "" {
-		fromClause = "FROM products p JOIN product_stored_in ps ON p.id = ps.product_id"
-		conditions = append(conditions, "ps.stored_in_id = $"+strconv.Itoa(idx), "ps.quantity > 0")
+		fromClause = "FROM product p JOIN product_storage ps ON p.id = ps.product_id"
+		conditions = append(conditions, "ps.storage_id = $"+strconv.Itoa(idx), "ps.quantity > 0")
 		args = append(args, storageID)
 		idx++
 	}
@@ -889,7 +862,7 @@ func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, tr
 		conditions = append(conditions, "p.condition IN ("+strings.Join(placeholders, ",")+")")
 	}
 	if collection != "" {
-		fromClause += " JOIN product_categories pc_col ON p.id = pc_col.product_id JOIN custom_categories c_col ON pc_col.category_id = c_col.id"
+		fromClause += " JOIN product_category pc_col ON p.id = pc_col.product_id JOIN custom_category c_col ON pc_col.category_id = c_col.id"
 		conditions = append(conditions, "c_col.slug = $"+strconv.Itoa(idx))
 		args = append(args, collection)
 		idx++

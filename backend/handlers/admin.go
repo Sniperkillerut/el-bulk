@@ -30,7 +30,7 @@ func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var admin models.Admin
-	err := h.DB.Get(&admin, "SELECT * FROM admins WHERE username = $1", req.Username)
+	err := h.DB.Get(&admin, "SELECT * FROM admin WHERE username = $1", req.Username)
 	if err != nil {
 		jsonError(w, "Invalid credentials", http.StatusUnauthorized)
 		return

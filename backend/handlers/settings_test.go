@@ -28,7 +28,7 @@ func TestSettingsHandler_Get(t *testing.T) {
 			AddRow("usd_to_cop_rate", "4500.5").
 			AddRow("contact_email", "test@example.com")
 
-		mock.ExpectQuery("SELECT key, value FROM settings").WillReturnRows(rows)
+		mock.ExpectQuery("SELECT key, value FROM setting").WillReturnRows(rows)
 
 		req, _ := http.NewRequest("GET", "/api/admin/settings", nil)
 		rr := httptest.NewRecorder()
@@ -43,7 +43,7 @@ func TestSettingsHandler_Get(t *testing.T) {
 
 	t.Run("Defaults on Error", func(t *testing.T) {
 		ResetSettingsCache()
-		mock.ExpectQuery("SELECT key, value FROM settings").WillReturnError(assert.AnError)
+		mock.ExpectQuery("SELECT key, value FROM setting").WillReturnError(assert.AnError)
 
 		req, _ := http.NewRequest("GET", "/api/admin/settings", nil)
 		rr := httptest.NewRecorder()
@@ -78,11 +78,11 @@ func TestSettingsHandler_Update(t *testing.T) {
 		body, _ := json.Marshal(input)
 
 		// Two upserts
-		mock.ExpectExec("INSERT INTO settings").WithArgs("usd_to_cop_rate", "4400.0000").WillReturnResult(sqlmock.NewResult(0, 1))
-		mock.ExpectExec("INSERT INTO settings").WithArgs("contact_email", email).WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectExec("INSERT INTO setting").WithArgs("usd_to_cop_rate", "4400.0000").WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectExec("INSERT INTO setting").WithArgs("contact_email", email).WillReturnResult(sqlmock.NewResult(0, 1))
 
 		// Post-update load
-		mock.ExpectQuery("SELECT key, value FROM settings").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop_rate", "4400.0"))
+		mock.ExpectQuery("SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop_rate", "4400.0"))
 
 		req, _ := http.NewRequest("PUT", "/api/admin/settings", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
@@ -116,9 +116,9 @@ func TestSettingsHandler_Update(t *testing.T) {
 
 		// 7 upserts
 		for i := 0; i < 7; i++ {
-			mock.ExpectExec("INSERT INTO settings").WillReturnResult(sqlmock.NewResult(0, 1))
+			mock.ExpectExec("INSERT INTO setting").WillReturnResult(sqlmock.NewResult(0, 1))
 		}
-		mock.ExpectQuery("SELECT key, value FROM settings").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).
+		mock.ExpectQuery("SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).
 			AddRow("usd_to_cop_rate", "4500.0"))
 
 		req, _ := http.NewRequest("PUT", "/api/admin/settings", bytes.NewBuffer(body))
@@ -142,7 +142,7 @@ func TestSettingsHandler_Update(t *testing.T) {
 		}{USDToCOPRate: &rate}
 		body, _ := json.Marshal(input)
 
-		mock.ExpectExec("INSERT INTO settings").WillReturnError(fmt.Errorf("db error"))
+		mock.ExpectExec("INSERT INTO setting").WillReturnError(fmt.Errorf("db error"))
 
 		req, _ := http.NewRequest("PUT", "/api/admin/settings", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()

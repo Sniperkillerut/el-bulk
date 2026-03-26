@@ -24,10 +24,10 @@ func TestProductHandler_BulkCreate_Errors(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	h := &ProductHandler{DB: sqlxDB}
 
-	t.Run("Tx Begin Error", func(t *testing.T) {
+	t.Run("SP Error", func(t *testing.T) {
 		inputs := []models.ProductInput{{Name: "P1", TCG: "mtg", Category: "singles"}}
 		body, _ := json.Marshal(inputs)
-		mock.ExpectBegin().WillReturnError(fmt.Errorf("tx error"))
+		mock.ExpectQuery("SELECT product_id FROM fn_bulk_upsert_product").WillReturnError(fmt.Errorf("db error"))
 
 		req, _ := http.NewRequest("POST", "/api/admin/products/bulk", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
@@ -45,7 +45,7 @@ func TestProductHandler_UpdateStorage_Errors(t *testing.T) {
 	h := &ProductHandler{DB: sqlxDB}
 
 	t.Run("Tx Begin Error", func(t *testing.T) {
-		updates := []models.ProductStorage{{StoredInID: "loc1", Quantity: 5}}
+		updates := []models.ProductStorage{{StorageID: "loc1", Quantity: 5}}
 		body, _ := json.Marshal(updates)
 		mock.ExpectBegin().WillReturnError(fmt.Errorf("tx error"))
 
@@ -58,10 +58,10 @@ func TestProductHandler_UpdateStorage_Errors(t *testing.T) {
 	})
 
 	t.Run("Delete Error", func(t *testing.T) {
-		updates := []models.ProductStorage{{StoredInID: "loc1", Quantity: 5}}
+		updates := []models.ProductStorage{{StorageID: "loc1", Quantity: 5}}
 		body, _ := json.Marshal(updates)
 		mock.ExpectBegin()
-		mock.ExpectExec("DELETE FROM product_stored_in").WillReturnError(fmt.Errorf("db error"))
+		mock.ExpectExec("DELETE FROM product_storage").WillReturnError(fmt.Errorf("db error"))
 		mock.ExpectRollback()
 
 		r := chi.NewRouter()
@@ -82,7 +82,7 @@ func TestProductHandler_Delete_Errors(t *testing.T) {
 	h := &ProductHandler{DB: sqlxDB}
 
 	t.Run("DB Error", func(t *testing.T) {
-		mock.ExpectExec("DELETE FROM products").WillReturnError(fmt.Errorf("db error"))
+		mock.ExpectExec("DELETE FROM product").WillReturnError(fmt.Errorf("db error"))
 		r := chi.NewRouter()
 		r.Delete("/api/admin/products/{id}", h.Delete)
 		req, _ := http.NewRequest("DELETE", "/api/admin/products/p1", nil)
@@ -103,7 +103,7 @@ func TestProductHandler_ListTCGs(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id", "name", "is_active", "created_at"}).
 			AddRow("mtg", "Magic", true, time.Now())
-		mock.ExpectQuery("SELECT id, name, is_active, created_at FROM tcgs WHERE is_active = true").WillReturnRows(rows)
+		mock.ExpectQuery("SELECT \\* FROM tcg WHERE is_active = true ORDER BY name").WillReturnRows(rows)
 
 		req, _ := http.NewRequest("GET", "/api/tcgs?active_only=true", nil)
 		rr := httptest.NewRecorder()
@@ -112,10 +112,10 @@ func TestProductHandler_ListTCGs(t *testing.T) {
 	})
 
 	t.Run("List Error", func(t *testing.T) {
-		mock.ExpectQuery("SELECT COUNT").WillReturnError(fmt.Errorf("db error"))
-		req, _ := http.NewRequest("GET", "/api/admin/orders", nil)
+		mock.ExpectQuery("SELECT \\* FROM tcg").WillReturnError(fmt.Errorf("db error"))
+		req, _ := http.NewRequest("GET", "/api/tcgs", nil)
 		rr := httptest.NewRecorder()
-		h.List(rr, req)
+		h.ListTCGs(rr, req)
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)
 	})
 }
@@ -132,9 +132,9 @@ func TestProductHandler_BulkCreate_Extra(t *testing.T) {
 		inputs := []models.ProductInput{{Name: ""}, {Name: "P1", TCG: "mtg", Category: "singles"}}
 		body, _ := json.Marshal(inputs)
 		
-		mock.ExpectBegin()
-		mock.ExpectQuery("INSERT INTO products").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("p1"))
-		mock.ExpectCommit()
+		mock.ExpectQuery("SELECT product_id FROM fn_bulk_upsert_product").
+			WithArgs(sqlmock.AnyArg()).
+			WillReturnRows(sqlmock.NewRows([]string{"product_id"}).AddRow("p-new"))
 
 		req, _ := http.NewRequest("POST", "/api/admin/products/bulk", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
@@ -146,9 +146,7 @@ func TestProductHandler_BulkCreate_Extra(t *testing.T) {
 		inputs := []models.ProductInput{{Name: "P1", TCG: "mtg", Category: "singles"}}
 		body, _ := json.Marshal(inputs)
 		
-		mock.ExpectBegin()
-		mock.ExpectQuery("INSERT INTO products").WillReturnError(fmt.Errorf("db error"))
-		mock.ExpectRollback()
+		mock.ExpectQuery("SELECT product_id FROM fn_bulk_upsert_product").WillReturnError(fmt.Errorf("db error"))
 
 		req, _ := http.NewRequest("POST", "/api/admin/products/bulk", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()

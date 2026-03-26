@@ -225,12 +225,12 @@ type StoredIn struct {
 
 type ProductStorage struct {
 	ProductID  string `db:"product_id"   json:"product_id"`
-	StoredInID string `db:"stored_in_id" json:"stored_in_id"`
+	StorageID  string `db:"storage_id" json:"storage_id"`
 	Quantity   int    `db:"quantity"     json:"quantity"`
 }
 
 type StorageLocation struct {
-	StoredInID string `db:"stored_in_id" json:"stored_in_id"`
+	StorageID string `db:"storage_id" json:"stored_in_id"`
 	Name       string `db:"name"         json:"name"`
 	Quantity   int    `db:"quantity"     json:"quantity"`
 }
@@ -311,7 +311,7 @@ type CompleteOrderInput struct {
 
 type StockDecrement struct {
 	ProductID  string `json:"product_id"`
-	StoredInID string `json:"stored_in_id"`
+	StorageID string `json:"stored_in_id"`
 	Quantity   int    `json:"quantity"`
 }
 

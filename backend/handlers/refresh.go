@@ -189,7 +189,7 @@ func RunPriceRefresh(db *sqlx.DB) (updated int, errs int) {
 	rows := []refreshRow{}
 	if err := db.Select(&rows, `
 		SELECT id, tcg, name, set_code, foil_treatment, price_source
-		FROM products
+		FROM product
 		WHERE price_source IN ('tcgplayer', 'cardmarket')
 	`); err != nil {
 		logger.Error("[price-refresh] failed to query products: %v", err)
@@ -254,7 +254,7 @@ func RunPriceRefresh(db *sqlx.DB) (updated int, errs int) {
 			continue
 		}
 
-		if _, err := db.Exec("UPDATE products SET price_reference=$1 WHERE id=$2", *refPrice, p.ID); err != nil {
+		if _, err := db.Exec("UPDATE product SET price_reference=$1 WHERE id=$2", *refPrice, p.ID); err != nil {
 			logger.Error("[price-refresh] DB update failed for %s: %v", p.ID, err)
 			errs++
 			continue

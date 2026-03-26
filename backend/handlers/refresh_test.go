@@ -76,14 +76,14 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id", "tcg", "name", "set_code", "foil_treatment", "price_source"}).
 			AddRow("1", "mtg", "Black Lotus", "lea", "non_foil", "tcgplayer").
 			AddRow("2", "mtg", "Mox Pearl", "lea", "non_foil", "tcgplayer")
-		mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM products").
+		mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM product").
 			WillReturnRows(rows)
 
 		// Mock updates
-		mock.ExpectExec("UPDATE products SET price_reference=\\$1 WHERE id=\\$2").
+		mock.ExpectExec("UPDATE product SET price_reference=\\$1 WHERE id=\\$2").
 			WithArgs(50000.0, "1").
 			WillReturnResult(sqlmock.NewResult(0, 1))
-		mock.ExpectExec("UPDATE products SET price_reference=\\$1 WHERE id=\\$2").
+		mock.ExpectExec("UPDATE product SET price_reference=\\$1 WHERE id=\\$2").
 			WithArgs(10000.0, "2").
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
@@ -95,7 +95,7 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 	})
 
 	t.Run("NoProducts", func(t *testing.T) {
-		mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM products").
+		mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM product").
 			WillReturnRows(sqlmock.NewRows([]string{"id", "tcg", "name", "set_code", "foil_treatment", "price_source"}))
 
 		updated, errs := RunPriceRefresh(sqlxDB)
@@ -106,7 +106,7 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 	})
 
 	t.Run("DB Error", func(t *testing.T) {
-		mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM products").
+		mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM product").
 			WillReturnError(fmt.Errorf("db error"))
 
 		updated, errs := RunPriceRefresh(sqlxDB)
@@ -117,7 +117,7 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 
 	t.Run("HTTP Error", func(t *testing.T) {
 		// Mock query success but HTTP fail
-		mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM products").
+		mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM product").
 			WillReturnRows(sqlmock.NewRows([]string{"id", "tcg", "name", "set_code", "foil_treatment", "price_source"}).AddRow("1", "mtg", "N1", "S1", "non_foil", "tcgplayer"))
 		
 		oldBase := external.ScryfallBase
@@ -142,7 +142,7 @@ func TestRefreshHandler_Trigger(t *testing.T) {
 
 	// Since RunPriceRefresh calls ScryfallBase, we need to mock it or it will fail
 	// Or we can just mock the empty product list to avoid the network call
-	mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM products").
+	mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM product").
 		WillReturnRows(sqlmock.NewRows([]string{"id", "tcg", "name", "set_code", "foil_treatment", "price_source"}))
 
 	req, _ := http.NewRequest("POST", "/api/admin/prices/refresh", nil)

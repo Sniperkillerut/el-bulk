@@ -41,7 +41,7 @@ func TestAdminHandler_Login(t *testing.T) {
 			mockSetup: func() {
 				rows := sqlmock.NewRows([]string{"id", "username", "password_hash"}).
 					AddRow("admin-uuid", "admin", string(hash))
-				mock.ExpectQuery("SELECT \\* FROM admins WHERE username = \\$1").
+				mock.ExpectQuery("SELECT \\* FROM admin WHERE username = \\$1").
 					WithArgs("admin").
 					WillReturnRows(rows)
 			},
@@ -54,7 +54,7 @@ func TestAdminHandler_Login(t *testing.T) {
 				Password: password,
 			},
 			mockSetup: func() {
-				mock.ExpectQuery("SELECT \\* FROM admins WHERE username = \\$1").
+				mock.ExpectQuery("SELECT \\* FROM admin WHERE username = \\$1").
 					WithArgs("nonexistent").
 					WillReturnError(http.ErrNoLocation) // Any error to simulate not found
 			},
@@ -69,7 +69,7 @@ func TestAdminHandler_Login(t *testing.T) {
 			mockSetup: func() {
 				rows := sqlmock.NewRows([]string{"id", "username", "password_hash"}).
 					AddRow("admin-uuid", "admin", string(hash))
-				mock.ExpectQuery("SELECT \\* FROM admins WHERE username = \\$1").
+				mock.ExpectQuery("SELECT \\* FROM admin WHERE username = \\$1").
 					WithArgs("admin").
 					WillReturnRows(rows)
 			},
@@ -128,7 +128,7 @@ func TestAdminHandler_Login_TokenFail(t *testing.T) {
 
 	rows := sqlmock.NewRows([]string{"id", "username", "password_hash"}).
 		AddRow("admin-uuid", "admin", string(hash))
-	mock.ExpectQuery("SELECT \\* FROM admins WHERE username = \\$1").
+	mock.ExpectQuery("SELECT \\* FROM admin WHERE username = \\$1").
 		WithArgs("admin").
 		WillReturnRows(rows)
 
