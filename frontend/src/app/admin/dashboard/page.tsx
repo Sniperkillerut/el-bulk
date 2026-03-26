@@ -74,6 +74,9 @@ export default function AdminDashboard() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [storageFilter, setStorageFilter] = useState('');
+  const [adminSortBy, setAdminSortBy] = useState('created_at');
+  const [adminSortDir, setAdminSortDir] = useState<'asc' | 'desc'>('desc');
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -141,13 +144,13 @@ export default function AdminDashboard() {
   }, [router]);
 
   const productKey = useMemo(() => 
-    token ? ['/api/admin/products', debouncedSearch, storageFilter, page] : null,
-    [token, debouncedSearch, storageFilter, page]
+    token ? ['/api/admin/products', debouncedSearch, storageFilter, page, adminSortBy, adminSortDir] : null,
+    [token, debouncedSearch, storageFilter, page, adminSortBy, adminSortDir]
   );
 
   const { data: productRes, error: productError, isLoading: productsLoading, mutate: mutateProducts } = useSWR(
     productKey,
-    ([, s, st, p]: any) => adminFetchProducts(token, { search: s, storage_id: st, page: p, page_size: 25 }),
+    ([, s, st, p, sb, sd]: any) => adminFetchProducts(token, { search: s, storage_id: st, page: p, page_size: 25, sort_by: sb, sort_dir: sd }),
     { keepPreviousData: true, revalidateOnFocus: false }
   );
 
@@ -830,13 +833,29 @@ export default function AdminDashboard() {
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+    setDeleteConfirm({ id, name });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return;
     try {
-      await adminDeleteProduct(token, id);
+      await adminDeleteProduct(token, deleteConfirm.id);
       mutateProducts();
     } catch {
       alert('Failed to delete product.');
+    } finally {
+      setDeleteConfirm(null);
     }
+  };
+
+  const toggleAdminSort = (col: string) => {
+    if (adminSortBy === col) {
+      setAdminSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setAdminSortBy(col);
+      setAdminSortDir(col === 'name' ? 'asc' : 'desc');
+    }
+    setPage(1);
   };
 
   const logout = () => {
@@ -899,11 +918,73 @@ export default function AdminDashboard() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--ink-border)' }}>
-              {['', 'Name', 'TCG', 'Category', 'Set', 'Condition', 'Stored In', 'Final Price', 'Stock', 'Collections', 'Actions'].map((h, i) => (
-                <th key={`${h}-${i}`} className="text-left px-4 py-3 text-xs font-mono-stack" style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                  {h === 'Actions' ? '' : h}
-                </th>
-              ))}
+              <th
+                className="text-left px-2 py-3 text-xs font-mono-stack cursor-pointer select-none"
+                style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap', width: 40, transition: 'all 0.15s', borderTop: '2px solid transparent', borderBottom: '2px solid transparent' }}
+                title="Reset sorting"
+                onClick={() => { setAdminSortBy('created_at'); setAdminSortDir('desc'); setPage(1); }}
+                onMouseEnter={e => {
+                  if (adminSortBy !== 'created_at') {
+                    e.currentTarget.style.background = 'var(--ink-surface)';
+                    e.currentTarget.style.borderTopColor = 'var(--kraft-dark)';
+                    e.currentTarget.style.borderBottomColor = 'var(--kraft-dark)';
+                  }
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.borderTopColor = 'transparent';
+                  e.currentTarget.style.borderBottomColor = 'transparent';
+                }}
+              >{adminSortBy !== 'created_at' ? '↺' : ''}</th>
+              {[
+                { label: 'Name', key: 'name' },
+                { label: 'TCG', key: 'tcg' },
+                { label: 'Category', key: 'category' },
+                { label: 'Set', key: 'set_name' },
+                { label: 'Condition', key: 'condition' },
+                { label: 'Stored In', key: '' },
+                { label: 'Final Price', key: 'price' },
+                { label: 'Stock', key: 'stock' },
+                { label: 'Collections', key: '' },
+              ].map((col, i) => {
+                const isActive = col.key && adminSortBy === col.key;
+                const isSortable = !!col.key;
+                return (
+                  <th
+                    key={`${col.label}-${i}`}
+                    className={`text-left px-4 py-3 text-xs font-mono-stack ${isSortable ? 'cursor-pointer select-none' : ''}`}
+                    style={{
+                      color: isActive ? 'var(--ink-deep)' : 'var(--text-muted)',
+                      whiteSpace: 'nowrap',
+                      transition: 'all 0.15s',
+                      borderTop: '2px solid transparent',
+                      borderBottom: '2px solid transparent',
+                    }}
+                    onClick={isSortable ? () => toggleAdminSort(col.key) : undefined}
+                    onMouseEnter={isSortable ? e => {
+                      e.currentTarget.style.background = 'var(--ink-surface)';
+                      e.currentTarget.style.borderTopColor = 'var(--kraft-dark)';
+                      e.currentTarget.style.borderBottomColor = 'var(--kraft-dark)';
+                      e.currentTarget.style.color = 'var(--ink-deep)';
+                    } : undefined}
+                    onMouseLeave={isSortable ? e => {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.borderTopColor = 'transparent';
+                      e.currentTarget.style.borderBottomColor = 'transparent';
+                      e.currentTarget.style.color = isActive ? 'var(--ink-deep)' : 'var(--text-muted)';
+                    } : undefined}
+                  >
+                    {col.label}
+                    {isActive && (
+                      <span className="ml-1 text-[10px]">{adminSortDir === 'asc' ? '▲' : '▼'}</span>
+                    )}
+                    {isSortable && !isActive && (
+                      <span className="ml-1 text-[10px]" style={{ opacity: 0 }}>▲</span>
+                    )}
+                  </th>
+                );
+              })}
+              <th className="text-left px-4 py-3 text-xs font-mono-stack" style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}></th>
             </tr>
           </thead>
           <tbody>
@@ -979,7 +1060,7 @@ export default function AdminDashboard() {
                     )}
                   </td>
                   <td key="actions" className="px-4 py-3">
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
                       <button
                         id={`edit-product-${p.id}`}
                         onClick={() => openEdit(p)}
@@ -989,8 +1070,11 @@ export default function AdminDashboard() {
                       <button
                         id={`delete-product-${p.id}`}
                         onClick={() => handleDelete(p.id, p.name)}
-                        style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem', background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)', color: 'var(--hp-color)', borderRadius: 4, cursor: 'pointer' }}
-                      >Delete</button>
+                        title="Delete product"
+                        style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)', color: 'var(--hp-color)', borderRadius: 4, cursor: 'pointer', fontSize: '0.85rem', transition: 'all 0.15s' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(248,113,113,0.25)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(248,113,113,0.1)'; }}
+                      >🗑</button>
                     </div>
                   </td>
                 </tr>
@@ -1642,6 +1726,37 @@ export default function AdminDashboard() {
           onClose={() => setShowImportModal(false)} 
           onImported={() => mutateProducts()} 
         />
+      )}
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }} onClick={() => setDeleteConfirm(null)}>
+          <div className="card no-tilt p-6 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()} style={{ background: 'var(--kraft-light)' }}>
+            <div className="flex items-center gap-3 mb-4">
+              <span style={{ fontSize: '1.5rem' }}>🗑️</span>
+              <h3 className="font-display text-xl">DELETE PRODUCT</h3>
+            </div>
+            <p className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>
+              Are you sure you want to delete:
+            </p>
+            <p className="text-sm font-semibold mb-4" style={{ color: 'var(--ink-deep)' }}>
+              &quot;{deleteConfirm.name}&quot;
+            </p>
+            <p className="text-xs mb-6" style={{ color: 'var(--hp-color)' }}>
+              This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="btn-secondary"
+                style={{ fontSize: '0.85rem', padding: '0.4rem 1rem' }}
+              >Cancel</button>
+              <button
+                onClick={confirmDelete}
+                style={{ fontSize: '0.85rem', padding: '0.4rem 1rem', background: 'var(--hp-color)', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontWeight: 600 }}
+              >Delete</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

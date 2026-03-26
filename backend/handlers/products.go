@@ -749,6 +749,16 @@ func (h *ProductHandler) buildOrderBy(sortBy, sortDir, search string, argsLen in
 	switch strings.ToLower(sortBy) {
 	case "name":
 		col = "p.name"
+	case "tcg":
+		col = "p.tcg"
+	case "category":
+		col = "p.category"
+	case "set_name":
+		col = "COALESCE(p.set_name, '')"
+	case "condition":
+		col = "COALESCE(p.condition, '')"
+	case "stock":
+		col = "p.stock"
 	case "cmc":
 		col = "COALESCE(p.cmc, 0)"
 	case "rarity":
