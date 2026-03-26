@@ -41,6 +41,8 @@ export interface ProductFilters {
   rarity?: string;
   language?: string;
   color?: string;
+  sort_by?: string;
+  sort_dir?: string;
 }
 
 export async function fetchProducts(filters: ProductFilters = {}): Promise<ProductListResponse> {

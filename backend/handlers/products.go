@@ -194,6 +194,8 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	rarity := q.Get("rarity")
 	language := q.Get("language")
 	color := q.Get("color")
+	sortBy := q.Get("sort_by")
+	sortDir := q.Get("sort_dir")
 
 	page, _ := strconv.Atoi(q.Get("page"))
 	if page < 1 {
@@ -220,10 +222,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orderBy := "p.created_at DESC"
-	if search != "" {
-		orderBy = "similarity(p.name, $" + strconv.Itoa(len(args)-1) + ") DESC, p.created_at DESC"
-	}
+	orderBy := h.buildOrderBy(sortBy, sortDir, search, len(args))
 
 	listQuery := `SELECT p.id, p.name, p.tcg, p.category, p.set_name, p.set_code, p.collector_number, p.condition, 
 	                    p.foil_treatment, p.card_treatment, p.promo_type, p.price_reference, p.price_source, 
@@ -727,6 +726,66 @@ func getTreatment(d, v string) string { if d == "Treatment" { return "" }; retur
 func getCondition(d, v string) string { if d == "Condition" { return "" }; return v }
 func getRarity(d, v string) string { if d == "Rarity" { return "" }; return v }
 func getLanguage(d, v string) string { if d == "Language" { return "" }; return v }
+
+// buildOrderBy constructs a safe ORDER BY clause from sort_by/sort_dir query params.
+// Supported sort_by values: name, price, cmc, rarity, created_at (default).
+// When search is active and no explicit sort is provided, uses similarity-based ordering.
+func (h *ProductHandler) buildOrderBy(sortBy, sortDir, search string, argsLen int) string {
+	// Validate direction
+	dir := "DESC"
+	if strings.EqualFold(sortDir, "asc") {
+		dir = "ASC"
+	}
+
+	// If no explicit sort requested, fall back to default behavior
+	if sortBy == "" {
+		if search != "" {
+			return "similarity(p.name, $" + strconv.Itoa(argsLen-1) + ") DESC, p.created_at DESC"
+		}
+		return "p.created_at DESC"
+	}
+
+	var col string
+	switch strings.ToLower(sortBy) {
+	case "name":
+		col = "p.name"
+	case "cmc":
+		col = "COALESCE(p.cmc, 0)"
+	case "rarity":
+		col = `CASE LOWER(COALESCE(p.rarity, ''))
+			WHEN 'mythic' THEN 6
+			WHEN 'special' THEN 5
+			WHEN 'rare' THEN 4
+			WHEN 'uncommon' THEN 3
+			WHEN 'common' THEN 2
+			WHEN 'bonus' THEN 1
+			ELSE 0 END`
+	case "price":
+		// Replicate ComputePrice logic in SQL using exchange rates
+		s, err := loadSettings(h.DB)
+		if err != nil {
+			s = models.Settings{USDToCOPRate: 4200, EURToCOPRate: 4600}
+		}
+		usdRate := strconv.FormatFloat(s.USDToCOPRate, 'f', 4, 64)
+		eurRate := strconv.FormatFloat(s.EURToCOPRate, 'f', 4, 64)
+		col = fmt.Sprintf(`COALESCE(p.price_cop_override,
+			CASE p.price_source
+				WHEN 'tcgplayer' THEN p.price_reference * %s
+				WHEN 'cardmarket' THEN p.price_reference * %s
+				ELSE 0
+			END, 0)`, usdRate, eurRate)
+	case "created_at":
+		col = "p.created_at"
+	default:
+		// Unknown sort field — ignore and fall back to default
+		if search != "" {
+			return "similarity(p.name, $" + strconv.Itoa(argsLen-1) + ") DESC, p.created_at DESC"
+		}
+		return "p.created_at DESC"
+	}
+
+	return col + " " + dir + ", p.created_at DESC"
+}
 
 func (h *ProductHandler) enrichProducts(products []models.Product, isAdmin bool) {
 	if len(products) == 0 {

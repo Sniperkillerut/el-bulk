@@ -38,6 +38,8 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
     color: [] 
   });
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [sortBy, setSortBy] = useState('created_at');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -59,7 +61,9 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
     rarity: filters.rarity.join(',') || undefined,
     language: filters.language.join(',') || undefined,
     color: filters.color.join(',') || undefined,
-  }), [tcg, category, page, debouncedSearch, filters]);
+    sort_by: sortBy || undefined,
+    sort_dir: sortDir || undefined,
+  }), [tcg, category, page, debouncedSearch, filters, sortBy, sortDir]);
 
   const { data: res, error, isLoading: loadingResult } = useSWR(
     ['/api/products', fetcherArgs],
@@ -234,10 +238,37 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
 
         {/* Content Area */}
         <div className="flex-1">
-          {/* Results count */}
-          <p className="text-xs mb-4 font-mono-stack" style={{ color: 'var(--text-muted)' }}>
-            {loading ? '...' : `${total} result${total !== 1 ? 's' : ''}`}
-          </p>
+          {/* Sort & Results bar */}
+          <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
+            <p className="text-xs font-mono-stack" style={{ color: 'var(--text-muted)' }}>
+              {loading ? '...' : `${total} result${total !== 1 ? 's' : ''}`}
+            </p>
+            <div className="flex items-center gap-2">
+              <label className="text-[10px] font-mono-stack font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Sort</label>
+              <select
+                value={sortBy}
+                onChange={e => { setSortBy(e.target.value); setPage(1); }}
+                className="text-xs font-mono-stack px-2 py-1.5 rounded-sm border-2 border-kraft-dark cursor-pointer"
+                style={{ background: 'var(--kraft-light)', color: 'var(--ink-deep)' }}
+                id={`sort-${tcg}-${category}`}
+              >
+                <option value="created_at">Newest</option>
+                <option value="name">Name</option>
+                <option value="price">Price</option>
+                {(tcg === 'mtg' || tcg === 'all') && <option value="cmc">Mana Cost</option>}
+                {(tcg === 'mtg' || tcg === 'all') && <option value="rarity">Rarity</option>}
+              </select>
+              <button
+                onClick={() => { setSortDir(d => d === 'asc' ? 'desc' : 'asc'); setPage(1); }}
+                className="flex items-center justify-center w-8 h-8 rounded-sm border-2 border-kraft-dark text-sm font-mono-stack transition-colors hover:bg-kraft-mid"
+                style={{ background: 'var(--kraft-light)', color: 'var(--ink-deep)' }}
+                title={sortDir === 'asc' ? 'Ascending' : 'Descending'}
+                id={`sort-dir-${tcg}-${category}`}
+              >
+                {sortDir === 'asc' ? '↑' : '↓'}
+              </button>
+            </div>
+          </div>
 
           {/* Grid */}
           {loading ? (
