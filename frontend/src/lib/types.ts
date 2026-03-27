@@ -318,4 +318,5 @@ export interface ScryfallCard {
   artist?: string;
   frame?: string;
   promo?: boolean;
+  digital?: boolean;
 }

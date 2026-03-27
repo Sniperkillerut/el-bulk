@@ -63,7 +63,7 @@ export default function ScryfallPopulate({
         <div className="flex-1 min-w-[200px]">
           <div className="flex justify-between items-end mb-1">
             <label className="text-xs font-mono-stack" style={{ color: 'var(--text-muted)' }}>CARD NAME *</label>
-            {setName && <span className="text-[10px] font-mono-stack truncate" style={{ color: 'var(--gold)', maxWidth: '200px' }}>{setName}</span>}
+            {setName && <span className="text-[10px] font-mono-stack truncate" style={{ color: 'var(--gold)', maxWidth: '350px' }}>{setName}</span>}
           </div>
           <input 
             type="text" 

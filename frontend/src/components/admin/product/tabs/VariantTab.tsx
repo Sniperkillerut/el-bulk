@@ -81,25 +81,45 @@ export default function VariantTab({
         <div>
           <label className="text-[10px] font-mono-stack mb-2 block uppercase text-text-muted">3. Promo Version</label>
           <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => onPromoChange('none')}
-              className={`px-3 py-1 rounded-sm border text-[10px] font-mono-stack ${
-                (!form.promo_type || form.promo_type === 'none' || form.promo_type === '') ? 'bg-gold text-black border-gold' : 'bg-ink-surface border-ink-border text-text-muted'
-              }`}
-            >
-              NONE
-            </button>
-            {promos.map((p: string) => (
-              <button
-                key={p}
-                onClick={() => onPromoChange(p)}
-                className={`px-3 py-1 rounded-sm border text-[10px] font-mono-stack ${
-                  (form.promo_type === p || (form.promo_type || '').split(',').includes(p)) ? 'bg-gold text-black border-gold' : 'bg-ink-surface border-ink-border text-text-muted'
-                }`}
-              >
-                {p.toUpperCase()}
-              </button>
-            ))}
+            {promos.length > 0 ? (
+              // If there are multiple promo options (e.g. Standard vs Promo Pack), show buttons
+              // Otherwise, just show a badge/label if it's purely informational
+              promos.length === 1 && (!form.promo_type || form.promo_type === 'none' || form.promo_type === '') ? (
+                <div className="px-3 py-1 rounded-sm border border-ink-border bg-ink-surface/50 text-[10px] font-mono-stack text-text-muted uppercase">
+                  Standard Version
+                </div>
+              ) : promos.length > 0 ? (
+                <>
+                  <button
+                    onClick={() => onPromoChange('none')}
+                    className={`px-3 py-1 rounded-sm border text-[10px] font-mono-stack transition-all ${
+                      (!form.promo_type || form.promo_type === 'none' || form.promo_type === '') ? 'bg-gold text-black border-gold shadow-[0_0_8px_rgba(212,175,55,0.3)]' : 'bg-ink-surface border-ink-border text-text-muted hover:border-gold/50'
+                    }`}
+                  >
+                    STANDARD
+                  </button>
+                  {promos.map((p: string) => (
+                    <button
+                      key={p}
+                      onClick={() => onPromoChange(p)}
+                      className={`px-3 py-1 rounded-sm border text-[10px] font-mono-stack transition-all ${
+                        (form.promo_type === p || (form.promo_type || '').split(',').includes(p)) ? 'bg-gold text-black border-gold shadow-[0_0_8px_rgba(212,175,55,0.3)]' : 'bg-ink-surface border-ink-border text-text-muted hover:border-gold/50'
+                      }`}
+                    >
+                      {p.toUpperCase()}
+                    </button>
+                  ))}
+                </>
+              ) : (
+                <div className="px-3 py-1 rounded-sm border border-ink-border bg-ink-surface/50 text-[10px] font-mono-stack text-text-muted uppercase">
+                  Standard Version
+                </div>
+              )
+            ) : (
+              <div className="px-3 py-1 rounded-sm border border-ink-border bg-ink-surface/50 text-[10px] font-mono-stack text-text-muted uppercase">
+                Standard Version
+              </div>
+            )}
           </div>
         </div>
 

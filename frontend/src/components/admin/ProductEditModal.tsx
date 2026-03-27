@@ -208,19 +208,36 @@ export default function ProductEditModal({
       else if (name) searchQ = `!"${name}"`;
       else if (set) searchQ = `set:${set}`;
 
-      const res = await fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(searchQ)}+is:paper&unique=prints&order=released`);
-      const body = await res.json();
-      if (!body.data || body.data.length === 0) throw new Error('No printings found for that search.');
-      
-      let prints: ScryfallCard[] = body.data;
-      if (prints.length > 0 && (prints.length === 1 || (set && cn))) {
+      const fetchAllPrints = async (q: string) => {
+        let results: ScryfallCard[] = [];
+        // Use game:paper to ensure only physical prints are included
+        let nextUrl: string | null = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(q)}+game:paper&unique=prints&order=released`;
+        
+        while (nextUrl) {
+          const r: Response = await fetch(nextUrl);
+          if (!r.ok) break;
+          const b: any = await r.json();
+          // Explicitly filter for non-digital cards as a secondary safety measure
+          if (b.data) {
+            const paperOnly = (b.data as ScryfallCard[]).filter(c => !c.digital);
+            results = results.concat(paperOnly);
+          }
+          nextUrl = b.has_more ? (b.next_page as string) : null;
+          if (nextUrl) await new Promise(res => setTimeout(res, 100));
+        }
+        return results;
+      };
+
+      let prints: ScryfallCard[] = await fetchAllPrints(searchQ);
+      if (prints.length === 0) throw new Error('No printings found for that search.');
+
+      // If we found prints and have an oracle ID, ensure we have ALL prints for that oracle ID
+      // (sometimes a broad name search or set/cn search misses variants)
+      if (prints.length > 0) {
         const oracleId = (prints[0] as any).oracle_id;
         if (oracleId) {
-          try {
-            const allRes = await fetch(`https://api.scryfall.com/cards/search?q=oracle_id:${oracleId}+is:paper&unique=prints&order=released`);
-            const allBody = await allRes.json();
-            if (allBody.data && allBody.data.length > 0) prints = allBody.data;
-          } catch (err) { console.error('Failed to fetch variants:', err); }
+          const oraclePrints = await fetchAllPrints(`oracle_id:${oracleId}`);
+          if (oraclePrints.length > prints.length) prints = oraclePrints;
         }
       }
 

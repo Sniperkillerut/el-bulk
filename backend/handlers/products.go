@@ -53,13 +53,13 @@ func (h *ProductHandler) populateStorage(products []models.Product) {
 	if err != nil {
 		return
 	}
-	
+
 	query = h.DB.Rebind(query)
 	var storageRows []struct {
-		ProductID  string `db:"product_id"`
+		ProductID string `db:"product_id"`
 		StorageID string `db:"stored_in_id"`
-		Name       string `db:"name"`
-		Quantity   int    `db:"quantity"`
+		Name      string `db:"name"`
+		Quantity  int    `db:"quantity"`
 	}
 	if err := h.DB.Select(&storageRows, query, args...); err != nil {
 		return
@@ -69,8 +69,8 @@ func (h *ProductHandler) populateStorage(products []models.Product) {
 	for _, r := range storageRows {
 		storageMap[r.ProductID] = append(storageMap[r.ProductID], models.StorageLocation{
 			StorageID: r.StorageID,
-			Name:       r.Name,
-			Quantity:   r.Quantity,
+			Name:      r.Name,
+			Quantity:  r.Quantity,
 		})
 	}
 
@@ -142,7 +142,7 @@ func (h *ProductHandler) populateCategories(products []models.Product, isAdmin b
 		logger.Error("Error creating IN query for populateCategories: %v", err)
 		return
 	}
-	
+
 	query = h.DB.Rebind(query)
 	var catRows []struct {
 		ProductID  string `db:"product_id"`
@@ -290,9 +290,9 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 // GET /api/products/:id
 func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	
+
 	isAdmin := strings.Contains(r.URL.Path, "/admin/")
-	
+
 	// Check TCG activity if not admin
 	if !isAdmin {
 		var active bool
@@ -325,20 +325,20 @@ func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 // GET /api/tcgs
 func (h *ProductHandler) ListTCGs(w http.ResponseWriter, r *http.Request) {
 	activeOnly := r.URL.Query().Get("active_only") == "true"
-	
+
 	var tcgs []models.TCG
 	query := "SELECT * FROM tcg ORDER BY name"
 	if activeOnly {
 		query = "SELECT * FROM tcg WHERE is_active = true ORDER BY name"
 	}
-	
+
 	err := h.DB.Select(&tcgs, query)
 	if err != nil {
 		logger.Error("Error listing TCGs: %v", err)
 		jsonError(w, "Database error", http.StatusInternalServerError)
 		return
 	}
-	
+
 	if tcgs == nil {
 		tcgs = []models.TCG{}
 	}
@@ -594,10 +594,10 @@ func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treat
 	}
 
 	for _, d := range dimensions {
-		from, conds, args := h.buildFilters(tcg, category, search, storageID, 
-			getFoil(d.name, foil), getTreatment(d.name, treatment), getCondition(d.name, condition), 
+		from, conds, args := h.buildFilters(tcg, category, search, storageID,
+			getFoil(d.name, foil), getTreatment(d.name, treatment), getCondition(d.name, condition),
 			collection, getRarity(d.name, rarity), getLanguage(d.name, language), color, isAdmin)
-		
+
 		where := ""
 		if len(conds) > 0 {
 			where = "WHERE " + strings.Join(conds, " AND ")
@@ -606,16 +606,30 @@ func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treat
 		var query string
 		if d.name == "Treatment" {
 			// Special handling for Treatment facets to include boolean flags
+			// Ensure we handle empty WHERE clauses correctly for the UNION branches
+			whereWithTextless := where
+			if whereWithTextless == "" {
+				whereWithTextless = "WHERE p.textless = true"
+			} else {
+				whereWithTextless += " AND p.textless = true"
+			}
+			whereWithFullArt := where
+			if whereWithFullArt == "" {
+				whereWithFullArt = "WHERE p.full_art = true"
+			} else {
+				whereWithFullArt += " AND p.full_art = true"
+			}
+
 			query = fmt.Sprintf(`
 				WITH counts AS (
 					SELECT LOWER(p.card_treatment) as val %s %s
 				)
 				SELECT val, COUNT(*) FROM counts GROUP BY val
 				UNION ALL
-				SELECT 'textless', COUNT(*) %s %s AND p.textless = true AND LOWER(p.card_treatment) != 'textless'
+				SELECT 'textless', COUNT(*) %s %s AND LOWER(p.card_treatment) != 'textless'
 				UNION ALL
-				SELECT 'full_art', COUNT(*) %s %s AND p.full_art = true AND LOWER(p.card_treatment) != 'full_art'
-			`, from, where, from, where, from, where)
+				SELECT 'full_art', COUNT(*) %s %s AND LOWER(p.card_treatment) != 'full_art'
+			`, from, where, from, whereWithTextless, from, whereWithFullArt)
 		} else {
 			query = fmt.Sprintf("SELECT COALESCE(%s, 'unknown') as val, COUNT(*) %s %s GROUP BY val", d.col, from, where)
 		}
@@ -627,13 +641,17 @@ func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treat
 				var c int
 				if err := rows.Scan(&v, &c); err == nil {
 					switch d.name {
-					case "Condition": f.Condition[v] = c
-					case "Foil": f.Foil[v] = c
-					case "Treatment": 
+					case "Condition":
+						f.Condition[v] = c
+					case "Foil":
+						f.Foil[v] = c
+					case "Treatment":
 						// Accumulate counts since we might have UNION results
 						f.Treatment[v] += c
-					case "Rarity": f.Rarity[v] = c
-					case "Language": f.Language[v] = c
+					case "Rarity":
+						f.Rarity[v] = c
+					case "Language":
+						f.Language[v] = c
 					}
 				}
 			}
@@ -656,7 +674,7 @@ func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treat
 			COUNT(*) FILTER (WHERE p.color_identity ILIKE '%%G%%') as g,
 			COUNT(*) FILTER (WHERE p.color_identity ILIKE '%%C%%') as c
 		%s %s`, from, colorWhere)
-	
+
 	var colRes struct {
 		W int `db:"w"`
 		U int `db:"u"`
@@ -702,11 +720,36 @@ func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treat
 	return f
 }
 
-func getFoil(d, v string) string { if d == "Foil" { return "" }; return v }
-func getTreatment(d, v string) string { if d == "Treatment" { return "" }; return v }
-func getCondition(d, v string) string { if d == "Condition" { return "" }; return v }
-func getRarity(d, v string) string { if d == "Rarity" { return "" }; return v }
-func getLanguage(d, v string) string { if d == "Language" { return "" }; return v }
+func getFoil(d, v string) string {
+	if d == "Foil" {
+		return ""
+	}
+	return v
+}
+func getTreatment(d, v string) string {
+	if d == "Treatment" {
+		return ""
+	}
+	return v
+}
+func getCondition(d, v string) string {
+	if d == "Condition" {
+		return ""
+	}
+	return v
+}
+func getRarity(d, v string) string {
+	if d == "Rarity" {
+		return ""
+	}
+	return v
+}
+func getLanguage(d, v string) string {
+	if d == "Language" {
+		return ""
+	}
+	return v
+}
 
 // buildOrderBy constructs a safe ORDER BY clause from sort_by/sort_dir query params.
 // Supported sort_by values: name, price, cmc, rarity, created_at (default).
@@ -843,7 +886,7 @@ func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, tr
 			args = append(args, lv)
 			idx++
 		}
-		
+
 		filter := "(LOWER(p.card_treatment) IN (" + strings.Join(placeholders, ",") + ")"
 		if hasTextless {
 			filter += " OR p.textless = true"

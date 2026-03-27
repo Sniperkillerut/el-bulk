@@ -17,7 +17,7 @@ export function getScryfallImage(card: ScryfallCard | undefined): string {
 export function resolveCardTreatment(card: ScryfallCard): CardTreatment {
   const fe = card.frame_effects || [];
   const pt = card.promo_types || [];
-  
+
   if (fe.includes('serialized')) return 'serialized';
   if (pt.includes('stepandcompleat')) return 'step_and_compleat';
   if (pt.includes('judgegift')) return 'judge_promo';
@@ -29,7 +29,7 @@ export function resolveCardTreatment(card: ScryfallCard): CardTreatment {
   if (card.full_art) return 'full_art';
   if (card.textless) return 'textless';
   if (pt.includes('promo') || card.promo) return 'promo';
-  
+
   return 'normal';
 }
 
@@ -46,7 +46,7 @@ export function resolveArtVariation(card: ScryfallCard): string {
 export function resolveFoilTreatment(card: ScryfallCard | undefined): FoilTreatment {
   if (!card) return 'non_foil';
   const pt = card.promo_types || [];
-  
+
   if (pt.includes('oilslick')) return 'oil_slick';
   if (pt.includes('stepandcompleat')) return 'step_and_compleat';
   if (pt.includes('galaxyfoil')) return 'galaxy_foil';
@@ -70,7 +70,7 @@ export function extractPrices(card: ScryfallCard) {
   const p = card.prices || {};
   const usd = p.usd || p.usd_foil || p.usd_etched || '0';
   const eur = p.eur || '0';
-  
+
   return {
     usd: parseFloat(usd as string),
     eur: parseFloat(eur as string)
@@ -105,21 +105,11 @@ export function getArtOptions(prints: ScryfallCard[], set: string, treatment: Ca
         options.set(p.collector_number, p.artist || 'Unknown');
       }
     });
-  
+
   return Array.from(options.entries())
     .map(([cn, artist]) => ({ cn, artist }))
     .sort((a, b) => a.cn.localeCompare(b.cn, undefined, { numeric: true }));
 }
-
-/**
- * List of promo_types that are redundant with current Card/Foil treatment categories
- * or are generic tags with no physical indicator.
- */
-const REDUNDANT_PROMOS = [
-  'boosterfun', 'showcase', 'borderless', 'extendedart', 'fullart', 'textless',
-  'foil', 'nonfoil', 'etched', 'glossy', 'galaxyfoil', 'surgefoil', 'textured', 
-  'oilslick', 'stepandcompleat', 'confettifoil', 'neonink', 'doublerainbow'
-];
 
 /**
  * Filter waterfall: 3. Get promo types for a chosen treatment + art (cn)
@@ -130,7 +120,6 @@ export function getPromoOptions(prints: ScryfallCard[], set: string, treatment: 
     .filter(p => !set || p.set?.toLowerCase() === set.toLowerCase() && resolveCardTreatment(p) === treatment && (p.collector_number === cn || !cn))
     .forEach(p => {
       (p.promo_types || [])
-        .filter(pt => !REDUNDANT_PROMOS.includes(pt))
         .forEach(pt => options.add(pt));
     });
   return Array.from(options);
@@ -141,23 +130,23 @@ export function getPromoOptions(prints: ScryfallCard[], set: string, treatment: 
  */
 export function getFoilOptions(prints: ScryfallCard[], set: string, treatment: CardTreatment, cn: string, promo: string): FoilTreatment[] {
   const options = new Set<FoilTreatment>();
-  
+
   const matches = prints.filter(p => {
     const isSetMatch = !set || p.set?.toLowerCase() === set.toLowerCase();
     const isTreatmentMatch = resolveCardTreatment(p) === treatment;
     const isCnMatch = p.collector_number === cn || !cn;
-    
+
     // Improved promo matching: check if the requested promo (single tag) is in the print's tags
     const isPromoMatch = !promo || promo === 'none' || (p.promo_types || []).includes(promo);
-    
+
     return isSetMatch && isTreatmentMatch && isCnMatch && isPromoMatch;
   });
 
   // If no exact matches (e.g. promo not available for this cn), try relaxing the promo check
   const finalMatches = matches.length > 0 ? matches : prints.filter(p => {
-    return (!set || p.set?.toLowerCase() === set.toLowerCase()) && 
-           resolveCardTreatment(p) === treatment && 
-           (p.collector_number === cn || !cn);
+    return (!set || p.set?.toLowerCase() === set.toLowerCase()) &&
+      resolveCardTreatment(p) === treatment &&
+      (p.collector_number === cn || !cn);
   });
 
   finalMatches.forEach(p => {
