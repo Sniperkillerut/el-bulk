@@ -493,9 +493,9 @@ func (h *ProductHandler) BulkCreate(w http.ResponseWriter, r *http.Request) {
 
 	// Call Stored Procedure
 	var ids []struct {
-		ID string `db:"product_id"`
+		ID string `db:"upserted_id"`
 	}
-	err = h.DB.Select(&ids, "SELECT product_id FROM fn_bulk_upsert_product($1)", string(jsonData))
+	err = h.DB.Select(&ids, "SELECT upserted_id FROM fn_bulk_upsert_product($1)", string(jsonData))
 	if err != nil {
 		logger.Error("Bulk upsert failed: %v", err)
 		jsonError(w, "Database failure during bulk import: "+err.Error(), http.StatusInternalServerError)

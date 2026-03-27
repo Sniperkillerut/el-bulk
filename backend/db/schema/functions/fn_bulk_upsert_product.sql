@@ -1,7 +1,7 @@
 -- Bulk Upsert Product
 -- Handles product creation/update, category mapping, and storage assignment in one call.
 CREATE OR REPLACE FUNCTION fn_bulk_upsert_product(data jsonb)
-RETURNS TABLE(product_id UUID) AS $$
+RETURNS TABLE(upserted_id UUID) AS $$
 DECLARE
     item jsonb;
     p_id UUID;
@@ -107,7 +107,7 @@ BEGIN
             ON CONFLICT DO NOTHING;
         END IF;
 
-        product_id := p_id;
+        upserted_id := p_id;
         RETURN NEXT;
     END LOOP;
 END;

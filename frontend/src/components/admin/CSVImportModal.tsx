@@ -42,6 +42,7 @@ export default function CSVImportModal({ token, storageLocations, categories, on
   const [mapping, setMapping] = useState<Record<string, string>>({});
   const [previewData, setPreviewData] = useState<BulkProductInput[]>([]);
   const [loading, setLoading] = useState(false);
+  const [processedCount, setProcessedCount] = useState(0);
   const [error, setError] = useState('');
   const [importResults, setImportResults] = useState<{ message: string; count: number } | null>(null);
 
@@ -107,8 +108,10 @@ export default function CSVImportModal({ token, storageLocations, categories, on
 
   const handleEnrich = async () => {
     setLoading(true);
+    setProcessedCount(0);
     setError('');
     const newData = [...previewData];
+    const totalToEnrich = newData.length;
     const CHUNK_SIZE = 75;
 
     try {
@@ -186,6 +189,7 @@ export default function CSVImportModal({ token, storageLocations, categories, on
           });
           
           setPreviewData([...newData]); // Update after batch
+          setProcessedCount(prev => Math.min(prev + chunk.length, totalToEnrich));
         } catch (e) {
           console.warn(`Batch lookup failed for chunk ${i}-${i + CHUNK_SIZE}`, e);
         }
@@ -200,6 +204,7 @@ export default function CSVImportModal({ token, storageLocations, categories, on
             newData[i] = {
               ...item,
               name: res.name || item.name,
+              // ... rest of res ...
               set_code: res.set_code || item.set_code,
               set_name: res.set_name,
               collector_number: res.collector_number || item.collector_number,
@@ -227,10 +232,14 @@ export default function CSVImportModal({ token, storageLocations, categories, on
             console.warn(`Fuzzy fallback failed for ${item.name}`, e);
           }
         }
+        // Small increments during fallback or just set to total at end
+        if (i % 10 === 0) setProcessedCount(totalToEnrich * 0.9 + (i / newData.length) * 0.1 * totalToEnrich);
       }
+      setProcessedCount(totalToEnrich);
       setPreviewData([...newData]);
     } finally {
       setLoading(false);
+      setTimeout(() => setProcessedCount(0), 1000);
     }
   };
 
@@ -372,19 +381,41 @@ export default function CSVImportModal({ token, storageLocations, categories, on
 
           {step === 'preview' && (
             <div className="flex flex-col h-full overflow-hidden">
-              <div className="mb-6 flex justify-between items-center bg-[#2a1e17] p-4 border-2 border-[#3c2a21]">
-                <div className="flex gap-4">
-                  <button 
-                    onClick={handleEnrich}
-                    disabled={loading}
-                    className="px-6 py-2 bg-[#8b7355] text-white font-black uppercase text-xs tracking-tighter hover:bg-[#d4c3b3] hover:text-[#3c2a21] transition-all disabled:opacity-50 flex items-center gap-2"
-                  >
-                    {loading ? '⌛ ENRICHING...' : '✨ ENRICH WITH SCRYFALL'}
-                  </button>
+              <div className="mb-6 flex flex-col gap-4 bg-[#2a1e17] p-4 border-2 border-[#3c2a21] relative overflow-hidden">
+                <div className="flex justify-between items-center relative z-10">
+                  <div className="flex gap-4">
+                    <button 
+                      onClick={handleEnrich}
+                      disabled={loading}
+                      className="px-6 py-2 bg-[#8b7355] text-white font-black uppercase text-xs tracking-tighter hover:bg-[#d4c3b3] hover:text-[#3c2a21] transition-all disabled:opacity-50 flex items-center gap-2 relative overflow-hidden group/btn"
+                    >
+                      <span className="relative z-10">{loading ? '⌛ ENRICHING...' : '✨ ENRICH WITH SCRYFALL'}</span>
+                      {loading && (
+                        <div 
+                          className="absolute inset-0 bg-white/20 transition-all duration-300" 
+                          style={{ width: `${(processedCount / previewData.length) * 100}%` }}
+                        />
+                      )}
+                    </button>
+                  </div>
+                  <div className="text-[#8b7355] font-bold text-sm italic">
+                    {previewData.length} cards detected in shipment
+                  </div>
                 </div>
-                <div className="text-[#8b7355] font-bold text-sm italic">
-                  {previewData.length} cards detected in shipment
-                </div>
+
+                {loading && (
+                  <div className="w-full bg-[#1a1614] h-1.5 border border-[#3c2a21] relative overflow-hidden">
+                    <div 
+                      className="absolute inset-y-0 left-0 bg-[#d4c3b3] transition-all duration-300 shadow-[0_0_10px_rgba(212,195,179,0.5)]"
+                      style={{ width: `${(processedCount / previewData.length) * 100}%` }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <span className="text-[8px] font-black text-[#8b7355] uppercase tracking-widest">
+                        Scanning Manifest: {Math.round((processedCount / previewData.length) * 100)}%
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex-1 overflow-auto border-2 border-[#3c2a21] bg-[#1a1614] custom-scrollbar">
@@ -540,10 +571,36 @@ export default function CSVImportModal({ token, storageLocations, categories, on
           )}
 
           {step === 'importing' && (
-            <div className="flex flex-col items-center justify-center py-32">
-              <div className="w-24 h-24 border-8 border-t-[#d4c3b3] border-[#3c2a21] rounded-full animate-spin mb-8"></div>
-              <h3 className="text-3xl font-black text-[#d4c3b3] uppercase tracking-tighter">Storing Shipment...</h3>
-              <p className="text-[#8b7355] mt-2 font-bold italic">Unpacking boxes and organizing the vault</p>
+            <div className="flex flex-col items-center justify-center py-32 text-center">
+              <div className="relative mb-12">
+                {/* Custom Box Animation */}
+                <div className="w-32 h-32 border-4 border-[#3c2a21] bg-[#2a1e17] shadow-2xl relative animate-bounce">
+                   <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-32 bg-[#3c2a21]/20"></div>
+                   <div className="absolute top-1/2 left-0 -translate-y-1/2 w-32 h-1 bg-[#3c2a21]/20"></div>
+                   <div className="absolute inset-2 border-2 border-[#3c2a21]/30 border-dashed"></div>
+                   <div className="absolute -top-4 -right-4 text-4xl">📦</div>
+                </div>
+                {/* Warehouse Floor Shadow */}
+                <div className="w-24 h-4 bg-black/40 blur-md rounded-full mt-4 mx-auto animate-pulse"></div>
+              </div>
+              
+              <h3 className="text-4xl font-black text-[#d4c3b3] uppercase tracking-tighter mb-4 italic drop-shadow-lg">
+                STORING SHIPMENT...
+              </h3>
+              <div className="max-w-md space-y-2">
+                <p className="text-[#8b7355] font-bold text-lg italic animate-pulse">
+                  "Unpacking boxes and organizing the vault"
+                </p>
+                <div className="flex justify-center gap-1">
+                  {[1,2,3].map(i => (
+                    <div key={i} className="w-2 h-2 bg-[#d4c3b3] animate-bounce" style={{ animationDelay: `${i*0.2}s` }}></div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="mt-12 p-4 border-2 border-[#3c2a21] bg-[#2a1e17] text-[10px] font-black text-[#8b7355] uppercase tracking-[0.3em]">
+                System processing batch of {previewData.length} records
+              </div>
             </div>
           )}
 
