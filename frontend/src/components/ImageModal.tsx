@@ -25,7 +25,6 @@ export default function ImageModal({ imageUrl, name, onClose }: ImageModalProps)
   }, [onClose]);
 
   const handleClose = (e: React.MouseEvent) => {
-    console.log('IMAGE_MODAL_CLOSE_TRIGGERED');
     e.stopPropagation();
     onClose();
   };
