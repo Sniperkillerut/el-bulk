@@ -170,7 +170,7 @@ export function applyPrintPrices(card: ScryfallCard | undefined, foil: FoilTreat
   const p = card.prices || {};
   if (source === 'tcgplayer') {
     if (foil === 'foil') return parseFloat(p.usd_foil || '0');
-    if (foil === 'etched') return parseFloat(p.usd_etched || '0');
+    if (foil === 'etched_foil') return parseFloat(p.usd_etched || '0');
     return parseFloat(p.usd || '0');
   } else if (source === 'cardmarket') {
     return parseFloat(p.eur || '0');
