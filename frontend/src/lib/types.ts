@@ -78,6 +78,7 @@ export interface ProductListResponse {
   page: number;
   page_size: number;
   facets: Facets;
+  query_time_ms: number;
 }
 
 export interface CartItem {

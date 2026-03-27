@@ -180,11 +180,12 @@ type TCGInput struct {
 }
 
 type ProductListResponse struct {
-	Products []Product `json:"products"`
-	Total    int       `json:"total"`
-	Page     int       `json:"page"`
-	PageSize int       `json:"page_size"`
-	Facets   Facets    `json:"facets"`
+	Products    []Product `json:"products"`
+	Total       int       `json:"total"`
+	Page        int       `json:"page"`
+	PageSize    int       `json:"page_size"`
+	Facets      Facets    `json:"facets"`
+	QueryTimeMS int64     `json:"query_time_ms"`
 }
 
 type Facets struct {

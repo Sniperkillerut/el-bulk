@@ -14,6 +14,8 @@ export function useAdminProducts(token: string) {
   const [sortKey, setSortKey] = useState('created_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
+  const [queryTime, setQueryTime] = useState(0);
+
   const fetchProducts = useCallback(async () => {
     if (!token) return;
     setLoading(true);
@@ -29,6 +31,7 @@ export function useAdminProducts(token: string) {
       });
       setProducts(data.products || []);
       setTotal(data.total || 0);
+      setQueryTime(data.query_time_ms || 0);
     } catch (e) {
       console.error('Failed to fetch products:', e);
     } finally {
@@ -50,6 +53,7 @@ export function useAdminProducts(token: string) {
     products, loading, total, page, pageSize, 
     search, setSearch, tcgFilter, setTcgFilter, 
     storageFilter, setStorageFilter, sortKey, sortDir,
+    queryTime,
     setPage, handleSort, refresh: fetchProducts
   };
 }

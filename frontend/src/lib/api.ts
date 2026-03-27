@@ -562,3 +562,12 @@ export async function adminCompleteOrder(token: string, id: string, decrements: 
   if (!res.ok) await logAndThrow(res, 'Failed to complete order');
   return res.json();
 }
+
+export async function adminFetchStats(token: string): Promise<{ database_size: string; cache_hit_ratio: number; active_connections: number; max_connections: number; total_products: number }> {
+  const res = await fetch(`${API_BASE}/api/admin/stats`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  });
+  if (!res.ok) throw new Error('Failed to fetch stats');
+  return res.json();
+}

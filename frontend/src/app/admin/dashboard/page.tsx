@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { adminFetchTCGs, getAdminSettings, updateAdminSettings,
   adminFetchStorage, adminCreateStorage, adminUpdateStorage, adminDeleteStorage,
   adminFetchCategories, adminCreateCategory, adminUpdateCategory, adminDeleteCategory,
-  adminDeleteProduct
+  adminDeleteProduct, adminFetchStats
 } from '@/lib/api';
 import { Product, Settings, StoredIn, CustomCategory, TCG } from '@/lib/types';
 import AdminSidebar from '@/components/admin/dashboard/AdminSidebar';
@@ -30,8 +30,11 @@ export default function AdminDashboard() {
     products, loading, total, page, pageSize, 
     search, setSearch, tcgFilter, setTcgFilter, 
     storageFilter, setStorageFilter, sortKey, sortDir,
+    queryTime,
     setPage, handleSort, refresh: refreshProducts 
   } = useAdminProducts(token);
+
+  const [stats, setStats] = useState<any>(null);
 
   // Modal States
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -58,13 +61,14 @@ export default function AdminDashboard() {
 
   const loadStaticData = async (t: string) => {
     try {
-      const [tcgData, settingsData, storageData, catData] = await Promise.all([
-        adminFetchTCGs(t), getAdminSettings(t), adminFetchStorage(t), adminFetchCategories(t)
+      const [tcgData, settingsData, storageData, catData, statsData] = await Promise.all([
+        adminFetchTCGs(t), getAdminSettings(t), adminFetchStorage(t), adminFetchCategories(t), adminFetchStats(t)
       ]);
       setTCGs(tcgData || []);
       setSettings(settingsData);
       setStorageLocations(storageData || []);
       setCategories(catData || []);
+      setStats(statsData);
     } catch (err: any) {
       console.error('[Dashboard] Failed to load dashboard data:', err);
       // If we get a 401, the token might be truly expired
@@ -195,10 +199,32 @@ export default function AdminDashboard() {
              <div className="text-4xl font-display leading-none">{total.toLocaleString()}</div>
              <div className="mt-4 pt-4 border-t border-ink-deep/10 flex justify-between items-center">
                 <span className="text-[10px] font-mono-stack opacity-60">QUERY_SPEED</span>
-                <span className="font-mono-stack text-[10px] font-bold">~14ms</span>
+                <span className="font-mono-stack text-[10px] font-bold">~{queryTime}ms</span>
              </div>
           </div>
         </div>
+
+        {/* System Health Stats */}
+        {stats && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="bg-white/40 p-3 rounded border border-ink-border/30 flex flex-col">
+              <span className="text-[9px] font-mono-stack uppercase opacity-50">DB_STORAGE_SIZE</span>
+              <span className="text-sm font-bold font-mono-stack">{stats.database_size}</span>
+            </div>
+            <div className="bg-white/40 p-3 rounded border border-ink-border/30 flex flex-col">
+              <span className="text-[9px] font-mono-stack uppercase opacity-50">CACHE_HIT_RATIO</span>
+              <span className="text-sm font-bold font-mono-stack">{stats.cache_hit_ratio}%</span>
+            </div>
+            <div className="bg-white/40 p-3 rounded border border-ink-border/30 flex flex-col">
+              <span className="text-[9px] font-mono-stack uppercase opacity-50">CONNS_IN_USE</span>
+              <span className="text-sm font-bold font-mono-stack">{stats.active_connections} / {stats.max_connections}</span>
+            </div>
+            <div className="bg-white/40 p-3 rounded border border-ink-border/30 flex flex-col">
+              <span className="text-[9px] font-mono-stack uppercase opacity-50">SYSTEM_STABILITY</span>
+              <span className="text-sm font-bold font-mono-stack text-emerald-600">NOMINAL</span>
+            </div>
+          </div>
+        )}
 
         {/* Product Table */}
         <ProductTable 

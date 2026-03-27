@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 
@@ -31,6 +30,7 @@ func main() {
 	refreshHandler := handlers.NewRefreshHandler(database)
 	orderHandler := handlers.NewOrderHandler(database)
 	tcgHandler := handlers.NewTCGHandler(database)
+	healthHandler := handlers.NewHealthHandler(database)
 
 	// Start nightly price refresh at midnight
 	handlers.StartMidnightScheduler(database)
@@ -43,10 +43,7 @@ func main() {
 	r.Use(middleware.CORS)
 
 	// Health check
-	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(w, `{"status":"ok"}`)
-	})
+	r.Get("/health", healthHandler.Ping)
 
 	// Public API
 	r.Route("/api", func(r chi.Router) {
@@ -117,6 +114,9 @@ func main() {
 				r.Get("/orders/{id}", orderHandler.GetDetail)
 				r.Put("/orders/{id}", orderHandler.Update)
 				r.Post("/orders/{id}/complete", orderHandler.Complete)
+
+				// System Health & Stats
+				r.Get("/stats", healthHandler.GetStats)
 			})
 		})
 	})

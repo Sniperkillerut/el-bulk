@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"time"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 
@@ -195,6 +196,7 @@ func (h *ProductHandler) populateCategories(products []models.Product, isAdmin b
 
 // GET /api/products
 func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
 	q := r.URL.Query()
 
 	tcg := q.Get("tcg")
@@ -291,13 +293,16 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	// Calculate Facets
 	facets := h.getFacets(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color, isAdmin)
 
+	queryTime := time.Since(start).Milliseconds()
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(models.ProductListResponse{
-		Products: products,
-		Total:    total,
-		Page:     page,
-		PageSize: pageSize,
-		Facets:   facets,
+		Products:    products,
+		Total:       total,
+		Page:        page,
+		PageSize:    pageSize,
+		Facets:      facets,
+		QueryTimeMS: queryTime,
 	})
 }
 
