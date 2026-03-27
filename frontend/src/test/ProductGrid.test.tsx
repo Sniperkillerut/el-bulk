@@ -5,8 +5,18 @@ import * as api from '@/lib/api'
 
 // Mock the API using the alias
 vi.mock('@/lib/api', () => ({
-  fetchProducts: vi.fn(),
-  fetchCategories: vi.fn(),
+  fetchProducts: vi.fn().mockResolvedValue({ products: [], total: 0, facets: {} }),
+  fetchCategories: vi.fn().mockResolvedValue([]),
+}))
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+  useSearchParams: () => new URLSearchParams(),
+  usePathname: () => '',
 }))
 
 const mockFacets = {
@@ -49,28 +59,34 @@ describe('ProductGrid', () => {
   })
 
   it('displays products when found', async () => {
-    vi.mocked(api.fetchProducts).mockResolvedValueOnce({
-      products: [
-        { 
-          id: '1', 
-          name: 'Black Lotus', 
-          tcg: 'mtg', 
-          price: 100000, 
-          image_url: '', 
-          category: 'singles',
-          stock: 1
-        }
-      ] as any,
-      total: 1,
-      page: 1,
-      page_size: 20,
-      facets: mockFacets as any
+    // Need to use mockImplementation instead of mockResolvedValueOnce because useSWR cache may re-fetch
+    vi.mocked(api.fetchProducts).mockImplementation(async () => {
+      return {
+        products: [
+          {
+            id: '1',
+            name: 'Black Lotus',
+            tcg: 'mtg',
+            price: 100000,
+            image_url: '',
+            category: 'singles',
+            stock: 1,
+            condition: 'NM',
+            foil_treatment: 'non_foil',
+            card_treatment: 'normal'
+          }
+        ] as any,
+        total: 1,
+        page: 1,
+        page_size: 20,
+        facets: mockFacets as any
+      }
     })
 
     render(<ProductGrid tcg="mtg" category="singles" title="MTG Singles" />)
 
     await waitFor(() => {
       expect(screen.getByText('Black Lotus')).toBeInTheDocument()
-    })
+    }, { timeout: 3000 })
   })
 })

@@ -24,7 +24,7 @@ func TestProductHandler_BuildFilters_Comprehensive(t *testing.T) {
 			// 1. Total count
 			mock.ExpectQuery("SELECT COUNT\\(\\*\\) FROM product p").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 			// 2. Main list
-			mock.ExpectQuery("SELECT .* FROM product p").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("1"))
+			mock.ExpectQuery("SELECT .* FROM view_product_enriched p").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("1"))
 			
 			// 3. Enrichment: populatePrices calls loadSettings
 			mock.ExpectQuery("SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop", "4000"))
@@ -64,7 +64,7 @@ func TestProductHandler_AdminVsPublic(t *testing.T) {
 		ResetSettingsCache()
 
 		mock.ExpectQuery("(?i)SELECT COUNT\\(\\*\\) FROM product p LEFT JOIN tcg t").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
-		mock.ExpectQuery("(?i)SELECT .* FROM product p LEFT JOIN tcg t").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("1"))
+		mock.ExpectQuery("(?i)SELECT .* FROM view_product_enriched p LEFT JOIN tcg t").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("1"))
 		
 		// Enrichment
 		mock.ExpectQuery("SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop", "4000"))
@@ -91,7 +91,7 @@ func TestProductHandler_AdminVsPublic(t *testing.T) {
 		ResetSettingsCache()
 
 		mock.ExpectQuery("(?i)SELECT COUNT\\(\\*\\) FROM product p").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
-		mock.ExpectQuery("(?i)SELECT .* FROM product p").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("1"))
+		mock.ExpectQuery("(?i)SELECT .* FROM view_product_enriched p").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("1"))
 		
 		// Enrichment
 		mock.ExpectQuery("SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop", "4000"))

@@ -51,7 +51,7 @@ func TestStorageHandler_Create(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		input := models.StoredIn{Name: "New Box"}
 		body, _ := json.Marshal(input)
-		mock.ExpectQuery("INSERT INTO stored_in").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("5"))
+		mock.ExpectQuery("INSERT INTO storage_location").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("5"))
 
 		req, _ := http.NewRequest("POST", "/api/admin/storage", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
@@ -62,7 +62,7 @@ func TestStorageHandler_Create(t *testing.T) {
 	t.Run("DB Error", func(t *testing.T) {
 		input := models.StoredIn{Name: "New Box"}
 		body, _ := json.Marshal(input)
-		mock.ExpectQuery("INSERT INTO stored_in").WillReturnError(fmt.Errorf("conflict"))
+		mock.ExpectQuery("INSERT INTO storage_location").WillReturnError(fmt.Errorf("conflict"))
 
 		req, _ := http.NewRequest("POST", "/api/admin/storage", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
@@ -82,7 +82,7 @@ func TestStorageHandler_Update(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		input := models.StoredIn{Name: "Updated Name"}
 		body, _ := json.Marshal(input)
-		mock.ExpectExec("UPDATE stored_in").WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectExec("UPDATE storage_location").WillReturnResult(sqlmock.NewResult(0, 1))
 
 		r := chi.NewRouter()
 		r.Put("/api/admin/storage/{id}", h.Update)
@@ -95,7 +95,7 @@ func TestStorageHandler_Update(t *testing.T) {
 	t.Run("DB Error", func(t *testing.T) {
 		input := models.StoredIn{Name: "Updated Name"}
 		body, _ := json.Marshal(input)
-		mock.ExpectExec("UPDATE stored_in").WillReturnError(fmt.Errorf("db error"))
+		mock.ExpectExec("UPDATE storage_location").WillReturnError(fmt.Errorf("db error"))
 
 		r := chi.NewRouter()
 		r.Put("/api/admin/storage/{id}", h.Update)

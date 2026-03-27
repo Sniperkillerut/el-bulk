@@ -24,7 +24,7 @@ func TestProductHandler_List_FiltersInactiveTCG(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 
 	// 2. Main list query (Note: sqlx expands p.* into explicit columns)
-	mock.ExpectQuery("(?i)SELECT .* FROM product p").
+	mock.ExpectQuery("(?i)SELECT .* FROM view_product_enriched p").
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "tcg"}).AddRow("1", "Black Lotus", "mtg"))
 
 	// 3. Facets query (getFacets calls buildFilters 7 times for different dimensions)
