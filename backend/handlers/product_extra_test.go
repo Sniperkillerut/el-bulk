@@ -132,9 +132,9 @@ func TestProductHandler_BulkCreate_Extra(t *testing.T) {
 		inputs := []models.ProductInput{{Name: ""}, {Name: "P1", TCG: "mtg", Category: "singles"}}
 		body, _ := json.Marshal(inputs)
 		
-		mock.ExpectQuery("SELECT product_id FROM fn_bulk_upsert_product").
+		mock.ExpectQuery("SELECT upserted_id FROM fn_bulk_upsert_product").
 			WithArgs(sqlmock.AnyArg()).
-			WillReturnRows(sqlmock.NewRows([]string{"product_id"}).AddRow("p-new"))
+			WillReturnRows(sqlmock.NewRows([]string{"upserted_id"}).AddRow("p-new"))
 
 		req, _ := http.NewRequest("POST", "/api/admin/products/bulk", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
@@ -146,7 +146,7 @@ func TestProductHandler_BulkCreate_Extra(t *testing.T) {
 		inputs := []models.ProductInput{{Name: "P1", TCG: "mtg", Category: "singles"}}
 		body, _ := json.Marshal(inputs)
 		
-		mock.ExpectQuery("SELECT product_id FROM fn_bulk_upsert_product").WillReturnError(fmt.Errorf("db error"))
+		mock.ExpectQuery("SELECT upserted_id FROM fn_bulk_upsert_product").WillReturnError(fmt.Errorf("db error"))
 
 		req, _ := http.NewRequest("POST", "/api/admin/products/bulk", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()

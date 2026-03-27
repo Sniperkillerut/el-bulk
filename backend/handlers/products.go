@@ -104,16 +104,30 @@ func (h *ProductHandler) saveProductStorage(productID string, items []models.Sto
 		logger.Error("Error clearing product_storage for %s: %v", productID, err)
 	}
 
+	var validItems []models.StorageLocation
 	for _, item := range items {
 		if item.Quantity > 0 {
-			_, err := h.DB.Exec(`
-				INSERT INTO product_storage (product_id, storage_id, quantity)
-				VALUES ($1, $2, $3)
-			`, productID, item.StorageID, item.Quantity)
-			if err != nil {
-				logger.Error("Error inserting product_stored_in (product=%s, storage=%s): %v", productID, item.StorageID, err)
-			}
+			validItems = append(validItems, item)
 		}
+	}
+
+	if len(validItems) == 0 {
+		return
+	}
+
+	query := "INSERT INTO product_storage (product_id, storage_id, quantity) VALUES "
+	values := make([]interface{}, 0, len(validItems)*3)
+	placeholders := make([]string, 0, len(validItems))
+
+	for i, item := range validItems {
+		placeholders = append(placeholders, fmt.Sprintf("($%d, $%d, $%d)", i*3+1, i*3+2, i*3+3))
+		values = append(values, productID, item.StorageID, item.Quantity)
+	}
+
+	query += strings.Join(placeholders, ", ")
+	_, err = h.DB.Exec(query, values...)
+	if err != nil {
+		logger.Error("Error bulk inserting product_storage for %s: %v", productID, err)
 	}
 }
 
@@ -552,20 +566,36 @@ func (h *ProductHandler) UpdateStorage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 2. Insert active
+	var validUpdates []models.ProductStorage
 	for _, u := range updates {
 		if u.Quantity > 0 {
-			_, err = tx.Exec(`
-				INSERT INTO product_storage (product_id, storage_id, quantity)
-				VALUES ($1, $2, $3)
-			`, id, u.StorageID, u.Quantity)
-			if err != nil {
-				tx.Rollback()
-				jsonError(w, "Failed to update storage map", http.StatusInternalServerError)
-				return
-			}
+			validUpdates = append(validUpdates, u)
 		}
 	}
-	tx.Commit()
+
+	if len(validUpdates) > 0 {
+		query := "INSERT INTO product_storage (product_id, storage_id, quantity) VALUES "
+		values := make([]interface{}, 0, len(validUpdates)*3)
+		placeholders := make([]string, 0, len(validUpdates))
+
+		for i, u := range validUpdates {
+			placeholders = append(placeholders, fmt.Sprintf("($%d, $%d, $%d)", i*3+1, i*3+2, i*3+3))
+			values = append(values, id, u.StorageID, u.Quantity)
+		}
+
+		query += strings.Join(placeholders, ", ")
+		_, err = tx.Exec(query, values...)
+		if err != nil {
+			tx.Rollback()
+			jsonError(w, "Failed to update storage map", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		jsonError(w, "Failed to commit transaction", http.StatusInternalServerError)
+		return
+	}
 
 	h.GetStorage(w, r)
 }
