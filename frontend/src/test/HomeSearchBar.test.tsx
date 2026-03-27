@@ -5,7 +5,17 @@ import * as api from '@/lib/api'
 
 // Mock the API using the alias
 vi.mock('@/lib/api', () => ({
-  fetchProducts: vi.fn(),
+  fetchProducts: vi.fn().mockResolvedValue({ products: [], total: 0, facets: {} }),
+}))
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+  useSearchParams: () => new URLSearchParams(),
+  usePathname: () => '',
 }))
 
 const mockFacets = {
@@ -31,12 +41,14 @@ describe('HomeSearchBar', () => {
 
   it('handles null search results gracefully', async () => {
     // @ts-ignore
-    vi.mocked(api.fetchProducts).mockResolvedValueOnce({
-      products: null as any,
-      total: 0,
-      page: 1,
-      page_size: 10,
-      facets: mockFacets as any
+    vi.mocked(api.fetchProducts).mockImplementation(async () => {
+      return {
+        products: null as any,
+        total: 0,
+        page: 1,
+        page_size: 10,
+        facets: mockFacets as any
+      }
     })
 
     render(<HomeSearchBar />)
@@ -57,22 +69,24 @@ describe('HomeSearchBar', () => {
   })
 
   it('displays search results when found', async () => {
-    vi.mocked(api.fetchProducts).mockResolvedValueOnce({
-      products: [
-        { 
-          id: '1', 
-          name: 'Black Lotus', 
-          tcg: 'mtg', 
-          price: 100000, 
-          image_url: '', 
-          category: 'singles',
-          stock: 1 
-        }
-      ] as any,
-      total: 1,
-      page: 1,
-      page_size: 10,
-      facets: mockFacets as any
+    vi.mocked(api.fetchProducts).mockImplementation(async () => {
+      return {
+        products: [
+          {
+            id: '1',
+            name: 'Black Lotus',
+            tcg: 'mtg',
+            price: 100000,
+            image_url: '',
+            category: 'singles',
+            stock: 1
+          }
+        ] as any,
+        total: 1,
+        page: 1,
+        page_size: 10,
+        facets: mockFacets as any
+      }
     })
 
     render(<HomeSearchBar />)

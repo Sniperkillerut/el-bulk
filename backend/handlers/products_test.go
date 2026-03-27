@@ -33,7 +33,7 @@ func TestProductHandler_List(t *testing.T) {
 		
 		rows = sqlmock.NewRows([]string{"id", "name", "tcg", "category", "price_source", "price_reference", "stock", "created_at", "updated_at", "stored_in_json", "categories_json"}).
 			AddRow("p1", "Product 1", "mtg", "singles", "tcgplayer", 1.0, 10, now, now, []byte("[]"), []byte("[]"))
-		mock.ExpectQuery("(?i)SELECT \\* FROM view_product_enriched p").WillReturnRows(rows)
+		mock.ExpectQuery("(?i)SELECT .* FROM view_product_enriched p").WillReturnRows(rows)
 		
 		mock.ExpectQuery("(?i)SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop", "4000"))
 
