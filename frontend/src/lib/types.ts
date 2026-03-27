@@ -124,10 +124,16 @@ export const resolveLabel = (key: string, map: Record<string, string>) => {
   label = label.replace(/oilslick/gi, 'Oil Slick');
   label = label.replace(/stepandcompleat/gi, 'Step-and-Compleat');
   label = label.replace(/silverfoil/gi, 'Silver Foil');
-  label = label.replace(/foil$/, ' Foil'); 
-  label = label.replace(/_foil$/, ' Foil');
+  // Avoid double spaces when _foil or camelCase already added a space/separator
+  label = label.replace(/([a-z])foil$/i, '$1 Foil');
   label = label.replace(/_/g, ' '); 
-  return label.replace(/\b\w/g, l => l.toUpperCase()).trim();
+  // Consolidate multiple spaces
+  label = label.replace(/\s+/g, ' ');
+
+  // Title Case, but preserve the hyphen in Step-and-Compleat
+  return label.replace(/\b\w/g, l => l.toUpperCase())
+    .replace(/Step-And-Compleat/g, 'Step-and-Compleat')
+    .trim();
 };
 
 export const TCG_LABELS: Record<string, string> = {
