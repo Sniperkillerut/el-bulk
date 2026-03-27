@@ -165,7 +165,7 @@ export default function AdminDashboard() {
 
         {/* Filters and Stats */}
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mb-8">
-          <div className="xl:col-span-3 card p-6 bg-ink-surface/40 flex flex-wrap gap-6 items-end">
+          <div className="xl:col-span-3 card no-tilt p-6 bg-ink-surface/40 flex flex-wrap gap-6 items-end">
             <div className="flex-1 min-w-[240px]">
               <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">Scanner Search</label>
               <div className="relative">

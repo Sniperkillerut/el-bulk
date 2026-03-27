@@ -10,7 +10,7 @@ export function ProductTableRow({ product: p, onEdit, onDelete }: ProductTableRo
   const tcgName = p.tcg.length <= 4 ? p.tcg.toUpperCase() : (TCG_SHORT[p.tcg] || p.tcg.substring(0, 3).toUpperCase());
 
   return (
-    <tr key={p.id} onClick={() => onEdit(p)} className="cursor-pointer">
+    <tr key={p.id} onClick={() => onEdit(p)} className="cursor-pointer hover:bg-gold/10 hover:shadow-inner transition-all duration-200 group border-b border-ink-border/50 last:border-0 hover:z-10 relative">
       <td>
          <div className="flex items-center gap-3">
             <div className="w-10 h-14 bg-ink-border/20 rounded-sm shrink-0 overflow-hidden border border-ink-border/30 flex items-center justify-center relative group/img">
@@ -79,7 +79,7 @@ export function ProductTableRow({ product: p, onEdit, onDelete }: ProductTableRo
             {p.stock}
           </span>
           <div className="flex flex-wrap gap-1 justify-center">
-            {p.stored_in?.length ? p.stored_in.map((s, idx) => (
+            {p.stored_in && p.stored_in.length > 0 ? p.stored_in.map((s, idx) => (
               <span key={s.stored_in_id || `loc-${idx}`} className="badge shrink-0" style={{ background: 'var(--kraft-light)', color: 'var(--kraft-dark)', fontSize: '8px', padding: '1px 3px' }}>
                 {s.name}: {s.quantity}
               </span>
@@ -132,7 +132,7 @@ export default function ProductTable({
   };
 
   return (
-    <div className="card p-0 overflow-hidden relative" style={{ minHeight: '400px' }}>
+    <div className="card no-tilt p-0 overflow-hidden relative" style={{ minHeight: '400px' }}>
       {loading && (
         <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] flex items-center justify-center">
           <div className="flex flex-col items-center">
