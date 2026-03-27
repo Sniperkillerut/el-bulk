@@ -83,16 +83,15 @@ func TestAdminAuth(t *testing.T) {
 	}
 }
 
-func TestAdminAuth_DefaultSecret(t *testing.T) {
-	// Ensure default secret is used if JWT_SECRET is not set
+func TestAdminAuth_MissingSecret(t *testing.T) {
+	// Ensure internal server error if JWT_SECRET is not set
 	os.Unsetenv("JWT_SECRET")
 	
-	defaultSecret := "elbulk-default-secret-change-in-prod"
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": "admin-default",
+		"sub": "admin-test",
 		"exp": time.Now().Add(time.Hour).Unix(),
 	})
-	tokenStr, _ := token.SignedString([]byte(defaultSecret))
+	tokenStr, _ := token.SignedString([]byte("some-secret"))
 
 	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -104,5 +103,5 @@ func TestAdminAuth_DefaultSecret(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	handlerToTest.ServeHTTP(rr, req)
-	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
 }

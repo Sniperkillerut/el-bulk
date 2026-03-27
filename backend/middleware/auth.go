@@ -24,7 +24,8 @@ func AdminAuth(next http.Handler) http.Handler {
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 		secret := os.Getenv("JWT_SECRET")
 		if secret == "" {
-			secret = "elbulk-default-secret-change-in-prod"
+			http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
+			return
 		}
 
 		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
