@@ -83,6 +83,10 @@ func TestAdminHandler_Login(t *testing.T) {
 		},
 	}
 
+	secret := "test-secret"
+	os.Setenv("JWT_SECRET", secret)
+	defer os.Unsetenv("JWT_SECRET")
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockSetup()
@@ -110,10 +114,8 @@ func TestAdminHandler_Login(t *testing.T) {
 	}
 }
 
-func TestAdminHandler_Login_TokenFail(t *testing.T) {
-	// This is hard to trigger unless we force a secret that causes SignedString to fail,
-	// which is unlikely with HS256 and a string secret.
-	// But let's check default secret path.
+func TestAdminHandler_Login_MissingSecret(t *testing.T) {
+	// Ensure internal server error if JWT_SECRET is not set
 	os.Unsetenv("JWT_SECRET")
 	
 	db, mock, err := sqlmock.New()
@@ -138,5 +140,5 @@ func TestAdminHandler_Login_TokenFail(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	h.Login(rr, req)
-	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
 }

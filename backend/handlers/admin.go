@@ -43,7 +43,8 @@ func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
-		secret = "elbulk-default-secret-change-in-prod"
+		jsonError(w, "internal server error", http.StatusInternalServerError)
+		return
 	}
 
 	claims := jwt.MapClaims{
