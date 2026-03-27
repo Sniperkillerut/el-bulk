@@ -285,3 +285,37 @@ export interface BulkProductInput extends Partial<Omit<Product, 'categories' | '
   storage_items?: StorageLocation[];
 }
 
+export interface ScryfallCard {
+  id: string;
+  name: string;
+  set: string;
+  set_name?: string;
+  collector_number: string;
+  image_uris?: {
+    normal?: string;
+    small?: string;
+    large?: string;
+    border_crop?: string;
+  };
+  card_faces?: Array<{
+    image_uris?: {
+      normal?: string;
+    };
+  }>;
+  prices?: {
+    usd?: string | null;
+    usd_foil?: string | null;
+    usd_etched?: string | null;
+    eur?: string | null;
+  };
+  finishes?: string[];
+  frame_effects?: string[];
+  promo_types?: string[];
+  border_color?: string;
+  full_art?: boolean;
+  textless?: boolean;
+  security_stamp?: string;
+  artist?: string;
+  frame?: string;
+  promo?: boolean;
+}

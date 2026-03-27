@@ -9,7 +9,8 @@ services:
       POSTGRES_DB: elbulk
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./backend/db/schema:/docker-entrypoint-initdb.d
+      - ./backend/db/schema:/schema
+      - ./backend/db/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql
     ports:
       - "5432:5432"
     healthcheck:
@@ -36,6 +37,11 @@ services:
       FRONTEND_ORIGIN: http://localhost
     ports:
       - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     volumes:
       - ./backend:/app
 
@@ -46,7 +52,8 @@ services:
       target: dev
     container_name: el_bulk_frontend_dev
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8080
       INTERNAL_API_URL: http://backend:8080
