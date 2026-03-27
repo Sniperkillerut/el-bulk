@@ -310,7 +310,7 @@ func TestOrderHandler_Complete(t *testing.T) {
 	})
 
 	t.Run("Tx Error", func(t *testing.T) {
-		mock.ExpectQuery("SELECT fn_complete_order").
+		mock.ExpectExec("SELECT fn_complete_order").
 			WithArgs("EB-123", sqlmock.AnyArg()).
 			WillReturnError(fmt.Errorf("db error"))
 

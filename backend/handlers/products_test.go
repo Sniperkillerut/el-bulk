@@ -218,9 +218,9 @@ func TestProductHandler_BulkCreate(t *testing.T) {
 		}
 		body, _ := json.Marshal(inputs)
 
-		mock.ExpectQuery("SELECT product_id FROM fn_bulk_upsert_product").
+		mock.ExpectQuery("SELECT upserted_id FROM fn_bulk_upsert_product").
 			WithArgs(sqlmock.AnyArg()).
-			WillReturnRows(sqlmock.NewRows([]string{"product_id"}).AddRow("b1").AddRow("b2"))
+			WillReturnRows(sqlmock.NewRows([]string{"upserted_id"}).AddRow("b1").AddRow("b2"))
 
 		req, _ := http.NewRequest("POST", "/api/admin/products/bulk", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()

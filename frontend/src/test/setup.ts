@@ -55,12 +55,13 @@ vi.mock('swr', () => {
 });
 
 // Mock CartContext
+const mockAddItem = vi.fn();
 vi.mock('@/lib/CartContext', () => ({
   useCart: () => ({
     items: [],
     totalItems: 0,
     totalPrice: 0,
-    addItem: vi.fn(),
+    addItem: mockAddItem,
     removeItem: vi.fn(),
     updateQty: vi.fn(),
     clearCart: vi.fn(),

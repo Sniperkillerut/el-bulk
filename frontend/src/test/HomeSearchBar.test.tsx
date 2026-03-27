@@ -29,13 +29,17 @@ const mockFacets = {
   collection: {}
 }
 
+import { act } from '@testing-library/react'
+
 describe('HomeSearchBar', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('renders correctly', () => {
-    render(<HomeSearchBar />)
+  it('renders correctly', async () => {
+    await act(async () => {
+      render(<HomeSearchBar />)
+    })
     expect(screen.getByPlaceholderText(/search for cards/i)).toBeInTheDocument()
   })
 
@@ -51,11 +55,15 @@ describe('HomeSearchBar', () => {
       }
     })
 
-    render(<HomeSearchBar />)
+    await act(async () => {
+      render(<HomeSearchBar />)
+    })
     const input = screen.getByPlaceholderText(/search for cards/i)
     
     // Type something to trigger search
-    fireEvent.change(input, { target: { value: 'black lotus' } })
+    await act(async () => {
+      fireEvent.change(input, { target: { value: 'black lotus' } })
+    })
 
     // Wait for debounce and API call
     await waitFor(() => {
@@ -89,10 +97,14 @@ describe('HomeSearchBar', () => {
       }
     })
 
-    render(<HomeSearchBar />)
+    await act(async () => {
+      render(<HomeSearchBar />)
+    })
     const input = screen.getByPlaceholderText(/search for cards/i)
     
-    fireEvent.change(input, { target: { value: 'black lotus' } })
+    await act(async () => {
+      fireEvent.change(input, { target: { value: 'black lotus' } })
+    })
 
     await waitFor(() => {
       expect(screen.getByText('Black Lotus')).toBeInTheDocument()

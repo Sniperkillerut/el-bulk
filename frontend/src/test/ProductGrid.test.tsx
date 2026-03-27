@@ -30,14 +30,18 @@ const mockFacets = {
   collection: {}
 }
 
+import { act } from '@testing-library/react'
+
 describe('ProductGrid', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(api.fetchCategories).mockResolvedValue([])
   })
 
-  it('renders title and loading state', () => {
-    render(<ProductGrid tcg="mtg" category="singles" title="MTG Singles" />)
+  it('renders title and loading state', async () => {
+    await act(async () => {
+      render(<ProductGrid tcg="mtg" category="singles" title="MTG Singles" />)
+    })
     expect(screen.getByText('MTG Singles')).toBeInTheDocument()
   })
 
@@ -51,7 +55,9 @@ describe('ProductGrid', () => {
       facets: mockFacets as any
     })
 
-    render(<ProductGrid tcg="mtg" category="singles" title="MTG Singles" />)
+    await act(async () => {
+      render(<ProductGrid tcg="mtg" category="singles" title="MTG Singles" />)
+    })
 
     await waitFor(() => {
       expect(screen.getByText(/NO RESULTS/i)).toBeInTheDocument()
@@ -83,7 +89,9 @@ describe('ProductGrid', () => {
       }
     })
 
-    render(<ProductGrid tcg="mtg" category="singles" title="MTG Singles" />)
+    await act(async () => {
+      render(<ProductGrid tcg="mtg" category="singles" title="MTG Singles" />)
+    })
 
     await waitFor(() => {
       expect(screen.getByText('Black Lotus')).toBeInTheDocument()
