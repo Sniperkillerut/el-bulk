@@ -45,7 +45,6 @@ export default function AdminDashboard() {
   // Initial Load
   useEffect(() => {
     const t = localStorage.getItem('el_bulk_admin_token');
-    console.log('[Dashboard] Initializing with token:', t ? `${t.substring(0, 5)}...` : 'NONE');
     
     if (!t) {
       console.warn('[Dashboard] No token found, redirecting to login.');
