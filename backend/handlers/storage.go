@@ -27,7 +27,7 @@ func (h *StorageHandler) List(w http.ResponseWriter, r *http.Request) {
 			s.name, 
 			COALESCE(SUM(ps.quantity), 0) AS item_count 
 		FROM storage_location s 
-		LEFT JOIN product_stored_in ps ON s.id = ps.stored_in_id 
+		LEFT JOIN product_storage ps ON s.id = ps.storage_id 
 		GROUP BY s.id, s.name 
 		ORDER BY s.name
 	`)
@@ -53,7 +53,7 @@ func (h *StorageHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.DB.QueryRow("INSERT INTO stored_in (name) VALUES ($1) RETURNING id", input.Name).Scan(&input.ID)
+	err := h.DB.QueryRow("INSERT INTO storage_location (name) VALUES ($1) RETURNING id", input.Name).Scan(&input.ID)
 	if err != nil {
 		jsonError(w, "Failed to create location or name already exists", http.StatusInternalServerError)
 		return
@@ -70,7 +70,7 @@ func (h *StorageHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := h.DB.Exec("UPDATE stored_in SET name = $1 WHERE id = $2", input.Name, id)
+	_, err := h.DB.Exec("UPDATE storage_location SET name = $1 WHERE id = $2", input.Name, id)
 	if err != nil {
 		jsonError(w, "Failed to update location", http.StatusInternalServerError)
 		return

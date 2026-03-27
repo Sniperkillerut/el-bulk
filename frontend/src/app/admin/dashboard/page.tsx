@@ -4,67 +4,20 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import useSWR, { useSWRConfig } from 'swr';
 import { useRouter } from 'next/navigation';
 import {
-  adminFetchProducts, adminCreateProduct, adminUpdateProduct, adminDeleteProduct,
-  getAdminSettings, updateAdminSettings, lookupMTGCard, CardLookupResult,
+  adminFetchProducts, adminDeleteProduct,
+  getAdminSettings, updateAdminSettings,
   adminFetchStorage, adminCreateStorage, adminUpdateStorage, adminDeleteStorage,
-  adminUpdateProductStorage,
   adminFetchCategories, adminCreateCategory, adminUpdateCategory, adminDeleteCategory,
   adminFetchTCGs, adminCreateTCG, adminUpdateTCG, adminDeleteTCG
 } from '@/lib/api';
-import { Product, FOIL_LABELS, TREATMENT_LABELS, KNOWN_TCGS, TCG_SHORT, FoilTreatment, CardTreatment, PriceSource, Settings, StoredIn, StorageLocation, CustomCategory } from '@/lib/types';
+import { Product, KNOWN_TCGS, TCG_SHORT, Settings, StoredIn, StorageLocation, CustomCategory } from '@/lib/types';
 import OrdersPanel from '@/components/admin/OrdersPanel';
 import TCGManager from '@/components/admin/TCGManager';
 import CardImage from '@/components/CardImage';
 import CSVImportModal from '@/components/admin/CSVImportModal';
+import ProductEditModal from '@/components/admin/ProductEditModal';
 
-interface FormState {
-  name: string;
-  tcg: string;
-  category: 'singles' | 'sealed' | 'accessories';
-  set_name: string;
-  set_code: string;
-  condition: string;
-  foil_treatment: FoilTreatment;
-  card_treatment: CardTreatment;
-  price_source: PriceSource;
-  price_reference: number | '';
-  price_cop_override: number | '';
-  stock: number;
-  description: string;
-  category_ids: string[];
-  image_url: string;
-  collector_number: string;
-  promo_type: string;
-  language: string;
-  color_identity: string;
-  rarity: string;
-  cmc: number | '';
-  is_legendary: boolean;
-  is_historic: boolean;
-  is_land: boolean;
-  is_basic_land: boolean;
-  art_variation: string;
-  oracle_text: string;
-  artist: string;
-  type_line: string;
-  border_color: string;
-  frame: string;
-  full_art: boolean;
-  textless: boolean;
-}
 
-const EMPTY_FORM: FormState = {
-  name: '', tcg: 'mtg', category: 'singles',
-  set_name: '', set_code: '', condition: 'NM',
-  foil_treatment: 'non_foil', card_treatment: 'normal',
-  price_source: 'tcgplayer', price_reference: '', price_cop_override: '',
-  stock: 0, description: '', category_ids: [], image_url: '',
-  collector_number: '', promo_type: '',
-  language: 'en', color_identity: '', rarity: 'common', cmc: '',
-  is_legendary: false, is_historic: false, is_land: false, is_basic_land: false,
-  art_variation: '', oracle_text: '', artist: '', type_line: '',
-  border_color: '', frame: '', full_art: false, textless: false,
-};
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -82,13 +35,6 @@ export default function AdminDashboard() {
   // Modal states
   const [showModal, setShowModal] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
-  const [form, setForm] = useState<FormState>(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
-  const [formError, setFormError] = useState('');
-  
-  // Lookup states
-  const [scryfallPrints, setScryfallPrints] = useState<any[]>([]);
-  const [lookingUp, setLookingUp] = useState(false);
 
   // Storage Locations Global Modal
   const [showStorageModal, setShowStorageModal] = useState(false);
@@ -112,8 +58,7 @@ export default function AdminDashboard() {
   const [editingCategoryShowBadge, setEditingCategoryShowBadge] = useState(true);
   const [editingCategorySearchable, setEditingCategorySearchable] = useState(true);
   
-  // Product Storage State (inside Product Edit Modal)
-  const [productStorage, setProductStorage] = useState<StorageLocation[]>([]);
+
 
   // Settings states
   const [showSettings, setShowSettings] = useState(false);
@@ -228,62 +173,11 @@ export default function AdminDashboard() {
 
   const openCreate = () => {
     setEditProduct(null);
-    setForm({ ...EMPTY_FORM });
-    
-    // If we're filtering by a specific storage, pre-add it with 0 qty
-    const initialStorage = [];
-    if (storageFilter) {
-      const loc = storageLocations.find(l => l.id === storageFilter);
-      if (loc) initialStorage.push({ stored_in_id: loc.id, name: loc.name, quantity: 0 });
-    }
-    setProductStorage(initialStorage);
-    
-    setFormError('');
-    setScryfallPrints([]);
     setShowModal(true);
   };
 
   const openEdit = (p: Product) => {
     setEditProduct(p);
-    setForm({
-      name: p.name, tcg: p.tcg, category: p.category as typeof EMPTY_FORM['category'],
-      set_name: p.set_name || '', set_code: p.set_code || '',
-      condition: p.condition || 'NM',
-      foil_treatment: p.foil_treatment, card_treatment: p.card_treatment,
-      price_source: p.price_source || 'manual',
-      price_reference: p.price_reference ?? '',
-      price_cop_override: p.price_cop_override ?? '',
-      stock: p.stock, description: p.description || '',
-      category_ids: p.categories?.map(c => c.id) || [], 
-      image_url: p.image_url || '',
-      collector_number: p.collector_number || '',
-      promo_type: p.promo_type || '',
-      language: p.language || 'en',
-      color_identity: p.color_identity || '',
-      rarity: p.rarity || '',
-      cmc: p.cmc ?? '',
-      is_legendary: p.is_legendary,
-      is_historic: p.is_historic,
-      is_land: p.is_land,
-      is_basic_land: p.is_basic_land,
-      art_variation: p.art_variation || '',
-      oracle_text: p.oracle_text || '',
-      artist: p.artist || '',
-      type_line: p.type_line || '',
-      border_color: p.border_color || '',
-      frame: p.frame || '',
-      full_art: p.full_art,
-      textless: p.textless,
-    });
-    const existingStorage = p.stored_in || [];
-    // Only show locations that the product is actually in
-    setProductStorage(existingStorage.map(d => ({
-      stored_in_id: d.stored_in_id,
-      name: d.name,
-      quantity: d.quantity
-    })));
-    setFormError('');
-    setScryfallPrints([]);
     setShowModal(true);
   };
 
@@ -292,429 +186,15 @@ export default function AdminDashboard() {
     setShowSettings(true);
   };
 
-  const extractPrices = (print: any, foil: FoilTreatment) => {
-    const isEtched = foil === 'etched_foil';
-    const isFoil = foil !== 'non_foil' && !isEtched;
-    // TCGplayer: We use Market Price exclusively (standard Scryfall 'usd' fields).
-    let usd = parseFloat(isEtched ? print?.prices?.usd_etched || print?.prices?.usd_foil || print?.prices?.usd : isFoil ? print?.prices?.usd_foil || print?.prices?.usd : print?.prices?.usd);
-    // Cardmarket: Scryfall's 'eur' already encapsulates Trend -> 1d -> 7d -> Avg fallback.
-    let eur = parseFloat(isFoil || isEtched ? print?.prices?.eur_foil || print?.prices?.eur : print?.prices?.eur);
-    return { usd: isNaN(usd) ? null : usd, eur: isNaN(eur) ? null : eur };
+  // ── Product modal save/close callbacks ──
+  const handleModalClose = () => setShowModal(false);
+  const handleModalSaved = () => { setShowModal(false); mutateProducts(); };
+  const handleSaveAndNew = (lastForm: { tcg: string; category: string; condition: string; storageIds: string[] }) => {
+    mutateProducts();
+    setEditProduct(null);
+    // Modal will re-open with new form since showModal stays true
   };
 
-  const extractMTGMetadata = (card: CardLookupResult | any) => {
-    const isLegendary = card.is_legendary ?? (card.type_line?.toLowerCase().includes('legendary') || false);
-    const typeLine = card.type_line || '';
-    return {
-      language: card.language || card.lang || 'en',
-      color_identity: Array.isArray(card.color_identity) ? card.color_identity.join(',') : (card.color_identity || ''),
-      rarity: card.rarity || 'common',
-      cmc: card.cmc ?? 0,
-      is_legendary: isLegendary,
-      is_historic: card.is_historic ?? (
-        isLegendary || 
-        typeLine.toLowerCase().includes('artifact') || 
-        typeLine.toLowerCase().includes('saga') || false
-      ),
-      is_land: card.is_land ?? (typeLine.toLowerCase().includes('land') || false),
-      is_basic_land: card.is_basic_land ?? (typeLine.toLowerCase().includes('basic land') || false),
-      art_variation: card.art_variation || (card.variation ? 'Variation' : ''),
-      oracle_text: card.oracle_text || '',
-      artist: card.artist || '',
-      type_line: typeLine,
-      border_color: card.border_color || '',
-      frame: card.frame || '',
-      full_art: !!card.full_art,
-      textless: !!card.textless,
-    };
-  };
-
-  const applyPrintPrices = (print: any, foil: FoilTreatment, src: PriceSource) => {
-    const { usd, eur } = extractPrices(print, foil);
-    if (src === 'tcgplayer') return usd ?? 0;
-    if (src === 'cardmarket') return eur ?? 0;
-    return 0;
-  };
-
-  const extractDescription = (print: any) => {
-    return '';
-  };
-
-  const handlePopulate = async () => {
-    if (!form.name.trim() && (!form.set_code.trim() || !form.collector_number.trim())) return;
-    setLookingUp(true);
-    setFormError('');
-    try {
-      const res = await fetch(`https://api.scryfall.com/cards/search?q=!"${encodeURIComponent(form.name.trim())}"+is:paper&unique=prints&order=released`);
-      const body = await res.json();
-      if (!body.data || body.data.length === 0) throw new Error('No printings found for that precise name.');
-      const prints = body.data;
-      setScryfallPrints(prints);
-      
-      // Smart matching: try set+cn, then just set, then first result
-      let bestPrint = prints.find((p: any) => 
-        p.set === form.set_code && p.collector_number === form.collector_number
-      );
-      if (!bestPrint && form.set_code) {
-        bestPrint = prints.find((p: any) => p.set === form.set_code);
-      }
-      if (!bestPrint) {
-        bestPrint = prints[0];
-      }
-
-      const initialTreatment = getTreatmentType(bestPrint);
-      const initialFoil = (() => {
-        if (bestPrint.finishes?.includes('nonfoil') && bestPrint.finishes?.length === 1) return 'non_foil';
-        
-        const pt = bestPrint.promo_types || [];
-        const specializedFoilKeywords = ['slick', 'compleat', 'galaxy', 'surge', 'textured', 'raised', 'rainbow', 'confetti', 'ink', 'gilded', 'halo', 'glossy'];
-        const bestPromo = pt.find((p: string) => specializedFoilKeywords.some(kw => p.toLowerCase().includes(kw)));
-        
-        if (bestPromo) return bestPromo;
-        if (bestPrint.finishes?.includes('etched')) return 'etched_foil';
-        if (bestPrint.finishes?.includes('glossy')) return 'glossy';
-        if (bestPrint.finishes?.includes('foil')) return 'foil';
-        return 'non_foil';
-      })();
-
-      setForm(f => ({
-        ...f,
-        set_code: bestPrint.set,
-        set_name: bestPrint.set_name,
-        card_treatment: initialTreatment,
-        collector_number: bestPrint.collector_number,
-        promo_type: bestPrint.promo_types?.join(',') || 'none',
-        foil_treatment: initialFoil as FoilTreatment,
-        image_url: bestPrint.image_uris?.normal || bestPrint.image_uris?.large || f.image_url,
-        description: '', 
-        price_reference: applyPrintPrices(bestPrint, initialFoil as FoilTreatment, f.price_source),
-        ...extractMTGMetadata(bestPrint)
-      }));
-    } catch (e: unknown) {
-      setFormError(e instanceof Error ? e.message : 'Scryfall fetch failed');
-    } finally {
-      setLookingUp(false);
-    }
-  };
-
-  const resolveLabel = (key: string, map: Record<string, string>) => {
-    if (!key || key === 'none') return 'Standard / Regular';
-    if (map[key]) return map[key];
-    // Dynamic formatting for future-proofing
-    let label = key.replace(/([a-z])([A-Z])/g, '$1 $2'); // camelCase
-    label = label.replace(/oilslick/gi, 'Oil Slick');
-    label = label.replace(/stepandcompleat/gi, 'Step-and-Compleat');
-    label = label.replace(/silverfoil/gi, 'Silver Foil');
-    label = label.replace(/foil$/, ' Foil'); 
-    label = label.replace(/_foil$/, ' Foil');
-    label = label.replace(/_/g, ' '); 
-    return label.replace(/\b\w/g, l => l.toUpperCase()).trim();
-  };
-
-  const getTreatmentType = (print: any): CardTreatment => {
-    const fx = print.frame_effects || [];
-    const pt = print.promo_types || [];
-    
-    if (print.serialized) return 'serialized';
-    if (pt.includes('stepandcompleat')) return 'step_and_compleat';
-    if (pt.includes('galaxyfoil')) return 'galaxy_foil';
-    if (fx.includes('showcase')) return 'showcase';
-    if (fx.includes('extendedart')) return 'extended_art';
-    if (print.full_art) return 'full_art';
-    if (print.border_color === 'borderless') return 'borderless';
-    if (fx.includes('retro') || ['1993', '1997'].includes(print.frame)) return 'retro_frame';
-    if (print.frame === '2003') return 'legacy_border';
-    if (print.textless) return 'textless';
-    if (pt.includes('judgegift')) return 'judge_promo';
-    if (print.promo) return 'promo';
-    
-    // Dynamic Fallback for unrecognized treatments
-    const ignoredPromos = ['boosterfun', 'promopack', 'setpromo', 'buyabox'];
-    const validPt = pt.filter((p: string) => !ignoredPromos.includes(p) && !p.includes('foil'));
-    if (validPt.length > 0) return validPt[0];
-    if (fx.length > 0) return fx[0];
-    
-    return 'normal';
-  };
-
-  const getTreatmentOptions = (setCode?: string) => {
-    const targetSet = setCode || form.set_code;
-    if (scryfallPrints.length === 0) return [{ value: form.card_treatment, label: resolveLabel(form.card_treatment, TREATMENT_LABELS) }];
-    
-    const options = new Map<string, string>();
-    // Don't pre-set the current treatment as a ghost option if we are targeting a specific set
-    if (!setCode) {
-       options.set(form.card_treatment, resolveLabel(form.card_treatment, TREATMENT_LABELS));
-    }
-
-    scryfallPrints.forEach(p => {
-      if (p.set === targetSet || !targetSet) {
-        const type = getTreatmentType(p);
-        options.set(type, resolveLabel(type, TREATMENT_LABELS));
-      }
-    });
-    
-    return Array.from(options.entries()).map(([value, label]) => ({ value, label }));
-  };
-  const findMatchingPrint = (setCode: string, treatment: CardTreatment, collectorNumber: string, promoType: string, foil?: FoilTreatment) => {
-    // 1. Try to find a print that matches EVERYTHING
-    let match = scryfallPrints.find(p => {
-      const t = getTreatmentType(p);
-      const finishes = p.finishes || [];
-      const pt = p.promo_types || [];
-      const ptKey = pt.join(',') || 'none';
-      
-      const hasFoil = !foil || (foil === 'non_foil' && finishes.includes('nonfoil')) ||
-                      (foil === 'etched_foil' && finishes.includes('etched')) ||
-                      (foil === 'galaxy_foil' && pt.includes('galaxyfoil')) ||
-                      (finishes.includes('foil') || pt.includes(foil || ''));
-      
-      return p.set === setCode && t === treatment && p.collector_number === collectorNumber && ptKey === promoType && hasFoil;
-    });
-
-    if (match) return match;
-
-    // 2. Fall back to Art + Promo match
-    match = scryfallPrints.find(p => p.set === setCode && getTreatmentType(p) === treatment && p.collector_number === collectorNumber && (p.promo_types?.join(',') || 'none') === promoType);
-    if (match) return match;
-
-    // 3. Fall back to just Art match
-    match = scryfallPrints.find(p => p.set === setCode && getTreatmentType(p) === treatment && p.collector_number === collectorNumber);
-    if (match) return match;
-
-    // 4. Fall back to Treatment match
-    match = scryfallPrints.find(p => p.set === setCode && getTreatmentType(p) === treatment);
-    
-    return match || scryfallPrints.find(p => p.set === setCode) || scryfallPrints[0];
-  };
-
-  const getArtOptions = (treatment: CardTreatment, setCode?: string) => {
-    const targetSet = setCode || form.set_code;
-    const prints = scryfallPrints.filter(p => (p.set === targetSet || !targetSet) && getTreatmentType(p) === treatment);
-    const seen = new Set();
-    const results: { value: string, label: string }[] = [];
-    
-    prints.forEach(p => {
-      if (!seen.has(p.collector_number)) {
-        seen.add(p.collector_number);
-        results.push({ 
-          value: p.collector_number, 
-          label: `Art by ${p.artist} (#${p.collector_number})` 
-        });
-      }
-    });
-
-    if (results.length === 0 && form.collector_number) {
-       results.push({ 
-         value: form.collector_number, 
-         label: form.artist ? `Art by ${form.artist} (#${form.collector_number})` : `Art #${form.collector_number}` 
-       });
-    }
-    
-    return results;
-  };
-
-  const getPromoOptions = (treatment: CardTreatment, setCode: string, collectorNumber: string) => {
-    const prints = scryfallPrints.filter(p => p.collector_number === collectorNumber && p.set === setCode && getTreatmentType(p) === treatment);
-    const seen = new Set();
-    const results: { value: string, label: string }[] = [];
-    
-    prints.forEach(p => {
-      const pt = p.promo_types || [];
-      const ptKey = pt.join(',') || 'none';
-      if (!seen.has(ptKey)) {
-        seen.add(ptKey);
-        results.push({ 
-          value: ptKey, 
-          label: pt.length > 0 ? pt.map((t: string) => resolveLabel(t, FOIL_LABELS)).join(', ') : 'Standard / Regular' 
-        });
-      }
-    });
-
-    if (results.length === 0) {
-       results.push({ 
-         value: form.promo_type || 'none', 
-         label: (!form.promo_type || form.promo_type === 'none') ? 'Standard / Regular' : resolveLabel(form.promo_type, FOIL_LABELS)
-       });
-    }
-    
-    return results;
-  };
-
-  const getFoilOptions = (treatment: CardTreatment, setCode?: string, collectorNumber?: string, promoType?: string) => {
-    const targetSet = setCode || form.set_code;
-    const targetNum = collectorNumber || form.collector_number;
-    const targetPromo = promoType || form.promo_type;
-
-    const matchingPrints = scryfallPrints.filter(p => 
-      getTreatmentType(p) === treatment && 
-      (p.set === targetSet || !targetSet) &&
-      (p.collector_number === targetNum || !targetNum) &&
-      ((p.promo_types?.join(',') || 'none') === targetPromo || !targetPromo)
-    );
-    
-    const results: { value: FoilTreatment, label: string }[] = [];
-    const seen = new Set<string>();
-
-    const addOpt = (val: string, lbl?: string) => {
-      if (!seen.has(val)) {
-        seen.add(val);
-        results.push({ value: val as FoilTreatment, label: lbl || resolveLabel(val, FOIL_LABELS) });
-      }
-    };
-
-    matchingPrints.forEach(print => {
-      const finishes = print.finishes || [];
-      const pt = (print.promo_types || []) as string[];
-      
-      // 1. Physical Finishes
-      finishes.forEach((f: string) => {
-        const key = f === 'nonfoil' ? 'non_foil' : (f === 'foil' ? 'foil' : (f === 'etched' ? 'etched_foil' : f));
-        addOpt(key);
-      });
-      
-      // 2. Specialized Treatments (promo_types)
-      const specialFinishesKw = ['foil', 'ink', 'slick', 'textured', 'gilded', 'glossy', 'rainbow', 'compleat', 'galaxy', 'surge', 'halo', 'raised'];
-      pt.forEach((p: string) => {
-        if (specialFinishesKw.some(kw => p.toLowerCase().includes(kw))) {
-          addOpt(p); 
-        }
-      });
-    });
-
-    if (results.length === 0) {
-      addOpt(form.foil_treatment || 'non_foil');
-    }
-    return results;
-  };
-
-  const handleSourceChange = (src: PriceSource) => {
-    setForm(f => {
-      let ref = f.price_reference;
-      const print = findMatchingPrint(f.set_code, f.card_treatment, f.collector_number, f.promo_type, f.foil_treatment);
-      if (print) {
-        ref = applyPrintPrices(print, f.foil_treatment, src);
-      }
-      return { ...f, price_source: src, price_reference: ref };
-    });
-  };
-
-  const handleSetChange = (newSet: string) => {
-     // 1. Treatment
-     const treatments = getTreatmentOptions(newSet);
-     const newTreatment = treatments.find(t => t.value === form.card_treatment)?.value || treatments[0]?.value || 'regular';
-     
-     // 2. Art Variant
-     const arts = getArtOptions(newTreatment as CardTreatment, newSet);
-     const newArt = arts[0]?.value || '';
-
-     // 3. Promo Version
-     const promos = getPromoOptions(newTreatment as CardTreatment, newSet, newArt);
-     const newPromo = promos[0]?.value || 'none';
-
-     // 4. Foil
-     const foils = getFoilOptions(newTreatment as CardTreatment, newSet, newArt, newPromo);
-     const newFoil = foils[0]?.value || 'non_foil';
-     
-     // 5. Final Print
-     const bestPrint = findMatchingPrint(newSet, newTreatment as CardTreatment, newArt, newPromo, newFoil as FoilTreatment);
-
-     setForm(f => ({
-       ...f,
-       set_code: newSet,
-       set_name: bestPrint.set_name,
-       card_treatment: newTreatment as CardTreatment,
-       collector_number: newArt,
-       promo_type: newPromo,
-       foil_treatment: newFoil as FoilTreatment,
-       image_url: bestPrint.image_uris?.normal || bestPrint.image_uris?.large || f.image_url,
-       description: extractDescription(bestPrint) || f.description,
-       price_reference: applyPrintPrices(bestPrint, newFoil as FoilTreatment, f.price_source),
-       ...extractMTGMetadata(bestPrint)
-     }));
-  };
-
-  const handleTreatmentChange = (newTreatment: CardTreatment) => {
-    // 1. Art Variant
-    const arts = getArtOptions(newTreatment, form.set_code);
-    const newArt = arts[0]?.value || '';
-
-    // 2. Promo Version
-    const promos = getPromoOptions(newTreatment, form.set_code, newArt);
-    const newPromo = promos[0]?.value || 'none';
-
-    // 3. Foil
-    const foils = getFoilOptions(newTreatment, form.set_code, newArt, newPromo);
-    const newFoil = foils[0]?.value || 'non_foil';
-    
-    // 4. Final Print
-    const bestPrint = findMatchingPrint(form.set_code, newTreatment, newArt, newPromo, newFoil as FoilTreatment);
-
-    setForm(f => ({
-      ...f,
-      card_treatment: newTreatment,
-      collector_number: newArt,
-      promo_type: newPromo,
-      foil_treatment: newFoil as FoilTreatment,
-      image_url: bestPrint.image_uris?.normal || bestPrint.image_uris?.large || f.image_url,
-      description: '',
-      price_reference: applyPrintPrices(bestPrint, newFoil as FoilTreatment, f.price_source),
-      ...extractMTGMetadata(bestPrint)
-    }));
-  };
-
-  const handleArtChange = (newArt: string) => {
-    // 1. Promo Version
-    const promos = getPromoOptions(form.card_treatment, form.set_code, newArt);
-    const newPromo = promos[0]?.value || 'none';
-
-    // 2. Foil
-    const foils = getFoilOptions(form.card_treatment, form.set_code, newArt, newPromo);
-    const newFoil = foils[0]?.value || 'non_foil';
-    
-    // 3. Final Print
-    const bestPrint = findMatchingPrint(form.set_code, form.card_treatment, newArt, newPromo, newFoil as FoilTreatment);
-
-    setForm(f => ({
-      ...f,
-      collector_number: newArt,
-      promo_type: newPromo,
-      foil_treatment: newFoil as FoilTreatment,
-      image_url: bestPrint.image_uris?.normal || bestPrint.image_uris?.large || f.image_url,
-      description: '',
-      price_reference: applyPrintPrices(bestPrint, newFoil as FoilTreatment, f.price_source),
-      ...extractMTGMetadata(bestPrint)
-    }));
-  };
-
-  const handlePromoChange = (newPromo: string) => {
-    // 1. Foil
-    const foils = getFoilOptions(form.card_treatment, form.set_code, form.collector_number, newPromo);
-    const newFoil = foils[0]?.value || 'non_foil';
-    
-    // 2. Final Print
-    const bestPrint = findMatchingPrint(form.set_code, form.card_treatment, form.collector_number, newPromo, newFoil as FoilTreatment);
-
-    setForm(f => ({
-      ...f,
-      promo_type: newPromo,
-      foil_treatment: newFoil as FoilTreatment,
-      image_url: bestPrint.image_uris?.normal || bestPrint.image_uris?.large || f.image_url,
-      price_reference: applyPrintPrices(bestPrint, newFoil as FoilTreatment, f.price_source),
-      ...extractMTGMetadata(bestPrint)
-    }));
-  };
-
-  const handleFoilChange = (newFoil: FoilTreatment) => {
-     const print = findMatchingPrint(form.set_code, form.card_treatment, form.collector_number, form.promo_type, newFoil);
-     setForm(f => ({
-       ...f,
-       foil_treatment: newFoil,
-       image_url: print?.image_uris?.normal || print?.image_uris?.large || f.image_url,
-       price_reference: print ? applyPrintPrices(print, newFoil, f.price_source) : f.price_reference,
-       ...(print ? extractMTGMetadata(print) : {})
-      }));
-  };
 
 
   const handleCreateStorage = async () => {
@@ -776,97 +256,18 @@ export default function AdminDashboard() {
     } catch (e: any) { alert(e.message); }
   };
 
-  const updateStoreQty = (id: string, delta: number) => {
-    setProductStorage(prev => prev.map(loc => 
-      loc.stored_in_id === id ? { ...loc, quantity: Math.max(0, loc.quantity + delta) } : loc
-    ));
-  };
-
-  const setStoreQty = (id: string, qty: number) => {
-    setProductStorage(prev => prev.map(loc => 
-      loc.stored_in_id === id ? { ...loc, quantity: Math.max(0, qty) } : loc
-    ));
-  };
-
   const handleSaveSettings = async () => {
     if (!token) return;
     setSavingSettings(true);
     try {
       const updated = await updateAdminSettings(token, editingSettings);
-      mutateSettings(); // refresh settings
+      mutateSettings();
       setShowSettings(false);
-      mutateProducts(); // refresh prices natively without hard reload
+      mutateProducts();
     } catch (e) {
       alert('Failed to save settings: ' + (e instanceof Error ? e.message : 'Unknown error'));
     } finally {
       setSavingSettings(false);
-    }
-  };
-
-  const handleSave = async () => {
-    if (!form.name || !form.tcg || !form.category) {
-      setFormError('Name, TCG, and Category are required.');
-      return;
-    }
-    setSaving(true);
-    setFormError('');
-    try {
-      const payload: Partial<Product> & { category_ids?: string[] } = {
-        name: form.name, tcg: form.tcg, category: form.category,
-        set_name: form.set_name || undefined,
-        set_code: form.set_code || undefined,
-        condition: (form.condition || undefined) as Product['condition'],
-        foil_treatment: form.foil_treatment,
-        card_treatment: form.card_treatment,
-        price_source: form.price_source,
-        price_reference: form.price_reference === '' ? undefined : Number(form.price_reference),
-        price_cop_override: form.price_cop_override === '' ? undefined : Number(form.price_cop_override),
-        stock: form.stock,
-        image_url: form.image_url || undefined,
-        description: form.description || undefined,
-        category_ids: form.category_ids,
-        collector_number: form.collector_number || undefined,
-        promo_type: form.promo_type || undefined,
-        language: form.language,
-        color_identity: form.color_identity || undefined,
-        rarity: form.rarity || undefined,
-        cmc: form.cmc === '' ? undefined : Number(form.cmc),
-        is_legendary: form.is_legendary,
-        is_historic: form.is_historic,
-        is_land: form.is_land,
-        is_basic_land: form.is_basic_land,
-        art_variation: form.art_variation || undefined,
-        oracle_text: form.oracle_text || undefined,
-        artist: form.artist || undefined,
-        type_line: form.type_line || undefined,
-        border_color: form.border_color || undefined,
-        frame: form.frame || undefined,
-        full_art: form.full_art,
-        textless: form.textless,
-      };
-      
-      // Clean up irrelevant price fields depending on source
-      if (payload.price_source === 'manual') payload.price_reference = undefined;
-      else payload.price_cop_override = undefined;
-
-      let pid = editProduct ? editProduct.id : '';
-      if (editProduct) {
-        const updated = await adminUpdateProduct(token, editProduct.id, payload);
-        const storage = await adminUpdateProductStorage(token, updated.id, productStorage.map(s => ({ stored_in_id: s.stored_in_id, quantity: s.quantity })));
-        
-        // Update list in-place
-        mutateProducts();
-      } else {
-        const newP = await adminCreateProduct(token, payload);
-        await adminUpdateProductStorage(token, newP.id, productStorage.map(s => ({ stored_in_id: s.stored_in_id, quantity: s.quantity })));
-        mutateProducts(); // Re-fetch for new products to handle sorting/pagination
-      }
-      
-      setShowModal(false);
-    } catch (e: unknown) {
-      setFormError(e instanceof Error ? e.message : 'Failed to save product.');
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -958,7 +359,7 @@ export default function AdminDashboard() {
             <tr style={{ borderBottom: '1px solid var(--ink-border)' }}>
               <th
                 className="text-left px-2 py-3 text-xs font-mono-stack cursor-pointer select-none"
-                style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap', width: 40, transition: 'all 0.15s', borderTop: '2px solid transparent', borderBottom: '2px solid transparent' }}
+                style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap', width: 40, transition: 'all 0.15s', borderTopWidth: '2px', borderTopStyle: 'solid', borderTopColor: 'transparent', borderBottomWidth: '2px', borderBottomStyle: 'solid', borderBottomColor: 'transparent' }}
                 title="Reset sorting"
                 onClick={() => { setAdminSortBy('created_at'); setAdminSortDir('desc'); setPage(1); }}
                 onMouseEnter={e => {
@@ -995,8 +396,8 @@ export default function AdminDashboard() {
                       color: isActive ? 'var(--ink-deep)' : 'var(--text-muted)',
                       whiteSpace: 'nowrap',
                       transition: 'all 0.15s',
-                      borderTop: '2px solid transparent',
-                      borderBottom: '2px solid transparent',
+                      borderTopWidth: '2px', borderTopStyle: 'solid', borderTopColor: 'transparent',
+                      borderBottomWidth: '2px', borderBottomStyle: 'solid', borderBottomColor: 'transparent',
                     }}
                     onClick={isSortable ? () => toggleAdminSort(col.key) : undefined}
                     onMouseEnter={isSortable ? e => {
@@ -1069,8 +470,8 @@ export default function AdminDashboard() {
                   <td key="storage" className="px-4 py-3 text-xs font-mono-stack" style={{ maxWidth: 150 }}>
                     {p.stored_in && p.stored_in.length > 0 ? (
                       <div className="flex flex-wrap gap-1">
-                        {p.stored_in.map(s => (
-                          <span key={s.stored_in_id} className="badge" style={{ background: 'var(--kraft-light)', color: 'var(--text-secondary)', border: '1px solid var(--kraft-dark)', padding: '0.1rem 0.3rem', fontSize: '0.65rem' }}>
+                        {p.stored_in.map((s, idx) => (
+                          <span key={s.stored_in_id || `loc-${idx}`} className="badge" style={{ background: 'var(--kraft-light)', color: 'var(--text-secondary)', border: '1px solid var(--kraft-dark)', padding: '0.1rem 0.3rem', fontSize: '0.65rem' }}>
                             {s.name}: {s.quantity}
                           </span>
                         ))}
@@ -1395,383 +796,21 @@ export default function AdminDashboard() {
       )}
 
       {/* Product Modal */}
+
+      {/* Product Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-4 md:pt-8 px-2 md:px-4"
-          style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(3px)', overflowY: 'auto' }}>
-          <div className="card no-tilt p-4 md:p-6 w-full max-w-5xl mb-8" style={{ position: 'relative' }}>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="font-display text-3xl">{editProduct ? 'EDIT PRODUCT' : 'NEW PRODUCT'}</h2>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
-            </div>
-
-            <div className="flex gap-6 flex-col md:flex-row">
-              <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="sm:col-span-2 flex items-end gap-3 flex-wrap sm:flex-nowrap">
-                  <div style={{ width: '100px' }}>
-                    <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>SET</label>
-                    {scryfallPrints.length > 0 ? (
-                      <select id="form-set-code-top" value={form.set_code} onChange={e => handleSetChange(e.target.value)} className="font-bold">
-                        {Array.from(new Map(scryfallPrints.map(c => [c.set, c.set_name])).entries()).map(([code, name]) => (
-                          <option key={code} value={code}>[{code.toUpperCase()}] {name}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input id="form-set-code-top" type="text" value={form.set_code} onChange={e => setForm(f => ({ ...f, set_code: e.target.value.toUpperCase() }))} placeholder="MH2" className="text-center font-bold uppercase" />
-                    )}
-                  </div>
-                  <div style={{ width: '80px' }}>
-                    <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}># CN</label>
-                    <input id="form-cn-top" type="text" value={form.collector_number} onChange={e => handleArtChange(e.target.value)} placeholder="e.g. 123" className="text-center font-bold" />
-                  </div>
-                  <div className="flex-1 min-w-[200px]">
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="text-xs font-mono-stack" style={{ color: 'var(--text-muted)' }}>CARD / PRODUCT NAME *</label>
-                      {form.set_name && <span className="text-[10px] font-mono-stack truncate" style={{ color: 'var(--gold)', maxWidth: '200px' }}>{form.set_name}</span>}
-                    </div>
-                    <input id="form-name" type="text" value={form.name} onChange={e => {
-                      const val = e.target.value;
-                      setForm(f => ({ ...f, name: val }));
-                      setScryfallPrints([]);
-                    }} />
-                  </div>
-                  {form.tcg === 'mtg' && form.category === 'singles' && (
-                    <button type="button" onClick={handlePopulate} disabled={lookingUp || (!form.name.trim() && (!form.set_code.trim() || !form.collector_number.trim()))} className="btn-secondary px-4 transition-colors hover:text-gold" style={{ height: '42px', padding: '0 1rem', fontSize: '0.8rem' }} title="Lookup Scryfall Data">
-                      {lookingUp ? '⏳...' : '📥 POPULATE'}
-                    </button>
-                  )}
-                </div>
-              <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>TCG *</label>
-                <select id="form-tcg" value={form.tcg} onChange={e => setForm(f => ({ ...f, tcg: e.target.value }))}>
-                  {tcgs.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                  {tcgs.length === 0 && KNOWN_TCGS.map(t => <option key={t} value={t}>{TCG_SHORT[t]}</option>)}
-                  <option value="accessories">Accessories</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>CATEGORY *</label>
-                <select id="form-category" value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value as typeof EMPTY_FORM['category'] }))}>
-                  <option value="singles">Singles</option>
-                  <option value="sealed">Sealed</option>
-                  <option value="accessories">Accessories</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>CONDITION</label>
-                <select id="form-condition" value={form.condition} onChange={e => setForm(f => ({ ...f, condition: e.target.value }))}>
-                  {['NM', 'LP', 'MP', 'HP', 'DMG'].map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>CARD TREATMENT / VERSION</label>
-                <select id="form-treatment" 
-                  value={form.card_treatment} 
-                  disabled={scryfallPrints.length === 0}
-                  onChange={e => handleTreatmentChange(e.target.value as CardTreatment)}>
-                  {getTreatmentOptions().map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>ARTIST / COLLECTOR #</label>
-                <select id="form-art" 
-                  value={form.collector_number} 
-                  disabled={scryfallPrints.length === 0 || !form.card_treatment}
-                  onChange={e => handleArtChange(e.target.value)}>
-                  {getArtOptions(form.card_treatment).map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>PROMO VERSION</label>
-                <select id="form-promo" 
-                  value={form.promo_type} 
-                  disabled={scryfallPrints.length === 0 || !form.collector_number}
-                  onChange={e => handlePromoChange(e.target.value)}>
-                  {getPromoOptions(form.card_treatment, form.set_code, form.collector_number).map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>FOIL TREATMENT</label>
-                <select id="form-foil" 
-                  value={form.foil_treatment} 
-                  disabled={scryfallPrints.length === 0 || !form.promo_type}
-                  onChange={e => handleFoilChange(e.target.value as FoilTreatment)}>
-                  {getFoilOptions(form.card_treatment, form.set_code, form.collector_number, form.promo_type).map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-              
-              {/* Pricing section */}
-              <div className="sm:col-span-2 mt-2 pt-2" style={{ borderTop: '1px dashed var(--ink-border)' }}>
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="text-sm font-mono-stack" style={{ color: 'var(--text-primary)' }}>PRICING</h3>
-                   <div className="text-xs font-mono-stack px-2 py-1 rounded" style={{ background: 'var(--ink-surface)', color: 'var(--gold)' }}>
-                    {form.price_source === 'tcgplayer' && `(x ${settings?.usd_to_cop_rate || 0} COP)`}
-                    {form.price_source === 'cardmarket' && `(x ${settings?.eur_to_cop_rate || 0} COP)`}
-                    {form.price_source !== 'manual' && typeof form.price_reference === 'number' && (
-                       <span className="ml-2 font-bold text-sm" style={{ color: form.price_reference === 0 ? 'var(--hp-color)' : 'var(--gold)' }}>
-                         = ${(form.price_reference * (form.price_source === 'tcgplayer' ? (settings?.usd_to_cop_rate || 0) : (settings?.eur_to_cop_rate || 0))).toLocaleString('en-US', { maximumFractionDigits: 0 })} COP
-                       </span>
-                    )}
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>PRICE SOURCE *</label>
-                    <select id="form-price-source" value={form.price_source} onChange={e => handleSourceChange(e.target.value as PriceSource)}>
-                      <option value="manual">Manual Override (COP)</option>
-                      <option value="tcgplayer">External: TCGPlayer (USD)</option>
-                      <option value="cardmarket">External: Cardmarket (EUR)</option>
-                    </select>
-                  </div>
-                  {form.price_source === 'manual' ? (
-                    <div>
-                      <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>PRICE (COP) *</label>
-                      <input id="form-price-override" type="number" step="100" min="0" value={form.price_cop_override} onChange={e => setForm(f => ({ ...f, price_cop_override: e.target.value ? parseFloat(e.target.value) : '' }))} />
-                    </div>
-                  ) : (
-                    <div>
-                      <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>
-                        REFERENCE PRICE ({form.price_source === 'tcgplayer' ? 'USD' : 'EUR'}) *
-                      </label>
-                       <input id="form-price-reference" type="number" step="0.01" min="0" value={form.price_reference} 
-                        onChange={e => setForm(f => ({ ...f, price_reference: e.target.value ? parseFloat(e.target.value) : '' }))} 
-                        style={{ color: form.price_reference === 0 ? 'var(--hp-color)' : 'inherit', borderColor: form.price_reference === 0 ? 'var(--hp-color)' : 'var(--ink-border)' }} />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* MTG Metadata section */}
-              {form.tcg === 'mtg' && form.category === 'singles' && (
-                <div className="sm:col-span-2 mt-4 pt-4" style={{ borderTop: '1px dashed var(--ink-border)' }}>
-                  <h3 className="text-sm font-mono-stack mb-3" style={{ color: 'var(--text-primary)' }}>MTG METADATA</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-                    <div>
-                      <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>LANGUAGE</label>
-                      <select value={form.language} onChange={e => setForm(f => ({ ...f, language: e.target.value }))}>
-                        <option value="en">English (EN)</option>
-                        <option value="es">Spanish (ES)</option>
-                        <option value="fr">French (FR)</option>
-                        <option value="de">German (DE)</option>
-                        <option value="it">Italian (IT)</option>
-                        <option value="pt">Portuguese (PT)</option>
-                        <option value="ja">Japanese (JA)</option>
-                        <option value="ko">Korean (KO)</option>
-                        <option value="ru">Russian (RU)</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>COLOR IDENTITY</label>
-                      <input type="text" value={form.color_identity} onChange={e => setForm(f => ({ ...f, color_identity: e.target.value }))} placeholder="e.g. W,U" />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>RARITY</label>
-                      <select value={form.rarity} onChange={e => setForm(f => ({ ...f, rarity: e.target.value }))}>
-                        <option value="common">Common</option>
-                        <option value="uncommon">Uncommon</option>
-                        <option value="rare">Rare</option>
-                        <option value="mythic">Mythic</option>
-                        <option value="special">Special</option>
-                        <option value="bonus">Bonus</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>CMC</label>
-                      <input type="number" step="0.5" value={form.cmc} onChange={e => setForm(f => ({ ...f, cmc: e.target.value ? parseFloat(e.target.value) : '' }))} />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>ARTIST</label>
-                      <input type="text" value={form.artist} onChange={e => setForm(f => ({ ...f, artist: e.target.value }))} />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>TYPE LINE</label>
-                      <input type="text" value={form.type_line} onChange={e => setForm(f => ({ ...f, type_line: e.target.value }))} />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>ORACLE TEXT</label>
-                      <textarea 
-                        className="w-full text-[11px] font-mono-stack p-2 bg-transparent border border-ink-border rounded h-24"
-                        value={form.oracle_text} 
-                        onChange={e => setForm(f => ({ ...f, oracle_text: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-x-6 gap-y-3 p-3 bg-kraft-light/10 border border-kraft-dark rounded mb-4">
-                    <label className="flex items-center gap-2 text-xs font-mono-stack cursor-pointer">
-                      <input type="checkbox" checked={form.is_legendary} onChange={e => setForm(f => ({ ...f, is_legendary: e.target.checked }))} />
-                      LEGENDARY
-                    </label>
-                    <label className="flex items-center gap-2 text-xs font-mono-stack cursor-pointer">
-                      <input type="checkbox" checked={form.is_historic} onChange={e => setForm(f => ({ ...f, is_historic: e.target.checked }))} />
-                      HISTORIC
-                    </label>
-                    <label className="flex items-center gap-2 text-xs font-mono-stack cursor-pointer">
-                      <input type="checkbox" checked={form.is_land} onChange={e => setForm(f => ({ ...f, is_land: e.target.checked }))} />
-                      LAND
-                    </label>
-                    <label className="flex items-center gap-2 text-xs font-mono-stack cursor-pointer">
-                      <input type="checkbox" checked={form.is_basic_land} onChange={e => setForm(f => ({ ...f, is_basic_land: e.target.checked }))} />
-                      BASIC LAND
-                    </label>
-                    <label className="flex items-center gap-2 text-xs font-mono-stack cursor-pointer">
-                      <input type="checkbox" checked={form.full_art} onChange={e => setForm(f => ({ ...f, full_art: e.target.checked }))} />
-                      FULL ART
-                    </label>
-                    <label className="flex items-center gap-2 text-xs font-mono-stack cursor-pointer">
-                      <input type="checkbox" checked={form.textless} onChange={e => setForm(f => ({ ...f, textless: e.target.checked }))} />
-                      TEXTLESS
-                    </label>
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>IMAGE URL</label>
-                <input id="form-image" type="text" value={form.image_url} onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))} />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>DESCRIPTION</label>
-                <textarea id="form-description" className="w-full" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3} />
-              </div>
-              <div className="sm:col-span-2 mt-4 pt-4" style={{ borderTop: '1px dashed var(--ink-border)' }}>
-                <label className="text-xs font-mono-stack mb-2 block" style={{ color: 'var(--text-muted)' }}>CUSTOM COLLECTIONS / CATEGORIES</label>
-                <div className="flex flex-wrap gap-2">
-                  {categories.length === 0 && <span className="text-sm text-text-muted italic">No categories created yet. Create them from the dashboard header.</span>}
-                  {categories.map(c => {
-                    const isSelected = form.category_ids.includes(c.id);
-                    return (
-                      <button
-                        key={c.id}
-                        type="button"
-                        onClick={() => setForm(f => ({
-                          ...f,
-                          category_ids: isSelected ? f.category_ids.filter(id => id !== c.id) : [...f.category_ids, c.id]
-                        }))}
-                        className={`badge transition-colors cursor-pointer ${isSelected ? 'border-gold' : 'bg-ink-surface text-text-secondary border-ink-border hover:border-gold/50'}`}
-                        style={{
-                           background: isSelected ? 'var(--gold)' : '',
-                           color: isSelected ? 'var(--ink-deep)' : ''
-                        }}
-                      >
-                        {c.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            <div className="w-full md:w-64 flex-shrink-0">
-              <div className="sticky top-4">
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>IMAGE PREVIEW</label>
-                <div className="cardbox overflow-hidden" style={{ aspectRatio: '3/4', padding: '0.5rem', background: 'var(--kraft-light)' }}>
-                  <div className="w-full h-full bg-ink-card border border-ink-border relative flex items-center justify-center">
-                    {form.image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={form.image_url} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                    ) : (
-                      <span className="text-5xl opacity-20">🃏</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* STORAGE TABLE */}
-                <div className="cardbox p-3 bg-kraft-light/30">
-                  <div className="flex justify-between items-center mb-3">
-                    <label className="text-xs font-mono-stack uppercase text-text-muted m-0">STORAGE</label>
-                    <span className="text-xs font-bold bg-ink-surface px-2 py-1 text-gold rounded border border-ink-border">
-                      TOTAL: {productStorage.reduce((acc, l) => acc + l.quantity, 0)}
-                    </span>
-                  </div>
-                  
-                  <div className="space-y-2 max-h-60 overflow-y-auto mb-4 border-b border-ink-border pb-4">
-                    {productStorage.length === 0 && <p className="text-xs text-text-muted italic text-center py-2">No storage assignments yet.</p>}
-                    {productStorage.map(loc => (
-                      <div key={loc.stored_in_id} className="flex items-center justify-between gap-2 text-sm border-b border-ink-border/50 pb-2">
-                        <span className="truncate flex-1 font-semibold" title={loc.name}>{loc.name}</span>
-                        <div className="flex items-center gap-1">
-                          <button onClick={() => updateStoreQty(loc.stored_in_id, -1)} className="w-6 h-6 flex items-center justify-center bg-ink-surface border border-ink-border hover:text-hp-color transition-colors" disabled={loc.quantity <= 0}>-</button>
-                          <input type="number" value={loc.quantity === 0 ? '' : loc.quantity} min="0" 
-                            onChange={e => setStoreQty(loc.stored_in_id, parseInt(e.target.value) || 0)}
-                            className="w-12 px-1 py-0 text-center text-sm font-mono-stack" style={{ height: '24px' }} placeholder="0" />
-                          <button onClick={() => updateStoreQty(loc.stored_in_id, 1)} className="w-6 h-6 flex items-center justify-center bg-ink-surface border border-ink-border hover:text-gold transition-colors">+</button>
-                          <button onClick={() => setProductStorage(prev => prev.filter(p => p.stored_in_id !== loc.stored_in_id))} className="w-6 h-6 flex items-center justify-center hover:text-hp-color opacity-40 hover:opacity-100 transition-opacity" title="Remove assignment">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="pt-2">
-                    <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">Quick Add Location</label>
-                    <div className="flex gap-1">
-                      <select 
-                        className="flex-1 text-xs px-2 h-10"
-                        style={{ padding: '0 8px' }}
-                        onChange={(e) => {
-                          const id = e.target.value;
-                          if (!id) return;
-                          const loc = storageLocations.find(l => l.id === id);
-                          if (!loc) return;
-                          if (productStorage.find(p => p.stored_in_id === id)) return;
-                          setProductStorage(prev => [...prev, { stored_in_id: loc.id, name: loc.name, quantity: 0 }]);
-                          e.target.value = "";
-                        }}
-                      >
-                        <option value="">-- Select Location --</option>
-                        {storageLocations
-                          .filter(sl => !productStorage.some(ps => ps.stored_in_id === sl.id))
-                          .sort((a,b) => a.name.localeCompare(b.name))
-                          .map(sl => (
-                            <option key={sl.id} value={sl.id}>{sl.name}</option>
-                          ))
-                        }
-                      </select>
-                      <button 
-                        onClick={() => setShowStorageModal(true)}
-                        className="btn-secondary w-10 h-10 p-0 flex items-center justify-center"
-                        title="New Global Location"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-            {formError && (
-              <p className="mt-4 text-sm font-mono-stack" style={{ color: 'var(--hp-color)' }}>{formError}</p>
-            )}
-
-            <div className="flex gap-3 mt-6">
-              <button id="admin-save-product" onClick={handleSave} className="btn-primary flex-1 py-3 text-sm" disabled={saving}>
-                {saving ? 'SAVING...' : editProduct ? 'SAVE CHANGES' : 'CREATE PRODUCT'}
-              </button>
-              <button onClick={() => setShowModal(false)} className="btn-secondary py-3 text-sm">CANCEL</button>
-            </div>
-          </div>
-        </div>
+        <ProductEditModal
+          editProduct={editProduct}
+          token={token}
+          storageLocations={storageLocations}
+          categories={categories}
+          tcgs={tcgs}
+          settings={settings}
+          storageFilter={storageFilter}
+          onClose={handleModalClose}
+          onSaved={handleModalSaved}
+          onSaveAndNew={handleSaveAndNew}
+        />
       )}
 
       {/* TCG Registry Modal */}

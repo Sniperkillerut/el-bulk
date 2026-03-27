@@ -17,7 +17,7 @@ func main() {
 
 	// Clear products table
 	logger.Info("Clearing products table...")
-	_, err := database.Exec(`DELETE FROM products`)
+	_, err := database.Exec(`DELETE FROM product`)
 	if err != nil {
 		logger.Error("Failed to clear products: %v", err)
 		os.Exit(1)
@@ -40,7 +40,7 @@ func main() {
 	}
 
 	_, err = database.Exec(`
-		INSERT INTO admins (username, password_hash)
+		INSERT INTO admin (username, password_hash)
 		VALUES ($1, $2)
 		ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash
 	`, adminUser, string(hash))
@@ -147,14 +147,14 @@ func main() {
 	}
 	for _, cat := range categoriesToSeed {
 		var catID string
-		database.QueryRow(`INSERT INTO custom_categories (name, slug) VALUES ($1, $2) ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id`, cat.Name, cat.Slug).Scan(&catID)
+		database.QueryRow(`INSERT INTO custom_category (name, slug) VALUES ($1, $2) ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id`, cat.Name, cat.Slug).Scan(&catID)
 		categoryMap[cat.Slug] = catID
 	}
 
 	// Seed Storage
 	var binderID, boxA_ID string
-	database.QueryRow(`INSERT INTO stored_in (name) VALUES ('Binder 1') ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id`).Scan(&binderID)
-	database.QueryRow(`INSERT INTO stored_in (name) VALUES ('Box A') ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id`).Scan(&boxA_ID)
+	database.QueryRow(`INSERT INTO storage_location (name) VALUES ('Binder 1') ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id`).Scan(&binderID)
+	database.QueryRow(`INSERT INTO storage_location (name) VALUES ('Box A') ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id`).Scan(&boxA_ID)
 
 	for _, p := range products {
 		logger.Info("Seeding %s (%s)...", p.Name, p.TCG)
@@ -198,7 +198,7 @@ func main() {
 
 		var newProductID string
 		err = database.QueryRow(`
-			INSERT INTO products (
+			INSERT INTO product (
 				name, tcg, category, set_name, set_code, condition,
 				foil_treatment, card_treatment,
 				price_cop_override, price_source, stock, description, image_url,
@@ -219,13 +219,13 @@ func main() {
 
 		for _, slug := range p.CategorySlugs {
 			if id, ok := categoryMap[slug]; ok {
-				database.Exec(`INSERT INTO product_categories (product_id, category_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, newProductID, id)
+				database.Exec(`INSERT INTO product_category (product_id, category_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, newProductID, id)
 			}
 		}
 
 		if p.Stock > 0 {
-			database.Exec(`INSERT INTO product_stored_in (product_id, stored_in_id, quantity) VALUES ($1, $2, $3)`, newProductID, binderID, p.Stock/2)
-			database.Exec(`INSERT INTO product_stored_in (product_id, stored_in_id, quantity) VALUES ($1, $2, $3)`, newProductID, boxA_ID, p.Stock-(p.Stock/2))
+			database.Exec(`INSERT INTO product_storage (product_id, storage_id, quantity) VALUES ($1, $2, $3)`, newProductID, binderID, p.Stock/2)
+			database.Exec(`INSERT INTO product_storage (product_id, storage_id, quantity) VALUES ($1, $2, $3)`, newProductID, boxA_ID, p.Stock-(p.Stock/2))
 		}
 		time.Sleep(100 * time.Millisecond) // Respect rate limits
 	}

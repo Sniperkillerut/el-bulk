@@ -3,7 +3,7 @@
 CREATE OR REPLACE VIEW view_product_enriched AS
 SELECT p.*,
        (SELECT COALESCE(jsonb_agg(jsonb_build_object(
-           'storage_id', ps.storage_id,
+           'stored_in_id', ps.storage_id,
            'name', sl.name,
            'quantity', ps.quantity
        )), '[]') FROM product_storage ps JOIN storage_location sl ON ps.storage_id = sl.id WHERE ps.product_id = p.id AND ps.quantity > 0) as stored_in_json,

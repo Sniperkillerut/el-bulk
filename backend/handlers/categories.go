@@ -30,7 +30,7 @@ func (h *CategoriesHandler) List(w http.ResponseWriter, r *http.Request) {
 	query := `
 		SELECT c.id, c.name, c.slug, c.is_active, c.show_badge, c.searchable, c.created_at, COUNT(pc.product_id) as item_count
 		FROM custom_category c
-		LEFT JOIN product_categories pc ON c.id = pc.category_id
+		LEFT JOIN product_category pc ON c.id = pc.category_id
 	`
 	if !isAdmin {
 		query += " WHERE c.is_active = true OR c.searchable = true OR c.show_badge = true "
@@ -93,7 +93,7 @@ func (h *CategoriesHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	var cat models.CustomCategory
 	err := h.DB.QueryRowx(
-		"INSERT INTO custom_categories (name, slug, is_active, show_badge, searchable) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+		"INSERT INTO custom_category (name, slug, is_active, show_badge, searchable) VALUES ($1, $2, $3, $4, $5) RETURNING *",
 		input.Name, slug, isActive, showBadge, searchable,
 	).StructScan(&cat)
 
@@ -127,7 +127,7 @@ func (h *CategoriesHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	var cat models.CustomCategory
 	// We use COALESCE or similar if we wanted partial updates, but here we assume full input for simple CRUD
-	query := `UPDATE custom_categories SET name = $1, slug = $2`
+	query := `UPDATE custom_category SET name = $1, slug = $2`
 	args := []interface{}{input.Name, slug}
 	
 	idx := 3

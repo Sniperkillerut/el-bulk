@@ -229,8 +229,11 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	orderBy := h.buildOrderBy(sortBy, sortDir, search, len(args))
 
-	listQuery := `SELECT * FROM view_product_enriched p ` +
-		fromClause + " " + where + " ORDER BY " + orderBy + " LIMIT $" + strconv.Itoa(len(args)+1) + " OFFSET $" + strconv.Itoa(len(args)+2)
+	// For the listing query, swap the base table with the enriched view
+	// so we get stored_in_json and categories_json columns
+	viewFrom := strings.Replace(fromClause, "FROM product p", "FROM view_product_enriched p", 1)
+
+	listQuery := `SELECT p.* ` + viewFrom + " " + where + " ORDER BY " + orderBy + " LIMIT $" + strconv.Itoa(len(args)+1) + " OFFSET $" + strconv.Itoa(len(args)+2)
 
 	listArgs := append([]interface{}{}, args...)
 	listArgs = append(listArgs, pageSize, offset)

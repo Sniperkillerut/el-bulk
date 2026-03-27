@@ -225,7 +225,7 @@ type StoredIn struct {
 
 type ProductStorage struct {
 	ProductID  string `db:"product_id"   json:"product_id"`
-	StorageID  string `db:"storage_id" json:"storage_id"`
+	StorageID  string `db:"storage_id" json:"stored_in_id"`
 	Quantity   int    `db:"quantity"     json:"quantity"`
 }
 
