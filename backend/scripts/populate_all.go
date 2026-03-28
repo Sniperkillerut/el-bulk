@@ -24,7 +24,7 @@ func main() {
 		FoilTreatment string `db:"foil_treatment"`
 	}
 
-	err := database.Select(&products, "SELECT id, name, COALESCE(set_code, '') as set_code, foil_treatment FROM products WHERE tcg = 'mtg'")
+	err := database.Select(&products, "SELECT id, name, COALESCE(set_code, '') as set_code, foil_treatment FROM product WHERE tcg = 'mtg'")
 	if err != nil {
 		logger.Error("Failed to fetch products: %v", err)
 		os.Exit(1)
@@ -48,7 +48,7 @@ func main() {
 
 		// Update database
 		_, err = database.Exec(`
-			UPDATE products SET
+			UPDATE product SET
 				image_url = $1,
 				set_name = $2,
 				set_code = $3,
@@ -69,8 +69,9 @@ func main() {
 				frame = $18,
 				full_art = $19,
 				textless = $20,
+				promo_type = $21,
 				updated_at = NOW()
-			WHERE id = $21
+			WHERE id = $22
 		`, 
 		meta.ImageURL, 
 		meta.SetName,
@@ -92,6 +93,7 @@ func main() {
 		meta.Frame,
 		meta.FullArt,
 		meta.Textless,
+		meta.PromoType,
 		p.ID)
 
 		if err != nil {

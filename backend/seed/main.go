@@ -170,6 +170,7 @@ func main() {
 		fullArt, textless := p.FullArt, p.Textless
 		setCode, setName := p.SetCode, p.SetName
 
+		collectorNumber, promoType := "", ""
 		if p.TCG == "mtg" {
 			meta, err := external.LookupMTGCard(p.Name, p.SetCode, "", string(p.Foil))
 			if err == nil {
@@ -193,21 +194,23 @@ func main() {
 				if meta.Frame != nil { frame = *meta.Frame }
 				fullArt = meta.FullArt
 				textless = meta.Textless
+				collectorNumber = meta.CollectorNumber
+				if meta.PromoType != nil { promoType = *meta.PromoType }
 			}
 		}
 
 		var newProductID string
 		err = database.QueryRow(`
 			INSERT INTO product (
-				name, tcg, category, set_name, set_code, condition,
-				foil_treatment, card_treatment,
+				name, tcg, category, set_name, set_code, collector_number, condition,
+				foil_treatment, card_treatment, promo_type,
 				price_cop_override, price_source, stock, description, image_url,
 				language, color_identity, rarity, cmc, is_legendary, is_historic, is_land, is_basic_land, art_variation,
 				oracle_text, artist, type_line, border_color, frame, full_art, textless
-			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'manual', 0, $10, $11, 
-			          $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27) RETURNING id
-		`, p.Name, p.TCG, p.Category, setName, setCode, p.Condition,
-			p.Foil, p.Treatment,
+			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'manual', 0, $12, $13, 
+			          $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29) RETURNING id
+		`, p.Name, p.TCG, p.Category, setName, setCode, collectorNumber, p.Condition,
+			p.Foil, p.Treatment, promoType,
 			p.PriceCOP, desc, img,
 			lang, color, rarity, cmc, isLegendary, isHistoric, isLand, isBasicLand, artVariation,
 			oracleText, artist, typeLine, borderColor, frame, fullArt, textless).Scan(&newProductID)

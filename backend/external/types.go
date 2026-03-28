@@ -28,5 +28,6 @@ type CardLookupResult struct {
 	Frame        *string  `json:"frame,omitempty"`
 	FullArt      bool     `json:"full_art"`
 	Textless     bool     `json:"textless"`
+	PromoType    *string  `json:"promo_type,omitempty"`
 }
 

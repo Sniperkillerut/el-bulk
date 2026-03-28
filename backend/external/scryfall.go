@@ -61,6 +61,7 @@ type scryfallCard struct {
 	Frame         string   `json:"frame"`
 	FullArt       bool     `json:"full_art"`
 	Textless      bool     `json:"textless"`
+	PromoTypes    []string `json:"promo_types"`
 }
 
 type CardIdentifier struct {
@@ -286,6 +287,12 @@ func mapScryfallToResult(card *scryfallCard, foilTreatment string) *CardLookupRe
 		typeLine = strings.Join(tParts, " // ")
 	}
 
+	var promoType *string
+	if len(card.PromoTypes) > 0 {
+		pt := strings.Join(card.PromoTypes, ", ")
+		promoType = &pt
+	}
+
 	return &CardLookupResult{
 		Name:            card.Name,
 		ImageURL:        imageURL,
@@ -310,5 +317,6 @@ func mapScryfallToResult(card *scryfallCard, foilTreatment string) *CardLookupRe
 		Frame:           &card.Frame,
 		FullArt:         card.FullArt,
 		Textless:        card.Textless,
+		PromoType:       promoType,
 	}
 }
