@@ -39,7 +39,7 @@ BEGIN
         (order_meta->>'total_cop')::numeric,
         order_meta->>'notes'
     )
-    RETURNING id, order_number INTO v_order_id, v_order_num;
+    RETURNING id, "order".order_number INTO v_order_id, v_order_num;
 
     -- Insert Order Items
     INSERT INTO order_item (

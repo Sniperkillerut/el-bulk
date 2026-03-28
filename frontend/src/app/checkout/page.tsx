@@ -9,7 +9,7 @@ import CardImage from '@/components/CardImage';
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, totalPrice, updateQty, removeItem, clearCart } = useCart();
+  const { items, removedItems, totalPrice, updateQty, removeItem, restoreItem, permanentRemove, clearCart } = useCart();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -26,11 +26,9 @@ export default function CheckoutPage() {
 
   const set = (key: string, val: string) => setForm(f => ({ ...f, [key]: val }));
 
-  const handleSubmit = async () => {
-    if (!form.first_name.trim() || !form.phone.trim()) {
-      setError('Nombre y teléfono son requeridos.');
-      return;
-    }
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+
     if (items.length === 0) {
       setError('Tu carrito está vacío.');
       return;
@@ -72,7 +70,7 @@ export default function CheckoutPage() {
       <h1 className="font-display text-5xl mb-2">FINALIZAR COMPRA</h1>
       <div className="gold-line mb-8" />
 
-      <div className="flex flex-col lg:flex-row gap-8">
+      <form onSubmit={handleSubmit} className="flex flex-col lg:flex-row gap-8">
         {/* Left: Customer Form */}
         <div className="flex-1">
           <div className="card no-tilt p-6">
@@ -81,27 +79,27 @@ export default function CheckoutPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>NOMBRE *</label>
-                <input type="text" value={form.first_name} onChange={e => set('first_name', e.target.value)} placeholder="Juan" />
+                <input type="text" value={form.first_name} onChange={e => set('first_name', e.target.value)} placeholder="Juan" required />
               </div>
               <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>APELLIDO</label>
-                <input type="text" value={form.last_name} onChange={e => set('last_name', e.target.value)} placeholder="Pérez" />
+                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>APELLIDO *</label>
+                <input type="text" value={form.last_name} onChange={e => set('last_name', e.target.value)} placeholder="Pérez" required />
               </div>
               <div>
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>TELÉFONO / WHATSAPP *</label>
-                <input type="text" value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="+57 300 000 0000" />
+                <input type="tel" value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="3001234567" required />
               </div>
               <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>EMAIL</label>
-                <input type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="correo@ejemplo.com" />
+                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>EMAIL *</label>
+                <input type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="correo@ejemplo.com" required />
               </div>
               <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>CÉDULA / ID</label>
-                <input type="text" value={form.id_number} onChange={e => set('id_number', e.target.value)} placeholder="1.234.567.890" />
+                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>CÉDULA / ID *</label>
+                <input type="number" value={form.id_number} onChange={e => set('id_number', e.target.value)} placeholder="1234567890" required />
               </div>
               <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>DIRECCIÓN</label>
-                <input type="text" value={form.address} onChange={e => set('address', e.target.value)} placeholder="Cra 1 # 2-3" />
+                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>DIRECCIÓN *</label>
+                <input type="text" value={form.address} onChange={e => set('address', e.target.value)} placeholder="Cra 1 # 2-3" required />
               </div>
             </div>
 
@@ -166,16 +164,31 @@ export default function CheckoutPage() {
                       )}
                       <div className="flex items-center gap-2 mt-2">
                         <button
+                          type="button"
                           onClick={() => updateQty(p.id, item.quantity - 1)}
                           style={{ width: 22, height: 22, background: 'var(--ink-border)', border: 'none', borderRadius: 2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}
                         >−</button>
                         <span className="text-sm font-mono-stack w-5 text-center">{item.quantity}</span>
                         <button
+                          type="button"
                           onClick={() => updateQty(p.id, item.quantity + 1)}
                           disabled={item.quantity >= p.stock}
                           style={{ width: 22, height: 22, background: 'var(--ink-border)', border: 'none', borderRadius: 2, cursor: item.quantity >= p.stock ? 'not-allowed' : 'pointer', opacity: item.quantity >= p.stock ? 0.4 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}
                         >+</button>
-                        <button onClick={() => removeItem(p.id)} className="ml-auto text-xs" style={{ color: 'var(--hp-color)', background: 'none', border: 'none', cursor: 'pointer' }}>Eliminar</button>
+                        <span className="text-[10px] font-mono-stack ml-1" style={{ color: 'var(--text-muted)' }}>
+                          {p.stock} dispon.
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeItem(p.id)}
+                          className="ml-auto p-1 opacity-60 hover:opacity-100 transition-opacity"
+                          title="Eliminar"
+                          style={{ color: 'var(--hp-color)', background: 'none', border: 'none', cursor: 'pointer' }}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
+                          </svg>
+                        </button>
                       </div>
                     </div>
                     <div className="text-right flex-shrink-0">
@@ -196,7 +209,7 @@ export default function CheckoutPage() {
             {error && <p className="text-sm font-mono-stack mb-3" style={{ color: 'var(--hp-color)' }}>{error}</p>}
 
             <button
-              onClick={handleSubmit}
+              type="submit"
               disabled={submitting}
               className="btn-primary w-full py-3 text-lg"
               style={{ opacity: submitting ? 0.7 : 1 }}
@@ -207,9 +220,49 @@ export default function CheckoutPage() {
             <p className="text-[10px] font-mono-stack text-center mt-3" style={{ color: 'var(--text-muted)' }}>
               Al confirmar, un asesor se pondrá en contacto contigo para coordinar la entrega.
             </p>
+
+            {/* Removed Items Cache */}
+            {removedItems.length > 0 && (
+              <div className="mt-8 opacity-60 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-300">
+                <h3 className="font-display text-xl mb-4 text-muted">PRODUCTOS ELIMINADOS</h3>
+                <div className="space-y-2">
+                  {removedItems.map(item => (
+                    <div key={item.product.id} className="card no-tilt p-3 flex items-center gap-4 bg-ink-surface/30">
+                      <div style={{ width: 40 }}>
+                        <CardImage imageUrl={item.product.image_url} name={item.product.name} tcg={item.product.tcg} height={50} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold truncate">{item.product.name}</p>
+                        <p className="text-[10px] text-muted truncate">{item.product.set_name}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => restoreItem(item.product.id)}
+                          className="badge cursor-pointer hover:bg-gold hover:text-black transition-colors"
+                          style={{ fontSize: '0.7rem' }}
+                        >
+                          REAGREGAR
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => permanentRemove(item.product.id)}
+                          className="p-1 text-hp-color"
+                          title="Eliminar permanentemente"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      </form>
     </div>
   );
 }
