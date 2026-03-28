@@ -1,4 +1,4 @@
-import { FormState } from '../../ProductEditModal';
+import { FormState } from '../types';
 import { 
   getTreatmentOptions, getArtOptions, getPromoOptions, getFoilOptions, ArtOption 
 } from '@/lib/mtg-logic';
@@ -7,6 +7,7 @@ import { ScryfallCard, FoilTreatment, CardTreatment } from '@/lib/types';
 interface VariantTabProps {
   form: FormState;
   prints: ScryfallCard[];
+  isMTGSingles: boolean;
   onUpdate: (update: Partial<FormState>) => void;
   onTreatmentChange: (t: CardTreatment) => void;
   onArtChange: (a: string) => void;
@@ -15,7 +16,7 @@ interface VariantTabProps {
 }
 
 export default function VariantTab({
-  form, prints, onUpdate,
+  form, prints, isMTGSingles, onUpdate,
   onTreatmentChange, onArtChange, onPromoChange, onFoilChange
 }: VariantTabProps) {
   // Filter waterfalls
@@ -143,27 +144,85 @@ export default function VariantTab({
       </div>
 
       <div className="space-y-4 bg-ink-surface/30 p-4 rounded border border-ink-border">
-        <h4 className="text-[10px] font-mono-stack uppercase text-gold">Identity Summary</h4>
-        <div className="space-y-2 text-xs">
-          <div className="flex justify-between border-b border-ink-border/50 pb-1">
-            <span className="text-text-muted">Set:</span>
-            <span className="font-bold">{form.set_code.toUpperCase()}</span>
-          </div>
-          <div className="flex justify-between border-b border-ink-border/50 pb-1">
-            <span className="text-text-muted">Collector #:</span>
-            <span>{form.collector_number}</span>
-          </div>
-          <div className="flex justify-between border-b border-ink-border/50 pb-1">
-            <span className="text-text-muted">Treatment:</span>
-            <span>{form.card_treatment.toUpperCase()}</span>
-          </div>
-          <div className="flex justify-between border-b border-ink-border/50 pb-1">
-            <span className="text-text-muted">Foil:</span>
-            <span className={form.foil_treatment !== 'non_foil' ? 'text-gold italic' : ''}>
-              {form.foil_treatment.toUpperCase()}
-            </span>
+        <div>
+          <h4 className="text-[10px] font-mono-stack uppercase text-gold mb-3">Identity Summary</h4>
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between border-b border-ink-border/50 pb-1">
+              <span className="text-text-muted">Set:</span>
+              <span className="font-bold">{form.set_code.toUpperCase()}</span>
+            </div>
+            <div className="flex justify-between border-b border-ink-border/50 pb-1">
+              <span className="text-text-muted">Collector #:</span>
+              <span>{form.collector_number}</span>
+            </div>
+            <div className="flex justify-between border-b border-ink-border/50 pb-1">
+              <span className="text-text-muted">Treatment:</span>
+              <span>{form.card_treatment.toUpperCase()}</span>
+            </div>
+            <div className="flex justify-between border-b border-ink-border/50 pb-1">
+              <span className="text-text-muted">Foil:</span>
+              <span className={form.foil_treatment !== 'non_foil' ? 'text-gold italic' : ''}>
+                {form.foil_treatment.toUpperCase()}
+              </span>
+            </div>
           </div>
         </div>
+
+        {isMTGSingles && (
+          <div className="pt-4 border-t border-ink-border/50 space-y-4">
+            <h4 className="text-[10px] font-mono-stack uppercase text-gold mb-2">MTG Metadata</h4>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[9px] font-mono-stack mb-1 block uppercase text-text-muted">Language</label>
+                <input type="text" className="text-xs py-1" value={form.language || 'en'} onChange={e => onUpdate({ language: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-[9px] font-mono-stack mb-1 block uppercase text-text-muted">Rarity</label>
+                <input type="text" className="text-xs py-1" value={form.rarity || 'common'} onChange={e => onUpdate({ rarity: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-[9px] font-mono-stack mb-1 block uppercase text-text-muted">Colors</label>
+                <input type="text" className="text-xs py-1" value={form.color_identity} onChange={e => onUpdate({ color_identity: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-[9px] font-mono-stack mb-1 block uppercase text-text-muted">CMC</label>
+                <input type="number" step="1" className="text-xs py-1" value={form.cmc ?? ''} onChange={e => onUpdate({ cmc: e.target.value === '' ? '' : Number(e.target.value) })} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-x-2 gap-y-1 py-2 border-y border-ink-border/30">
+              {[
+                { label: 'LEGENDARY', key: 'is_legendary' },
+                { label: 'HISTORIC', key: 'is_historic' },
+                { label: 'LAND', key: 'is_land' },
+                { label: 'BASIC', key: 'is_basic_land' },
+                { label: 'FULL ART', key: 'full_art' },
+                { label: 'TEXTLESS', key: 'textless' }
+              ].map(flag => (
+                <label key={flag.key} className="flex items-center gap-1.5 text-[9px] font-mono-stack cursor-pointer hover:text-gold transition-colors">
+                  <input type="checkbox" checked={(form as any)[flag.key]} onChange={e => onUpdate({ [flag.key]: e.target.checked })} className="w-3 h-3" />
+                  {flag.label}
+                </label>
+              ))}
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-[9px] font-mono-stack mb-1 block uppercase text-text-muted">Type Line</label>
+                <input type="text" className="text-xs py-1" value={form.type_line} onChange={e => onUpdate({ type_line: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-[9px] font-mono-stack mb-1 block uppercase text-text-muted">Oracle Text</label>
+                <textarea rows={2} className="text-xs py-1" value={form.oracle_text} onChange={e => onUpdate({ oracle_text: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-[9px] font-mono-stack mb-1 block uppercase text-text-muted">Artist</label>
+                <input type="text" className="text-xs py-1" value={form.artist} onChange={e => onUpdate({ artist: e.target.value })} />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

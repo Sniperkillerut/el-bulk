@@ -306,6 +306,8 @@ export async function triggerPriceRefresh(
   return res.json();
 }
 
+// adminFetchStats removed from here to avoid duplication
+
 // ---------------------------------------------------------------------------
 // Admin: Storage Locations
 // ---------------------------------------------------------------------------
@@ -563,7 +565,7 @@ export async function adminCompleteOrder(token: string, id: string, decrements: 
   return res.json();
 }
 
-export async function adminFetchStats(token: string): Promise<{ database_size: string; cache_hit_ratio: number; active_connections: number; max_connections: number; total_products: number }> {
+export async function adminFetchStats(token: string): Promise<{ total_sku_records: number; query_speed_ms: number; database_size: string; cache_hit_ratio: number; active_connections: number; max_connections: number }> {
   const res = await fetch(`${API_BASE}/api/admin/stats`, {
     headers: { Authorization: `Bearer ${token}` },
     cache: 'no-store',

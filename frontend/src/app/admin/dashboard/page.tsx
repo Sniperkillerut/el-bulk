@@ -150,8 +150,8 @@ export default function AdminDashboard() {
       <main className="flex-1 p-8">
         <div className="flex justify-between items-start mb-10">
           <div className="space-y-1">
-            <h1 className="font-display text-5xl tracking-tighter text-ink-deep m-0">INVENTORY LOGISTICS</h1>
-            <p className="font-mono-stack text-xs text-text-muted opacity-60">ADMIN_DASHBOARD_V2.4 // SESSION_ACTIVE</p>
+            <h1 className="font-display text-5xl tracking-tighter text-ink-deep m-0">INVENTORY MANAGEMENT</h1>
+            <p className="font-mono-stack text-xs text-text-muted opacity-60">ADMIN DASHBOARD // SESSION ACTIVE</p>
           </div>
           <div className="flex gap-4">
              <button onClick={() => setShowImportModal(true)} className="btn-secondary px-6 flex items-center gap-2">
@@ -167,7 +167,7 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mb-8">
           <div className="xl:col-span-3 card no-tilt p-6 bg-ink-surface/40 flex flex-wrap gap-6 items-end">
             <div className="flex-1 min-w-[240px]">
-              <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">Scanner Search</label>
+              <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">Product Search</label>
               <div className="relative">
                 <input type="text" placeholder="Search by name, set, code..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30">🔍</span>
@@ -176,14 +176,14 @@ export default function AdminDashboard() {
             <div style={{ width: '160px' }}>
               <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">TCG Filter</label>
               <select value={tcgFilter} onChange={e => { setTcgFilter(e.target.value); setPage(1); }}>
-                <option value="">ALL SYSTEMS</option>
+                <option value="">ALL TCGS</option>
                 {tcgs.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
             </div>
             <div style={{ width: '180px' }}>
               <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">Physical Location</label>
               <select value={storageFilter} onChange={e => { setStorageFilter(e.target.value); setPage(1); }}>
-                <option value="">ALL WAREHOUSE</option>
+                <option value="">ALL LOCATIONS</option>
                 {storageLocations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
               </select>
             </div>
@@ -195,10 +195,10 @@ export default function AdminDashboard() {
           </div>
 
           <div className="card p-6 bg-gold text-ink-deep flex flex-col justify-center border-none shadow-xl">
-             <div className="text-[10px] font-mono-stack uppercase opacity-60 mb-1">TOTAL_SKU_RECORDS</div>
+             <div className="text-[10px] font-mono-stack uppercase opacity-60 mb-1">INVENTORY COUNT</div>
              <div className="text-4xl font-display leading-none">{total.toLocaleString()}</div>
              <div className="mt-4 pt-4 border-t border-ink-deep/10 flex justify-between items-center">
-                <span className="text-[10px] font-mono-stack opacity-60">QUERY_SPEED</span>
+                <span className="text-[10px] font-mono-stack opacity-60">SERVER RESPONSE</span>
                 <span className="font-mono-stack text-[10px] font-bold">~{queryTime}ms</span>
              </div>
           </div>
@@ -208,20 +208,20 @@ export default function AdminDashboard() {
         {stats && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div className="bg-white/40 p-3 rounded border border-ink-border/30 flex flex-col">
-              <span className="text-[9px] font-mono-stack uppercase opacity-50">DB_STORAGE_SIZE</span>
+              <span className="text-[9px] font-mono-stack uppercase opacity-50">DATABASE SIZE</span>
               <span className="text-sm font-bold font-mono-stack">{stats.database_size}</span>
             </div>
             <div className="bg-white/40 p-3 rounded border border-ink-border/30 flex flex-col">
-              <span className="text-[9px] font-mono-stack uppercase opacity-50">CACHE_HIT_RATIO</span>
+              <span className="text-[9px] font-mono-stack uppercase opacity-50">CACHE PERFORMANCE</span>
               <span className="text-sm font-bold font-mono-stack">{stats.cache_hit_ratio}%</span>
             </div>
             <div className="bg-white/40 p-3 rounded border border-ink-border/30 flex flex-col">
-              <span className="text-[9px] font-mono-stack uppercase opacity-50">CONNS_IN_USE</span>
+              <span className="text-[9px] font-mono-stack uppercase opacity-50">ACTIVE CONNECTIONS</span>
               <span className="text-sm font-bold font-mono-stack">{stats.active_connections} / {stats.max_connections}</span>
             </div>
             <div className="bg-white/40 p-3 rounded border border-ink-border/30 flex flex-col">
-              <span className="text-[9px] font-mono-stack uppercase opacity-50">SYSTEM_STABILITY</span>
-              <span className="text-sm font-bold font-mono-stack text-emerald-600">NOMINAL</span>
+              <span className="text-[9px] font-mono-stack uppercase opacity-50">SYSTEM STATUS</span>
+              <span className="text-sm font-bold font-mono-stack text-emerald-600">STABLE</span>
             </div>
           </div>
         )}

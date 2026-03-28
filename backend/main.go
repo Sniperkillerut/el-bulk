@@ -66,6 +66,7 @@ func main() {
 
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.AdminAuth)
+				r.Get("/stats", healthHandler.GetStats)
 
 				// Products CRUD
 				r.Get("/products", productHandler.List)

@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/el-bulk/backend/utils/logger"
@@ -22,6 +23,8 @@ type DBStats struct {
 	ActiveConns     int     `json:"active_connections"`
 	MaxConns        int     `json:"max_connections"`
 	TotalProducts   int     `json:"total_products"`
+	TotalSKURecords int     `json:"total_sku_records"`
+	QuerySpeedMS    int     `json:"query_speed_ms"`
 }
 
 func (h *HealthHandler) Ping(w http.ResponseWriter, r *http.Request) {
@@ -71,6 +74,13 @@ func (h *HealthHandler) GetStats(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		stats.TotalProducts = 0
 	}
+	stats.TotalSKURecords = stats.TotalProducts
+
+	// 5. Query Speed
+	start := time.Now()
+	var dummy int
+	_ = h.DB.Get(&dummy, "SELECT 1")
+	stats.QuerySpeedMS = int(time.Since(start).Milliseconds())
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(stats)

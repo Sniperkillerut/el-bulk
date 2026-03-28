@@ -1,10 +1,11 @@
-import { FormState } from '../../ProductEditModal';
-import { PriceSource, Settings, StorageLocation, StoredIn } from '@/lib/types';
+import { FormState } from '../types';
+import { CustomCategory, PriceSource, Settings, StorageLocation, StoredIn } from '@/lib/types';
 import StorageManager from '../StorageManager';
 
 interface PricingTabProps {
   form: FormState;
   settings: Settings | undefined;
+  categories: CustomCategory[];
   productStorage: StorageLocation[];
   storageLocations: StoredIn[];
   onUpdate: (update: Partial<FormState>) => void;
@@ -18,6 +19,7 @@ interface PricingTabProps {
 export default function PricingTab({
   form,
   settings,
+  categories,
   productStorage,
   storageLocations,
   onUpdate,
@@ -55,26 +57,14 @@ export default function PricingTab({
           {form.price_source === 'manual' ? (
             <div>
               <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>PRICE (COP) *</label>
-              <input 
-                type="number" 
-                step="100" 
-                min="0" 
-                value={form.price_cop_override} 
-                onChange={e => onUpdate({ price_cop_override: e.target.value ? parseFloat(e.target.value) : '' })} 
-              />
+              <input type="number" step="0.01" value={form.price_cop_override ?? ''} onChange={e => onUpdate({ price_cop_override: e.target.value === '' ? '' : Number(e.target.value) })} />
             </div>
           ) : (
             <div>
               <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>
                 REFERENCE PRICE ({form.price_source === 'tcgplayer' ? 'USD' : 'EUR'}) *
               </label>
-              <input 
-                type="number" 
-                step="0.01" 
-                min="0" 
-                value={form.price_reference}
-                onChange={e => onUpdate({ price_reference: e.target.value ? parseFloat(e.target.value) : '' })}
-                style={{ 
+              <input type="number" step="0.01" value={form.price_reference ?? ''} onChange={e => onUpdate({ price_reference: e.target.value === '' ? '' : Number(e.target.value) })} style={{ 
                   color: form.price_reference === 0 ? 'var(--hp-color)' : 'inherit', 
                   borderColor: form.price_reference === 0 ? 'var(--hp-color)' : 'var(--ink-border)' 
                 }} 
@@ -92,6 +82,55 @@ export default function PricingTab({
         onRemove={onRemoveStorage}
         onAdd={onAddStorage}
       />
+
+      <div className="pt-6 border-t border-ink-border/50 space-y-6">
+        <h3 className="text-xs font-mono-stack uppercase text-text-muted letter-spacing-widest">Basic Details</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <div>
+              <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">Description</label>
+              <textarea 
+                rows={4} 
+                value={form.description} 
+                onChange={e => onUpdate({ description: e.target.value })} 
+                placeholder="Product description..."
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">Image URL</label>
+              <input 
+                type="text" 
+                value={form.image_url} 
+                onChange={e => onUpdate({ image_url: e.target.value })} 
+                placeholder="https://..." 
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">Collections / Categories</label>
+            <div className="flex flex-wrap gap-2 p-3 border border-ink-border bg-ink-surface rounded-sm min-h-[42px]">
+              {categories.map(cat => (
+                <label key={cat.id} className="flex items-center gap-2 px-2 py-1 bg-kraft-light/20 border border-kraft-dark/30 rounded cursor-pointer hover:bg-kraft-light/40 transition-colors">
+                  <input 
+                    type="checkbox" 
+                    checked={form.category_ids.includes(cat.id)}
+                    onChange={e => {
+                      const ids = e.target.checked 
+                        ? [...form.category_ids, cat.id]
+                        : form.category_ids.filter(id => id !== cat.id);
+                      onUpdate({ category_ids: ids });
+                    }}
+                  />
+                  <span className="text-xs font-mono-stack">{cat.name}</span>
+                </label>
+              ))}
+              {categories.length === 0 && <span className="text-[10px] text-text-muted italic">No custom collections defined.</span>}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
