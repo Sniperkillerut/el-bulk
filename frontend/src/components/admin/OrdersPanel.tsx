@@ -313,11 +313,14 @@ export default function OrdersPanel({ token, onClose }: Props) {
                       value={detail.order.status}
                       onChange={e => handleStatusChange(e.target.value)}
                       disabled={saving || detail.order.status === 'completed'}
+                      className="bg-surface border-dark text-gold rounded px-2 py-1 outline-none focus:border-gold transition-colors"
                       style={{ fontSize: '0.85rem', padding: '0.3rem 0.6rem', minWidth: 120 }}
                     >
-                      {Object.entries(ORDER_STATUS_LABELS).map(([k, v]) => (
-                        <option key={k} value={k}>{v}</option>
-                      ))}
+                      {Object.entries(ORDER_STATUS_LABELS)
+                        .filter(([k]) => k !== 'completed' || detail.order.status === 'completed')
+                        .map(([k, v]) => (
+                          <option key={k} value={k}>{v}</option>
+                        ))}
                     </select>
                     {detail.order.status !== 'completed' && detail.order.status !== 'cancelled' && (
                       <button onClick={openCompleteModal} className="btn-primary" style={{ fontSize: '0.85rem', padding: '0.35rem 1rem' }}>
@@ -547,11 +550,16 @@ export default function OrdersPanel({ token, onClose }: Props) {
               <p className="text-sm font-mono-stack mt-3" style={{ color: 'var(--hp-color)' }}>{completeError}</p>
             )}
 
-            <div className="flex gap-3 mt-6">
-              <button onClick={handleComplete} disabled={completing} className="btn-primary flex-1 py-3">
-                {completing ? 'PROCESANDO...' : '✓ CONFIRMAR COMPLETAR ORDEN'}
-              </button>
-              <button onClick={() => setShowCompleteModal(false)} className="btn-secondary px-6 py-3">CANCELAR</button>
+            <div className="mt-6 p-4 border-2 border-dashed border-hp-color/30 rounded-lg bg-hp-color/5">
+              <p className="text-sm font-semibold text-hp-color mb-3 uppercase tracking-wider text-center">
+                ⚠ ¿Estás seguro? Esto bloqueará la orden y no se podrá editar después.
+              </p>
+              <div className="flex gap-3">
+                <button onClick={handleComplete} disabled={completing} className="btn-primary flex-1 py-3 bg-hp-color hover:bg-hp-color/90">
+                  {completing ? 'PROCESANDO...' : '✓ CONFIRMAR Y COMPLETAR ORDEN'}
+                </button>
+                <button onClick={() => setShowCompleteModal(false)} className="btn-secondary px-6 py-3">CANCELAR</button>
+              </div>
             </div>
           </div>
         </div>
