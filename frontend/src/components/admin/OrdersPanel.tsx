@@ -187,8 +187,8 @@ export default function OrdersPanel({ token, onClose }: Props) {
   const hasEdits = detail ? detail.items.some(i => itemEdits[i.id] !== i.quantity) : false;
 
   return (
-    <div className="fixed inset-0 z-[60] flex" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)' }}>
-      <div className="flex flex-col w-full h-full max-w-7xl mx-auto p-4 md:p-6">
+    <div className="flex flex-col h-full w-full bg-ink-deep">
+      <div className="flex flex-col w-full h-full p-4 md:p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-4 flex-shrink-0">
           <div>

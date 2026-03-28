@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { adminFetchTCGs, getAdminSettings, updateAdminSettings,
+import {
+  adminFetchTCGs, getAdminSettings, updateAdminSettings,
   adminFetchStorage, adminCreateStorage, adminUpdateStorage, adminDeleteStorage,
   adminFetchCategories, adminCreateCategory, adminUpdateCategory, adminDeleteCategory,
   adminDeleteProduct, adminFetchStats
@@ -24,14 +25,14 @@ export default function AdminDashboard() {
   const [settings, setSettings] = useState<Settings>();
   const [storageLocations, setStorageLocations] = useState<StoredIn[]>([]);
   const [categories, setCategories] = useState<CustomCategory[]>([]);
-  
+
   // Custom Hook for Product Data Orchestration
-  const { 
-    products, loading, total, page, pageSize, 
-    search, setSearch, tcgFilter, setTcgFilter, 
+  const {
+    products, loading, total, page, pageSize,
+    search, setSearch, tcgFilter, setTcgFilter,
     storageFilter, setStorageFilter, sortKey, sortDir,
     queryTime,
-    setPage, handleSort, refresh: refreshProducts 
+    setPage, handleSort, refresh: refreshProducts
   } = useAdminProducts(token);
 
   const [stats, setStats] = useState<any>(null);
@@ -48,13 +49,13 @@ export default function AdminDashboard() {
   // Initial Load
   useEffect(() => {
     const t = localStorage.getItem('el_bulk_admin_token');
-    
+
     if (!t) {
       console.warn('[Dashboard] No token found, redirecting to login.');
       router.push('/admin/login');
       return;
     }
-    
+
     setToken(t);
     loadStaticData(t);
   }, [router]);
@@ -82,7 +83,7 @@ export default function AdminDashboard() {
 
   // CRUD Actions
   const handleSaveProduct = () => { setShowEditModal(false); setEditingProduct(null); refreshProducts(); };
-  
+
   const handleSaveAndNew = () => {
     refreshProducts();
     setEditingProduct(null);
@@ -154,12 +155,12 @@ export default function AdminDashboard() {
             <p className="font-mono-stack text-xs text-text-muted opacity-60">ADMIN DASHBOARD // SESSION ACTIVE</p>
           </div>
           <div className="flex gap-4">
-             <button onClick={() => setShowImportModal(true)} className="btn-secondary px-6 flex items-center gap-2">
-                <span>📥</span> IMPORT CSV
-             </button>
-             <button onClick={() => { setEditingProduct(null); setShowEditModal(true); }} className="btn-primary px-8 flex items-center gap-2">
-                <span className="text-xl">+</span> ADD NEW PRODUCT
-             </button>
+            <button onClick={() => setShowImportModal(true)} className="btn-secondary px-6 flex items-center gap-2">
+              <span>📥</span> IMPORT CSV
+            </button>
+            <button onClick={() => { setEditingProduct(null); setShowEditModal(true); }} className="btn-primary px-8 flex items-center gap-2">
+              <span className="text-xl">+</span> ADD NEW PRODUCT
+            </button>
           </div>
         </div>
 
@@ -188,19 +189,19 @@ export default function AdminDashboard() {
               </select>
             </div>
             <div className="flex gap-2">
-               <button onClick={() => setShowStorageModal(true)} title="Manage Locations" className="w-10 h-10 border border-ink-border rounded hover:bg-ink-surface transition-colors flex items-center justify-center">📦</button>
-               <button onClick={() => setShowCategoryModal(true)} title="Manage Collections" className="w-10 h-10 border border-ink-border rounded hover:bg-ink-surface transition-colors flex items-center justify-center">🔖</button>
-               <button onClick={() => setShowSettingsModal(true)} title="Global Settings" className="w-10 h-10 border border-ink-border rounded hover:bg-ink-surface transition-colors flex items-center justify-center">⚙️</button>
+              <button onClick={() => setShowStorageModal(true)} title="Manage Locations" className="w-10 h-10 border border-ink-border rounded hover:bg-ink-surface transition-colors flex items-center justify-center">📦</button>
+              <button onClick={() => setShowCategoryModal(true)} title="Manage Collections" className="w-10 h-10 border border-ink-border rounded hover:bg-ink-surface transition-colors flex items-center justify-center">🔖</button>
+              <button onClick={() => setShowSettingsModal(true)} title="Global Settings" className="w-10 h-10 border border-ink-border rounded hover:bg-ink-surface transition-colors flex items-center justify-center">⚙️</button>
             </div>
           </div>
 
-          <div className="card p-6 bg-gold text-ink-deep flex flex-col justify-center border-none shadow-xl">
-             <div className="text-[10px] font-mono-stack uppercase opacity-60 mb-1">INVENTORY COUNT</div>
-             <div className="text-4xl font-display leading-none">{total.toLocaleString()}</div>
-             <div className="mt-4 pt-4 border-t border-ink-deep/10 flex justify-between items-center">
-                <span className="text-[10px] font-mono-stack opacity-60">SERVER RESPONSE</span>
-                <span className="font-mono-stack text-[10px] font-bold">~{queryTime}ms</span>
-             </div>
+          <div className="card p-6 bg-gold text-ink-deep flex flex-col justify-center border-none shadow-xl no-tilt ">
+            <div className="text-[10px] font-mono-stack uppercase opacity-60 mb-1">INVENTORY COUNT</div>
+            <div className="text-4xl font-display leading-none">{total.toLocaleString()}</div>
+            <div className="mt-4 pt-4 border-t border-ink-deep/10 flex justify-between items-center">
+              <span className="text-[10px] font-mono-stack opacity-60">SERVER RESPONSE</span>
+              <span className="font-mono-stack text-[10px] font-bold">~{queryTime}ms</span>
+            </div>
           </div>
         </div>
 
@@ -227,7 +228,7 @@ export default function AdminDashboard() {
         )}
 
         {/* Product Table */}
-        <ProductTable 
+        <ProductTable
           products={products}
           sortKey={sortKey}
           sortDir={sortDir}
@@ -240,21 +241,21 @@ export default function AdminDashboard() {
         {/* Pagination */}
         <div className="mt-8 flex justify-between items-center bg-white/40 p-3 rounded border border-ink-border/30">
           <div className="text-xs font-mono-stack text-text-muted">
-            SHOWING <span className="text-ink-deep font-bold">{((page-1)*pageSize)+1} - {Math.min(page*pageSize, total)}</span> OF {total} ENTRIES
+            SHOWING <span className="text-ink-deep font-bold">{((page - 1) * pageSize) + 1} - {Math.min(page * pageSize, total)}</span> OF {total} ENTRIES
           </div>
           <div className="flex gap-2">
-            <button disabled={page === 1} onClick={() => setPage(page-1)} className="btn-secondary py-1 px-4 text-xs font-bold' disabled:opacity-30">← PREV</button>
+            <button disabled={page === 1} onClick={() => setPage(page - 1)} className="btn-secondary py-1 px-4 text-xs font-bold' disabled:opacity-30">← PREV</button>
             <div className="flex items-center px-4 font-mono-stack text-xs font-bold bg-ink-surface rounded border border-ink-border">
               PAGE {page} / {Math.max(1, Math.ceil(total / pageSize))}
             </div>
-            <button disabled={page >= Math.ceil(total / pageSize)} onClick={() => setPage(page+1)} className="btn-secondary py-1 px-4 text-xs font-bold' disabled:opacity-30">NEXT →</button>
+            <button disabled={page >= Math.ceil(total / pageSize)} onClick={() => setPage(page + 1)} className="btn-secondary py-1 px-4 text-xs font-bold' disabled:opacity-30">NEXT →</button>
           </div>
         </div>
       </main>
 
       {/* Modals */}
       {showEditModal && (
-        <ProductEditModal 
+        <ProductEditModal
           editProduct={editingProduct}
           token={token}
           storageLocations={storageLocations}
@@ -269,7 +270,7 @@ export default function AdminDashboard() {
       )}
 
       {showImportModal && (
-        <CSVImportModal 
+        <CSVImportModal
           token={token}
           storageLocations={storageLocations}
           categories={categories}
@@ -279,7 +280,7 @@ export default function AdminDashboard() {
       )}
 
       {showSettingsModal && settings && (
-        <SettingsModal 
+        <SettingsModal
           settings={settings}
           onSave={handleUpdateSettings}
           onClose={() => setShowSettingsModal(false)}
@@ -288,7 +289,7 @@ export default function AdminDashboard() {
       )}
 
       {showStorageModal && (
-        <StorageManagerModal 
+        <StorageManagerModal
           storageLocations={storageLocations}
           onCreate={handleCreateStorage}
           onUpdate={handleUpdateStorage}
@@ -298,7 +299,7 @@ export default function AdminDashboard() {
       )}
 
       {showCategoryModal && (
-        <CategoryManagerModal 
+        <CategoryManagerModal
           categories={categories}
           onCreate={handleCreateCategory}
           onUpdate={handleUpdateCategory}

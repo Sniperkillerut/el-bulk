@@ -171,6 +171,7 @@ type TCG struct {
 	Name      string    `db:"name"       json:"name"`
 	IsActive  bool      `db:"is_active"  json:"is_active"`
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	ItemCount int       `db:"item_count" json:"item_count"`
 }
 
 type TCGInput struct {

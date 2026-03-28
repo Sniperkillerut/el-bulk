@@ -4,7 +4,7 @@ import { remoteLogger } from './remoteLogger';
 const isServer = typeof window === 'undefined';
 const API_BASE = isServer 
   ? (process.env.INTERNAL_API_URL || 'http://backend:8080')
-  : ''; // Use relative path in browser to trigger Next.js rewrites
+  : (process.env.NEXT_PUBLIC_API_URL || ''); 
 
 async function logAndThrow(res: Response, defaultMsg: string): Promise<never> {
   let errorMessage = defaultMsg;
@@ -475,10 +475,12 @@ export async function adminUpdateTCG(token: string, id: string, name: string, is
 }
 
 export async function adminDeleteTCG(token: string, id: string): Promise<void> {
+  console.log(`[API] DELETE /api/admin/tcgs/${id}`);
   const res = await fetch(`${API_BASE}/api/admin/tcgs/${id}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   });
+  console.log(`[API] DELETE /api/admin/tcgs/${id} status=${res.status}`);
   if (!res.ok) await logAndThrow(res, 'Failed to delete TCG');
   metadataCache.delete('admin_tcgs');
   metadataCache.delete('tcgs_true');

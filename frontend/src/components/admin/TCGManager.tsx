@@ -14,6 +14,9 @@ export default function TCGManager({ token }: Props) {
   const [error, setError] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [newTcg, setNewTcg] = useState({ id: '', name: '' });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const loadTCGs = async () => {
     setLoading(true);
@@ -40,12 +43,28 @@ export default function TCGManager({ token }: Props) {
     }
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleRename = async (tcg: TCG) => {
+    if (!editingName.trim() || editingName === tcg.name) {
+      setEditingId(null);
+      return;
+    }
+
+    try {
+      await adminUpdateTCG(token, tcg.id, editingName, tcg.is_active);
+      setTcgs(prev => prev.map(t => t.id === tcg.id ? { ...t, name: editingName } : t));
+      setEditingId(null);
+    } catch (err: any) {
+      setError('Failed to rename TCG: ' + err.message);
+    }
+  };
+
+  const handleCreate = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     if (!newTcg.id || !newTcg.name) return;
 
     try {
-      const created = await adminCreateTCG(token, newTcg.id.toLowerCase().replace(/[^a-z0-9]/g, ''), newTcg.name);
+      const id = newTcg.id.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const created = await adminCreateTCG(token, id, newTcg.name);
       setTcgs(prev => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
       setNewTcg({ id: '', name: '' });
       setIsAdding(false);
@@ -55,13 +74,13 @@ export default function TCGManager({ token }: Props) {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this TCG? This will fail if there are products assigned to it.')) return;
-
     try {
       await adminDeleteTCG(token, id);
       setTcgs(prev => prev.filter(t => t.id !== id));
+      setConfirmDeleteId(null);
     } catch (err: any) {
       setError('Failed to delete TCG: ' + err.message);
+      setConfirmDeleteId(null);
     }
   };
 
@@ -136,37 +155,99 @@ export default function TCGManager({ token }: Props) {
               tcg.is_active ? 'bg-[#1a1614] border-[#3c2a21]' : 'bg-[#1a1614]/50 border-[#3c2a21]/50 grayscale'
             }`}
           >
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 flex-1">
               <div 
-                className={`w-3 h-3 rounded-full ${tcg.is_active ? 'bg-[#7eb07e] shadow-[0_0_10px_rgba(126,176,126,0.5)]' : 'bg-[#b04b4b]'}`}
+                className={`w-3 h-3 rounded-full shrink-0 ${tcg.is_active ? 'bg-[#7eb07e] shadow-[0_0_10px_rgba(126,176,126,0.5)]' : 'bg-[#b04b4b]'}`}
               />
-              <div>
-                <h4 className="font-black text-[#d4c3b3] uppercase tracking-tight">{tcg.name}</h4>
-                <p className="text-[10px] font-mono text-[#8b7355]">SLUG: {tcg.id}</p>
-              </div>
+              
+              {editingId === tcg.id ? (
+                <div className="flex gap-2 flex-1 max-w-md">
+                  <input
+                    autoFocus
+                    value={editingName}
+                    onChange={e => setEditingName(e.target.value)}
+                    className="flex-1 bg-[#1a1614] border-2 border-[#d4c3b3]/50 p-1 text-[#d4c3b3] text-sm outline-none"
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') handleRename(tcg);
+                      if (e.key === 'Escape') setEditingId(null);
+                    }}
+                  />
+                  <button onClick={() => handleRename(tcg)} className="text-[#7eb07e] text-[10px] font-black uppercase">SAVE</button>
+                  <button onClick={() => setEditingId(null)} className="text-[#8b7355] text-[10px] font-black uppercase">CANCEL</button>
+                </div>
+              ) : (
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-black text-[#d4c3b3] uppercase tracking-tight leading-none">{tcg.name}</h4>
+                    {tcg.item_count !== undefined && (
+                      <span className="px-1.5 py-0.5 rounded bg-[#d4c3b3]/10 text-[#d4c3b3]/60 text-[9px] font-mono-stack border border-[#d4c3b3]/10">
+                        {tcg.item_count} ITEMS
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] font-mono text-[#8b7355]">SLUG: {tcg.id}</p>
+                </div>
+              )}
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => handleToggle(tcg)}
-                className={`px-3 py-1.5 text-[10px] font-black uppercase border-2 transition-all ${
-                  tcg.is_active 
-                    ? 'border-[#b04b4b] text-[#b04b4b] hover:bg-[#b04b4b] hover:text-white' 
-                    : 'border-[#7eb07e] text-[#7eb07e] hover:bg-[#7eb07e] hover:text-white'
-                }`}
-              >
-                {tcg.is_active ? 'DISABLE' : 'ENABLE'}
-              </button>
-              
-              <button
-                onClick={() => handleDelete(tcg.id)}
-                className="p-1.5 text-[#8b7355] hover:text-[#b04b4b] transition-colors"
-                title="Delete TCG"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" />
-                </svg>
-              </button>
+            <div className="flex items-center gap-3">
+              {editingId !== tcg.id ? (
+                confirmDeleteId === tcg.id ? (
+                  <div className="flex items-center gap-2 animate-in fade-in zoom-in-95 duration-200">
+                    <span className="text-[10px] font-black text-[#b04b4b] uppercase mr-1">ARE YOU SURE?</span>
+                    <button
+                      onClick={() => handleDelete(tcg.id)}
+                      className="px-2 py-1 bg-[#b04b4b] text-white text-[9px] font-black uppercase hover:bg-[#ffbaba] hover:text-[#b04b4b] transition-all"
+                    >
+                      CONFIRM
+                    </button>
+                    <button
+                      onClick={() => setConfirmDeleteId(null)}
+                      className="px-2 py-1 border-2 border-[#8b7355]/30 text-[#8b7355] text-[9px] font-black uppercase hover:border-[#d4c3b3] hover:text-[#d4c3b3] transition-all"
+                    >
+                      CANCEL
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => { setEditingId(tcg.id); setEditingName(tcg.name); setConfirmDeleteId(null); }}
+                      className="p-1.5 text-[#8b7355] hover:text-[#d4c3b3] transition-colors"
+                      title="Rename TCG"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 00 2 2h14a2 2 0 00 2-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                    </button>
+
+                    <button
+                      onClick={() => handleToggle(tcg)}
+                      className={`px-3 py-1 text-[9px] font-black uppercase border-2 transition-all ${
+                        tcg.is_active 
+                          ? 'border-[#b04b4b]/50 text-[#b04b4b] hover:bg-[#b04b4b] hover:text-white' 
+                          : 'border-[#7eb07e]/50 text-[#7eb07e] hover:bg-[#7eb07e] hover:text-white'
+                      }`}
+                    >
+                      {tcg.is_active ? 'DISABLE' : 'ENABLE'}
+                    </button>
+                    
+                    <button
+                      onClick={() => { setConfirmDeleteId(tcg.id); setEditingId(null); }}
+                      disabled={tcg.item_count ? tcg.item_count > 0 : false}
+                      className={`p-1.5 transition-colors ${
+                        tcg.item_count && tcg.item_count > 0 
+                          ? 'text-[#8b7355]/20 cursor-not-allowed' 
+                          : 'text-[#8b7355] hover:text-[#b04b4b]'
+                      }`}
+                      title={tcg.item_count && tcg.item_count > 0 ? "Cannot delete TCG with active products" : "Delete TCG"}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" />
+                      </svg>
+                    </button>
+                  </>
+                )
+              ) : null}
             </div>
           </div>
         ))}

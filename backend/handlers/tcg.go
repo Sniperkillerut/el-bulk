@@ -22,7 +22,13 @@ func NewTCGHandler(db *sqlx.DB) *TCGHandler {
 // GET /api/admin/tcgs
 func (h *TCGHandler) List(w http.ResponseWriter, r *http.Request) {
 	var tcgs []models.TCG
-	err := h.DB.Select(&tcgs, "SELECT * FROM tcg ORDER BY name")
+	err := h.DB.Select(&tcgs, `
+		SELECT t.*, COUNT(p.id) as item_count 
+		FROM tcg t 
+		LEFT JOIN product p ON t.id = p.tcg 
+		GROUP BY t.id 
+		ORDER BY t.name
+	`)
 	if err != nil {
 		logger.Error("Error listing TCGs for admin: %v", err)
 		jsonError(w, "Database error", http.StatusInternalServerError)
@@ -92,10 +98,17 @@ func (h *TCGHandler) Update(w http.ResponseWriter, r *http.Request) {
 // DELETE /api/admin/tcgs/{id}
 func (h *TCGHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	logger.Info("[TCG_DELETE] 📥 Received DELETE request for ID: %s", id)
+
+	if id == "" {
+		jsonError(w, "ID is required", http.StatusBadRequest)
+		return
+	}
 
 	// Check if any products exist for this TCG
 	var productCount int
 	err := h.DB.Get(&productCount, "SELECT COUNT(*) FROM product WHERE tcg = $1", id)
+	logger.Info("[TCG_DELETE] Checking products for %s: count=%d", id, productCount)
 	if err != nil {
 		jsonError(w, "Database error checking products", http.StatusInternalServerError)
 		return

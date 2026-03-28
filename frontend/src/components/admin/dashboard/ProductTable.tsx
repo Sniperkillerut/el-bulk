@@ -1,4 +1,5 @@
 import { Product, TCG_SHORT } from '@/lib/types';
+import CardImage from '@/components/CardImage';
 
 interface ProductTableRowProps {
   product: Product;
@@ -18,12 +19,15 @@ export function ProductTableRow({ product: p, onEdit, onDelete }: ProductTableRo
         <div className="absolute left-0 top-0 bottom-0 w-1 bg-gold scale-y-0 group-hover:scale-y-100 transition-transform duration-200 origin-center" />
         
         <div className="flex items-center gap-3 py-1">
-            <div className="w-10 h-14 bg-ink-border/10 rounded-sm shrink-0 overflow-hidden border border-ink-border/20 flex items-center justify-center relative group/img shadow-sm">
-              {p.image_url ? (
-                <img src={p.image_url} alt="" className="w-full h-full object-cover grayscale-[0.3] group-hover:grayscale-0 transition-all" />
-              ) : (
-                <span className="text-[8px] font-mono-stack text-text-muted">NO IMG</span>
-              )}
+            <div className="w-10 h-14 shrink-0 overflow-hidden relative group/img shadow-sm">
+              <CardImage 
+                imageUrl={p.image_url} 
+                name={p.name} 
+                tcg={p.tcg} 
+                height="100%" 
+                enableHover={true} 
+                enableModal={true} 
+              />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 mb-0.5">

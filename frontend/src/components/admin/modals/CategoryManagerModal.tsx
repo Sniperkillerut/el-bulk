@@ -71,7 +71,7 @@ export default function CategoryManagerModal({
                   <div className="flex items-center gap-3">
                     <span className="font-semibold text-lg">{cat.name}</span>
                     <span className="text-xs font-mono-stack text-text-muted bg-kraft-light px-2 py-0.5 rounded border border-kraft-dark">
-                      ID: {cat.id}
+                      {cat.item_count || 0} items
                     </span>
                   </div>
                   <div className="flex gap-2">
