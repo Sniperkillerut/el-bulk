@@ -26,7 +26,7 @@ func (h *BountyHandler) List(w http.ResponseWriter, r *http.Request) {
 	query := `
 		SELECT 
 			id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, 
-			hide_price, quantity_needed, image_url, created_at, updated_at
+			hide_price, quantity_needed, image_url, price_source, price_reference, created_at, updated_at
 		FROM bounty
 		ORDER BY created_at DESC
 	`
@@ -57,15 +57,16 @@ func (h *BountyHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query := `
-		INSERT INTO bounty (name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, image_url)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, image_url, created_at, updated_at
+		INSERT INTO bounty (name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, image_url, price_source, price_reference)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, image_url, price_source, price_reference, created_at, updated_at
 	`
 	var bounty models.Bounty
 	err := h.DB.QueryRowx(query,
 		input.Name, input.TCG, input.SetName, input.Condition, input.FoilTreatment,
 		input.CardTreatment, input.CollectorNumber, input.PromoType, input.Language,
 		input.TargetPrice, input.HidePrice, input.QuantityNeeded, input.ImageURL,
+		input.PriceSource, input.PriceReference,
 	).StructScan(&bounty)
 
 	if err != nil {
@@ -90,15 +91,17 @@ func (h *BountyHandler) Update(w http.ResponseWriter, r *http.Request) {
 		UPDATE bounty
 		SET name = $1, tcg = $2, set_name = $3, condition = $4, foil_treatment = $5,
 		    card_treatment = $6, collector_number = $7, promo_type = $8, language = $9,
-		    target_price = $10, hide_price = $11, quantity_needed = $12, image_url = $13, updated_at = now()
-		WHERE id = $14
-		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, image_url, created_at, updated_at
+		    target_price = $10, hide_price = $11, quantity_needed = $12, image_url = $13,
+		    price_source = $14, price_reference = $15, updated_at = now()
+		WHERE id = $16
+		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, image_url, price_source, price_reference, created_at, updated_at
 	`
 	var bounty models.Bounty
 	err := h.DB.QueryRowx(query,
 		input.Name, input.TCG, input.SetName, input.Condition, input.FoilTreatment,
 		input.CardTreatment, input.CollectorNumber, input.PromoType, input.Language,
-		input.TargetPrice, input.HidePrice, input.QuantityNeeded, input.ImageURL, id,
+		input.TargetPrice, input.HidePrice, input.QuantityNeeded, input.ImageURL,
+		input.PriceSource, input.PriceReference, id,
 	).StructScan(&bounty)
 
 	if err != nil {

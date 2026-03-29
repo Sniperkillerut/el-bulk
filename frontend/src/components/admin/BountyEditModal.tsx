@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { adminCreateBounty, adminUpdateBounty } from '@/lib/api';
-import { Bounty, BountyInput, FoilTreatment, Condition, TCG, ScryfallCard } from '@/lib/types';
-import { extractMTGMetadata, getScryfallImage, resolveFoilTreatment } from '@/lib/mtg-logic';
+import { Bounty, BountyInput, FoilTreatment, CardTreatment, Condition, TCG, ScryfallCard, Settings, PriceSource } from '@/lib/types';
+import { extractMTGMetadata, getScryfallImage, resolveFoilTreatment, findMatchingPrint, applyPrintPrices, resolveCardTreatment, getSuggestedPrice } from '@/lib/mtg-logic';
 import ScryfallPopulate from './product/ScryfallPopulate';
 import MTGVariantSelector from './MTGVariantSelector';
 
@@ -11,6 +11,7 @@ interface BountyEditModalProps {
   editBounty: Bounty | null;
   token: string;
   tcgs: TCG[];
+  settings: Settings | undefined;
   onClose: () => void;
   onSaved: () => void;
   initialData?: Partial<BountyInput>;
@@ -20,11 +21,12 @@ export const EMPTY_BOUNTY: BountyInput = {
   name: '', tcg: 'mtg', set_name: '', condition: 'NM',
   foil_treatment: 'non_foil', card_treatment: 'normal',
   collector_number: '', promo_type: '', language: 'en',
-  target_price: 0, hide_price: false, quantity_needed: 1, image_url: ''
+  target_price: 0, hide_price: false, quantity_needed: 1, image_url: '',
+  price_source: 'tcgplayer', price_reference: 0
 };
 
 export default function BountyEditModal({
-  editBounty, token, tcgs, onClose, onSaved, initialData
+  editBounty, token, tcgs, settings, onClose, onSaved, initialData
 }: BountyEditModalProps) {
   const [form, setForm] = useState<BountyInput>(EMPTY_BOUNTY);
   const [scryfallPrints, setScryfallPrints] = useState<ScryfallCard[]>([]);
@@ -52,6 +54,9 @@ export default function BountyEditModal({
         hide_price: editBounty.hide_price,
         quantity_needed: editBounty.quantity_needed,
         image_url: editBounty.image_url || '',
+        price_source: editBounty.price_source || 'tcgplayer',
+        price_reference: editBounty.price_reference || 0,
+        ...extractMTGMetadata(editBounty as any)
       });
     } else {
       setForm({ ...EMPTY_BOUNTY, ...initialData });
@@ -136,12 +141,24 @@ export default function BountyEditModal({
       if (!bestPrint) bestPrint = prints[0];
 
       if (!bestPrint) throw new Error('Could not identify a matching print.');
+      
+      const treat = resolveCardTreatment(bestPrint);
+      const foil = resolveFoilTreatment(bestPrint);
+      const promo = bestPrint.promo_types?.join(',') || 'none';
+      const ref = applyPrintPrices(bestPrint, foil, form.price_source);
+      const suggested = getSuggestedPrice(bestPrint, foil, form.price_source, settings);
 
       setForm(f => ({
         ...f,
         name: bestPrint?.name || f.name,
         set_name: bestPrint?.set_name || f.set_name,
         image_url: getScryfallImage(bestPrint) || f.image_url,
+        card_treatment: treat,
+        foil_treatment: foil,
+        promo_type: promo,
+        price_reference: ref,
+        target_price: suggested !== undefined ? suggested : f.target_price,
+        ...extractMTGMetadata(bestPrint)
       }));
       setSetCode(bestPrint?.set || setCode);
       setCollectorNumber(bestPrint?.collector_number || collectorNumber);
@@ -152,6 +169,102 @@ export default function BountyEditModal({
       setLookingUp(false);
     }
   };
+
+
+  const handlePriceSourceChange = (src: PriceSource) => {
+    setForm(f => {
+      const bestPrint = findMatchingPrint(scryfallPrints, setCode, f.card_treatment, f.collector_number || '', f.promo_type || '', f.foil_treatment);
+      const ref = applyPrintPrices(bestPrint, f.foil_treatment, src);
+      const suggested = getSuggestedPrice(bestPrint, f.foil_treatment, src, settings);
+      return {
+        ...f,
+        price_source: src,
+        price_reference: ref,
+        target_price: suggested !== undefined ? suggested : f.target_price
+      };
+    });
+  };
+
+  const handleSetSearchChange = (newSet: string) => {
+    const bestPrint = findMatchingPrint(scryfallPrints, newSet, form.card_treatment, form.collector_number || '', form.promo_type || '', form.foil_treatment);
+    setSetCode(newSet);
+    const ref = applyPrintPrices(bestPrint, form.foil_treatment, form.price_source);
+    const suggested = getSuggestedPrice(bestPrint, form.foil_treatment, form.price_source, settings);
+    setForm(f => ({
+      ...f,
+      set_name: bestPrint?.set_name || f.set_name,
+      image_url: getScryfallImage(bestPrint) || f.image_url,
+      price_reference: ref,
+      target_price: suggested !== undefined ? suggested : f.target_price
+    }));
+  };
+
+  const handleTreatmentChange = (t: CardTreatment) => {
+    const bestPrint = findMatchingPrint(scryfallPrints, setCode, t, form.collector_number || '', form.promo_type || '', form.foil_treatment);
+    const ref = applyPrintPrices(bestPrint, bestPrint?.finishes?.includes('foil') ? 'foil' : 'non_foil', form.price_source);
+    const suggested = getSuggestedPrice(bestPrint, bestPrint?.finishes?.includes('foil') ? 'foil' : 'non_foil', form.price_source, settings);
+    
+    setForm(f => ({
+      ...f,
+      card_treatment: t,
+      collector_number: bestPrint?.collector_number || f.collector_number,
+      promo_type: (bestPrint?.promo_types || []).join(',') || 'none',
+      foil_treatment: resolveFoilTreatment(bestPrint),
+      image_url: getScryfallImage(bestPrint) || f.image_url,
+      price_reference: ref,
+      target_price: suggested !== undefined ? suggested : f.target_price,
+      ...extractMTGMetadata(bestPrint)
+    }));
+    if (bestPrint?.collector_number) setCollectorNumber(bestPrint.collector_number);
+  };
+
+  const handleArtChange = (a: string) => {
+    const bestPrint = findMatchingPrint(scryfallPrints, setCode, form.card_treatment, a, form.promo_type || '', form.foil_treatment);
+    setCollectorNumber(a);
+    const ref = applyPrintPrices(bestPrint, resolveFoilTreatment(bestPrint), form.price_source);
+    const suggested = getSuggestedPrice(bestPrint, resolveFoilTreatment(bestPrint), form.price_source, settings);
+    
+    setForm(f => ({
+      ...f,
+      collector_number: a,
+      promo_type: (bestPrint?.promo_types || []).join(',') || 'none',
+      foil_treatment: resolveFoilTreatment(bestPrint),
+      image_url: getScryfallImage(bestPrint) || f.image_url,
+      price_reference: ref,
+      target_price: suggested !== undefined ? suggested : f.target_price,
+      ...extractMTGMetadata(bestPrint)
+    }));
+  };
+
+  const handlePromoChange = (p: string) => {
+    const bestPrint = findMatchingPrint(scryfallPrints, setCode, form.card_treatment, form.collector_number || '', p, form.foil_treatment);
+    const ref = applyPrintPrices(bestPrint, resolveFoilTreatment(bestPrint), form.price_source);
+    const suggested = getSuggestedPrice(bestPrint, resolveFoilTreatment(bestPrint), form.price_source, settings);
+    
+    setForm(f => ({
+      ...f,
+      promo_type: p,
+      foil_treatment: resolveFoilTreatment(bestPrint),
+      image_url: getScryfallImage(bestPrint) || f.image_url,
+      price_reference: ref,
+      target_price: suggested !== undefined ? suggested : f.target_price,
+      ...extractMTGMetadata(bestPrint)
+    }));
+  };
+
+  const handleFoilChange = (f: FoilTreatment) => {
+    const bestPrint = findMatchingPrint(scryfallPrints, setCode, form.card_treatment, form.collector_number || '', form.promo_type || '', f);
+    const ref = applyPrintPrices(bestPrint, f, form.price_source);
+    const suggested = getSuggestedPrice(bestPrint, f, form.price_source, settings);
+    setForm(old => ({
+      ...old,
+      foil_treatment: f,
+      image_url: getScryfallImage(bestPrint) || old.image_url,
+      price_reference: ref,
+      target_price: suggested !== undefined ? suggested : old.target_price
+    }));
+  };
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-4 md:pt-8 px-2 md:px-4"
@@ -198,15 +311,9 @@ export default function BountyEditModal({
                   lookingUp={lookingUp}
                   onNameChange={val => { setForm(f => ({ ...f, name: val })); setScryfallPrints([]); }}
                   onSetCodeChange={val => setSetCode(val)}
-                  onCollectorNumberChange={val => setCollectorNumber(val)}
+                  onCollectorNumberChange={handleArtChange}
                   onPopulate={handlePopulate}
-                  onSetSearchChange={val => {
-                    setSetCode(val);
-                    const p = scryfallPrints.find(pr => pr.set === val);
-                    if (p) {
-                      setForm(f => ({ ...f, set_name: p.set_name, image_url: getScryfallImage(p) }));
-                    }
-                  }}
+                  onSetSearchChange={handleSetSearchChange}
                 />
                 
                 {scryfallPrints.length > 0 && (
@@ -219,13 +326,10 @@ export default function BountyEditModal({
                       promoType={form.promo_type}
                       foilTreatment={form.foil_treatment}
                       prints={scryfallPrints}
-                      onTreatmentChange={t => setForm(f => ({ ...f, card_treatment: t }))}
-                      onArtChange={a => { 
-                        setCollectorNumber(a);
-                        setForm(f => ({ ...f, collector_number: a }));
-                      }}
-                      onPromoChange={p => setForm(old => ({ ...old, promo_type: p }))}
-                      onFoilChange={f => setForm(old => ({ ...old, foil_treatment: f }))}
+                      onTreatmentChange={handleTreatmentChange}
+                      onArtChange={handleArtChange}
+                      onPromoChange={handlePromoChange}
+                      onFoilChange={handleFoilChange}
                     />
                   </div>
                 )}
@@ -243,16 +347,68 @@ export default function BountyEditModal({
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4 mt-6">
-              <div>
-                <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">TARGET PRICE (COP)</label>
-                <input type="number" min="0" step="50" className="w-full font-mono text-lg" value={form.target_price || ''} onChange={e => setForm(f => ({ ...f, target_price: parseFloat(e.target.value) }))} placeholder="0" />
+            <div className="mt-8 border-t border-ink-border/20 pt-6">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-xs font-mono-stack uppercase text-text-muted tracking-widest m-0">PRICING</h3>
+                <div className="text-xs font-mono-stack px-2 py-1 rounded bg-ink-surface text-gold shadow-sm">
+                  {form.price_source === 'tcgplayer' && `(x ${settings?.usd_to_cop_rate || 0} COP)`}
+                  {form.price_source === 'cardmarket' && `(x ${settings?.eur_to_cop_rate || 0} COP)`}
+                  {form.price_source !== 'manual' && (
+                    <span className="ml-2 font-bold text-sm">
+                      = ${(form.target_price || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} COP
+                    </span>
+                  )}
+                </div>
               </div>
-              <div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">PRICE SOURCE *</label>
+                  <select className="bg-white/80 border-white/40 w-full" value={form.price_source} onChange={e => handlePriceSourceChange(e.target.value as PriceSource)}>
+                    <option value="manual">Manual Override (COP)</option>
+                    <option value="tcgplayer">External: TCGPlayer (USD)</option>
+                    <option value="cardmarket">External: Cardmarket (EUR)</option>
+                  </select>
+                </div>
+                
+                {form.price_source !== 'manual' ? (
+                  <div>
+                    <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">
+                      REFERENCE PRICE ({form.price_source === 'tcgplayer' ? 'USD' : 'EUR'}) *
+                    </label>
+                    <input 
+                      type="number" step="0.01" className="w-full font-mono bg-white/90 border-white/40" 
+                      value={form.price_reference || ''} 
+                      onChange={e => {
+                        const val = parseFloat(e.target.value) || 0;
+                        const rate = form.price_source === 'tcgplayer' ? (settings?.usd_to_cop_rate || 0) : (settings?.eur_to_cop_rate || 0);
+                        setForm(f => ({ ...f, price_reference: val, target_price: Math.round(val * rate) }));
+                      }} 
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">PRICE (COP) *</label>
+                    <input 
+                      type="number" min="0" step="100" 
+                      className="w-full font-mono bg-white/90 border-white/40" 
+                      value={form.target_price || ''} 
+                      onChange={e => setForm(f => ({ ...f, target_price: parseFloat(e.target.value) }))} 
+                      placeholder="0" 
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4 bg-ink-surface/30 rounded-sm border border-ink-border/50">
                 <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">QUANTITY NEEDED</label>
-                <input type="number" min="1" className="w-full font-mono text-lg" value={form.quantity_needed} onChange={e => setForm(f => ({ ...f, quantity_needed: parseInt(e.target.value) || 1 }))} />
+                <input type="number" min="1" className="w-full max-w-[200px] font-mono bg-white/80 border-white/40 h-[42px]" value={form.quantity_needed} onChange={e => setForm(f => ({ ...f, quantity_needed: parseInt(e.target.value) || 1 }))} />
               </div>
             </div>
+
+
+
+
 
             <div className="mt-4 flex items-center gap-2">
               <input type="checkbox" id="hide_price" checked={form.hide_price} onChange={e => setForm(f => ({ ...f, hide_price: e.target.checked }))} className="w-4 h-4 accent-gold" />

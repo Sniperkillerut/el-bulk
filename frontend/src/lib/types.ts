@@ -61,7 +61,6 @@ export interface Settings {
   contact_hours: string;
 }
 
-
 export interface Facets {
   condition: Record<string, number>;
   foil: Record<string, number>;
@@ -344,6 +343,8 @@ export interface Bounty {
   hide_price: boolean;
   quantity_needed: number;
   image_url?: string;
+  price_source: PriceSource;
+  price_reference?: number;
   created_at: string;
   updated_at: string;
 }
@@ -362,6 +363,8 @@ export interface BountyInput {
   hide_price: boolean;
   quantity_needed: number;
   image_url?: string;
+  price_source: PriceSource;
+  price_reference?: number;
 }
 
 export interface ClientRequest {

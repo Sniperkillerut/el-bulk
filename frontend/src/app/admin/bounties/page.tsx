@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { 
   adminCreateBounty, adminUpdateBounty, adminDeleteBounty, fetchBounties,
   adminFetchClientRequests, adminUpdateClientRequestStatus, adminFetchTCGs,
-  adminFetchBountyOffers, adminUpdateBountyOfferStatus
+  adminFetchBountyOffers, adminUpdateBountyOfferStatus, fetchPublicSettings
 } from '@/lib/api';
-import { Bounty, BountyInput, ClientRequest, TCG, BountyOffer } from '@/lib/types';
+import { Bounty, BountyInput, ClientRequest, TCG, BountyOffer, Settings } from '@/lib/types';
 import AdminSidebar from '@/components/admin/dashboard/AdminSidebar';
 import BountyEditModal from '@/components/admin/BountyEditModal';
 import BountyOfferResolveModal from '@/components/admin/BountyOfferResolveModal';
@@ -21,6 +21,7 @@ export default function AdminBountiesPage() {
   const [requests, setRequests] = useState<ClientRequest[]>([]);
   const [offers, setOffers] = useState<BountyOffer[]>([]);
   const [tcgs, setTCGs] = useState<TCG[]>([]);
+  const [settings, setSettings] = useState<Settings | undefined>();
   
   const [loading, setLoading] = useState(true);
   const [editingBounty, setEditingBounty] = useState<Bounty | null>(null);
@@ -41,16 +42,18 @@ export default function AdminBountiesPage() {
   const loadData = async (t: string) => {
     setLoading(true);
     try {
-      const [bData, rData, tData, oData] = await Promise.all([
+      const [bData, rData, tData, oData, sData] = await Promise.all([
         fetchBounties(),
         adminFetchClientRequests(t),
         adminFetchTCGs(t),
-        adminFetchBountyOffers(t)
+        adminFetchBountyOffers(t),
+        fetchPublicSettings()
       ]);
       setBounties(bData || []);
       setRequests(rData || []);
       setTCGs(tData || []);
       setOffers(oData || []);
+      setSettings(sData);
     } catch (err: any) {
       console.error('Failed to load bounties data', err);
     } finally {
@@ -281,6 +284,7 @@ export default function AdminBountiesPage() {
           initialData={initialBountyData}
           token={token}
           tcgs={tcgs}
+          settings={settings}
           onClose={() => { setShowEditModal(false); setEditingBounty(null); setInitialBountyData(undefined); }}
           onSaved={() => { setShowEditModal(false); setEditingBounty(null); setInitialBountyData(undefined); handleRefresh(); }}
         />

@@ -19,6 +19,8 @@ type Bounty struct {
 	HidePrice      bool          `db:"hide_price"       json:"hide_price"`
 	QuantityNeeded int           `db:"quantity_needed"  json:"quantity_needed"`
 	ImageURL       *string       `db:"image_url"        json:"image_url,omitempty"`
+	PriceSource    string        `db:"price_source"     json:"price_source"`
+	PriceReference *float64      `db:"price_reference"  json:"price_reference,omitempty"`
 	CreatedAt      time.Time     `db:"created_at"       json:"created_at"`
 	UpdatedAt      time.Time     `db:"updated_at"       json:"updated_at"`
 }
@@ -37,6 +39,8 @@ type BountyInput struct {
 	HidePrice      bool          `json:"hide_price"`
 	QuantityNeeded int           `json:"quantity_needed"`
 	ImageURL       *string       `json:"image_url,omitempty"`
+	PriceSource    string        `json:"price_source"`
+	PriceReference *float64      `json:"price_reference,omitempty"`
 }
 
 type ClientRequest struct {
