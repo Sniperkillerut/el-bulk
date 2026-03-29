@@ -16,12 +16,14 @@ func main() {
 	defer database.Close()
 
 	// Clear products table
-	logger.Info("Clearing products table...")
+	logger.Info("Clearing tables...")
 	_, err := database.Exec(`DELETE FROM product`)
 	if err != nil {
 		logger.Error("Failed to clear products: %v", err)
 		os.Exit(1)
 	}
+	database.Exec(`DELETE FROM bounty`)
+	database.Exec(`DELETE FROM client_request`)
 
 	// Create admin user
 	adminUser := os.Getenv("ADMIN_USERNAME")
@@ -118,6 +120,16 @@ func main() {
 
 		// SEALED
 		{"MTG Duskmourn Box", "mtg", "sealed", "Duskmourn", "DSK", "NM", 680000, 5, []string{"featured", "new-arrivals"}, "36 Play Boosters.", "https://media.wizards.com/2024/wpn/Duskmourn_PlayBoosterBox.png", models.FoilNonFoil, models.TreatmentNormal, "en", false, false, "black", "2015"},
+
+		// POKEMON
+		{"Charizard Base Set", "pokemon", "singles", "Base Set", "BS", "LP", 1500000, 1, []string{"featured", "hot-items"}, "The classic holo rare Charizard.", "https://images.pokemontcg.io/base1/4_hires.png", models.FoilFoil, models.TreatmentNormal, "en", false, false, "", ""},
+		{"Pikachu Illustrator", "pokemon", "singles", "Promo", "PR", "NM", 999999999, 0, []string{"hot-items"}, "Holographic Illustrator Promo.", "https://m.media-amazon.com/images/I/71wE1Iov9qL.jpg", models.FoilFoil, models.TreatmentPromo, "jp", false, false, "", ""},
+
+		// YUGIOH
+		{"Blue-Eyes White Dragon", "yugioh", "singles", "Legend of Blue Eyes White Dragon", "LOB", "NM", 450000, 3, []string{"featured"}, "Iconic LOB classic.", "https://m.media-amazon.com/images/I/71+G3SGBO5L.jpg", models.FoilFoil, models.TreatmentNormal, "en", false, false, "", ""},
+
+		// LORCANA
+		{"Elsa - Spirit of Winter", "lorcana", "singles", "The First Chapter", "TFC", "NM", 3500000, 1, []string{"hot-items"}, "Enchanted variant.", "https://m.media-amazon.com/images/I/71wPZ23Z8tL.jpg", models.FoilFoil, models.TreatmentAlternateArt, "en", true, false, "", ""},
 
 		// ACCESSORIES
 		{"Dragon Shield Pink", "accessories", "accessories", "N/A", "N/A", "NM", 55000, 25, []string{"sale"}, "100 Matte sleeves.", "https://m.media-amazon.com/images/I/71Q+B+B+L+L._AC_SL1500_.jpg", models.FoilNonFoil, models.TreatmentNormal, "en", false, false, "black", "N/A"},
@@ -231,6 +243,65 @@ func main() {
 			database.Exec(`INSERT INTO product_storage (product_id, storage_id, quantity) VALUES ($1, $2, $3)`, newProductID, boxA_ID, p.Stock-(p.Stock/2))
 		}
 		time.Sleep(100 * time.Millisecond) // Respect rate limits
+	}
+
+	// -------------------------------------------------------------------------
+	// BOUNTY SEEDING
+	// -------------------------------------------------------------------------
+	logger.Info("Seeding bounties...")
+	bounties := []struct {
+		Name          string
+		TCG           string
+		SetName       string
+		Condition     string
+		FoilTreatment string
+		TargetPrice   float64
+		HidePrice     bool
+		Qty           int
+		ImageURL      string
+	}{
+		{"Gaea's Cradle", "mtg", "Urza's Saga", "NM", "non_foil", 2500000, false, 1, ""},
+		{"Mox Diamond", "mtg", "Stronghold", "LP", "non_foil", 1800000, true, 2, ""},
+		{"Charizard Base Set", "pokemon", "Base Set", "NM", "foil", 1500000, false, 1, ""},
+		{"Emrakul, the Aeons Torn", "mtg", "Rise of the Eldrazi", "NM", "foil", 150000, false, 4, ""},
+	}
+
+	for _, b := range bounties {
+		_, err := database.Exec(`
+			INSERT INTO bounty (name, tcg, set_name, condition, foil_treatment, target_price, hide_price, quantity_needed, image_url)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		`, b.Name, b.TCG, b.SetName, b.Condition, b.FoilTreatment, b.TargetPrice, b.HidePrice, b.Qty, b.ImageURL)
+		if err != nil {
+			logger.Warn("Failed to seed bounty: %v", err)
+		}
+	}
+
+	// -------------------------------------------------------------------------
+	// CLIENT REQUEST SEEDING
+	// -------------------------------------------------------------------------
+	logger.Info("Seeding client requests...")
+	requests := []struct {
+		Customer string
+		Contact  string
+		Card     string
+		Set      string
+		Details  string
+		Status   string
+	}{
+		{"John Doe", "john@example.com", "Black Lotus", "Alpha", "Need in NM condition", "pending"},
+		{"Jane Smith", "+1234567890", "Pikachu Illustrator", "Promo", "Budget is tight, let me know if any appear", "rejected"},
+		{"Carlos Ruiz", "cruz@mail.co", "Dual Lands", "Revised", "Looking for Underground Sea particularly", "accepted"},
+		{"Maria", "maria@gmail.com", "Jace, the Mind Sculptor", "Worldwake", "Foil version only please", "pending"},
+	}
+
+	for _, req := range requests {
+		_, err := database.Exec(`
+			INSERT INTO client_request (customer_name, customer_contact, card_name, set_name, details, status)
+			VALUES ($1, $2, $3, $4, $5, $6)
+		`, req.Customer, req.Contact, req.Card, req.Set, req.Details, req.Status)
+		if err != nil {
+			logger.Warn("Failed to seed client request: %v", err)
+		}
 	}
 
 	logger.Info("Seed complete!")

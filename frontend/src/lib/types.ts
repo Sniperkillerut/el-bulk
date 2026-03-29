@@ -328,3 +328,50 @@ export interface ScryfallCard {
   promo?: boolean;
   digital?: boolean;
 }
+
+export interface Bounty {
+  id: string;
+  name: string;
+  tcg: string;
+  set_name?: string;
+  condition?: Condition;
+  foil_treatment: FoilTreatment;
+  target_price?: number;
+  hide_price: boolean;
+  quantity_needed: number;
+  image_url?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BountyInput {
+  name: string;
+  tcg: string;
+  set_name?: string;
+  condition?: Condition;
+  foil_treatment: FoilTreatment;
+  target_price?: number;
+  hide_price: boolean;
+  quantity_needed: number;
+  image_url?: string;
+}
+
+export interface ClientRequest {
+  id: string;
+  customer_name: string;
+  customer_contact: string;
+  card_name: string;
+  set_name?: string;
+  details?: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  created_at: string;
+}
+
+export interface ClientRequestInput {
+  customer_name: string;
+  customer_contact: string;
+  card_name: string;
+  set_name?: string;
+  details?: string;
+}
+

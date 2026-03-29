@@ -30,6 +30,7 @@ func main() {
 	refreshHandler := handlers.NewRefreshHandler(database)
 	orderHandler := handlers.NewOrderHandler(database)
 	tcgHandler := handlers.NewTCGHandler(database)
+	bountyHandler := handlers.NewBountyHandler(database)
 	healthHandler := handlers.NewHealthHandler(database)
 
 	// Start nightly price refresh at midnight
@@ -52,6 +53,9 @@ func main() {
 		r.Get("/tcgs", productHandler.ListTCGs)
 		r.Get("/categories", categoriesHandler.List)
 		r.Get("/settings", settingsHandler.Get)
+
+		r.Get("/bounties", bountyHandler.List)
+		r.Post("/client-requests", bountyHandler.CreateRequest)
 
 		// Public order creation
 		r.Post("/orders", orderHandler.Create)
@@ -115,6 +119,13 @@ func main() {
 				r.Get("/orders/{id}", orderHandler.GetDetail)
 				r.Put("/orders/{id}", orderHandler.Update)
 				r.Post("/orders/{id}/complete", orderHandler.Complete)
+
+				// Bounties & Client Requests CRUD
+				r.Post("/bounties", bountyHandler.Create)
+				r.Put("/bounties/{id}", bountyHandler.Update)
+				r.Delete("/bounties/{id}", bountyHandler.Delete)
+				r.Get("/client-requests", bountyHandler.ListRequests)
+				r.Put("/client-requests/{id}/status", bountyHandler.UpdateRequestStatus)
 
 				// System Health & Stats
 				r.Get("/stats", healthHandler.GetStats)

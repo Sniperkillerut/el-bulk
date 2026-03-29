@@ -575,3 +575,74 @@ export async function adminFetchStats(token: string): Promise<{ total_sku_record
   if (!res.ok) throw new Error('Failed to fetch stats');
   return res.json();
 }
+
+// ---------------------------------------------------------------------------
+// Bounties
+// ---------------------------------------------------------------------------
+
+export async function fetchBounties(): Promise<import('./types').Bounty[]> {
+  const res = await fetch(`${API_BASE}/api/bounties`, { cache: 'no-store' });
+  if (!res.ok) await logAndThrow(res, 'Failed to fetch bounties');
+  return res.json();
+}
+
+export async function adminCreateBounty(token: string, data: import('./types').BountyInput): Promise<import('./types').Bounty> {
+  const res = await fetch(`${API_BASE}/api/admin/bounties`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) await logAndThrow(res, 'Failed to create bounty');
+  return res.json();
+}
+
+export async function adminUpdateBounty(token: string, id: string, data: import('./types').BountyInput): Promise<import('./types').Bounty> {
+  const res = await fetch(`${API_BASE}/api/admin/bounties/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) await logAndThrow(res, 'Failed to update bounty');
+  return res.json();
+}
+
+export async function adminDeleteBounty(token: string, id: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/admin/bounties/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) await logAndThrow(res, 'Failed to delete bounty');
+}
+
+// ---------------------------------------------------------------------------
+// Client Requests
+// ---------------------------------------------------------------------------
+
+export async function createClientRequest(data: import('./types').ClientRequestInput): Promise<import('./types').ClientRequest> {
+  const res = await fetch(`${API_BASE}/api/client-requests`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) await logAndThrow(res, 'Failed to submit request');
+  return res.json();
+}
+
+export async function adminFetchClientRequests(token: string): Promise<import('./types').ClientRequest[]> {
+  const res = await fetch(`${API_BASE}/api/admin/client-requests`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  });
+  if (!res.ok) await logAndThrow(res, 'Failed to fetch client requests');
+  return res.json();
+}
+
+export async function adminUpdateClientRequestStatus(token: string, id: string, status: string): Promise<import('./types').ClientRequest> {
+  const res = await fetch(`${API_BASE}/api/admin/client-requests/${id}/status`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ status }),
+  });
+  if (!res.ok) await logAndThrow(res, 'Failed to update request status');
+  return res.json();
+}

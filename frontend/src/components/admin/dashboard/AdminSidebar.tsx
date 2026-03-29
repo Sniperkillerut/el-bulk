@@ -17,6 +17,7 @@ export default function AdminSidebar() {
     { label: 'INVENTORY', href: '/admin/dashboard', icon: '📦' },
     { label: 'ORDERS', href: '/admin/orders', icon: '📝' },
     { label: 'TCG REGISTRY', href: '/admin/tcgs', icon: '🎴' },
+    { label: 'WANTED / BOUNTIES', href: '/admin/bounties', icon: '🎯' },
   ];
 
   return (

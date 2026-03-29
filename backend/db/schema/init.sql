@@ -11,6 +11,8 @@
 \i tables/customer.sql
 \i tables/admin.sql
 \i tables/custom_category.sql
+\i tables/bounty.sql
+\i tables/client_request.sql
 
 -- 3. Dependent Tables
 \i tables/product.sql
@@ -34,5 +36,6 @@
 
 -- 5. Triggers
 \i triggers/trg_product_updated_at.sql
+\i triggers/trg_bounty_updated_at.sql
 \i triggers/trg_setting_updated_at.sql
 \i triggers/trg_sync_product_stock.sql

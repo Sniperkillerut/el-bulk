@@ -118,6 +118,10 @@ export default function Navbar() {
               style={{ textDecoration: 'none' }}>
               Contact
             </Link>
+            <Link href="/bounties" className="text-sm font-medium transition-colors hover:opacity-80"
+              style={{ color: 'var(--hp-color)', textDecoration: 'none' }}>
+              🎯 Wanted Cards
+            </Link>
             <Link href="/bulk" className="text-sm font-medium transition-colors hover:opacity-80"
               style={{ color: 'var(--gold-dark)', textDecoration: 'none' }}>
               💰 Sell Your Bulk
@@ -199,6 +203,11 @@ export default function Navbar() {
               <Link href="/contact" onClick={() => setMobileOpen(false)}
                 className="block py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--gold-dark)]" style={{ textDecoration: 'none' }}>
                 Contact
+              </Link>
+              <Link href="/bounties" onClick={() => setMobileOpen(false)}
+                className="block py-3 text-center border-2 rounded-sm mt-4 font-bold" 
+                style={{ color: 'var(--hp-color)', borderColor: 'var(--hp-color)', textDecoration: 'none' }}>
+                🎯 WANTED CARDS
               </Link>
               <Link href="/bulk" onClick={() => setMobileOpen(false)}
                 className="block py-3 text-center border-2 border-gold-dark rounded-sm mt-2 font-bold" 
