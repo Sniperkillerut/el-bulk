@@ -24,6 +24,9 @@ func main() {
 	}
 	database.Exec(`DELETE FROM bounty`)
 	database.Exec(`DELETE FROM client_request`)
+	database.Exec(`DELETE FROM order_item`)
+	database.Exec(`DELETE FROM "order"`)
+	database.Exec(`DELETE FROM customer`)
 
 	// Create admin user
 	adminUser := os.Getenv("ADMIN_USERNAME")
@@ -168,6 +171,7 @@ func main() {
 	database.QueryRow(`INSERT INTO storage_location (name) VALUES ('Binder 1') ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id`).Scan(&binderID)
 	database.QueryRow(`INSERT INTO storage_location (name) VALUES ('Box A') ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id`).Scan(&boxA_ID)
 
+	var allProductIDs []string
 	for _, p := range products {
 		logger.Info("Seeding %s (%s)...", p.Name, p.TCG)
 
@@ -227,7 +231,9 @@ func main() {
 			lang, color, rarity, cmc, isLegendary, isHistoric, isLand, isBasicLand, artVariation,
 			oracleText, artist, typeLine, borderColor, frame, fullArt, textless).Scan(&newProductID)
 		
-		if err != nil {
+		if err == nil {
+			allProductIDs = append(allProductIDs, newProductID)
+		} else {
 			logger.Warn("failed to insert %s: %v", p.Name, err)
 			continue
 		}
@@ -301,6 +307,76 @@ func main() {
 		`, req.Customer, req.Contact, req.Card, req.Set, req.Details, req.Status)
 		if err != nil {
 			logger.Warn("Failed to seed client request: %v", err)
+		}
+	}
+
+	// -------------------------------------------------------------------------
+	// ORDER SEEDING
+	// -------------------------------------------------------------------------
+	logger.Info("Seeding customers and orders...")
+	
+	customers := []struct{ First, Last, Email, Phone string }{
+		{"Alice", "Wonderland", "alice@example.com", "3001234567"},
+		{"Bob", "Builder", "bob@example.com", "3007654321"},
+		{"Charlie", "Chocolate", "charlie@example.com", "3109876543"},
+	}
+
+	for _, c := range customers {
+		var custID string
+		err := database.QueryRow(`
+			INSERT INTO customer (first_name, last_name, email, phone)
+			VALUES ($1, $2, $3, $4) RETURNING id
+		`, c.First, c.Last, c.Email, c.Phone).Scan(&custID)
+		if err != nil {
+			logger.Warn("Failed to seed customer %s: %v", c.First, err)
+			continue
+		}
+
+		// Create 2-3 orders per customer
+		numOrders := 2
+		for i := 0; i < numOrders; i++ {
+			orderNum := "ORD-" + custID[:4] + "-" + string(rune(65+i))
+			status := []string{"pending", "confirmed", "completed", "cancelled"}[i%4]
+			payment := []string{"Cash", "Transfer", "Mercado Pago"}[i%3]
+			
+			// Random date in the last 30 days
+			randomDays := i * 7 // simplistic "random"
+			orderDate := time.Now().AddDate(0, 0, -randomDays)
+
+			var orderID string
+			err := database.QueryRow(`
+				INSERT INTO "order" (order_number, customer_id, status, payment_method, total_cop, created_at)
+				VALUES ($1, $2, $3, $4, $5, $6) RETURNING id
+			`, orderNum, custID, status, payment, 0, orderDate).Scan(&orderID)
+			
+			if err != nil {
+				logger.Warn("Failed to seed order %s: %v", orderNum, err)
+				continue
+			}
+
+			// Add 1-3 items per order
+			var total float64
+			for j := 0; j < (i%3)+1; j++ {
+				if len(allProductIDs) == 0 { break }
+				pid := allProductIDs[(i+j)%len(allProductIDs)]
+				
+				// Fetch product details
+				var pName, pSet string
+				var pPrice float64
+				database.QueryRow("SELECT name, set_name, price_cop_override FROM product WHERE id = $1", pid).Scan(&pName, &pSet, &pPrice)
+				
+				qty := j + 1
+				itemPrice := pPrice
+				total += itemPrice * float64(qty)
+
+				database.Exec(`
+					INSERT INTO order_item (order_id, product_id, product_name, product_set, unit_price_cop, quantity)
+					VALUES ($1, $2, $3, $4, $5, $6)
+				`, orderID, pid, pName, pSet, itemPrice, qty)
+			}
+
+			// Update total
+			database.Exec(`UPDATE "order" SET total_cop = $1 WHERE id = $2`, total, orderID)
 		}
 	}
 
