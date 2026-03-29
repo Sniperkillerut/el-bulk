@@ -81,7 +81,7 @@ export function extractPrices(card: ScryfallCard) {
  * Filter waterfall: 1. Get all unique treatments across all prints
  */
 export function getTreatmentOptions(prints: ScryfallCard[], set: string): CardTreatment[] {
-  const treatments = new Set<CardTreatment>(['normal']);
+  const treatments = new Set<CardTreatment>();
   prints
     .filter(p => !set || p.set?.toLowerCase() === set.toLowerCase())
     .forEach(p => treatments.add(resolveCardTreatment(p)));
