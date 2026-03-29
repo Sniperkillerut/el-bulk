@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
 import { fetchBounties } from '@/lib/api';
-import Navbar from '@/components/Navbar';
 import PublicBountiesClient from './bounties-client';
 
 export const metadata: Metadata = {
@@ -15,7 +14,6 @@ export default async function BountiesPage() {
 
   return (
     <div className="min-h-screen flex flex-col pt-24 bg-kraft-paper">
-      <Navbar />
       <main className="flex-1 w-full relative z-10 pb-20">
         <div className="section-container pt-8 md:pt-16 pb-12">
           
