@@ -336,6 +336,10 @@ export interface Bounty {
   set_name?: string;
   condition?: Condition;
   foil_treatment: FoilTreatment;
+  card_treatment: CardTreatment;
+  collector_number?: string;
+  promo_type?: string;
+  language: string;
   target_price?: number;
   hide_price: boolean;
   quantity_needed: number;
@@ -350,6 +354,10 @@ export interface BountyInput {
   set_name?: string;
   condition?: Condition;
   foil_treatment: FoilTreatment;
+  card_treatment: CardTreatment;
+  collector_number?: string;
+  promo_type?: string;
+  language: string;
   target_price?: number;
   hide_price: boolean;
   quantity_needed: number;
@@ -375,3 +383,26 @@ export interface ClientRequestInput {
   details?: string;
 }
 
+export interface BountyOffer {
+  id: string;
+  bounty_id: string;
+  customer_name: string;
+  customer_contact: string;
+  condition?: Condition;
+  status: 'pending' | 'reviewed' | 'accepted' | 'rejected';
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BountyOfferInput {
+  bounty_id: string;
+  customer_name: string;
+  customer_contact: string;
+  condition?: Condition;
+  notes?: string;
+}
+
+export interface BountyWithOffers extends Bounty {
+  offers: BountyOffer[];
+}

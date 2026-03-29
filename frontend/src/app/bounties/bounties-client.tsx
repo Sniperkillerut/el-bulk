@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import { Bounty } from '@/lib/types';
 import ClientRequestModal from '@/components/ClientRequestModal';
+import BountyOfferModal from '@/components/BountyOfferModal';
 
 export default function PublicBountiesClient({ initialBounties }: { initialBounties: Bounty[] }) {
   const [bounties, setBounties] = useState<Bounty[]>(initialBounties);
   const [showModal, setShowModal] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [offerBounty, setOfferBounty] = useState<Bounty | null>(null);
 
   const handleSuccess = () => {
     setShowModal(false);
@@ -79,6 +81,12 @@ export default function PublicBountiesClient({ initialBounties }: { initialBount
                       )}
                     </div>
                  </div>
+                 <button 
+                   onClick={() => setOfferBounty(b)}
+                   className="mt-4 w-full bg-gold/10 hover:bg-gold text-gold hover:text-ink-deep font-bold font-mono tracking-widest text-[10px] py-2 transition-all border border-gold/40 rounded-sm uppercase"
+                 >
+                   HAVE THIS? SELL IT
+                 </button>
               </div>
             </div>
           ))}
@@ -86,6 +94,7 @@ export default function PublicBountiesClient({ initialBounties }: { initialBount
       )}
 
       {showModal && <ClientRequestModal onClose={() => setShowModal(false)} onSuccess={handleSuccess} />}
+      {offerBounty && <BountyOfferModal bounty={offerBounty} onClose={() => setOfferBounty(null)} />}
     </>
   );
 }

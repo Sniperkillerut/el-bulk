@@ -55,6 +55,7 @@ func main() {
 		r.Get("/settings", settingsHandler.Get)
 
 		r.Get("/bounties", bountyHandler.List)
+		r.Post("/bounties/offers", bountyHandler.SubmitOffer)
 		r.Post("/client-requests", bountyHandler.CreateRequest)
 
 		// Public order creation
@@ -124,6 +125,8 @@ func main() {
 				r.Post("/bounties", bountyHandler.Create)
 				r.Put("/bounties/{id}", bountyHandler.Update)
 				r.Delete("/bounties/{id}", bountyHandler.Delete)
+				r.Get("/bounties/offers", bountyHandler.ListOffers)
+				r.Put("/bounties/offers/{id}/status", bountyHandler.UpdateOfferStatus)
 				r.Get("/client-requests", bountyHandler.ListRequests)
 				r.Put("/client-requests/{id}/status", bountyHandler.UpdateRequestStatus)
 

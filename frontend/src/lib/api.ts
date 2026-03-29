@@ -614,6 +614,35 @@ export async function adminDeleteBounty(token: string, id: string): Promise<void
   if (!res.ok) await logAndThrow(res, 'Failed to delete bounty');
 }
 
+export async function createBountyOffer(data: import('./types').BountyOfferInput): Promise<import('./types').BountyOffer> {
+  const res = await fetch(`${API_BASE}/api/bounties/offers`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) await logAndThrow(res, 'Failed to submit offer');
+  return res.json();
+}
+
+export async function adminFetchBountyOffers(token: string): Promise<import('./types').BountyOffer[]> {
+  const res = await fetch(`${API_BASE}/api/admin/bounties/offers`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  });
+  if (!res.ok) await logAndThrow(res, 'Failed to fetch offers');
+  return res.json();
+}
+
+export async function adminUpdateBountyOfferStatus(token: string, id: string, status: string): Promise<import('./types').BountyOffer> {
+  const res = await fetch(`${API_BASE}/api/admin/bounties/offers/${id}/status`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ status }),
+  });
+  if (!res.ok) await logAndThrow(res, 'Failed to update offer status');
+  return res.json();
+}
+
 // ---------------------------------------------------------------------------
 // Client Requests
 // ---------------------------------------------------------------------------

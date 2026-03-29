@@ -5,6 +5,7 @@ import { adminCreateBounty, adminUpdateBounty } from '@/lib/api';
 import { Bounty, BountyInput, FoilTreatment, Condition, TCG, ScryfallCard } from '@/lib/types';
 import { extractMTGMetadata, getScryfallImage, resolveFoilTreatment } from '@/lib/mtg-logic';
 import ScryfallPopulate from './product/ScryfallPopulate';
+import MTGVariantSelector from './MTGVariantSelector';
 
 interface BountyEditModalProps {
   editBounty: Bounty | null;
@@ -17,7 +18,9 @@ interface BountyEditModalProps {
 
 export const EMPTY_BOUNTY: BountyInput = {
   name: '', tcg: 'mtg', set_name: '', condition: 'NM',
-  foil_treatment: 'non_foil', target_price: 0, hide_price: false, quantity_needed: 1, image_url: ''
+  foil_treatment: 'non_foil', card_treatment: 'normal',
+  collector_number: '', promo_type: '', language: 'en',
+  target_price: 0, hide_price: false, quantity_needed: 1, image_url: ''
 };
 
 export default function BountyEditModal({
@@ -41,6 +44,10 @@ export default function BountyEditModal({
         set_name: editBounty.set_name || '',
         condition: editBounty.condition || 'NM',
         foil_treatment: editBounty.foil_treatment,
+        card_treatment: editBounty.card_treatment || 'normal',
+        collector_number: editBounty.collector_number || '',
+        promo_type: editBounty.promo_type || '',
+        language: editBounty.language || 'en',
         target_price: editBounty.target_price || 0,
         hide_price: editBounty.hide_price,
         quantity_needed: editBounty.quantity_needed,
@@ -181,25 +188,48 @@ export default function BountyEditModal({
             </div>
 
             {form.tcg === 'mtg' ? (
-              <ScryfallPopulate 
-                name={form.name} 
-                setCode={setCode} 
-                collectorNumber={collectorNumber}
-                setName={form.set_name || ''}
-                scryfallPrints={scryfallPrints}
-                lookingUp={lookingUp}
-                onNameChange={val => { setForm(f => ({ ...f, name: val })); setScryfallPrints([]); }}
-                onSetCodeChange={val => setSetCode(val)}
-                onCollectorNumberChange={val => setCollectorNumber(val)}
-                onPopulate={handlePopulate}
-                onSetSearchChange={val => {
-                  setSetCode(val);
-                  const p = scryfallPrints.find(pr => pr.set === val);
-                  if (p) {
-                    setForm(f => ({ ...f, set_name: p.set_name, image_url: getScryfallImage(p) }));
-                  }
-                }}
-              />
+              <>
+                <ScryfallPopulate 
+                  name={form.name} 
+                  setCode={setCode} 
+                  collectorNumber={collectorNumber}
+                  setName={form.set_name || ''}
+                  scryfallPrints={scryfallPrints}
+                  lookingUp={lookingUp}
+                  onNameChange={val => { setForm(f => ({ ...f, name: val })); setScryfallPrints([]); }}
+                  onSetCodeChange={val => setSetCode(val)}
+                  onCollectorNumberChange={val => setCollectorNumber(val)}
+                  onPopulate={handlePopulate}
+                  onSetSearchChange={val => {
+                    setSetCode(val);
+                    const p = scryfallPrints.find(pr => pr.set === val);
+                    if (p) {
+                      setForm(f => ({ ...f, set_name: p.set_name, image_url: getScryfallImage(p) }));
+                    }
+                  }}
+                />
+                
+                {scryfallPrints.length > 0 && (
+                  <div className="mt-6 border-t border-ink-border/20 pt-6">
+                    <MTGVariantSelector
+                      tcg={form.tcg}
+                      setCode={setCode}
+                      cardTreatment={form.card_treatment}
+                      collectorNumber={collectorNumber}
+                      promoType={form.promo_type}
+                      foilTreatment={form.foil_treatment}
+                      prints={scryfallPrints}
+                      onTreatmentChange={t => setForm(f => ({ ...f, card_treatment: t }))}
+                      onArtChange={a => { 
+                        setCollectorNumber(a);
+                        setForm(f => ({ ...f, collector_number: a }));
+                      }}
+                      onPromoChange={p => setForm(old => ({ ...old, promo_type: p }))}
+                      onFoilChange={f => setForm(old => ({ ...old, foil_treatment: f }))}
+                    />
+                  </div>
+                )}
+              </>
             ) : (
               <div>
                 <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">CARD NAME</label>

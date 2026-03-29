@@ -25,7 +25,7 @@ func (h *BountyHandler) List(w http.ResponseWriter, r *http.Request) {
 	var bounties []models.Bounty
 	query := `
 		SELECT 
-			id, name, tcg, set_name, condition, foil_treatment, target_price, 
+			id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, 
 			hide_price, quantity_needed, image_url, created_at, updated_at
 		FROM bounty
 		ORDER BY created_at DESC
@@ -57,13 +57,14 @@ func (h *BountyHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query := `
-		INSERT INTO bounty (name, tcg, set_name, condition, foil_treatment, target_price, hide_price, quantity_needed, image_url)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-		RETURNING id, name, tcg, set_name, condition, foil_treatment, target_price, hide_price, quantity_needed, image_url, created_at, updated_at
+		INSERT INTO bounty (name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, image_url)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, image_url, created_at, updated_at
 	`
 	var bounty models.Bounty
 	err := h.DB.QueryRowx(query,
 		input.Name, input.TCG, input.SetName, input.Condition, input.FoilTreatment,
+		input.CardTreatment, input.CollectorNumber, input.PromoType, input.Language,
 		input.TargetPrice, input.HidePrice, input.QuantityNeeded, input.ImageURL,
 	).StructScan(&bounty)
 
@@ -88,13 +89,15 @@ func (h *BountyHandler) Update(w http.ResponseWriter, r *http.Request) {
 	query := `
 		UPDATE bounty
 		SET name = $1, tcg = $2, set_name = $3, condition = $4, foil_treatment = $5,
-		    target_price = $6, hide_price = $7, quantity_needed = $8, image_url = $9, updated_at = now()
-		WHERE id = $10
-		RETURNING id, name, tcg, set_name, condition, foil_treatment, target_price, hide_price, quantity_needed, image_url, created_at, updated_at
+		    card_treatment = $6, collector_number = $7, promo_type = $8, language = $9,
+		    target_price = $10, hide_price = $11, quantity_needed = $12, image_url = $13, updated_at = now()
+		WHERE id = $14
+		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, image_url, created_at, updated_at
 	`
 	var bounty models.Bounty
 	err := h.DB.QueryRowx(query,
 		input.Name, input.TCG, input.SetName, input.Condition, input.FoilTreatment,
+		input.CardTreatment, input.CollectorNumber, input.PromoType, input.Language,
 		input.TargetPrice, input.HidePrice, input.QuantityNeeded, input.ImageURL, id,
 	).StructScan(&bounty)
 
@@ -127,6 +130,91 @@ func (h *BountyHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// === BOUNTY OFFERS ===
+
+func (h *BountyHandler) ListOffers(w http.ResponseWriter, r *http.Request) {
+	var offers []models.BountyOffer
+	query := `
+		SELECT 
+			id, bounty_id, customer_name, customer_contact, condition, status, notes, created_at, updated_at
+		FROM bounty_offer
+		ORDER BY created_at DESC
+	`
+	err := h.DB.Select(&offers, query)
+	if err != nil {
+		logger.Error("Failed to list bounty offers: %v", err)
+		jsonError(w, "Failed to fetch bounty offers", http.StatusInternalServerError)
+		return
+	}
+	if offers == nil {
+		offers = []models.BountyOffer{}
+	}
+
+	jsonOK(w, offers)
+}
+
+func (h *BountyHandler) SubmitOffer(w http.ResponseWriter, r *http.Request) {
+	var input models.BountyOfferInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		jsonError(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if input.BountyID == "" || input.CustomerName == "" || input.CustomerContact == "" {
+		jsonError(w, "BountyID, CustomerName, and CustomerContact are required", http.StatusBadRequest)
+		return
+	}
+
+	query := `
+		INSERT INTO bounty_offer (bounty_id, customer_name, customer_contact, condition, notes)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING id, bounty_id, customer_name, customer_contact, condition, status, notes, created_at, updated_at
+	`
+	var offer models.BountyOffer
+	err := h.DB.QueryRowx(query,
+		input.BountyID, input.CustomerName, input.CustomerContact, input.Condition, input.Notes,
+	).StructScan(&offer)
+
+	if err != nil {
+		logger.Error("Failed to submit bounty offer: %v", err)
+		jsonError(w, "Failed to submit offer", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	jsonOK(w, offer)
+}
+
+func (h *BountyHandler) UpdateOfferStatus(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var input models.UpdateBountyOfferStatusInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		jsonError(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	query := `
+		UPDATE bounty_offer
+		SET status = $1, updated_at = now()
+		WHERE id = $2
+		RETURNING id, bounty_id, customer_name, customer_contact, condition, status, notes, created_at, updated_at
+	`
+	var offer models.BountyOffer
+	err := h.DB.QueryRowx(query, input.Status, id).StructScan(&offer)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			jsonError(w, "Offer not found", http.StatusNotFound)
+		} else {
+			logger.Error("Failed to update offer status: %v", err)
+			jsonError(w, "Failed to update offer status", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	jsonOK(w, offer)
 }
 
 // === CLIENT REQUESTS ===
