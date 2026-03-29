@@ -166,7 +166,7 @@ export default function AdminDashboard() {
 
         {/* Filters and Stats */}
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mb-8">
-          <div className="xl:col-span-3 card no-tilt p-6 bg-ink-surface/40 flex flex-wrap gap-6 items-end">
+          <div className="xl:col-span-3 card p-6 bg-ink-surface/40 flex flex-wrap gap-6 items-end">
             <div className="flex-1 min-w-[240px]">
               <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">Product Search</label>
               <div className="relative">
@@ -195,7 +195,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className="card p-6 bg-gold text-ink-deep flex flex-col justify-center border-none shadow-xl no-tilt ">
+          <div className="card p-6 bg-gold text-ink-deep flex flex-col justify-center border-none shadow-xl ">
             <div className="text-[10px] font-mono-stack uppercase opacity-60 mb-1">INVENTORY COUNT</div>
             <div className="text-4xl font-display leading-none">{total.toLocaleString()}</div>
             <div className="mt-4 pt-4 border-t border-ink-deep/10 flex justify-between items-center">

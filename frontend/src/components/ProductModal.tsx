@@ -81,7 +81,7 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
         </div>
 
         {loading ? (
-          <div className="card no-tilt bg-surface p-12">
+          <div className="card bg-surface p-12">
             <div className="grid md:grid-cols-2 gap-8">
               <div className="skeleton" style={{ height: 400, borderRadius: 2 }} />
               <div className="flex flex-col gap-4">
@@ -92,13 +92,13 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
             </div>
           </div>
         ) : error || !product ? (
-          <div className="card no-tilt p-16 text-center stamp-border bg-surface">
+          <div className="card p-16 text-center stamp-border bg-surface">
             <h1 className="font-display text-5xl mb-4 text-hp-color">ITEM NOT FOUND</h1>
             <p style={{ color: 'var(--text-muted)' }} className="mb-6 font-mono-stack">This item may have been sold or removed.</p>
             <button onClick={onClose} className="btn-secondary">Close</button>
           </div>
         ) : (
-          <div className="card no-tilt bg-surface">
+          <div className="card bg-surface">
             <div className="grid md:grid-cols-2 gap-0 overflow-hidden">
               {/* Image Section */}
               <div className="p-8" style={{ background: 'var(--kraft-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

@@ -35,7 +35,7 @@ export default function AdminTCGsPage() {
             <h1 className="font-display text-5xl text-ink-surface uppercase tracking-tight">System Configuration</h1>
             <p className="font-mono-stack text-xs text-text-muted uppercase tracking-widest mt-2">Managing Active Trading Card Game Systems</p>
           </div>
-          <div className="card no-tilt p-6">
+          <div className="card p-6">
             <TCGManager token={token} />
           </div>
         </div>

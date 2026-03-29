@@ -344,7 +344,7 @@ export default function ProductEditModal({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-4 md:pt-8 px-2 md:px-4"
       style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(12px)', overflowY: 'auto' }}>
-      <div className="card no-tilt p-0 w-full max-w-6xl mb-8 border-white/20 shadow-2xl animate-in fade-in zoom-in duration-300" 
+      <div className="card p-0 w-full max-w-6xl mb-8 border-white/20 shadow-2xl animate-in fade-in zoom-in duration-300" 
         style={{ position: 'relative', background: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(20px)' }}>
 
         <div className="flex items-center justify-between p-4 md:p-6 pb-2">
@@ -461,7 +461,7 @@ export default function ProductEditModal({
                <label className="text-[10px] font-mono-stack uppercase tracking-tighter opacity-50" style={{ color: 'var(--text-muted)' }}>IMAGE PREVIEW</label>
                <span className="text-[10px] font-mono-stack px-2 py-0.5 rounded-full font-bold shadow-sm" style={{ background: 'var(--nm-color)', color: 'white' }}>{form.condition}</span>
             </div>
-            <div className="card no-tilt p-2 bg-white/40 border-white/30 backdrop-blur-sm overflow-hidden group mb-8 shadow-xl">
+            <div className="card p-2 bg-white/40 border-white/30 backdrop-blur-sm overflow-hidden group mb-8 shadow-xl">
               <div className="relative aspect-[63/88] w-full bg-ink-border/5 rounded shadow-inner flex items-center justify-center overflow-hidden">
                 {form.image_url ? (
                   <img src={form.image_url} alt={form.name} className="w-full h-full object-contain drop-shadow-2xl transition-transform duration-700 group-hover:scale-110" />

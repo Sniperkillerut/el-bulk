@@ -73,7 +73,7 @@ export default function CheckoutPage() {
       <form onSubmit={handleSubmit} className="flex flex-col lg:flex-row gap-8">
         {/* Left: Customer Form */}
         <div className="flex-1">
-          <div className="card no-tilt p-6">
+          <div className="card p-6">
             <h2 className="font-display text-2xl mb-4">INFORMACIÓN DE CONTACTO</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -135,7 +135,7 @@ export default function CheckoutPage() {
 
         {/* Right: Order Summary */}
         <div className="w-full lg:w-[420px] flex-shrink-0">
-          <div className="card no-tilt p-6 sticky top-4">
+          <div className="card p-6 sticky top-4">
             <h2 className="font-display text-2xl mb-4">RESUMEN DEL PEDIDO</h2>
             <p className="text-xs font-mono-stack mb-4" style={{ color: 'var(--text-muted)' }}>
               {items.reduce((s, i) => s + i.quantity, 0)} ARTÍCULO{items.length !== 1 ? 'S' : ''}
@@ -227,7 +227,7 @@ export default function CheckoutPage() {
                 <h3 className="font-display text-xl mb-4 text-muted">PRODUCTOS ELIMINADOS</h3>
                 <div className="space-y-2">
                   {removedItems.map(item => (
-                    <div key={item.product.id} className="card no-tilt p-3 flex items-center gap-4 bg-ink-surface/30">
+                    <div key={item.product.id} className="card p-3 flex items-center gap-4 bg-ink-surface/30">
                       <div style={{ width: 40 }}>
                         <CardImage imageUrl={item.product.image_url} name={item.product.name} tcg={item.product.tcg} height={50} />
                       </div>

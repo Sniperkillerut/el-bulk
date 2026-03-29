@@ -35,7 +35,7 @@ export default function StorageManagerModal({
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center px-4"
       style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)' }}>
-      <div className="card no-tilt max-w-2xl w-full p-8" style={{ background: 'var(--ink-surface)', border: '4px solid var(--kraft-dark)' }}>
+      <div className="card max-w-2xl w-full p-8" style={{ background: 'var(--ink-surface)', border: '4px solid var(--kraft-dark)' }}>
         <div className="flex items-center justify-between mb-8">
           <h2 className="font-display text-4xl m-0">STORAGE LOCATIONS</h2>
           <button onClick={onClose} className="text-text-muted hover:text-text-primary text-xl">✕</button>

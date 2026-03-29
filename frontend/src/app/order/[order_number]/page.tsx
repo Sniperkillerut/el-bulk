@@ -9,7 +9,7 @@ export default function OrderConfirmation() {
 
   return (
     <div className="centered-container px-4 py-16 text-center">
-      <div className="card no-tilt max-w-lg mx-auto p-8">
+      <div className="card max-w-lg mx-auto p-8">
         <div className="text-5xl mb-4">✅</div>
         <h1 className="font-display text-4xl mb-2">¡ORDEN RECIBIDA!</h1>
         <div className="divider" />

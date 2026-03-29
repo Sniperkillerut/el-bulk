@@ -19,7 +19,7 @@ export default function SettingsModal({
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center px-4"
       style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)' }}>
-      <div className="card no-tilt max-w-4xl w-full p-8" style={{ background: 'var(--ink-surface)', border: '4px solid var(--kraft-dark)', position: 'relative' }}>
+      <div className="card max-w-4xl w-full p-8" style={{ background: 'var(--ink-surface)', border: '4px solid var(--kraft-dark)', position: 'relative' }}>
         {/* Decorative Corner */}
         <div className="absolute top-0 right-0 w-16 h-16 pointer-events-none opacity-20" style={{ borderTop: '8px solid var(--gold)', borderRight: '8px solid var(--gold)' }} />
         

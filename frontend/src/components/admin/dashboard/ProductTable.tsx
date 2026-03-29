@@ -139,7 +139,7 @@ export default function ProductTable({
   };
 
   return (
-    <div className="card no-tilt p-0 overflow-hidden relative" style={{ minHeight: '400px' }}>
+    <div className="card p-0 overflow-hidden relative" style={{ minHeight: '400px' }}>
       {loading && (
         <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] flex items-center justify-center">
           <div className="flex flex-col items-center">

@@ -28,7 +28,7 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--ink-deep)' }}>
-      <div className="card no-tilt p-8 w-full max-w-sm">
+      <div className="card p-8 w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
           <div style={{ display: 'inline-block', background: 'var(--gold)', borderRadius: 4, padding: '4px 12px', marginBottom: 8 }}>
