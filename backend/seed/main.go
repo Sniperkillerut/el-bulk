@@ -1,6 +1,9 @@
 package main
 
 import (
+	"flag"
+	"fmt"
+	"math/rand"
 	"os"
 	"time"
 
@@ -8,377 +11,365 @@ import (
 	"github.com/el-bulk/backend/external"
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/logger"
+	"github.com/jmoiron/sqlx"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func main() {
+	mode := flag.String("mode", "minimal", "Seeding mode: 'minimal' (configs + 1 product) or 'full' (hundreds of records)")
+	flag.Parse()
+
 	database := db.Connect()
 	defer database.Close()
 
-	// Clear products table
+	if *mode == "full" {
+		logger.Info("🌟 Running FULL seeding mode (this may take a minute)...")
+	} else {
+		logger.Info("🌱 Running MINIMAL seeding mode...")
+	}
+
+	clearTables(database)
+	
+	adminID := seedAdmin(database)
+	tcgIDs := seedTCGs(database)
+	categoryMap := seedCategories(database)
+	storageIDs := seedStorage(database)
+	seedSettings(database)
+
+	if *mode == "minimal" {
+		seedMinimalData(database, tcgIDs, categoryMap, storageIDs)
+	} else {
+		seedFullData(database, tcgIDs, categoryMap, storageIDs)
+	}
+
+	logger.Info("✅ Seeding complete! (Mode: %s, Admin: %s)", *mode, adminID)
+}
+
+func clearTables(db *sqlx.DB) {
 	logger.Info("Clearing tables...")
-	_, err := database.Exec(`DELETE FROM product`)
-	if err != nil {
-		logger.Error("Failed to clear products: %v", err)
-		os.Exit(1)
+	tables := []string{
+		"order_item",
+		"\"order\"",
+		"customer",
+		"product_category",
+		"product_storage",
+		"product",
+		"bounty_offer",
+		"bounty",
+		"client_request",
+		"storage_location",
+		"custom_category",
+		"tcg",
+		"admin",
 	}
-	database.Exec(`DELETE FROM bounty`)
-	database.Exec(`DELETE FROM client_request`)
-	database.Exec(`DELETE FROM order_item`)
-	database.Exec(`DELETE FROM "order"`)
-	database.Exec(`DELETE FROM customer`)
+	for _, t := range tables {
+		db.Exec(fmt.Sprintf("DELETE FROM %s", t))
+	}
+}
 
-	// Create admin user
-	adminUser := os.Getenv("ADMIN_USERNAME")
-	adminPass := os.Getenv("ADMIN_PASSWORD")
-	if adminUser == "" {
-		adminUser = "admin"
-	}
-	if adminPass == "" {
-		adminPass = "elbulk2024!"
-	}
+func seedAdmin(db *sqlx.DB) string {
+	user := os.Getenv("ADMIN_USERNAME")
+	pass := os.Getenv("ADMIN_PASSWORD")
+	if user == "" { user = "admin" }
+	if pass == "" { pass = "elbulk2024!" }
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(adminPass), bcrypt.DefaultCost)
-	if err != nil {
-		logger.Error("Failed to hash password: %v", err)
-		os.Exit(1)
-	}
-
-	_, err = database.Exec(`
+	hash, _ := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
+	var id string
+	db.QueryRow(`
 		INSERT INTO admin (username, password_hash)
 		VALUES ($1, $2)
-		ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash
-	`, adminUser, string(hash))
-	if err != nil {
-		logger.Error("Failed to create admin: %v", err)
-		os.Exit(1)
-	}
-	logger.Info("Admin user '%s' created/updated", adminUser)
+		RETURNING id
+	`, user, string(hash)).Scan(&id)
+	logger.Info("Admin user '%s' created", user)
+	return id
+}
 
-	// -------------------------------------------------------------------------
-	// PRODUCT SEEDING
-	// -------------------------------------------------------------------------
-
-	type seedProduct struct {
-		Name          string
-		TCG           string
-		Category      string
-		SetName       string
-		SetCode       string
-		Condition     string
-		PriceCOP      float64
-		Stock         int
-		CategorySlugs []string
-		Description   string
-		ImageURL      string
-		Foil          models.FoilTreatment
-		Treatment     models.CardTreatment
-		Language      string
-		FullArt       bool
-		Textless      bool
-		BorderColor   string
-		Frame         string
-	}
-
-	products := []seedProduct{
-		// Sheoldred, the Apocalypse
-		{"Sheoldred, the Apocalypse", "mtg", "singles", "Dominaria United", "DMU", "NM", 280000, 10, []string{"featured", "hot-items"}, "The Praetor of the Apocalypse.", "", models.FoilNonFoil, models.TreatmentNormal, "en", false, false, "", ""},
-		{"Sheoldred, the Apocalypse", "mtg", "singles", "Dominaria United", "DMU", "NM", 350000, 2, []string{"hot-items"}, "Showcase variant.", "", models.FoilFoil, models.TreatmentShowcase, "en", false, false, "", ""},
-		
-		// The One Ring
-		{"The One Ring", "mtg", "singles", "The Lord of the Rings: Tales of Middle-earth", "LTR", "NM", 450000, 5, []string{"hot-items"}, "Main set version.", "", models.FoilNonFoil, models.TreatmentNormal, "en", false, false, "", ""},
-		{"The One Ring", "mtg", "singles", "Tales of Middle-earth Bundle", "LTR", "NM", 550000, 2, []string{"featured"}, "Bundle alternate art.", "", models.FoilFoil, models.TreatmentAlternateArt, "en", false, false, "", ""},
-		{"The One Ring", "mtg", "singles", "LTR Extension", "LTR", "NM", 850000, 1, []string{"hot-items"}, "Borderless Poster variant.", "", models.FoilFoil, models.TreatmentBorderless, "en", true, false, "", ""},
-
-		// Mana Crypt
-		{"Mana Crypt", "mtg", "singles", "Special Guests", "SPG", "NM", 780000, 1, []string{"featured", "hot-items"}, "Special Guest version.", "", models.FoilNonFoil, models.TreatmentNormal, "en", false, false, "", ""},
-		{"Mana Crypt", "mtg", "singles", "Double Masters", "2XM", "NM", 950000, 1, []string{"hot-items"}, "Borderless variant.", "", models.FoilFoil, models.TreatmentBorderless, "en", true, false, "", ""},
-
-		// Specialty
-		{"Lightning Bolt", "mtg", "singles", "Judge Gift Cards", "PPRO", "NM", 250000, 2, []string{"featured"}, "Judge Promo Bolt.", "", models.FoilFoil, models.TreatmentPromo, "en", false, false, "", ""},
-		{"Force of Will", "mtg", "singles", "Judge Gift Cards", "PPRO", "NM", 1200000, 1, []string{"hot-items"}, "Judge Promo Force.", "", models.FoilFoil, models.TreatmentPromo, "en", false, false, "", ""},
-		{"Cryptic Command", "mtg", "singles", "Player Rewards 2009", "P09", "NM", 150000, 2, []string{"featured"}, "Textless Player Reward.", "", models.FoilFoil, models.TreatmentTextless, "en", true, true, "", ""},
-		{"Damnation", "mtg", "singles", "Player Rewards 2008", "P08", "NM", 180000, 1, []string{"hot-items"}, "Textless Player Reward.", "", models.FoilFoil, models.TreatmentTextless, "en", true, true, "", ""},
-
-		// Languages
-		{"Snapcaster Mage", "mtg", "singles", "Innistrad", "ISD", "NM", 120000, 4, []string{"featured"}, "Japanese variant.", "", models.FoilFoil, models.TreatmentNormal, "jp", false, false, "", ""},
-		{"Thoughtseize", "mtg", "singles", "Theros", "THS", "LP", 55000, 8, []string{"sale"}, "Spanish variant.", "", models.FoilNonFoil, models.TreatmentNormal, "es", false, false, "", ""},
-		{"Tarmogoyf", "mtg", "singles", "Future Sight", "FUT", "NM", 85000, 2, []string{"featured"}, "German variant.", "", models.FoilNonFoil, models.TreatmentNormal, "de", false, false, "", ""},
-
-		// Retro
-		{"Thalia, Guardian of Thraben", "mtg", "singles", "Modern Horizons 2", "MH2", "NM", 45000, 12, []string{"sale"}, "Retro Frame variant.", "", models.FoilNonFoil, models.TreatmentLegacyBorder, "en", false, false, "black", "old"},
-		{"Counterspell", "mtg", "singles", "Alpha", "LEA", "NM", 4500000, 1, []string{"hot-items"}, "Original Old Frame.", "", models.FoilNonFoil, models.TreatmentNormal, "en", false, false, "black", "old"},
-
-		// Exotic
-		{"Sol Ring", "mtg", "singles", "Warhammer 40,000", "40K", "NM", 125000, 3, []string{"featured"}, "Surge Foil Sol Ring.", "", models.FoilSurgeFoil, models.TreatmentNormal, "en", false, false, "black", "2015"},
-		{"Elesh Norn, Mother of Machines", "mtg", "singles", "Phyrexia: All Will Be One", "ONE", "NM", 850000, 1, []string{"featured", "hot-items"}, "Oil Slick Raised Foil.", "", models.FoilOilSlick, models.TreatmentBorderless, "en", true, false, "black", "2015"},
-		{"Mondrak, Glory Dominus", "mtg", "singles", "Phyrexia: All Will Be One", "ONE", "NM", 450000, 1, []string{"featured"}, "Step-and-Compleat Foil.", "", models.FoilStepAndCompleat, models.TreatmentShowcase, "en", false, false, "black", "2015"},
-		{"Ragavan, Nimble Pilferer", "mtg", "singles", "Multiverse Legends", "MUL", "NM", 9500000, 1, []string{"hot-items"}, "Serialized 001/500.", "", models.FoilDoubleRainbow, models.TreatmentSerialized, "en", false, false, "black", "2015"},
-		{"Brazen Borrower", "mtg", "singles", "Modern Horizons 2", "MH2", "NM", 85000, 5, []string{"sale"}, "Etched Foil Showcase.", "", models.FoilEtchedFoil, models.TreatmentShowcase, "en", false, false, "black", "2015"},
-		{"Liliana of the Veil", "mtg", "singles", "Double Masters 2022", "2X2", "NM", 1500000, 1, []string{"hot-items"}, "Textured Foil variant.", "", models.FoilTexturedFoil, models.TreatmentBorderless, "en", true, false, "black", "2015"},
-		{"Hidetsugu, Devouring Chaos", "mtg", "singles", "Kamigawa: Neon Dynasty", "NEO", "NM", 5500000, 1, []string{"hot-items"}, "Neon Ink Red Foil.", "", models.FoilNeonInk, models.TreatmentNormal, "en", false, false, "black", "2015"},
-		{"Smothering Tithe", "mtg", "singles", "Wilds of Eldraine Anime", "WOT", "NM", 650000, 1, []string{"featured"}, "Confetti Foil Anime Art.", "", models.FoilConfettiFoil, models.TreatmentAlternateArt, "en", false, false, "black", "2015"},
-		{"The Meathook Massacre", "mtg", "singles", "Innistrad: Midnight Hunt", "MID", "NM", 185000, 2, []string{"hot-items"}, "Extended Art variant.", "", models.FoilNonFoil, models.TreatmentExtendedArt, "en", false, false, "black", "2015"},
-		{"Comet, Stellar Pup", "mtg", "singles", "Unfinity", "UNF", "NM", 120000, 4, []string{"featured"}, "Galaxy Foil variant.", "", models.FoilGalaxyFoil, models.TreatmentNormal, "en", false, false, "black", "2015"},
-
-		// SEALED
-		{"MTG Duskmourn Box", "mtg", "sealed", "Duskmourn", "DSK", "NM", 680000, 5, []string{"featured", "new-arrivals"}, "36 Play Boosters.", "https://media.wizards.com/2024/wpn/Duskmourn_PlayBoosterBox.png", models.FoilNonFoil, models.TreatmentNormal, "en", false, false, "black", "2015"},
-
-		// POKEMON
-		{"Charizard Base Set", "pokemon", "singles", "Base Set", "BS", "LP", 1500000, 1, []string{"featured", "hot-items"}, "The classic holo rare Charizard.", "https://images.pokemontcg.io/base1/4_hires.png", models.FoilFoil, models.TreatmentNormal, "en", false, false, "", ""},
-		{"Pikachu Illustrator", "pokemon", "singles", "Promo", "PR", "NM", 999999999, 0, []string{"hot-items"}, "Holographic Illustrator Promo.", "https://m.media-amazon.com/images/I/71wE1Iov9qL.jpg", models.FoilFoil, models.TreatmentPromo, "jp", false, false, "", ""},
-
-		// YUGIOH
-		{"Blue-Eyes White Dragon", "yugioh", "singles", "Legend of Blue Eyes White Dragon", "LOB", "NM", 450000, 3, []string{"featured"}, "Iconic LOB classic.", "https://m.media-amazon.com/images/I/71+G3SGBO5L.jpg", models.FoilFoil, models.TreatmentNormal, "en", false, false, "", ""},
-
-		// LORCANA
-		{"Elsa - Spirit of Winter", "lorcana", "singles", "The First Chapter", "TFC", "NM", 3500000, 1, []string{"hot-items"}, "Enchanted variant.", "https://m.media-amazon.com/images/I/71wPZ23Z8tL.jpg", models.FoilFoil, models.TreatmentAlternateArt, "en", true, false, "", ""},
-
-		// ACCESSORIES
-		{"Dragon Shield Pink", "accessories", "accessories", "N/A", "N/A", "NM", 55000, 25, []string{"sale"}, "100 Matte sleeves.", "https://m.media-amazon.com/images/I/71Q+B+B+L+L._AC_SL1500_.jpg", models.FoilNonFoil, models.TreatmentNormal, "en", false, false, "black", "N/A"},
-	}
-
-	// Seed TCGs
-	tcgsToSeed := []struct{ ID, Name string }{
+func seedTCGs(db *sqlx.DB) map[string]string {
+	tcgs := []struct{ ID, Name string }{
 		{"mtg", "Magic: The Gathering"},
 		{"pokemon", "Pokémon"},
+		{"yugioh", "Yu-Gi-Oh!"},
 		{"lorcana", "Disney Lorcana"},
 		{"onepiece", "One Piece"},
-		{"yugioh", "Yu-Gi-Oh!"},
-		{"starwars", "Star Wars Unlimited"},
-		{"weiss", "Weiss Schwarz"},
 	}
-	for _, t := range tcgsToSeed {
-		database.Exec(`INSERT INTO tcg (id, name) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name`, t.ID, t.Name)
+	ids := make(map[string]string)
+	for _, t := range tcgs {
+		db.Exec(`INSERT INTO tcg (id, name) VALUES ($1, $2)`, t.ID, t.Name)
+		ids[t.ID] = t.ID
 	}
+	return ids
+}
 
-	// Seed Categories
-	categoryMap := make(map[string]string)
-	categoriesToSeed := []struct{ Name, Slug string }{
+func seedCategories(db *sqlx.DB) map[string]string {
+	cats := []struct{ Name, Slug string }{
 		{"Featured", "featured"},
-		{"Sale", "sale"},
-		{"New Arrivals", "new-arrivals"},
 		{"Hot Items", "hot-items"},
+		{"New Arrivals", "new-arrivals"},
+		{"Sale", "sale"},
 	}
-	for _, cat := range categoriesToSeed {
-		var catID string
-		database.QueryRow(`INSERT INTO custom_category (name, slug) VALUES ($1, $2) ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id`, cat.Name, cat.Slug).Scan(&catID)
-		categoryMap[cat.Slug] = catID
+	mapping := make(map[string]string)
+	for _, cat := range cats {
+		var id string
+		db.QueryRow(`INSERT INTO custom_category (name, slug) VALUES ($1, $2) RETURNING id`, cat.Name, cat.Slug).Scan(&id)
+		mapping[cat.Slug] = id
+	}
+	return mapping
+}
+
+func seedStorage(db *sqlx.DB) []string {
+	locations := []string{"Showcase A", "Storage Box 1", "Binder Vault"}
+	var ids []string
+	for _, loc := range locations {
+		var id string
+		db.QueryRow(`INSERT INTO storage_location (name) VALUES ($1) RETURNING id`, loc).Scan(&id)
+		ids = append(ids, id)
+	}
+	return ids
+}
+
+func seedSettings(db *sqlx.DB) {
+	settings := map[string]string{
+		"usd_to_cop_rate": "4450",
+		"eur_to_cop_rate": "4800",
+		"contact_email":    "contact@el-bulk.com",
+		"contact_phone":    "+57 300 123 4567",
+	}
+	for k, v := range settings {
+		db.Exec(`INSERT INTO setting (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`, k, v)
+	}
+}
+
+func seedMinimalData(db *sqlx.DB, tcgIDs map[string]string, cats map[string]string, storageIDs []string) {
+	// 1 Sample Product
+	name := "Black Lotus"
+	var pID string
+	db.QueryRow(`
+		INSERT INTO product (name, tcg, category, set_name, set_code, price_source, price_cop_override, stock)
+		VALUES ($1, 'mtg', 'singles', 'Alpha', 'LEA', 'manual', 25000000, 1) RETURNING id
+	`, name).Scan(&pID)
+	
+	db.Exec(`INSERT INTO product_storage (product_id, storage_id, quantity) VALUES ($1, $2, 1)`, pID, storageIDs[0])
+	db.Exec(`INSERT INTO product_category (product_id, category_id) VALUES ($1, $2)`, pID, cats["featured"])
+}
+
+func seedFullData(db *sqlx.DB, tcgIDs map[string]string, cats map[string]string, storageIDs []string) {
+	// Seed 1 Minimal Product first as a safety baseline
+	seedMinimalData(db, tcgIDs, cats, storageIDs)
+
+	// 1. Seed Hundreds of MTG Products (Bulk)
+	identifiers := []external.CardIdentifier{
+		{Name: "Sheoldred, the Apocalypse", Set: "dmu"},
+		{Name: "The One Ring", Set: "ltr"},
+		{Name: "Mana Crypt", Set: "2xm"},
+		{Name: "Ragavan, Nimble Pilferer", Set: "mh2"},
+		{Name: "Orcish Bowmasters", Set: "ltr"},
+		{Name: "Sol Ring", Set: "v10"},
+		{Name: "Lightning Bolt", Set: "lea"},
+		{Name: "Force of Will", Set: "all"},
+		{Name: "Brainstorm", Set: "mmq"},
+		{Name: "Tarmogoyf", Set: "fut"},
+		{Name: "Snapcaster Mage", Set: "isd"},
+		{Name: "Liliana of the Veil", Set: "isd"},
+		{Name: "Jace, the Mind Sculptor", Set: "wwk"},
+		{Name: "Thoughtseize", Set: "lrw"},
+		{Name: "Mox Amber", Set: "dom"},
+		{Name: "Chrome Mox", Set: "mrd"},
+		{Name: "Mox Opal", Set: "som"},
+		{Name: "Cavern of Souls", Set: "avr"},
+		{Name: "Ancient Tomb", Set: "tmp"},
+		{Name: "City of Traitors", Set: "exo"},
+		{Name: "Gaea's Cradle", Set: "usg"},
+		{Name: "Serra's Sanctum", Set: "usg"},
+		{Name: "Tolarian Academy", Set: "usg"},
+		{Name: "Volcanic Island", Set: "rev"},
+		{Name: "Underground Sea", Set: "rev"},
+		{Name: "Tropical Island", Set: "rev"},
+		{Name: "Tundra", Set: "rev"},
+		{Name: "Badlands", Set: "rev"},
+		{Name: "Taiga", Set: "rev"},
+		{Name: "Savannah", Set: "rev"},
+		{Name: "Scrubland", Set: "rev"},
+		{Name: "Bayou", Set: "rev"},
+		{Name: "Plateau", Set: "rev"},
 	}
 
-	// Seed Storage
-	var binderID, boxA_ID string
-	database.QueryRow(`INSERT INTO storage_location (name) VALUES ('Binder 1') ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id`).Scan(&binderID)
-	database.QueryRow(`INSERT INTO storage_location (name) VALUES ('Box A') ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id`).Scan(&boxA_ID)
+	// Double the list to reach ~100 unique-ish entries
+	baseLen := len(identifiers)
+	for i := 0; i < 70; i++ {
+		identifiers = append(identifiers, identifiers[i%baseLen])
+	}
 
-	var allProductIDs []string
-	for _, p := range products {
-		logger.Info("Seeding %s (%s)...", p.Name, p.TCG)
-
-		desc := p.Description
-		img := p.ImageURL
-		lang := p.Language
-		color, rarity := "", ""
-		var cmc float64 = 0
-		isLegendary, isHistoric, isLand, isBasicLand := false, false, false, false
-		artVariation, oracleText, artist, typeLine := "", "", "", ""
-		borderColor, frame := p.BorderColor, p.Frame
-		fullArt, textless := p.FullArt, p.Textless
-		setCode, setName := p.SetCode, p.SetName
-
-		collectorNumber, promoType := "", ""
-		if p.TCG == "mtg" {
-			meta, err := external.LookupMTGCard(p.Name, p.SetCode, "", string(p.Foil))
-			if err == nil {
-				if desc == "" && meta.OracleText != nil { desc = *meta.OracleText }
-				if img == "" { img = meta.ImageURL }
-				if lang == "" { lang = meta.Language }
-				if meta.ColorIdentity != nil { color = *meta.ColorIdentity }
-				if meta.Rarity != nil { rarity = *meta.Rarity }
-				if meta.CMC != nil { cmc = *meta.CMC }
-				isLegendary = meta.IsLegendary
-				isHistoric = meta.IsHistoric
-				isLand = meta.IsLand
-				isBasicLand = meta.IsBasicLand
-				if meta.ArtVariation != nil { artVariation = *meta.ArtVariation }
-				if setCode == "" || setCode == "N/A" { setCode = meta.SetCode }
-				if setName == "" || setName == "N/A" { setName = meta.SetName }
-				if meta.OracleText != nil { oracleText = *meta.OracleText }
-				if meta.Artist != nil { artist = *meta.Artist }
-				if meta.TypeLine != nil { typeLine = *meta.TypeLine }
-				if meta.BorderColor != nil { borderColor = *meta.BorderColor }
-				if meta.Frame != nil { frame = *meta.Frame }
-				fullArt = meta.FullArt
-				textless = meta.Textless
-				collectorNumber = meta.CollectorNumber
-				if meta.PromoType != nil { promoType = *meta.PromoType }
-			}
+	logger.Info("Fetching bulk metadata for %d cards...", len(identifiers))
+	
+	var results []external.CardLookupResult
+	// Scryfall /cards/collection limit is 75 identifiers
+	for i := 0; i < len(identifiers); i += 75 {
+		end := i + 75
+		if end > len(identifiers) {
+			end = len(identifiers)
 		}
-
-		var newProductID string
-		err = database.QueryRow(`
-			INSERT INTO product (
-				name, tcg, category, set_name, set_code, collector_number, condition,
-				foil_treatment, card_treatment, promo_type,
-				price_cop_override, price_source, stock, description, image_url,
-				language, color_identity, rarity, cmc, is_legendary, is_historic, is_land, is_basic_land, art_variation,
-				oracle_text, artist, type_line, border_color, frame, full_art, textless
-			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'manual', 0, $12, $13, 
-			          $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29) RETURNING id
-		`, p.Name, p.TCG, p.Category, setName, setCode, collectorNumber, p.Condition,
-			p.Foil, p.Treatment, promoType,
-			p.PriceCOP, desc, img,
-			lang, color, rarity, cmc, isLegendary, isHistoric, isLand, isBasicLand, artVariation,
-			oracleText, artist, typeLine, borderColor, frame, fullArt, textless).Scan(&newProductID)
-		
-		if err == nil {
-			allProductIDs = append(allProductIDs, newProductID)
-		} else {
-			logger.Warn("failed to insert %s: %v", p.Name, err)
+		chunk := identifiers[i:end]
+		res, err := external.BatchLookupMTGCard(chunk)
+		if err != nil {
+			logger.Error("Batch lookup chunk failed: %v", err)
 			continue
 		}
-
-		for _, slug := range p.CategorySlugs {
-			if id, ok := categoryMap[slug]; ok {
-				database.Exec(`INSERT INTO product_category (product_id, category_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, newProductID, id)
-			}
-		}
-
-		if p.Stock > 0 {
-			database.Exec(`INSERT INTO product_storage (product_id, storage_id, quantity) VALUES ($1, $2, $3)`, newProductID, binderID, p.Stock/2)
-			database.Exec(`INSERT INTO product_storage (product_id, storage_id, quantity) VALUES ($1, $2, $3)`, newProductID, boxA_ID, p.Stock-(p.Stock/2))
-		}
+		results = append(results, res...)
 		time.Sleep(100 * time.Millisecond) // Respect rate limits
 	}
 
-	// -------------------------------------------------------------------------
-	// BOUNTY SEEDING
-	// -------------------------------------------------------------------------
+	fTreatments := []models.FoilTreatment{models.FoilNonFoil, models.FoilFoil, models.FoilEtchedFoil, models.FoilSurgeFoil}
+	cTreatments := []models.CardTreatment{models.TreatmentNormal, models.TreatmentShowcase, models.TreatmentBorderless, models.TreatmentExtendedArt}
+	conditions := []string{"NM", "LP", "MP"}
+
+	var productIDs []string
+	for i, res := range results {
+		f := fTreatments[i%len(fTreatments)]
+		t := cTreatments[i%len(cTreatments)]
+		cond := conditions[i%len(conditions)]
+		stock := rand.Intn(15) + 1
+		price := float64(rand.Intn(500000) + 10000)
+
+		var pID string
+		err := db.QueryRow(`
+			INSERT INTO product (
+				name, tcg, category, set_name, set_code, collector_number, condition,
+				foil_treatment, card_treatment, language, price_source, price_cop_override,
+				image_url, stock, rarity, is_legendary, oracle_text
+			) VALUES ($1, 'mtg', 'singles', $2, $3, $4, $5, $6, $7, 'en', 'manual', $8, $9, $10, $11, $12, $13)
+			RETURNING id
+		`, res.Name, res.SetName, res.SetCode, res.CollectorNumber, cond, f, t, price, res.ImageURL, stock, res.Rarity, res.IsLegendary, res.OracleText).Scan(&pID)
+
+		if err == nil {
+			productIDs = append(productIDs, pID)
+			// Categories: Every product gets one primary category, some get "Featured" too
+			catKeys := []string{"new-arrivals", "hot-items", "sale"}
+			db.Exec(`INSERT INTO product_category (product_id, category_id) VALUES ($1, $2)`, pID, cats[catKeys[i%len(catKeys)]])
+			if i%5 == 0 {
+				db.Exec(`INSERT INTO product_category (product_id, category_id) VALUES ($1, $2)`, pID, cats["featured"])
+			}
+			// Storage
+			db.Exec(`INSERT INTO product_storage (product_id, storage_id, quantity) VALUES ($1, $2, $3)`, pID, storageIDs[rand.Intn(len(storageIDs))], stock)
+		}
+	}
+
+	// 2. MTG Sealed
+	logger.Info("Seeding MTG Sealed...")
+	mtgSealed := []struct{ Name, Set, Img string; Price float64 }{
+		{"Outlaws of Thunder Junction Play Booster Box", "OTJ", "https://m.media-amazon.com/images/I/71D+8+8+L+L._AC_SL1500_.jpg", 650000},
+		{"Modern Horizons 3 Collector Booster Box", "MH3", "https://m.media-amazon.com/images/I/81P+P+P+L+L._AC_SL1500_.jpg", 1850000},
+		{"Murders at Karlov Manor Commander Deck", "MKC", "https://m.media-amazon.com/images/I/71R+R+R+L+L._AC_SL1500_.jpg", 180000},
+	}
+	for _, s := range mtgSealed {
+		var pID string
+		db.QueryRow(`INSERT INTO product (name, tcg, category, set_name, set_code, price_source, price_cop_override, stock, image_url)
+				 VALUES ($1, 'mtg', 'sealed', $2, $3, 'manual', $4, 5, $5) RETURNING id`, s.Name, s.Name, s.Set, s.Price, s.Img).Scan(&pID)
+		db.Exec(`INSERT INTO product_storage (product_id, storage_id, quantity) VALUES ($1, $2, 5)`, pID, storageIDs[0])
+		db.Exec(`INSERT INTO product_category (product_id, category_id) VALUES ($1, $2)`, pID, cats["new-arrivals"])
+	}
+
+	// 3. Pokémon Singles & Sealed
+	logger.Info("Seeding Pokémon...")
+	pkmnItems := []struct{ Name, Cat, Set, Img string; Price float64 }{
+		{"Charizard ex", "singles", "151", "https://images.pokemontcg.io/sv3pt5/199_hires.png", 550000},
+		{"Pikachu with Grey Felt Hat", "singles", "Promo", "https://images.pokemontcg.io/svnp/85_hires.png", 800000},
+		{"Scarlet & Violet 151 Elite Trainer Box", "sealed", "151", "https://m.media-amazon.com/images/I/71S+S+S+L+L._AC_SL1500_.jpg", 280000},
+		{"Crown Zenith Special Collection", "sealed", "CRZ", "https://m.media-amazon.com/images/I/81W+W+W+L+L._AC_SL1500_.jpg", 160000},
+	}
+	for _, p := range pkmnItems {
+		var pID string
+		db.QueryRow(`INSERT INTO product (name, tcg, category, set_name, set_code, price_source, price_cop_override, stock, image_url)
+				 VALUES ($1, 'pokemon', $2, $3, $4, 'manual', $5, 10, $6) RETURNING id`, p.Name, p.Cat, p.Set, p.Set, p.Price, p.Img).Scan(&pID)
+		db.Exec(`INSERT INTO product_storage (product_id, storage_id, quantity) VALUES ($1, $2, 10)`, pID, storageIDs[rand.Intn(len(storageIDs))])
+		db.Exec(`INSERT INTO product_category (product_id, category_id) VALUES ($1, $2)`, pID, cats["hot-items"])
+	}
+
+	// 4. Yu-Gi-Oh Singles & Sealed
+	logger.Info("Seeding Yu-Gi-Oh...")
+	ygoItems := []struct{ Name, Cat, Set, Img string; Price float64 }{
+		{"Blue-Eyes White Dragon (25th Anniversary)", "singles", "LOB", "https://m.media-amazon.com/images/I/51R+R+R+L+L.jpg", 120000},
+		{"Dark Magician (Ghost Rare)", "singles", "GFP2", "https://m.media-amazon.com/images/I/51G+G+G+L+L.jpg", 450000},
+		{"Legendary Collection: 25th Anniversary Edition", "sealed", "LC01", "https://m.media-amazon.com/images/I/81L+L+L+L+L._AC_SL1500_.jpg", 145000},
+	}
+	for _, y := range ygoItems {
+		var pID string
+		db.QueryRow(`INSERT INTO product (name, tcg, category, set_name, set_code, price_source, price_cop_override, stock, image_url)
+				 VALUES ($1, 'yugioh', $2, $3, $4, 'manual', $5, 8, $6) RETURNING id`, y.Name, y.Cat, y.Set, y.Set, y.Price, y.Img).Scan(&pID)
+		db.Exec(`INSERT INTO product_storage (product_id, storage_id, quantity) VALUES ($1, $2, 8)`, pID, storageIDs[1])
+		db.Exec(`INSERT INTO product_category (product_id, category_id) VALUES ($1, $2)`, pID, cats["featured"])
+	}
+
+	// 5. Accessories
+	logger.Info("Seeding Accessories...")
+	accs := []struct{ Name, Img string; Price float64 }{
+		{"Dragon Shield Matte - Jet Black", "https://m.media-amazon.com/images/I/71J+J+J+L+L._AC_SL1500_.jpg", 55000},
+		{"Ultimate Guard Flip'n'Tray 100+ - XenoSkin Blue", "https://m.media-amazon.com/images/I/71B+B+B+L+L._AC_SL1500_.jpg", 115000},
+		{"Gamegenic Squire 100+ Convertible - Red", "https://m.media-amazon.com/images/I/61G+G+G+L+L._AC_SL1500_.jpg", 85000},
+	}
+	for _, a := range accs {
+		var pID string
+		db.QueryRow(`INSERT INTO product (name, tcg, category, set_name, set_code, price_source, price_cop_override, stock, image_url)
+				 VALUES ($1, 'accessories', 'accessories', 'N/A', 'N/A', 'manual', $2, 20, $3) RETURNING id`, a.Name, a.Price, a.Img).Scan(&pID)
+		db.Exec(`INSERT INTO product_storage (product_id, storage_id, quantity) VALUES ($1, $2, 20)`, pID, storageIDs[2])
+		db.Exec(`INSERT INTO product_category (product_id, category_id) VALUES ($1, $2)`, pID, cats["sale"])
+	}
+
+	// 6. Bounties
 	logger.Info("Seeding bounties...")
-	bounties := []struct {
-		Name          string
-		TCG           string
-		SetName       string
-		Condition     string
-		FoilTreatment string
-		TargetPrice   float64
-		HidePrice     bool
-		Qty           int
-		ImageURL      string
-	}{
-		{"Gaea's Cradle", "mtg", "Urza's Saga", "NM", "non_foil", 2500000, false, 1, ""},
-		{"Mox Diamond", "mtg", "Stronghold", "LP", "non_foil", 1800000, true, 2, ""},
-		{"Charizard Base Set", "pokemon", "Base Set", "NM", "foil", 1500000, false, 1, ""},
-		{"Emrakul, the Aeons Torn", "mtg", "Rise of the Eldrazi", "NM", "foil", 150000, false, 4, ""},
+	for i := 0; i < 15; i++ {
+		db.Exec(`
+			INSERT INTO bounty (name, tcg, set_name, condition, quantity_needed, target_price, is_active)
+			VALUES ($1, 'mtg', 'Modern Horizons 3', 'NM', $2, $3, true)
+		`, fmt.Sprintf("Bounty Card #%d", i), rand.Intn(10)+1, rand.Intn(100000)+5000)
 	}
 
-	for _, b := range bounties {
-		_, err := database.Exec(`
-			INSERT INTO bounty (name, tcg, set_name, condition, foil_treatment, target_price, hide_price, quantity_needed, image_url)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-		`, b.Name, b.TCG, b.SetName, b.Condition, b.FoilTreatment, b.TargetPrice, b.HidePrice, b.Qty, b.ImageURL)
-		if err != nil {
-			logger.Warn("Failed to seed bounty: %v", err)
-		}
-	}
-
-	// -------------------------------------------------------------------------
-	// CLIENT REQUEST SEEDING
-	// -------------------------------------------------------------------------
+	// 7. Client Requests
 	logger.Info("Seeding client requests...")
-	requests := []struct {
-		Customer string
-		Contact  string
-		Card     string
-		Set      string
-		Details  string
-		Status   string
-	}{
-		{"John Doe", "john@example.com", "Black Lotus", "Alpha", "Need in NM condition", "pending"},
-		{"Jane Smith", "+1234567890", "Pikachu Illustrator", "Promo", "Budget is tight, let me know if any appear", "rejected"},
-		{"Carlos Ruiz", "cruz@mail.co", "Dual Lands", "Revised", "Looking for Underground Sea particularly", "accepted"},
-		{"Maria", "maria@gmail.com", "Jace, the Mind Sculptor", "Worldwake", "Foil version only please", "pending"},
-	}
-
-	for _, req := range requests {
-		_, err := database.Exec(`
+	for i := 0; i < 12; i++ {
+		status := []string{"pending", "accepted", "rejected", "solved"}[i%4]
+		db.Exec(`
 			INSERT INTO client_request (customer_name, customer_contact, card_name, set_name, details, status)
-			VALUES ($1, $2, $3, $4, $5, $6)
-		`, req.Customer, req.Contact, req.Card, req.Set, req.Details, req.Status)
-		if err != nil {
-			logger.Warn("Failed to seed client request: %v", err)
-		}
+			VALUES ($1, $2, $3, 'MH3', 'Looking for this card in foil.', $4)
+		`, fmt.Sprintf("Client %d", i), "+57 310 111 2233", fmt.Sprintf("Request Card %d", i), status)
 	}
 
-	// -------------------------------------------------------------------------
-	// ORDER SEEDING
-	// -------------------------------------------------------------------------
-	logger.Info("Seeding customers and orders...")
-	
-	customers := []struct{ First, Last, Email, Phone string }{
-		{"Alice", "Wonderland", "alice@example.com", "3001234567"},
-		{"Bob", "Builder", "bob@example.com", "3007654321"},
-		{"Charlie", "Chocolate", "charlie@example.com", "3109876543"},
-	}
-
-	for _, c := range customers {
-		var custID string
-		err := database.QueryRow(`
+	// 8. Customers & Orders
+	logger.Info("Seeding customers and history...")
+	for i := 0; i < 50; i++ {
+		var cID string
+		db.QueryRow(`
 			INSERT INTO customer (first_name, last_name, email, phone)
 			VALUES ($1, $2, $3, $4) RETURNING id
-		`, c.First, c.Last, c.Email, c.Phone).Scan(&custID)
-		if err != nil {
-			logger.Warn("Failed to seed customer %s: %v", c.First, err)
-			continue
-		}
+		`, fmt.Sprintf("User%d", i), "Test", fmt.Sprintf("user%d@example.com", i), fmt.Sprintf("300%07d", i)).Scan(&cID)
 
-		// Create 2-3 orders per customer
-		numOrders := 2
-		for i := 0; i < numOrders; i++ {
-			orderNum := "ORD-" + custID[:4] + "-" + string(rune(65+i))
-			status := []string{"pending", "confirmed", "completed", "cancelled"}[i%4]
-			payment := []string{"Cash", "Transfer", "Mercado Pago"}[i%3]
+		numOrders := rand.Intn(4) + 1
+		for j := 0; j < numOrders; j++ {
+			var oID string
+			status := "completed"
+			if rand.Intn(10) > 8 { status = "pending" }
 			
-			// Random date in the last 30 days
-			randomDays := i * 7 // simplistic "random"
-			orderDate := time.Now().AddDate(0, 0, -randomDays)
-
-			var orderID string
-			err := database.QueryRow(`
+			db.QueryRow(`
 				INSERT INTO "order" (order_number, customer_id, status, payment_method, total_cop, created_at)
-				VALUES ($1, $2, $3, $4, $5, $6) RETURNING id
-			`, orderNum, custID, status, payment, 0, orderDate).Scan(&orderID)
-			
-			if err != nil {
-				logger.Warn("Failed to seed order %s: %v", orderNum, err)
-				continue
-			}
+				VALUES ($1, $2, $3, 'Transfer', $4, $5) RETURNING id
+			`, fmt.Sprintf("ORD-%d-%d", i, j), cID, status, 0.0, time.Now().AddDate(0, 0, -rand.Intn(30))).Scan(&oID)
 
-			// Add 1-3 items per order
-			var total float64
-			for j := 0; j < (i%3)+1; j++ {
-				if len(allProductIDs) == 0 { break }
-				pid := allProductIDs[(i+j)%len(allProductIDs)]
-				
-				// Fetch product details
+			// Items
+			total := 0.0
+			for k := 0; k < rand.Intn(3)+1; k++ {
+				if len(productIDs) == 0 { break }
+				pID := productIDs[rand.Intn(len(productIDs))]
 				var pName, pSet string
 				var pPrice float64
-				database.QueryRow("SELECT name, set_name, price_cop_override FROM product WHERE id = $1", pid).Scan(&pName, &pSet, &pPrice)
+				db.QueryRow("SELECT name, set_name, price_cop_override FROM product WHERE id = $1", pID).Scan(&pName, &pSet, &pPrice)
 				
-				qty := j + 1
-				itemPrice := pPrice
-				total += itemPrice * float64(qty)
-
-				database.Exec(`
+				qty := rand.Intn(2) + 1
+				db.Exec(`
 					INSERT INTO order_item (order_id, product_id, product_name, product_set, unit_price_cop, quantity)
 					VALUES ($1, $2, $3, $4, $5, $6)
-				`, orderID, pid, pName, pSet, itemPrice, qty)
+				`, oID, pID, pName, pSet, pPrice, qty)
+				total += pPrice * float64(qty)
 			}
-
-			// Update total
-			database.Exec(`UPDATE "order" SET total_cop = $1 WHERE id = $2`, total, orderID)
+			db.Exec(`UPDATE "order" SET total_cop = $1 WHERE id = $2`, total, oID)
 		}
 	}
-
-	logger.Info("Seed complete!")
 }
