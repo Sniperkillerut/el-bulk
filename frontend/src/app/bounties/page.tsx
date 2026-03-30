@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { fetchBounties } from '@/lib/api';
-import PublicBountiesClient from './bounties-client';
+import PublicBountiesClient from '@/app/bounties/bounties-client';
 
 export const metadata: Metadata = {
   title: 'Wanted Cards - El Bulk TCG',

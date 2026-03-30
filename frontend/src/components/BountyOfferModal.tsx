@@ -47,9 +47,9 @@ export default function BountyOfferModal({ bounty, onClose }: BountyOfferModalPr
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-ink rounded-lg w-full max-w-md border border-ink-border shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-300">
-        <div className="flex items-center justify-between p-4 border-b border-ink-border/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      <div className="bg-ink-surface rounded-lg w-full max-w-md border border-ink-border shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-300">
+        <div className="flex items-center justify-between p-4 border-b border-ink-border/50 bg-ink-deep">
           <h3 className="font-display text-2xl m-0 text-gold uppercase tracking-tighter">Sell Us Your Card</h3>
           <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 text-white/60 hover:text-white transition-colors">
             ✕

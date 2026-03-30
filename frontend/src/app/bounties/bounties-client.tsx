@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Bounty } from '@/lib/types';
+import { Bounty, TREATMENT_LABELS } from '@/lib/types';
 import ClientRequestModal from '@/components/ClientRequestModal';
 import BountyOfferModal from '@/components/BountyOfferModal';
+import CardImage from '@/components/CardImage';
+import { ConditionBadge, FoilBadge } from '@/components/Badges';
 
 export default function PublicBountiesClient({ initialBounties }: { initialBounties: Bounty[] }) {
   const [bounties, setBounties] = useState<Bounty[]>(initialBounties);
@@ -41,52 +43,64 @@ export default function PublicBountiesClient({ initialBounties }: { initialBount
            <button onClick={() => setShowModal(true)} className="mt-6 btn-secondary px-8 font-bold">SUBMIT REQUEST</button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {bounties.map((b, idx) => (
-            <div key={b.id} className="card bg-white/80 p-0 overflow-hidden flex flex-col group hover:-translate-y-2 transition-all duration-500 shadow-xl hover:shadow-gold/20 group animate-in fade-in slide-in-from-bottom flex" style={{ animationDelay: `${idx * 50}ms`, animationFillMode: 'both' }}>
-              <div className="aspect-[4/3] w-full bg-ink-border/5 p-4 flex items-center justify-center relative">
-                 {b.image_url ? (
-                    <img src={b.image_url} alt={b.name} className="w-full h-full object-contain filter group-hover:brightness-110 transition-all duration-700 max-h-56" />
-                 ) : (
-                    <div className="h-full w-full flex items-center justify-center font-mono-stack text-xs text-text-muted">NO IMAGE</div>
-                 )}
-                 <div className="absolute inset-0 bg-gradient-to-t from-ink-deep/20 to-transparent"></div>
-                 <span className="absolute bottom-2 right-2 bg-gold text-ink-deep font-mono-stack text-[9px] px-2 py-1 uppercase tracking-widest font-bold shadow-md transform rotate-2">{b.tcg}</span>
+            <div 
+              key={b.id} 
+              onClick={() => setOfferBounty(b)}
+              className="card flex flex-col overflow-hidden animate-fade-up group cursor-pointer" 
+              style={{ animationDelay: `${idx * 50}ms`, animationFillMode: 'both' }}
+            >
+              <div className="thumb-hover-wrap">
+                <CardImage imageUrl={b.image_url} name={b.name} tcg={b.tcg} />
               </div>
-              <div className="p-5 flex-1 flex flex-col">
-                 <h3 className="font-display text-2xl leading-tight mb-1 text-ink-deep group-hover:text-gold transition-colors">{b.name}</h3>
-                 <p className="text-xs text-text-muted mb-4 tracking-widest uppercase truncate">{b.set_name || 'Any Edition'}</p>
-                 
-                 <div className="grid grid-cols-2 gap-y-3 gap-x-2 text-[10px] font-mono-stack mt-auto border-t border-ink-border/20 pt-4">
-                    <div>
-                      <span className="opacity-50 block mb-0.5">CONDITION</span>
-                      <strong className="text-ink-deep">{b.condition || 'ANY'}</strong>
-                    </div>
-                    <div>
-                      <span className="opacity-50 block mb-0.5">FOIL</span>
-                      <strong className="text-ink-deep">{b.foil_treatment.replace(/_/g, ' ')}</strong>
-                    </div>
-                    <div>
-                      <span className="opacity-50 block mb-0.5">WANTED</span>
-                      <strong className="text-ink-deep">{b.quantity_needed}</strong>
-                    </div>
-                    <div>
-                      <span className="opacity-50 block mb-0.5">OFFER PRICE</span>
-                      {b.hide_price ? (
-                         <strong className="text-text-secondary cursor-help" title="Contact Us to determine a price">CONTACT US</strong>
-                      ) : (
-                         <strong className="text-gold-dark font-mono bg-gold/10 px-1 py-0.5 rounded shadow-sm">
-                           ${b.target_price?.toLocaleString('es-CO')} COP
-                         </strong>
-                      )}
-                    </div>
-                 </div>
-                 <button 
-                   onClick={() => setOfferBounty(b)}
-                   className="mt-4 w-full bg-gold/10 hover:bg-gold text-gold hover:text-ink-deep font-bold font-mono tracking-widest text-[10px] py-2 transition-all border border-gold/40 rounded-sm uppercase"
-                 >
-                   HAVE THIS? SELL IT
-                 </button>
+
+              <div className="p-3 flex flex-col flex-1 gap-2">
+                {/* Badges row */}
+                <div className="flex flex-wrap gap-1">
+                  <ConditionBadge condition={b.condition} />
+                  <FoilBadge foil={b.foil_treatment} />
+                  {b.card_treatment && b.card_treatment !== 'normal' && TREATMENT_LABELS[b.card_treatment] && (
+                    <span className="badge" style={{ background: 'rgba(100,130,200,0.12)', color: '#8ba4d0', border: '1px solid rgba(100,130,200,0.25)' }}>
+                      {TREATMENT_LABELS[b.card_treatment]}
+                    </span>
+                  )}
+                </div>
+
+                {/* Name */}
+                <h3 className="text-sm font-semibold leading-snug group-hover:text-gold transition-colors line-clamp-2"
+                  style={{ color: 'var(--text-primary)' }}>
+                  {b.name}
+                </h3>
+
+                {/* Set */}
+                <p className="text-xs" style={{ color: 'var(--text-muted)', fontFamily: 'Space Mono, monospace' }}>
+                  {b.set_name || 'Any Edition'}
+                </p>
+                
+                {/* Footer */}
+                <div className="flex items-center justify-between mt-auto pt-2" style={{ borderTop: '1px solid var(--ink-border)' }}>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-mono-stack uppercase opacity-50 leading-none mb-1">Offer</span>
+                    {b.hide_price ? (
+                      <span className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>ASK</span>
+                    ) : (
+                      <span className="price text-sm leading-none">${b.target_price?.toLocaleString('es-CO')}</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono opacity-50" title="Quantity needed">
+                      ×{b.quantity_needed}
+                    </span>
+                    <button 
+                      className="btn-primary"
+                      style={{ fontSize: '0.8rem', padding: '0.3rem 0.8rem' }}
+                    >
+                      SELL
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           ))}

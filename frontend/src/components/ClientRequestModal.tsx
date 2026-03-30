@@ -40,55 +40,91 @@ export default function ClientRequestModal({ onClose, onSuccess }: ClientRequest
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-deep/60 backdrop-blur-sm">
-      <div className="bg-white rounded max-w-lg w-full p-6 shadow-2xl relative animate-in fade-in zoom-in duration-200 border-gold/50 border-t-4">
-        <button onClick={onClose} className="absolute top-4 right-4 text-text-muted hover:text-ink-deep text-xl">✕</button>
-        
-        <h2 className="font-display text-2xl text-ink-deep mb-2">REQUEST A CARD</h2>
-        <p className="text-sm text-text-muted mb-6">Tell us what you're looking for, and we'll add it to our wanted list if we can find it!</p>
-        
-        {error && (
-          <div className="bg-hp-color/10 border-l-4 border-hp-color text-hp-color p-3 mb-4 text-sm font-mono-stack">
-            {error}
-          </div>
-        )}
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">YOUR NAME *</label>
-              <input type="text" className="w-full p-2 border border-ink-border rounded bg-ink-surface/30" required value={form.customer_name} onChange={e => setForm({...form, customer_name: e.target.value})} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      <div className="bg-ink-surface rounded-lg w-full max-w-md border border-ink-border shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-300">
+        <div className="flex items-center justify-between p-4 border-b border-ink-border/50 bg-ink-deep">
+          <h3 className="font-display text-2xl m-0 text-gold uppercase tracking-tighter">Request a card</h3>
+          <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 text-white/60 hover:text-white transition-colors">
+            ✕
+          </button>
+        </div>
+
+        <div className="p-6">
+          <p className="text-xs text-text-muted mb-6 uppercase tracking-widest leading-relaxed">
+            Can't find what you need? Tell us the details and we'll start the hunt!
+          </p>
+
+          {error && (
+            <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded mb-4">
+              {error}
             </div>
-            <div>
-              <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">PHONE / EMAIL *</label>
-              <input type="text" className="w-full p-2 border border-ink-border rounded bg-ink-surface/30" required value={form.customer_contact} onChange={e => setForm({...form, customer_contact: e.target.value})} placeholder="+57 300..." />
+          )}
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">Your Name *</label>
+                <input 
+                  type="text" 
+                  className="w-full text-sm" 
+                  required 
+                  value={form.customer_name} 
+                  onChange={e => setForm({...form, customer_name: e.target.value})} 
+                  placeholder="John Doe"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">Contact Info *</label>
+                <input 
+                  type="text" 
+                  className="w-full text-sm" 
+                  required 
+                  value={form.customer_contact} 
+                  onChange={e => setForm({...form, customer_contact: e.target.value})} 
+                  placeholder="Phone or Instagram"
+                />
+              </div>
             </div>
-          </div>
-          
-          <div>
-            <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">CARD NAME *</label>
-            <input type="text" className="w-full p-2 border border-ink-border rounded bg-ink-surface/30" required value={form.card_name} onChange={e => setForm({...form, card_name: e.target.value})} placeholder="e.g. Black Lotus" />
-          </div>
-          
-          <div>
-            <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">SPECIFIC SET (OPTIONAL)</label>
-            <input type="text" className="w-full p-2 border border-ink-border rounded bg-ink-surface/30" value={form.set_name} onChange={e => setForm({...form, set_name: e.target.value})} placeholder="e.g. Alpha" />
-          </div>
-          
-          <div>
-            <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">ADDITIONAL DETAILS</label>
-            <textarea className="w-full p-2 border border-ink-border rounded bg-ink-surface/30 h-24 resize-none" value={form.details} onChange={e => setForm({...form, details: e.target.value})} placeholder="Condition preferences, foil, language, target price..." />
-          </div>
-          
-          <div className="pt-4 flex gap-3">
-             <button type="submit" disabled={submitting} className="btn-primary flex-1 py-3 text-sm font-bold shadow-lg shadow-gold/20">
-               {submitting ? 'SENDING...' : 'SUBMIT REQUEST'}
-             </button>
-             <button type="button" onClick={onClose} disabled={submitting} className="btn-secondary px-6 text-sm font-mono-stack hover:bg-ink-surface">
-               CANCEL
-             </button>
-          </div>
-        </form>
+            
+            <div>
+              <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">Card Name *</label>
+              <input 
+                type="text" 
+                className="w-full text-sm" 
+                required 
+                value={form.card_name} 
+                onChange={e => setForm({...form, card_name: e.target.value})} 
+                placeholder="e.g. Sheoldred, the Apocalypse"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">Specific Set (Optional)</label>
+              <input 
+                type="text" 
+                className="w-full text-sm" 
+                value={form.set_name} 
+                onChange={e => setForm({...form, set_name: e.target.value})} 
+                placeholder="e.g. Dominaria United" 
+              />
+            </div>
+            
+            <div>
+              <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">Additional Details</label>
+              <textarea 
+                className="w-full text-sm resize-none" 
+                rows={3}
+                value={form.details} 
+                onChange={e => setForm({...form, details: e.target.value})} 
+                placeholder="Condition, foil, language, etc..." 
+              />
+            </div>
+            
+            <button type="submit" disabled={submitting} className="btn-primary w-full py-3 mt-4">
+              {submitting ? 'SENDING MISSION...' : 'SUBMIT MISSION'}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

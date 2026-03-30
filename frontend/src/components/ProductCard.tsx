@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Product, FOIL_LABELS, TREATMENT_LABELS } from '@/lib/types';
 import { useCart } from '@/lib/CartContext';
+import { ConditionBadge, FoilBadge } from './Badges';
 import CardImage from './CardImage';
 import { openProductModal } from './ProductModalManager';
 
@@ -11,18 +12,6 @@ interface ProductCardProps {
   product: Product;
 }
 
-function ConditionBadge({ condition }: { condition?: string }) {
-  if (!condition) return null;
-  const cls = `badge badge-${condition.toLowerCase()}`;
-  return <span className={cls}>{condition}</span>;
-}
-
-function FoilBadge({ foil }: { foil: string }) {
-  if (foil === 'non_foil') return null;
-  const label = FOIL_LABELS[foil as keyof typeof FOIL_LABELS];
-  if (!label) return null;
-  return <span className="badge badge-foil">✦ {label}</span>;
-}
 
 export default function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart();
