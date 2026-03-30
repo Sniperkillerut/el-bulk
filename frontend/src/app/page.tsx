@@ -10,7 +10,7 @@ export default async function HomePage() {
   let tcgs: import('@/lib/types').TCG[] = [];
   let collections: { category: import('@/lib/types').CustomCategory; products: import('@/lib/types').Product[] }[] = [];
   let bounties: import('@/lib/types').Bounty[] = [];
-  
+
   try {
     const [catsRes, tcgsRes] = await Promise.all([
       fetchCategories(),
@@ -18,7 +18,7 @@ export default async function HomePage() {
     ]);
     categories = catsRes;
     tcgs = tcgsRes;
-    
+
     // Fetch top 4 products for each category
     collections = await Promise.all(
       categories.filter(cat => cat.is_active).map(async (cat) => {
@@ -57,7 +57,7 @@ export default async function HomePage() {
           <div className="max-w-2xl bg-surface p-6 md:p-8 rounded-sm shadow-sm" style={{ border: '2px solid var(--kraft-shadow)', position: 'relative' }}>
             <div className="absolute top-0 right-10 w-16 h-8 bg-kraft-light hidden sm:block" style={{ transform: 'translateY(-50%)', border: '1px solid var(--kraft-shadow)' }} />
             <div className="absolute top-0 right-12 w-12 h-8 bg-kraft-mid" style={{ transform: 'translateY(-50%) rotate(5deg)', border: '1px solid var(--kraft-shadow)' }} />
-            
+
             <div className="badge flex items-center justify-center inline-flex" style={{ background: 'var(--kraft-light)', color: 'var(--hp-color)', borderColor: 'var(--hp-color)', marginBottom: '1.5rem', borderWidth: '2px', transform: 'rotate(-2deg)' }}>
               STORE_01 // YOUR LOCAL TCG SHOP
             </div>
@@ -65,8 +65,8 @@ export default async function HomePage() {
               EL <span style={{ color: 'var(--gold-dark)' }}>BULK</span>
             </h1>
             <p className="text-base md:text-lg mb-8" style={{ color: 'var(--text-secondary)', maxWidth: 480 }}>
-              The shoebox where we keep all the good stuff. 
-              Singles, sealed product, and accessories. 
+              The shoebox where we keep all the good stuff.
+              Singles, sealed product, and accessories.
               And we pay <strong style={{ color: 'var(--gold-dark)' }}>cash for your bulk.</strong>
             </p>
 
@@ -75,11 +75,7 @@ export default async function HomePage() {
             </div>
 
             <div className="responsive-stack gap-3">
-              {tcgs.length > 0 ? (
-                <Link href={`/${tcgs[0].id}/singles`} className="btn-primary text-center">SHOP {tcgs[0].name.toUpperCase()}</Link>
-              ) : (
-                <Link href="/singles" className="btn-primary text-center">BROWSE SINGLES</Link>
-              )}
+              <Link href="/singles" className="btn-primary text-center">BROWSE SINGLES</Link>
               <Link href="/bulk" className="btn-secondary text-center">SELL YOUR BULK →</Link>
             </div>
           </div>
@@ -111,10 +107,10 @@ export default async function HomePage() {
 
       <div className="centered-container px-4 py-8 space-y-16">
         {collections.length === 0 ? (
-           <div className="stamp-border rounded-sm p-8 text-center" style={{ color: 'var(--text-muted)' }}>
-             <p className="font-display text-2xl mb-2">STORE IS EMPTY</p>
-             <p className="font-mono-stack text-sm">No collections have been populated yet.</p>
-           </div>
+          <div className="stamp-border rounded-sm p-8 text-center" style={{ color: 'var(--text-muted)' }}>
+            <p className="font-display text-2xl mb-2">STORE IS EMPTY</p>
+            <p className="font-mono-stack text-sm">No collections have been populated yet.</p>
+          </div>
         ) : (
           collections.map(col => (
             <section key={col.category.id}>
@@ -153,7 +149,7 @@ export default async function HomePage() {
                 VIEW ALL →
               </Link>
             </div>
-            
+
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4">
               {bounties.map(b => <BountyCard key={b.id} bounty={b} />)}
             </div>
