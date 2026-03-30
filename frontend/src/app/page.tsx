@@ -1,13 +1,15 @@
 import Link from 'next/link';
-import { fetchProducts, fetchCategories, fetchTCGs } from '@/lib/api';
+import { fetchProducts, fetchCategories, fetchTCGs, fetchBounties } from '@/lib/api';
 import ProductCard from '@/components/ProductCard';
+import BountyCard from '@/components/BountyCard';
 import { TCG_SHORT, CustomCategory } from '@/lib/types';
 import HomeSearchBar from '@/components/HomeSearchBar';
 
 export default async function HomePage() {
   let categories: CustomCategory[] = [];
   let tcgs: import('@/lib/types').TCG[] = [];
-  let collections: { category: CustomCategory; products: import('@/lib/types').Product[] }[] = [];
+  let collections: { category: import('@/lib/types').CustomCategory; products: import('@/lib/types').Product[] }[] = [];
+  let bounties: import('@/lib/types').Bounty[] = [];
   
   try {
     const [catsRes, tcgsRes] = await Promise.all([
@@ -24,6 +26,10 @@ export default async function HomePage() {
         return { category: cat, products: res.products };
       })
     );
+
+    // Fetch top active bounties
+    const allBounties = await fetchBounties({ active: true });
+    bounties = allBounties.slice(0, 8); // Show up to 8 on home page
   } catch {
     // DB not connected in dev — show empty state gracefully
   }
@@ -111,26 +117,47 @@ export default async function HomePage() {
            </div>
         ) : (
           collections.map(col => (
-              <section key={col.category.id}>
-                <div className="flex items-baseline justify-between gap-4 mb-6 border-b-2 border-kraft-dark pb-2">
-                  <h2 className="font-display text-4xl uppercase" style={{ color: 'var(--ink-deep)' }}>
-                    {col.category.name}
-                  </h2>
-                  <Link href={`/collection/${col.category.slug}`} className="text-sm font-bold font-mono-stack hover:text-gold transition-colors" style={{ color: 'var(--text-secondary)' }}>
-                    VIEW ALL →
-                  </Link>
+            <section key={col.category.id}>
+              <div className="flex items-baseline justify-between gap-4 mb-6 border-b-2 border-kraft-dark pb-2">
+                <h2 className="font-display text-4xl uppercase" style={{ color: 'var(--ink-deep)' }}>
+                  {col.category.name}
+                </h2>
+                <Link href={`/collection/${col.category.slug}`} className="text-sm font-bold font-mono-stack hover:text-gold transition-colors" style={{ color: 'var(--text-secondary)' }}>
+                  VIEW ALL →
+                </Link>
+              </div>
+              {col.products.length === 0 ? (
+                <div className="text-center p-8 bg-ink-surface border border-dashed border-ink-border rounded-sm">
+                  <p className="font-mono-stack text-sm text-text-muted">No items assigned to this collection yet.</p>
                 </div>
-                {col.products.length === 0 ? (
-                  <div className="text-center p-8 bg-ink-surface border border-dashed border-ink-border rounded-sm">
-                    <p className="font-mono-stack text-sm text-text-muted">No items assigned to this collection yet.</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {col.products.map(p => <ProductCard key={p.id} product={p} />)}
-                  </div>
-                )}
-              </section>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {col.products.map(p => <ProductCard key={p.id} product={p} />)}
+                </div>
+              )}
+            </section>
           ))
+        )}
+
+        {/* Featured Bounties Section */}
+        {bounties.length > 0 && (
+          <section>
+            <div className="flex items-baseline justify-between gap-4 mb-6 border-b-2 border-kraft-dark pb-2">
+              <div className="flex items-center gap-3">
+                <h2 className="font-display text-4xl uppercase" style={{ color: 'var(--ink-deep)' }}>
+                  WANTED / <span style={{ color: 'var(--hp-color)' }}>BOUNTIES</span>
+                </h2>
+                <div className="hidden sm:block px-2 py-0.5 bg-hp-color text-white text-[10px] font-bold font-mono-stack rotate-2">Urgently Needed</div>
+              </div>
+              <Link href="/bounties" className="text-sm font-bold font-mono-stack hover:text-gold transition-colors" style={{ color: 'var(--text-secondary)' }}>
+                VIEW ALL →
+              </Link>
+            </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4">
+              {bounties.map(b => <BountyCard key={b.id} bounty={b} />)}
+            </div>
+          </section>
         )}
       </div>
 

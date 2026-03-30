@@ -4,6 +4,7 @@ import './globals.css';
 import Navbar from '@/components/Navbar';
 import { CartProvider } from '@/lib/CartContext';
 import ProductModalManager from '@/components/ProductModalManager';
+import BountyModalManager from '@/components/BountyModalManager';
 import RemoteLogManager from '@/components/RemoteLogManager';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -59,6 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <CartProvider>
           <Navbar />
           <ProductModalManager />
+          <BountyModalManager />
           <main style={{ minHeight: 'calc(100vh - 64px)' }}>
             {children}
           </main>
