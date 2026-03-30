@@ -319,6 +319,7 @@ export interface ScryfallCard {
   finishes?: string[];
   frame_effects?: string[];
   promo_types?: string[];
+  type_line?: string;
   border_color?: string;
   full_art?: boolean;
   textless?: boolean;

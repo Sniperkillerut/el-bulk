@@ -91,9 +91,9 @@ export default function BountyEditModal({
     }
   };
 
-  const handlePopulate = async () => {
+  const handlePopulate = async (forceSearchName?: string) => {
     setFormError('');
-    const name = form.name.trim();
+    const name = forceSearchName || form.name.trim();
     const set = setCode.trim().toLowerCase();
     const cn = collectorNumber.trim();
     if (!name && (!set || !cn)) return;
@@ -312,7 +312,11 @@ export default function BountyEditModal({
                   onNameChange={val => { setForm(f => ({ ...f, name: val })); setScryfallPrints([]); setFormError(''); }}
                   onSetCodeChange={val => { setSetCode(val); setFormError(''); }}
                   onCollectorNumberChange={val => { handleArtChange(val); setFormError(''); }}
-                  onPopulate={handlePopulate}
+                  onPopulate={() => handlePopulate()}
+                  onCardSelect={(card: ScryfallCard) => {
+                    setForm(f => ({ ...f, name: card.name }));
+                    handlePopulate(card.name);
+                  }}
                   onSetSearchChange={handleSetSearchChange}
                 />
                 
