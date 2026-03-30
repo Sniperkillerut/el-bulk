@@ -15,6 +15,7 @@ export default function BountyOfferModal({ bounty, onClose }: BountyOfferModalPr
     customer_name: '',
     customer_contact: '',
     condition: 'NM',
+    quantity: 1,
     notes: '',
   });
 
@@ -111,19 +112,31 @@ export default function BountyOfferModal({ bounty, onClose }: BountyOfferModalPr
                 />
               </div>
 
-              <div>
-                <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">Condition of your card</label>
-                <select 
-                  value={form.condition || 'NM'} 
-                  onChange={e => setForm(f => ({...f, condition: e.target.value as Condition}))} 
-                  className="w-full text-sm"
-                >
-                  <option value="NM">Near Mint (NM)</option>
-                  <option value="LP">Lightly Played (LP)</option>
-                  <option value="MP">Moderately Played (MP)</option>
-                  <option value="HP">Heavily Played (HP)</option>
-                  <option value="DMG">Damaged (DMG)</option>
-                </select>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">Condition *</label>
+                  <select 
+                    value={form.condition} 
+                    onChange={e => setForm(f => ({...f, condition: e.target.value as Condition}))} 
+                    className="w-full text-sm"
+                  >
+                    <option value="NM">Near Mint (NM)</option>
+                    <option value="LP">Lightly Played (LP)</option>
+                    <option value="MP">Moderately Played (MP)</option>
+                    <option value="HP">Heavily Played (HP)</option>
+                    <option value="DMG">Damaged (DMG)</option>
+                  </select>
+                </div>
+                <div className="w-24">
+                  <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">Quantity *</label>
+                  <input 
+                    type="number" min="1" max="100"
+                    value={form.quantity} 
+                    onChange={e => setForm(f => ({...f, quantity: parseInt(e.target.value) || 1}))} 
+                    className="w-full text-sm font-mono" 
+                    required 
+                  />
+                </div>
               </div>
 
               <div>

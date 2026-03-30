@@ -345,6 +345,7 @@ export interface Bounty {
   image_url?: string;
   price_source: PriceSource;
   price_reference?: number;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -365,6 +366,7 @@ export interface BountyInput {
   image_url?: string;
   price_source: PriceSource;
   price_reference?: number;
+  is_active?: boolean;
 }
 
 export interface ClientRequest {
@@ -374,7 +376,7 @@ export interface ClientRequest {
   card_name: string;
   set_name?: string;
   details?: string;
-  status: 'pending' | 'accepted' | 'rejected';
+  status: 'pending' | 'accepted' | 'rejected' | 'solved';
   created_at: string;
 }
 
@@ -392,6 +394,7 @@ export interface BountyOffer {
   customer_name: string;
   customer_contact: string;
   condition?: Condition;
+  quantity: number;
   status: 'pending' | 'reviewed' | 'accepted' | 'rejected';
   notes?: string;
   created_at: string;
@@ -403,6 +406,7 @@ export interface BountyOfferInput {
   customer_name: string;
   customer_contact: string;
   condition?: Condition;
+  quantity: number;
   notes?: string;
 }
 

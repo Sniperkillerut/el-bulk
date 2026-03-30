@@ -580,8 +580,9 @@ export async function adminFetchStats(token: string): Promise<{ total_sku_record
 // Bounties
 // ---------------------------------------------------------------------------
 
-export async function fetchBounties(): Promise<import('./types').Bounty[]> {
-  const res = await fetch(`${API_BASE}/api/bounties`, { cache: 'no-store' });
+export async function fetchBounties(params?: { active?: boolean }): Promise<import('./types').Bounty[]> {
+  const query = params?.active ? '?active=true' : '';
+  const res = await fetch(`${API_BASE}/api/bounties${query}`, { cache: 'no-store' });
   if (!res.ok) await logAndThrow(res, 'Failed to fetch bounties');
   return res.json();
 }

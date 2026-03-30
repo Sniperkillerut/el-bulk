@@ -7,17 +7,18 @@ interface BountyOfferResolveModalProps {
   offer: BountyOffer;
   bounty: Bounty;
   requests: ClientRequest[];
+  selectedRequestIds: string[];
   onClose: () => void;
   onAccept: (action: 'inventory' | 'notify_requests', message?: string) => Promise<void>;
   onReject: () => Promise<void>;
 }
 
-export default function BountyOfferResolveModal({ offer, bounty, requests, onClose, onAccept, onReject }: BountyOfferResolveModalProps) {
+export default function BountyOfferResolveModal({ offer, bounty, requests, selectedRequestIds, onClose, onAccept, onReject }: BountyOfferResolveModalProps) {
   const [processing, setProcessing] = useState(false);
   const [action, setAction] = useState<'inventory' | 'notify_requests'>('inventory');
   
-  // Find related requests (same card name roughly)
-  const relatedRequests = requests.filter(r => r.card_name.toLowerCase().includes(bounty.name.toLowerCase()));
+  const relatedRequests = requests.filter(r => r.card_name.toLowerCase().includes(bounty.name.toLowerCase()) && r.status === 'pending');
+  const selectedCount = selectedRequestIds.length;
 
   const handleConfirm = async () => {
     setProcessing(true);
@@ -65,11 +66,23 @@ export default function BountyOfferResolveModal({ offer, bounty, requests, onClo
             <label className={`flex items-start gap-3 p-4 border rounded cursor-pointer transition-colors ${action === 'notify_requests' ? 'border-gold bg-gold/5' : 'border-ink-border/30 hover:bg-ink-surface/30'}`}>
               <input type="radio" name="action" checked={action === 'notify_requests'} onChange={() => setAction('notify_requests')} className="mt-1 accent-gold" />
               <div className="w-full">
-                <strong className="block text-sm">Fulfill Client Requests</strong>
-                <p className="text-xs text-text-muted mt-1">Accept the card and notify clients waiting for it. Do not list for open sale.</p>
+                <strong className="block text-sm">
+                  {selectedCount > 0 ? `Fulfill ${selectedCount} Selected Requests` : 'Fulfill Matching Requests'}
+                </strong>
+                <p className="text-xs text-text-muted mt-1">
+                  {selectedCount > 0 
+                    ? `Accept the card and notify the ${selectedCount} clients you selected.`
+                    : 'Accept the card and notify ALL clients waiting for it.'
+                  }
+                </p>
                 {relatedRequests.length > 0 ? (
-                  <div className="mt-3 p-2 bg-emerald-50 text-emerald-800 text-xs rounded border border-emerald-200">
-                    <strong>{relatedRequests.length} matching requests found!</strong>
+                  <div className={`mt-3 p-2 text-xs rounded border ${selectedCount > 0 ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-gold/10 text-gold-dark border-gold/20'}`}>
+                    <strong>
+                      {selectedCount > 0 
+                        ? `${selectedCount} of ${relatedRequests.length} matching requests selected.` 
+                        : `${relatedRequests.length} matching requests found.`
+                      }
+                    </strong>
                   </div>
                 ) : (
                   <div className="mt-3 text-xs text-text-muted italic">No matching open requests found.</div>

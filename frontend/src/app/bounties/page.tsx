@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export const revalidate = 60; // Cache for 60 seconds
 
 export default async function BountiesPage() {
-  const bounties = await fetchBounties().catch(() => []);
+  const bounties = await fetchBounties({ active: true }).catch(() => []);
 
   return (
     <div className="min-h-screen flex flex-col pt-24 bg-kraft-paper">

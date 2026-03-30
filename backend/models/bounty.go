@@ -21,6 +21,7 @@ type Bounty struct {
 	ImageURL       *string       `db:"image_url"        json:"image_url,omitempty"`
 	PriceSource    string        `db:"price_source"     json:"price_source"`
 	PriceReference *float64      `db:"price_reference"  json:"price_reference,omitempty"`
+	IsActive       bool          `db:"is_active"        json:"is_active"`
 	CreatedAt      time.Time     `db:"created_at"       json:"created_at"`
 	UpdatedAt      time.Time     `db:"updated_at"       json:"updated_at"`
 }
@@ -41,6 +42,7 @@ type BountyInput struct {
 	ImageURL       *string       `json:"image_url,omitempty"`
 	PriceSource    string        `json:"price_source"`
 	PriceReference *float64      `json:"price_reference,omitempty"`
+	IsActive       *bool         `json:"is_active,omitempty"`
 }
 
 type ClientRequest struct {
@@ -72,6 +74,7 @@ type BountyOffer struct {
 	CustomerName    string    `db:"customer_name"    json:"customer_name"`
 	CustomerContact string    `db:"customer_contact" json:"customer_contact"`
 	Condition       *string   `db:"condition"        json:"condition,omitempty"`
+	Quantity        int       `db:"quantity"         json:"quantity"`
 	Status          string    `db:"status"           json:"status"`
 	Notes           *string   `db:"notes"            json:"notes,omitempty"`
 	CreatedAt       time.Time `db:"created_at"       json:"created_at"`
@@ -83,6 +86,7 @@ type BountyOfferInput struct {
 	CustomerName    string  `json:"customer_name"`
 	CustomerContact string  `json:"customer_contact"`
 	Condition       *string `json:"condition,omitempty"`
+	Quantity        int     `json:"quantity"`
 	Notes           *string `json:"notes,omitempty"`
 }
 

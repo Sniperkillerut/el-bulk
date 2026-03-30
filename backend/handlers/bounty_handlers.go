@@ -26,11 +26,13 @@ func (h *BountyHandler) List(w http.ResponseWriter, r *http.Request) {
 	query := `
 		SELECT 
 			id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, 
-			hide_price, quantity_needed, image_url, price_source, price_reference, created_at, updated_at
+			hide_price, quantity_needed, image_url, price_source, price_reference, is_active, created_at, updated_at
 		FROM bounty
+		WHERE ($1 = '' OR is_active = ($1 = 'true'))
 		ORDER BY created_at DESC
 	`
-	err := h.DB.Select(&bounties, query)
+	activeParam := r.URL.Query().Get("active")
+	err := h.DB.Select(&bounties, query, activeParam)
 	if err != nil {
 		logger.Error("Failed to list bounties: %v", err)
 		jsonError(w, "Failed to fetch bounties", http.StatusInternalServerError)
@@ -56,17 +58,22 @@ func (h *BountyHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	isActive := true
+	if input.IsActive != nil {
+		isActive = *input.IsActive
+	}
+
 	query := `
-		INSERT INTO bounty (name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, image_url, price_source, price_reference)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, image_url, price_source, price_reference, created_at, updated_at
+		INSERT INTO bounty (name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, image_url, price_source, price_reference, is_active)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, image_url, price_source, price_reference, is_active, created_at, updated_at
 	`
 	var bounty models.Bounty
 	err := h.DB.QueryRowx(query,
 		input.Name, input.TCG, input.SetName, input.Condition, input.FoilTreatment,
 		input.CardTreatment, input.CollectorNumber, input.PromoType, input.Language,
 		input.TargetPrice, input.HidePrice, input.QuantityNeeded, input.ImageURL,
-		input.PriceSource, input.PriceReference,
+		input.PriceSource, input.PriceReference, isActive,
 	).StructScan(&bounty)
 
 	if err != nil {
@@ -87,21 +94,26 @@ func (h *BountyHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	isActive := true
+	if input.IsActive != nil {
+		isActive = *input.IsActive
+	}
+
 	query := `
 		UPDATE bounty
 		SET name = $1, tcg = $2, set_name = $3, condition = $4, foil_treatment = $5,
 		    card_treatment = $6, collector_number = $7, promo_type = $8, language = $9,
 		    target_price = $10, hide_price = $11, quantity_needed = $12, image_url = $13,
-		    price_source = $14, price_reference = $15, updated_at = now()
-		WHERE id = $16
-		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, image_url, price_source, price_reference, created_at, updated_at
+		    price_source = $14, price_reference = $15, is_active = $16, updated_at = now()
+		WHERE id = $17
+		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, image_url, price_source, price_reference, is_active, created_at, updated_at
 	`
 	var bounty models.Bounty
 	err := h.DB.QueryRowx(query,
 		input.Name, input.TCG, input.SetName, input.Condition, input.FoilTreatment,
 		input.CardTreatment, input.CollectorNumber, input.PromoType, input.Language,
 		input.TargetPrice, input.HidePrice, input.QuantityNeeded, input.ImageURL,
-		input.PriceSource, input.PriceReference, id,
+		input.PriceSource, input.PriceReference, isActive, id,
 	).StructScan(&bounty)
 
 	if err != nil {
@@ -141,7 +153,7 @@ func (h *BountyHandler) ListOffers(w http.ResponseWriter, r *http.Request) {
 	var offers []models.BountyOffer
 	query := `
 		SELECT 
-			id, bounty_id, customer_name, customer_contact, condition, status, notes, created_at, updated_at
+			id, bounty_id, customer_name, customer_contact, condition, quantity, status, notes, created_at, updated_at
 		FROM bounty_offer
 		ORDER BY created_at DESC
 	`
@@ -170,14 +182,18 @@ func (h *BountyHandler) SubmitOffer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if input.Quantity <= 0 {
+		input.Quantity = 1
+	}
+
 	query := `
-		INSERT INTO bounty_offer (bounty_id, customer_name, customer_contact, condition, notes)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id, bounty_id, customer_name, customer_contact, condition, status, notes, created_at, updated_at
+		INSERT INTO bounty_offer (bounty_id, customer_name, customer_contact, condition, quantity, notes)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id, bounty_id, customer_name, customer_contact, condition, quantity, status, notes, created_at, updated_at
 	`
 	var offer models.BountyOffer
 	err := h.DB.QueryRowx(query,
-		input.BountyID, input.CustomerName, input.CustomerContact, input.Condition, input.Notes,
+		input.BountyID, input.CustomerName, input.CustomerContact, input.Condition, input.Quantity, input.Notes,
 	).StructScan(&offer)
 
 	if err != nil {
