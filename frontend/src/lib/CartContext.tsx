@@ -21,23 +21,8 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | null>(null);
 
-const CART_COOKIE = 'el-bulk-cart';
-const REMOVED_COOKIE = 'el-bulk-removed';
-
-function setCookie(name: string, value: string, days = 30) {
-  const expires = new Date(Date.now() + days * 864e5).toUTCString();
-  if (typeof document !== 'undefined') {
-    document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
-  }
-}
-
-function getCookie(name: string) {
-  if (typeof document === 'undefined') return '';
-  return document.cookie.split('; ').reduce((r, v) => {
-    const parts = v.split('=');
-    return parts[0] === name ? decodeURIComponent(parts[1]) : r;
-  }, '');
-}
+const CART_STORAGE_KEY = 'el-bulk-cart';
+const REMOVED_STORAGE_KEY = 'el-bulk-removed';
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -45,24 +30,34 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
-  // Load from cookies on mount
+  // Load from localStorage on mount
   React.useEffect(() => {
-    const savedCart = getCookie(CART_COOKIE);
-    const savedRemoved = getCookie(REMOVED_COOKIE);
-    if (savedCart) {
-      try { setItems(JSON.parse(savedCart)); } catch (e) { console.error(e); }
+    if (typeof window !== 'undefined') {
+      try {
+        const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+        const savedRemoved = localStorage.getItem(REMOVED_STORAGE_KEY);
+        if (savedCart) {
+          setItems(JSON.parse(savedCart));
+        }
+        if (savedRemoved) {
+          setRemovedItems(JSON.parse(savedRemoved));
+        }
+      } catch (e) {
+        console.error('Failed to load cart from localStorage:', e);
+      }
+      setInitialized(true);
     }
-    if (savedRemoved) {
-      try { setRemovedItems(JSON.parse(savedRemoved)); } catch (e) { console.error(e); }
-    }
-    setInitialized(true);
   }, []);
 
-  // Save to cookies on change
+  // Save to localStorage on change
   React.useEffect(() => {
-    if (!initialized) return;
-    setCookie(CART_COOKIE, JSON.stringify(items));
-    setCookie(REMOVED_COOKIE, JSON.stringify(removedItems));
+    if (!initialized || typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+      localStorage.setItem(REMOVED_STORAGE_KEY, JSON.stringify(removedItems));
+    } catch (e) {
+      console.error('Failed to save cart to localStorage:', e);
+    }
   }, [items, removedItems, initialized]);
 
   const addItem = useCallback((product: Product) => {
