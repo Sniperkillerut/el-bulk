@@ -1,5 +1,5 @@
 -- Order Item Table
-CREATE TABLE order_item (
+CREATE TABLE IF NOT EXISTS order_item (
   id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id       UUID REFERENCES "order"(id) ON DELETE CASCADE,
   product_id     UUID REFERENCES product(id) ON DELETE SET NULL,

@@ -1,5 +1,5 @@
 -- Admin-configurable global settings (key/value)
-CREATE TABLE setting (
+CREATE TABLE IF NOT EXISTS setting (
   key        TEXT PRIMARY KEY,
   value      TEXT NOT NULL,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()

@@ -1,5 +1,5 @@
 -- TCG (Trading Card Game) Table
-CREATE TABLE tcg (
+CREATE TABLE IF NOT EXISTS tcg (
   id         TEXT PRIMARY KEY, -- slug: mtg, pokemon, etc.
   name       TEXT NOT NULL,
   is_active  BOOLEAN NOT NULL DEFAULT true,

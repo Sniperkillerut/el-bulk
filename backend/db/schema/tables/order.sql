@@ -1,5 +1,5 @@
 -- Order Table
-CREATE TABLE "order" (
+CREATE TABLE IF NOT EXISTS "order" (
   id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_number   TEXT UNIQUE NOT NULL,
   customer_id    UUID REFERENCES customer(id) ON DELETE RESTRICT,

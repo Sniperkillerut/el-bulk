@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
@@ -55,12 +56,56 @@ func ConnectResilient() (*sqlx.DB, error) {
 
 	logger.Info("Database connected successfully")
 
-	// Run migrations
+	// 1. Initialize core schema (Go-native)
+	if err := Initialize(db); err != nil {
+		logger.Error("Schema initialization failure: %v", err)
+	}
+
+	// 2. Run incremental migrations (if any left)
 	if err := Migrate(db); err != nil {
 		logger.Error("Migration failure: %v", err)
 	}
 
 	return db, nil
+}
+
+// Initialize runs the core schema defined in db/schema/init.sql
+func Initialize(db *sqlx.DB) error {
+	schemaDir := filepath.Join("db", "schema")
+	initPath := filepath.Join(schemaDir, "init.sql")
+
+	content, err := os.ReadFile(initPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil // No initial schema defined
+		}
+		return err
+	}
+
+	lines := strings.Split(string(content), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		// Basic parser for \i commands
+		if strings.HasPrefix(line, "\\i ") {
+			sqlFile := strings.TrimSpace(strings.TrimPrefix(line, "\\i "))
+			err := executeSQLFile(db, filepath.Join(schemaDir, sqlFile))
+			if err != nil {
+				return fmt.Errorf("failed to execute schema file %s: %v", sqlFile, err)
+			}
+			logger.Info("Initialized schema component: %s", sqlFile)
+		}
+	}
+	return nil
+}
+
+func executeSQLFile(db *sqlx.DB, path string) error {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(string(content))
+	return err
 }
 
 func Migrate(db *sqlx.DB) error {
@@ -74,21 +119,20 @@ func Migrate(db *sqlx.DB) error {
 		return err
 	}
 
-	// For simplicity in this demo, we'll just run all .sql files.
-	// In a production app, we should use a migrations table to track applied ones.
+	count := 0
 	for _, f := range files {
 		if filepath.Ext(f.Name()) == ".sql" {
 			path := filepath.Join(migrationsDir, f.Name())
-			content, err := os.ReadFile(path)
-			if err != nil {
-				return fmt.Errorf("failed to read migration %s: %v", f.Name(), err)
-			}
-			_, err = db.Exec(string(content))
-			if err != nil {
+			if err := executeSQLFile(db, path); err != nil {
 				return fmt.Errorf("failed to execute migration %s: %v", f.Name(), err)
 			}
 			logger.Info("Applied migration: %s", f.Name())
+			count++
 		}
+	}
+
+	if count > 0 {
+		logger.Info("Successfully applied %d migrations", count)
 	}
 	return nil
 }

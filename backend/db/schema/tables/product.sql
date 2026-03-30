@@ -1,5 +1,5 @@
 -- Product Table
-CREATE TABLE product (
+CREATE TABLE IF NOT EXISTS product (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name              TEXT NOT NULL,
   tcg               TEXT NOT NULL,
@@ -45,15 +45,15 @@ CREATE TABLE product (
 );
 
 -- Indices
-CREATE INDEX idx_product_tcg      ON product(tcg);
-CREATE INDEX idx_product_category ON product(category);
-CREATE INDEX idx_product_search   ON product USING gin(to_tsvector('english', name || ' ' || COALESCE(set_name, '')));
-CREATE INDEX idx_product_trgm     ON product USING gin (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_product_tcg      ON product(tcg);
+CREATE INDEX IF NOT EXISTS idx_product_category ON product(category);
+CREATE INDEX IF NOT EXISTS idx_product_search   ON product USING gin(to_tsvector('english', name || ' ' || COALESCE(set_name, '')));
+CREATE INDEX IF NOT EXISTS idx_product_trgm     ON product USING gin (name gin_trgm_ops);
 
 -- Facet Indices for Performance
-CREATE INDEX idx_product_condition      ON product(condition);
-CREATE INDEX idx_product_foil           ON product(foil_treatment);
-CREATE INDEX idx_product_treatment      ON product(card_treatment);
-CREATE INDEX idx_product_rarity         ON product(rarity);
-CREATE INDEX idx_product_language       ON product(language);
-CREATE INDEX idx_product_color_identity ON product(color_identity);
+CREATE INDEX IF NOT EXISTS idx_product_condition      ON product(condition);
+CREATE INDEX IF NOT EXISTS idx_product_foil           ON product(foil_treatment);
+CREATE INDEX IF NOT EXISTS idx_product_treatment      ON product(card_treatment);
+CREATE INDEX IF NOT EXISTS idx_product_rarity         ON product(rarity);
+CREATE INDEX IF NOT EXISTS idx_product_language       ON product(language);
+CREATE INDEX IF NOT EXISTS idx_product_color_identity ON product(color_identity);

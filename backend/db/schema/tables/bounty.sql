@@ -1,4 +1,4 @@
-CREATE TABLE bounty (
+CREATE TABLE IF NOT EXISTS bounty (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name              TEXT NOT NULL,
   tcg               TEXT NOT NULL,
@@ -13,10 +13,13 @@ CREATE TABLE bounty (
   hide_price        BOOLEAN NOT NULL DEFAULT false,
   quantity_needed   INTEGER NOT NULL DEFAULT 1 CHECK (quantity_needed >= 0),
   image_url         TEXT,
+  price_source      TEXT NOT NULL DEFAULT 'manual',
+  price_reference   NUMERIC(12, 2),
+  is_active         BOOLEAN NOT NULL DEFAULT true,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- Indices
-CREATE INDEX idx_bounty_tcg ON bounty(tcg);
-CREATE INDEX idx_bounty_search ON bounty USING gin(to_tsvector('english', name || ' ' || COALESCE(set_name, '')));
+CREATE INDEX IF NOT EXISTS idx_bounty_tcg ON bounty(tcg);
+CREATE INDEX IF NOT EXISTS idx_bounty_search ON bounty USING gin(to_tsvector('english', name || ' ' || COALESCE(set_name, '')));
