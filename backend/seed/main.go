@@ -39,7 +39,8 @@ func main() {
 	if *mode == "minimal" {
 		seedMinimalData(database, tcgIDs, categoryMap, storageIDs)
 	} else {
-		seedFullData(database, tcgIDs, categoryMap, storageIDs)
+		productIDs := seedFullData(database, tcgIDs, categoryMap, storageIDs)
+		seedNotices(database, productIDs)
 	}
 
 	logger.Info("✅ Seeding complete! (Mode: %s, Admin: %s)", *mode, adminID)
@@ -59,6 +60,7 @@ func clearTables(db *sqlx.DB) {
 		"client_request",
 		"storage_location",
 		"custom_category",
+		"notice",
 		"tcg",
 		"admin",
 	}
@@ -139,7 +141,7 @@ func seedSettings(db *sqlx.DB) {
 	}
 }
 
-func seedMinimalData(db *sqlx.DB, tcgIDs map[string]string, cats map[string]string, storageIDs []string) {
+func seedMinimalData(db *sqlx.DB, tcgIDs map[string]string, cats map[string]string, storageIDs []string) string {
 	// 1 Sample Product
 	name := "Black Lotus"
 	var pID string
@@ -150,9 +152,10 @@ func seedMinimalData(db *sqlx.DB, tcgIDs map[string]string, cats map[string]stri
 	
 	db.Exec(`INSERT INTO product_storage (product_id, storage_id, quantity) VALUES ($1, $2, 1)`, pID, storageIDs[0])
 	db.Exec(`INSERT INTO product_category (product_id, category_id) VALUES ($1, $2)`, pID, cats["featured"])
+	return pID
 }
 
-func seedFullData(db *sqlx.DB, tcgIDs map[string]string, cats map[string]string, storageIDs []string) {
+func seedFullData(db *sqlx.DB, tcgIDs map[string]string, cats map[string]string, storageIDs []string) []string {
 	// Seed 1 Minimal Product first as a safety baseline
 	seedMinimalData(db, tcgIDs, cats, storageIDs)
 
@@ -371,5 +374,86 @@ func seedFullData(db *sqlx.DB, tcgIDs map[string]string, cats map[string]string,
 			}
 			db.Exec(`UPDATE "order" SET total_cop = $1 WHERE id = $2`, total, oID)
 		}
+	}
+	return productIDs
+}
+
+func seedNotices(db *sqlx.DB, productIDs []string) {
+	logger.Info("Seeding notices (blog/news)...")
+	
+	p1Id := "PROD-1"
+	if len(productIDs) > 0 { p1Id = productIDs[0] }
+	p2Id := "PROD-2"
+	if len(productIDs) > 1 { p2Id = productIDs[1] }
+
+	notices := []struct{ Title, Slug, HTML, Img string }{
+		{
+			Title: "Modern Horizons 3: The Full Spoiler is Here!",
+			Slug:  "mh3-full-spoiler",
+			Img:   "https://cards.scryfall.io/art_crop/front/1/2/12128594-82ea-4a4b-9e4a-464817a02796.jpg",
+			HTML: `
+				<h2>Prepare your wallets!</h2>
+				<p>The latest Magic set is finally revealed in its entirety. We're seeing some incredible reprints and brand new powerhouses for Modern and Commander alike.</p>
+				<h3>Top Picks</h3>
+				<ul>
+					<li><b>Eldrazi Support:</b> Massive titans are back.</li>
+					<li><b>New Elementals:</b> A new cycle of evoke-like effects.</li>
+				</ul>
+				<div style="margin: 2rem 0; border: 2px solid var(--gold); padding: 1rem; background: var(--ink-surface);">
+					<p style="margin:0; font-size: 0.8rem;"><b>CHECK THIS OUT:</b> We already have <a data-card-id="` + p1Id + `">This Incredible Card</a> in stock!</p>
+				</div>
+				<p>Stay tuned for our pre-release events next weekend.</p>
+				<iframe width="100%" height="315" src="https://www.youtube.com/embed/dQw4w9WgXcQ" frameborder="0" allowfullscreen></iframe>
+			`,
+		},
+		{
+			Title: "New Pokémon 151 Restock Incoming",
+			Slug:  "pokemon-151-restock",
+			Img:   "https://images.pokemontcg.io/sv3pt5/logo.png",
+			HTML: `
+				<h2>The Kanto starters are back.</h2>
+				<p>We've secured a massive shipment of Elite Trainer Boxes and Booster Bundles for the 151 set. Don't miss your chance to complete your master set!</p>
+				<p>Available starting this Friday. We'll also have a limited supply of <a data-card-id="` + p2Id + `">special promo cards</a> for the first 10 customers.</p>
+				<img src="https://images.pokemontcg.io/sv3pt5/199_hires.png" alt="Charizard" style="width: 200px; display: block; margin: 1rem auto;" />
+			`,
+		},
+		{
+			Title: "Tournament Report: Regional Qualifiers",
+			Slug:  "regional-qualifiers-report",
+			Img:   "https://cards.scryfall.io/art_crop/front/0/e/0e8f6e6e-7c35-4281-b31c-266382f052cc.jpg",
+			HTML: `
+				<h2>What a weekend!</h2>
+				<p>Over 100 players gathered for our RQ last Saturday. The meta was dominated by combo decks, but a rogue aggro pilot took down the whole thing.</p>
+				<blockquote>"I didn't expect to win, I just played what I liked." - Winner</blockquote>
+				<p>Next big event is the Store Championship in July!</p>
+			`,
+		},
+		{
+			Title: "Collector's Corner: Grading your cards",
+			Slug:  "grading-guide",
+			Img:   "https://cards.scryfall.io/art_crop/front/a/e/ae56ce7c-b31c-266382f052cc.jpg",
+			HTML: `
+				<h2>Is that 10 worth it?</h2>
+				<p>Many customers ask if they should grade their pulls. Here's our quick guide on what to look for: centering, surface, edges, and corners.</p>
+				<p>We provide a pre-grading service here at the shop to help you decide!</p>
+			`,
+		},
+		{
+			Title: "Weekly Shop Update",
+			Slug:  "weekly-update-march-30",
+			Img:   "https://cards.scryfall.io/art_crop/front/f/1/f1911e6e-7c35-4281-b31c-266382f052cc.jpg",
+			HTML: `
+				<h2>New space and better lighting!</h2>
+				<p>We've finished redecorating the play area. Come by and see the new displays. We also have a new coffee machine for those long tournament rounds.</p>
+				<p>See you all this week!</p>
+			`,
+		},
+	}
+
+	for _, n := range notices {
+		db.Exec(`
+			INSERT INTO notice (title, slug, content_html, featured_image_url)
+			VALUES ($1, $2, $3, $4)
+		`, n.Title, n.Slug, n.HTML, n.Img)
 	}
 }

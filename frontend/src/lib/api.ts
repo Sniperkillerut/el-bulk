@@ -530,3 +530,37 @@ export async function adminUpdateClientRequestStatus(token: string, id: string, 
     body: JSON.stringify({ status }),
   }, token);
 }
+
+// ---------------------------------------------------------------------------
+// Notices (Blog/News)
+// ---------------------------------------------------------------------------
+
+export async function fetchNotices(params?: { limit?: number }): Promise<import('./types').Notice[]> {
+  return apiFetch<import('./types').Notice[]>('/api/notices', { params, cache: 'no-store' });
+}
+
+export async function fetchNoticeBySlug(slug: string): Promise<import('./types').Notice> {
+  return apiFetch<import('./types').Notice>(`/api/notices/${slug}`, { cache: 'no-store' });
+}
+
+export async function adminFetchNotices(token: string): Promise<import('./types').Notice[]> {
+  return apiFetch<import('./types').Notice[]>('/api/admin/notices', { cache: 'no-store' }, token);
+}
+
+export async function adminCreateNotice(token: string, data: import('./types').NoticeInput): Promise<import('./types').Notice> {
+  return apiFetch<import('./types').Notice>('/api/admin/notices', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }, token);
+}
+
+export async function adminUpdateNotice(token: string, id: string, data: import('./types').NoticeInput): Promise<import('./types').Notice> {
+  return apiFetch<import('./types').Notice>(`/api/admin/notices/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  }, token);
+}
+
+export async function adminDeleteNotice(token: string, id: string): Promise<void> {
+  return apiFetch<void>(`/api/admin/notices/${id}`, { method: 'DELETE' }, token);
+}

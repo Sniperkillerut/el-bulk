@@ -141,8 +141,20 @@ func main() {
 
 				// System Health & Stats
 				r.Get("/stats", healthHandler.GetStats)
+
+				// Notices (Blog/News) CRUD
+				noticeHandler := handlers.NewNoticeHandler(database)
+				r.Get("/notices", noticeHandler.AdminList)
+				r.Post("/notices", noticeHandler.Create)
+				r.Put("/notices/{id}", noticeHandler.Update)
+				r.Delete("/notices/{id}", noticeHandler.Delete)
 			})
 		})
+
+		// Public Notices
+		noticeHandler := handlers.NewNoticeHandler(database)
+		r.Get("/notices", noticeHandler.List)
+		r.Get("/notices/{slug}", noticeHandler.GetBySlug)
 	})
 
 	port := os.Getenv("PORT")

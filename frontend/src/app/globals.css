@@ -556,3 +556,18 @@ textarea:focus {
 .border-dark {
   border-color: var(--ink-border);
 }
+
+/* Card Preview Links in Notices */
+[data-card-id] {
+  color: var(--gold-dark) !important;
+  font-style: italic;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: help;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+[data-card-id]:hover {
+  color: var(--hp-color) !important;
+}

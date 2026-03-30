@@ -42,6 +42,7 @@ export default function AdminSidebar() {
   const navItems = [
     { label: 'INVENTORY', href: '/admin/dashboard', icon: '📦' },
     { label: 'ORDERS', href: '/admin/orders', icon: '📝' },
+    { label: 'NOTICES', href: '/admin/notices', icon: '📢' },
     { label: 'TCG REGISTRY', href: '/admin/tcgs', icon: '🎴' },
     { label: 'WANTED / BOUNTIES', href: '/admin/bounties', icon: '🎯' },
   ];

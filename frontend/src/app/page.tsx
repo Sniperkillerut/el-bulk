@@ -4,6 +4,7 @@ import ProductCard from '@/components/ProductCard';
 import BountyCard from '@/components/BountyCard';
 import { TCG_SHORT, CustomCategory } from '@/lib/types';
 import HomeSearchBar from '@/components/HomeSearchBar';
+import NoticeSection from '@/components/NoticeSection';
 
 export default async function HomePage() {
   let categories: CustomCategory[] = [];
@@ -155,6 +156,9 @@ export default async function HomePage() {
             </div>
           </section>
         )}
+
+        {/* Notices Section */}
+        <NoticeSection />
       </div>
 
       {/* Buy Bulk CTA Banner - Cardboard Package Style */}

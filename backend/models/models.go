@@ -335,3 +335,24 @@ type OrderWithCustomer struct {
 	CustomerName string `db:"customer_name" json:"customer_name"`
 	ItemCount    int    `db:"item_count"    json:"item_count"`
 }
+
+// ── Notices (Blog/News) ─────────────────────────────
+
+type Notice struct {
+	ID               string    `db:"id"                 json:"id"`
+	Title            string    `db:"title"              json:"title"`
+	Slug             string    `db:"slug"               json:"slug"`
+	ContentHTML      string    `db:"content_html"       json:"content_html"`
+	FeaturedImageURL *string   `db:"featured_image_url" json:"featured_image_url,omitempty"`
+	IsPublished      bool      `db:"is_published"       json:"is_published"`
+	CreatedAt        time.Time `db:"created_at"         json:"created_at"`
+	UpdatedAt        time.Time `db:"updated_at"         json:"updated_at"`
+}
+
+type NoticeInput struct {
+	Title            string  `json:"title"`
+	Slug             string  `json:"slug"`
+	ContentHTML      string  `json:"content_html"`
+	FeaturedImageURL *string `json:"featured_image_url,omitempty"`
+	IsPublished      bool    `json:"is_published"`
+}

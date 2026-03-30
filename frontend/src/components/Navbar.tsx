@@ -115,6 +115,10 @@ export default function Navbar() {
               style={{ textDecoration: 'none' }}>
               Accessories
             </Link>
+            <Link href="/notices" className="text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--gold-dark)]"
+              style={{ textDecoration: 'none' }}>
+              Notices
+            </Link>
             <Link href="/contact" className="text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--gold-dark)]"
               style={{ textDecoration: 'none' }}>
               Contact

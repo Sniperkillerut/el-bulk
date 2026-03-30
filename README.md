@@ -140,3 +140,42 @@ To automate the daily database dump, add this to your Pi’s crontab (`crontab -
 ### 4. Performance Tips for Pi
 - **Swap**: Ensure at least 2GB of swap space is enabled (`sudo fallocate -l 2G /swapfile`).
 - **Storage**: Boot from a USB SSD if possible to avoid MicroSD card wear from PostgreSQL writes.
+
+## System Development
+
+- **Backend**: Go with Chi and SQLX.
+- **Frontend**: Next.js with Tailwind and Vanilla CSS.
+- **Database**: PostgreSQL.
+
+### Admin: Notices & News (HTML Content)
+
+Administrators can post "Notices" (Blog/News) using raw HTML. Here is a recommended structure for rich posts:
+
+```html
+<!-- Heading -->
+<h2>Latest Spoilers from MH3</h2>
+
+<!-- Image -->
+<img src="https://example.com/banner.jpg" alt="Banner" />
+
+<!-- Paragraph with Card Preview -->
+<p>
+  We just pulled a 
+  <a data-card-id="YOUR-PRODUCT-UUID-HERE">Black Lotus</a> 
+  from a blind box!
+</p>
+
+<!-- Video Embed -->
+<iframe width="100%" height="315" src="https://www.youtube.com/embed/VIDEO_ID" frameborder="0" allowfullscreen></iframe>
+
+<!-- List -->
+<ul>
+  <li>In-store events this Friday.</li>
+  <li>New sleeves in stock.</li>
+</ul>
+```
+
+> [!TIP]
+> The `data-card-id` attribute on an `<a>` tag will automatically trigger a mouseover image reveal for that product.
+
+## Seeding
