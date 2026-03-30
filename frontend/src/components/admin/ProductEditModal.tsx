@@ -156,12 +156,28 @@ export default function ProductEditModal({
       }
 
       if (andNew && onSaveAndNew) {
+        // Keep sticky fields for faster entry
+        const stickyTcg = form.tcg;
+        const stickyCategory = form.category;
+        const stickyCondition = form.condition;
+        
         onSaveAndNew({ 
-          tcg: form.tcg, 
-          category: form.category, 
-          condition: form.condition, 
+          tcg: stickyTcg, 
+          category: stickyCategory, 
+          condition: stickyCondition, 
           storageIds: productStorage.map(s => s.stored_in_id) 
         });
+
+        // Reset form but keep sticky values
+        setForm({
+          ...EMPTY_FORM,
+          tcg: stickyTcg,
+          category: stickyCategory,
+          condition: stickyCondition,
+        });
+        setProductStorage(prev => prev.map(s => ({ ...s, quantity: 0 })));
+        setScryfallPrints([]);
+        setActiveTab('variant');
       } else {
         onSaved();
       }
@@ -364,14 +380,30 @@ export default function ProductEditModal({
         <div className="px-4 md:px-6 pt-2 flex gap-4 flex-wrap">
           <div style={{ minWidth: '160px' }}>
             <label className="text-[10px] font-mono-stack mb-1 block uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>TCG SYSTEM</label>
-            <select className="bg-white/50 border-white/40 focus:bg-white transition-all" value={form.tcg} onChange={e => setForm(f => ({ ...f, tcg: e.target.value }))}>
+            <select 
+              className="bg-white/50 border-white/40 focus:bg-white transition-all" 
+              value={form.tcg} 
+              onChange={e => {
+                const newTcg = e.target.value;
+                setForm(f => ({ ...EMPTY_FORM, tcg: newTcg, category: f.category, condition: f.condition }));
+                setScryfallPrints([]);
+              }}
+            >
               {tcgs.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
               <option value="accessories">Accessories</option>
             </select>
           </div>
           <div style={{ minWidth: '140px' }}>
             <label className="text-[10px] font-mono-stack mb-1 block uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>CATEGORY</label>
-            <select className="bg-white/50 border-white/40 focus:bg-white transition-all" value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value as 'singles' | 'sealed' | 'accessories' }))}>
+            <select 
+              className="bg-white/50 border-white/40 focus:bg-white transition-all" 
+              value={form.category} 
+              onChange={e => {
+                const newCat = e.target.value as 'singles' | 'sealed' | 'accessories';
+                setForm(f => ({ ...EMPTY_FORM, tcg: f.tcg, category: newCat, condition: f.condition }));
+                setScryfallPrints([]);
+              }}
+            >
               <option value="singles">Singles</option>
               <option value="sealed">Sealed</option>
               <option value="accessories">Accessories</option>

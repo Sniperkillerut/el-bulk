@@ -21,19 +21,28 @@ export default function VariantTab({
 }: VariantTabProps) {
   return (
     <div className="flex flex-col gap-6">
-      <MTGVariantSelector
-        tcg={form.tcg}
-        setCode={form.set_code}
-        cardTreatment={form.card_treatment}
-        collectorNumber={form.collector_number}
-        promoType={form.promo_type}
-        foilTreatment={form.foil_treatment}
-        prints={prints}
-        onTreatmentChange={onTreatmentChange}
-        onArtChange={onArtChange}
-        onPromoChange={onPromoChange}
-        onFoilChange={onFoilChange}
-      />
+      {isMTGSingles && (
+        <MTGVariantSelector
+          tcg={form.tcg}
+          setCode={form.set_code}
+          cardTreatment={form.card_treatment}
+          collectorNumber={form.collector_number}
+          promoType={form.promo_type}
+          foilTreatment={form.foil_treatment}
+          prints={prints}
+          onTreatmentChange={onTreatmentChange}
+          onArtChange={onArtChange}
+          onPromoChange={onPromoChange}
+          onFoilChange={onFoilChange}
+        />
+      )}
+
+      {!isMTGSingles && (
+        <div className="p-12 text-center bg-ink-surface/20 border border-dashed border-ink-border rounded-lg text-text-muted animate-in fade-in duration-500">
+          <p className="text-sm font-mono-stack">VARIANT OPTIONS ARE CURRENTLY OPTIMIZED FOR MTG SINGLES.</p>
+          <p className="text-[10px] mt-1 opacity-60">General product details are managed in the main header and Pricing tab.</p>
+        </div>
+      )}
 
       {isMTGSingles && prints.length > 0 && (
         <div className="bg-ink-surface/30 p-4 rounded border border-ink-border animate-in fade-in slide-in-from-bottom-2 duration-300">
