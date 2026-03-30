@@ -69,6 +69,11 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
                   {item.product.set_name && (
                     <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{item.product.set_name}</p>
                   )}
+                  {item.product.cart_count && item.product.cart_count > 0 && (
+                    <p className="text-[9px] font-mono mt-0.5 opacity-60" style={{ color: 'var(--gold)' }}>
+                      ● {item.product.cart_count} {item.product.cart_count === 1 ? 'OTHER USER HAS' : 'OTHER USERS HAVE'} THIS IN THEIR CART
+                    </p>
+                  )}
                     <div className="flex items-center gap-2 mt-2">
                       <button
                         onClick={() => updateQty(item.product.id, item.quantity - 1)}
@@ -122,6 +127,11 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold truncate text-primary">{item.product.name}</p>
+                      {item.product.cart_count && item.product.cart_count > 0 && (
+                        <p className="text-[8px] font-mono mt-0.5 opacity-50" style={{ color: 'var(--gold)' }}>
+                          ● {item.product.cart_count} {item.product.cart_count === 1 ? 'OTHER USER HAS' : 'OTHER USERS HAVE'} THIS IN THEIR CART
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center gap-1">
                       <button 

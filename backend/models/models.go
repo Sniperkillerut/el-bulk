@@ -92,6 +92,9 @@ type Product struct {
 
 	CreatedAt       time.Time         `db:"created_at"         json:"created_at"`
 	UpdatedAt       time.Time         `db:"updated_at"         json:"updated_at"`
+
+	// CartCount is the number of unique customers who have this product in a pending order.
+	CartCount       int               `db:"-"                  json:"cart_count"`
 }
 
 // ComputePrice calculates the COP price for this product given the exchange rates.

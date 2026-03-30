@@ -48,6 +48,7 @@ export interface Product {
 
   created_at: string;
   updated_at: string;
+  cart_count?: number;
 }
 
 /** Admin-configurable exchange rates. */

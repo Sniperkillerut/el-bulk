@@ -84,6 +84,45 @@ func (h *ProductHandler) populateStorage(products []models.Product) {
 	}
 }
 
+func (h *ProductHandler) populateCartCounts(products []models.Product) {
+	if len(products) == 0 {
+		return
+	}
+	var pids []string
+	for _, p := range products {
+		pids = append(pids, p.ID)
+	}
+
+	query, args, err := sqlx.In(`
+		SELECT oi.product_id, COUNT(DISTINCT o.customer_id) as cart_count
+		FROM "order" o
+		JOIN order_item oi ON o.id = oi.order_id
+		WHERE o.status = 'pending' AND oi.product_id IN (?)
+		GROUP BY oi.product_id
+	`, pids)
+	if err != nil {
+		return
+	}
+
+	query = h.DB.Rebind(query)
+	var countRows []struct {
+		ProductID string `db:"product_id"`
+		CartCount int    `db:"cart_count"`
+	}
+	if err := h.DB.Select(&countRows, query, args...); err != nil {
+		return
+	}
+
+	countMap := make(map[string]int)
+	for _, r := range countRows {
+		countMap[r.ProductID] = r.CartCount
+	}
+
+	for i := range products {
+		products[i].CartCount = countMap[products[i].ID]
+	}
+}
+
 func (h *ProductHandler) saveProductCategories(productID string, categoryIDs []string) {
 	logger.Info("saveProductCategories called for Product: %s with categories: %v", productID, categoryIDs)
 	_, err := h.DB.Exec("DELETE FROM product_category WHERE product_id = $1", productID)
@@ -290,6 +329,9 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 		products[i].Price = products[i].ComputePrice(s.USDToCOPRate, s.EURToCOPRate)
 	}
 
+	// Populate global cart counts from pending orders
+	h.populateCartCounts(products)
+
 	// Calculate Facets
 	facets := h.getFacets(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color, isAdmin)
 
@@ -338,6 +380,7 @@ func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.populatePrices([]models.Product{product})
+	h.populateCartCounts([]models.Product{product})
 	jsonOK(w, product)
 }
 

@@ -195,11 +195,18 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
                 <hr className="divider w-full my-6" />
 
                 {/* Price */}
-                <div className="flex items-baseline gap-3 mb-6">
+                <div className="flex items-baseline gap-3 mb-6 flex-wrap">
                   <span className="price text-5xl tracking-tighter">${product.price.toLocaleString('en-US', { maximumFractionDigits: 0 })} COP</span>
-                  <span className="text-xs font-mono-stack font-bold px-2 py-1 rounded-sm" style={{ background: product.stock === 0 ? 'var(--hp-color)' : 'var(--nm-color)', color: '#fff' }}>
-                    {product.stock === 0 ? 'OUT OF STOCK' : `${product.stock} IN STOCK`}
-                  </span>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-mono-stack font-bold px-2 py-1 rounded-sm w-fit" style={{ background: product.stock === 0 ? 'var(--hp-color)' : 'var(--nm-color)', color: '#fff' }}>
+                      {product.stock === 0 ? 'OUT OF STOCK' : `${product.stock} IN STOCK`}
+                    </span>
+                    {product.cart_count && product.cart_count > 0 && (
+                      <span className="text-[10px] font-mono tracking-wider" style={{ color: 'var(--gold)', opacity: 0.9 }}>
+                        ● {product.cart_count} {product.cart_count === 1 ? 'OTHER USER HAS' : 'OTHER USERS HAVE'} THIS IN THEIR CART
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Description / Rules Text */}

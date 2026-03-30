@@ -12,12 +12,13 @@ interface ProductCardProps {
   product: Product;
 }
 
-
 export default function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const outOfStock = product.stock === 0;
+
+  const displayCartCount = product.cart_count || 0;
 
   let href = `/product/${product.id}`;
   if (pathname && searchParams) {
@@ -81,21 +82,30 @@ export default function ProductCard({ product }: ProductCardProps) {
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between mt-auto pt-2" style={{ borderTop: '1px solid var(--ink-border)' }}>
-          <span className="price text-base">${product.price.toLocaleString('en-US', { maximumFractionDigits: 0 })} COP</span>
-          <div className="flex items-center gap-2">
-            <span className="text-xs" style={{ color: 'var(--text-muted)', fontFamily: 'Space Mono' }}>
-              {outOfStock ? '—' : `×${product.stock}`}
-            </span>
-            <button
-              id={`add-to-cart-${product.id}`}
-              onClick={() => !outOfStock && addItem(product)}
-              disabled={outOfStock}
-              className="btn-primary"
-              style={{ fontSize: '0.8rem', padding: '0.3rem 0.8rem', opacity: outOfStock ? 0.4 : 1, cursor: outOfStock ? 'not-allowed' : 'pointer' }}
-            >
-              {outOfStock ? 'SOLD OUT' : 'ADD'}
-            </button>
+        <div className="mt-auto">
+          {displayCartCount > 0 && (
+            <div className="flex items-center gap-1.5 text-[10px] font-mono tracking-wider mb-2" style={{ color: 'var(--text-secondary)', opacity: 0.8 }}>
+              <span style={{ color: 'var(--gold)' }}>●</span>
+              {displayCartCount} {displayCartCount === 1 ? 'OTHER USER HAS' : 'OTHER USERS HAVE'} THIS IN THEIR CART
+            </div>
+          )}
+          
+          <div className="flex items-center justify-between pt-2" style={{ borderTop: '1px solid var(--ink-border)' }}>
+            <span className="price text-base">${product.price.toLocaleString('en-US', { maximumFractionDigits: 0 })} COP</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs" style={{ color: 'var(--text-muted)', fontFamily: 'Space Mono' }}>
+                {outOfStock ? '—' : `×${product.stock}`}
+              </span>
+              <button
+                id={`add-to-cart-${product.id}`}
+                onClick={() => !outOfStock && addItem(product)}
+                disabled={outOfStock}
+                className="btn-primary"
+                style={{ fontSize: '0.8rem', padding: '0.3rem 0.8rem', opacity: outOfStock ? 0.4 : 1, cursor: outOfStock ? 'not-allowed' : 'pointer' }}
+              >
+                {outOfStock ? 'SOLD OUT' : 'ADD'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
