@@ -12,7 +12,6 @@ import { Product, Settings, StoredIn, CustomCategory, TCG } from '@/lib/types';
 import AdminSidebar from '@/components/admin/dashboard/AdminSidebar';
 import ProductEditModal from '@/components/admin/ProductEditModal';
 import CSVImportModal from '@/components/admin/CSVImportModal';
-import SettingsModal from '@/components/admin/modals/SettingsModal';
 import StorageManagerModal from '@/components/admin/modals/StorageManagerModal';
 import CategoryManagerModal from '@/components/admin/modals/CategoryManagerModal';
 import ProductTable from '@/components/admin/dashboard/ProductTable';
@@ -44,7 +43,6 @@ export default function AdminDashboard() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showStorageModal, setShowStorageModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
-  const [savingSettings, setSavingSettings] = useState(false);
 
   // Initial Load
   useEffect(() => {
@@ -98,15 +96,7 @@ export default function AdminDashboard() {
     } catch { alert('Failed to delete product.'); }
   };
 
-  const handleUpdateSettings = async (newSettings: Settings) => {
-    setSavingSettings(true);
-    try {
-      await updateAdminSettings(token, newSettings);
-      setSettings(newSettings);
-      setShowSettingsModal(false);
-    } catch { alert('Failed to update settings.'); }
-    finally { setSavingSettings(false); }
-  };
+
 
   // Storage Handlers
   const handleCreateStorage = async (name: string) => {
@@ -191,7 +181,6 @@ export default function AdminDashboard() {
             <div className="flex gap-2">
               <button onClick={() => setShowStorageModal(true)} title="Manage Locations" className="w-10 h-10 border border-ink-border rounded hover:bg-ink-surface transition-colors flex items-center justify-center">📦</button>
               <button onClick={() => setShowCategoryModal(true)} title="Manage Collections" className="w-10 h-10 border border-ink-border rounded hover:bg-ink-surface transition-colors flex items-center justify-center">🔖</button>
-              <button onClick={() => setShowSettingsModal(true)} title="Global Settings" className="w-10 h-10 border border-ink-border rounded hover:bg-ink-surface transition-colors flex items-center justify-center">⚙️</button>
             </div>
           </div>
 
@@ -279,14 +268,7 @@ export default function AdminDashboard() {
         />
       )}
 
-      {showSettingsModal && settings && (
-        <SettingsModal
-          settings={settings}
-          onSave={handleUpdateSettings}
-          onClose={() => setShowSettingsModal(false)}
-          saving={savingSettings}
-        />
-      )}
+
 
       {showStorageModal && (
         <StorageManagerModal

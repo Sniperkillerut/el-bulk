@@ -3,6 +3,9 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { getAdminSettings, updateAdminSettings } from '@/lib/api';
+import { Settings } from '@/lib/types';
 
 export default function AdminSidebar() {
   const pathname = usePathname();
@@ -52,6 +55,19 @@ export default function AdminSidebar() {
             </Link>
           );
         })}
+
+        <p className="font-mono-stack text-[10px] text-text-muted font-bold px-2 mt-8 mb-4 tracking-widest uppercase opacity-40">System Actions</p>
+        <Link
+          href="/admin/settings"
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded transition-all group no-underline ${
+            pathname === '/admin/settings' 
+              ? 'bg-gold text-ink-deep font-bold shadow-lg shadow-gold/10' 
+              : 'text-text-secondary hover:bg-ink-surface hover:text-gold'
+          }`}
+        >
+          <span className={`text-lg ${pathname === '/admin/settings' ? '' : 'opacity-50 group-hover:opacity-100'}`}>⚙️</span>
+          <span className="font-display text-sm tracking-tight text-left">GLOBAL SETTINGS</span>
+        </Link>
       </nav>
 
       {/* Sidebar Footer */}
