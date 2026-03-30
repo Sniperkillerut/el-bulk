@@ -1,11 +1,14 @@
 'use client';
 
+import { useSearchParams } from 'next/navigation';
 import { useAdmin } from '@/hooks/useAdmin';
 import AdminHeader from '@/components/admin/AdminHeader';
 import OrdersPanel from '@/components/admin/OrdersPanel';
 
 export default function AdminOrdersPage() {
   const { token, loading } = useAdmin();
+  const searchParams = useSearchParams();
+  const initialOrderId = searchParams.get('id');
 
   if (loading || !token) {
     return (
@@ -23,7 +26,7 @@ export default function AdminOrdersPage() {
       />
       
       <div className="flex-1 min-h-0 bg-white shadow-sm border border-kraft-dark/20 rounded overflow-auto">
-        <OrdersPanel token={token} />
+        <OrdersPanel token={token} initialOrderId={initialOrderId} />
       </div>
     </div>
   );

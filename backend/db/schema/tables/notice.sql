@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS notice (
 CREATE INDEX IF NOT EXISTS idx_notice_slug ON notice(slug);
 
 -- Trigger to update updated_at
+DROP TRIGGER IF EXISTS tr_notice_updated_at ON notice;
 CREATE TRIGGER tr_notice_updated_at
     BEFORE UPDATE ON notice
     FOR EACH ROW

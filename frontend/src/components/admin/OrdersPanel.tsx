@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import {
   adminFetchOrders, adminFetchOrderDetail, adminUpdateOrder, adminCompleteOrder
 } from '@/lib/api';
@@ -12,10 +13,11 @@ import CardImage from '@/components/CardImage';
 
 interface Props {
   token: string;
+  initialOrderId?: string | null;
   onClose?: () => void;
 }
 
-export default function OrdersPanel({ token, onClose }: Props) {
+export default function OrdersPanel({ token, initialOrderId, onClose }: Props) {
   // List state
   const [orders, setOrders] = useState<OrderWithCustomer[]>([]);
   const [total, setTotal] = useState(0);
@@ -56,6 +58,13 @@ export default function OrdersPanel({ token, onClose }: Props) {
   }, [token, statusFilter, debouncedSearch, page]);
 
   useEffect(() => { loadOrders(); }, [loadOrders]);
+
+  useEffect(() => {
+    if (initialOrderId) {
+      // Small delay to ensure list is loaded or just call selectOrder
+      selectOrder(initialOrderId);
+    }
+  }, [initialOrderId, token]);
 
   const selectOrder = async (id: string) => {
     setItemEdits({});
@@ -324,7 +333,9 @@ export default function OrdersPanel({ token, onClose }: Props) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                 <div className="cardbox p-3">
                   <h4 className="text-xs font-mono-stack mb-2" style={{ color: 'var(--text-muted)' }}>CLIENTE</h4>
-                  <p className="font-semibold">{detail.customer.first_name} {detail.customer.last_name}</p>
+                  <Link href={`/admin/clients/${detail.customer.id}`} className="font-semibold text-gold-dark hover:underline transition-all block mb-1">
+                    {detail.customer.first_name} {detail.customer.last_name} →
+                  </Link>
                   <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                     📱 <a 
                       href={`https://wa.me/${detail.customer.phone.replace(/\D/g, '')}`} 

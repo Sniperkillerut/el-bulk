@@ -77,6 +77,10 @@ func (h *NewsletterHandler) AdminGetSubscribers(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	if subscribers == nil {
+		subscribers = []models.NewsletterSubscriber{}
+	}
+
 	json.NewEncoder(w).Encode(subscribers)
 }
 

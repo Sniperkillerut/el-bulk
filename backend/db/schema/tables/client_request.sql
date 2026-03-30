@@ -1,5 +1,7 @@
+DROP TABLE IF EXISTS client_request CASCADE;
 CREATE TABLE IF NOT EXISTS client_request (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id       UUID REFERENCES customer(id) ON DELETE SET NULL,
   customer_name     TEXT NOT NULL,
   customer_contact  TEXT NOT NULL,
   card_name         TEXT NOT NULL,

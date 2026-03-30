@@ -13,6 +13,9 @@
 \i tables/custom_category.sql
 \i tables/bounty.sql
 \i tables/client_request.sql
+\i tables/notice.sql
+\i tables/newsletter_subscriber.sql
+\i tables/bounty_offer.sql
 
 -- 3. Dependent Tables
 \i tables/product.sql
@@ -20,6 +23,7 @@
 \i tables/product_storage.sql
 \i tables/order.sql
 \i tables/order_item.sql
+\i tables/customer_note.sql
 
 -- 4. Functions & Stored Procedures
 \i functions/fn_update_updated_at.sql
@@ -28,6 +32,7 @@
 \i functions/fn_bulk_upsert_product.sql
 \i functions/fn_place_order.sql
 \i functions/fn_complete_order.sql
+\i functions/fn_fulfill_bounty_offer.sql
 
 -- 5. Views
 \i views/view_product_enriched.sql
@@ -39,3 +44,4 @@
 \i triggers/trg_bounty_updated_at.sql
 \i triggers/trg_setting_updated_at.sql
 \i triggers/trg_sync_product_stock.sql
+\i triggers/trg_bounty_fulfillment.sql

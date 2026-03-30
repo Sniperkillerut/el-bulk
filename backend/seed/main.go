@@ -62,6 +62,8 @@ func clearTables(db *sqlx.DB) {
 		"storage_location",
 		"custom_category",
 		"notice",
+		"newsletter_subscriber",
+		"customer_note",
 		"tcg",
 		"admin",
 	}
@@ -347,6 +349,7 @@ func seedFullData(db *sqlx.DB, tcgIDs map[string]string, cats map[string]string,
 		`, fmt.Sprintf("User%d", i), "Test", fmt.Sprintf("user%d@example.com", i), fmt.Sprintf("300%07d", i)).Scan(&cID)
 
 		numOrders := rand.Intn(4) + 1
+		if i < 5 { numOrders = rand.Intn(10) + 10 } // Create some VIP customers with 10-20 orders
 		for j := 0; j < numOrders; j++ {
 			var oID string
 			status := "completed"
@@ -449,53 +452,132 @@ func seedNotices(db *sqlx.DB, productIDs []string) {
 				<p>See you all this week!</p>
 			`,
 		},
+		{
+			Title: "Upcoming Tournament: Pokémon Regional Qualifier",
+			Slug:  "pokemon-reg-qualifier-2026",
+			Img:   "https://images.unsplash.com/photo-1613771404721-1f92d799e49f?q=80&w=800&auto=format&fit=crop",
+			HTML: "<h2>Battle for the Top!</h2><p>Registration opens this Friday. Limited slots available. Format: Standard.</p>",
+		},
+		{
+			Title: "Weekly Deal: Buy 3 Boosters, Get 1 Free!",
+			Slug:  "weekly-deal-boosters",
+			Img:   "https://images.unsplash.com/photo-1541560052753-107f96307409?q=80&w=800&auto=format&fit=crop",
+			HTML: "<p>This week only, buy any 3 TCG boosters and get the 4th one free. Valid across MTG, Pokémon, and Yu-Gi-Oh.</p>",
+		},
+		{
+			Title: "Trading Corner: Bulk Trade-in Event",
+			Slug:  "bulk-trade-in-event",
+			Img:   "https://images.unsplash.com/photo-1598214886806-c87b84b7078b?q=80&w=800&auto=format&fit=crop",
+			HTML: "<p>Turn your bulk commons and uncommons into store credit! We're running a special trade-in event this Saturday starting at 10 AM.</p>",
+		},
 	}
 
 	for _, n := range notices {
-		db.Exec(`
+		_, err := db.Exec(`
 			INSERT INTO notice (title, slug, content_html, featured_image_url)
 			VALUES ($1, $2, $3, $4)
 		`, n.Title, n.Slug, n.HTML, n.Img)
+		if err != nil {
+			logger.Error("Failed to seed notice '%s': %v", n.Title, err)
+		}
 	}
 }
 
 func seedCRM(db *sqlx.DB, adminID string) {
-	logger.Info("Seeding CRM data (subscribers and notes)...")
+	logger.Info("Seeding CRM data (subscribers, notes, requests, and offers)...")
 
-	// 1. Seed some newsletter subscribers
-	var customers []struct{ ID, Email string }
-	db.Select(&customers, "SELECT id, email FROM customer LIMIT 20")
+	// 1. Fetch some customers to link data to
+	var customers []struct {
+		ID        string `db:"id"`
+		FirstName string `db:"first_name"`
+		LastName  string `db:"last_name"`
+		Email     string `db:"email"`
+	}
+	db.Select(&customers, "SELECT id, first_name, last_name, email FROM customer LIMIT 20")
 
+	// 2. Seed some newsletter subscribers
 	for i, c := range customers {
-		if i % 3 == 0 { // ~33% signup rate for existing users
+		if i%3 == 0 { // ~33% signup rate
 			db.Exec(`
 				INSERT INTO newsletter_subscriber (email, customer_id)
-				VALUES ($1, $2)
-				ON CONFLICT DO NOTHING
+				VALUES ($1, $2) ON CONFLICT DO NOTHING
 			`, c.Email, c.ID)
 		}
 	}
 
-	// Some guest subscribers
-	guests := []string{"guest1@example.com", "collector99@gmail.com", "mtg_pro@outlook.com"}
-	for _, email := range guests {
-		db.Exec("INSERT INTO newsletter_subscriber (email) VALUES ($1) ON CONFLICT DO NOTHING", email)
-	}
-
-	// 2. Seed some customer notes
-	interactions := []string{
-		"Spoke to customer via WhatsApp. Interested in MH3 boosters.",
-		"Requested a custom quote for bulk common/uncommon collection.",
-		"Note: Preferred shipping method is via courier.",
-		"Verified identity document for high-value order.",
+	// 3. Seed Client Requests (Linked to top customers)
+	requestTemplates := []struct{ Card, Details string }{
+		{"Black Lotus", "Looking for a budget Unlimited edition."},
+		{"Charizard Base Set", "PSA 8 or higher preferred."},
+		{"Sheoldred, the Apocalypse", "Need 4 copies for a tournament."},
+		{"Mewtwo GX SV107", "Shiny Vault version only."},
+		{"Ragavan, Nimble Pilferer", "Borderless art if possible."},
+		{"The One Ring", "Special edition for my collection."},
+		{"Sol Ring", "Looking for Masterpiece version."},
+		{"Pikachu Illustrator", "Just kidding, unless you have it!"},
 	}
 
 	for i, c := range customers {
-		if i % 5 == 0 { // ~20% have notes
+		if i >= 10 { // Only link first 10
+			break
+		}
+		template := requestTemplates[i%len(requestTemplates)]
+		status := []string{"pending", "accepted", "solved"}[i%3]
+		
+		db.Exec(`
+			INSERT INTO client_request (customer_id, customer_name, customer_contact, card_name, details, status)
+			VALUES ($1, $2, $3, $4, $5, $6)
+		`, c.ID, c.FirstName+" "+c.LastName, c.Email, template.Card, template.Details, status)
+	}
+
+	// 4. Seed Bounty Offers (Linked to top customers)
+	var bountyIDs []string
+	db.Select(&bountyIDs, "SELECT id FROM bounty LIMIT 10")
+
+	if len(bountyIDs) > 0 {
+		for i, c := range customers {
+			if i >= 12 { // Link more offers than requests
+				break
+			}
+			bID := bountyIDs[i%len(bountyIDs)]
+			status := []string{"pending", "accepted", "fulfilled"}[i%3]
+			
+			db.Exec(`
+				INSERT INTO bounty_offer (bounty_id, customer_id, quantity, status, admin_notes)
+				VALUES ($1, $2, $3, $4, $5)
+			`, bID, c.ID, (rand.Intn(3) + 1), status, "Verified collection. Quality looks good.")
+		}
+	}
+
+	// 5. Seed some guest requests (Unlinked)
+	for i := 0; i < 5; i++ {
+		db.Exec(`
+			INSERT INTO client_request (customer_name, customer_contact, card_name, details, status)
+			VALUES ($1, $2, $3, $4, 'pending')
+		`, fmt.Sprintf("Guest %d", i), fmt.Sprintf("guest%d@example.com", i), "Some Random Card", "I'm not a registered user yet.")
+	}
+
+	// 6. Seed Customer Notes
+	interactions := []string{
+		"Spoke to customer via WhatsApp. Interested in MH3 boosters.",
+		"Requested a custom quote for bulk collection.",
+		"Note: Preferred shipping method is via courier.",
+		"Verified identity document for high-value order.",
+		"Resolved condition complaint on previous order.",
+		"Asking for pre-order availability of next set.",
+		"Loyal customer. Provided discount code.",
+		"Confirmed receipt of package. Very satisfied.",
+	}
+
+	for i, c := range customers {
+		noteChance := 5
+		if i < 5 { noteChance = 1 } // Every top customer gets a note
+		
+		if i % noteChance == 0 {
 			db.Exec(`
 				INSERT INTO customer_note (customer_id, content, admin_id)
 				VALUES ($1, $2, $3)
-			`, c.ID, interactions[i % len(interactions)], adminID)
+			`, c.ID, interactions[rand.Intn(len(interactions))], adminID)
 		}
 	}
 }

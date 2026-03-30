@@ -20,13 +20,20 @@ func (h *CustomerAdminHandler) ListCustomers(w http.ResponseWriter, r *http.Requ
 			c.*,
 			(SELECT COUNT(*) FROM "order" o WHERE o.customer_id = c.id) as order_count,
 			(SELECT COALESCE(SUM(total_cop), 0) FROM "order" o WHERE o.customer_id = c.id) as total_spend,
-			(SELECT EXISTS(SELECT 1 FROM newsletter_subscriber n WHERE n.customer_id = c.id OR n.email = c.email)) as is_subscriber
+			(SELECT EXISTS(SELECT 1 FROM newsletter_subscriber n WHERE n.customer_id = c.id OR n.email = c.email)) as is_subscriber,
+			(SELECT content FROM customer_note n WHERE n.customer_id = c.id ORDER BY created_at DESC LIMIT 1) as latest_note,
+			(SELECT COUNT(*) FROM client_request r WHERE r.customer_id = c.id) as request_count,
+			(SELECT COUNT(*) FROM bounty_offer bo WHERE bo.customer_id = c.id) as offer_count
 		FROM customer c
 		ORDER BY created_at DESC
 	`)
 	if err != nil {
 		http.Error(w, "Database error", http.StatusInternalServerError)
 		return
+	}
+
+	if customers == nil {
+		customers = []models.CustomerStats{}
 	}
 
 	json.NewEncoder(w).Encode(customers)
@@ -42,6 +49,8 @@ func (h *CustomerAdminHandler) GetCustomerDetail(w http.ResponseWriter, r *http.
 	var detail models.CustomerDetail
 	err := h.DB.Get(&detail.Customer, "SELECT * FROM customer WHERE id = $1", id)
 	if err != nil {
+		// Log the error for debugging
+		println("Error fetching customer", id, ":", err.Error())
 		http.Error(w, "Customer not found", http.StatusNotFound)
 		return
 	}
@@ -69,6 +78,37 @@ func (h *CustomerAdminHandler) GetCustomerDetail(w http.ResponseWriter, r *http.
 	// Fetch subscription status
 	err = h.DB.Get(&detail.IsSubscriber, "SELECT EXISTS(SELECT 1 FROM newsletter_subscriber WHERE customer_id = $1 OR email = $2)", id, detail.Email)
 	
+	// Fetch requests
+	err = h.DB.Select(&detail.Requests, `SELECT * FROM client_request WHERE customer_id = $1 OR customer_contact = $2 ORDER BY created_at DESC`, id, detail.Email)
+	if err != nil {
+		detail.Requests = []models.ClientRequest{}
+	}
+
+	// Fetch bounty offers
+	err = h.DB.Select(&detail.Offers, `
+		SELECT o.*, b.name as bounty_name
+		FROM bounty_offer o
+		JOIN bounty b ON o.bounty_id = b.id
+		WHERE o.customer_id = $1
+		ORDER BY o.created_at DESC
+	`, id)
+	if err != nil {
+		detail.Offers = []models.BountyOffer{}
+	}
+
+	if detail.Orders == nil {
+		detail.Orders = []models.Order{}
+	}
+	if detail.Notes == nil {
+		detail.Notes = []models.CustomerNote{}
+	}
+	if detail.Requests == nil {
+		detail.Requests = []models.ClientRequest{}
+	}
+	if detail.Offers == nil {
+		detail.Offers = []models.BountyOffer{}
+	}
+
 	json.NewEncoder(w).Encode(detail)
 }
 

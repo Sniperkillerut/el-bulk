@@ -386,6 +386,7 @@ export interface BountyInput {
 
 export interface ClientRequest {
   id: string;
+  customer_id?: string;
   customer_name: string;
   customer_contact: string;
   card_name: string;
@@ -396,6 +397,7 @@ export interface ClientRequest {
 }
 
 export interface ClientRequestInput {
+  customer_id?: string;
   customer_name: string;
   customer_contact: string;
   card_name: string;
@@ -406,14 +408,17 @@ export interface ClientRequestInput {
 export interface BountyOffer {
   id: string;
   bounty_id: string;
+  customer_id: string;
   customer_name: string;
   customer_contact: string;
-  condition?: Condition;
+  condition?: string;
   quantity: number;
-  status: 'pending' | 'reviewed' | 'accepted' | 'rejected';
+  status: 'pending' | 'accepted' | 'rejected' | 'fulfilled';
   notes?: string;
+  admin_notes?: string;
   created_at: string;
   updated_at: string;
+  bounty_name?: string;
 }
 
 export interface BountyOfferInput {
@@ -471,11 +476,16 @@ export interface CustomerStats extends UserProfile {
   order_count: number;
   total_spend: number;
   is_subscriber: boolean;
+  latest_note?: string | null;
+  request_count: number;
+  offer_count: number;
   created_at: string;
 }
 
 export interface CustomerDetail extends UserProfile {
   orders: Order[];
   notes: CustomerNote[];
+  requests: ClientRequest[];
+  offers: BountyOffer[];
   is_subscriber: boolean;
 }

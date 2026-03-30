@@ -153,9 +153,14 @@ func (h *BountyHandler) ListOffers(w http.ResponseWriter, r *http.Request) {
 	var offers []models.BountyOffer
 	query := `
 		SELECT 
-			id, bounty_id, customer_name, customer_contact, condition, quantity, status, notes, created_at, updated_at
-		FROM bounty_offer
-		ORDER BY created_at DESC
+			o.id, o.bounty_id, o.customer_id, o.quantity, o.condition, o.status, o.notes, o.admin_notes, o.created_at, o.updated_at,
+			b.name as bounty_name,
+			c.first_name || ' ' || COALESCE(c.last_name, '') as customer_name,
+			COALESCE(c.phone, c.email) as customer_contact
+		FROM bounty_offer o
+		JOIN bounty b ON o.bounty_id = b.id
+		JOIN customer c ON o.customer_id = c.id
+		ORDER BY o.created_at DESC
 	`
 	err := h.DB.Select(&offers, query)
 	if err != nil {
@@ -177,8 +182,8 @@ func (h *BountyHandler) SubmitOffer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if input.BountyID == "" || input.CustomerName == "" || input.CustomerContact == "" {
-		jsonError(w, "BountyID, CustomerName, and CustomerContact are required", http.StatusBadRequest)
+	if input.BountyID == "" || input.CustomerID == "" {
+		jsonError(w, "BountyID and CustomerID are required", http.StatusBadRequest)
 		return
 	}
 
@@ -187,13 +192,18 @@ func (h *BountyHandler) SubmitOffer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query := `
-		INSERT INTO bounty_offer (bounty_id, customer_name, customer_contact, condition, quantity, notes)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING id, bounty_id, customer_name, customer_contact, condition, quantity, status, notes, created_at, updated_at
+		INSERT INTO bounty_offer (bounty_id, customer_id, quantity, condition, notes, admin_notes, status)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING id, bounty_id, customer_id, quantity, condition, status, notes, admin_notes, created_at, updated_at
 	`
 	var offer models.BountyOffer
+	status := "pending"
+	if input.Status != nil {
+		status = *input.Status
+	}
+
 	err := h.DB.QueryRowx(query,
-		input.BountyID, input.CustomerName, input.CustomerContact, input.Condition, input.Quantity, input.Notes,
+		input.BountyID, input.CustomerID, input.Quantity, input.Condition, input.Notes, input.AdminNotes, status,
 	).StructScan(&offer)
 
 	if err != nil {
@@ -218,18 +228,31 @@ func (h *BountyHandler) UpdateOfferStatus(w http.ResponseWriter, r *http.Request
 		UPDATE bounty_offer
 		SET status = $1, updated_at = now()
 		WHERE id = $2
-		RETURNING id, bounty_id, customer_name, customer_contact, condition, status, notes, created_at, updated_at
 	`
+	_, err := h.DB.Exec(query, input.Status, id)
+	if err != nil {
+		logger.Error("Failed to update offer status: %v", err)
+		jsonError(w, "Failed to update offer status", http.StatusInternalServerError)
+		return
+	}
+
 	var offer models.BountyOffer
-	err := h.DB.QueryRowx(query, input.Status, id).StructScan(&offer)
+	selectQuery := `
+		SELECT 
+			o.id, o.bounty_id, o.customer_id, o.quantity, o.condition, o.status, o.notes, o.admin_notes, o.created_at, o.updated_at,
+			b.name as bounty_name,
+			c.first_name || ' ' || COALESCE(c.last_name, '') as customer_name,
+			COALESCE(c.phone, c.email) as customer_contact
+		FROM bounty_offer o
+		JOIN bounty b ON o.bounty_id = b.id
+		JOIN customer c ON o.customer_id = c.id
+		WHERE o.id = $1
+	`
+	err = h.DB.Get(&offer, selectQuery, id)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
-			jsonError(w, "Offer not found", http.StatusNotFound)
-		} else {
-			logger.Error("Failed to update offer status: %v", err)
-			jsonError(w, "Failed to update offer status", http.StatusInternalServerError)
-		}
+		logger.Error("Failed to fetch updated offer: %v", err)
+		jsonError(w, "Failed to fetch updated offer", http.StatusInternalServerError)
 		return
 	}
 
@@ -241,7 +264,7 @@ func (h *BountyHandler) UpdateOfferStatus(w http.ResponseWriter, r *http.Request
 func (h *BountyHandler) ListRequests(w http.ResponseWriter, r *http.Request) {
 	var requests []models.ClientRequest
 	query := `
-		SELECT id, customer_name, customer_contact, card_name, set_name, details, status, created_at
+		SELECT id, customer_id, customer_name, customer_contact, card_name, set_name, details, status, created_at
 		FROM client_request
 		ORDER BY created_at DESC
 	`
@@ -271,14 +294,18 @@ func (h *BountyHandler) CreateRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Auto-linking logic: Check if customer exists by email
+	var customerID *string
+	_ = h.DB.Get(&customerID, "SELECT id FROM customer WHERE email = $1", input.CustomerContact)
+
 	query := `
-		INSERT INTO client_request (customer_name, customer_contact, card_name, set_name, details, status)
-		VALUES ($1, $2, $3, $4, $5, 'pending')
-		RETURNING id, customer_name, customer_contact, card_name, set_name, details, status, created_at
+		INSERT INTO client_request (customer_id, customer_name, customer_contact, card_name, set_name, details, status)
+		VALUES ($1, $2, $3, $4, $5, $6, 'pending')
+		RETURNING id, customer_id, customer_name, customer_contact, card_name, set_name, details, status, created_at
 	`
 	var req models.ClientRequest
 	err := h.DB.QueryRowx(query,
-		input.CustomerName, input.CustomerContact, input.CardName, input.SetName, input.Details,
+		customerID, input.CustomerName, input.CustomerContact, input.CardName, input.SetName, input.Details,
 	).StructScan(&req)
 
 	if err != nil {

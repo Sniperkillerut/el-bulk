@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { useAdmin } from '@/hooks/useAdmin';
 import { adminFetchClientDetail, adminAddCustomerNote } from '@/lib/api';
 import { CustomerDetail, CustomerNote } from '@/lib/types';
@@ -11,6 +11,8 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 export default function AdminClientDetailPage() {
   const { token } = useAdmin();
   const { id } = useParams();
+  const searchParams = useSearchParams();
+  const initialOrderId = searchParams.get('orderId');
   const [detail, setDetail] = useState<CustomerDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [newNote, setNewNote] = useState('');
@@ -32,6 +34,12 @@ export default function AdminClientDetailPage() {
   useEffect(() => {
     fetchDetail();
   }, [token, id]);
+
+  useEffect(() => {
+    if (initialOrderId) {
+      setSelectedOrder(initialOrderId);
+    }
+  }, [initialOrderId]);
 
   const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,7 +117,7 @@ export default function AdminClientDetailPage() {
           <div className="cardbox p-8">
             <h3 className="text-2xl mb-6 flex items-center gap-3">
               JOURNAL OF INTERACTIONS 
-              <span className="text-[10px] font-mono-stack bg-kraft-dark text-white px-2 py-0.5 rounded-full">{detail.notes.length}</span>
+              <span className="text-[10px] font-mono-stack bg-kraft-dark text-white px-2 py-0.5 rounded-full">{(detail.notes || []).length}</span>
             </h3>
             
             <form onSubmit={handleAddNote} className="mb-10 bg-kraft-light/20 p-4 border border-dashed border-kraft-dark rounded-sm">
@@ -126,7 +134,7 @@ export default function AdminClientDetailPage() {
                       className="text-[10px] font-mono-stack flex-1"
                     >
                       <option value="">General Interaction / No specific order</option>
-                      {detail.orders.map(o => (
+                      {(detail.orders || []).map(o => (
                         <option key={o.id} value={o.id}>About Order {o.order_number}</option>
                       ))}
                     </select>
@@ -135,10 +143,10 @@ export default function AdminClientDetailPage() {
             </form>
 
             <div className="space-y-4">
-              {detail.notes.length === 0 ? (
+              {(detail.notes || []).length === 0 ? (
                 <div className="text-center py-8 text-[10px] font-mono-stack text-text-muted uppercase tracking-widest italic opacity-40">No entries recorded in the journal.</div>
               ) : (
-                detail.notes.map((note) => (
+                (detail.notes || []).map((note) => (
                   <div key={note.id} className="p-4 bg-ink-surface border-l-4 border-kraft-dark rounded-sm shadow-sm">
                     <div className="flex justify-between items-start mb-2">
                        <div className="flex items-center gap-2">
@@ -146,7 +154,7 @@ export default function AdminClientDetailPage() {
                          <span className="text-[9px] font-mono-stack text-text-muted">Added on {new Date(note.created_at).toLocaleString()}</span>
                        </div>
                        {note.order_id && (
-                         <span className="text-[9px] font-mono-stack bg-gold/10 text-gold-dark border border-gold/30 px-2 py-0.5">REFERENCE: {detail.orders.find(o => o.id === note.order_id)?.order_number}</span>
+                         <span className="text-[9px] font-mono-stack bg-gold/10 text-gold-dark border border-gold/30 px-2 py-0.5">REFERENCE: {(detail.orders || []).find(o => o.id === note.order_id)?.order_number}</span>
                        )}
                     </div>
                     <p className="text-xs font-mono-stack text-text-secondary leading-relaxed whitespace-pre-wrap">{note.content}</p>
@@ -162,13 +170,13 @@ export default function AdminClientDetailPage() {
             <div className="cardbox p-6">
                 <h3 className="text-2xl mb-6">ORDER HISTORY</h3>
                 <div className="space-y-3">
-                  {detail.orders.length === 0 ? (
+                  {(detail.orders || []).length === 0 ? (
                     <div className="p-8 text-center text-xs font-mono-stack opacity-40">NO ORDERS FOUND.</div>
                   ) : (
-                    detail.orders.map(order => (
+                    (detail.orders || []).map(order => (
                       <Link 
                         key={order.id} 
-                        href={`/admin/orders/${order.id}`}
+                        href={`/admin/orders?id=${order.id}`}
                         className="block p-4 border border-ink-border/30 hover:border-gold transition-all no-underline group hover:translate-x-1"
                       >
                         <div className="flex justify-between items-center mb-1">
@@ -191,17 +199,63 @@ export default function AdminClientDetailPage() {
                 </div>
             </div>
 
+            <div className="cardbox p-6 space-y-8">
+                <div>
+                  <h3 className="text-xl mb-4 font-display tracking-wider">ACTIVE REQUESTS</h3>
+                  <div className="space-y-2">
+                    {(detail.requests || []).length === 0 ? (
+                      <div className="text-[10px] font-mono-stack opacity-40 italic">NO ACTIVE REQUESTS.</div>
+                    ) : (
+                      (detail.requests || []).map(req => (
+                        <div key={req.id} className="p-3 bg-hp-color/5 border border-hp-color/20 rounded-sm">
+                          <div className="flex justify-between items-start mb-1">
+                            <span className="font-bold text-xs uppercase text-hp-color">{req.card_name}</span>
+                            <span className="text-[8px] font-mono-stack px-1 bg-hp-color text-white rounded-sm">{req.status}</span>
+                          </div>
+                          {req.set_name && <p className="text-[9px] font-mono-stack opacity-60">SET: {req.set_name}</p>}
+                          <p className="text-[9px] font-mono-stack mt-1 italic">"{req.details || 'No additional details'}"</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xl mb-4 font-display tracking-wider">BOUNTY OFFERS</h3>
+                  <div className="space-y-2">
+                    {(detail.offers || []).length === 0 ? (
+                      <div className="text-[10px] font-mono-stack opacity-40 italic">NO OFFERS RECORDED.</div>
+                    ) : (
+                      (detail.offers || []).map(offer => (
+                        <div key={offer.id} className="p-3 bg-emerald-50 border border-emerald-200 rounded-sm">
+                          <div className="flex justify-between items-start mb-1">
+                            <span className="font-bold text-xs uppercase text-emerald-800">{offer.bounty_name || 'Bounty Item'}</span>
+                            <span className={`text-[8px] font-mono-stack px-1 rounded-sm ${
+                              offer.status === 'fulfilled' ? 'bg-emerald-600' : 'bg-amber-600'
+                            } text-white`}>{offer.status}</span>
+                          </div>
+                          <div className="flex justify-between items-end mt-1">
+                            <span className="text-[9px] font-mono-stack opacity-60">QTY: {offer.quantity}</span>
+                            <span className="text-[8px] font-mono-stack text-text-muted">{new Date(offer.created_at).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+            </div>
+
             <div className="p-6 bg-kraft-dark/10 border-2 border-dotted border-kraft-dark rounded-lg flex flex-col gap-4 text-center">
                  <h5 className="font-display text-sm tracking-widest text-kraft-dark">VALUED CLIENT SUMMARY</h5>
                  <div className="flex justify-around items-center border-y border-kraft-dark/20 py-4">
                     <div>
                       <p className="text-[10px] font-mono-stack text-text-muted tracking-tighter uppercase mb-1">Lifetime</p>
-                      <p className="text-xl font-bold font-mono-stack leading-none">${detail.orders.reduce((sum, o) => sum + o.total_cop, 0).toLocaleString()}</p>
+                      <p className="text-xl font-bold font-mono-stack leading-none">${(detail.orders || []).reduce((sum, o) => sum + o.total_cop, 0).toLocaleString()}</p>
                     </div>
                     <div className="w-px h-8 bg-kraft-dark/20" />
                     <div>
                       <p className="text-[10px] font-mono-stack text-text-muted tracking-tighter uppercase mb-1">Purchased</p>
-                      <p className="text-xl font-bold font-mono-stack leading-none">{detail.orders.length}</p>
+                      <p className="text-xl font-bold font-mono-stack leading-none">{(detail.orders || []).length}</p>
                     </div>
                  </div>
             </div>

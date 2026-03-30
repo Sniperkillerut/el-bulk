@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { 
   adminCreateBounty, adminUpdateBounty, adminDeleteBounty, fetchBounties,
   adminFetchClientRequests, adminUpdateClientRequestStatus, adminFetchTCGs,
@@ -324,7 +325,15 @@ export default function AdminBountiesPage() {
                     
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-1">
-                        <h3 className="font-bold text-lg m-0 text-ink-deep font-mono-stack">Seller: {offer.customer_name}</h3>
+                        <h3 className="font-bold text-lg m-0 text-ink-deep font-mono-stack">
+                          Seller: {offer.customer_id ? (
+                            <Link href={`/admin/clients/${offer.customer_id}`} className="hover:text-gold-dark hover:underline transition-all">
+                              {offer.customer_name}
+                            </Link>
+                          ) : (
+                            offer.customer_name
+                          )}
+                        </h3>
                         <span className={`badge ${offer.status === 'pending' ? 'bg-gold text-ink-deep font-bold' : offer.status === 'accepted' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-red-100 text-red-700'}`}>{offer.status.toUpperCase()}</span>
                       </div>
                       <SmartContactLink 
@@ -407,7 +416,13 @@ export default function AdminBountiesPage() {
                               <div className="flex-1">
                                 <div className="flex justify-between items-start">
                                   <span className="text-sm font-bold flex items-center gap-2 text-ink-deep uppercase font-mono-stack">
-                                    {r.customer_name}
+                                    {r.customer_id ? (
+                                      <Link href={`/admin/clients/${r.customer_id}`} className="hover:text-gold-dark hover:underline transition-all">
+                                        {r.customer_name}
+                                      </Link>
+                                    ) : (
+                                      r.customer_name
+                                    )}
                                     {r.status === 'accepted' && <span className="text-[8px] px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded uppercase tracking-tighter shadow-sm font-bold">DIRECT DEMAND</span>}
                                   </span>
                                   <span className="text-[10px] text-text-muted font-mono-stack opacity-60 font-bold">{new Date(r.created_at).toLocaleDateString()}</span>
@@ -464,7 +479,15 @@ export default function AdminBountiesPage() {
                         {req.status === 'solved' ? 'COMPLETE' : req.status.toUpperCase()}
                       </span>
                     </div>
-                    <p className="text-sm">Client: <strong>{req.customer_name}</strong> - <SmartContactLink 
+                    <p className="text-sm">Client: <strong>
+                      {req.customer_id ? (
+                        <Link href={`/admin/clients/${req.customer_id}`} className="hover:text-gold-dark hover:underline transition-all">
+                          {req.customer_name}
+                        </Link>
+                      ) : (
+                        req.customer_name
+                      )}
+                    </strong> - <SmartContactLink 
             contact={req.customer_contact} 
             className="text-gold-dark hover:underline font-bold transition-all"
           /></p>

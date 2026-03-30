@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAdmin } from '@/hooks/useAdmin';
 import { adminFetchClients } from '@/lib/api';
 import { CustomerStats } from '@/lib/types';
@@ -9,6 +10,7 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function AdminClientsPage() {
   const { token } = useAdmin();
+  const router = useRouter();
   const [clients, setClients] = useState<CustomerStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -33,8 +35,8 @@ export default function AdminClientsPage() {
     <div className="p-8">
       <div className="flex justify-between items-end mb-8">
         <div>
-          <h1 className="text-4xl mb-2">CLIENTS</h1>
-          <p className="font-mono-stack text-xs text-text-muted uppercase tracking-widest">Customer Relationship Management</p>
+          <h1 className="text-4xl mb-2 uppercase">CRM: Client Registry</h1>
+          <p className="font-mono-stack text-xs text-text-muted uppercase tracking-widest">Managing Relationships & Interactions</p>
         </div>
         <div className="w-64">
            <input 
@@ -54,21 +56,27 @@ export default function AdminClientsPage() {
               <th className="p-4 font-display text-xs uppercase tracking-wider">Customer</th>
               <th className="p-4 font-display text-xs uppercase tracking-wider">Contact</th>
               <th className="p-4 font-display text-xs uppercase tracking-wider text-center">Orders</th>
-              <th className="p-4 font-display text-xs uppercase tracking-wider text-right">Total Spended</th>
+              <th className="p-4 font-display text-xs uppercase tracking-wider text-center text-gold-dark/80">Requests</th>
+              <th className="p-4 font-display text-xs uppercase tracking-wider text-center text-emerald-700/80">Offers</th>
+              <th className="p-4 font-display text-xs uppercase tracking-wider text-right">Spend (COP)</th>
               <th className="p-4 font-display text-xs uppercase tracking-wider text-center">Newsletter</th>
-              <th className="p-4 font-display text-xs uppercase tracking-wider text-right">Actions</th>
+              <th className="p-4 font-display text-xs uppercase tracking-wider">Recent Journal Entry</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-ink-border/30">
             {filteredClients.map((client) => (
-              <tr key={client.id} className="hover:bg-gold/5 transition-colors group">
+              <tr 
+                key={client.id} 
+                className="hover:bg-gold/5 transition-colors group cursor-pointer"
+                onClick={() => router.push(`/admin/clients/${client.id}`)}
+              >
                 <td className="p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-kraft-dark flex items-center justify-center text-white font-display text-xs">
                       {client.first_name[0]}{client.last_name[0]}
                     </div>
                     <div>
-                      <div className="font-bold text-sm uppercase">{client.first_name} {client.last_name}</div>
+                      <div className="font-bold text-sm uppercase group-hover:text-gold-dark transition-colors">{client.first_name} {client.last_name}</div>
                       <div className="text-[10px] font-mono-stack text-text-muted">ID: {client.id.slice(0,8)}</div>
                     </div>
                   </div>
@@ -80,6 +88,24 @@ export default function AdminClientsPage() {
                 <td className="p-4 text-center font-mono-stack text-xs font-bold">
                   {client.order_count}
                 </td>
+                <td className="p-4 text-center">
+                  {client.request_count > 0 ? (
+                    <span className="badge bg-gold/10 text-gold-dark border-gold/20 text-[10px] font-bold px-2.5">
+                      {client.request_count}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] opacity-20 font-mono-stack">0</span>
+                  )}
+                </td>
+                <td className="p-4 text-center">
+                  {client.offer_count > 0 ? (
+                    <span className="badge bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] font-bold px-2.5">
+                      {client.offer_count}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] opacity-20 font-mono-stack">0</span>
+                  )}
+                </td>
                 <td className="p-4 text-right font-mono-stack text-xs text-emerald-700 font-bold">
                    ${client.total_spend.toLocaleString()}
                 </td>
@@ -90,13 +116,12 @@ export default function AdminClientsPage() {
                     <span className="text-[9px] opacity-30 font-mono-stack">NO</span>
                   )}
                 </td>
-                <td className="p-4 text-right">
-                  <Link 
-                    href={`/admin/clients/${client.id}`}
-                    className="btn-secondary py-1 px-3 text-[10px]"
-                  >
-                    VIEW PROFILE
-                  </Link>
+                <td className="p-4 text-xs font-mono-stack max-w-xs transition-opacity group-hover:opacity-100 opacity-70">
+                   {client.latest_note ? (
+                     <div className="truncate italic">"{client.latest_note}"</div>
+                   ) : (
+                     <span className="opacity-30 italic">No notes recorded...</span>
+                   )}
                 </td>
               </tr>
             ))}
