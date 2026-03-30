@@ -57,6 +57,10 @@ func main() {
 		r.Get("/bounties", bountyHandler.List)
 		r.Post("/bounties/offers", bountyHandler.SubmitOffer)
 		r.Post("/client-requests", bountyHandler.CreateRequest)
+		
+		// Newsletter
+		newsletterHandler := &handlers.NewsletterHandler{DB: database}
+		r.Post("/newsletter/subscribe", newsletterHandler.Subscribe)
 
 		// Public order creation (with optional user context)
 		r.With(middleware.OptionalUserAuth).Post("/orders", orderHandler.Create)
@@ -143,11 +147,15 @@ func main() {
 				r.Get("/stats", healthHandler.GetStats)
 
 				// Notices (Blog/News) CRUD
-				noticeHandler := handlers.NewNoticeHandler(database)
-				r.Get("/notices", noticeHandler.AdminList)
-				r.Post("/notices", noticeHandler.Create)
-				r.Put("/notices/{id}", noticeHandler.Update)
 				r.Delete("/notices/{id}", noticeHandler.Delete)
+
+				// CRM - Customers & Subscribers
+				customerAdminHandler := &handlers.CustomerAdminHandler{DB: database}
+				r.Get("/clients", customerAdminHandler.ListCustomers)
+				r.Get("/clients/{id}", customerAdminHandler.GetCustomerDetail)
+				r.Post("/clients/{id}/notes", customerAdminHandler.AddNote)
+
+				r.Get("/subscribers", newsletterHandler.AdminGetSubscribers)
 			})
 		})
 

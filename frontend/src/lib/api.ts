@@ -1,4 +1,4 @@
-import { Product, ProductListResponse } from './types';
+import { Product, ProductListResponse, NewsletterSubscriber, CustomerStats, CustomerDetail } from './types';
 import { remoteLogger } from './remoteLogger';
 
 const isServer = typeof window === 'undefined';
@@ -563,4 +563,32 @@ export async function adminUpdateNotice(token: string, id: string, data: import(
 
 export async function adminDeleteNotice(token: string, id: string): Promise<void> {
   return apiFetch<void>(`/api/admin/notices/${id}`, { method: 'DELETE' }, token);
+}
+
+// Newsletter
+export async function subscribeToNewsletter(email: string): Promise<void> {
+  return apiFetch<void>('/api/newsletter/subscribe', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function adminFetchSubscribers(token: string): Promise<NewsletterSubscriber[]> {
+  return apiFetch<NewsletterSubscriber[]>('/api/admin/subscribers', {}, token);
+}
+
+// CRM - Clients
+export async function adminFetchClients(token: string): Promise<CustomerStats[]> {
+  return apiFetch<CustomerStats[]>('/api/admin/clients', {}, token);
+}
+
+export async function adminFetchClientDetail(token: string, id: string): Promise<CustomerDetail> {
+  return apiFetch<CustomerDetail>(`/api/admin/clients/${id}`, {}, token);
+}
+
+export async function adminAddCustomerNote(token: string, customerId: string, content: string, orderId?: string): Promise<void> {
+  return apiFetch<void>(`/api/admin/clients/${customerId}/notes`, {
+    method: 'POST',
+    body: JSON.stringify({ content, order_id: orderId }),
+  }, token);
 }

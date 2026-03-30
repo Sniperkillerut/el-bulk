@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Notice } from '@/lib/types';
 import { fetchNoticeBySlug } from '@/lib/api';
 import NoticeContent from '@/components/NoticeContent';
+import NewsletterForm from '@/components/NewsletterForm';
 
 export default function NoticeDetailPage() {
   const { slug } = useParams();
@@ -97,12 +98,9 @@ export default function NoticeDetailPage() {
               </div>
 
               <div className="p-4 border border-dashed border-kraft-dark rounded-sm">
-                <h5 className="font-display text-sm uppercase mb-3">Newsletter</h5>
-                <p className="text-[10px] font-mono-stack mb-3">Stay updated with our latest news and spoilers.</p>
-                <div className="flex gap-2">
-                  <input type="email" placeholder="YOUR EMAIL" className="flex-1 bg-surface border border-kraft-shadow px-2 py-1 text-[10px] focus:outline-gold" />
-                  <button className="btn-secondary py-1 px-3 text-[10px]">OK</button>
-                </div>
+                <h5 className="font-display text-sm uppercase mb-3 text-kraft-dark">Newsletter</h5>
+                <p className="text-[10px] font-mono-stack mb-4 text-text-muted">Stay updated with our latest news and spoilers.</p>
+                <NewsletterForm />
               </div>
             </div>
           </aside>

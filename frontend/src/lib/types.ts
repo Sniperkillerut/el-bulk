@@ -101,6 +101,19 @@ export const FOIL_LABELS: Record<string, string> = {
   double_rainbow: 'Double Rainbow Foil',
 };
 
+export interface UserProfile {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email?: string;
+  phone?: string;
+  id_number?: string;
+  address?: string;
+  auth_provider?: string;
+  auth_provider_id?: string;
+  avatar_url?: string;
+}
+
 export const TREATMENT_LABELS: Record<string, string> = {
   normal: 'Regular',
   full_art: 'Full Art (Regular)',
@@ -433,4 +446,36 @@ export interface NoticeInput {
   content_html: string;
   featured_image_url?: string;
   is_published: boolean;
+}
+
+export interface NewsletterSubscriber {
+  id: string;
+  email: string;
+  customer_id?: string;
+  first_name?: string;
+  last_name?: string;
+  created_at: string;
+}
+
+export interface CustomerNote {
+  id: string;
+  customer_id: string;
+  order_id?: string;
+  content: string;
+  admin_id?: string;
+  admin_name?: string;
+  created_at: string;
+}
+
+export interface CustomerStats extends UserProfile {
+  order_count: number;
+  total_spend: number;
+  is_subscriber: boolean;
+  created_at: string;
+}
+
+export interface CustomerDetail extends UserProfile {
+  orders: Order[];
+  notes: CustomerNote[];
+  is_subscriber: boolean;
 }

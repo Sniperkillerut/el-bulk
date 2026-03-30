@@ -356,3 +356,38 @@ type NoticeInput struct {
 	FeaturedImageURL *string `json:"featured_image_url,omitempty"`
 	IsPublished      bool    `json:"is_published"`
 }
+
+type NewsletterSubscriber struct {
+	ID         string     `db:"id" json:"id"`
+	Email      string     `db:"email" json:"email"`
+	CustomerID *string    `db:"customer_id" json:"customer_id,omitempty"`
+	CreatedAt  time.Time  `db:"created_at" json:"created_at"`
+	// Join fields
+	FirstName  *string    `db:"first_name" json:"first_name,omitempty"`
+	LastName   *string    `db:"last_name" json:"last_name,omitempty"`
+}
+
+type CustomerNote struct {
+	ID         string     `db:"id" json:"id"`
+	CustomerID string     `db:"customer_id" json:"customer_id"`
+	OrderID    *string    `db:"order_id" json:"order_id,omitempty"`
+	Content    string     `db:"content" json:"content"`
+	AdminID    *string    `db:"admin_id" json:"admin_id,omitempty"`
+	CreatedAt  time.Time  `db:"created_at" json:"created_at"`
+	// Join fields
+	AdminName  *string    `db:"admin_name" json:"admin_name,omitempty"`
+}
+
+type CustomerStats struct {
+	Customer
+	OrderCount  int     `db:"order_count" json:"order_count"`
+	TotalSpend  float64 `db:"total_spend" json:"total_spend"`
+	IsSubscriber bool    `db:"is_subscriber" json:"is_subscriber"`
+}
+
+type CustomerDetail struct {
+	Customer
+	Orders       []Order        `json:"orders"`
+	Notes        []CustomerNote `json:"notes"`
+	IsSubscriber bool           `json:"is_subscriber"`
+}

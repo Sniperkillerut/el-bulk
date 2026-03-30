@@ -41,6 +41,7 @@ func main() {
 	} else {
 		productIDs := seedFullData(database, tcgIDs, categoryMap, storageIDs)
 		seedNotices(database, productIDs)
+		seedCRM(database, adminID)
 	}
 
 	logger.Info("✅ Seeding complete! (Mode: %s, Admin: %s)", *mode, adminID)
@@ -455,5 +456,46 @@ func seedNotices(db *sqlx.DB, productIDs []string) {
 			INSERT INTO notice (title, slug, content_html, featured_image_url)
 			VALUES ($1, $2, $3, $4)
 		`, n.Title, n.Slug, n.HTML, n.Img)
+	}
+}
+
+func seedCRM(db *sqlx.DB, adminID string) {
+	logger.Info("Seeding CRM data (subscribers and notes)...")
+
+	// 1. Seed some newsletter subscribers
+	var customers []struct{ ID, Email string }
+	db.Select(&customers, "SELECT id, email FROM customer LIMIT 20")
+
+	for i, c := range customers {
+		if i % 3 == 0 { // ~33% signup rate for existing users
+			db.Exec(`
+				INSERT INTO newsletter_subscriber (email, customer_id)
+				VALUES ($1, $2)
+				ON CONFLICT DO NOTHING
+			`, c.Email, c.ID)
+		}
+	}
+
+	// Some guest subscribers
+	guests := []string{"guest1@example.com", "collector99@gmail.com", "mtg_pro@outlook.com"}
+	for _, email := range guests {
+		db.Exec("INSERT INTO newsletter_subscriber (email) VALUES ($1) ON CONFLICT DO NOTHING", email)
+	}
+
+	// 2. Seed some customer notes
+	interactions := []string{
+		"Spoke to customer via WhatsApp. Interested in MH3 boosters.",
+		"Requested a custom quote for bulk common/uncommon collection.",
+		"Note: Preferred shipping method is via courier.",
+		"Verified identity document for high-value order.",
+	}
+
+	for i, c := range customers {
+		if i % 5 == 0 { // ~20% have notes
+			db.Exec(`
+				INSERT INTO customer_note (customer_id, content, admin_id)
+				VALUES ($1, $2, $3)
+			`, c.ID, interactions[i % len(interactions)], adminID)
+		}
 	}
 }
