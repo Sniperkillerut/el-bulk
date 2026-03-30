@@ -6,7 +6,7 @@ import {
   adminFetchTCGs, getAdminSettings, updateAdminSettings,
   adminFetchStorage, adminCreateStorage, adminUpdateStorage, adminDeleteStorage,
   adminFetchCategories, adminCreateCategory, adminUpdateCategory, adminDeleteCategory,
-  adminDeleteProduct, adminFetchStats
+  adminDeleteProduct
 } from '@/lib/api';
 import { Product, Settings, StoredIn, CustomCategory, TCG } from '@/lib/types';
 import AdminSidebar from '@/components/admin/dashboard/AdminSidebar';
@@ -34,45 +34,35 @@ export default function AdminDashboard() {
     setPage, handleSort, refresh: refreshProducts
   } = useAdminProducts(token);
 
-  const [stats, setStats] = useState<any>(null);
-
   // Modal States
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showStorageModal, setShowStorageModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
 
   // Initial Load
   useEffect(() => {
     const t = localStorage.getItem('el_bulk_admin_token');
-
     if (!t) {
-      console.warn('[Dashboard] No token found, redirecting to login.');
       router.push('/admin/login');
       return;
     }
-
     setToken(t);
     loadStaticData(t);
   }, [router]);
 
   const loadStaticData = async (t: string) => {
     try {
-      const [tcgData, settingsData, storageData, catData, statsData] = await Promise.all([
-        adminFetchTCGs(t), getAdminSettings(t), adminFetchStorage(t), adminFetchCategories(t), adminFetchStats(t)
+      const [tcgData, settingsData, storageData, catData] = await Promise.all([
+        adminFetchTCGs(t), getAdminSettings(t), adminFetchStorage(t), adminFetchCategories(t)
       ]);
       setTCGs(tcgData || []);
       setSettings(settingsData);
       setStorageLocations(storageData || []);
       setCategories(catData || []);
-      setStats(statsData);
     } catch (err: any) {
-      console.error('[Dashboard] Failed to load dashboard data:', err);
-      // If we get a 401, the token might be truly expired
       if (err.message?.includes('401') || err.message?.includes('Unauthorized')) {
-        console.warn('[Dashboard] Unauthorized static data fetch, clearing token.');
         localStorage.removeItem('el_bulk_admin_token');
         router.push('/admin/login');
       }
@@ -81,12 +71,7 @@ export default function AdminDashboard() {
 
   // CRUD Actions
   const handleSaveProduct = () => { setShowEditModal(false); setEditingProduct(null); refreshProducts(); };
-
-  const handleSaveAndNew = () => {
-    refreshProducts();
-    setEditingProduct(null);
-    // Modal stays open, form resets (handled inside ProductEditModal)
-  };
+  const handleSaveAndNew = () => { refreshProducts(); setEditingProduct(null); };
 
   const handleDeleteProduct = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete ${name}?`)) return;
@@ -96,153 +81,131 @@ export default function AdminDashboard() {
     } catch { alert('Failed to delete product.'); }
   };
 
-
-
-  // Storage Handlers
+  // Shared Handlers
   const handleCreateStorage = async (name: string) => {
     await adminCreateStorage(token, name);
-    const data = await adminFetchStorage(token);
-    setStorageLocations(data || []);
+    setStorageLocations(await adminFetchStorage(token) || []);
   };
   const handleUpdateStorage = async (id: string, name: string) => {
     await adminUpdateStorage(token, id, name);
-    const data = await adminFetchStorage(token);
-    setStorageLocations(data || []);
+    setStorageLocations(await adminFetchStorage(token) || []);
   };
   const handleDeleteStorage = async (id: string, name: string, count: number) => {
     if (count > 0 && !confirm(`Location "${name}" contains ${count} items. Deleting it will clear these assignments. Continue?`)) return;
     else if (!confirm(`Delete storage location "${name}"?`)) return;
     await adminDeleteStorage(token, id);
-    const data = await adminFetchStorage(token);
-    setStorageLocations(data || []);
+    setStorageLocations(await adminFetchStorage(token) || []);
   };
 
-  // Category Handlers
   const handleCreateCategory = async (name: string) => {
     await adminCreateCategory(token, name);
-    const data = await adminFetchCategories(token);
-    setCategories(data || []);
+    setCategories(await adminFetchCategories(token) || []);
   };
   const handleUpdateCategory = async (id: string, name: string) => {
     await adminUpdateCategory(token, id, name);
-    const data = await adminFetchCategories(token);
-    setCategories(data || []);
+    setCategories(await adminFetchCategories(token) || []);
   };
   const handleDeleteCategory = async (id: string, name: string) => {
     if (!confirm(`Delete collection "${name}"?`)) return;
     await adminDeleteCategory(token, id);
-    const data = await adminFetchCategories(token);
-    setCategories(data || []);
+    setCategories(await adminFetchCategories(token) || []);
   };
 
   return (
-    <div className="flex min-h-screen bg-kraft-paper">
+    <div className="flex h-screen bg-kraft-paper overflow-hidden text-ink-deep">
       <AdminSidebar />
-      <main className="flex-1 p-8">
-        <div className="flex justify-between items-start mb-10">
-          <div className="space-y-1">
-            <h1 className="font-display text-5xl tracking-tighter text-ink-deep m-0">INVENTORY MANAGEMENT</h1>
-            <p className="font-mono-stack text-xs text-text-muted opacity-60">ADMIN DASHBOARD // SESSION ACTIVE</p>
-          </div>
-          <div className="flex gap-4">
-            <button onClick={() => setShowImportModal(true)} className="btn-secondary px-6 flex items-center gap-2">
-              <span>📥</span> IMPORT CSV
-            </button>
-            <button onClick={() => { setEditingProduct(null); setShowEditModal(true); }} className="btn-primary px-8 flex items-center gap-2">
-              <span className="text-xl">+</span> ADD NEW PRODUCT
-            </button>
-          </div>
-        </div>
-
-        {/* Filters and Stats */}
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mb-8">
-          <div className="xl:col-span-3 card p-6 bg-ink-surface/40 flex flex-wrap gap-6 items-end">
-            <div className="flex-1 min-w-[240px]">
-              <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">Product Search</label>
-              <div className="relative">
-                <input type="text" placeholder="Search by name, set, code..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30">🔍</span>
+      <main className="flex-1 flex flex-col overflow-hidden relative">
+        <div className="flex-1 flex flex-col p-8 min-h-0 max-w-7xl mx-auto w-full">
+          {/* Header */}
+          <header className="flex justify-between items-start mb-8 flex-shrink-0">
+            <div className="space-y-1">
+              <h1 className="font-display text-6xl tracking-tighter text-ink-deep m-0">INVENTORY MANAGEMENT</h1>
+              <p className="font-mono-stack text-xs text-text-muted opacity-60 uppercase font-bold tracking-widest">Store Dashboard // Operations Active</p>
+            </div>
+            <div className="flex gap-4">
+              <button onClick={() => setShowImportModal(true)} className="btn-secondary px-6 flex items-center gap-2">
+                <span>📥</span> IMPORT CSV
+              </button>
+              <button onClick={() => { setEditingProduct(null); setShowEditModal(true); }} className="btn-primary px-8 flex items-center gap-2 shadow-lg shadow-gold/20">
+                <span className="text-xl">+</span> ADD NEW PRODUCT
+              </button>
+            </div>
+          </header>
+ 
+          {/* Filters and Search Bar */}
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mb-8 flex-shrink-0">
+            <div className="xl:col-span-3 card p-6 bg-white/40 backdrop-blur shadow-sm border-kraft-dark/20 flex flex-wrap gap-6 items-end">
+              <div className="flex-1 min-w-[240px]">
+                <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">Product Search</label>
+                <div className="relative">
+                  <input type="text" placeholder="Search by name, set, code..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30" />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30">🔍</span>
+                </div>
+              </div>
+              <div style={{ width: '160px' }}>
+                <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">TCG Filter</label>
+                <select value={tcgFilter} onChange={e => { setTcgFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30">
+                  <option value="">ALL TCGS</option>
+                  {tcgs.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </div>
+              <div style={{ width: '180px' }}>
+                <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">Physical Location</label>
+                <select value={storageFilter} onChange={e => { setStorageFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30">
+                  <option value="">ALL LOCATIONS</option>
+                  {storageLocations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                </select>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => setShowStorageModal(true)} title="Manage Locations" className="w-10 h-10 border border-kraft-dark/30 rounded bg-white hover:bg-kraft-light transition-colors flex items-center justify-center">📦</button>
+                <button onClick={() => setShowCategoryModal(true)} title="Manage Collections" className="w-10 h-10 border border-kraft-dark/30 rounded bg-white hover:bg-kraft-light transition-colors flex items-center justify-center">🔖</button>
               </div>
             </div>
-            <div style={{ width: '160px' }}>
-              <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">TCG Filter</label>
-              <select value={tcgFilter} onChange={e => { setTcgFilter(e.target.value); setPage(1); }}>
-                <option value="">ALL TCGS</option>
-                {tcgs.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-              </select>
+ 
+            <div className="card p-6 bg-gold text-ink-deep flex flex-col justify-center border-none shadow-xl shadow-gold/20 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 -rotate-45 translate-x-12 -translate-y-12"></div>
+              <div className="text-[10px] font-mono-stack uppercase font-bold opacity-60 mb-1">INVENTORY COUNT</div>
+              <div className="text-4xl font-display leading-none">{total.toLocaleString()}</div>
+              <div className="mt-4 pt-4 border-t border-ink-deep/10 flex justify-between items-center">
+                <span className="text-[10px] font-mono-stack opacity-60">RESPONSE TIME</span>
+                <span className="font-mono-stack text-[10px] font-bold">~{queryTime}ms</span>
+              </div>
             </div>
-            <div style={{ width: '180px' }}>
-              <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">Physical Location</label>
-              <select value={storageFilter} onChange={e => { setStorageFilter(e.target.value); setPage(1); }}>
-                <option value="">ALL LOCATIONS</option>
-                {storageLocations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-              </select>
+          </div>
+ 
+ 
+          {/* Product Table Area - Now Flexible and Scrollable */}
+          <div className="flex-1 min-h-0 card border-kraft-dark/20 shadow-sm bg-white overflow-hidden flex flex-col">
+             <div className="flex-1 overflow-auto">
+               <ProductTable
+                  products={products}
+                  sortKey={sortKey}
+                  sortDir={sortDir}
+                  onSort={handleSort}
+                  onEdit={(p) => { setEditingProduct(p); setShowEditModal(true); }}
+                  onDelete={handleDeleteProduct}
+                  loading={loading}
+                />
+             </div>
+          </div>
+ 
+          {/* Pagination Footer - Fixed at Bottom */}
+          <footer className="mt-6 flex justify-between items-center bg-white/40 p-4 rounded border border-kraft-dark/20 backdrop-blur-sm flex-shrink-0">
+            <div className="text-xs font-mono-stack text-text-muted font-bold">
+              SHOWING <span className="text-ink-deep">{((page - 1) * pageSize) + 1} - {Math.min(page * pageSize, total)}</span> OF {total} ENTRIES
             </div>
             <div className="flex gap-2">
-              <button onClick={() => setShowStorageModal(true)} title="Manage Locations" className="w-10 h-10 border border-ink-border rounded hover:bg-ink-surface transition-colors flex items-center justify-center">📦</button>
-              <button onClick={() => setShowCategoryModal(true)} title="Manage Collections" className="w-10 h-10 border border-ink-border rounded hover:bg-ink-surface transition-colors flex items-center justify-center">🔖</button>
+              <button disabled={page === 1} onClick={() => setPage(page - 1)} className="btn-secondary py-1 px-4 text-xs font-bold disabled:opacity-30">← PREV</button>
+              <div className="flex items-center px-4 font-mono-stack text-xs font-bold bg-white rounded border border-kraft-dark/20">
+                PAGE {page} / {Math.max(1, Math.ceil(total / pageSize))}
+              </div>
+              <button disabled={page >= Math.ceil(total / pageSize)} onClick={() => setPage(page + 1)} className="btn-secondary py-1 px-4 text-xs font-bold disabled:opacity-30">NEXT →</button>
             </div>
-          </div>
-
-          <div className="card p-6 bg-gold text-ink-deep flex flex-col justify-center border-none shadow-xl ">
-            <div className="text-[10px] font-mono-stack uppercase opacity-60 mb-1">INVENTORY COUNT</div>
-            <div className="text-4xl font-display leading-none">{total.toLocaleString()}</div>
-            <div className="mt-4 pt-4 border-t border-ink-deep/10 flex justify-between items-center">
-              <span className="text-[10px] font-mono-stack opacity-60">SERVER RESPONSE</span>
-              <span className="font-mono-stack text-[10px] font-bold">~{queryTime}ms</span>
-            </div>
-          </div>
-        </div>
-
-        {/* System Health Stats */}
-        {stats && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div className="bg-white/40 p-3 rounded border border-ink-border/30 flex flex-col">
-              <span className="text-[9px] font-mono-stack uppercase opacity-50">DATABASE SIZE</span>
-              <span className="text-sm font-bold font-mono-stack">{stats.database_size}</span>
-            </div>
-            <div className="bg-white/40 p-3 rounded border border-ink-border/30 flex flex-col">
-              <span className="text-[9px] font-mono-stack uppercase opacity-50">CACHE PERFORMANCE</span>
-              <span className="text-sm font-bold font-mono-stack">{stats.cache_hit_ratio}%</span>
-            </div>
-            <div className="bg-white/40 p-3 rounded border border-ink-border/30 flex flex-col">
-              <span className="text-[9px] font-mono-stack uppercase opacity-50">ACTIVE CONNECTIONS</span>
-              <span className="text-sm font-bold font-mono-stack">{stats.active_connections} / {stats.max_connections}</span>
-            </div>
-            <div className="bg-white/40 p-3 rounded border border-ink-border/30 flex flex-col">
-              <span className="text-[9px] font-mono-stack uppercase opacity-50">SYSTEM STATUS</span>
-              <span className="text-sm font-bold font-mono-stack text-emerald-600">STABLE</span>
-            </div>
-          </div>
-        )}
-
-        {/* Product Table */}
-        <ProductTable
-          products={products}
-          sortKey={sortKey}
-          sortDir={sortDir}
-          onSort={handleSort}
-          onEdit={(p) => { setEditingProduct(p); setShowEditModal(true); }}
-          onDelete={handleDeleteProduct}
-          loading={loading}
-        />
-
-        {/* Pagination */}
-        <div className="mt-8 flex justify-between items-center bg-white/40 p-3 rounded border border-ink-border/30">
-          <div className="text-xs font-mono-stack text-text-muted">
-            SHOWING <span className="text-ink-deep font-bold">{((page - 1) * pageSize) + 1} - {Math.min(page * pageSize, total)}</span> OF {total} ENTRIES
-          </div>
-          <div className="flex gap-2">
-            <button disabled={page === 1} onClick={() => setPage(page - 1)} className="btn-secondary py-1 px-4 text-xs font-bold' disabled:opacity-30">← PREV</button>
-            <div className="flex items-center px-4 font-mono-stack text-xs font-bold bg-ink-surface rounded border border-ink-border">
-              PAGE {page} / {Math.max(1, Math.ceil(total / pageSize))}
-            </div>
-            <button disabled={page >= Math.ceil(total / pageSize)} onClick={() => setPage(page + 1)} className="btn-secondary py-1 px-4 text-xs font-bold' disabled:opacity-30">NEXT →</button>
-          </div>
+          </footer>
         </div>
       </main>
 
-      {/* Modals */}
+      {/* Modals Layer */}
       {showEditModal && (
         <ProductEditModal
           editProduct={editingProduct}
@@ -251,7 +214,6 @@ export default function AdminDashboard() {
           categories={categories}
           tcgs={tcgs}
           settings={settings}
-          storageFilter={storageFilter}
           onClose={() => { setShowEditModal(false); setEditingProduct(null); }}
           onSaved={handleSaveProduct}
           onSaveAndNew={handleSaveAndNew}
@@ -267,8 +229,6 @@ export default function AdminDashboard() {
           onImported={() => { setShowImportModal(false); refreshProducts(); }}
         />
       )}
-
-
 
       {showStorageModal && (
         <StorageManagerModal

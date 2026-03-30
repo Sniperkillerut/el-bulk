@@ -62,11 +62,11 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <div className="flex h-screen bg-ink-deep overflow-hidden">
+    <div className="flex h-screen bg-kraft-paper overflow-hidden text-ink-deep">
       <AdminSidebar />
-      <main className="flex-1 overflow-auto p-8 relative bg-kraft-paper">
-        <div className="max-w-5xl mx-auto">
-          <header className="flex justify-between items-baseline mb-12 border-b-4 border-ink-deep pb-4">
+      <main className="flex-1 flex flex-col overflow-hidden relative">
+        <div className="flex-1 flex flex-col p-8 min-h-0 max-w-5xl mx-auto w-full">
+          <header className="flex justify-between items-baseline mb-12 border-b-4 border-ink-deep pb-4 flex-shrink-0">
             <div>
               <h1 className="font-display text-6xl m-0 text-ink-deep">GLOBAL SETTINGS</h1>
               <p className="font-mono-stack text-xs text-text-muted opacity-60 mt-2 tracking-widest uppercase font-bold">System Configuration // Global Overrides</p>

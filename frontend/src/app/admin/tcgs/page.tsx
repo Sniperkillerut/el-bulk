@@ -27,15 +27,16 @@ export default function AdminTCGsPage() {
   }
 
   return (
-    <div className="flex h-screen bg-ink-deep overflow-hidden">
+    <div className="flex h-screen bg-kraft-paper overflow-hidden text-ink-deep">
       <AdminSidebar />
-      <main className="flex-1 overflow-auto p-8 relative">
-        <div className="max-w-5xl mx-auto h-full">
-          <div className="mb-8">
-            <h1 className="font-display text-5xl text-ink-surface uppercase tracking-tight">System Configuration</h1>
-            <p className="font-mono-stack text-xs text-text-muted uppercase tracking-widest mt-2">Managing Active Trading Card Game Systems</p>
-          </div>
-          <div className="card p-6">
+      <main className="flex-1 flex flex-col overflow-hidden relative">
+        <div className="flex-1 flex flex-col p-8 min-h-0 max-w-5xl mx-auto w-full">
+          <header className="mb-8 flex-shrink-0">
+            <h1 className="font-display text-5xl text-ink-deep uppercase tracking-tighter">TCG REGISTRY</h1>
+            <p className="font-mono-stack text-xs text-text-muted uppercase tracking-widest mt-2 font-bold opacity-60">System Configuration // Active Card Databases</p>
+          </header>
+
+          <div className="flex-1 min-h-0 overflow-auto">
             <TCGManager token={token} />
           </div>
         </div>

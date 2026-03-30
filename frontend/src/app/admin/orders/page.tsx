@@ -27,11 +27,18 @@ export default function AdminOrdersPage() {
   }
 
   return (
-    <div className="flex h-screen bg-ink-deep overflow-hidden">
+    <div className="flex h-screen bg-kraft-paper overflow-hidden text-ink-deep">
       <AdminSidebar />
-      <main className="flex-1 overflow-auto p-6 relative">
-        <div className="max-w-7xl mx-auto h-full">
-           <OrdersPanel token={token} onClose={() => router.push('/admin/dashboard')} />
+      <main className="flex-1 flex flex-col overflow-hidden relative">
+        <div className="flex-1 flex flex-col p-8 min-h-0 max-w-5xl mx-auto w-full">
+          <header className="mb-8 flex-shrink-0">
+            <h1 className="font-display text-5xl text-ink-deep uppercase tracking-tighter">ORDER MANAGEMENT</h1>
+            <p className="font-mono-stack text-xs text-text-muted uppercase tracking-widest mt-2 font-bold">Reviewing and Fulfilling Customer Card Orders</p>
+          </header>
+          
+          <div className="flex-1 min-h-0 bg-white shadow-sm border border-kraft-dark/20 rounded overflow-auto">
+            <OrdersPanel token={token} />
+          </div>
         </div>
       </main>
     </div>

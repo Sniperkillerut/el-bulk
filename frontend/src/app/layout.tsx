@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/Navbar';
+import StorefrontLayoutWrapper from '@/components/StorefrontLayoutWrapper';
 import { CartProvider } from '@/lib/CartContext';
 import ProductModalManager from '@/components/ProductModalManager';
 import BountyModalManager from '@/components/BountyModalManager';
@@ -58,26 +59,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body suppressHydrationWarning>
         <RemoteLogManager />
         <CartProvider>
-          <Navbar />
-          <ProductModalManager />
-          <BountyModalManager />
-          <main style={{ minHeight: 'calc(100vh - 64px)' }}>
+          <StorefrontLayoutWrapper>
             {children}
-          </main>
-          <footer style={{ background: 'var(--ink-navy)', borderTop: '1px solid var(--ink-border)', padding: '2rem 1rem' }}>
-            <div className="centered-container flex flex-col md:flex-row items-center justify-between gap-4">
-              <div>
-                <span className="font-display text-xl text-gold">EL BULK</span>
-                <span className="text-xs ml-2" style={{ color: 'var(--text-muted)', fontFamily: 'Space Mono, monospace' }}>TCG STORE</span>
-              </div>
-              <p className="text-xs text-center" style={{ color: 'var(--text-muted)' }}>
-                We buy bulk. We sell singles. We love cardboard.
-              </p>
-              <p className="text-xs" style={{ color: 'var(--text-muted)', fontFamily: 'Space Mono, monospace' }}>
-                © {new Date().getFullYear()} El Bulk
-              </p>
-            </div>
-          </footer>
+          </StorefrontLayoutWrapper>
         </CartProvider>
       </body>
     </html>

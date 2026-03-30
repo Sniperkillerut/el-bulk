@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { getAdminSettings, updateAdminSettings } from '@/lib/api';
+import { getAdminSettings, updateAdminSettings, adminFetchStats } from '@/lib/api';
 import { Settings } from '@/lib/types';
 
 export default function AdminSidebar() {
@@ -15,6 +15,29 @@ export default function AdminSidebar() {
     localStorage.removeItem('el_bulk_admin_token');
     router.push('/admin/login');
   };
+ 
+  const [stats, setStats] = useState<any>(null);
+  const [loadingStats, setLoadingStats] = useState(false);
+ 
+  const fetchStats = async () => {
+    const token = localStorage.getItem('el_bulk_admin_token');
+    if (!token) return;
+    setLoadingStats(true);
+    try {
+      const data = await adminFetchStats(token);
+      setStats(data);
+    } catch (err) {
+      console.error('Failed to fetch sidebar stats', err);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+ 
+  useEffect(() => {
+    fetchStats();
+    const interval = setInterval(fetchStats, 30000); // 30s auto-refresh
+    return () => clearInterval(interval);
+  }, []);
 
   const navItems = [
     { label: 'INVENTORY', href: '/admin/dashboard', icon: '📦' },
@@ -71,19 +94,58 @@ export default function AdminSidebar() {
       </nav>
 
       {/* Sidebar Footer */}
-      <div className="p-4 border-t border-ink-border">
+      <div className="p-4 border-t border-ink-border bg-ink-surface/20">
+        <div className="px-4 mb-4">
+          <div className="flex items-center justify-between mb-3 border-b border-ink-border/30 pb-2">
+            <span className="font-mono-stack text-[9px] text-text-muted uppercase tracking-widest font-bold">System Health</span>
+            <button 
+              onClick={fetchStats}
+              disabled={loadingStats}
+              className={`text-[10px] hover:text-gold transition-colors ${loadingStats ? 'animate-spin opacity-50' : 'opacity-40 hover:opacity-100'}`}
+              title="Refresh Stats"
+            >
+              🔄
+            </button>
+          </div>
+          
+          {stats ? (
+            <div className="grid grid-cols-2 gap-x-2 gap-y-3">
+              <div>
+                <p className="text-[8px] font-mono-stack text-text-muted uppercase opacity-60">DB Size</p>
+                <p className="text-[10px] font-mono-stack text-lp-color font-bold">{stats.database_size}</p>
+              </div>
+              <div>
+                <p className="text-[8px] font-mono-stack text-text-muted uppercase opacity-60">Latency</p>
+                <p className="text-[10px] font-mono-stack text-gold font-bold">{stats.query_speed_ms}ms</p>
+              </div>
+              <div>
+                <p className="text-[8px] font-mono-stack text-text-muted uppercase opacity-60">Active Clients</p>
+                <p className="text-[10px] font-mono-stack text-emerald-400 font-bold">{stats.active_connections}</p>
+              </div>
+              <div>
+                <p className="text-[8px] font-mono-stack text-text-muted uppercase opacity-60">Cache</p>
+                <p className="text-[10px] font-mono-stack text-lp-color font-bold">{stats.cache_hit_ratio}%</p>
+              </div>
+            </div>
+          ) : (
+            <div className="py-2 text-[9px] text-text-muted italic animate-pulse">Synchronizing core...</div>
+          )}
+        </div>
+
         <button 
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 text-hp-color hover:bg-hp-color/10 rounded transition-all font-display text-sm tracking-tight"
+          className="w-full flex items-center gap-3 px-4 py-3 text-hp-color hover:bg-hp-color/10 rounded-lg transition-all font-display text-sm tracking-tight border border-hp-color/20"
         >
           <span>🚪</span>
           LOG OUT SESSION
         </button>
-        <div className="mt-4 px-4">
+ 
+        <div className="mt-4 px-4 flex items-center justify-between">
            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-lp-color animate-pulse"></div>
-              <span className="font-mono-stack text-[9px] text-text-muted uppercase">Connection Secure</span>
+              <div className="w-1.5 h-1.5 rounded-full bg-lp-color animate-pulse"></div>
+              <span className="font-mono-stack text-[8px] text-text-muted uppercase font-bold tracking-tighter">Secure Link Active</span>
            </div>
+           <span className="text-[8px] font-mono-stack text-text-muted opacity-30">V1.4.2</span>
         </div>
       </div>
     </aside>
