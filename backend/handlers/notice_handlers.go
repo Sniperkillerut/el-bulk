@@ -10,6 +10,7 @@ import (
 
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/logger"
+	"github.com/el-bulk/backend/utils/mailer"
 )
 
 type NoticeHandler struct {
@@ -108,6 +109,11 @@ func (h *NoticeHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Trigger newsletter broadcast if published
+	if notice.IsPublished {
+		go mailer.BroadcastNotice(h.DB, notice)
+	}
+
 	jsonOK(w, notice)
 }
 
@@ -133,6 +139,13 @@ func (h *NoticeHandler) Update(w http.ResponseWriter, r *http.Request) {
 		logger.Error("Failed to update notice %s: %v", id, err)
 		jsonError(w, "Failed to update notice", http.StatusInternalServerError)
 		return
+	}
+
+	// Trigger newsletter broadcast if status changed to published
+	// We could check the previous state, but BroadcastNotice handles duplicates or we can just send it
+	// For simplicity, if it's currently published, we can trigger it (optionally checking if it was NOT published before)
+	if notice.IsPublished {
+		go mailer.BroadcastNotice(h.DB, notice)
 	}
 
 	jsonOK(w, notice)
