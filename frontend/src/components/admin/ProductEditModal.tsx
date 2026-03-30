@@ -200,13 +200,14 @@ export default function ProductEditModal({
   };
 
   const handlePopulate = async () => {
+    setFormError('');
     const name = form.name.trim();
     const set = form.set_code.trim().toLowerCase();
     const cn = form.collector_number.trim();
     if (!name && (!set || !cn)) return;
 
     setLookingUp(true); 
-    setFormError('');
+
     try {
       let searchQ = "";
       if (set && cn) searchQ = `set:${set} cn:"${cn}"`;
@@ -392,9 +393,9 @@ export default function ProductEditModal({
             setName={form.set_name}
             scryfallPrints={scryfallPrints}
             lookingUp={lookingUp}
-            onNameChange={val => { setForm(f => ({ ...f, name: val })); setScryfallPrints([]); }}
-            onSetCodeChange={val => setForm(f => ({ ...f, set_code: val }))}
-            onCollectorNumberChange={handleArtChange}
+            onNameChange={val => { setForm(f => ({ ...f, name: val })); setScryfallPrints([]); setFormError(''); }}
+            onSetCodeChange={val => { setForm(f => ({ ...f, set_code: val })); setFormError(''); }}
+            onCollectorNumberChange={val => { handleArtChange(val); setFormError(''); }}
             onPopulate={handlePopulate}
             onSetSearchChange={handleSetSearchChange}
           />

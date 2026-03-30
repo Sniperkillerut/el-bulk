@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { BountyOffer, Bounty, ClientRequest } from '@/lib/types';
+import CardImage from '@/components/CardImage';
 
 interface BountyOfferResolveModalProps {
   offer: BountyOffer;
@@ -43,12 +44,18 @@ export default function BountyOfferResolveModal({ offer, bounty, requests, selec
         </div>
         
         <div className="p-6">
-          <div className="mb-6 p-4 bg-gold/10 border border-gold/30 rounded">
-            <h4 className="font-bold mb-1">Offer details:</h4>
-            <p className="text-sm">Client: <strong>{offer.customer_name}</strong> - {offer.customer_contact}</p>
-            <p className="text-xs text-text-muted mt-1">{offer.notes || 'No notes provided'}</p>
-            <div className="mt-2 text-sm">
-              Condition: <strong>{offer.condition}</strong>
+          <div className="mb-6 p-4 bg-gold/10 border border-gold/30 rounded flex gap-4">
+            <div className="w-16 h-20 bg-ink-surface/50 rounded flex-shrink-0 overflow-hidden border border-gold/20">
+              <CardImage imageUrl={bounty.image_url} name={bounty.name} tcg={bounty.tcg} enableHover={true} />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-bold mb-1">Offer details:</h4>
+              <p className="text-sm italic text-ink-deep mb-1">{bounty.name} ({bounty.set_name})</p>
+              <p className="text-sm">Client: <strong>{offer.customer_name}</strong> - {offer.customer_contact}</p>
+              <p className="text-xs text-text-muted mt-1">{offer.notes || 'No notes provided'}</p>
+              <div className="mt-2 text-sm">
+                Condition: <strong className="badge bg-gold/20 text-gold-dark border-gold/30">{offer.condition}</strong>
+              </div>
             </div>
           </div>
 

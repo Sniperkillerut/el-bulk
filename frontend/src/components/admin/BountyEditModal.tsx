@@ -92,13 +92,13 @@ export default function BountyEditModal({
   };
 
   const handlePopulate = async () => {
+    setFormError('');
     const name = form.name.trim();
     const set = setCode.trim().toLowerCase();
     const cn = collectorNumber.trim();
     if (!name && (!set || !cn)) return;
 
     setLookingUp(true);
-    setFormError('');
     try {
       let searchQ = "";
       if (set && cn) searchQ = `set:${set} cn:"${cn}"`;
@@ -309,9 +309,9 @@ export default function BountyEditModal({
                   setName={form.set_name || ''}
                   scryfallPrints={scryfallPrints}
                   lookingUp={lookingUp}
-                  onNameChange={val => { setForm(f => ({ ...f, name: val })); setScryfallPrints([]); }}
-                  onSetCodeChange={val => setSetCode(val)}
-                  onCollectorNumberChange={handleArtChange}
+                  onNameChange={val => { setForm(f => ({ ...f, name: val })); setScryfallPrints([]); setFormError(''); }}
+                  onSetCodeChange={val => { setSetCode(val); setFormError(''); }}
+                  onCollectorNumberChange={val => { handleArtChange(val); setFormError(''); }}
                   onPopulate={handlePopulate}
                   onSetSearchChange={handleSetSearchChange}
                 />
