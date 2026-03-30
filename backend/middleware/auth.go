@@ -15,13 +15,21 @@ const AdminContextKey contextKey = "admin_id"
 
 func AdminAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		var tokenStr string
+		cookie, err := r.Cookie("admin_token")
+		if err == nil {
+			tokenStr = cookie.Value
+		} else {
+			authHeader := r.Header.Get("Authorization")
+			if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
+				tokenStr = strings.TrimPrefix(authHeader, "Bearer ")
+			}
+		}
+
+		if tokenStr == "" {
 			http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 			return
 		}
-
-		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 		secret := os.Getenv("JWT_SECRET")
 		if secret == "" {
 			http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)

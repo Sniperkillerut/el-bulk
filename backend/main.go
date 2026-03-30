@@ -58,12 +58,21 @@ func main() {
 		r.Post("/bounties/offers", bountyHandler.SubmitOffer)
 		r.Post("/client-requests", bountyHandler.CreateRequest)
 
-		// Public order creation
-		r.Post("/orders", orderHandler.Create)
+		// Public order creation (with optional user context)
+		r.With(middleware.OptionalUserAuth).Post("/orders", orderHandler.Create)
 
 		// Frontend logging
 		logHandler := handlers.NewLogHandler()
 		r.Post("/logs", logHandler.Receive)
+
+		// User Auth
+		userAuthHandler := handlers.NewUserAuthHandler(database)
+		r.Route("/auth", func(r chi.Router) {
+			r.Get("/google/login", userAuthHandler.GoogleLogin)
+			r.Get("/google/callback", userAuthHandler.GoogleCallback)
+			r.Post("/logout", userAuthHandler.Logout)
+			r.With(middleware.RequireUserAuth).Get("/me", userAuthHandler.Me)
+		})
 
 		// Admin routes (protected)
 		r.Route("/admin", func(r chi.Router) {

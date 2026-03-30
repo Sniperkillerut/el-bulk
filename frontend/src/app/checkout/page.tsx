@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/lib/CartContext';
+import { useUser } from '@/context/UserContext';
 import { createOrder } from '@/lib/api';
 import { PAYMENT_METHODS, FOIL_LABELS, TREATMENT_LABELS } from '@/lib/types';
 import CardImage from '@/components/CardImage';
@@ -10,6 +11,7 @@ import CardImage from '@/components/CardImage';
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, removedItems, totalPrice, updateQty, removeItem, restoreItem, permanentRemove, clearCart } = useCart();
+  const { user } = useUser();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -23,6 +25,20 @@ export default function CheckoutPage() {
     payment_method: 'cash',
     notes: '',
   });
+
+  useEffect(() => {
+    if (user) {
+      setForm(f => ({
+        ...f,
+        first_name: f.first_name || user.first_name || '',
+        last_name: f.last_name || user.last_name || '',
+        email: f.email || user.email || '',
+        phone: f.phone || user.phone || '',
+        id_number: f.id_number || user.id_number || '',
+        address: f.address || user.address || '',
+      }));
+    }
+  }, [user]);
 
   const set = (key: string, val: string) => setForm(f => ({ ...f, [key]: val }));
 

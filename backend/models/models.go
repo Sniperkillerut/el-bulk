@@ -243,14 +243,17 @@ type StorageLocation struct {
 // ── Orders ──────────────────────────────────────────────
 
 type Customer struct {
-	ID        string    `db:"id"         json:"id"`
-	FirstName string    `db:"first_name" json:"first_name"`
-	LastName  string    `db:"last_name"  json:"last_name"`
-	Email     *string   `db:"email"      json:"email,omitempty"`
-	Phone     string    `db:"phone"      json:"phone"`
-	IDNumber  *string   `db:"id_number"  json:"id_number,omitempty"`
-	Address   *string   `db:"address"    json:"address,omitempty"`
-	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	ID             string    `db:"id"               json:"id"`
+	FirstName      string    `db:"first_name"       json:"first_name"`
+	LastName       string    `db:"last_name"        json:"last_name"`
+	Email          *string   `db:"email"            json:"email,omitempty"`
+	Phone          *string   `db:"phone"            json:"phone,omitempty"`
+	IDNumber       *string   `db:"id_number"        json:"id_number,omitempty"`
+	Address        *string   `db:"address"          json:"address,omitempty"`
+	AuthProvider   *string   `db:"auth_provider"    json:"auth_provider,omitempty"`
+	AuthProviderID *string   `db:"auth_provider_id" json:"auth_provider_id,omitempty"`
+	AvatarURL      *string   `db:"avatar_url"       json:"avatar_url,omitempty"`
+	CreatedAt      time.Time `db:"created_at"       json:"created_at"`
 }
 
 type Order struct {

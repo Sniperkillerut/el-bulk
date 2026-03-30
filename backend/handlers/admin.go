@@ -60,5 +60,15 @@ func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	http.SetCookie(w, &http.Cookie{
+		Name:     "admin_token",
+		Value:    signed,
+		Path:     "/",
+		Expires:  time.Now().Add(24 * time.Hour),
+		HttpOnly: true,
+		Secure:   false, // Set to true in prod
+		SameSite: http.SameSiteLaxMode,
+	})
+
 	jsonOK(w, models.LoginResponse{Token: signed})
 }

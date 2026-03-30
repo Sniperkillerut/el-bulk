@@ -1,4 +1,4 @@
-FROM golang:1.23-alpine AS dev
+FROM golang:1.25-alpine AS dev
 WORKDIR /app
 RUN apk add --no-cache git curl
 # Install Air via fixed version binary for stability
@@ -8,7 +8,7 @@ RUN go mod download
 COPY . .
 ENTRYPOINT ["air"]
 
-FROM golang:1.23-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 

@@ -52,6 +52,7 @@ async function apiFetch<T>(endpoint: string, options: FetchOptions = {}, token?:
   }
 
   const res = await fetch(url.toString(), {
+    credentials: 'include',
     ...rest,
     headers,
   });

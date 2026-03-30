@@ -1,15 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCart } from '@/lib/CartContext';
+import { useUser } from '@/context/UserContext';
 import { TCG, TCG_SHORT } from '@/lib/types';
 import { fetchTCGs } from '@/lib/api';
 import CartDrawer from './CartDrawer';
-import { useEffect } from 'react';
 
 export default function Navbar() {
   const { totalItems, openCart, isOpen, closeCart } = useCart();
+  const { user, loading: userLoading, loginWithGoogle, logout } = useUser();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [singlesDropOpen, setSinglesDropOpen] = useState(false);
   const [sealedDropOpen, setSealedDropOpen] = useState(false);
@@ -128,8 +129,40 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Cart + Mobile */}
+          {/* Cart + Mobile + User */}
           <div className="flex items-center gap-3">
+            {/* User Auth */}
+            {!userLoading && (
+              <div className="relative group flex items-center">
+                {user ? (
+                  <div className="flex flex-col items-end group-hover:flex">
+                    <img 
+                      src={user.avatar_url || 'https://www.gravatar.com/avatar/?d=mp'} 
+                      alt={user.first_name}
+                      className="w-8 h-8 rounded-full border border-ink-border cursor-pointer object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute top-10 right-0 w-32 bg-ink-surface border border-ink-border rounded-md shadow-xl p-2 hidden group-hover:block transition-all z-50">
+                      <p className="text-xs text-text-muted truncate mb-2">{user.email}</p>
+                      <button 
+                        onClick={logout}
+                        className="w-full text-left text-sm text-text-secondary hover:text-gold-dark transition-colors bg-transparent border-none cursor-pointer p-0"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={loginWithGoogle}
+                    className="text-sm font-medium text-text-secondary transition-colors hover:text-gold-dark flex items-center gap-1 bg-transparent border-none cursor-pointer p-0"
+                  >
+                    Login
+                  </button>
+                )}
+              </div>
+            )}
+
             <button
               id="cart-toggle"
               onClick={openCart}

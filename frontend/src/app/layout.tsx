@@ -8,6 +8,8 @@ import ProductModalManager from '@/components/ProductModalManager';
 import BountyModalManager from '@/components/BountyModalManager';
 import RemoteLogManager from '@/components/RemoteLogManager';
 
+import { UserProvider } from '@/context/UserContext';
+
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
@@ -58,11 +60,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body suppressHydrationWarning>
         <RemoteLogManager />
-        <CartProvider>
-          <StorefrontLayoutWrapper>
-            {children}
-          </StorefrontLayoutWrapper>
-        </CartProvider>
+        <UserProvider>
+          <CartProvider>
+            <StorefrontLayoutWrapper>
+              {children}
+            </StorefrontLayoutWrapper>
+          </CartProvider>
+        </UserProvider>
       </body>
     </html>
   );

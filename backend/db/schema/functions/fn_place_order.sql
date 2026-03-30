@@ -11,23 +11,37 @@ DECLARE
     v_order_id UUID;
     v_order_num TEXT;
 BEGIN
-    -- Upsert Customer
-    INSERT INTO customer (first_name, last_name, email, phone, id_number, address)
-    VALUES (
-        customer_data->>'first_name',
-        customer_data->>'last_name',
-        customer_data->>'email',
-        customer_data->>'phone',
-        customer_data->>'id_number',
-        customer_data->>'address'
-    )
-    ON CONFLICT (phone) DO UPDATE SET
-        first_name = EXCLUDED.first_name,
-        last_name = EXCLUDED.last_name,
-        email = EXCLUDED.email,
-        id_number = EXCLUDED.id_number,
-        address = EXCLUDED.address
-    RETURNING id INTO v_customer_id;
+    -- Upsert Customer logic based on whether ID is provided
+    IF customer_data->>'id' IS NOT NULL AND customer_data->>'id' != '' THEN
+        UPDATE customer SET
+            first_name = customer_data->>'first_name',
+            last_name = customer_data->>'last_name',
+            email = customer_data->>'email',
+            phone = customer_data->>'phone',
+            id_number = customer_data->>'id_number',
+            address = customer_data->>'address'
+        WHERE id = (customer_data->>'id')::uuid
+        RETURNING id INTO v_customer_id;
+    END IF;
+
+    IF v_customer_id IS NULL THEN
+        INSERT INTO customer (first_name, last_name, email, phone, id_number, address)
+        VALUES (
+            customer_data->>'first_name',
+            customer_data->>'last_name',
+            customer_data->>'email',
+            customer_data->>'phone',
+            customer_data->>'id_number',
+            customer_data->>'address'
+        )
+        ON CONFLICT (phone) DO UPDATE SET
+            first_name = EXCLUDED.first_name,
+            last_name = EXCLUDED.last_name,
+            email = EXCLUDED.email,
+            id_number = EXCLUDED.id_number,
+            address = EXCLUDED.address
+        RETURNING id INTO v_customer_id;
+    END IF;
 
     -- Create Order
     INSERT INTO "order" (order_number, customer_id, status, payment_method, total_cop, notes)

@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 
+	"github.com/el-bulk/backend/middleware"
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/logger"
 )
@@ -129,7 +130,13 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	var customerIDStr string
+	if ctxID := r.Context().Value(middleware.UserIDKey); ctxID != nil {
+		customerIDStr = ctxID.(string)
+	}
+
 	customerJSON, _ := json.Marshal(map[string]interface{}{
+		"id":         customerIDStr,
 		"first_name": input.FirstName,
 		"last_name":  input.LastName,
 		"email":      input.Email,
