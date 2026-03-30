@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { BountyOffer, Bounty, ClientRequest } from '@/lib/types';
 import CardImage from '@/components/CardImage';
+import SmartContactLink from '@/components/admin/SmartContactLink';
 
 interface BountyOfferResolveModalProps {
   offer: BountyOffer;
@@ -51,7 +52,10 @@ export default function BountyOfferResolveModal({ offer, bounty, requests, selec
             <div className="flex-1">
               <h4 className="font-bold mb-1">Offer details:</h4>
               <p className="text-sm italic text-ink-deep mb-1">{bounty.name} ({bounty.set_name})</p>
-              <p className="text-sm">Client: <strong>{offer.customer_name}</strong> - {offer.customer_contact}</p>
+              <p className="text-sm">Client: <strong>{offer.customer_name}</strong> - <SmartContactLink 
+                contact={offer.customer_contact} 
+                className="text-gold-dark hover:underline font-bold transition-all"
+              /></p>
               <p className="text-xs text-text-muted mt-1">{offer.notes || 'No notes provided'}</p>
               <div className="mt-2 text-sm">
                 Condition: <strong className="badge bg-gold/20 text-gold-dark border-gold/30">{offer.condition}</strong>

@@ -325,8 +325,23 @@ export default function OrdersPanel({ token, onClose }: Props) {
                 <div className="cardbox p-3">
                   <h4 className="text-xs font-mono-stack mb-2" style={{ color: 'var(--text-muted)' }}>CLIENTE</h4>
                   <p className="font-semibold">{detail.customer.first_name} {detail.customer.last_name}</p>
-                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>📱 {detail.customer.phone}</p>
-                  {detail.customer.email && <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>✉ {detail.customer.email}</p>}
+                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    📱 <a 
+                      href={`https://wa.me/${detail.customer.phone.replace(/\D/g, '')}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-gold-dark hover:underline font-bold transition-all"
+                    >
+                      {detail.customer.phone}
+                    </a>
+                  </p>
+                  {detail.customer.email && (
+                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                      ✉ <a href={`mailto:${detail.customer.email}`} className="text-gold-dark hover:underline transition-all">
+                        {detail.customer.email}
+                      </a>
+                    </p>
+                  )}
                   {detail.customer.address && <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>📍 {detail.customer.address}</p>}
                   {detail.customer.id_number && <p className="text-xs font-mono-stack mt-1" style={{ color: 'var(--text-muted)' }}>CC: {detail.customer.id_number}</p>}
                 </div>

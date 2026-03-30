@@ -12,6 +12,7 @@ import AdminSidebar from '@/components/admin/dashboard/AdminSidebar';
 import BountyEditModal from '@/components/admin/BountyEditModal';
 import BountyOfferResolveModal from '@/components/admin/BountyOfferResolveModal';
 import CardImage from '@/components/CardImage';
+import SmartContactLink from '@/components/admin/SmartContactLink';
 
 export default function AdminBountiesPage() {
   const router = useRouter();
@@ -169,7 +170,7 @@ export default function AdminBountiesPage() {
             </div>
           </header>
 
-          <div className="flex gap-2 mb-8 border-b border-ink-deep/20 overflow-x-auto whitespace-nowrap flex-shrink-0">
+          <div className="flex flex-wrap gap-2 mb-8 border-b border-ink-deep/20 flex-shrink-0">
             {[
               { id: 'bounties', label: 'WANTED LIST', count: bounties.filter(b => b.is_active).length },
               { id: 'offers', label: 'OFFERS VERIFICATION', count: offers.filter(o => o.status === 'pending').length, suffix: 'PENDING' },
@@ -330,7 +331,10 @@ export default function AdminBountiesPage() {
                             <h3 className="font-bold text-lg m-0 text-ink-deep font-mono-stack">Seller: {offer.customer_name}</h3>
                             <span className={`badge ${offer.status === 'pending' ? 'bg-gold text-ink-deep font-bold' : offer.status === 'accepted' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-red-100 text-red-700'}`}>{offer.status.toUpperCase()}</span>
                           </div>
-                          <p className="text-sm font-mono-stack text-text-muted font-bold">{offer.customer_contact}</p>
+                          <SmartContactLink 
+                            contact={offer.customer_contact} 
+                            className="text-sm font-mono-stack text-gold-dark hover:underline font-bold transition-all"
+                          />
                           
                           <div className="mt-3 flex flex-wrap gap-4 items-start">
                             <div className="flex-1 min-w-[200px] p-3 bg-kraft-paper/50 rounded border border-kraft-dark/20">
@@ -412,7 +416,10 @@ export default function AdminBountiesPage() {
                                       </span>
                                       <span className="text-[10px] text-text-muted font-mono-stack opacity-60 font-bold">{new Date(r.created_at).toLocaleDateString()}</span>
                                     </div>
-                                    <p className="text-xs text-text-muted font-mono-stack">{r.customer_contact}</p>
+                                    <SmartContactLink 
+                                      contact={r.customer_contact} 
+                                      className="text-xs text-gold-dark hover:underline font-mono-stack transition-all"
+                                    />
                                   </div>
                                 </label>
                               ))
@@ -461,7 +468,10 @@ export default function AdminBountiesPage() {
                             {req.status === 'solved' ? 'COMPLETE' : req.status.toUpperCase()}
                           </span>
                         </div>
-                        <p className="text-sm font-bold text-text-muted font-mono-stack uppercase opacity-80">Client: {req.customer_name} <span className="mx-2 opacity-30">|</span> {req.customer_contact}</p>
+                        <p className="text-sm">Client: <strong>{req.customer_name}</strong> - <SmartContactLink 
+                contact={req.customer_contact} 
+                className="text-gold-dark hover:underline font-bold transition-all"
+              /></p>
                         <p className="text-xs text-text-muted mt-2 italic border-l-2 border-kraft-dark/10 pl-3">"{req.details || 'No additional details provided.'}"</p>
                         <p className="text-[10px] text-text-muted mt-3 uppercase tracking-widest font-mono-stack font-bold opacity-40">Requested: {new Date(req.created_at).toLocaleString()}</p>
                       </div>
