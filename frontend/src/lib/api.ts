@@ -27,6 +27,43 @@ async function logAndThrow(res: Response, defaultMsg: string): Promise<never> {
   throw error;
 }
 
+interface FetchOptions extends RequestInit {
+  params?: Record<string, any>;
+}
+
+async function apiFetch<T>(endpoint: string, options: FetchOptions = {}, token?: string): Promise<T> {
+  const { params, headers: customHeaders, ...rest } = options;
+  
+  const url = new URL(`${API_BASE}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`);
+  if (params) {
+    Object.entries(params).forEach(([key, val]) => {
+      if (val !== undefined && val !== '' && val !== null) {
+        url.searchParams.set(key, String(val));
+      }
+    });
+  }
+
+  const headers = new Headers(customHeaders);
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  if (!headers.has('Content-Type') && (rest.method === 'POST' || rest.method === 'PUT' || rest.method === 'PATCH')) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  const res = await fetch(url.toString(), {
+    ...rest,
+    headers,
+  });
+
+  if (!res.ok) {
+    await logAndThrow(res, `API error on ${endpoint}`);
+  }
+
+  if (res.status === 204) return {} as T;
+  return res.json();
+}
+
 export interface ProductFilters {
   tcg?: string;
   category?: string;
@@ -46,26 +83,11 @@ export interface ProductFilters {
 }
 
 export async function fetchProducts(filters: ProductFilters = {}): Promise<ProductListResponse> {
-  const params = new URLSearchParams();
-
-  Object.entries(filters).forEach(([key, val]) => {
-    if (val !== undefined && val !== '' && val !== null) {
-      params.set(key, String(val));
-    }
-  });
-
-  const res = await fetch(`${API_BASE}/api/products?${params.toString()}`, {
-    cache: 'no-store',
-  });
-
-  if (!res.ok) await logAndThrow(res, 'Failed to fetch products');
-  return res.json();
+  return apiFetch<ProductListResponse>('/api/products', { params: filters, cache: 'no-store' });
 }
 
 export async function fetchProduct(id: string): Promise<Product> {
-  const res = await fetch(`${API_BASE}/api/products/${id}`, { cache: 'default' });
-  if (!res.ok) await logAndThrow(res, 'Product not found');
-  return res.json();
+  return apiFetch<Product>(`/api/products/${id}`, { cache: 'default' });
 }
 
 // Metadata caching (in-memory session)
@@ -86,11 +108,13 @@ export async function fetchCategories(): Promise<import('./types').CustomCategor
   const cached = getCached('categories');
   if (cached) return cached;
 
-  const res = await fetch(`${API_BASE}/api/categories`, { cache: 'default' });
-  if (!res.ok) return [];
-  const data = await res.json();
-  setCached('categories', data);
-  return data;
+  try {
+    const data = await apiFetch<import('./types').CustomCategory[]>('/api/categories', { cache: 'default' });
+    setCached('categories', data);
+    return data;
+  } catch (e) {
+    return [];
+  }
 }
 
 export async function fetchTCGs(activeOnly: boolean = true): Promise<import('./types').TCG[]> {
@@ -98,86 +122,61 @@ export async function fetchTCGs(activeOnly: boolean = true): Promise<import('./t
   const cached = getCached(key);
   if (cached) return cached;
 
-  const res = await fetch(`${API_BASE}/api/tcgs?active_only=${activeOnly}`, { cache: 'default' });
-  if (!res.ok) return [];
-  const data = await res.json();
-  const tcgs = Array.isArray(data) ? data : (data.tcgs || []);
-  setCached(key, tcgs);
-  return tcgs;
+  try {
+    const data = await apiFetch<any>('/api/tcgs', { params: { active_only: activeOnly }, cache: 'default' });
+    const tcgs = Array.isArray(data) ? data : (data.tcgs || []);
+    setCached(key, tcgs);
+    return tcgs;
+  } catch (e) {
+    return [];
+  }
 }
 
 export async function fetchPublicSettings(): Promise<import('./types').Settings> {
   const cached = getCached('settings');
   if (cached) return cached;
 
-  const res = await fetch(`${API_BASE}/api/settings`, { cache: 'default' });
-  if (!res.ok) throw new Error('Failed to fetch settings');
-  const data = await res.json();
+  const data = await apiFetch<import('./types').Settings>('/api/settings', { cache: 'default' });
   setCached('settings', data);
   return data;
 }
 
 // Admin API (requires token)
 export async function adminLogin(username: string, password: string): Promise<string> {
-  const res = await fetch(`${API_BASE}/api/admin/login`, {
+  const data = await apiFetch<{ token: string }>('/api/admin/login', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
   });
-  if (!res.ok) await logAndThrow(res, 'Invalid credentials');
-  const data = await res.json();
   return data.token;
 }
 
 export async function adminFetchProducts(token: string, filters: ProductFilters = {}): Promise<ProductListResponse> {
-  const params = new URLSearchParams();
-  Object.entries(filters).forEach(([key, val]) => {
-    if (val !== undefined && val !== '') params.set(key, String(val));
-  });
-  const res = await fetch(`${API_BASE}/api/admin/products?${params.toString()}`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: 'no-store',
-  });
-  if (!res.ok) await logAndThrow(res, 'Failed to fetch products');
-  return res.json();
+  return apiFetch<ProductListResponse>('/api/admin/products', { params: filters, cache: 'no-store' }, token);
 }
 
 export async function adminCreateProduct(token: string, data: Partial<Product>): Promise<Product> {
-  const res = await fetch(`${API_BASE}/api/admin/products`, {
+  return apiFetch<Product>('/api/admin/products', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify(data),
-  });
-  if (!res.ok) await logAndThrow(res, 'Failed to create product');
-  return res.json();
+  }, token);
 }
 
 export async function adminUpdateProduct(token: string, id: string, data: Partial<Product>): Promise<Product> {
-  const res = await fetch(`${API_BASE}/api/admin/products/${id}`, {
+  return apiFetch<Product>(`/api/admin/products/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify(data),
-  });
-  if (!res.ok) await logAndThrow(res, 'Failed to update product');
-  return res.json();
+  }, token);
 }
 
 export async function adminDeleteProduct(token: string, id: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/api/admin/products/${id}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) await logAndThrow(res, 'Failed to delete product');
+  return apiFetch<void>(`/api/admin/products/${id}`, { method: 'DELETE' }, token);
 }
 
 export async function adminBulkCreateProducts(token: string, products: import('./types').BulkProductInput[]): Promise<{ message: string; count: number }> {
-  const res = await fetch(`${API_BASE}/api/admin/products/bulk`, {
+  return apiFetch<{ message: string; count: number }>('/api/admin/products/bulk', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify(products),
-  });
-  if (!res.ok) await logAndThrow(res, 'Failed to bulk create products');
-  return res.json();
+  }, token);
 }
 
 // ---------------------------------------------------------------------------
@@ -219,31 +218,19 @@ export async function lookupMTGCard(
   cn?: string,
   foil?: string,
 ): Promise<CardLookupResult> {
-  const params = new URLSearchParams({ name });
-  if (set) params.set('set', set);
-  if (cn) params.set('cn', cn);
-  if (foil) params.set('foil', foil);
-  const res = await fetch(`${API_BASE}/api/admin/lookup/mtg?${params.toString()}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) await logAndThrow(res, 'MTG lookup failed');
-  return res.json();
+  return apiFetch<CardLookupResult>('/api/admin/lookup/mtg', {
+    params: { name, set, cn, foil },
+  }, token);
 }
 
 export async function adminBatchLookupMTG(
   token: string,
   identifiers: { name?: string; set?: string; cn?: string }[]
 ): Promise<CardLookupResult[]> {
-  const res = await fetch(`${API_BASE}/api/admin/lookup/mtg/batch`, {
+  return apiFetch<CardLookupResult[]>('/api/admin/lookup/mtg/batch', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
     body: JSON.stringify({ identifiers }),
-  });
-  if (!res.ok) await logAndThrow(res, 'MTG batch lookup failed');
-  return res.json();
+  }, token);
 }
 
 export async function lookupPokemonCard(
@@ -251,13 +238,9 @@ export async function lookupPokemonCard(
   name: string,
   set?: string,
 ): Promise<CardLookupResult> {
-  const params = new URLSearchParams({ name });
-  if (set) params.set('set', set);
-  const res = await fetch(`${API_BASE}/api/admin/lookup/pokemon?${params.toString()}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) await logAndThrow(res, 'Pokémon lookup failed');
-  return res.json();
+  return apiFetch<CardLookupResult>('/api/admin/lookup/pokemon', {
+    params: { name, set },
+  }, token);
 }
 
 // ---------------------------------------------------------------------------
@@ -268,12 +251,7 @@ export async function getAdminSettings(token: string): Promise<import('./types')
   const cached = getCached('admin_settings');
   if (cached) return cached;
 
-  const res = await fetch(`${API_BASE}/api/admin/settings`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: 'default',
-  });
-  if (!res.ok) throw new Error('Failed to load settings');
-  const data = await res.json();
+  const data = await apiFetch<import('./types').Settings>('/api/admin/settings', { cache: 'default' }, token);
   setCached('admin_settings', data);
   return data;
 }
@@ -282,13 +260,10 @@ export async function updateAdminSettings(
   token: string,
   settings: Partial<import('./types').Settings>,
 ): Promise<import('./types').Settings> {
-  const res = await fetch(`${API_BASE}/api/admin/settings`, {
+  return apiFetch<import('./types').Settings>('/api/admin/settings', {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify(settings),
-  });
-  if (!res.ok) throw new Error('Failed to update settings');
-  return res.json();
+  }, token);
 }
 
 // ---------------------------------------------------------------------------
@@ -298,12 +273,9 @@ export async function updateAdminSettings(
 export async function triggerPriceRefresh(
   token: string,
 ): Promise<{ updated: number; errors: number }> {
-  const res = await fetch(`${API_BASE}/api/admin/prices/refresh`, {
+  return apiFetch<{ updated: number; errors: number }>('/api/admin/prices/refresh', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) throw new Error('Price refresh failed');
-  return res.json();
+  }, token);
 }
 
 // adminFetchStats removed from here to avoid duplication
@@ -316,47 +288,31 @@ export async function adminFetchStorage(token: string): Promise<import('./types'
   const cached = getCached('admin_storage');
   if (cached) return cached;
 
-  const res = await fetch(`${API_BASE}/api/admin/storage`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: 'default',
-  });
-  if (!res.ok) {
-    if (res.status === 401) throw new Error('401 Unauthorized');
-    throw new Error('Failed to fetch storage locations');
-  }
-  const data = await res.json();
+  const data = await apiFetch<import('./types').StoredIn[]>('/api/admin/storage', { cache: 'default' }, token);
   setCached('admin_storage', data);
   return data;
 }
 
 export async function adminCreateStorage(token: string, name: string): Promise<import('./types').StoredIn> {
-  const res = await fetch(`${API_BASE}/api/admin/storage`, {
+  const data = await apiFetch<import('./types').StoredIn>('/api/admin/storage', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ name }),
-  });
-  if (!res.ok) await logAndThrow(res, 'Failed to create storage location');
+  }, token);
   metadataCache.delete('admin_storage');
-  return res.json();
+  return data;
 }
 
 export async function adminUpdateStorage(token: string, id: string, name: string): Promise<import('./types').StoredIn> {
-  const res = await fetch(`${API_BASE}/api/admin/storage/${id}`, {
+  const data = await apiFetch<import('./types').StoredIn>(`/api/admin/storage/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ name }),
-  });
-  if (!res.ok) await logAndThrow(res, 'Failed to update storage location');
+  }, token);
   metadataCache.delete('admin_storage');
-  return res.json();
+  return data;
 }
 
 export async function adminDeleteStorage(token: string, id: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/api/admin/storage/${id}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) await logAndThrow(res, 'Failed to delete storage location');
+  await apiFetch<void>(`/api/admin/storage/${id}`, { method: 'DELETE' }, token);
   metadataCache.delete('admin_storage');
 }
 
@@ -368,15 +324,7 @@ export async function adminFetchCategories(token: string): Promise<import('./typ
   const cached = getCached('admin_categories');
   if (cached) return cached;
 
-  const res = await fetch(`${API_BASE}/api/admin/categories`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: 'default',
-  });
-  if (!res.ok) {
-    if (res.status === 401) throw new Error('401 Unauthorized');
-    throw new Error('Failed to fetch custom categories');
-  }
-  const data = await res.json();
+  const data = await apiFetch<import('./types').CustomCategory[]>('/api/admin/categories', { cache: 'default' }, token);
   setCached('admin_categories', data);
   return data;
 }
@@ -389,15 +337,13 @@ export async function adminCreateCategory(
   show_badge: boolean = true,
   searchable: boolean = true
 ): Promise<import('./types').CustomCategory> {
-  const res = await fetch(`${API_BASE}/api/admin/categories`, {
+  const data = await apiFetch<import('./types').CustomCategory>('/api/admin/categories', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ name, slug, is_active, show_badge, searchable }),
-  });
-  if (!res.ok) await logAndThrow(res, 'Failed to create custom category');
+  }, token);
   metadataCache.delete('admin_categories');
   metadataCache.delete('categories');
-  return res.json();
+  return data;
 }
 
 export async function adminUpdateCategory(
@@ -409,23 +355,17 @@ export async function adminUpdateCategory(
   show_badge?: boolean,
   searchable?: boolean
 ): Promise<import('./types').CustomCategory> {
-  const res = await fetch(`${API_BASE}/api/admin/categories/${id}`, {
+  const data = await apiFetch<import('./types').CustomCategory>(`/api/admin/categories/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ name, slug, is_active, show_badge, searchable }),
-  });
-  if (!res.ok) await logAndThrow(res, 'Failed to update custom category');
+  }, token);
   metadataCache.delete('admin_categories');
   metadataCache.delete('categories');
-  return res.json();
+  return data;
 }
 
 export async function adminDeleteCategory(token: string, id: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/api/admin/categories/${id}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) await logAndThrow(res, 'Failed to delete custom category');
+  await apiFetch<void>(`/api/admin/categories/${id}`, { method: 'DELETE' }, token);
   metadataCache.delete('admin_categories');
   metadataCache.delete('categories');
 }
@@ -438,50 +378,35 @@ export async function adminFetchTCGs(token: string): Promise<import('./types').T
   const cached = getCached('admin_tcgs');
   if (cached) return cached;
 
-  const res = await fetch(`${API_BASE}/api/admin/tcgs`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: 'default',
-  });
-  if (!res.ok) await logAndThrow(res, 'Failed to fetch TCGs');
-  const data = await res.json();
+  const data = await apiFetch<import('./types').TCG[]>('/api/admin/tcgs', { cache: 'default' }, token);
   setCached('admin_tcgs', data);
   return data;
 }
 
 export async function adminCreateTCG(token: string, id: string, name: string): Promise<import('./types').TCG> {
-  const res = await fetch(`${API_BASE}/api/admin/tcgs`, {
+  const data = await apiFetch<import('./types').TCG>('/api/admin/tcgs', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ id, name }),
-  });
-  if (!res.ok) await logAndThrow(res, 'Failed to create TCG');
+  }, token);
   metadataCache.delete('admin_tcgs');
   metadataCache.delete('tcgs_true');
   metadataCache.delete('tcgs_false');
-  return res.json();
+  return data;
 }
 
 export async function adminUpdateTCG(token: string, id: string, name: string, is_active: boolean): Promise<import('./types').TCG> {
-  const res = await fetch(`${API_BASE}/api/admin/tcgs/${id}`, {
+  const data = await apiFetch<import('./types').TCG>(`/api/admin/tcgs/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ name, is_active }),
-  });
-  if (!res.ok) await logAndThrow(res, 'Failed to update TCG');
+  }, token);
   metadataCache.delete('admin_tcgs');
   metadataCache.delete('tcgs_true');
   metadataCache.delete('tcgs_false');
-  return res.json();
+  return data;
 }
 
 export async function adminDeleteTCG(token: string, id: string): Promise<void> {
-  console.log(`[API] DELETE /api/admin/tcgs/${id}`);
-  const res = await fetch(`${API_BASE}/api/admin/tcgs/${id}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  console.log(`[API] DELETE /api/admin/tcgs/${id} status=${res.status}`);
-  if (!res.ok) await logAndThrow(res, 'Failed to delete TCG');
+  await apiFetch<void>(`/api/admin/tcgs/${id}`, { method: 'DELETE' }, token);
   metadataCache.delete('admin_tcgs');
   metadataCache.delete('tcgs_true');
   metadataCache.delete('tcgs_false');
@@ -492,13 +417,10 @@ export async function adminDeleteTCG(token: string, id: string): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export async function adminUpdateProductStorage(token: string, productId: string, updates: import('./types').ProductStorageInput[]): Promise<import('./types').StorageLocation[]> {
-  const res = await fetch(`${API_BASE}/api/admin/products/${productId}/storage`, {
+  return apiFetch<import('./types').StorageLocation[]>(`/api/admin/products/${productId}/storage`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify(updates),
-  });
-  if (!res.ok) await logAndThrow(res, 'Failed to update product storage');
-  return res.json();
+  }, token);
 }
 
 // ---------------------------------------------------------------------------
@@ -506,13 +428,10 @@ export async function adminUpdateProductStorage(token: string, productId: string
 // ---------------------------------------------------------------------------
 
 export async function createOrder(data: import('./types').CreateOrderRequest): Promise<{ order_number: string; order_id: string; total_cop: number; status: string }> {
-  const res = await fetch(`${API_BASE}/api/orders`, {
+  return apiFetch<any>('/api/orders', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  if (!res.ok) await logAndThrow(res, 'Failed to place order');
-  return res.json();
 }
 
 // ---------------------------------------------------------------------------
@@ -520,60 +439,29 @@ export async function createOrder(data: import('./types').CreateOrderRequest): P
 // ---------------------------------------------------------------------------
 
 export async function adminFetchOrders(token: string, filters: { status?: string; search?: string; page?: number; page_size?: number } = {}): Promise<import('./types').OrderListResponse> {
-  const params = new URLSearchParams();
-  Object.entries(filters).forEach(([key, val]) => {
-    if (val !== undefined && val !== '') params.set(key, String(val));
-  });
-  const res = await fetch(`${API_BASE}/api/admin/orders?${params.toString()}`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: 'no-store',
-  });
-  if (!res.ok) {
-    if (res.status === 401) throw new Error('401 Unauthorized');
-    throw new Error('Failed to fetch orders');
-  }
-  return res.json();
+  return apiFetch<import('./types').OrderListResponse>('/api/admin/orders', { params: filters, cache: 'no-store' }, token);
 }
 
 export async function adminFetchOrderDetail(token: string, id: string): Promise<import('./types').OrderDetail> {
-  const res = await fetch(`${API_BASE}/api/admin/orders/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: 'no-store',
-  });
-  if (!res.ok) {
-    if (res.status === 401) throw new Error('401 Unauthorized');
-    throw new Error('Failed to fetch order detail');
-  }
-  return res.json();
+  return apiFetch<import('./types').OrderDetail>(`/api/admin/orders/${id}`, { cache: 'no-store' }, token);
 }
 
 export async function adminUpdateOrder(token: string, id: string, data: { status?: string; items?: { id: string; quantity: number }[] }): Promise<import('./types').OrderDetail> {
-  const res = await fetch(`${API_BASE}/api/admin/orders/${id}`, {
+  return apiFetch<import('./types').OrderDetail>(`/api/admin/orders/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify(data),
-  });
-  if (!res.ok) await logAndThrow(res, 'Failed to update order');
-  return res.json();
+  }, token);
 }
 
 export async function adminCompleteOrder(token: string, id: string, decrements: { product_id: string; stored_in_id: string; quantity: number }[]): Promise<import('./types').OrderDetail> {
-  const res = await fetch(`${API_BASE}/api/admin/orders/${id}/complete`, {
+  return apiFetch<import('./types').OrderDetail>(`/api/admin/orders/${id}/complete`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ decrements }),
-  });
-  if (!res.ok) await logAndThrow(res, 'Failed to complete order');
-  return res.json();
+  }, token);
 }
 
 export async function adminFetchStats(token: string): Promise<{ total_sku_records: number; query_speed_ms: number; database_size: string; cache_hit_ratio: number; active_connections: number; max_connections: number }> {
-  const res = await fetch(`${API_BASE}/api/admin/stats`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: 'no-store',
-  });
-  if (!res.ok) throw new Error('Failed to fetch stats');
-  return res.json();
+  return apiFetch<any>('/api/admin/stats', { cache: 'no-store' }, token);
 }
 
 // ---------------------------------------------------------------------------
@@ -581,67 +469,43 @@ export async function adminFetchStats(token: string): Promise<{ total_sku_record
 // ---------------------------------------------------------------------------
 
 export async function fetchBounties(params?: { active?: boolean }): Promise<import('./types').Bounty[]> {
-  const query = params?.active ? '?active=true' : '';
-  const res = await fetch(`${API_BASE}/api/bounties${query}`, { cache: 'no-store' });
-  if (!res.ok) await logAndThrow(res, 'Failed to fetch bounties');
-  return res.json();
+  return apiFetch<import('./types').Bounty[]>('/api/bounties', { params, cache: 'no-store' });
 }
 
 export async function adminCreateBounty(token: string, data: import('./types').BountyInput): Promise<import('./types').Bounty> {
-  const res = await fetch(`${API_BASE}/api/admin/bounties`, {
+  return apiFetch<import('./types').Bounty>('/api/admin/bounties', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify(data),
-  });
-  if (!res.ok) await logAndThrow(res, 'Failed to create bounty');
-  return res.json();
+  }, token);
 }
 
 export async function adminUpdateBounty(token: string, id: string, data: import('./types').BountyInput): Promise<import('./types').Bounty> {
-  const res = await fetch(`${API_BASE}/api/admin/bounties/${id}`, {
+  return apiFetch<import('./types').Bounty>(`/api/admin/bounties/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify(data),
-  });
-  if (!res.ok) await logAndThrow(res, 'Failed to update bounty');
-  return res.json();
+  }, token);
 }
 
 export async function adminDeleteBounty(token: string, id: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/api/admin/bounties/${id}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) await logAndThrow(res, 'Failed to delete bounty');
+  return apiFetch<void>(`/api/admin/bounties/${id}`, { method: 'DELETE' }, token);
 }
 
 export async function createBountyOffer(data: import('./types').BountyOfferInput): Promise<import('./types').BountyOffer> {
-  const res = await fetch(`${API_BASE}/api/bounties/offers`, {
+  return apiFetch<import('./types').BountyOffer>('/api/bounties/offers', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  if (!res.ok) await logAndThrow(res, 'Failed to submit offer');
-  return res.json();
 }
 
 export async function adminFetchBountyOffers(token: string): Promise<import('./types').BountyOffer[]> {
-  const res = await fetch(`${API_BASE}/api/admin/bounties/offers`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: 'no-store',
-  });
-  if (!res.ok) await logAndThrow(res, 'Failed to fetch offers');
-  return res.json();
+  return apiFetch<import('./types').BountyOffer[]>('/api/admin/bounties/offers', { cache: 'no-store' }, token);
 }
 
 export async function adminUpdateBountyOfferStatus(token: string, id: string, status: string): Promise<import('./types').BountyOffer> {
-  const res = await fetch(`${API_BASE}/api/admin/bounties/offers/${id}/status`, {
+  return apiFetch<import('./types').BountyOffer>(`/api/admin/bounties/offers/${id}/status`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ status }),
-  });
-  if (!res.ok) await logAndThrow(res, 'Failed to update offer status');
-  return res.json();
+  }, token);
 }
 
 // ---------------------------------------------------------------------------
@@ -649,30 +513,19 @@ export async function adminUpdateBountyOfferStatus(token: string, id: string, st
 // ---------------------------------------------------------------------------
 
 export async function createClientRequest(data: import('./types').ClientRequestInput): Promise<import('./types').ClientRequest> {
-  const res = await fetch(`${API_BASE}/api/client-requests`, {
+  return apiFetch<import('./types').ClientRequest>('/api/client-requests', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  if (!res.ok) await logAndThrow(res, 'Failed to submit request');
-  return res.json();
 }
 
 export async function adminFetchClientRequests(token: string): Promise<import('./types').ClientRequest[]> {
-  const res = await fetch(`${API_BASE}/api/admin/client-requests`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: 'no-store',
-  });
-  if (!res.ok) await logAndThrow(res, 'Failed to fetch client requests');
-  return res.json();
+  return apiFetch<import('./types').ClientRequest[]>('/api/admin/client-requests', { cache: 'no-store' }, token);
 }
 
 export async function adminUpdateClientRequestStatus(token: string, id: string, status: string): Promise<import('./types').ClientRequest> {
-  const res = await fetch(`${API_BASE}/api/admin/client-requests/${id}/status`, {
+  return apiFetch<import('./types').ClientRequest>(`/api/admin/client-requests/${id}/status`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ status }),
-  });
-  if (!res.ok) await logAndThrow(res, 'Failed to update request status');
-  return res.json();
+  }, token);
 }

@@ -1,3 +1,5 @@
+'use client';
+
 import { StorageLocation, StoredIn } from '@/lib/types';
 
 interface StorageManagerProps {

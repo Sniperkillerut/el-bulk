@@ -1,3 +1,5 @@
+'use client';
+
 import { Settings } from '@/lib/types';
 import { useState } from 'react';
 

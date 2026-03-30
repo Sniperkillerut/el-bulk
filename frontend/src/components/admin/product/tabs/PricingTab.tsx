@@ -1,3 +1,5 @@
+'use client';
+
 import { FormState } from '../types';
 import { CustomCategory, PriceSource, Settings, StorageLocation, StoredIn } from '@/lib/types';
 import StorageManager from '../StorageManager';

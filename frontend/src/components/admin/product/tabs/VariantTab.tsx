@@ -1,3 +1,5 @@
+'use client';
+
 import { FormState } from '../types';
 import { ScryfallCard, FoilTreatment, CardTreatment } from '@/lib/types';
 import MTGVariantSelector from '../../MTGVariantSelector';

@@ -1,3 +1,5 @@
+'use client';
+
 import { Product, TCG_SHORT } from '@/lib/types';
 import CardImage from '@/components/CardImage';
 

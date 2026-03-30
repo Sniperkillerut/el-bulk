@@ -1,3 +1,5 @@
+'use client';
+
 import { 
   getTreatmentOptions, getArtOptions, getPromoOptions, getFoilOptions, ArtOption 
 } from '@/lib/mtg-logic';

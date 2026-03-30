@@ -1,3 +1,5 @@
+'use client';
+
 import { StoredIn } from '@/lib/types';
 import { useState } from 'react';
 

@@ -1,3 +1,5 @@
+'use client';
+
 import { CustomCategory } from '@/lib/types';
 import { useState } from 'react';
 

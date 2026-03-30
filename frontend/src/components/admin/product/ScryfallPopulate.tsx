@@ -1,3 +1,5 @@
+'use client';
+
 import { ScryfallCard } from '@/lib/types';
 
 interface ScryfallPopulateProps {

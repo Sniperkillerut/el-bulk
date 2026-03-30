@@ -1,9 +1,10 @@
 'use client';
 
-import { Bounty, TREATMENT_LABELS } from '@/lib/types';
+import { Bounty } from '@/lib/types';
 import CardImage from './CardImage';
-import { ConditionBadge, FoilBadge } from './Badges';
 import { openBountyModal } from './BountyModalManager';
+import CardBadgeList from './cards/CardBadgeList';
+import CardInfo from './cards/CardInfo';
 
 interface BountyCardProps {
   bounty: Bounty;
@@ -28,27 +29,13 @@ export default function BountyCard({ bounty, delay = 0 }: BountyCardProps) {
       </div>
 
       <div className="p-3 flex flex-col flex-1 gap-2">
-        {/* Badges row */}
-        <div className="flex flex-wrap gap-1">
-          <ConditionBadge condition={bounty.condition} />
-          <FoilBadge foil={bounty.foil_treatment} />
-          {bounty.card_treatment && bounty.card_treatment !== 'normal' && TREATMENT_LABELS[bounty.card_treatment] && (
-            <span className="badge" style={{ background: 'rgba(100,130,200,0.12)', color: '#8ba4d0', border: '1px solid rgba(100,130,200,0.25)' }}>
-              {TREATMENT_LABELS[bounty.card_treatment]}
-            </span>
-          )}
-        </div>
+        <CardBadgeList 
+          condition={bounty.condition}
+          foil={bounty.foil_treatment}
+          treatment={bounty.card_treatment}
+        />
 
-        {/* Name */}
-        <h3 className="text-sm font-semibold leading-snug group-hover:text-gold transition-colors line-clamp-2"
-          style={{ color: 'var(--text-primary)' }}>
-          {bounty.name}
-        </h3>
-
-        {/* Set */}
-        <p className="text-xs" style={{ color: 'var(--text-muted)', fontFamily: 'Space Mono, monospace' }}>
-          {bounty.set_name || 'Any Edition'}
-        </p>
+        <CardInfo name={bounty.name} setName={bounty.set_name} hoverEffect={false} />
         
         {/* Footer */}
         <div className="flex items-center justify-between mt-auto pt-2" style={{ borderTop: '1px solid var(--ink-border)' }}>

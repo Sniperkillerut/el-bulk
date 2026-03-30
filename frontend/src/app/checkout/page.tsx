@@ -157,7 +157,7 @@ export default function CheckoutPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold truncate">{p.name}</p>
                       {p.set_name && <p className="text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>{p.set_name}</p>}
-                      {p.cart_count && p.cart_count > 0 && (
+                      {(p.cart_count ?? 0) > 0 && (
                         <p className="text-[9px] font-mono mt-0.5 opacity-60" style={{ color: 'var(--gold)' }}>
                           ● {p.cart_count} {p.cart_count === 1 ? 'OTHER USER HAS' : 'OTHER USERS HAVE'} THIS IN THEIR CART
                         </p>
@@ -239,7 +239,7 @@ export default function CheckoutPage() {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate">{item.product.name}</p>
                         <p className="text-[10px] text-muted truncate">{item.product.set_name}</p>
-                        {item.product.cart_count && item.product.cart_count > 0 && (
+                        {(item.product.cart_count ?? 0) > 0 && (
                           <p className="text-[9px] font-mono mt-0.5 opacity-60" style={{ color: 'var(--gold)' }}>
                             ● {item.product.cart_count} {item.product.cart_count === 1 ? 'OTHER USER HAS' : 'OTHER USERS HAVE'} THIS IN THEIR CART
                           </p>

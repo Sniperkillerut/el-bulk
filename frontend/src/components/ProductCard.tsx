@@ -1,12 +1,12 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { Product, FOIL_LABELS, TREATMENT_LABELS } from '@/lib/types';
+import { Product } from '@/lib/types';
 import { useCart } from '@/lib/CartContext';
-import { ConditionBadge, FoilBadge } from './Badges';
 import CardImage from './CardImage';
 import { openProductModal } from './ProductModalManager';
+import CardBadgeList from './cards/CardBadgeList';
+import CardInfo from './cards/CardInfo';
 
 interface ProductCardProps {
   product: Product;
@@ -40,57 +40,29 @@ export default function ProductCard({ product }: ProductCardProps) {
       </a>
 
       <div className="p-3 flex flex-col flex-1 gap-2">
-        {/* Badges row */}
-        <div className="flex flex-wrap gap-1">
-          <ConditionBadge condition={product.condition} />
-          <FoilBadge foil={product.foil_treatment} />
-          {product.card_treatment && product.card_treatment !== 'normal' && TREATMENT_LABELS[product.card_treatment] && (
-            <span className="badge" style={{ background: 'rgba(100,130,200,0.12)', color: '#8ba4d0', border: '1px solid rgba(100,130,200,0.25)' }}>
-              {TREATMENT_LABELS[product.card_treatment]}
-            </span>
-          )}
-          {product.textless && (
-            <span className="badge" style={{ background: 'rgba(248,113,113,0.15)', color: 'var(--hp-color)', border: '1px solid rgba(248,113,113,0.3)' }}>
-              TEXTLESS
-            </span>
-          )}
-          {product.full_art && product.card_treatment !== 'full_art' && (
-            <span className="badge" style={{ background: 'rgba(120,180,120,0.15)', color: 'var(--nm-color)', border: '1px solid rgba(120,180,120,0.3)' }}>
-              FULL ART
-            </span>
-          )}
-          {product.categories?.map(c => (
-            <span key={c.id} className="badge" style={{ background: 'var(--gold)', color: 'var(--ink-deep)', border: '1px solid rgba(212,175,55,0.3)' }}>
-              {c.name}
-            </span>
-          ))}
-        </div>
+        <CardBadgeList 
+          condition={product.condition}
+          foil={product.foil_treatment}
+          treatment={product.card_treatment}
+          textless={product.textless}
+          fullArt={product.full_art}
+          categories={product.categories}
+        />
 
-        {/* Name */}
         <a href={href} onClick={handleOpenModal} style={{ textDecoration: 'none' }}>
-          <h3 className="text-sm font-semibold leading-snug hover:text-gold transition-colors line-clamp-2"
-            style={{ color: 'var(--text-primary)' }}>
-            {product.name}
-          </h3>
+          <CardInfo name={product.name} setName={product.set_name} setCode={product.set_code} />
         </a>
 
-        {/* Set */}
-        {product.set_name && (
-          <p className="text-xs" style={{ color: 'var(--text-muted)', fontFamily: 'Space Mono, monospace' }}>
-            {product.set_code ? `[${product.set_code}]` : ''} {product.set_name}
-          </p>
-        )}
-
         {/* Footer */}
-        <div className="mt-auto">
+        <div className="mt-auto pt-2 flex flex-col gap-2" style={{ borderTop: '1px solid var(--ink-border)' }}>
           {displayCartCount > 0 && (
-            <div className="flex items-center gap-1.5 text-[10px] font-mono tracking-wider mb-2" style={{ color: 'var(--text-secondary)', opacity: 0.8 }}>
+            <div className="flex items-center gap-1.5 text-[10px] font-mono tracking-wider mb-0.5" style={{ color: 'var(--text-secondary)', opacity: 0.8 }}>
               <span style={{ color: 'var(--gold)' }}>●</span>
               {displayCartCount} {displayCartCount === 1 ? 'OTHER USER HAS' : 'OTHER USERS HAVE'} THIS IN THEIR CART
             </div>
           )}
           
-          <div className="flex items-center justify-between pt-2" style={{ borderTop: '1px solid var(--ink-border)' }}>
+          <div className="flex items-center justify-between">
             <span className="price text-base">${product.price.toLocaleString('en-US', { maximumFractionDigits: 0 })} COP</span>
             <div className="flex items-center gap-2">
               <span className="text-xs" style={{ color: 'var(--text-muted)', fontFamily: 'Space Mono' }}>
