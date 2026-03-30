@@ -406,21 +406,30 @@ export default function ProductEditModal({
           </div>
         )}
 
-        <div className="px-4 md:px-6 mt-6 flex gap-1 border-b border-ink-border/20">
-          {TABS.filter(t => t.show).map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className="font-mono-stack text-[11px] px-6 py-3 transition-all tracking-widest uppercase relative"
-              style={{
-                color: activeTab === tab.id ? 'var(--gold)' : 'var(--text-muted)',
-                fontWeight: activeTab === tab.id ? 800 : 400,
-                cursor: 'pointer',
-              }}>
-              {tab.label}
-              {activeTab === tab.id && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gold animate-in slide-in-from-left duration-300" />
-              )}
-            </button>
-          ))}
+        <div className="px-4 md:px-6 mt-6 flex gap-3 border-b border-ink-border/20">
+          {TABS.filter(t => t.show).map(tab => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button 
+                key={tab.id} 
+                onClick={() => setActiveTab(tab.id)}
+                className={`
+                  font-mono-stack text-sm px-10 py-6 transition-all tracking-widest uppercase relative -mb-px rounded-t-md border-x border-t-[8px] group
+                  ${isActive 
+                    ? 'text-gold bg-white border-gold border-x-ink-border/20 border-b-white z-20 shadow-[0_0_25px_rgba(186,155,74,0.5),0_0_12px_rgba(186,155,74,0.3)] font-black' 
+                    : 'text-text-muted bg-kraft-dark/30 border-transparent hover:text-ink-deep hover:bg-kraft-dark/50 font-bold'
+                  }
+                `}
+              >
+                <div className="flex items-center gap-4">
+                  <span className={`transition-all duration-300 w-5 flex justify-center ${isActive ? 'opacity-100 scale-125 text-gold' : 'opacity-20 group-hover:opacity-100'}`}>◈</span>
+                  {tab.label}
+                  {/* Balanced Spacer */}
+                  <div className="w-5" />
+                </div>
+              </button>
+            );
+          })}
         </div>
 
         <div className="flex gap-8 flex-col md:flex-row p-4 md:p-6 pt-6">

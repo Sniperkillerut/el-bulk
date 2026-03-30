@@ -169,27 +169,41 @@ export default function AdminBountiesPage() {
             </div>
           </header>
 
-          <div className="flex gap-1 mb-6 border-b border-kraft-dark/20 overflow-x-auto whitespace-nowrap flex-shrink-0">
+          <div className="flex gap-2 mb-8 border-b border-ink-deep/20 overflow-x-auto whitespace-nowrap flex-shrink-0">
             {[
               { id: 'bounties', label: 'WANTED LIST', count: bounties.filter(b => b.is_active).length },
               { id: 'offers', label: 'OFFERS VERIFICATION', count: offers.filter(o => o.status === 'pending').length, suffix: 'PENDING' },
               { id: 'requests', label: 'CLIENT REQUESTS', count: requests.filter(r => r.status === 'pending').length, suffix: 'PENDING' }
-            ].map(tab => (
-               <button 
-                key={tab.id}
-                className={`font-mono-stack text-[10px] px-6 py-4 transition-all uppercase font-bold tracking-widest ${
-                  activeTab === tab.id 
-                    ? 'text-ink-deep border-b-4 border-gold bg-gold/5' 
-                    : 'text-text-muted hover:text-ink-deep hover:bg-kraft-light/50'
-                }`}
-                onClick={() => {
-                  setActiveTab(tab.id as any);
-                  setExpandedOfferId(null);
-                }}
-              >
-                {tab.label} ({tab.count} {tab.suffix || ''})
-              </button>
-            ))}
+            ].map(tab => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button 
+                  key={tab.id}
+                  className={`
+                    font-mono-stack text-sm px-10 py-6 transition-all uppercase tracking-widest
+                    rounded-t-md border-x relative -mb-px group border-t-[8px]
+                    ${isActive 
+                      ? 'text-ink-deep bg-white border-gold border-x-kraft-dark/30 border-b-white z-20 shadow-[0_0_25px_rgba(186,155,74,0.4),0_0_10px_rgba(186,155,74,0.2)] font-black' 
+                      : 'text-text-muted bg-kraft-dark/40 border-transparent border-x-kraft-dark/20 hover:text-ink-deep hover:bg-kraft-dark/60 font-bold'
+                    }
+                  `}
+                  onClick={() => {
+                    setActiveTab(tab.id as any);
+                    setExpandedOfferId(null);
+                  }}
+                >
+                  <div className="flex items-center gap-4">
+                    <span className={`transition-all duration-300 w-4 flex justify-center ${isActive ? 'text-gold scale-125' : 'text-text-muted group-hover:text-gold'}`}>●</span>
+                    {tab.label}
+                    <span className={`px-3 py-1 rounded-lg text-xs font-black shadow-inner ${isActive ? 'bg-gold/20 text-ink-deep' : 'bg-ink-deep/10 text-text-muted'}`}>
+                      {tab.count} {isActive && tab.suffix ? tab.suffix : ''}
+                    </span>
+                    {/* Balanced Spacer */}
+                    <div className="w-4" />
+                  </div>
+                </button>
+              );
+            })}
           </div>
 
           <div className="flex-1 min-h-0 overflow-auto pr-2">

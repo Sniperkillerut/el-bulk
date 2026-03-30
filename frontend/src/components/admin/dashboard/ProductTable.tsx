@@ -12,7 +12,7 @@ export function ProductTableRow({ product: p, onEdit, onDelete }: ProductTableRo
 
   return (
     <tr key={p.id} onClick={() => onEdit(p)} 
-      className="cursor-pointer transition-all duration-200 group border-b border-ink-border/30 last:border-0 relative hover:bg-gold/[0.03] hover:translate-x-1"
+      className="cursor-pointer transition-all duration-200 group border-b border-ink-border/30 last:border-0 relative hover:bg-gold/[0.03]"
     >
       <td className="relative overflow-hidden">
         {/* Hover Highlight Bar */}
