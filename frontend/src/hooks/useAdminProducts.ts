@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Product, TCG_SHORT } from '@/lib/types';
+import { Product } from '@/lib/types';
 import { adminFetchProducts } from '@/lib/api';
 
 export function useAdminProducts(token: string) {

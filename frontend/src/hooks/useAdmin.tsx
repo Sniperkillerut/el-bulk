@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAdminSettings, fetchPublicSettings } from '@/lib/api';
 import { Settings } from '@/lib/types';
@@ -43,15 +43,15 @@ export function AdminProvider({ children }: { children: React.ReactNode }): Reac
     }
   };
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem('el_bulk_admin_token');
     setToken(null);
     router.push('/admin/login');
-  };
+  }, [router]);
 
-  const refreshSettings = async () => {
+  const refreshSettings = useCallback(async () => {
     if (token) await loadSettings(token);
-  };
+  }, [token]);
 
   return (
     <AdminContext.Provider value={{ token, settings, loading, logout, refreshSettings }}>

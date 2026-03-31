@@ -47,14 +47,21 @@ export default function AdminDashboard() {
       setTCGs(tcgData || []);
       setStorageLocations(storageData || []);
       setCategories(catData || []);
-    } catch (err: any) {
-      if (err.message?.includes('401')) logout();
+    } catch (err) {
+      if (err instanceof Error && err.message?.includes('401')) logout();
     }
   }, [logout]);
 
   // Initial Load
   useEffect(() => {
-    if (token) loadStaticData(token);
+    if (token) {
+      // Use a small delay to avoid "cascading render" warnings when multiple state updates 
+      // are triggered by the same dependency (token) across different hooks/effects.
+      const timer = setTimeout(() => {
+        void loadStaticData(token);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
   }, [token, loadStaticData]);
 
   // CRUD Actions

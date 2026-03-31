@@ -31,15 +31,15 @@ func main() {
 	clearTables(database)
 	
 	adminID := seedAdmin(database)
-	tcgIDs := seedTCGs(database)
+	seedTCGs(database)
 	categoryMap := seedCategories(database)
 	storageIDs := seedStorage(database)
 	seedSettings(database)
 
 	if *mode == "minimal" {
-		seedMinimalData(database, tcgIDs, categoryMap, storageIDs)
+		seedMinimalData(database, categoryMap, storageIDs)
 	} else {
-		productIDs := seedFullData(database, tcgIDs, categoryMap, storageIDs)
+		productIDs := seedFullData(database, categoryMap, storageIDs)
 		seedNotices(database, productIDs)
 		seedCRM(database, adminID)
 	}
@@ -144,7 +144,7 @@ func seedSettings(db *sqlx.DB) {
 	}
 }
 
-func seedMinimalData(db *sqlx.DB, tcgIDs map[string]string, cats map[string]string, storageIDs []string) string {
+func seedMinimalData(db *sqlx.DB, cats map[string]string, storageIDs []string) string {
 	// 1 Sample Product
 	name := "Black Lotus"
 	var pID string
@@ -158,9 +158,9 @@ func seedMinimalData(db *sqlx.DB, tcgIDs map[string]string, cats map[string]stri
 	return pID
 }
 
-func seedFullData(db *sqlx.DB, tcgIDs map[string]string, cats map[string]string, storageIDs []string) []string {
+func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []string {
 	// Seed 1 Minimal Product first as a safety baseline
-	seedMinimalData(db, tcgIDs, cats, storageIDs)
+	seedMinimalData(db, cats, storageIDs)
 
 	// 1. Seed Hundreds of MTG Products (Bulk)
 	identifiers := []external.CardIdentifier{
