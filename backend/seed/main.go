@@ -320,7 +320,40 @@ func seedFullData(db *sqlx.DB, tcgIDs map[string]string, cats map[string]string,
 		db.Exec(`INSERT INTO product_category (product_id, category_id) VALUES ($1, $2)`, pID, cats["sale"])
 	}
 
-	// 6. Bounties
+	// 6. Store Exclusives (Decks)
+	logger.Info("Seeding Store Exclusives (Decks)...")
+	var deckID string
+	err := db.QueryRow(`
+		INSERT INTO product (name, tcg, category, price_source, price_cop_override, stock, image_url, description)
+		VALUES ($1, 'mtg', 'store_exclusives', 'manual', $2, 5, $3, $4) RETURNING id
+	`, 
+		"Custom Commander Precon: Goblin Swarm", 
+		150000, 
+		"https://cards.scryfall.io/art_crop/front/0/e/0e8f6e6e-7c35-4281-b31c-266382f052cc.jpg",
+		"A highly synergistic 100-card goblin deck ready to play out of the box. Includes tokens and a deck box.",
+	).Scan(&deckID)
+
+	if err == nil {
+		db.Exec(`INSERT INTO product_storage (product_id, storage_id, quantity) VALUES ($1, $2, 5)`, deckID, storageIDs[0])
+		db.Exec(`INSERT INTO product_category (product_id, category_id) VALUES ($1, $2)`, deckID, cats["featured"])
+
+		// Add some deck cards
+		deckCards := []struct{ Name, Set, CN string; Qty int }{
+			{"Krenko, Mob Boss", "rvr", "114", 1},
+			{"Goblin Chieftain", "jmp", "324", 1},
+			{"Goblin Warchief", "dom", "130", 1},
+			{"Mountain", "usg", "343", 35},
+		}
+
+		for _, dc := range deckCards {
+			db.Exec(`
+				INSERT INTO deck_card (product_id, name, set_code, collector_number, quantity)
+				VALUES ($1, $2, $3, $4, $5)
+			`, deckID, dc.Name, dc.Set, dc.CN, dc.Qty)
+		}
+	}
+
+	// 7. Bounties
 	logger.Info("Seeding bounties...")
 	for i := 0; i < 15; i++ {
 		db.Exec(`

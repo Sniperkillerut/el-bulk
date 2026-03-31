@@ -95,6 +95,19 @@ type Product struct {
 
 	// CartCount is the number of unique customers who have this product in a pending order.
 	CartCount       int               `db:"-"                  json:"cart_count"`
+
+	// DeckCards handles the cards included in a store_exclusives Deck
+	DeckCards       []DeckCard        `db:"-"                  json:"deck_cards,omitempty"`
+}
+
+type DeckCard struct {
+	ID              string `db:"id"               json:"id"`
+	ProductID       string `db:"product_id"       json:"product_id"`
+	Name            string `db:"name"             json:"name"`
+	SetCode         string `db:"set_code"         json:"set_code,omitempty"`
+	CollectorNumber string `db:"collector_number" json:"collector_number,omitempty"`
+	Quantity        int    `db:"quantity"         json:"quantity"`
+	ImageURL        string `db:"image_url"        json:"image_url,omitempty"`
 }
 
 // ComputePrice calculates the COP price for this product given the exchange rates.
@@ -154,6 +167,8 @@ type ProductInput struct {
 	Frame        *string  `json:"frame,omitempty"`
 	FullArt      bool     `json:"full_art"`
 	Textless     bool     `json:"textless"`
+
+	DeckCards    []DeckCard `json:"deck_cards,omitempty"`
 }
 
 // Settings holds admin-configurable global settings and contact info.

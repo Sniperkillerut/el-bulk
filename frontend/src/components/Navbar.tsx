@@ -115,6 +115,10 @@ export default function Navbar() {
               style={{ textDecoration: 'none' }}>
               Accessories
             </Link>
+            <Link href="/store-exclusives" className="text-sm font-medium text-[var(--gold-dark)] transition-colors hover:text-[var(--gold)]"
+              style={{ textDecoration: 'none' }}>
+              Store Exclusives
+            </Link>
             <Link href="/notices" className="text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--gold-dark)]"
               style={{ textDecoration: 'none' }}>
               Notices
@@ -236,6 +240,10 @@ export default function Navbar() {
               <Link href="/accessories" onClick={() => setMobileOpen(false)}
                 className="block py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--gold-dark)]" style={{ textDecoration: 'none' }}>
                 Accessories
+              </Link>
+              <Link href="/store-exclusives" onClick={() => setMobileOpen(false)}
+                className="block py-2 text-sm font-medium text-[var(--gold-dark)] transition-colors hover:text-[var(--gold)]" style={{ textDecoration: 'none' }}>
+                Store Exclusives
               </Link>
               <Link href="/contact" onClick={() => setMobileOpen(false)}
                 className="block py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--gold-dark)]" style={{ textDecoration: 'none' }}>

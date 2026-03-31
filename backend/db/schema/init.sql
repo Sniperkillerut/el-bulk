@@ -4,6 +4,9 @@
 -- 1. Extensions
 \i extensions.sql
 
+-- 1.5 Utility Functions
+\i functions/fn_update_updated_at.sql
+
 -- 2. Independent Tables
 \i tables/setting.sql
 \i tables/tcg.sql
@@ -19,6 +22,7 @@
 
 -- 3. Dependent Tables
 \i tables/product.sql
+\i tables/deck_card.sql
 \i tables/product_category.sql
 \i tables/product_storage.sql
 \i tables/order.sql
@@ -26,7 +30,6 @@
 \i tables/customer_note.sql
 
 -- 4. Functions & Stored Procedures
-\i functions/fn_update_updated_at.sql
 \i functions/fn_update_product_stock.sql
 \i functions/fn_get_product_detail.sql
 \i functions/fn_bulk_upsert_product.sql

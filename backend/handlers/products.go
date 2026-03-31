@@ -136,6 +136,32 @@ func (h *ProductHandler) saveProductCategories(productID string, categoryIDs []s
 	}
 }
 
+func (h *ProductHandler) saveDeckCards(productID string, cards []models.DeckCard) {
+	_, err := h.DB.Exec("DELETE FROM deck_card WHERE product_id = $1", productID)
+	if err != nil {
+		logger.Error("Error clearing deck_card for %s: %v", productID, err)
+	}
+
+	if len(cards) == 0 {
+		return
+	}
+
+	query := "INSERT INTO deck_card (product_id, name, set_code, collector_number, quantity, image_url) VALUES "
+	values := make([]interface{}, 0, len(cards)*6)
+	placeholders := make([]string, 0, len(cards))
+
+	for i, c := range cards {
+		placeholders = append(placeholders, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d)", i*6+1, i*6+2, i*6+3, i*6+4, i*6+5, i*6+6))
+		values = append(values, productID, c.Name, c.SetCode, c.CollectorNumber, c.Quantity, c.ImageURL)
+	}
+
+	query += strings.Join(placeholders, ", ")
+	_, err = h.DB.Exec(query, values...)
+	if err != nil {
+		logger.Error("Error bulk inserting deck_card for %s: %v", productID, err)
+	}
+}
+
 func (h *ProductHandler) saveProductStorage(productID string, items []models.StorageLocation) {
 	_, err := h.DB.Exec("DELETE FROM product_storage WHERE product_id = $1", productID)
 	if err != nil {
@@ -231,6 +257,49 @@ func (h *ProductHandler) populateCategories(products []models.Product, isAdmin b
 	}
 }
 
+func (h *ProductHandler) populateDeckCards(products []models.Product) {
+	if len(products) == 0 {
+		return
+	}
+	var deckPids []string
+	for _, p := range products {
+		if p.Category == "store_exclusives" {
+			deckPids = append(deckPids, p.ID)
+		}
+	}
+	if len(deckPids) == 0 {
+		return
+	}
+
+	sql := "SELECT id, product_id, name, set_code, collector_number, quantity, image_url FROM deck_card WHERE product_id IN (?)"
+	query, args, err := sqlx.In(sql, deckPids)
+	if err != nil {
+		logger.Error("Error creating IN query for populateDeckCards: %v", err)
+		return
+	}
+	query = h.DB.Rebind(query)
+	var rows []models.DeckCard
+	if err := h.DB.Select(&rows, query, args...); err != nil {
+		logger.Error("Error selecting deck_cards: %v", err)
+		return
+	}
+
+	cardMap := make(map[string][]models.DeckCard)
+	for _, r := range rows {
+		cardMap[r.ProductID] = append(cardMap[r.ProductID], r)
+	}
+
+	for i := range products {
+		if products[i].Category == "store_exclusives" {
+			if cards, ok := cardMap[products[i].ID]; ok {
+				products[i].DeckCards = cards
+			} else {
+				products[i].DeckCards = []models.DeckCard{}
+			}
+		}
+	}
+}
+
 func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	q := r.URL.Query()
@@ -286,6 +355,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 		models.Product
 		StoredInJSON   []byte `db:"stored_in_json"`
 		CategoriesJSON []byte `db:"categories_json"`
+		DeckCardsJSON  []byte `db:"deck_cards_json"`
 	}
 
 	if err := h.DB.Select(&rows, listQuery, listArgs...); err != nil {
@@ -311,6 +381,9 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 				}
 				products[i].Categories = filtered
 			}
+		}
+		if r.DeckCardsJSON != nil {
+			json.Unmarshal(r.DeckCardsJSON, &products[i].DeckCards)
 		}
 	}
 
@@ -429,6 +502,10 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	h.saveProductCategories(product.ID, input.CategoryIDs)
 	h.saveProductStorage(product.ID, input.StorageItems)
+	if input.Category == "store_exclusives" {
+		h.saveDeckCards(product.ID, input.DeckCards)
+		product.DeckCards = input.DeckCards
+	}
 
 	products := []models.Product{product}
 	h.populatePrices(products)
@@ -478,6 +555,10 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	h.saveProductCategories(product.ID, input.CategoryIDs)
 	h.saveProductStorage(product.ID, input.StorageItems)
+	if input.Category == "store_exclusives" {
+		h.saveDeckCards(product.ID, input.DeckCards)
+		product.DeckCards = input.DeckCards
+	}
 
 	products := []models.Product{product}
 	h.populatePrices(products)

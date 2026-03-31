@@ -19,7 +19,7 @@ interface FiltersState {
 
 interface ProductGridProps {
   tcg: string;
-  category: 'singles' | 'sealed' | 'accessories';
+  category: 'singles' | 'sealed' | 'accessories' | 'store_exclusives';
   title: string;
   subtitle?: string;
 }

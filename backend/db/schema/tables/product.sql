@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS product (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name              TEXT NOT NULL,
   tcg               TEXT NOT NULL,
-  category          TEXT NOT NULL CHECK (category IN ('singles', 'sealed', 'accessories')),
+  category          TEXT NOT NULL CHECK (category IN ('singles', 'sealed', 'accessories', 'store_exclusives')),
   set_name          TEXT,
   set_code          TEXT,
   collector_number  TEXT,

@@ -1,12 +1,12 @@
-import { Product, StoredIn, CustomCategory, Condition, FoilTreatment, CardTreatment, PriceSource } from '@/lib/types';
+import { Product, StoredIn, CustomCategory, Condition, FoilTreatment, CardTreatment, PriceSource, DeckCard } from '@/lib/types';
 
-export type TabId = 'variant' | 'pricing';
+export type TabId = 'variant' | 'pricing' | 'deck';
 
 export interface FormState {
   id?: string;
   name: string;
   tcg: string;
-  category: 'singles' | 'sealed' | 'accessories';
+  category: 'singles' | 'sealed' | 'accessories' | 'store_exclusives';
   set_name: string;
   set_code: string;
   condition: Condition;
@@ -39,6 +39,7 @@ export interface FormState {
   textless: boolean;
   category_ids: string[];
   storage_items: { stored_in_id: string; quantity: number }[];
+  deck_cards: DeckCard[];
 }
 
 export interface ProductEditModalProps {

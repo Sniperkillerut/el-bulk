@@ -15,6 +15,7 @@ import {
 import ScryfallPopulate from './product/ScryfallPopulate';
 import VariantTab from './product/tabs/VariantTab';
 import PricingTab from './product/tabs/PricingTab';
+import DeckCardsTab from './product/tabs/DeckCardsTab';
 import { FormState, TabId, ProductEditModalProps } from './product/types';
 
 export const EMPTY_FORM: FormState = {
@@ -28,7 +29,7 @@ export const EMPTY_FORM: FormState = {
   is_legendary: false, is_historic: false, is_land: false, is_basic_land: false,
   art_variation: '', oracle_text: '', artist: '', type_line: '',
   border_color: '', frame: '', full_art: false, textless: false,
-  storage_items: []
+  storage_items: [], deck_cards: []
 };
 
 export default function ProductEditModal({
@@ -83,6 +84,7 @@ export default function ProductEditModal({
         full_art: editProduct.full_art,
         textless: editProduct.textless,
         storage_items: editProduct.stored_in?.map(s => ({ stored_in_id: s.stored_in_id, quantity: s.quantity })) || [],
+        deck_cards: editProduct.deck_cards || [],
       });
       setProductStorage((editProduct.stored_in || []).map(d => ({
         stored_in_id: d.stored_in_id, name: d.name, quantity: d.quantity
@@ -142,6 +144,7 @@ export default function ProductEditModal({
         frame: form.frame || undefined,
         full_art: form.full_art, 
         textless: form.textless,
+        deck_cards: form.deck_cards,
       };
       
       if (payload.price_source === 'manual') payload.price_reference = undefined;
@@ -353,9 +356,12 @@ export default function ProductEditModal({
     }));
   };
 
+  const isStoreExclusive = form.category === 'store_exclusives';
+
   const TABS: { id: TabId; label: string; show: boolean }[] = [
     { id: 'variant', label: 'VARIANT & IDENTITY', show: true },
     { id: 'pricing', label: 'PRICING & STOCK', show: true },
+    { id: 'deck', label: 'DECK BUILDER', show: isStoreExclusive },
   ];
 
   return (
@@ -399,7 +405,7 @@ export default function ProductEditModal({
               className="bg-white/50 border-white/40 focus:bg-white transition-all" 
               value={form.category} 
               onChange={e => {
-                const newCat = e.target.value as 'singles' | 'sealed' | 'accessories';
+                const newCat = e.target.value as 'singles' | 'sealed' | 'accessories' | 'store_exclusives';
                 setForm(f => ({ ...EMPTY_FORM, tcg: f.tcg, category: newCat, condition: f.condition }));
                 setScryfallPrints([]);
               }}
@@ -407,6 +413,7 @@ export default function ProductEditModal({
               <option value="singles">Singles</option>
               <option value="sealed">Sealed</option>
               <option value="accessories">Accessories</option>
+              <option value="store_exclusives">Store Exclusives</option>
             </select>
           </div>
           <div style={{ minWidth: '100px' }}>
@@ -498,6 +505,12 @@ export default function ProductEditModal({
                   const loc = storageLocations.find(l => l.id === id);
                   if (loc) setProductStorage(prev => [...prev, { stored_in_id: loc.id, name: loc.name, quantity: 0 }]);
                 }}
+              />
+            )}
+            {activeTab === 'deck' && isStoreExclusive && (
+              <DeckCardsTab 
+                form={form} 
+                onUpdate={u => setForm(f => ({ ...f, ...u }))} 
               />
             )}
           </div>

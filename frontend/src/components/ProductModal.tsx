@@ -21,12 +21,7 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
   const { addItem } = useCart();
 
   useEffect(() => {
-    if (initialProduct) {
-      setProduct(initialProduct);
-      setLoading(false);
-      return;
-    }
-
+    if (initialProduct) return;
     if (!productId) return;
 
     setLoading(true);
@@ -211,6 +206,23 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
                   </div>
                 )}
               </div>
+
+              {/* Deck Cards List for Store Exclusives */}
+              {product.category === 'store_exclusives' && product.deck_cards && product.deck_cards.length > 0 && (
+                <div className="mt-4 border-t border-kraft-dark pt-4">
+                  <h3 className="font-mono-stack text-xs uppercase text-text-muted mb-2 font-bold tracking-widest">
+                    Deck Contents ({product.deck_cards.reduce((sum, c) => sum + c.quantity, 0)} cards)
+                  </h3>
+                  <div className="max-h-32 overflow-y-auto custom-scrollbar pr-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs font-mono">
+                    {product.deck_cards.map(card => (
+                      <div key={card.id} className="flex justify-between border-b border-dashed border-kraft-dark/30 py-1">
+                        <span className="truncate pr-2">{card.quantity}x {card.name}</span>
+                        <span className="text-[9px] text-text-muted">{card.set_code?.toUpperCase()}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Actions */}
               <div className="mt-8">

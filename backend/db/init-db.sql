@@ -1,1 +1,2 @@
-\i /schema/init.sql
+\cd /schema
+\i init.sql

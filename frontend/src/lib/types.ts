@@ -5,11 +5,22 @@ export type Condition = 'NM' | 'LP' | 'MP' | 'HP' | 'DMG';
 
 export type PriceSource = 'tcgplayer' | 'cardmarket' | 'manual';
 
+export interface DeckCard {
+  id: string;
+  product_id?: string;
+  name: string;
+  set_code?: string;
+  collector_number?: string;
+  quantity: number;
+  image_url?: string;
+}
+
 export interface Product {
   id: string;
   name: string;
   tcg: string;
-  category: 'singles' | 'sealed' | 'accessories';
+  category: 'singles' | 'sealed' | 'accessories' | 'store_exclusives';
+  deck_cards?: DeckCard[];
   set_name?: string;
   set_code?: string;
   condition?: Condition;

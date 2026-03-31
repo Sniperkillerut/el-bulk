@@ -23,15 +23,27 @@ BEGIN
                 'slug', cc.slug,
                 'show_badge', cc.show_badge,
                 'is_active', cc.is_active,
-                'searchable', cc.searchable
-            ))
-            FROM product_category pc
-            JOIN custom_category cc ON pc.category_id = cc.id
-            WHERE pc.product_id = p_id
-        ), '[]'::jsonb)
-    ) INTO result
-    FROM product p
-    WHERE p.id = p_id;
+            'searchable', cc.searchable
+        ))
+        FROM product_category pc
+        JOIN custom_category cc ON pc.category_id = cc.id
+        WHERE pc.product_id = p_id
+    ), '[]'::jsonb),
+    'deck_cards', COALESCE((
+        SELECT jsonb_agg(jsonb_build_object(
+            'id', dc.id,
+            'name', dc.name,
+            'set_code', dc.set_code,
+            'collector_number', dc.collector_number,
+            'quantity', dc.quantity,
+            'image_url', dc.image_url
+        ))
+        FROM deck_card dc
+        WHERE dc.product_id = p_id
+    ), '[]'::jsonb)
+) INTO result
+FROM product p
+WHERE p.id = p_id;
 
     RETURN result;
 END;
