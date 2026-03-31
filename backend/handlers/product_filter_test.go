@@ -27,11 +27,9 @@ func TestProductHandler_List_FiltersInactiveTCG(t *testing.T) {
 	mock.ExpectQuery("(?i)SELECT .* FROM view_product_enriched p").
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "tcg"}).AddRow("1", "Black Lotus", "mtg"))
 
-	// 3. Facets query (getFacets calls buildFilters 7 times for different dimensions)
-	for i := 0; i < 7; i++ {
-		mock.ExpectQuery("(?i)SELECT .* COUNT\\(\\*\\) FROM product p").
-			WillReturnRows(sqlmock.NewRows([]string{"val", "count"}).AddRow("NM", 1))
-	}
+	// 3. Facets query (one single call to the special function)
+	mock.ExpectQuery("(?i)SELECT fn_get_product_facets").
+		WillReturnRows(sqlmock.NewRows([]string{"fn_get_product_facets"}).AddRow([]byte(`{"condition":{"NM":1}}`)))
 
 	// 4. Mock enrichment queries (populatePrices, populateStorage, populateCategories)
 	mock.ExpectQuery("(?i)SELECT .* FROM product_prices").WillReturnRows(sqlmock.NewRows([]string{"id"}))

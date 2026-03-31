@@ -40,6 +40,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [logic, setLogic] = useState<'and' | 'or'>('or');
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -63,7 +64,8 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
     color: filters.color.join(',') || undefined,
     sort_by: sortBy || undefined,
     sort_dir: sortDir || undefined,
-  }), [tcg, category, page, debouncedSearch, filters, sortBy, sortDir]);
+    logic: logic !== 'or' ? logic : undefined,
+  }), [tcg, category, page, debouncedSearch, filters, sortBy, sortDir, logic]);
 
   const { data: res, error, isLoading: loadingResult } = useSWR(
     ['/api/products', fetcherArgs],
@@ -129,6 +131,38 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
         {/* Sidebar */}
         <aside className="w-full md:w-64 shrink-0">
           <div className="sticky top-24 flex flex-col gap-6">
+            {/* Logic Toggle */}
+            <div className="flex flex-col gap-2">
+              <p className="text-[10px] font-bold text-text-muted uppercase font-mono-stack">Search Strategy</p>
+              <div className="flex p-1 bg-kraft-mid/30 rounded-md border border-kraft-dark/20">
+                <button
+                  onClick={() => { setLogic('or'); setPage(1); }}
+                  className={`flex-1 py-1.5 px-2 text-[10px] font-bold rounded transition-all font-mono-stack ${
+                    logic === 'or' 
+                      ? 'bg-ink-deep text-white shadow-sm' 
+                      : 'text-text-muted hover:text-ink-deep'
+                  }`}
+                >
+                  BROAD (OR)
+                </button>
+                <button
+                  onClick={() => { setLogic('and'); setPage(1); }}
+                  className={`flex-1 py-1.5 px-2 text-[10px] font-bold rounded transition-all font-mono-stack ${
+                    logic === 'and' 
+                      ? 'bg-ink-deep text-white shadow-sm' 
+                      : 'text-text-muted hover:text-ink-deep'
+                  }`}
+                >
+                  NARROW (AND)
+                </button>
+              </div>
+              <p className="text-[8px] italic text-text-muted/80 leading-tight">
+                {logic === 'or' 
+                  ? "Broadens results: match ANY selected filter." 
+                  : "Narrows results: match ALL selected filters."}
+              </p>
+            </div>
+
             {/* Search (Mobile/Desktop sidebar) */}
             <div>
               <p className="text-[10px] font-bold text-text-muted uppercase mb-2 font-mono-stack">Keywords</p>

@@ -246,7 +246,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	search := q.Get("search")
 	storageID := q.Get("storage_id")
 	foil := q.Get("foil")
-	treatment := q.Get("treatment")
+		treatment := q.Get("treatment")
 	condition := q.Get("condition")
 	collection := q.Get("collection")
 	rarity := q.Get("rarity")
@@ -254,6 +254,10 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	color := q.Get("color")
 	sortBy := q.Get("sort_by")
 	sortDir := q.Get("sort_dir")
+	filterLogic := q.Get("logic")
+	if filterLogic == "" {
+		filterLogic = "or"
+	}
 
 	isAdmin := strings.Contains(r.URL.Path, "/admin/")
 	maxPageSize := 100
@@ -262,7 +266,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 	page, pageSize, offset := httputil.GetPagination(r, 20, maxPageSize)
 
-	fromClause, conditions, args := h.buildFilters(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color, isAdmin)
+	fromClause, conditions, args := h.buildFilters(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color, filterLogic, isAdmin)
 
 	where := ""
 	if len(conditions) > 0 {
@@ -330,7 +334,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 		Total:       total,
 		Page:        page,
 		PageSize:    pageSize,
-		Facets:      h.getFacets(tcg, category, search, storageID, foil, treatment, condition, rarity, language, color, collection, isAdmin),
+		Facets:      h.getFacets(tcg, category, search, storageID, foil, treatment, condition, rarity, language, color, collection, filterLogic, isAdmin),
 		QueryTimeMS: time.Since(start).Milliseconds(),
 	})
 }
@@ -635,10 +639,10 @@ func (h *ProductHandler) UpdateStorage(w http.ResponseWriter, r *http.Request) {
 	h.GetStorage(w, r)
 }
 
-func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treatment, condition, rarity, language, color, collection string, isAdmin bool) models.Facets {
+func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treatment, condition, rarity, language, color, collection, filterLogic string, isAdmin bool) models.Facets {
 	var result []byte
-	err := h.DB.Get(&result, "SELECT fn_get_product_facets($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
-		tcg, category, search, storageID, foil, treatment, condition, rarity, language, color, collection, isAdmin)
+	err := h.DB.Get(&result, "SELECT fn_get_product_facets($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)",
+		tcg, category, search, storageID, foil, treatment, condition, rarity, language, color, collection, filterLogic, isAdmin)
 
 	if err != nil {
 		logger.Error("Error calling fn_get_product_facets: %v", err)
@@ -724,28 +728,58 @@ func (h *ProductHandler) buildOrderBy(sortBy, sortDir, search string, argsLen in
 	return col + " " + dir + ", p.created_at DESC"
 }
 
-
-func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color string, isAdmin bool) (string, []string, []interface{}) {
+func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color, filterLogic string, isAdmin bool) (string, []string, []interface{}) {
 	fromClause := "FROM product p"
 	builder := sqlutil.NewBuilder(fromClause)
 
+	var mandatory []string
+	var optional []string
+
 	if !isAdmin {
 		builder.BaseQuery += " LEFT JOIN tcg t ON p.tcg = t.id"
-		builder.Conditions = append(builder.Conditions, "(t.is_active IS NULL OR t.is_active = true)")
+		mandatory = append(mandatory, "(t.is_active IS NULL OR t.is_active = true)")
 	}
 
 	if storageID != "" {
 		builder.BaseQuery = "FROM product p JOIN product_storage ps ON p.id = ps.product_id"
-		builder.AddCondition("ps.storage_id = ?", storageID)
-		builder.Conditions = append(builder.Conditions, "ps.quantity > 0")
+		placeholder := fmt.Sprintf("$%d", len(builder.Args)+1)
+		builder.Args = append(builder.Args, storageID)
+		mandatory = append(mandatory, "ps.storage_id = "+placeholder)
+		mandatory = append(mandatory, "ps.quantity > 0")
 	}
 
 	if tcg != "" {
-		builder.AddCondition("p.tcg = ?", strings.ToLower(tcg))
+		placeholder := fmt.Sprintf("$%d", len(builder.Args)+1)
+		builder.Args = append(builder.Args, strings.ToLower(tcg))
+		mandatory = append(mandatory, "p.tcg = "+placeholder)
 	}
 	if category != "" {
-		builder.AddCondition("p.category = ?", strings.ToLower(category))
+		placeholder := fmt.Sprintf("$%d", len(builder.Args)+1)
+		builder.Args = append(builder.Args, strings.ToLower(category))
+		mandatory = append(mandatory, "p.category = "+placeholder)
 	}
+	if search != "" {
+		// Mandatory AND for search terms
+		searchTerms := strings.Fields(search)
+		for _, term := range searchTerms {
+			// Using 8 identical arguments for the various ILIKE fields
+			placeholderIdx := len(builder.Args) + 1
+			for j := 0; j < 8; j++ {
+				builder.Args = append(builder.Args, "%"+term+"%")
+			}
+			p1 := fmt.Sprintf("$%d", placeholderIdx)
+			p2 := fmt.Sprintf("$%d", placeholderIdx+1)
+			p3 := fmt.Sprintf("$%d", placeholderIdx+2)
+			p4 := fmt.Sprintf("$%d", placeholderIdx+3)
+			p5 := fmt.Sprintf("$%d", placeholderIdx+4)
+			p6 := fmt.Sprintf("$%d", placeholderIdx+5)
+			p7 := fmt.Sprintf("$%d", placeholderIdx+6)
+			p8 := fmt.Sprintf("$%d", placeholderIdx+7)
+			
+			mandatory = append(mandatory, fmt.Sprintf("(p.name ILIKE %s OR p.set_name ILIKE %s OR p.set_code ILIKE %s OR p.artist ILIKE %s OR p.collector_number ILIKE %s OR p.oracle_text ILIKE %s OR p.type_line ILIKE %s OR p.promo_type ILIKE %s)", p1, p2, p3, p4, p5, p6, p7, p8))
+		}
+	}
+
 	if foil != "" {
 		vals := strings.Split(foil, ",")
 		placeholders := make([]string, len(vals))
@@ -754,7 +788,7 @@ func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, tr
 			placeholders[i] = placeholder
 			builder.Args = append(builder.Args, strings.ToLower(v))
 		}
-		builder.Conditions = append(builder.Conditions, "LOWER(p.foil_treatment) IN ("+strings.Join(placeholders, ",")+")")
+		optional = append(optional, "LOWER(p.foil_treatment) IN ("+strings.Join(placeholders, ",")+")")
 	}
 	if treatment != "" {
 		vals := strings.Split(treatment, ",")
@@ -782,7 +816,7 @@ func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, tr
 			filter += " OR p.full_art = true"
 		}
 		filter += ")"
-		builder.Conditions = append(builder.Conditions, filter)
+		optional = append(optional, filter)
 	}
 	if condition != "" {
 		vals := strings.Split(condition, ",")
@@ -792,7 +826,7 @@ func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, tr
 			placeholders[i] = placeholder
 			builder.Args = append(builder.Args, strings.ToUpper(v))
 		}
-		builder.Conditions = append(builder.Conditions, "p.condition IN ("+strings.Join(placeholders, ",")+")")
+		optional = append(optional, "p.condition IN ("+strings.Join(placeholders, ",")+")")
 	}
 	if collection != "" {
 		vals := strings.Split(collection, ",")
@@ -802,8 +836,7 @@ func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, tr
 			placeholders[i] = placeholder
 			builder.Args = append(builder.Args, strings.ToLower(v))
 		}
-		// Use EXISTS to avoid row duplication when a product matches multiple selected collections
-		builder.Conditions = append(builder.Conditions, fmt.Sprintf(
+		optional = append(optional, fmt.Sprintf(
 			"EXISTS (SELECT 1 FROM product_category pc_col JOIN custom_category c_col ON pc_col.category_id = c_col.id WHERE pc_col.product_id = p.id AND c_col.slug IN (%s))",
 			strings.Join(placeholders, ","),
 		))
@@ -816,7 +849,7 @@ func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, tr
 			placeholders[i] = placeholder
 			builder.Args = append(builder.Args, strings.ToLower(v))
 		}
-		builder.Conditions = append(builder.Conditions, "LOWER(p.rarity) IN ("+strings.Join(placeholders, ",")+")")
+		optional = append(optional, "LOWER(p.rarity) IN ("+strings.Join(placeholders, ",")+")")
 	}
 	if language != "" {
 		vals := strings.Split(language, ",")
@@ -826,7 +859,7 @@ func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, tr
 			placeholders[i] = placeholder
 			builder.Args = append(builder.Args, strings.ToLower(v))
 		}
-		builder.Conditions = append(builder.Conditions, "LOWER(p.language) IN ("+strings.Join(placeholders, ",")+")")
+		optional = append(optional, "LOWER(p.language) IN ("+strings.Join(placeholders, ",")+")")
 	}
 	if color != "" {
 		vals := strings.Split(color, ",")
@@ -836,35 +869,18 @@ func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, tr
 			colorConds[i] = "p.color_identity ILIKE " + placeholder
 			builder.Args = append(builder.Args, "%"+strings.ToUpper(v)+"%")
 		}
-		builder.Conditions = append(builder.Conditions, "("+strings.Join(colorConds, " OR ")+")")
-	}
-	if search != "" {
-		searchPattern := "%" + search + "%"
-		placeholderName := fmt.Sprintf("$%d", len(builder.Args)+1)
-		placeholderPattern := fmt.Sprintf("$%d", len(builder.Args)+2)
-		builder.Conditions = append(builder.Conditions, fmt.Sprintf(`(
-			p.name %% %s OR 
-			p.name ILIKE %s OR 
-			COALESCE(p.set_name, '') ILIKE %s OR
-			COALESCE(p.set_code, '') ILIKE %s OR
-			COALESCE(p.artist, '') ILIKE %s OR
-			COALESCE(p.collector_number, '') ILIKE %s OR
-			COALESCE(p.oracle_text, '') ILIKE %s OR
-			COALESCE(p.type_line, '') ILIKE %s OR
-			COALESCE(p.promo_type, '') ILIKE %s
-		)`, placeholderName, placeholderPattern, placeholderPattern, placeholderPattern, placeholderPattern, placeholderPattern, placeholderPattern, placeholderPattern, placeholderPattern))
-		builder.Args = append(builder.Args, search, searchPattern)
+		optional = append(optional, "("+strings.Join(colorConds, " OR ")+")")
 	}
 
-	finalQuery, args := builder.Build()
-	// Split finalQuery back into parts for the legacy return signature
-	splitIdx := strings.Index(finalQuery, " WHERE ")
-	from := finalQuery
-	var conds []string
-	if splitIdx != -1 {
-		from = finalQuery[:splitIdx]
-		conds = strings.Split(finalQuery[splitIdx+7:], " AND ")
+	finalConditions := mandatory
+	if len(optional) > 0 {
+		opLogic := " OR "
+		if strings.ToLower(filterLogic) == "and" {
+			opLogic = " AND "
+		}
+		optionalBlock := "(" + strings.Join(optional, opLogic) + ")"
+		finalConditions = append(finalConditions, optionalBlock)
 	}
 
-	return from, conds, args
+	return builder.BaseQuery, finalConditions, builder.Args
 }

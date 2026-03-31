@@ -42,7 +42,7 @@ func TestProductHandler_List(t *testing.T) {
 			WillReturnRows(sqlmock.NewRows([]string{"product_id", "id", "name", "slug", "show_badge", "is_active", "searchable"}).AddRow("p1", "cat1", "Cat 1", "cat1", true, true, true))
 		
 		mock.ExpectQuery("(?i)SELECT fn_get_product_facets").
-			WillReturnRows(sqlmock.NewRows([]string{"fn_get_product_facets"}).AddRow([]byte(`{"condition":[{"val":"NM","count":1}],"foil":[{"val":"non_foil","count":1}]}`)))
+			WillReturnRows(sqlmock.NewRows([]string{"fn_get_product_facets"}).AddRow([]byte(`{"condition":{"NM":1},"foil":{"non_foil":1}}`)))
 
 		req, _ := http.NewRequest("GET", "/api/products?page=1&pageSize=20", nil)
 		rr := httptest.NewRecorder()
