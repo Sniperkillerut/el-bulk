@@ -18,7 +18,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <AdminProvider>
-      <div className="flex h-screen bg-kraft-paper overflow-hidden text-ink-deep">
+      <div className="admin-layout flex h-screen bg-kraft-paper overflow-hidden text-ink-deep">
         <AdminSidebar />
         <main className="flex-1 flex flex-col overflow-hidden relative">
           {children}

@@ -295,6 +295,23 @@ h3 {
   opacity: 1;
 }
 
+/* Reset animations for Admin Pages */
+.admin-layout .card:hover {
+  transform: none !important;
+  box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.05) !important;
+  border-color: var(--ink-border) !important;
+}
+
+.admin-layout .card::after {
+  display: none !important;
+}
+
+.admin-layout .btn-primary:hover,
+.admin-layout .btn-secondary:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
 /* Shoebox lid effect */
 .box-lid {
   border-bottom: 4px solid var(--kraft-dark);
