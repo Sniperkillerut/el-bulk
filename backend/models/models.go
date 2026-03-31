@@ -107,6 +107,7 @@ type DeckCard struct {
 	SetCode         string `db:"set_code"         json:"set_code,omitempty"`
 	CollectorNumber string `db:"collector_number" json:"collector_number,omitempty"`
 	Quantity        int    `db:"quantity"         json:"quantity"`
+	TypeLine        string `db:"type_line"        json:"type_line,omitempty"`
 	ImageURL        string `db:"image_url"        json:"image_url,omitempty"`
 }
 

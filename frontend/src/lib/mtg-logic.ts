@@ -1,4 +1,4 @@
-import { FoilTreatment, CardTreatment, ScryfallCard, PriceSource } from './types';
+import { FoilTreatment, CardTreatment, ScryfallCard, PriceSource, DeckCard } from './types';
 
 /**
  * Extracts the best image URL from a Scryfall card object,
@@ -182,19 +182,19 @@ export function extractMTGMetadata(card: ScryfallCard | undefined) {
   if (!card) return {};
   return {
     language: 'en',
-    color_identity: (card as any).color_identity?.join('') || '',
-    rarity: (card as any).rarity || '',
-    cmc: (card as any).cmc || 0,
+    color_identity: card.color_identity?.join('') || '',
+    rarity: card.rarity || '',
+    cmc: card.cmc || 0,
     collector_number: card.collector_number || '',
     promo_type: (card.promo_types || []).join(',') || 'none',
-    is_legendary: (card as any).type_line?.includes('Legendary') || false,
-    is_land: (card as any).type_line?.includes('Land') || false,
-    is_basic_land: (card as any).type_line?.includes('Basic Land') || false,
-    oracle_text: (card as any).oracle_text || '',
-    artist: (card as any).artist || '',
-    type_line: (card as any).type_line || '',
+    is_legendary: card.type_line?.includes('Legendary') || false,
+    is_land: card.type_line?.includes('Land') || false,
+    is_basic_land: card.type_line?.includes('Basic Land') || false,
+    oracle_text: card.oracle_text || '',
+    artist: card.artist || '',
+    type_line: card.type_line || '',
     border_color: card.border_color || '',
-    frame: (card as any).frame || '',
+    frame: card.frame || '',
     full_art: card.full_art || false,
     textless: card.textless || false,
   };
@@ -258,4 +258,51 @@ export function getSuggestedPrice(card: ScryfallCard | undefined, foil: FoilTrea
 
   // Round to nearest 100 COP as a standard
   return Math.round((ref * rate) / 100) * 100;
+}
+
+/**
+ * Categorizes deck cards by their MTG type (ignoring subtypes)
+ * and returns summary statistics.
+ */
+export function getDeckAnalytics(cards: DeckCard[]) {
+  const counts: Record<string, number> = {
+    Lands: 0,
+    Creatures: 0,
+    Instants: 0,
+    Sorceries: 0,
+    Artifacts: 0,
+    Enchantments: 0,
+    Planeswalkers: 0,
+    Battles: 0,
+    Other: 0
+  };
+
+  let total = 0;
+  cards.forEach(card => {
+    total += card.quantity;
+    if (!card.type_line) {
+      counts.Other += card.quantity;
+      return;
+    }
+    
+    // Split by Em-dash or hyphen and take the first part (types, not subtypes)
+    const typeLine = card.type_line.split(/[—\-]/)[0].toLowerCase();
+    
+    if (typeLine.includes('land')) counts.Lands += card.quantity;
+    else if (typeLine.includes('creature')) counts.Creatures += card.quantity;
+    else if (typeLine.includes('instant')) counts.Instants += card.quantity;
+    else if (typeLine.includes('sorcery')) counts.Sorceries += card.quantity;
+    else if (typeLine.includes('artifact')) counts.Artifacts += card.quantity;
+    else if (typeLine.includes('enchantment')) counts.Enchantments += card.quantity;
+    else if (typeLine.includes('planeswalker')) counts.Planeswalkers += card.quantity;
+    else if (typeLine.includes('battle')) counts.Battles += card.quantity;
+    else counts.Other += card.quantity;
+  });
+
+  const summary = Object.entries(counts)
+    .filter(([, count]) => count > 0)
+    .map(([type, count]) => `${count} ${type.toLowerCase()}`)
+    .join(' - ');
+
+  return { total, counts, summary };
 }

@@ -2,6 +2,7 @@
 
 import { DeckCard } from '@/lib/types';
 import CardImage from './CardImage';
+import { getDeckAnalytics } from '@/lib/mtg-logic';
 
 interface DeckContentsProps {
   cards: DeckCard[];
@@ -16,11 +17,23 @@ interface DeckContentsProps {
 export default function DeckContents({ cards, tcg, className = '' }: DeckContentsProps) {
   if (!cards || cards.length === 0) return null;
 
+  const { total, summary } = getDeckAnalytics(cards);
+
   return (
     <div className={`mt-4 ${className}`}>
-      <h3 className="font-mono-stack text-xs uppercase text-text-muted mb-3 font-bold tracking-widest">
-        Deck Contents ({cards.reduce((sum, c) => sum + c.quantity, 0)} cards)
-      </h3>
+      <div className="mb-4">
+        <h3 className="font-mono-stack text-xs uppercase text-text-muted opacity-70 flex justify-between items-center mb-1 font-bold tracking-widest">
+          <span>Deck Contents</span>
+          <span className="bg-ink-border/10 px-2 py-0.5 rounded-full text-[10px] font-bold text-ink-deep/60">
+            {total} CARDS
+          </span>
+        </h3>
+        {summary && (
+          <p className="text-[10px] font-mono-stack text-text-muted opacity-60 uppercase tracking-tighter">
+            {summary}
+          </p>
+        )}
+      </div>
       <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
         {cards.map((card) => (
           <div key={card.id} className="relative group">

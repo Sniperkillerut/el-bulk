@@ -146,13 +146,13 @@ func (h *ProductHandler) saveDeckCards(productID string, cards []models.DeckCard
 		return
 	}
 
-	query := "INSERT INTO deck_card (product_id, name, set_code, collector_number, quantity, image_url) VALUES "
-	values := make([]interface{}, 0, len(cards)*6)
+	query := "INSERT INTO deck_card (product_id, name, set_code, collector_number, quantity, type_line, image_url) VALUES "
+	values := make([]interface{}, 0, len(cards)*7)
 	placeholders := make([]string, 0, len(cards))
 
 	for i, c := range cards {
-		placeholders = append(placeholders, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d)", i*6+1, i*6+2, i*6+3, i*6+4, i*6+5, i*6+6))
-		values = append(values, productID, c.Name, c.SetCode, c.CollectorNumber, c.Quantity, c.ImageURL)
+		placeholders = append(placeholders, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d, $%d)", i*7+1, i*7+2, i*7+3, i*7+4, i*7+5, i*7+6, i*7+7))
+		values = append(values, productID, c.Name, c.SetCode, c.CollectorNumber, c.Quantity, c.TypeLine, c.ImageURL)
 	}
 
 	query += strings.Join(placeholders, ", ")
@@ -271,7 +271,7 @@ func (h *ProductHandler) populateDeckCards(products []models.Product) {
 		return
 	}
 
-	sql := "SELECT id, product_id, name, set_code, collector_number, quantity, image_url FROM deck_card WHERE product_id IN (?)"
+	sql := "SELECT id, product_id, name, set_code, collector_number, quantity, type_line, image_url FROM deck_card WHERE product_id IN (?)"
 	query, args, err := sqlx.In(sql, deckPids)
 	if err != nil {
 		logger.Error("Error creating IN query for populateDeckCards: %v", err)

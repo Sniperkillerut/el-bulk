@@ -12,6 +12,7 @@ export interface DeckCard {
   set_code?: string;
   collector_number?: string;
   quantity: number;
+  type_line?: string;
   image_url?: string;
 }
 
@@ -352,6 +353,10 @@ export interface ScryfallCard {
   frame?: string;
   promo?: boolean;
   digital?: boolean;
+  color_identity?: string[];
+  rarity?: string;
+  cmc?: number;
+  oracle_text?: string;
 }
 
 export interface Bounty {

@@ -338,18 +338,18 @@ func seedFullData(db *sqlx.DB, tcgIDs map[string]string, cats map[string]string,
 		db.Exec(`INSERT INTO product_category (product_id, category_id) VALUES ($1, $2)`, deckID, cats["featured"])
 
 		// Add some deck cards
-		deckCards := []struct{ Name, Set, CN string; Qty int }{
-			{"Krenko, Mob Boss", "rvr", "114", 1},
-			{"Goblin Chieftain", "jmp", "324", 1},
-			{"Goblin Warchief", "dom", "130", 1},
-			{"Mountain", "usg", "343", 35},
+		deckCards := []struct{ Name, Set, CN, TypeLine string; Qty int }{
+			{"Krenko, Mob Boss", "rvr", "114", "Legendary Creature — Goblin Warrior", 1},
+			{"Goblin Chieftain", "jmp", "324", "Creature — Goblin", 1},
+			{"Goblin Warchief", "dom", "130", "Creature — Goblin Warrior", 1},
+			{"Mountain", "usg", "343", "Basic Land — Mountain", 35},
 		}
 
 		for _, dc := range deckCards {
 			db.Exec(`
-				INSERT INTO deck_card (product_id, name, set_code, collector_number, quantity)
-				VALUES ($1, $2, $3, $4, $5)
-			`, deckID, dc.Name, dc.Set, dc.CN, dc.Qty)
+				INSERT INTO deck_card (product_id, name, set_code, collector_number, quantity, type_line)
+				VALUES ($1, $2, $3, $4, $5, $6)
+			`, deckID, dc.Name, dc.Set, dc.CN, dc.Qty, dc.TypeLine)
 		}
 	}
 

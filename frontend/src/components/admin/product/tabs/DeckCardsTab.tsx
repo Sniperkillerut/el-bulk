@@ -5,6 +5,8 @@ import { FormState } from '../types';
 import { DeckCard, ScryfallCard } from '@/lib/types';
 import ScryfallPopulate from '../ScryfallPopulate';
 import { getScryfallImage } from '@/lib/mtg-logic';
+import { getDeckAnalytics } from '@/lib/mtg-logic';
+import CardImage from '@/components/CardImage';
 
 interface DeckCardsTabProps {
   form: FormState;
@@ -36,7 +38,7 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
       while (nextUrl) {
         const r: Response = await fetch(nextUrl);
         if (!r.ok) break;
-        const b: any = await r.json();
+        const b: { data: ScryfallCard[]; has_more: boolean; next_page?: string } = await r.json();
         if (b.data) {
           const paperOnly = (b.data as ScryfallCard[]).filter(c => !c.digital);
           results = results.concat(paperOnly);
@@ -47,14 +49,14 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
 
       if (results.length === 0) throw new Error('No printings found');
       
-      const oracleId = (results[0] as any).oracle_id;
+      const oracleId = (results[0] as unknown as { oracle_id?: string }).oracle_id;
       if (oracleId) {
         let oNextUrl: string | null = `https://api.scryfall.com/cards/search?q=oracle_id:${oracleId}+game:paper&unique=prints&order=released`;
         let oResults: ScryfallCard[] = [];
         while (oNextUrl) {
           const r: Response = await fetch(oNextUrl);
           if (!r.ok) break;
-          const b: any = await r.json();
+          const b: { data: ScryfallCard[]; has_more: boolean; next_page?: string } = await r.json();
           if (b.data) {
             const paperOnly = (b.data as ScryfallCard[]).filter(c => !c.digital);
             oResults = oResults.concat(paperOnly);
@@ -66,7 +68,7 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
       }
 
       setScryfallPrints(results);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
       setScryfallPrints([]);
     } finally {
@@ -81,6 +83,7 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
       set_code: card?.set || searchSet || '',
       collector_number: card?.collector_number || searchCn || '',
       quantity: 1,
+      type_line: card?.type_line || '',
       image_url: card ? (getScryfallImage(card) || '') : ''
     };
     
@@ -107,6 +110,21 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
   const updateCardQty = (id: string, qty: number) => {
     onUpdate({ deck_cards: form.deck_cards.map(c => c.id === id ? { ...c, quantity: Math.max(1, qty) } : c) });
   };
+
+  const editCard = (card: DeckCard) => {
+    setSearchName(card.name);
+    setSearchSet(card.set_code || '');
+    setSearchCn(card.collector_number || '');
+    
+    // Trigger populate with the existing name
+    // (Small delay to ensure setState is processed if needed, though handlePopulate uses params)
+    handlePopulate(card.name);
+    
+    // Optional: Scroll back to top to see the results
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const { total, summary } = getDeckAnalytics(form.deck_cards);
 
   return (
     <div className="space-y-6">
@@ -178,9 +196,19 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
       </div>
 
       <div>
-        <h3 className="font-mono-stack text-xs uppercase tracking-widest text-text-muted mb-4 opacity-70">
-          Current Deck List ({form.deck_cards.reduce((sum, c) => sum + c.quantity, 0)} cards)
-        </h3>
+        <div className="mb-4">
+          <h3 className="font-mono-stack text-xs uppercase tracking-widest text-text-muted opacity-70 flex justify-between items-center mb-1">
+            <span>Current Deck List</span>
+            <span className="bg-ink-border/10 px-2 py-0.5 rounded-full text-[10px] font-bold text-ink-deep/60">
+              {total} CARDS
+            </span>
+          </h3>
+          {summary && (
+            <p className="text-[10px] font-mono-stack text-text-muted opacity-60 uppercase tracking-tighter">
+              {summary}
+            </p>
+          )}
+        </div>
         {form.deck_cards.length === 0 ? (
           <div className="text-sm text-text-muted py-8 text-center bg-white/30 rounded-lg border border-white/20 font-mono-stack">
             Deck is currently empty.
@@ -189,14 +217,14 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
           <div className="flex flex-col gap-2 max-h-96 overflow-y-auto custom-scrollbar p-1">
             {form.deck_cards.map(card => (
               <div key={card.id} className="flex items-center gap-3 p-2 bg-white/60 border border-white/40 rounded-lg shrink-0">
-                {card.image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={card.image_url} alt={card.name} className="w-10 h-14 object-cover rounded-sm border border-ink-border/20 shadow-sm" />
-                ) : (
-                  <div className="w-10 h-14 bg-ink-border/10 rounded-sm flex items-center justify-center text-[8px] text-text-muted text-center leading-tight">
-                    NO<br/>IMG
-                  </div>
-                )}
+                <div className="w-10 h-14 shrink-0 rounded-sm overflow-hidden border border-ink-border/20 shadow-sm shadow-black/5">
+                  <CardImage 
+                    imageUrl={card.image_url} 
+                    name={card.name} 
+                    tcg={form.tcg} 
+                    enableHover={true} 
+                  />
+                </div>
                 <div className="flex flex-col flex-1 min-w-0">
                   <span className="font-bold text-sm truncate">{card.name}</span>
                   <span className="text-[10px] uppercase font-mono-stack text-text-muted truncate">
@@ -210,9 +238,14 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
                   <input type="number" value={card.quantity} onChange={e => updateCardQty(card.id, parseInt(e.target.value) || 1)} className="w-12 text-center text-xs py-1 px-1 bg-white/50 m-0" min={1} />
                   <button type="button" onClick={() => updateCardQty(card.id, card.quantity + 1)} className="w-6 h-6 rounded bg-ink-border/10 hover:bg-ink-border/20 transition-colors flex items-center justify-center font-mono font-bold">+</button>
                 </div>
-                <button type="button" onClick={() => removeCard(card.id)} className="w-8 h-8 rounded-full text-hp-color hover:bg-hp-color/10 flex items-center justify-center transition-colors">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={() => editCard(card)} className="w-8 h-8 rounded-full text-gold hover:bg-gold/10 flex items-center justify-center transition-colors" title="Edit/Repopulate">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  </button>
+                  <button type="button" onClick={() => removeCard(card.id)} className="w-8 h-8 rounded-full text-hp-color hover:bg-hp-color/10 flex items-center justify-center transition-colors" title="Remove">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
               </div>
             ))}
           </div>

@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS deck_card (
   set_code          TEXT,
   collector_number  TEXT,
   quantity          INTEGER NOT NULL DEFAULT 1,
+  type_line         TEXT,
   image_url         TEXT,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );

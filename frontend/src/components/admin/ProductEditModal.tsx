@@ -98,6 +98,12 @@ export default function ProductEditModal({
       }
       setProductStorage(initialStorage);
     }
+    setFormError('');
+    setScryfallPrints([]);
+  }, [editProduct, storageFilter, storageLocations]);
+
+  // Handle automatic tab selection on product switch/load
+  useEffect(() => {
     if (editProduct) {
       if (editProduct.category === 'store_exclusives') setActiveTab('deck');
       else if (editProduct.tcg === 'mtg' && editProduct.category === 'singles') setActiveTab('variant');
@@ -107,10 +113,7 @@ export default function ProductEditModal({
       else if (form.tcg === 'mtg' && form.category === 'singles') setActiveTab('variant');
       else setActiveTab('pricing');
     }
-
-    setFormError('');
-    setScryfallPrints([]);
-  }, [editProduct, storageFilter, storageLocations]);
+  }, [editProduct, form.category, form.tcg]);
 
   const handleSave = async (andNew: boolean) => {
     if (!form.name || !form.tcg || !form.category) { 
@@ -252,7 +255,7 @@ export default function ProductEditModal({
         while (nextUrl) {
           const r: Response = await fetch(nextUrl);
           if (!r.ok) break;
-          const b: any = await r.json();
+          const b: { data: ScryfallCard[]; has_more: boolean; next_page?: string } = await r.json();
           if (b.data) {
             const paperOnly = (b.data as ScryfallCard[]).filter(c => !c.digital);
             results = results.concat(paperOnly);
@@ -267,7 +270,7 @@ export default function ProductEditModal({
       if (prints.length === 0) throw new Error('No printings found for that search.');
 
       if (prints.length > 0) {
-        const oracleId = (prints[0] as any).oracle_id;
+        const oracleId = (prints[0] as unknown as { oracle_id?: string }).oracle_id;
         if (oracleId) {
           const oraclePrints = await fetchAllPrints(`oracle_id:${oracleId}`);
           if (oraclePrints.length > prints.length) prints = oraclePrints;
@@ -572,10 +575,11 @@ export default function ProductEditModal({
               </div>
               <div className="card p-2 bg-white/40 border-white/30 backdrop-blur-sm overflow-hidden group mb-8 shadow-xl">
                 <div className="relative aspect-[63/88] w-full bg-ink-border/5 rounded shadow-inner flex items-center justify-center overflow-hidden">
-                  {form.image_url ? (
-                    <img src={form.image_url} alt={form.name} className="w-full h-full object-contain drop-shadow-2xl transition-transform duration-700 group-hover:scale-110" />
-                  ) : (
-                    <div className="text-[10px] font-mono-stack text-text-muted text-center p-4">NO IMAGE FOUND<br/>SEARCH TO LOAD</div>
+                {form.image_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={form.image_url} alt={form.name} className="w-full h-full object-contain drop-shadow-2xl transition-transform duration-700 group-hover:scale-110" />
+                ) : (
+                  <div className="text-[10px] font-mono-stack text-text-muted text-center p-4">NO IMAGE FOUND<br/>SEARCH TO LOAD</div>
                   )}
                   {form.foil_treatment !== 'non_foil' && (
                     <div className="absolute inset-0 pointer-events-none opacity-30 mix-blend-color-dodge transition-opacity group-hover:opacity-50"
