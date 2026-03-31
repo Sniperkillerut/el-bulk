@@ -6,6 +6,7 @@ import { fetchProduct } from '@/lib/api';
 import { Product, FOIL_LABELS, TREATMENT_LABELS, resolveLabel } from '@/lib/types';
 import { useCart } from '@/lib/CartContext';
 import Link from 'next/link';
+import DeckContents from '@/components/DeckContents';
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -199,6 +200,11 @@ export default function ProductDetailPage() {
                 </div>
               )}
             </div>
+
+            {/* Deck Cards Grid for Store Exclusives */}
+            {product.category === 'store_exclusives' && product.deck_cards && product.deck_cards.length > 0 && (
+               <DeckContents cards={product.deck_cards} tcg={product.tcg} className="border-t border-kraft-dark pt-6 mt-6" />
+            )}
 
             {/* Actions */}
             <div className="flex gap-3 mt-8">

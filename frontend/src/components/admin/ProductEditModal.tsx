@@ -98,6 +98,16 @@ export default function ProductEditModal({
       }
       setProductStorage(initialStorage);
     }
+    if (editProduct) {
+      if (editProduct.category === 'store_exclusives') setActiveTab('deck');
+      else if (editProduct.tcg === 'mtg' && editProduct.category === 'singles') setActiveTab('variant');
+      else setActiveTab('pricing');
+    } else {
+      if (form.category === 'store_exclusives') setActiveTab('deck');
+      else if (form.tcg === 'mtg' && form.category === 'singles') setActiveTab('variant');
+      else setActiveTab('pricing');
+    }
+
     setFormError('');
     setScryfallPrints([]);
   }, [editProduct, storageFilter, storageLocations]);
@@ -180,7 +190,9 @@ export default function ProductEditModal({
         });
         setProductStorage(prev => prev.map(s => ({ ...s, quantity: 0 })));
         setScryfallPrints([]);
-        setActiveTab('variant');
+        if (stickyCategory === 'store_exclusives') setActiveTab('deck');
+        else if (stickyTcg === 'mtg' && stickyCategory === 'singles') setActiveTab('variant');
+        else setActiveTab('pricing');
       } else {
         onSaved();
       }
@@ -359,9 +371,9 @@ export default function ProductEditModal({
   const isStoreExclusive = form.category === 'store_exclusives';
 
   const TABS: { id: TabId; label: string; show: boolean }[] = [
-    { id: 'variant', label: 'VARIANT & IDENTITY', show: true },
-    { id: 'pricing', label: 'PRICING & STOCK', show: true },
     { id: 'deck', label: 'DECK BUILDER', show: isStoreExclusive },
+    { id: 'variant', label: 'VARIANT & IDENTITY', show: isMTGSingles },
+    { id: 'pricing', label: 'PRICING & STOCK', show: true },
   ];
 
   return (
@@ -393,6 +405,11 @@ export default function ProductEditModal({
                 const newTcg = e.target.value;
                 setForm(f => ({ ...EMPTY_FORM, tcg: newTcg, category: f.category, condition: f.condition }));
                 setScryfallPrints([]);
+                if (!editProduct) {
+                  if (form.category === 'store_exclusives') setActiveTab('deck');
+                  else if (newTcg === 'mtg' && form.category === 'singles') setActiveTab('variant');
+                  else setActiveTab('pricing');
+                }
               }}
             >
               {tcgs.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -408,6 +425,11 @@ export default function ProductEditModal({
                 const newCat = e.target.value as 'singles' | 'sealed' | 'accessories' | 'store_exclusives';
                 setForm(f => ({ ...EMPTY_FORM, tcg: f.tcg, category: newCat, condition: f.condition }));
                 setScryfallPrints([]);
+                if (!editProduct) {
+                  if (newCat === 'store_exclusives') setActiveTab('deck');
+                  else if (newCat === 'singles' && form.tcg === 'mtg') setActiveTab('variant');
+                  else setActiveTab('pricing');
+                }
               }}
             >
               <option value="singles">Singles</option>
@@ -508,58 +530,87 @@ export default function ProductEditModal({
               />
             )}
             {activeTab === 'deck' && isStoreExclusive && (
-              <DeckCardsTab 
-                form={form} 
-                onUpdate={u => setForm(f => ({ ...f, ...u }))} 
-              />
+              <>
+                <DeckCardsTab 
+                  form={form} 
+                  onUpdate={u => setForm(f => ({ ...f, ...u }))} 
+                />
+                
+                {/* Horizontal actions for Deck Builder since sidebar is hidden */}
+                <div className="flex flex-row items-center justify-end gap-3 mt-8 pt-6 border-t border-ink-border/20">
+                  <button 
+                    onClick={() => handleSave(false)} 
+                    disabled={saving} 
+                    className="btn-primary px-8 py-3 text-sm font-bold shadow-[0_10px_30px_rgba(212,175,55,0.3)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.4)] transition-all active:scale-95"
+                  >
+                    {saving ? '📥 SAVING...' : '💾 SAVE PRODUCT'}
+                  </button>
+                  <button 
+                    onClick={() => handleSave(true)} 
+                    disabled={saving} 
+                    className="btn-secondary px-6 py-3 text-[10px] font-bold font-mono-stack tracking-widest border-ink-border/20"
+                  >
+                    💾 SAVE & ADD NEW
+                  </button>
+                  <button 
+                    onClick={onClose} 
+                    disabled={saving} 
+                    className="px-4 text-[9px] font-mono-stack text-text-muted hover:text-hp-color transition-colors tracking-widest opacity-60"
+                  >
+                    CANCEL
+                  </button>
+                </div>
+              </>
             )}
           </div>
 
-          <div className="w-full md:w-80 shrink-0">
-            <div className="flex justify-between items-center mb-3">
-               <label className="text-[10px] font-mono-stack uppercase tracking-tighter opacity-50" style={{ color: 'var(--text-muted)' }}>IMAGE PREVIEW</label>
-               <span className="text-[10px] font-mono-stack px-2 py-0.5 rounded-full font-bold shadow-sm" style={{ background: 'var(--nm-color)', color: 'white' }}>{form.condition}</span>
-            </div>
-            <div className="card p-2 bg-white/40 border-white/30 backdrop-blur-sm overflow-hidden group mb-8 shadow-xl">
-              <div className="relative aspect-[63/88] w-full bg-ink-border/5 rounded shadow-inner flex items-center justify-center overflow-hidden">
-                {form.image_url ? (
-                  <img src={form.image_url} alt={form.name} className="w-full h-full object-contain drop-shadow-2xl transition-transform duration-700 group-hover:scale-110" />
-                ) : (
-                  <div className="text-[10px] font-mono-stack text-text-muted text-center p-4">NO IMAGE FOUND<br/>SEARCH TO LOAD</div>
-                )}
-                {form.foil_treatment !== 'non_foil' && (
-                  <div className="absolute inset-0 pointer-events-none opacity-30 mix-blend-color-dodge transition-opacity group-hover:opacity-50"
-                    style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)', backgroundSize: '200% 200%', animation: 'shimmer 3s infinite linear' }} />
-                )}
+          {activeTab !== 'deck' && (
+            <div className="w-full md:w-80 shrink-0">
+              <div className="flex justify-between items-center mb-3">
+                 <label className="text-[10px] font-mono-stack uppercase tracking-tighter opacity-50" style={{ color: 'var(--text-muted)' }}>IMAGE PREVIEW</label>
+                 <span className="text-[10px] font-mono-stack px-2 py-0.5 rounded-full font-bold shadow-sm" style={{ background: 'var(--nm-color)', color: 'white' }}>{form.condition}</span>
+              </div>
+              <div className="card p-2 bg-white/40 border-white/30 backdrop-blur-sm overflow-hidden group mb-8 shadow-xl">
+                <div className="relative aspect-[63/88] w-full bg-ink-border/5 rounded shadow-inner flex items-center justify-center overflow-hidden">
+                  {form.image_url ? (
+                    <img src={form.image_url} alt={form.name} className="w-full h-full object-contain drop-shadow-2xl transition-transform duration-700 group-hover:scale-110" />
+                  ) : (
+                    <div className="text-[10px] font-mono-stack text-text-muted text-center p-4">NO IMAGE FOUND<br/>SEARCH TO LOAD</div>
+                  )}
+                  {form.foil_treatment !== 'non_foil' && (
+                    <div className="absolute inset-0 pointer-events-none opacity-30 mix-blend-color-dodge transition-opacity group-hover:opacity-50"
+                      style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)', backgroundSize: '200% 200%', animation: 'shimmer 3s infinite linear' }} />
+                  )}
+                </div>
+              </div>
+
+              {formError && (
+                <div className="p-4 mb-6 bg-hp-color/5 border border-hp-color/20 text-hp-color text-[11px] rounded font-mono-stack animate-in slide-in-from-right duration-300">
+                  <span className="font-bold mr-2">! ERROR:</span> {formError}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <button 
+                  onClick={() => handleSave(false)} 
+                  disabled={saving} 
+                  className="btn-primary w-full py-5 text-sm font-bold shadow-[0_10px_30px_rgba(212,175,55,0.3)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.4)] transition-all active:scale-95"
+                >
+                  {saving ? '📥 SAVING...' : '💾 SAVE PRODUCT'}
+                </button>
+                <button 
+                  onClick={() => handleSave(true)} 
+                  disabled={saving} 
+                  className="btn-secondary w-full py-4 text-[10px] font-bold font-mono-stack tracking-widest border-ink-border/20"
+                >
+                  💾 SAVE & ADD NEW
+                </button>
+                <button onClick={onClose} disabled={saving} className="w-full py-2 text-[9px] font-mono-stack text-text-muted hover:text-hp-color transition-colors tracking-widest opacity-60">
+                  CANCEL
+                </button>
               </div>
             </div>
-
-            {formError && (
-              <div className="p-4 mb-6 bg-hp-color/5 border border-hp-color/20 text-hp-color text-[11px] rounded font-mono-stack animate-in slide-in-from-right duration-300">
-                <span className="font-bold mr-2">! ERROR:</span> {formError}
-              </div>
-            )}
-
-            <div className="space-y-4">
-              <button 
-                onClick={() => handleSave(false)} 
-                disabled={saving} 
-                className="btn-primary w-full py-5 text-sm font-bold shadow-[0_10px_30px_rgba(212,175,55,0.3)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.4)] transition-all active:scale-95"
-              >
-                {saving ? '📥 SAVING...' : '💾 SAVE PRODUCT'}
-              </button>
-              <button 
-                onClick={() => handleSave(true)} 
-                disabled={saving} 
-                className="btn-secondary w-full py-4 text-[10px] font-bold font-mono-stack tracking-widest border-ink-border/20"
-              >
-                💾 SAVE & ADD NEW
-              </button>
-              <button onClick={onClose} disabled={saving} className="w-full py-2 text-[9px] font-mono-stack text-text-muted hover:text-hp-color transition-colors tracking-widest opacity-60">
-                CANCEL
-              </button>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
