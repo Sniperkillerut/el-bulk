@@ -145,7 +145,7 @@ func TestOrderHandler_List(t *testing.T) {
 	h := &OrderHandler{DB: sqlxDB}
 
 	t.Run("List Admin", func(t *testing.T) {
-		mock.ExpectQuery("(?i)SELECT COUNT\\(\\*\\) FROM \"order\"").
+		mock.ExpectQuery("(?i)SELECT COUNT\\(\\*\\) FROM view_order_list o").
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 
 		rows := sqlmock.NewRows([]string{"id", "order_number", "customer_id", "status", "payment_method", "total_cop", "notes", "created_at", "completed_at", "customer_name", "item_count"}).

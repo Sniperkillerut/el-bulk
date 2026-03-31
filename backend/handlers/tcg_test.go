@@ -25,9 +25,9 @@ func TestTCGHandler_List(t *testing.T) {
 	h := &TCGHandler{DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
-		rows := sqlmock.NewRows([]string{"id", "name", "is_active", "created_at"}).
-			AddRow("mtg", "Magic", true, time.Now())
-		mock.ExpectQuery("SELECT \\* FROM tcg ORDER BY name").WillReturnRows(rows)
+		rows := sqlmock.NewRows([]string{"id", "name", "is_active", "created_at", "item_count"}).
+			AddRow("mtg", "Magic", true, time.Now(), 0)
+		mock.ExpectQuery("(?i)SELECT t.*, COUNT\\(p.id\\) as item_count FROM tcg t LEFT JOIN product p ON t.id = p.tcg GROUP BY t.id ORDER BY t.name").WillReturnRows(rows)
 
 		req, _ := http.NewRequest("GET", "/api/admin/tcgs", nil)
 		rr := httptest.NewRecorder()

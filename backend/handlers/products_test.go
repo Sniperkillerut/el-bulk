@@ -37,13 +37,12 @@ func TestProductHandler_List(t *testing.T) {
 		
 		mock.ExpectQuery("(?i)SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop", "4000"))
 
-		mock.ExpectQuery("(?i)SELECT condition, COUNT.*").WillReturnRows(sqlmock.NewRows([]string{"condition", "count"}).AddRow("NM", 1))
-		mock.ExpectQuery("(?i)SELECT foil_treatment, COUNT.*").WillReturnRows(sqlmock.NewRows([]string{"foil_treatment", "count"}).AddRow("non_foil", 1))
-		mock.ExpectQuery("(?i)SELECT card_treatment, COUNT.*").WillReturnRows(sqlmock.NewRows([]string{"card_treatment", "count"}).AddRow("normal", 1))
-		mock.ExpectQuery("(?i)SELECT rarity, COUNT.*").WillReturnRows(sqlmock.NewRows([]string{"rarity", "count"}).AddRow("rare", 1))
-		mock.ExpectQuery("(?i)SELECT language, COUNT.*").WillReturnRows(sqlmock.NewRows([]string{"language", "count"}).AddRow("en", 1))
-		mock.ExpectQuery("(?i)SELECT.*FILTER.*").WillReturnRows(sqlmock.NewRows([]string{"w", "u", "b", "r", "g", "c"}).AddRow(1, 0, 0, 0, 0, 0))
-		mock.ExpectQuery("(?i)SELECT c.slug, COUNT.* FROM product_category pc JOIN custom_category c").WillReturnRows(sqlmock.NewRows([]string{"slug", "count"}).AddRow("cat1", 1))
+		mock.ExpectQuery("(?i)SELECT pc\\.product_id, c\\.id, c\\.name, c\\.slug, c\\.show_badge, c\\.is_active, c\\.searchable FROM product_category pc JOIN custom_category c ON pc.category_id = c.id WHERE pc\\.product_id IN \\(\\$1\\) AND c\\.show_badge = true ORDER BY c\\.name").
+			WithArgs("p1").
+			WillReturnRows(sqlmock.NewRows([]string{"product_id", "id", "name", "slug", "show_badge", "is_active", "searchable"}).AddRow("p1", "cat1", "Cat 1", "cat1", true, true, true))
+		
+		mock.ExpectQuery("(?i)SELECT fn_get_product_facets").
+			WillReturnRows(sqlmock.NewRows([]string{"fn_get_product_facets"}).AddRow([]byte(`{"condition":[{"val":"NM","count":1}],"foil":[{"val":"non_foil","count":1}]}`)))
 
 		req, _ := http.NewRequest("GET", "/api/products?page=1&pageSize=20", nil)
 		rr := httptest.NewRecorder()

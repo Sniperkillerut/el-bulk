@@ -33,12 +33,13 @@ func TestProductHandler_BuildFilters_Comprehensive(t *testing.T) {
 			mock.ExpectQuery("SELECT .* FROM product_storage").WillReturnRows(sqlmock.NewRows([]string{"product_id", "stored_in_id", "name", "quantity"}).AddRow("1", "loc1", "Box 1", 10))
 			
 			// 5. Enrichment: populateCategories
-			mock.ExpectQuery("SELECT .* FROM product_category").WillReturnRows(sqlmock.NewRows([]string{"product_id", "id", "name"}).AddRow("1", "cat1", "Category 1"))
+			mock.ExpectQuery("(?i)SELECT pc\\.product_id, c\\.id, c\\.name, c\\.slug, c\\.show_badge, c\\.is_active, c\\.searchable FROM product_category pc JOIN custom_category c ON pc.category_id = c.id WHERE pc\\.product_id IN \\(\\$1\\) AND c\\.show_badge = true ORDER BY c\\.name").
+				WithArgs("1").
+				WillReturnRows(sqlmock.NewRows([]string{"product_id", "id", "name", "slug", "show_badge", "is_active", "searchable"}).AddRow("1", "cat1", "Category 1", "cat1", true, true, true))
 
-			// 6. Facets (7 calls)
-			for i := 0; i < 7; i++ {
-				mock.ExpectQuery("(?i)SELECT .* FROM product p").WillReturnRows(sqlmock.NewRows([]string{"val", "count"}))
-			}
+			// 6. Facets (1 call)
+			mock.ExpectQuery("(?i)SELECT fn_get_product_facets").
+				WillReturnRows(sqlmock.NewRows([]string{"fn_get_product_facets"}).AddRow([]byte(`{}`)))
 
 			req, _ := http.NewRequest("GET", "/api/products"+url, nil)
 			rr := httptest.NewRecorder()
@@ -69,12 +70,12 @@ func TestProductHandler_AdminVsPublic(t *testing.T) {
 		// Enrichment
 		mock.ExpectQuery("SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop", "4000"))
 		mock.ExpectQuery("SELECT .* FROM product_storage").WillReturnRows(sqlmock.NewRows([]string{"product_id", "stored_in_id", "name", "quantity"}).AddRow("1", "loc1", "Box 1", 10))
-		mock.ExpectQuery("SELECT .* FROM product_category").WillReturnRows(sqlmock.NewRows([]string{"product_id", "id", "name"}).AddRow("1", "cat1", "Cat 1"))
+		mock.ExpectQuery("(?i)SELECT pc\\.product_id, c\\.id, c\\.name, c\\.slug, c\\.show_badge, c\\.is_active, c\\.searchable FROM product_category pc JOIN custom_category c ON pc.category_id = c.id WHERE pc\\.product_id IN \\(\\$1\\) AND c\\.show_badge = true ORDER BY c\\.name").
+			WillReturnRows(sqlmock.NewRows([]string{"product_id", "id", "name", "slug", "show_badge", "is_active", "searchable"}).AddRow("1", "cat1", "Cat 1", "cat1", true, true, true))
 
 		// Facets
-		for i := 0; i < 7; i++ {
-			mock.ExpectQuery("(?i)SELECT .* FROM product p LEFT JOIN tcg t").WillReturnRows(sqlmock.NewRows([]string{"val", "count"}))
-		}
+		mock.ExpectQuery("(?i)SELECT fn_get_product_facets").
+			WillReturnRows(sqlmock.NewRows([]string{"fn_get_product_facets"}).AddRow([]byte(`{}`)))
 
 		req, _ := http.NewRequest("GET", "/api/products", nil)
 		rr := httptest.NewRecorder()
@@ -96,12 +97,12 @@ func TestProductHandler_AdminVsPublic(t *testing.T) {
 		// Enrichment
 		mock.ExpectQuery("SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop", "4000"))
 		mock.ExpectQuery("SELECT .* FROM product_storage").WillReturnRows(sqlmock.NewRows([]string{"product_id", "stored_in_id", "name", "quantity"}).AddRow("1", "loc1", "Box 1", 10))
-		mock.ExpectQuery("SELECT .* FROM product_category").WillReturnRows(sqlmock.NewRows([]string{"product_id", "id", "name"}).AddRow("1", "cat1", "Cat 1"))
+		mock.ExpectQuery("(?i)SELECT pc\\.product_id, c\\.id, c\\.name, c\\.slug, c\\.show_badge, c\\.is_active, c\\.searchable FROM product_category pc JOIN custom_category c ON pc.category_id = c.id WHERE pc\\.product_id IN \\(\\$1\\) ORDER BY c\\.name").
+			WillReturnRows(sqlmock.NewRows([]string{"product_id", "id", "name", "slug", "show_badge", "is_active", "searchable"}).AddRow("1", "cat1", "Cat 1", "cat1", true, true, true))
 
 		// Facets
-		for i := 0; i < 7; i++ {
-			mock.ExpectQuery("(?i)SELECT .* FROM product p").WillReturnRows(sqlmock.NewRows([]string{"val", "count"}))
-		}
+		mock.ExpectQuery("(?i)SELECT fn_get_product_facets").
+			WillReturnRows(sqlmock.NewRows([]string{"fn_get_product_facets"}).AddRow([]byte(`{}`)))
 
 		req, _ := http.NewRequest("GET", "/api/admin/products", nil)
 		rr := httptest.NewRecorder()
