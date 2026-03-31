@@ -10,6 +10,8 @@ import (
 
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/logger"
+	"github.com/el-bulk/backend/external"
+	"time"
 )
 
 type TCGHandler struct {
@@ -134,4 +136,48 @@ func (h *TCGHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(w, map[string]string{"message": "TCG deleted successfully"})
+}
+
+// POST /api/admin/tcgs/sync-sets
+func (h *TCGHandler) SyncSets(w http.ResponseWriter, r *http.Request) {
+	sets, err := external.FetchSets()
+	if err != nil {
+		logger.Error("Error fetching MTG sets from Scryfall: %v", err)
+		render.Error(w, "Failed to reach Scryfall", http.StatusBadGateway)
+		return
+	}
+
+	tx, err := h.DB.Beginx()
+	if err != nil {
+		render.Error(w, "Database transaction error", http.StatusInternalServerError)
+		return
+	}
+	defer tx.Rollback()
+
+	for _, s := range sets {
+		_, err := tx.Exec(`
+			INSERT INTO tcg_set (tcg, code, name, released_at, set_type)
+			VALUES ($1, $2, $3, $4, $5)
+			ON CONFLICT (tcg, code) DO UPDATE SET
+				name = EXCLUDED.name,
+				released_at = EXCLUDED.released_at,
+				set_type = EXCLUDED.set_type
+		`, "mtg", s.Code, s.Name, s.ReleasedAt, s.SetType)
+		if err != nil {
+			logger.Error("Error upserting set %s: %v", s.Code, err)
+			continue
+		}
+	}
+
+	_, _ = tx.Exec("INSERT INTO setting (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value", "last_set_sync", time.Now().Format(time.RFC3339))
+
+	if err := tx.Commit(); err != nil {
+		render.Error(w, "Failed to commit sets sync", http.StatusInternalServerError)
+		return
+	}
+
+	render.Success(w, map[string]interface{}{
+		"count": len(sets),
+		"last_sync": time.Now().Format(time.RFC3339),
+	})
 }

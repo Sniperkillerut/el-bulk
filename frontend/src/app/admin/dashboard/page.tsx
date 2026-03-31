@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   adminFetchTCGs, adminFetchStorage, adminCreateStorage, adminUpdateStorage, adminDeleteStorage,
   adminFetchCategories, adminCreateCategory, adminUpdateCategory, adminDeleteCategory,
-  adminDeleteProduct
+  adminDeleteProduct, adminSyncSets
 } from '@/lib/api';
 import { Product, StoredIn, CustomCategory, TCG } from '@/lib/types';
 import { useAdmin } from '@/hooks/useAdmin';
@@ -38,6 +38,7 @@ export default function AdminDashboard() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showStorageModal, setShowStorageModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const loadStaticData = useCallback(async (t: string) => {
     try {
@@ -106,6 +107,21 @@ export default function AdminDashboard() {
     setCategories(await adminFetchCategories(token!) || []);
   };
 
+  const handleSyncSets = async () => {
+    if (!token) return;
+    setIsSyncing(true);
+    try {
+      const res = await adminSyncSets(token);
+      alert(`Successfully synced ${res.count} sets!`);
+      // Reload to refresh settings (last sync date)
+      window.location.reload();
+    } catch (err) {
+      alert('Failed to sync sets.');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col p-8 min-h-0 max-w-7xl mx-auto w-full">
       <AdminHeader 
@@ -113,6 +129,20 @@ export default function AdminDashboard() {
         subtitle="Store Dashboard // Operations Active"
         actions={
           <>
+            <div className="flex flex-col items-end mr-4">
+              <button 
+                onClick={handleSyncSets} 
+                disabled={isSyncing}
+                className="btn-secondary px-4 py-1.5 text-[10px] flex items-center gap-2 mb-1"
+              >
+                <span>{isSyncing ? '⌛' : '🔄'}</span> {isSyncing ? 'SYNCING...' : 'SYNC SETS'}
+              </button>
+              {settings?.last_set_sync && (
+                <span className="text-[9px] font-mono-stack text-text-muted opacity-60">
+                  LAST SYNC: {new Date(settings.last_set_sync).toLocaleString()}
+                </span>
+              )}
+            </div>
             <button onClick={() => setShowImportModal(true)} className="btn-secondary px-6 flex items-center gap-2">
               <span>📥</span> IMPORT CSV
             </button>

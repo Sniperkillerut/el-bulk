@@ -315,6 +315,8 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	rarity := q.Get("rarity")
 	language := q.Get("language")
 	color := q.Get("color")
+	setName := q.Get("set_name")
+	inStock := q.Get("in_stock") == "true"
 	sortBy := q.Get("sort_by")
 	sortDir := q.Get("sort_dir")
 	filterLogic := q.Get("logic")
@@ -329,7 +331,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 	page, pageSize, offset := httputil.GetPagination(r, 20, maxPageSize)
 
-	fromClause, conditions, args := h.buildFilters(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color, filterLogic, isAdmin)
+	fromClause, conditions, args := h.buildFilters(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color, setName, inStock, filterLogic, isAdmin)
 
 	where := ""
 	if len(conditions) > 0 {
@@ -397,7 +399,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 		Total:       total,
 		Page:        page,
 		PageSize:    pageSize,
-		Facets:      h.getFacets(tcg, category, search, storageID, foil, treatment, condition, rarity, language, color, collection, filterLogic, isAdmin),
+		Facets:      h.getFacets(tcg, category, search, storageID, foil, treatment, condition, rarity, language, color, collection, setName, inStock, filterLogic, isAdmin),
 		QueryTimeMS: time.Since(start).Milliseconds(),
 	})
 }
@@ -688,10 +690,10 @@ func (h *ProductHandler) UpdateStorage(w http.ResponseWriter, r *http.Request) {
 	h.GetStorage(w, r)
 }
 
-func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treatment, condition, rarity, language, color, collection, filterLogic string, isAdmin bool) models.Facets {
+func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treatment, condition, rarity, language, color, collection, setName string, inStock bool, filterLogic string, isAdmin bool) models.Facets {
 	var result []byte
-	err := h.DB.Get(&result, "SELECT fn_get_product_facets($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)",
-		tcg, category, search, storageID, foil, treatment, condition, rarity, language, color, collection, filterLogic, isAdmin)
+	err := h.DB.Get(&result, "SELECT fn_get_product_facets($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
+		tcg, category, search, storageID, foil, treatment, condition, rarity, language, color, collection, setName, inStock, filterLogic, isAdmin)
 
 	if err != nil {
 		logger.Error("Error calling fn_get_product_facets: %v", err)
@@ -767,7 +769,7 @@ func (h *ProductHandler) buildOrderBy(sortBy, sortDir, search string, argsLen in
 	return col + " " + dir + ", p.created_at DESC"
 }
 
-func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color, filterLogic string, isAdmin bool) (string, []string, []interface{}) {
+func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color, setName string, inStock bool, filterLogic string, isAdmin bool) (string, []string, []interface{}) {
 	fromClause := "FROM product p"
 	builder := sqlutil.NewBuilder(fromClause)
 
@@ -796,6 +798,10 @@ func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, tr
 		placeholder := fmt.Sprintf("$%d", len(builder.Args)+1)
 		builder.Args = append(builder.Args, strings.ToLower(category))
 		mandatory = append(mandatory, "p.category = "+placeholder)
+	}
+
+	if inStock {
+		mandatory = append(mandatory, "p.stock > 0")
 	}
 	if search != "" {
 		searchTerms := strings.Fields(search)
@@ -895,6 +901,16 @@ func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, tr
 			placeholder := fmt.Sprintf("$%d", len(builder.Args)+1)
 			conds = append(conds, "p.color_identity ILIKE "+placeholder)
 			builder.Args = append(builder.Args, "%"+strings.ToUpper(v)+"%")
+		}
+		optional = append(optional, "("+strings.Join(conds, opLogic)+")")
+	}
+	if setName != "" {
+		vals := strings.Split(setName, ",")
+		var conds []string
+		for _, v := range vals {
+			placeholder := fmt.Sprintf("$%d", len(builder.Args)+1)
+			conds = append(conds, "p.set_name = "+placeholder)
+			builder.Args = append(builder.Args, v)
 		}
 		optional = append(optional, "("+strings.Join(conds, opLogic)+")")
 	}

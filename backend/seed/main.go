@@ -35,6 +35,7 @@ func main() {
 	categoryMap := seedCategories(database)
 	storageIDs := seedStorage(database)
 	seedSettings(database)
+	seedSets(database)
 
 	if *mode == "minimal" {
 		seedMinimalData(database, categoryMap, storageIDs)
@@ -70,6 +71,7 @@ func clearTables(db *sqlx.DB) {
 	for _, t := range tables {
 		db.Exec(fmt.Sprintf("DELETE FROM %s", t))
 	}
+	db.Exec("DELETE FROM tcg_set")
 }
 
 func seedAdmin(db *sqlx.DB) string {
@@ -142,6 +144,30 @@ func seedSettings(db *sqlx.DB) {
 	for k, v := range settings {
 		db.Exec(`INSERT INTO setting (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`, k, v)
 	}
+}
+
+func seedSets(db *sqlx.DB) {
+	logger.Info("🔭 Syncing MTG Sets from Scryfall...")
+	sets, err := external.FetchSets()
+	if err != nil {
+		logger.Warn("⚠️ Failed to fetch sets for seeding: %v", err)
+		return
+	}
+
+	tx, _ := db.Beginx()
+	for _, s := range sets {
+		tx.Exec(`
+			INSERT INTO tcg_set (tcg, code, name, released_at, set_type)
+			VALUES ($1, $2, $3, $4, $5)
+			ON CONFLICT (tcg, code) DO UPDATE SET
+				name = EXCLUDED.name,
+				released_at = EXCLUDED.released_at,
+				set_type = EXCLUDED.set_type
+		`, "mtg", s.Code, s.Name, s.ReleasedAt, s.SetType)
+	}
+	tx.Exec("INSERT INTO setting (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value", "last_set_sync", time.Now().Format(time.RFC3339))
+	tx.Commit()
+	logger.Info("✅ %d sets synchronized", len(sets))
 }
 
 func seedMinimalData(db *sqlx.DB, cats map[string]string, storageIDs []string) string {

@@ -167,6 +167,7 @@ type Settings struct {
 	ContactEmail     string   `json:"contact_email"`
 	ContactInstagram string   `json:"contact_instagram"`
 	ContactHours     string   `json:"contact_hours"`
+	LastSetSync      string   `json:"last_set_sync"`
 }
 
 type TCG struct {
@@ -175,6 +176,14 @@ type TCG struct {
 	IsActive  bool      `db:"is_active"  json:"is_active"`
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
 	ItemCount int       `db:"item_count" json:"item_count"`
+}
+
+type TCGSet struct {
+	TCG        string `db:"tcg"         json:"tcg"`
+	Code       string `db:"code"        json:"code"`
+	Name       string `db:"name"        json:"name"`
+	ReleasedAt string `db:"released_at" json:"released_at"`
+	SetType    string `db:"set_type"    json:"set_type"`
 }
 
 type TCGInput struct {
@@ -192,6 +201,12 @@ type ProductListResponse struct {
 	QueryTimeMS int64     `json:"query_time_ms"`
 }
 
+type FacetItem struct {
+	ID    string `json:"id"`
+	Label string `json:"label"`
+	Count int    `json:"count"`
+}
+
 type Facets struct {
 	Condition  map[string]int `json:"condition"`
 	Foil       map[string]int `json:"foil"`
@@ -200,6 +215,7 @@ type Facets struct {
 	Language   map[string]int `json:"language"`
 	Color      map[string]int `json:"color"`
 	Collection map[string]int `json:"collection"`
+	SetName    []FacetItem    `json:"set_name"`
 }
 
 type Admin struct {

@@ -414,6 +414,16 @@ export async function adminDeleteTCG(token: string, id: string): Promise<void> {
   metadataCache.delete('tcgs_false');
 }
 
+export async function adminSyncSets(token: string): Promise<{ count: number; last_sync: string }> {
+  const data = await apiFetch<{ count: number; last_sync: string }>('/api/admin/tcgs/sync-sets', {
+    method: 'POST',
+  }, token);
+  metadataCache.delete('admin_tcgs');
+  metadataCache.delete('settings');
+  metadataCache.delete('admin_settings');
+  return data;
+}
+
 // ---------------------------------------------------------------------------
 // Admin: Product Storage Management
 // ---------------------------------------------------------------------------

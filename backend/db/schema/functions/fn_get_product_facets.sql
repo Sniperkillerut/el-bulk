@@ -1,5 +1,5 @@
 -- fn_get_product_facets
--- Returns a JSONB object containing counts for Condition, Foil, Treatment, Rarity, Language, Color, and Collection.
+-- Returns a JSONB object containing counts for Condition, Foil, Treatment, Rarity, Language, Color, Collection, and Set.
 -- Each count respects all active filters *except* its own dimension (standard faceted navigation behavior).
 CREATE OR REPLACE FUNCTION fn_get_product_facets(
     p_tcg TEXT DEFAULT '',
@@ -13,6 +13,8 @@ CREATE OR REPLACE FUNCTION fn_get_product_facets(
     p_language TEXT DEFAULT '',
     p_color TEXT DEFAULT '',
     p_collection TEXT DEFAULT '',
+    p_set_name TEXT DEFAULT '',
+    p_in_stock BOOLEAN DEFAULT true,
     p_filter_logic TEXT DEFAULT 'or',
     p_is_admin BOOLEAN DEFAULT false
 ) RETURNS JSONB AS $$
@@ -20,7 +22,7 @@ DECLARE
     result JSONB;
 BEGIN
     WITH base_products AS (
-        -- Mandatory context filters: only show cards that actually have stock (>0)
+        -- Base products filtered by global context (TCG, Category, Search, Storage, Admin)
         SELECT 
             p.*
         FROM product p
@@ -43,14 +45,12 @@ BEGIN
                 SELECT 1 FROM product_storage ps 
                 WHERE ps.product_id = p.id AND ps.storage_id::text = p_storage_id AND ps.quantity > 0
             ))
-            AND EXISTS (SELECT 1 FROM product_storage ps2 WHERE ps2.product_id = p.id AND ps2.quantity > 0)
+            AND (NOT p_in_stock OR EXISTS (SELECT 1 FROM product_storage ps2 WHERE ps2.product_id = p.id AND ps2.quantity > 0))
             AND (p_is_admin OR (t.is_active IS NULL OR t.is_active = true))
     ),
-    -- Individual facet calculations
+    -- Facet calculations
     f_condition AS (
         SELECT COALESCE(condition, 'unknown') as val, COUNT(DISTINCT base_products.id) as c FROM base_products 
-        LEFT JOIN product_category pc_col ON base_products.id = pc_col.product_id
-        LEFT JOIN custom_category c_col ON pc_col.category_id = c_col.id
         WHERE 
           CASE WHEN p_filter_logic = 'and' THEN
             (p_foil = '' OR (SELECT bool_and(LOWER(foil_treatment) = item) FROM unnest(string_to_array(LOWER(p_foil), ',')) as item))
@@ -59,6 +59,7 @@ BEGIN
             AND (p_language = '' OR (SELECT bool_and(LOWER(language) = item) FROM unnest(string_to_array(LOWER(p_language), ',')) as item))
             AND (p_color = '' OR (SELECT bool_and(color_identity ILIKE '%' || item || '%') FROM unnest(string_to_array(UPPER(p_color), ',')) as item))
             AND (p_collection = '' OR (SELECT bool_and(EXISTS (SELECT 1 FROM product_category pc2 JOIN custom_category c2 ON pc2.category_id = c2.id WHERE pc2.product_id = base_products.id AND c2.slug = item)) FROM unnest(string_to_array(LOWER(p_collection), ',')) as item))
+            AND (p_set_name = '' OR (SELECT bool_and(LOWER(set_name) = item) FROM unnest(string_to_array(LOWER(p_set_name), ',')) as item))
           ELSE
             true
           END
@@ -66,8 +67,6 @@ BEGIN
     ),
     f_foil AS (
         SELECT COALESCE(LOWER(foil_treatment), 'non_foil') as val, COUNT(DISTINCT base_products.id) as c FROM base_products 
-        LEFT JOIN product_category pc_col ON base_products.id = pc_col.product_id
-        LEFT JOIN custom_category c_col ON pc_col.category_id = c_col.id
         WHERE 
           CASE WHEN p_filter_logic = 'and' THEN
             (p_condition = '' OR (SELECT bool_and(LOWER(condition) = item) FROM unnest(string_to_array(LOWER(p_condition), ',')) as item))
@@ -76,6 +75,7 @@ BEGIN
             AND (p_language = '' OR (SELECT bool_and(LOWER(language) = item) FROM unnest(string_to_array(LOWER(p_language), ',')) as item))
             AND (p_color = '' OR (SELECT bool_and(color_identity ILIKE '%' || item || '%') FROM unnest(string_to_array(UPPER(p_color), ',')) as item))
             AND (p_collection = '' OR (SELECT bool_and(EXISTS (SELECT 1 FROM product_category pc2 JOIN custom_category c2 ON pc2.category_id = c2.id WHERE pc2.product_id = base_products.id AND c2.slug = item)) FROM unnest(string_to_array(LOWER(p_collection), ',')) as item))
+            AND (p_set_name = '' OR (SELECT bool_and(LOWER(set_name) = item) FROM unnest(string_to_array(LOWER(p_set_name), ',')) as item))
           ELSE
             true
           END
@@ -83,8 +83,6 @@ BEGIN
     ),
     f_rarity AS (
         SELECT COALESCE(LOWER(rarity), 'unknown') as val, COUNT(DISTINCT base_products.id) as c FROM base_products 
-        LEFT JOIN product_category pc_col ON base_products.id = pc_col.product_id
-        LEFT JOIN custom_category c_col ON pc_col.category_id = c_col.id
         WHERE 
           CASE WHEN p_filter_logic = 'and' THEN
             (p_condition = '' OR (SELECT bool_and(LOWER(condition) = item) FROM unnest(string_to_array(LOWER(p_condition), ',')) as item))
@@ -93,6 +91,7 @@ BEGIN
             AND (p_language = '' OR (SELECT bool_and(LOWER(language) = item) FROM unnest(string_to_array(LOWER(p_language), ',')) as item))
             AND (p_color = '' OR (SELECT bool_and(color_identity ILIKE '%' || item || '%') FROM unnest(string_to_array(UPPER(p_color), ',')) as item))
             AND (p_collection = '' OR (SELECT bool_and(EXISTS (SELECT 1 FROM product_category pc2 JOIN custom_category c2 ON pc2.category_id = c2.id WHERE pc2.product_id = base_products.id AND c2.slug = item)) FROM unnest(string_to_array(LOWER(p_collection), ',')) as item))
+            AND (p_set_name = '' OR (SELECT bool_and(LOWER(set_name) = item) FROM unnest(string_to_array(LOWER(p_set_name), ',')) as item))
           ELSE
             true
           END
@@ -100,8 +99,6 @@ BEGIN
     ),
     f_language AS (
         SELECT COALESCE(LOWER(language), 'en') as val, COUNT(DISTINCT base_products.id) as c FROM base_products 
-        LEFT JOIN product_category pc_col ON base_products.id = pc_col.product_id
-        LEFT JOIN custom_category c_col ON pc_col.category_id = c_col.id
         WHERE 
           CASE WHEN p_filter_logic = 'and' THEN
             (p_condition = '' OR (SELECT bool_and(LOWER(condition) = item) FROM unnest(string_to_array(LOWER(p_condition), ',')) as item))
@@ -110,6 +107,7 @@ BEGIN
             AND (p_rarity = '' OR (SELECT bool_and(LOWER(rarity) = item) FROM unnest(string_to_array(LOWER(p_rarity), ',')) as item))
             AND (p_color = '' OR (SELECT bool_and(color_identity ILIKE '%' || item || '%') FROM unnest(string_to_array(UPPER(p_color), ',')) as item))
             AND (p_collection = '' OR (SELECT bool_and(EXISTS (SELECT 1 FROM product_category pc2 JOIN custom_category c2 ON pc2.category_id = c2.id WHERE pc2.product_id = base_products.id AND c2.slug = item)) FROM unnest(string_to_array(LOWER(p_collection), ',')) as item))
+            AND (p_set_name = '' OR (SELECT bool_and(LOWER(set_name) = item) FROM unnest(string_to_array(LOWER(p_set_name), ',')) as item))
           ELSE
             true
           END
@@ -124,8 +122,6 @@ BEGIN
             COUNT(DISTINCT base_products.id) FILTER (WHERE color_identity ILIKE '%G%') as g,
             COUNT(DISTINCT base_products.id) FILTER (WHERE color_identity ILIKE '%C%') as c
         FROM base_products
-        LEFT JOIN product_category pc_col ON base_products.id = pc_col.product_id
-        LEFT JOIN custom_category c_col ON pc_col.category_id = c_col.id
         WHERE 
           CASE WHEN p_filter_logic = 'and' THEN
             (p_condition = '' OR (SELECT bool_and(LOWER(condition) = item) FROM unnest(string_to_array(LOWER(p_condition), ',')) as item))
@@ -134,6 +130,7 @@ BEGIN
             AND (p_rarity = '' OR (SELECT bool_and(LOWER(rarity) = item) FROM unnest(string_to_array(LOWER(p_rarity), ',')) as item))
             AND (p_language = '' OR (SELECT bool_and(LOWER(language) = item) FROM unnest(string_to_array(LOWER(p_language), ',')) as item))
             AND (p_collection = '' OR (SELECT bool_and(EXISTS (SELECT 1 FROM product_category pc2 JOIN custom_category c2 ON pc2.category_id = c2.id WHERE pc2.product_id = base_products.id AND c2.slug = item)) FROM unnest(string_to_array(LOWER(p_collection), ',')) as item))
+            AND (p_set_name = '' OR (SELECT bool_and(LOWER(set_name) = item) FROM unnest(string_to_array(LOWER(p_set_name), ',')) as item))
           ELSE
             true
           END
@@ -142,8 +139,6 @@ BEGIN
         SELECT val, SUM(c) as c FROM (
             SELECT COALESCE(LOWER(card_treatment), 'normal') as val, COUNT(DISTINCT base_products.id) as c 
             FROM base_products 
-            LEFT JOIN product_category pc_col ON base_products.id = pc_col.product_id
-            LEFT JOIN custom_category c_col ON pc_col.category_id = c_col.id
             WHERE 
               CASE WHEN p_filter_logic = 'and' THEN
                 (p_condition = '' OR (SELECT bool_and(LOWER(condition) = item) FROM unnest(string_to_array(LOWER(p_condition), ',')) as item))
@@ -152,14 +147,13 @@ BEGIN
                 AND (p_language = '' OR (SELECT bool_and(LOWER(language) = item) FROM unnest(string_to_array(LOWER(p_language), ',')) as item))
                 AND (p_color = '' OR (SELECT bool_and(color_identity ILIKE '%' || item || '%') FROM unnest(string_to_array(UPPER(p_color), ',')) as item))
                 AND (p_collection = '' OR (SELECT bool_and(EXISTS (SELECT 1 FROM product_category pc2 JOIN custom_category c2 ON pc2.category_id = c2.id WHERE pc2.product_id = base_products.id AND c2.slug = item)) FROM unnest(string_to_array(LOWER(p_collection), ',')) as item))
+                AND (p_set_name = '' OR (SELECT bool_and(LOWER(set_name) = item) FROM unnest(string_to_array(LOWER(p_set_name), ',')) as item))
               ELSE
                 true
               END
             GROUP BY val
             UNION ALL
             SELECT 'full_art' as val, COUNT(DISTINCT base_products.id) as c FROM base_products 
-            LEFT JOIN product_category pc_col ON base_products.id = pc_col.product_id
-            LEFT JOIN custom_category c_col ON pc_col.category_id = c_col.id
             WHERE full_art = true AND 
               CASE WHEN p_filter_logic = 'and' THEN
                 (p_condition = '' OR (SELECT bool_and(LOWER(condition) = item) FROM unnest(string_to_array(LOWER(p_condition), ',')) as item))
@@ -168,11 +162,10 @@ BEGIN
                 AND (p_language = '' OR (SELECT bool_and(LOWER(language) = item) FROM unnest(string_to_array(LOWER(p_language), ',')) as item))
                 AND (p_color = '' OR (SELECT bool_and(color_identity ILIKE '%' || item || '%') FROM unnest(string_to_array(UPPER(p_color), ',')) as item))
                 AND (p_collection = '' OR (SELECT bool_and(EXISTS (SELECT 1 FROM product_category pc2 JOIN custom_category c2 ON pc2.category_id = c2.id WHERE pc2.product_id = base_products.id AND c2.slug = item)) FROM unnest(string_to_array(LOWER(p_collection), ',')) as item))
+                AND (p_set_name = '' OR (SELECT bool_and(LOWER(set_name) = item) FROM unnest(string_to_array(LOWER(p_set_name), ',')) as item))
               ELSE true END
             UNION ALL
             SELECT 'textless' as val, COUNT(DISTINCT base_products.id) as c FROM base_products 
-            LEFT JOIN product_category pc_col ON base_products.id = pc_col.product_id
-            LEFT JOIN custom_category c_col ON pc_col.category_id = c_col.id
             WHERE textless = true AND 
               CASE WHEN p_filter_logic = 'and' THEN
                 (p_condition = '' OR (SELECT bool_and(LOWER(condition) = item) FROM unnest(string_to_array(LOWER(p_condition), ',')) as item))
@@ -181,6 +174,7 @@ BEGIN
                 AND (p_language = '' OR (SELECT bool_and(LOWER(language) = item) FROM unnest(string_to_array(LOWER(p_language), ',')) as item))
                 AND (p_color = '' OR (SELECT bool_and(color_identity ILIKE '%' || item || '%') FROM unnest(string_to_array(UPPER(p_color), ',')) as item))
                 AND (p_collection = '' OR (SELECT bool_and(EXISTS (SELECT 1 FROM product_category pc2 JOIN custom_category c2 ON pc2.category_id = c2.id WHERE pc2.product_id = base_products.id AND c2.slug = item)) FROM unnest(string_to_array(LOWER(p_collection), ',')) as item))
+                AND (p_set_name = '' OR (SELECT bool_and(LOWER(set_name) = item) FROM unnest(string_to_array(LOWER(p_set_name), ',')) as item))
               ELSE true END
         ) t GROUP BY val
     ),
@@ -197,10 +191,35 @@ BEGIN
             AND (p_rarity = '' OR (SELECT bool_and(LOWER(rarity) = item) FROM unnest(string_to_array(LOWER(p_rarity), ',')) as item))
             AND (p_language = '' OR (SELECT bool_and(LOWER(language) = item) FROM unnest(string_to_array(LOWER(p_language), ',')) as item))
             AND (p_color = '' OR (SELECT bool_and(color_identity ILIKE '%' || item || '%') FROM unnest(string_to_array(UPPER(p_color), ',')) as item))
+            AND (p_set_name = '' OR (SELECT bool_and(LOWER(set_name) = item) FROM unnest(string_to_array(LOWER(p_set_name), ',')) as item))
           ELSE
             true
           END
         GROUP BY val
+    ),
+    f_set_name AS (
+        SELECT 
+            COALESCE(p.set_name, 'Unknown') as val, 
+            COUNT(DISTINCT p.id) as c,
+            MAX(s.released_at) as release_date
+        FROM base_products p
+        LEFT JOIN tcg_set s ON (LOWER(p.set_name) = LOWER(s.name) AND p.tcg = s.tcg) OR (LOWER(p.set_code) = LOWER(s.code) AND p.tcg = s.tcg)
+        WHERE 
+          CASE WHEN p_filter_logic = 'and' THEN
+            (p_condition = '' OR (SELECT bool_and(LOWER(condition) = item) FROM unnest(string_to_array(LOWER(p_condition), ',')) as item))
+            AND (p_foil = '' OR (SELECT bool_and(LOWER(foil_treatment) = item) FROM unnest(string_to_array(LOWER(p_foil), ',')) as item))
+            AND (p_treatment = '' OR (SELECT bool_and(LOWER(card_treatment) = item OR (item = 'full_art' AND full_art = true) OR (item = 'textless' AND textless = true)) FROM unnest(string_to_array(LOWER(p_treatment), ',')) as item))
+            AND (p_rarity = '' OR (SELECT bool_and(LOWER(rarity) = item) FROM unnest(string_to_array(LOWER(p_rarity), ',')) as item))
+            AND (p_language = '' OR (SELECT bool_and(LOWER(language) = item) FROM unnest(string_to_array(LOWER(p_language), ',')) as item))
+            AND (p_color = '' OR (SELECT bool_and(color_identity ILIKE '%' || item || '%') FROM unnest(string_to_array(UPPER(p_color), ',')) as item))
+            AND (p_collection = '' OR (SELECT bool_and(EXISTS (SELECT 1 FROM product_category pc2 JOIN custom_category c2 ON pc2.category_id = c2.id WHERE pc2.product_id = p.id AND c2.slug = item)) FROM unnest(string_to_array(LOWER(p_collection), ',')) as item))
+          ELSE
+            true
+          END
+        GROUP BY val
+        HAVING COUNT(DISTINCT p.id) > 0
+        ORDER BY release_date DESC NULLS LAST, val ASC
+        LIMIT 50
     )
     SELECT jsonb_build_object(
         'condition', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_condition),
@@ -209,10 +228,10 @@ BEGIN
         'language', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_language),
         'color', (SELECT jsonb_build_object('W', w, 'U', u, 'B', b, 'R', r, 'G', g, 'C', c) FROM f_color),
         'treatment', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_treatment),
-        'collection', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_collection)
+        'collection', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_collection),
+        'set_name', (SELECT COALESCE(jsonb_agg(jsonb_build_object('id', val, 'label', val, 'count', c)), '[]'::jsonb) FROM f_set_name)
     ) INTO result;
 
     RETURN result;
 END;
 $$ LANGUAGE plpgsql;
-

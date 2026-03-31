@@ -1,7 +1,7 @@
 package handlers
 
 import (
-"github.com/el-bulk/backend/utils/render"
+	"github.com/el-bulk/backend/utils/render"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -87,6 +87,8 @@ func loadSettings(db *sqlx.DB) (models.Settings, error) {
 			s.ContactInstagram = val
 		case "contact_hours":
 			s.ContactHours = val
+		case "last_set_sync":
+			s.LastSetSync = val
 		}
 	}
 

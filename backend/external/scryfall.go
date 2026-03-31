@@ -458,3 +458,42 @@ func BuildPriceMap() (map[PriceKey]CardPrices, error) {
 
 	return priceMap, nil
 }
+// ─── Scryfall sets data structures ──────────────────────────────────────────
+
+type ScryfallSet struct {
+	Code       string `json:"code"`
+	Name       string `json:"name"`
+	ReleasedAt string `json:"released_at"`
+	SetType    string `json:"set_type"`
+}
+
+type ScryfallSetsResponse struct {
+	Data []ScryfallSet `json:"data"`
+}
+
+// FetchSets retrieves all MTG sets from Scryfall.
+func FetchSets() ([]ScryfallSet, error) {
+	req, err := http.NewRequest(http.MethodGet, ScryfallBase+"/sets", nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", "ElBulkTCGStore/1.0 (contact@elbulk.com)")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := scryfallClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("scryfall sets status %d", resp.StatusCode)
+	}
+
+	var setsResp ScryfallSetsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&setsResp); err != nil {
+		return nil, err
+	}
+
+	return setsResp.Data, nil
+}

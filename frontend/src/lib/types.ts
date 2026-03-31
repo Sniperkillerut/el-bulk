@@ -76,6 +76,13 @@ export interface Settings {
   contact_email: string;
   contact_instagram: string;
   contact_hours: string;
+  last_set_sync?: string;
+}
+
+export interface FacetItem {
+  id: string;
+  label: string;
+  count: number;
 }
 
 export interface Facets {
@@ -86,6 +93,7 @@ export interface Facets {
   language: Record<string, number>;
   color: Record<string, number>;
   collection: Record<string, number>;
+  set_name?: FacetItem[];
 }
 
 export interface ProductListResponse {

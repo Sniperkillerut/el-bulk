@@ -115,6 +115,7 @@ func main() {
 				r.Post("/tcgs", tcgHandler.Create)
 				r.Put("/tcgs/{id}", tcgHandler.Update)
 				r.Delete("/tcgs/{id}", tcgHandler.Delete)
+				r.Post("/tcgs/sync-sets", tcgHandler.SyncSets)
 
 				// Exchange rate settings
 				r.Get("/settings", settingsHandler.Get)

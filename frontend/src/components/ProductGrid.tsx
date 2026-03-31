@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import useSWR from 'swr';
 import { fetchProducts, fetchCategories } from '@/lib/api';
 import ProductCard from '@/components/ProductCard';
@@ -15,6 +15,8 @@ interface FiltersState {
   rarity: string[];
   language: string[];
   color: string[];
+  setName: string[];
+  inStock: boolean;
 }
 
 interface ProductGridProps {
@@ -35,7 +37,9 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
     collection: [], 
     rarity: [], 
     language: [], 
-    color: [] 
+    color: [],
+    setName: [],
+    inStock: true
   });
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
@@ -62,6 +66,8 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
     rarity: filters.rarity.join(',') || undefined,
     language: filters.language.join(',') || undefined,
     color: filters.color.join(',') || undefined,
+    set_name: filters.setName.join(',') || undefined,
+    in_stock: filters.inStock,
     sort_by: sortBy || undefined,
     sort_dir: sortDir || undefined,
     logic: logic !== 'or' ? logic : undefined,
@@ -94,14 +100,15 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
     loadCats();
   }, []);
 
-  const toggleFilter = (key: keyof FiltersState, value: string) => {
+  const toggleFilter = (key: keyof FiltersState, value: string | boolean) => {
     setPage(1);
     setFilters(prev => {
-      if (key === 'search') return { ...prev, search: value };
+      if (key === 'search') return { ...prev, search: value as string };
+      if (key === 'inStock') return { ...prev, inStock: value as boolean };
       const current = prev[key] as string[];
-      const next = current.includes(value) 
+      const next = current.includes(value as string) 
         ? current.filter(v => v !== value)
-        : [...current, value];
+        : [...current, value as string];
       return { ...prev, [key]: next };
     });
   };
@@ -111,6 +118,12 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
   };
 
   const totalPages = Math.ceil(total / 20);
+
+  const setNameCounts = useMemo(() => {
+    const c: Record<string, number> = {};
+    facets?.set_name?.forEach(f => { c[f.id] = f.count; });
+    return c;
+  }, [facets?.set_name]);
 
   return (
     <div className="centered-container px-4 py-8">
@@ -177,8 +190,25 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
 
             {category === 'singles' && (
               <div className="flex flex-col gap-1">
+                {/* Stock - Always at top */}
+                <div className="border-b border-dashed border-kraft-dark py-3">
+                  <p className="font-display text-xl sm:text-2xl text-ink-deep mb-2">Stock</p>
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input 
+                      type="checkbox" 
+                      checked={filters.inStock}
+                      onChange={() => toggleFilter('inStock', !filters.inStock)}
+                      className="w-4 h-4 border-2 border-kraft-dark rounded-sm checked:bg-ink-deep appearance-none relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-[10px] checked:after:text-white"
+                    />
+                    <span className="text-xs font-mono-stack text-text-secondary group-hover:text-ink-deep transition-colors">
+                      In Stock Only
+                    </span>
+                  </label>
+                </div>
+
                 <FilterSection 
                   title="Condition" 
+                  initialOpen={false}
                   items={[
                     { id: 'NM', label: 'NM', color: '#22c55e' },
                     { id: 'LP', label: 'LP', color: '#84cc16' },
@@ -208,57 +238,69 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                 />
 
                 {tcg?.toLowerCase() === 'mtg' && (
-                  <>
-                    <FilterSection 
-                      title="Rarity" 
-                      items={[
-                        { id: 'Common', label: 'Common', color: '#1a1714' },
-                        { id: 'Uncommon', label: 'Uncommon', color: '#707883' },
-                        { id: 'Rare', label: 'Rare', color: '#b59119' },
-                        { id: 'Mythic', label: 'Mythic', color: '#d14210' },
-                        { id: 'Special', label: 'Special', color: '#6e2191' },
-                        { id: 'Bonus', label: 'Bonus', color: '#6e2191' }
-                      ]} 
-                      selected={filters.rarity}
-                      onToggle={(val) => toggleFilter('rarity', val)}
-                      counts={facets?.rarity}
-                    />
-                    
-                    <FilterSection 
-                      title="Color" 
-                      items={[
-                        { id: 'W', label: 'White', color: '#f8f6d3' },
-                        { id: 'U', label: 'Blue', color: '#0e68ab' },
-                        { id: 'B', label: 'Black', color: '#150b00' },
-                        { id: 'R', label: 'Red', color: '#d3202a' },
-                        { id: 'G', label: 'Green', color: '#00733e' },
-                        { id: 'C', label: 'Colorless', color: '#90adbb' }
-                      ]} 
-                      selected={filters.color}
-                      onToggle={(val) => toggleFilter('color', val)}
-                      counts={facets?.color}
-                    />
+                  <FilterSection 
+                    title="Rarity" 
+                    initialOpen={false}
+                    items={[
+                      { id: 'Common', label: 'Common', color: '#1a1714' },
+                      { id: 'Uncommon', label: 'Uncommon', color: '#707883' },
+                      { id: 'Rare', label: 'Rare', color: '#b59119' },
+                      { id: 'Mythic', label: 'Mythic', color: '#d14210' },
+                      { id: 'Special', label: 'Special', color: '#6e2191' },
+                      { id: 'Bonus', label: 'Bonus', color: '#6e2191' }
+                    ]} 
+                    selected={filters.rarity}
+                    onToggle={(val) => toggleFilter('rarity', val)}
+                    counts={facets?.rarity}
+                  />
+                )}
 
-                    <FilterSection 
-                      title="Language" 
-                      items={[
-                        { id: 'en', label: 'English' },
-                        { id: 'es', label: 'Spanish' },
-                        { id: 'jp', label: 'Japanese' },
-                        { id: 'it', label: 'Italian' },
-                        { id: 'fr', label: 'French' },
-                        { id: 'de', label: 'German' },
-                        { id: 'pt', label: 'Portuguese' },
-                        { id: 'ru', label: 'Russian' },
-                        { id: 'kr', label: 'Korean' },
-                        { id: 'zhs', label: 'CH Simpl.' },
-                        { id: 'zht', label: 'CH Trad.' }
-                      ]} 
-                      selected={filters.language}
-                      onToggle={(val) => toggleFilter('language', val)}
-                      counts={facets?.language}
-                    />
-                  </>
+                <FilterSection 
+                  title="Set" 
+                  items={facets?.set_name || []} 
+                  selected={filters.setName}
+                  onToggle={(val) => toggleFilter('setName', val)}
+                  counts={setNameCounts}
+                />
+
+                {tcg?.toLowerCase() === 'mtg' && (
+                  <FilterSection 
+                    title="Color" 
+                    initialOpen={false}
+                    items={[
+                      { id: 'W', label: 'White', color: '#f8f6d3' },
+                      { id: 'U', label: 'Blue', color: '#0e68ab' },
+                      { id: 'B', label: 'Black', color: '#150b00' },
+                      { id: 'R', label: 'Red', color: '#d3202a' },
+                      { id: 'G', label: 'Green', color: '#00733e' },
+                      { id: 'C', label: 'Colorless', color: '#90adbb' }
+                    ]} 
+                    selected={filters.color}
+                    onToggle={(val) => toggleFilter('color', val)}
+                    counts={facets?.color}
+                  />
+                )}
+
+                {tcg?.toLowerCase() === 'mtg' && (
+                  <FilterSection 
+                    title="Language" 
+                    items={[
+                      { id: 'en', label: 'English' },
+                      { id: 'es', label: 'Spanish' },
+                      { id: 'jp', label: 'Japanese' },
+                      { id: 'it', label: 'Italian' },
+                      { id: 'fr', label: 'French' },
+                      { id: 'de', label: 'German' },
+                      { id: 'pt', label: 'Portuguese' },
+                      { id: 'ru', label: 'Russian' },
+                      { id: 'kr', label: 'Korean' },
+                      { id: 'zhs', label: 'CH Simpl.' },
+                      { id: 'zht', label: 'CH Trad.' }
+                    ]} 
+                    selected={filters.language}
+                    onToggle={(val) => toggleFilter('language', val)}
+                    counts={facets?.language}
+                  />
                 )}
 
                 <FilterSection 
@@ -269,9 +311,9 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                   counts={facets?.collection}
                 />
 
-                {(filters.search || filters.foil.length > 0 || filters.treatment.length > 0 || filters.condition.length > 0 || filters.collection.length > 0 || filters.rarity.length > 0 || filters.language.length > 0 || filters.color.length > 0) && (
+                {(filters.search || filters.foil.length > 0 || filters.treatment.length > 0 || filters.condition.length > 0 || filters.collection.length > 0 || filters.rarity.length > 0 || filters.language.length > 0 || filters.color.length > 0 || filters.setName.length > 0) && (
                   <button
-                    onClick={() => { setFilters({ search: '', foil: [], treatment: [], condition: [], collection: [], rarity: [], language: [], color: [] }); setPage(1); }}
+                    onClick={() => { setFilters({ search: '', foil: [], treatment: [], condition: [], collection: [], rarity: [], language: [], color: [], setName: [], inStock: true }); setPage(1); }}
                     className="btn-secondary w-full mt-4"
                     style={{ fontSize: '0.85rem', padding: '0.4rem' }}
                   >
@@ -371,15 +413,17 @@ function FilterSection({
   items, 
   selected, 
   onToggle, 
-  counts 
+  counts,
+  initialOpen = true
 }: { 
   title: string, 
   items: { id: string, label: string, color?: string }[], 
   selected: string[], 
   onToggle: (id: string) => void, 
-  counts?: Record<string, number> 
+  counts?: Record<string, number>,
+  initialOpen?: boolean
 }) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(initialOpen);
   
   if (items.length === 0) return null;
 
