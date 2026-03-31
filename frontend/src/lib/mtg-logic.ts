@@ -277,26 +277,38 @@ export function getDeckAnalytics(cards: DeckCard[]) {
     Other: 0
   };
 
+  const groups: Record<string, DeckCard[]> = {
+    Creatures: [],
+    Instants: [],
+    Sorceries: [],
+    Artifacts: [],
+    Enchantments: [],
+    Planeswalkers: [],
+    Battles: [],
+    Lands: [],
+    Other: []
+  };
+
   let total = 0;
   cards.forEach(card => {
     total += card.quantity;
     if (!card.type_line) {
       counts.Other += card.quantity;
+      groups.Other.push(card);
       return;
     }
     
-    // Split by Em-dash or hyphen and take the first part (types, not subtypes)
     const typeLine = card.type_line.split(/[—\-]/)[0].toLowerCase();
     
-    if (typeLine.includes('land')) counts.Lands += card.quantity;
-    else if (typeLine.includes('creature')) counts.Creatures += card.quantity;
-    else if (typeLine.includes('instant')) counts.Instants += card.quantity;
-    else if (typeLine.includes('sorcery')) counts.Sorceries += card.quantity;
-    else if (typeLine.includes('artifact')) counts.Artifacts += card.quantity;
-    else if (typeLine.includes('enchantment')) counts.Enchantments += card.quantity;
-    else if (typeLine.includes('planeswalker')) counts.Planeswalkers += card.quantity;
-    else if (typeLine.includes('battle')) counts.Battles += card.quantity;
-    else counts.Other += card.quantity;
+    if (typeLine.includes('land')) { counts.Lands += card.quantity; groups.Lands.push(card); }
+    else if (typeLine.includes('creature')) { counts.Creatures += card.quantity; groups.Creatures.push(card); }
+    else if (typeLine.includes('instant')) { counts.Instants += card.quantity; groups.Instants.push(card); }
+    else if (typeLine.includes('sorcery')) { counts.Sorceries += card.quantity; groups.Sorceries.push(card); }
+    else if (typeLine.includes('artifact')) { counts.Artifacts += card.quantity; groups.Artifacts.push(card); }
+    else if (typeLine.includes('enchantment')) { counts.Enchantments += card.quantity; groups.Enchantments.push(card); }
+    else if (typeLine.includes('planeswalker')) { counts.Planeswalkers += card.quantity; groups.Planeswalkers.push(card); }
+    else if (typeLine.includes('battle')) { counts.Battles += card.quantity; groups.Battles.push(card); }
+    else { counts.Other += card.quantity; groups.Other.push(card); }
   });
 
   const summary = Object.entries(counts)
@@ -304,5 +316,5 @@ export function getDeckAnalytics(cards: DeckCard[]) {
     .map(([type, count]) => `${count} ${type.toLowerCase()}`)
     .join(' - ');
 
-  return { total, counts, summary };
+  return { total, counts, summary, groups };
 }

@@ -1,5 +1,4 @@
-'use client';
-
+import { useState } from 'react';
 import { DeckCard } from '@/lib/types';
 import CardImage from './CardImage';
 import { getDeckAnalytics } from '@/lib/mtg-logic';
@@ -10,47 +9,95 @@ interface DeckContentsProps {
   className?: string;
 }
 
-/**
- * DeckContents renders a responsive grid of deck cards as thumbnails.
- * Each thumbnail shows the quantity and triggers a large preview on hover.
- */
 export default function DeckContents({ cards, tcg, className = '' }: DeckContentsProps) {
+  const { total, summary, groups } = getDeckAnalytics(cards);
+  
+  // Track expanded groups. Default is all expanded.
+  const [expandedGroups, setExpandedGroups] = useState<string[]>(
+    Object.keys(groups).filter(key => groups[key].length > 0)
+  );
+
   if (!cards || cards.length === 0) return null;
 
-  const { total, summary } = getDeckAnalytics(cards);
+  const toggleGroup = (groupName: string) => {
+    setExpandedGroups(prev => 
+      prev.includes(groupName) 
+        ? prev.filter(g => g !== groupName)
+        : [...prev, groupName]
+    );
+  };
+
+  const expandAll = () => setExpandedGroups(Object.keys(groups).filter(key => groups[key].length > 0));
+  const collapseAll = () => setExpandedGroups([]);
 
   return (
     <div className={`mt-4 ${className}`}>
-      <div className="mb-4">
-        <h3 className="font-mono-stack text-xs uppercase text-text-muted opacity-70 flex justify-between items-center mb-1 font-bold tracking-widest">
-          <span>Deck Contents</span>
-          <span className="bg-ink-border/10 px-2 py-0.5 rounded-full text-[10px] font-bold text-ink-deep/60">
-            {total} CARDS
-          </span>
-        </h3>
-        {summary && (
-          <p className="text-[10px] font-mono-stack text-text-muted opacity-60 uppercase tracking-tighter">
-            {summary}
-          </p>
-        )}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-4">
+        <div>
+          <h3 className="font-mono-stack text-xs uppercase text-text-muted opacity-70 flex items-center gap-2 mb-1 font-bold tracking-widest">
+            <span>Deck Contents</span>
+            <span className="bg-ink-border/10 px-2 py-0.5 rounded-full text-[10px] font-bold text-ink-deep/60">
+              {total} CARDS
+            </span>
+          </h3>
+          {summary && (
+            <p className="text-[10px] font-mono-stack text-text-muted opacity-60 uppercase tracking-tighter">
+              {summary}
+            </p>
+          )}
+        </div>
+        <div className="flex gap-4">
+          <button type="button" onClick={expandAll} className="text-[10px] uppercase font-mono-stack font-bold text-gold hover:underline">Expand All</button>
+          <button type="button" onClick={collapseAll} className="text-[10px] uppercase font-mono-stack font-bold text-text-muted hover:underline">Collapse All</button>
+        </div>
       </div>
-      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-        {cards.map((card) => (
-          <div key={card.id} className="relative group">
-            <div className="border border-kraft-dark/30 rounded-sm overflow-hidden bg-ink-surface shadow-sm transition-transform hover:scale-105">
-              <CardImage 
-                imageUrl={card.image_url} 
-                name={card.name} 
-                tcg={tcg} 
-                enableHover={true}
-              />
+
+      <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+        {Object.entries(groups).map(([groupName, groupCards]) => {
+          if (groupCards.length === 0) return null;
+          const isExpanded = expandedGroups.includes(groupName);
+          const groupQty = groupCards.reduce((sum, c) => sum + c.quantity, 0);
+
+          return (
+            <div key={groupName} className="border-b border-ink-border/5 last:border-0 pb-4">
+              <button 
+                type="button"
+                onClick={() => toggleGroup(groupName)}
+                className="w-full flex items-center justify-between py-2 group/header"
+              >
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </span>
+                  <span className="font-mono-stack text-xs font-bold uppercase tracking-widest text-ink-deep group-hover/header:text-gold transition-colors">
+                    {groupName} ({groupQty})
+                  </span>
+                </div>
+                <div className="h-px flex-1 bg-ink-border/10 mx-4 opacity-50"></div>
+              </button>
+
+              {isExpanded && (
+                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2 mt-2 px-1">
+                  {groupCards.map((card) => (
+                    <div key={card.id} className="relative group/card">
+                      <div className="border border-kraft-dark/30 rounded-sm overflow-hidden bg-ink-surface shadow-sm transition-transform hover:scale-105">
+                        <CardImage 
+                          imageUrl={card.image_url} 
+                          name={card.name} 
+                          tcg={tcg} 
+                          enableHover={true}
+                        />
+                      </div>
+                      <div className="absolute bottom-0 right-0 bg-ink-deep text-white text-[10px] font-mono-stack font-bold px-1.5 py-0.5 rounded-tl-sm pointer-events-none shadow-md z-10">
+                        x{card.quantity}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="absolute bottom-0 right-0 bg-ink-deep text-white text-[10px] font-mono-stack font-bold px-1.5 py-0.5 rounded-tl-sm pointer-events-none shadow-md z-10">
-              x{card.quantity}
-            </div>
-            {/* Tooltip on bottom for name on hover if needed, but the big image shows the card name usually */}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
