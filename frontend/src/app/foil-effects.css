@@ -30,17 +30,17 @@
   background: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0) 0%,
-    rgba(255, 0, 0, 0.1) 15%,
-    rgba(255, 255, 0, 0.1) 30%,
-    rgba(0, 255, 0, 0.1) 45%,
-    rgba(0, 255, 255, 0.1) 60%,
-    rgba(0, 0, 255, 0.1) 75%,
-    rgba(255, 0, 255, 0.1) 90%,
+    rgba(255, 0, 0, 0.15) 15%,
+    rgba(255, 255, 0, 0.15) 30%,
+    rgba(0, 255, 0, 0.15) 45%,
+    rgba(0, 255, 255, 0.15) 60%,
+    rgba(0, 0, 255, 0.15) 75%,
+    rgba(255, 0, 255, 0.15) 90%,
     rgba(255, 255, 255, 0) 100%
   );
   background-size: 400% 100%;
   animation: foil-shimmer 4s infinite linear;
-  opacity: 0.4;
+  opacity: 0.6;
 }
 
 /* Surge Foil: Wavy, high-energy pulses */
@@ -48,12 +48,12 @@
   background: repeating-linear-gradient(
     45deg,
     rgba(255, 255, 255, 0),
-    rgba(255, 255, 255, 0.15) 10%,
+    rgba(255, 255, 255, 0.25) 10%,
     rgba(255, 255, 255, 0) 20%
   );
   background-size: 200% 200%;
   animation: foil-shimmer 2s infinite ease-in-out, foil-pulse 2s infinite;
-  opacity: 0.5;
+  opacity: 0.7;
   mix-blend-mode: overlay;
 }
 
@@ -61,14 +61,14 @@
 .foil-etched {
   background: linear-gradient(
     135deg,
-    rgba(255, 215, 0, 0.1) 0%,
-    rgba(255, 255, 255, 0.2) 50%,
-    rgba(255, 215, 0, 0.1) 100%
+    rgba(255, 215, 0, 0.2) 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 215, 0, 0.2) 100%
   );
   background-size: 200% 200%;
   animation: foil-shimmer 6s infinite linear;
-  filter: contrast(120%) brightness(110%);
-  opacity: 0.3;
+  filter: contrast(130%) brightness(120%);
+  opacity: 0.5;
 }
 .foil-etched::after {
   content: "";
@@ -87,7 +87,7 @@
     radial-gradient(circle at 70% 20%, white 1.5px, transparent 1.5px);
   background-size: 100px 100px;
   animation: foil-rotate 20s infinite linear;
-  opacity: 0.6;
+  opacity: 0.8;
 }
 
 /* Oil Slick: Dark iridescent rainbow */
@@ -95,14 +95,14 @@
   background: linear-gradient(
     135deg,
     rgba(0, 0, 0, 0.2) 0%,
-    rgba(255, 0, 255, 0.1) 25%,
-    rgba(0, 255, 255, 0.1) 50%,
-    rgba(255, 255, 0, 0.1) 75%,
+    rgba(255, 0, 255, 0.2) 25%,
+    rgba(0, 255, 255, 0.2) 50%,
+    rgba(255, 255, 0, 0.2) 75%,
     rgba(0, 0, 0, 0.2) 100%
   );
   background-size: 300% 300%;
   animation: foil-shimmer 8s infinite alternate-reverse;
-  opacity: 0.5;
+  opacity: 0.7;
   mix-blend-mode: hard-light;
 }
 
@@ -111,12 +111,12 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath d='M10 0 L20 10 L10 20 L0 10 Z' fill='none' stroke='white' stroke-width='0.5' opacity='0.2'/%3E%3C/svg%3E");
   background-size: 40px 40px;
   animation: foil-shimmer 15s infinite linear;
-  opacity: 0.3;
+  opacity: 0.5;
 }
 
 /* Interaction: Hover intensity */
 .group:hover .foil-overlay {
-  opacity: 0.8;
+  opacity: 0.95;
 }
 
 .foil-ripple {
