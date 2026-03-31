@@ -146,13 +146,13 @@ func (h *ProductHandler) saveDeckCards(productID string, cards []models.DeckCard
 		return
 	}
 
-	query := "INSERT INTO deck_card (product_id, name, set_code, collector_number, quantity, type_line, image_url) VALUES "
-	values := make([]interface{}, 0, len(cards)*7)
+	query := "INSERT INTO deck_card (product_id, name, set_code, collector_number, quantity, type_line, image_url, foil_treatment, card_treatment, rarity, art_variation) VALUES "
+	values := make([]interface{}, 0, len(cards)*11)
 	placeholders := make([]string, 0, len(cards))
 
 	for i, c := range cards {
-		placeholders = append(placeholders, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d, $%d)", i*7+1, i*7+2, i*7+3, i*7+4, i*7+5, i*7+6, i*7+7))
-		values = append(values, productID, c.Name, c.SetCode, c.CollectorNumber, c.Quantity, c.TypeLine, c.ImageURL)
+		placeholders = append(placeholders, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)", i*11+1, i*11+2, i*11+3, i*11+4, i*11+5, i*11+6, i*11+7, i*11+8, i*11+9, i*11+10, i*11+11))
+		values = append(values, productID, c.Name, c.SetCode, c.CollectorNumber, c.Quantity, c.TypeLine, c.ImageURL, c.FoilTreatment, c.CardTreatment, c.Rarity, c.ArtVariation)
 	}
 
 	query += strings.Join(placeholders, ", ")
@@ -271,7 +271,7 @@ func (h *ProductHandler) populateDeckCards(products []models.Product) {
 		return
 	}
 
-	sql := "SELECT id, product_id, name, set_code, collector_number, quantity, type_line, image_url FROM deck_card WHERE product_id IN (?)"
+	sql := "SELECT id, product_id, name, set_code, collector_number, quantity, type_line, image_url, foil_treatment, card_treatment, rarity, art_variation FROM deck_card WHERE product_id IN (?)"
 	query, args, err := sqlx.In(sql, deckPids)
 	if err != nil {
 		logger.Error("Error creating IN query for populateDeckCards: %v", err)

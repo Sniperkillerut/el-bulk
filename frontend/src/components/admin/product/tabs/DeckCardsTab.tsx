@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { FormState } from '../types';
 import { DeckCard, ScryfallCard } from '@/lib/types';
 import ScryfallPopulate from '../ScryfallPopulate';
-import { getScryfallImage } from '@/lib/mtg-logic';
-import { getDeckAnalytics } from '@/lib/mtg-logic';
+import { getScryfallImage, getDeckAnalytics, resolveCardTreatment, resolveFoilTreatment, resolveArtVariation } from '@/lib/mtg-logic';
+import { FOIL_LABELS, TREATMENT_LABELS, resolveLabel } from '@/lib/types';
 import CardImage from '@/components/CardImage';
 
 interface DeckCardsTabProps {
@@ -84,7 +84,11 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
       collector_number: card?.collector_number || searchCn || '',
       quantity: 1,
       type_line: card?.type_line || '',
-      image_url: card ? (getScryfallImage(card) || '') : ''
+      image_url: card ? (getScryfallImage(card) || '') : '',
+      foil_treatment: card ? resolveFoilTreatment(card) : 'non_foil',
+      card_treatment: card ? resolveCardTreatment(card) : 'normal',
+      rarity: card?.rarity || 'common',
+      art_variation: card ? resolveArtVariation(card) : ''
     };
     
     // check if it already exists, if so increment
@@ -226,12 +230,35 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
                   />
                 </div>
                 <div className="flex flex-col flex-1 min-w-0">
-                  <span className="font-bold text-sm truncate">{card.name}</span>
-                  <span className="text-[10px] uppercase font-mono-stack text-text-muted truncate">
-                    {card.set_code && `${card.set_code.toUpperCase()}`}
-                    {card.set_code && card.collector_number && ' · '}
-                    {card.collector_number && `#${card.collector_number}`}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm truncate">{card.name}</span>
+                    {card.rarity && (
+                      <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase ${
+                        card.rarity === 'mythic' ? 'bg-hp-color/10 text-hp-color' :
+                        card.rarity === 'rare' ? 'bg-gold/10 text-gold' :
+                        card.rarity === 'uncommon' ? 'bg-ink-deep/10 text-ink-deep' :
+                        'bg-text-muted/10 text-text-muted'
+                      }`}>
+                        {card.rarity}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                    <span className="text-[10px] font-mono-stack text-text-muted">
+                      {card.set_code?.toUpperCase()} #{card.collector_number}
+                    </span>
+                    {card.foil_treatment && card.foil_treatment !== 'non_foil' && (
+                      <span className="text-[9px] font-bold text-ink-deep/60 flex items-center gap-0.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-tr from-blue-400 via-purple-400 to-pink-400"></span>
+                        {resolveLabel(card.foil_treatment, FOIL_LABELS)}
+                      </span>
+                    )}
+                    {card.card_treatment && card.card_treatment !== 'normal' && (
+                      <span className="text-[9px] font-mono-stack font-bold px-1 bg-ink-border/5 rounded text-text-muted border border-ink-border/5">
+                        {resolveLabel(card.card_treatment, TREATMENT_LABELS)}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button type="button" onClick={() => updateCardQty(card.id, card.quantity - 1)} className="w-6 h-6 rounded bg-ink-border/10 hover:bg-ink-border/20 transition-colors flex items-center justify-center font-mono font-bold" disabled={card.quantity <= 1}>-</button>

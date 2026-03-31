@@ -101,14 +101,18 @@ type Product struct {
 }
 
 type DeckCard struct {
-	ID              string `db:"id"               json:"id"`
-	ProductID       string `db:"product_id"       json:"product_id"`
-	Name            string `db:"name"             json:"name"`
-	SetCode         string `db:"set_code"         json:"set_code,omitempty"`
-	CollectorNumber string `db:"collector_number" json:"collector_number,omitempty"`
-	Quantity        int    `db:"quantity"         json:"quantity"`
-	TypeLine        string `db:"type_line"        json:"type_line,omitempty"`
-	ImageURL        string `db:"image_url"        json:"image_url,omitempty"`
+	ID              string        `db:"id"               json:"id"`
+	ProductID       string        `db:"product_id"       json:"product_id"`
+	Name            string        `db:"name"             json:"name"`
+	SetCode         string        `db:"set_code"         json:"set_code,omitempty"`
+	CollectorNumber string        `db:"collector_number" json:"collector_number,omitempty"`
+	Quantity        int           `db:"quantity"         json:"quantity"`
+	TypeLine        string        `db:"type_line"        json:"type_line,omitempty"`
+	ImageURL        string        `db:"image_url"        json:"image_url,omitempty"`
+	FoilTreatment   FoilTreatment `db:"foil_treatment"   json:"foil_treatment"`
+	CardTreatment   CardTreatment `db:"card_treatment"   json:"card_treatment"`
+	Rarity          string        `db:"rarity"           json:"rarity,omitempty"`
+	ArtVariation    string        `db:"art_variation"    json:"art_variation,omitempty"`
 }
 
 // ComputePrice calculates the COP price for this product given the exchange rates.

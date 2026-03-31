@@ -14,6 +14,10 @@ export interface DeckCard {
   quantity: number;
   type_line?: string;
   image_url?: string;
+  foil_treatment?: FoilTreatment;
+  card_treatment?: CardTreatment;
+  rarity?: string;
+  art_variation?: string;
 }
 
 export interface Product {

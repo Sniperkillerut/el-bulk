@@ -22,6 +22,10 @@ SELECT p.*,
            'collector_number', dc.collector_number,
            'quantity', dc.quantity,
            'type_line', dc.type_line,
-           'image_url', dc.image_url
+           'image_url', dc.image_url,
+           'foil_treatment', dc.foil_treatment,
+           'card_treatment', dc.card_treatment,
+           'rarity', dc.rarity,
+           'art_variation', dc.art_variation
        )), '[]') FROM deck_card dc WHERE dc.product_id = p.id) as deck_cards_json
 FROM product p;

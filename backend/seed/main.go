@@ -322,6 +322,29 @@ func seedFullData(db *sqlx.DB, tcgIDs map[string]string, cats map[string]string,
 
 	// 6. Store Exclusives (Decks)
 	logger.Info("Seeding Store Exclusives (Decks)...")
+
+	// Helper for seeding deck cards with Scryfall metadata
+	seedDeckCards := func(deckID string, identifiers []external.CardIdentifier) {
+		logger.Info("Looking up metadata for %d deck cards...", len(identifiers))
+		var results []external.CardLookupResult
+		for i := 0; i < len(identifiers); i += 75 {
+			end := i + 75
+			if end > len(identifiers) { end = len(identifiers) }
+			res, err := external.BatchLookupMTGCard(identifiers[i:end])
+			if err == nil { results = append(results, res...) }
+		}
+
+		for _, r := range results {
+			db.Exec(`
+				INSERT INTO deck_card (
+					product_id, name, set_code, collector_number, quantity, 
+					type_line, image_url, foil_treatment, card_treatment, rarity, art_variation
+				)
+				VALUES ($1, $2, $3, $4, 1, $5, $6, 'non_foil', 'normal', $7, $8)
+			`, deckID, r.Name, r.SetCode, r.CollectorNumber, r.TypeLine, r.ImageURL, r.Rarity, r.ArtVariation)
+		}
+	}
+
 	var deckID string
 	err := db.QueryRow(`
 		INSERT INTO product (name, tcg, category, price_source, price_cop_override, stock, image_url, description)
@@ -337,21 +360,12 @@ func seedFullData(db *sqlx.DB, tcgIDs map[string]string, cats map[string]string,
 		db.Exec(`INSERT INTO product_storage (product_id, storage_id, quantity) VALUES ($1, $2, 5)`, deckID, storageIDs[0])
 		db.Exec(`INSERT INTO product_category (product_id, category_id) VALUES ($1, $2)`, deckID, cats["featured"])
 
-		// Add some deck cards
-		deckCards := []struct{ Name, Set, CN, TypeLine string; Qty int }{
-			{"Krenko, Mob Boss", "rvr", "114", "Legendary Creature — Goblin Warrior", 1},
-			{"Goblin Chieftain", "jmp", "324", "Creature — Goblin", 1},
-			{"Goblin Warchief", "dom", "130", "Creature — Goblin Warrior", 1},
-			{"Mountain", "usg", "343", "Basic Land — Mountain", 35},
-		}
-
-		for _, dc := range deckCards {
-			imgURL := fmt.Sprintf("https://api.scryfall.com/cards/%s/%s?format=image&version=normal", dc.Set, dc.CN)
-			db.Exec(`
-				INSERT INTO deck_card (product_id, name, set_code, collector_number, quantity, type_line, image_url)
-				VALUES ($1, $2, $3, $4, $5, $6, $7)
-			`, deckID, dc.Name, dc.Set, dc.CN, dc.Qty, dc.TypeLine, imgURL)
-		}
+		seedDeckCards(deckID, []external.CardIdentifier{
+			{Name: "Krenko, Mob Boss", Set: "rvr", CollectorNumber: "114"},
+			{Name: "Goblin Chieftain", Set: "jmp", CollectorNumber: "324"},
+			{Name: "Goblin Warchief", Set: "dom", CollectorNumber: "130"},
+			{Name: "Mountain", Set: "usg", CollectorNumber: "343"},
+		})
 	}
 
 	// 6b. Premium Dragon Deck (100 Cards)
@@ -371,123 +385,116 @@ func seedFullData(db *sqlx.DB, tcgIDs map[string]string, cats map[string]string,
 		db.Exec(`INSERT INTO product_storage (product_id, storage_id, quantity) VALUES ($1, $2, 3)`, dragonDeckID, storageIDs[1])
 		db.Exec(`INSERT INTO product_category (product_id, category_id) VALUES ($1, $2)`, dragonDeckID, cats["hot-items"])
 
-		dragonDeckCards := []struct{ Name, Set, CN, TypeLine string; Qty int }{
+		dragonDeckIds := []external.CardIdentifier{
 			// Lands (35 Unique)
-			{"Ancient Tomb", "tmp", "315", "Land", 1},
-			{"Cavern of Souls", "avr", "226", "Land", 1},
-			{"City of Brass", "mma", "221", "Land", 1},
-			{"Mana Confluence", "jou", "163", "Land", 1},
-			{"Command Tower", "cm2", "242", "Land", 1},
-			{"Reflecting Pool", "tpr", "241", "Land", 1},
-			{"Forbidden Orchard", "chk", "276", "Land", 1},
-			{"Exotic Orchard", "cn2", "219", "Land", 1},
-			{"Path of Ancestry", "c17", "63", "Land", 1},
-			{"Haven of the Spirit Dragon", "dtk", "249", "Land", 1},
-			{"Crucible of the Spirit Dragon", "frf", "167", "Land", 1},
-			{"Stomping Ground", "rna", "259", "Land — Mountain Forest", 1},
-			{"Steam Vents", "grn", "257", "Land — Island Mountain", 1},
-			{"Watery Grave", "grn", "259", "Land — Island Swamp", 1},
-			{"Blood Crypt", "rna", "245", "Land — Swamp Mountain", 1},
-			{"Overgrown Tomb", "grn", "253", "Land — Swamp Forest", 1},
-			{"Temple Garden", "grn", "258", "Land — Forest Plains", 1},
-			{"Hallowed Fountain", "rna", "251", "Land — Plains Island", 1},
-			{"Sacred Foundry", "grn", "254", "Land — Mountain Plains", 1},
-			{"Breeding Pool", "rna", "246", "Land — Forest Island", 1},
-			{"Godless Shrine", "rna", "248", "Land — Plains Swamp", 1},
-			{"Wooded Foothills", "ons", "330", "Land", 1},
-			{"Polluted Delta", "ons", "335", "Land", 1},
-			{"Bloodstained Mire", "ons", "313", "Land", 1},
-			{"Windswept Heath", "ons", "328", "Land", 1},
-			{"Flooded Strand", "ons", "316", "Land", 1},
-			{"Scalding Tarn", "zen", "223", "Land", 1},
-			{"Marsh Flats", "zen", "219", "Land", 1},
-			{"Verdant Catacombs", "zen", "229", "Land", 1},
-			{"Misty Rainforest", "zen", "220", "Land", 1},
-			{"Arid Mesa", "zen", "211", "Land", 1},
-			{"Mountain", "clb", "453", "Basic Land — Mountain", 1},
-			{"Mountain", "clb", "454", "Basic Land — Mountain", 1},
-			{"Island", "clb", "451", "Basic Land — Island", 1},
-			{"Forest", "clb", "457", "Basic Land — Forest", 1},
+			{Name: "Ancient Tomb", Set: "tmp", CollectorNumber: "315"},
+			{Name: "Cavern of Souls", Set: "avr", CollectorNumber: "226"},
+			{Name: "City of Brass", Set: "mma", CollectorNumber: "221"},
+			{Name: "Mana Confluence", Set: "jou", CollectorNumber: "163"},
+			{Name: "Command Tower", Set: "cm2", CollectorNumber: "242"},
+			{Name: "Reflecting Pool", Set: "tpr", CollectorNumber: "241"},
+			{Name: "Forbidden Orchard", Set: "chk", CollectorNumber: "276"},
+			{Name: "Exotic Orchard", Set: "cn2", CollectorNumber: "219"},
+			{Name: "Path of Ancestry", Set: "c17", CollectorNumber: "63"},
+			{Name: "Haven of the Spirit Dragon", Set: "dtk", CollectorNumber: "249"},
+			{Name: "Crucible of the Spirit Dragon", Set: "frf", CollectorNumber: "167"},
+			{Name: "Stomping Ground", Set: "rna", CollectorNumber: "259"},
+			{Name: "Steam Vents", Set: "grn", CollectorNumber: "257"},
+			{Name: "Watery Grave", Set: "grn", CollectorNumber: "259"},
+			{Name: "Blood Crypt", Set: "rna", CollectorNumber: "245"},
+			{Name: "Overgrown Tomb", Set: "grn", CollectorNumber: "253"},
+			{Name: "Temple Garden", Set: "grn", CollectorNumber: "258"},
+			{Name: "Hallowed Fountain", Set: "rna", CollectorNumber: "251"},
+			{Name: "Sacred Foundry", Set: "grn", CollectorNumber: "254"},
+			{Name: "Breeding Pool", Set: "rna", CollectorNumber: "246"},
+			{Name: "Godless Shrine", Set: "rna", CollectorNumber: "248"},
+			{Name: "Wooded Foothills", Set: "ons", CollectorNumber: "330"},
+			{Name: "Polluted Delta", Set: "ons", CollectorNumber: "335"},
+			{Name: "Bloodstained Mire", Set: "ons", CollectorNumber: "313"},
+			{Name: "Windswept Heath", Set: "ons", CollectorNumber: "328"},
+			{Name: "Flooded Strand", Set: "ons", CollectorNumber: "316"},
+			{Name: "Scalding Tarn", Set: "zen", CollectorNumber: "223"},
+			{Name: "Marsh Flats", Set: "zen", CollectorNumber: "219"},
+			{Name: "Verdant Catacombs", Set: "zen", CollectorNumber: "229"},
+			{Name: "Misty Rainforest", Set: "zen", CollectorNumber: "220"},
+			{Name: "Arid Mesa", Set: "zen", CollectorNumber: "211"},
+			{Name: "Mountain", Set: "clb", CollectorNumber: "453"},
+			{Name: "Mountain", Set: "clb", CollectorNumber: "454"},
+			{Name: "Island", Set: "clb", CollectorNumber: "451"},
+			{Name: "Forest", Set: "clb", CollectorNumber: "457"},
 
 			// Creatures (30 Unique)
-			{"The Ur-Dragon", "c17", "48", "Legendary Creature — Elder Dragon Avatar", 1},
-			{"Miirym, Sentinel Wyrm", "clb", "284", "Legendary Creature — Dragon Spirit", 1},
-			{"Lathliss, Dragon Queen", "m19", "149", "Legendary Creature — Dragon", 1},
-			{"Korvold, Fae-Cursed King", "eld", "329", "Legendary Creature — Dragon Noble", 1},
-			{"Utvara Hellkite", "rtr", "110", "Creature — Dragon", 1},
-			{"Scourge of Valkas", "m14", "151", "Creature — Dragon", 1},
-			{"Balefire Dragon", "isd", "129", "Creature — Dragon", 1},
-			{"Terror of the Peaks", "m21", "164", "Creature — Dragon", 1},
-			{"Hellkite Tyrant", "gtc", "94", "Creature — Dragon", 1},
-			{"Old Gnawbone", "afr", "197", "Creature — Dragon", 1},
-			{"Kyodai, Soul of Kamigawa", "neo", "23", "Legendary Creature — Dragon Spirit", 1},
-			{"Dragonlord Dromoka", "dtk", "217", "Legendary Creature — Elder Dragon", 1},
-			{"Dragonlord Silumgar", "dtk", "220", "Legendary Creature — Elder Dragon", 1},
-			{"Dragonlord Kolaghan", "dtk", "218", "Legendary Creature — Elder Dragon", 1},
-			{"Dragonlord Atarka", "dtk", "216", "Legendary Creature — Elder Dragon", 1},
-			{"Dragonlord Ojutai", "dtk", "219", "Legendary Creature — Elder Dragon", 1},
-			{"Silumgar, the Drifting Death", "frf", "154", "Legendary Creature — Dragon Skeleton", 1},
-			{"Kolaghan, the Storm's Fury", "frf", "155", "Legendary Creature — Dragon", 1},
-			{"Atarka, World Render", "frf", "149", "Legendary Creature — Dragon", 1},
-			{"Ojutai, Soul of Winter", "frf", "156", "Legendary Creature — Dragon Spirit", 1},
-			{"Dromoka, the Eternal", "frf", "151", "Legendary Creature — Dragon", 1},
-			{"Tiamat", "afr", "235", "Legendary Creature — Dragon God", 1},
-			{"Ancient Silver Dragon", "clb", "57", "Creature — Elder Dragon", 1},
-			{"Ancient Copper Dragon", "clb", "161", "Creature — Elder Dragon", 1},
-			{"Ancient Brass Dragon", "clb", "111", "Creature — Elder Dragon", 1},
-			{"Ancient Gold Dragon", "clb", "3", "Creature — Elder Dragon", 1},
-			{"Ancient Bronze Dragon", "clb", "214", "Creature — Elder Dragon", 1},
-			{"Klauth, Unrivaled Ancient", "afc", "50", "Legendary Creature — Dragon", 1},
-			{"Rivaz of the Claw", "dmu", "215", "Legendary Creature — Viashino Warlock", 1},
-			{"Dragonborn Looter", "clb", "65", "Creature — Dragon Rogue", 1},
+			{Name: "The Ur-Dragon", Set: "c17", CollectorNumber: "48"},
+			{Name: "Miirym, Sentinel Wyrm", Set: "clb", CollectorNumber: "284"},
+			{Name: "Lathliss, Dragon Queen", Set: "m19", CollectorNumber: "149"},
+			{Name: "Korvold, Fae-Cursed King", Set: "eld", CollectorNumber: "329"},
+			{Name: "Utvara Hellkite", Set: "rtr", CollectorNumber: "110"},
+			{Name: "Scourge of Valkas", Set: "m14", CollectorNumber: "151"},
+			{Name: "Balefire Dragon", Set: "isd", CollectorNumber: "129"},
+			{Name: "Terror of the Peaks", Set: "m21", CollectorNumber: "164"},
+			{Name: "Hellkite Tyrant", Set: "gtc", CollectorNumber: "94"},
+			{Name: "Old Gnawbone", Set: "afr", CollectorNumber: "197"},
+			{Name: "Kyodai, Soul of Kamigawa", Set: "neo", CollectorNumber: "23"},
+			{Name: "Dragonlord Dromoka", Set: "dtk", CollectorNumber: "217"},
+			{Name: "Dragonlord Silumgar", Set: "dtk", CollectorNumber: "220"},
+			{Name: "Dragonlord Kolaghan", Set: "dtk", CollectorNumber: "218"},
+			{Name: "Dragonlord Atarka", Set: "dtk", CollectorNumber: "216"},
+			{Name: "Dragonlord Ojutai", Set: "dtk", CollectorNumber: "219"},
+			{Name: "Silumgar, the Drifting Death", Set: "frf", CollectorNumber: "154"},
+			{Name: "Kolaghan, the Storm's Fury", Set: "frf", CollectorNumber: "155"},
+			{Name: "Atarka, World Render", Set: "frf", CollectorNumber: "149"},
+			{Name: "Ojutai, Soul of Winter", Set: "frf", CollectorNumber: "156"},
+			{Name: "Dromoka, the Eternal", Set: "frf", CollectorNumber: "151"},
+			{Name: "Tiamat", Set: "afr", CollectorNumber: "235"},
+			{Name: "Ancient Silver Dragon", Set: "clb", CollectorNumber: "57"},
+			{Name: "Ancient Copper Dragon", Set: "clb", CollectorNumber: "161"},
+			{Name: "Ancient Brass Dragon", Set: "clb", CollectorNumber: "111"},
+			{Name: "Ancient Gold Dragon", Set: "clb", CollectorNumber: "3"},
+			{Name: "Ancient Bronze Dragon", Set: "clb", CollectorNumber: "214"},
+			{Name: "Klauth, Unrivaled Ancient", Set: "afc", CollectorNumber: "50"},
+			{Name: "Rivaz of the Claw", Set: "dmu", CollectorNumber: "215"},
+			{Name: "Dragonborn Looter", Set: "clb", CollectorNumber: "65"},
 
 			// Artifacts/Enchantments (15 Unique)
-			{"Sol Ring", "clb", "882", "Artifact", 1},
-			{"Arcane Signet", "clb", "861", "Artifact", 1},
-			{"Dragon's Hoard", "m19", "232", "Artifact", 1},
-			{"Herald's Horn", "c17", "53", "Artifact", 1},
-			{"Urza's Incubator", "vma", "287", "Artifact", 1},
-			{"Chromatic Lantern", "grn", "233", "Artifact", 1},
-			{"The Great Henge", "eld", "161", "Legendary Artifact", 1},
-			{"Temur Ascendancy", "ktk", "207", "Enchantment", 1},
-			{"Dragon Tempest", "dtk", "136", "Enchantment", 1},
-			{"Kindred Discovery", "c17", "11", "Enchantment", 1},
-			{"Rhythm of the Wild", "rna", "201", "Enchantment", 1},
-			{"Smothering Tithe", "rna", "22", "Enchantment", 1},
-			{"Rhystic Study", "pcy", "45", "Enchantment", 1},
-			{"Sylvan Library", "ema", "187", "Enchantment", 1},
-			{"Garruk's Uprising", "m21", "186", "Enchantment", 1},
+			{Name: "Sol Ring", Set: "clb", CollectorNumber: "882"},
+			{Name: "Arcane Signet", Set: "clb", CollectorNumber: "861"},
+			{Name: "Dragon's Hoard", Set: "m19", CollectorNumber: "232"},
+			{Name: "Herald's Horn", Set: "c17", CollectorNumber: "53"},
+			{Name: "Urza's Incubator", Set: "vma", CollectorNumber: "287"},
+			{Name: "Chromatic Lantern", Set: "grn", CollectorNumber: "233"},
+			{Name: "The Great Henge", Set: "eld", CollectorNumber: "161"},
+			{Name: "Temur Ascendancy", Set: "ktk", CollectorNumber: "207"},
+			{Name: "Dragon Tempest", Set: "dtk", CollectorNumber: "136"},
+			{Name: "Kindred Discovery", Set: "c17", CollectorNumber: "11"},
+			{Name: "Rhythm of the Wild", Set: "rna", CollectorNumber: "201"},
+			{Name: "Smothering Tithe", Set: "rna", CollectorNumber: "22"},
+			{Name: "Rhystic Study", Set: "pcy", CollectorNumber: "45"},
+			{Name: "Sylvan Library", Set: "ema", CollectorNumber: "187"},
+			{Name: "Garruk's Uprising", Set: "m21", CollectorNumber: "186"},
 
 			// Instants/Sorceries (20 Unique)
-			{"Swords to Plowshares", "clb", "707", "Instant", 1},
-			{"Path to Exile", "2xm", "25", "Instant", 1},
-			{"Cyclonic Rift", "rtr", "35", "Instant", 1},
-			{"Heroic Intervention", "aer", "109", "Instant", 1},
-			{"Teferi's Protection", "c17", "8", "Instant", 1},
-			{"Counterspell", "clb", "441", "Instant", 1},
-			{"Vampiric Tutor", "cmr", "156", "Instant", 1},
-			{"Enlightened Tutor", "ema", "9", "Instant", 1},
-			{"Worldly Tutor", "cc1", "6", "Instant", 1},
-			{"Mystical Tutor", "ema", "62", "Instant", 1},
-			{"Cultivate", "clb", "821", "Sorcery", 1},
-			{"Kodama's Reach", "clb", "835", "Sorcery", 1},
-			{"Farseek", "rav", "164", "Sorcery", 1},
-			{"Three Visits", "cmr", "261", "Sorcery", 1},
-			{"Nature's Lore", "por", "184", "Sorcery", 1},
-			{"Blasphemous Act", "clb", "788", "Sorcery", 1},
-			{"Toxic Deluge", "2xm", "110", "Sorcery", 1},
-			{"Demonic Tutor", "vma", "116", "Sorcery", 1},
-			{"Farewell", "neo", "13", "Sorcery", 1},
-			{"Crux of Fate", "frf", "65", "Sorcery", 1},
+			{Name: "Swords to Plowshares", Set: "clb", CollectorNumber: "707"},
+			{Name: "Path to Exile", Set: "2xm", CollectorNumber: "25"},
+			{Name: "Cyclonic Rift", Set: "rtr", CollectorNumber: "35"},
+			{Name: "Heroic Intervention", Set: "aer", CollectorNumber: "109"},
+			{Name: "Teferi's Protection", Set: "c17", CollectorNumber: "8"},
+			{Name: "Counterspell", Set: "clb", CollectorNumber: "441"},
+			{Name: "Vampiric Tutor", Set: "cmr", CollectorNumber: "156"},
+			{Name: "Enlightened Tutor", Set: "ema", CollectorNumber: "9"},
+			{Name: "Worldly Tutor", Set: "cc1", CollectorNumber: "6"},
+			{Name: "Mystical Tutor", Set: "ema", CollectorNumber: "62"},
+			{Name: "Cultivate", Set: "clb", CollectorNumber: "821"},
+			{Name: "Kodama's Reach", Set: "clb", CollectorNumber: "835"},
+			{Name: "Farseek", Set: "rav", CollectorNumber: "164"},
+			{Name: "Three Visits", Set: "cmr", CollectorNumber: "261"},
+			{Name: "Nature's Lore", Set: "por", CollectorNumber: "184"},
+			{Name: "Blasphemous Act", Set: "clb", CollectorNumber: "788"},
+			{Name: "Toxic Deluge", Set: "2xm", CollectorNumber: "110"},
+			{Name: "Demonic Tutor", Set: "vma", CollectorNumber: "116"},
+			{Name: "Farewell", Set: "neo", CollectorNumber: "13"},
+			{Name: "Crux of Fate", Set: "frf", CollectorNumber: "65"},
 		}
-
-		for _, dc := range dragonDeckCards {
-			imgURL := fmt.Sprintf("https://api.scryfall.com/cards/%s/%s?format=image&version=normal", dc.Set, dc.CN)
-			db.Exec(`
-				INSERT INTO deck_card (product_id, name, set_code, collector_number, quantity, type_line, image_url)
-				VALUES ($1, $2, $3, $4, $5, $6, $7)
-			`, dragonDeckID, dc.Name, dc.Set, dc.CN, dc.Qty, dc.TypeLine, imgURL)
-		}
+		seedDeckCards(dragonDeckID, dragonDeckIds)
 	}
 
 	// 7. Bounties
