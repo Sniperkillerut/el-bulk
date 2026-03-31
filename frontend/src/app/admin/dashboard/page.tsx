@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   adminFetchTCGs, adminFetchStorage, adminCreateStorage, adminUpdateStorage, adminDeleteStorage,
   adminFetchCategories, adminCreateCategory, adminUpdateCategory, adminDeleteCategory,
@@ -26,6 +26,7 @@ export default function AdminDashboard() {
   const {
     products, loading, total, page, pageSize,
     search, setSearch, tcgFilter, setTcgFilter,
+    categoryFilter, setCategoryFilter,
     storageFilter, setStorageFilter, sortKey, sortDir,
     queryTime,
     setPage, handleSort, refresh: refreshProducts
@@ -38,12 +39,7 @@ export default function AdminDashboard() {
   const [showStorageModal, setShowStorageModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
 
-  // Initial Load
-  useEffect(() => {
-    if (token) loadStaticData(token);
-  }, [token]);
-
-  const loadStaticData = async (t: string) => {
+  const loadStaticData = useCallback(async (t: string) => {
     try {
       const [tcgData, storageData, catData] = await Promise.all([
         adminFetchTCGs(t), adminFetchStorage(t), adminFetchCategories(t)
@@ -54,7 +50,12 @@ export default function AdminDashboard() {
     } catch (err: any) {
       if (err.message?.includes('401')) logout();
     }
-  };
+  }, [logout]);
+
+  // Initial Load
+  useEffect(() => {
+    if (token) loadStaticData(token);
+  }, [token, loadStaticData]);
 
   // CRUD Actions
   const handleSaveProduct = () => { setShowEditModal(false); setEditingProduct(null); refreshProducts(); };
@@ -125,14 +126,24 @@ export default function AdminDashboard() {
               <span className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30">🔍</span>
             </div>
           </div>
-          <div style={{ width: '160px' }}>
+          <div style={{ width: '130px' }}>
             <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">TCG Filter</label>
             <select value={tcgFilter} onChange={e => { setTcgFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30">
               <option value="">ALL TCGS</option>
               {tcgs.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
             </select>
           </div>
-          <div style={{ width: '180px' }}>
+          <div style={{ width: '150px' }}>
+            <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">Category</label>
+            <select value={categoryFilter} onChange={e => { setCategoryFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30">
+              <option value="">ALL CATEGORIES</option>
+              <option value="singles">SINGLES</option>
+              <option value="sealed">SEALED</option>
+              <option value="accessories">ACCESSORIES</option>
+              <option value="store_exclusives">STORE EXCLUSIVES</option>
+            </select>
+          </div>
+          <div style={{ width: '160px' }}>
             <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">Physical Location</label>
             <select value={storageFilter} onChange={e => { setStorageFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30">
               <option value="">ALL LOCATIONS</option>

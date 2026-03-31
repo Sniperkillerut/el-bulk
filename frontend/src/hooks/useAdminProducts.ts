@@ -10,6 +10,7 @@ export function useAdminProducts(token: string) {
   const [pageSize] = useState(25);
   const [search, setSearch] = useState('');
   const [tcgFilter, setTcgFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [storageFilter, setStorageFilter] = useState('');
   const [sortKey, setSortKey] = useState('created_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
@@ -25,6 +26,7 @@ export function useAdminProducts(token: string) {
         page_size: pageSize, 
         search, 
         tcg: tcgFilter, 
+        category: categoryFilter,
         storage_id: storageFilter, 
         sort_by: sortKey, 
         sort_dir: sortDir
@@ -37,7 +39,7 @@ export function useAdminProducts(token: string) {
     } finally {
       setLoading(false);
     }
-  }, [token, page, pageSize, search, tcgFilter, storageFilter, sortKey, sortDir]);
+  }, [token, page, pageSize, search, tcgFilter, categoryFilter, storageFilter, sortKey, sortDir]);
 
   useEffect(() => {
     fetchProducts();
@@ -52,6 +54,7 @@ export function useAdminProducts(token: string) {
   return {
     products, loading, total, page, pageSize, 
     search, setSearch, tcgFilter, setTcgFilter, 
+    categoryFilter, setCategoryFilter,
     storageFilter, setStorageFilter, sortKey, sortDir,
     queryTime,
     setPage, handleSort, refresh: fetchProducts
