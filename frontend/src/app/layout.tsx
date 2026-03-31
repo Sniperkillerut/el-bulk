@@ -9,6 +9,8 @@ import BountyModalManager from '@/components/BountyModalManager';
 import RemoteLogManager from '@/components/RemoteLogManager';
 
 import { UserProvider } from '@/context/UserContext';
+import { UIProvider } from '@/context/UIContext';
+import './foil-effects.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -61,11 +63,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body suppressHydrationWarning>
         <RemoteLogManager />
         <UserProvider>
-          <CartProvider>
-            <StorefrontLayoutWrapper>
-              {children}
-            </StorefrontLayoutWrapper>
-          </CartProvider>
+          <UIProvider>
+            <CartProvider>
+              <StorefrontLayoutWrapper>
+                {children}
+              </StorefrontLayoutWrapper>
+            </CartProvider>
+          </UIProvider>
         </UserProvider>
       </body>
     </html>

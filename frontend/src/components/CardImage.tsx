@@ -2,12 +2,14 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useUI } from '@/context/UIContext';
 import ImageModal from './ImageModal';
 
 interface CardImageProps {
   imageUrl?: string | null;
   name: string;
   tcg?: string;
+  foilTreatment?: string;
   height?: number | string;
   enableHover?: boolean;
   enableModal?: boolean;
@@ -22,7 +24,11 @@ const TCG_EMOJI: Record<string, string> = {
   accessories: '🛡️',
 };
 
-export default function CardImage({ imageUrl, name, tcg, height, enableHover = false, enableModal = false }: CardImageProps) {
+export default function CardImage({ 
+  imageUrl, name, tcg, foilTreatment, height, 
+  enableHover = false, enableModal = false 
+}: CardImageProps) {
+  const { foilEffectsEnabled } = useUI();
   const [imgError, setImgError] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -124,6 +130,11 @@ export default function CardImage({ imageUrl, name, tcg, height, enableHover = f
         </div>
       )}
 
+      {/* Foil Overlay */}
+      {foilEffectsEnabled && foilTreatment && foilTreatment !== 'non_foil' && (
+        <FoilOverlay treatment={foilTreatment} />
+      )}
+
       {isHovered && imageUrl && rect && (
         <HoverPortal imageUrl={imageUrl} name={name} startRect={rect} />
       )}
@@ -140,13 +151,32 @@ export default function CardImage({ imageUrl, name, tcg, height, enableHover = f
   );
 }
 
+function FoilOverlay({ treatment }: { treatment: string }) {
+  // Normalize treatment slug for CSS classes
+  const effectClass = treatment.toLowerCase().replace(/_/g, '-');
+  
+  const getFoilClass = (t: string) => {
+    const slug = t.toLowerCase();
+    if (slug === 'foil' || slug === 'traditional_foil') return 'foil-classic';
+    if (slug.includes('surge')) return 'foil-surge';
+    if (slug.includes('etched')) return 'foil-etched';
+    if (slug.includes('galaxy')) return 'foil-galaxy';
+    if (slug.includes('oil_slick')) return 'foil-oil-slick';
+    if (slug.includes('step_and_compleat') || slug.includes('compleat')) return 'foil-step-compleat';
+    if (slug.includes('ripple')) return 'foil-ripple';
+    if (slug.includes('textured')) return 'foil-etched';
+    return `foil-${effectClass.replace('foil-', '')}` || 'foil-classic';
+  };
+
+  return <div className={`foil-overlay ${getFoilClass(treatment)}`} />;
+}
+
 function HoverPortal({ imageUrl, name, startRect }: { imageUrl: string; name: string; startRect: DOMRect }) {
   const [isMounted, setIsMounted] = useState(false);
   const [portalNode, setPortalNode] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
     setPortalNode(document.body);
-    // Tiny delay to trigger transition after mount
     const timer = setTimeout(() => setIsMounted(true), 10);
     return () => clearTimeout(timer);
   }, []);

@@ -6,6 +6,7 @@ import { Product, FOIL_LABELS, TREATMENT_LABELS, resolveLabel } from '@/lib/type
 import { useCart } from '@/lib/CartContext';
 import Link from 'next/link';
 import Modal from './ui/Modal';
+import CardImage from './CardImage';
 import DeckContents from './DeckContents';
 
 interface ProductModalProps {
@@ -81,12 +82,13 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
             <div className="p-8 bg-kraft-light flex items-center justify-center">
               <div className="cardbox overflow-hidden shadow-md w-full max-w-sm aspect-[3/4] bg-ink-surface p-2">
                 <div className="w-full h-full border border-ink-border relative shadow-[inset_0_0_10px_rgba(0,0,0,0.05)]">
-                  {product.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={product.image_url} alt={product.name} className="w-full h-full object-contain p-4" />
-                  ) : (
-                    <div className="flex items-center justify-center h-full w-full text-5xl opacity-20">🃏</div>
-                  )}
+                  <CardImage 
+                    imageUrl={product.image_url} 
+                    name={product.name} 
+                    tcg={product.tcg}
+                    foilTreatment={product.foil_treatment}
+                    enableModal={true}
+                  />
                 </div>
               </div>
             </div>

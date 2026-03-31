@@ -6,11 +6,13 @@ import { useCart } from '@/lib/CartContext';
 import { useUser } from '@/context/UserContext';
 import { TCG, TCG_SHORT } from '@/lib/types';
 import { fetchTCGs } from '@/lib/api';
+import { useUI } from '@/context/UIContext';
 import CartDrawer from './CartDrawer';
 
 export default function Navbar() {
   const { totalItems, openCart, isOpen, closeCart } = useCart();
   const { user, loading: userLoading, loginWithGoogle, logout } = useUser();
+  const { foilEffectsEnabled, toggleFoilEffects } = useUI();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [singlesDropOpen, setSinglesDropOpen] = useState(false);
   const [sealedDropOpen, setSealedDropOpen] = useState(false);
@@ -170,6 +172,27 @@ export default function Navbar() {
                 )}
               </div>
             )}
+
+            {/* Foil Toggle */}
+            <button
+              onClick={toggleFoilEffects}
+              className="p-2 rounded-lg transition-all"
+              style={{ 
+                background: 'var(--ink-surface)', 
+                border: '1px solid var(--ink-border)', 
+                cursor: 'pointer',
+                color: foilEffectsEnabled ? 'var(--gold)' : 'var(--text-muted)',
+                opacity: foilEffectsEnabled ? 1 : 0.6,
+                transform: foilEffectsEnabled ? 'scale(1.1)' : 'scale(1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              aria-label="Toggle foil effects"
+              title={foilEffectsEnabled ? "Disable foil effects" : "Enable foil effects"}
+            >
+              <span style={{ fontSize: '1.1rem' }}>✨</span>
+            </button>
 
             <button
               id="cart-toggle"

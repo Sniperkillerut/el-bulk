@@ -16,6 +16,7 @@ import ScryfallPopulate from './product/ScryfallPopulate';
 import VariantTab from './product/tabs/VariantTab';
 import PricingTab from './product/tabs/PricingTab';
 import DeckCardsTab from './product/tabs/DeckCardsTab';
+import CardImage from '../CardImage';
 import { FormState, TabId, ProductEditModalProps } from './product/types';
 
 export const EMPTY_FORM: FormState = {
@@ -617,16 +618,7 @@ export default function ProductEditModal({
               </div>
               <div className="card p-2 bg-white/40 border-white/30 backdrop-blur-sm overflow-hidden group mb-8 shadow-xl">
                 <div className="relative aspect-[63/88] w-full bg-ink-border/5 rounded shadow-inner flex items-center justify-center overflow-hidden">
-                {form.image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={form.image_url} alt={form.name} className="w-full h-full object-contain drop-shadow-2xl transition-transform duration-700 group-hover:scale-110" />
-                ) : (
-                  <div className="text-[10px] font-mono-stack text-text-muted text-center p-4">NO IMAGE FOUND<br/>SEARCH TO LOAD</div>
-                  )}
-                  {form.foil_treatment !== 'non_foil' && (
-                    <div className="absolute inset-0 pointer-events-none opacity-30 mix-blend-color-dodge transition-opacity group-hover:opacity-50"
-                      style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)', backgroundSize: '200% 200%', animation: 'shimmer 3s infinite linear' }} />
-                  )}
+                  <CardImage imageUrl={form.image_url} name={form.name} tcg={form.tcg} foilTreatment={form.foil_treatment} />
                 </div>
               </div>
 
