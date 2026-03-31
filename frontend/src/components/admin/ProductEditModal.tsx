@@ -380,10 +380,10 @@ export default function ProductEditModal({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-4 md:pt-8 px-2 md:px-4"
-      style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(12px)', overflowY: 'auto' }}>
-      <div className="card p-0 w-full max-w-6xl mb-8 border-white/20 shadow-2xl animate-in fade-in zoom-in duration-300" 
-        style={{ position: 'relative', background: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(20px)' }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4"
+      style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(12px)' }}>
+      <div className="card p-0 w-full max-w-6xl max-h-[94vh] flex flex-col border-white/20 shadow-2xl animate-in fade-in zoom-in duration-300" 
+        style={{ position: 'relative', background: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(20px)', overflow: 'hidden' }}>
 
         <div className="flex items-center justify-between p-4 md:p-6 pb-2">
           <div className="flex flex-col">
@@ -500,7 +500,8 @@ export default function ProductEditModal({
           })}
         </div>
 
-        <div className="flex gap-8 flex-col md:flex-row p-4 md:p-6 pt-6">
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <div className="flex gap-8 flex-col md:flex-row p-4 md:p-6 pb-12">
           <div className="flex-1 min-w-0 animate-in fade-in slide-in-from-bottom-2 duration-500">
             {activeTab === 'variant' && (
               <VariantTab 
@@ -618,5 +619,6 @@ export default function ProductEditModal({
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 }

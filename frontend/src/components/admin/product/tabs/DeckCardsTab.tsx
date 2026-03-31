@@ -218,63 +218,81 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
             Deck is currently empty.
           </div>
         ) : (
-          <div className="flex flex-col gap-2 max-h-96 overflow-y-auto custom-scrollbar p-1">
-            {form.deck_cards.map(card => (
-              <div key={card.id} className="flex items-center gap-3 p-2 bg-white/60 border border-white/40 rounded-lg shrink-0">
-                <div className="w-10 h-14 shrink-0 rounded-sm overflow-hidden border border-ink-border/20 shadow-sm shadow-black/5">
-                  <CardImage 
-                    imageUrl={card.image_url} 
-                    name={card.name} 
-                    tcg={form.tcg} 
-                    enableHover={true} 
-                  />
-                </div>
-                <div className="flex flex-col flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm truncate">{card.name}</span>
-                    {card.rarity && (
-                      <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase ${
-                        card.rarity === 'mythic' ? 'bg-hp-color/10 text-hp-color' :
-                        card.rarity === 'rare' ? 'bg-gold/10 text-gold' :
-                        card.rarity === 'uncommon' ? 'bg-ink-deep/10 text-ink-deep' :
-                        'bg-text-muted/10 text-text-muted'
-                      }`}>
-                        {card.rarity}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                    <span className="text-[10px] font-mono-stack text-text-muted">
-                      {card.set_code?.toUpperCase()} #{card.collector_number}
+          <div className="space-y-6 max-h-[600px] overflow-y-auto custom-scrollbar p-1">
+            {Object.entries(getDeckAnalytics(form.deck_cards).groups).map(([groupName, groupCards]) => {
+              if (groupCards.length === 0) return null;
+              const groupQty = groupCards.reduce((sum, c) => sum + c.quantity, 0);
+
+              return (
+                <div key={groupName} className="space-y-2">
+                  <div className="flex items-center gap-2 py-1 px-2 bg-ink-border/5 rounded">
+                    <span className="font-mono-stack text-[10px] font-bold uppercase tracking-wider text-text-muted">
+                      {groupName} ({groupQty})
                     </span>
-                    {card.foil_treatment && card.foil_treatment !== 'non_foil' && (
-                      <span className="text-[9px] font-bold text-ink-deep/60 flex items-center gap-0.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-tr from-blue-400 via-purple-400 to-pink-400"></span>
-                        {resolveLabel(card.foil_treatment, FOIL_LABELS)}
-                      </span>
-                    )}
-                    {card.card_treatment && card.card_treatment !== 'normal' && (
-                      <span className="text-[9px] font-mono-stack font-bold px-1 bg-ink-border/5 rounded text-text-muted border border-ink-border/5">
-                        {resolveLabel(card.card_treatment, TREATMENT_LABELS)}
-                      </span>
-                    )}
+                    <div className="h-px flex-1 bg-ink-border/10"></div>
+                  </div>
+                  
+                  <div className="flex flex-col gap-2">
+                    {groupCards.map(card => (
+                      <div key={card.id} className="flex items-center gap-3 p-2 bg-white/60 border border-white/40 rounded-lg shrink-0 group/row hover:border-gold/30 transition-colors">
+                        <div className="w-10 h-14 shrink-0 rounded-sm overflow-hidden border border-ink-border/20 shadow-sm shadow-black/5">
+                          <CardImage 
+                            imageUrl={card.image_url} 
+                            name={card.name} 
+                            tcg={form.tcg} 
+                            enableHover={true} 
+                          />
+                        </div>
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-sm truncate">{card.name}</span>
+                            {card.rarity && (
+                              <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase ${
+                                card.rarity === 'mythic' ? 'bg-hp-color/10 text-hp-color' :
+                                card.rarity === 'rare' ? 'bg-gold/10 text-gold' :
+                                card.rarity === 'uncommon' ? 'bg-ink-deep/10 text-ink-deep' :
+                                'bg-text-muted/10 text-text-muted'
+                              }`}>
+                                {card.rarity}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                            <span className="text-[10px] font-mono-stack text-text-muted">
+                              {card.set_code?.toUpperCase()} #{card.collector_number}
+                            </span>
+                            {card.foil_treatment && card.foil_treatment !== 'non_foil' && (
+                              <span className="text-[9px] font-bold text-ink-deep/60 flex items-center gap-0.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-tr from-blue-400 via-purple-400 to-pink-400"></span>
+                                {resolveLabel(card.foil_treatment, FOIL_LABELS)}
+                              </span>
+                            )}
+                            {card.card_treatment && card.card_treatment !== 'normal' && (
+                              <span className="text-[9px] font-mono-stack font-bold px-1 bg-ink-border/5 rounded text-text-muted border border-ink-border/5">
+                                {resolveLabel(card.card_treatment, TREATMENT_LABELS)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button type="button" onClick={() => updateCardQty(card.id, card.quantity - 1)} className="w-6 h-6 rounded bg-ink-border/10 hover:bg-ink-border/20 transition-colors flex items-center justify-center font-mono font-bold" disabled={card.quantity <= 1}>-</button>
+                          <input type="number" value={card.quantity} onChange={e => updateCardQty(card.id, parseInt(e.target.value) || 1)} className="w-12 text-center text-xs py-1 px-1 bg-white/50 m-0 border-none outline-none focus:ring-0" min={1} />
+                          <button type="button" onClick={() => updateCardQty(card.id, card.quantity + 1)} className="w-6 h-6 rounded bg-ink-border/10 hover:bg-ink-border/20 transition-colors flex items-center justify-center font-mono font-bold">+</button>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button type="button" onClick={() => editCard(card)} className="w-8 h-8 rounded-full text-gold hover:bg-gold/10 flex items-center justify-center transition-colors" title="Edit/Repopulate">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                          </button>
+                          <button type="button" onClick={() => removeCard(card.id)} className="w-8 h-8 rounded-full text-hp-color hover:bg-hp-color/10 flex items-center justify-center transition-colors" title="Remove">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button type="button" onClick={() => updateCardQty(card.id, card.quantity - 1)} className="w-6 h-6 rounded bg-ink-border/10 hover:bg-ink-border/20 transition-colors flex items-center justify-center font-mono font-bold" disabled={card.quantity <= 1}>-</button>
-                  <input type="number" value={card.quantity} onChange={e => updateCardQty(card.id, parseInt(e.target.value) || 1)} className="w-12 text-center text-xs py-1 px-1 bg-white/50 m-0" min={1} />
-                  <button type="button" onClick={() => updateCardQty(card.id, card.quantity + 1)} className="w-6 h-6 rounded bg-ink-border/10 hover:bg-ink-border/20 transition-colors flex items-center justify-center font-mono font-bold">+</button>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button type="button" onClick={() => editCard(card)} className="w-8 h-8 rounded-full text-gold hover:bg-gold/10 flex items-center justify-center transition-colors" title="Edit/Repopulate">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                  </button>
-                  <button type="button" onClick={() => removeCard(card.id)} className="w-8 h-8 rounded-full text-hp-color hover:bg-hp-color/10 flex items-center justify-center transition-colors" title="Remove">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
