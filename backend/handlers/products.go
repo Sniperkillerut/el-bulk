@@ -330,7 +330,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 		Total:       total,
 		Page:        page,
 		PageSize:    pageSize,
-		Facets:      h.getFacets(tcg, category, search, storageID, foil, treatment, condition, rarity, language, color, isAdmin),
+		Facets:      h.getFacets(tcg, category, search, storageID, foil, treatment, condition, rarity, language, color, collection, isAdmin),
 		QueryTimeMS: time.Since(start).Milliseconds(),
 	})
 }
@@ -635,10 +635,10 @@ func (h *ProductHandler) UpdateStorage(w http.ResponseWriter, r *http.Request) {
 	h.GetStorage(w, r)
 }
 
-func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treatment, condition, rarity, language, color string, isAdmin bool) models.Facets {
+func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treatment, condition, rarity, language, color, collection string, isAdmin bool) models.Facets {
 	var result []byte
-	err := h.DB.Get(&result, "SELECT fn_get_product_facets($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
-		tcg, category, search, storageID, foil, treatment, condition, rarity, language, color, isAdmin)
+	err := h.DB.Get(&result, "SELECT fn_get_product_facets($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
+		tcg, category, search, storageID, foil, treatment, condition, rarity, language, color, collection, isAdmin)
 
 	if err != nil {
 		logger.Error("Error calling fn_get_product_facets: %v", err)
@@ -795,8 +795,18 @@ func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, tr
 		builder.Conditions = append(builder.Conditions, "p.condition IN ("+strings.Join(placeholders, ",")+")")
 	}
 	if collection != "" {
-		builder.BaseQuery += " JOIN product_category pc_col ON p.id = pc_col.product_id JOIN custom_category c_col ON pc_col.category_id = c_col.id"
-		builder.AddCondition("c_col.slug = ?", collection)
+		vals := strings.Split(collection, ",")
+		placeholders := make([]string, len(vals))
+		for i, v := range vals {
+			placeholder := fmt.Sprintf("$%d", len(builder.Args)+1)
+			placeholders[i] = placeholder
+			builder.Args = append(builder.Args, strings.ToLower(v))
+		}
+		// Use EXISTS to avoid row duplication when a product matches multiple selected collections
+		builder.Conditions = append(builder.Conditions, fmt.Sprintf(
+			"EXISTS (SELECT 1 FROM product_category pc_col JOIN custom_category c_col ON pc_col.category_id = c_col.id WHERE pc_col.product_id = p.id AND c_col.slug IN (%s))",
+			strings.Join(placeholders, ","),
+		))
 	}
 	if rarity != "" {
 		vals := strings.Split(rarity, ",")
