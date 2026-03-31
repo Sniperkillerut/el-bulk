@@ -330,7 +330,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 		Total:       total,
 		Page:        page,
 		PageSize:    pageSize,
-		Facets:      h.getFacets(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color, isAdmin),
+		Facets:      h.getFacets(tcg, category, search, storageID, foil, treatment, condition, rarity, language, color, isAdmin),
 		QueryTimeMS: time.Since(start).Milliseconds(),
 	})
 }
@@ -635,7 +635,7 @@ func (h *ProductHandler) UpdateStorage(w http.ResponseWriter, r *http.Request) {
 	h.GetStorage(w, r)
 }
 
-func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color string, isAdmin bool) models.Facets {
+func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treatment, condition, rarity, language, color string, isAdmin bool) models.Facets {
 	var result []byte
 	err := h.DB.Get(&result, "SELECT fn_get_product_facets($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
 		tcg, category, search, storageID, foil, treatment, condition, rarity, language, color, isAdmin)
@@ -652,37 +652,6 @@ func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treat
 	}
 
 	return facets
-}
-
-func getFoil(d, v string) string {
-	if d == "Foil" {
-		return ""
-	}
-	return v
-}
-func getTreatment(d, v string) string {
-	if d == "Treatment" {
-		return ""
-	}
-	return v
-}
-func getCondition(d, v string) string {
-	if d == "Condition" {
-		return ""
-	}
-	return v
-}
-func getRarity(d, v string) string {
-	if d == "Rarity" {
-		return ""
-	}
-	return v
-}
-func getLanguage(d, v string) string {
-	if d == "Language" {
-		return ""
-	}
-	return v
 }
 
 // buildOrderBy constructs a safe ORDER BY clause from sort_by/sort_dir query params.

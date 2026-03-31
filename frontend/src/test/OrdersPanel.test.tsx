@@ -15,8 +15,9 @@ const mockOrders = [
   {
     id: 'o1',
     order_number: 'EB-1',
+    customer_id: 'c1',
     customer_name: 'John Doe',
-    status: 'pending',
+    status: 'pending' as const,
     total_cop: 1000,
     created_at: new Date().toISOString(),
     item_count: 1,
@@ -53,13 +54,13 @@ describe('OrdersPanel', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (api.adminFetchOrders as any).mockResolvedValue({
+    vi.mocked(api.adminFetchOrders).mockResolvedValue({
       orders: mockOrders,
       total: 1,
       page: 1,
       page_size: 20,
     });
-    (api.adminFetchOrderDetail as any).mockResolvedValue(mockOrderDetail);
+    vi.mocked(api.adminFetchOrderDetail).mockResolvedValue(mockOrderDetail);
   });
 
   it('renders leading state initially', async () => {
