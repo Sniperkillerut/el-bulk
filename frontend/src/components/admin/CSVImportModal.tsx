@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import Papa from 'papaparse';
 import { 
   BulkProductInput, 
@@ -9,9 +9,10 @@ import {
   FoilTreatment, 
   CardTreatment, 
   Condition, 
-  StorageLocation,
   FOIL_LABELS,
-  TREATMENT_LABELS
+  TREATMENT_LABELS,
+  TCG_LABELS,
+  KNOWN_TCGS
 } from '@/lib/types';
 import { lookupMTGCard, adminBulkCreateProducts, adminBatchLookupMTG } from '@/lib/api';
 import CardImage from '@/components/CardImage';
@@ -48,7 +49,10 @@ export default function CSVImportModal({ token, storageLocations, categories, on
 
   // Global settings for the import
   const [defaultStorage, setDefaultStorage] = useState(storageLocations[0]?.id || '');
-  const [defaultCategories, setDefaultCategories] = useState<string[]>([]);
+  const [defaultCategories] = useState<string[]>([]);
+  const [importDestination, setImportDestination] = useState<'singles' | 'deck'>('singles');
+  const [deckName, setDeckName] = useState('');
+  const [tcgType, setTcgType] = useState('mtg');
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -85,11 +89,15 @@ export default function CSVImportModal({ token, storageLocations, categories, on
       setError('Card Name mapping is required.');
       return;
     }
+    if (importDestination === 'deck' && !deckName.trim()) {
+      setError('Deck Name is required for Deck imports.');
+      return;
+    }
 
     const data: BulkProductInput[] = csvData.map(row => {
       const p: BulkProductInput = {
-        tcg: 'mtg',
-        category: 'singles',
+        tcg: tcgType,
+        category: importDestination === 'singles' ? 'singles' : 'store_exclusives',
         name: row[mapping['name']] || '',
         set_code: row[mapping['set_code']] || '',
         collector_number: row[mapping['collector_number']] || '',
@@ -107,6 +115,11 @@ export default function CSVImportModal({ token, storageLocations, categories, on
   };
 
   const handleEnrich = async () => {
+    if (tcgType !== 'mtg') {
+      setError('Automatic enrichment is only available for Magic: The Gathering.');
+      return;
+    }
+
     setLoading(true);
     setProcessedCount(0);
     setError('');
@@ -129,10 +142,6 @@ export default function CSVImportModal({ token, storageLocations, categories, on
           results.forEach((res) => {
             // Find the best match in the chunk
             const matchingIndexInChunk = chunk.findIndex((item, idx) => {
-              // Skip if this chunk item was already updated in this results loop (to handle duplicates)
-              // But actually, for batch, we want to update all identical cards.
-              // So we find ALL matches or just the first one that hasn't been enriched yet?
-              // Let's just find the first one that matches and hasn't had an image_url yet.
               const dataIndex = i + idx;
               if (newData[dataIndex].image_url) return false;
 
@@ -204,7 +213,6 @@ export default function CSVImportModal({ token, storageLocations, categories, on
             newData[i] = {
               ...item,
               name: res.name || item.name,
-              // ... rest of res ...
               set_code: res.set_code || item.set_code,
               set_name: res.set_name,
               collector_number: res.collector_number || item.collector_number,
@@ -232,7 +240,6 @@ export default function CSVImportModal({ token, storageLocations, categories, on
             console.warn(`Fuzzy fallback failed for ${item.name}`, e);
           }
         }
-        // Small increments during fallback or just set to total at end
         if (i % 10 === 0) setProcessedCount(totalToEnrich * 0.9 + (i / newData.length) * 0.1 * totalToEnrich);
       }
       setProcessedCount(totalToEnrich);
@@ -247,7 +254,43 @@ export default function CSVImportModal({ token, storageLocations, categories, on
     setLoading(true);
     setStep('importing');
     try {
-      const res = await adminBulkCreateProducts(token, previewData);
+      let dataToImport = previewData;
+
+      if (importDestination === 'deck') {
+        const deckProduct: BulkProductInput = {
+          name: deckName,
+          tcg: tcgType,
+          category: 'store_exclusives',
+          stock: 1,
+          price_source: 'manual',
+          price_reference: 0,
+          image_url: previewData[0]?.image_url, // Use first card as deck image
+          deck_cards: previewData.map(item => ({
+            name: item.name!,
+            quantity: item.stock || 1,
+            set_code: item.set_code,
+            collector_number: item.collector_number,
+            image_url: item.image_url,
+            foil_treatment: item.foil_treatment,
+            card_treatment: item.card_treatment,
+            rarity: item.rarity,
+            language: item.language || 'en',
+            color_identity: item.color_identity,
+            cmc: item.cmc,
+            is_legendary: !!item.is_legendary,
+            is_historic: !!item.is_historic,
+            is_land: !!item.is_land,
+            is_basic_land: !!item.is_basic_land,
+            art_variation: item.art_variation,
+            type_line: item.type_line,
+          })) as any,
+          category_ids: [...defaultCategories],
+          storage_items: defaultStorage ? [{ stored_in_id: defaultStorage, name: '', quantity: 1 }] : []
+        };
+        dataToImport = [deckProduct];
+      }
+
+      const res = await adminBulkCreateProducts(token, dataToImport);
       setImportResults(res);
       setStep('summary');
     } catch (e: any) {
@@ -328,7 +371,59 @@ export default function CSVImportModal({ token, storageLocations, categories, on
                   <h4 className="text-[#d4c3b3] font-bold mb-4 uppercase text-sm tracking-widest">General Settings</h4>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-xs font-bold text-[#8b7355] uppercase mb-1">Target Storage</label>
+                      <label className="block text-xs font-bold text-[#8b7355] uppercase mb-1">Destination</label>
+                      <div className="flex gap-4 mb-4">
+                        <button
+                          onClick={() => setImportDestination('singles')}
+                          className={`flex-1 py-3 px-4 border-2 font-black uppercase text-xs tracking-widest transition-all ${
+                            importDestination === 'singles'
+                              ? 'bg-[#d4c3b3] border-[#d4c3b3] text-[#1a1614]'
+                              : 'bg-[#1a1614] border-[#3c2a21] text-[#8b7355] hover:border-[#d4c3b3]'
+                          }`}
+                        >
+                          Singles
+                        </button>
+                        <button
+                          onClick={() => setImportDestination('deck')}
+                          className={`flex-1 py-3 px-4 border-2 font-black uppercase text-xs tracking-widest transition-all ${
+                            importDestination === 'deck'
+                              ? 'bg-[#d4c3b3] border-[#d4c3b3] text-[#1a1614]'
+                              : 'bg-[#1a1614] border-[#3c2a21] text-[#8b7355] hover:border-[#d4c3b3]'
+                          }`}
+                        >
+                          Deck
+                        </button>
+                      </div>
+                    </div>
+
+                    {importDestination === 'deck' && (
+                      <div>
+                        <label className="block text-xs font-bold text-[#8b7355] uppercase mb-1">Deck Name</label>
+                        <input
+                          type="text"
+                          value={deckName}
+                          onChange={(e) => setDeckName(e.target.value)}
+                          placeholder="e.g. Mono Red Aggro"
+                          className="w-full bg-[#1a1614] border-2 border-[#3c2a21] p-3 text-[#d4c3b3] focus:border-[#d4c3b3] outline-none transition-all placeholder:text-[#3c2a21]"
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-xs font-bold text-[#8b7355] uppercase mb-1">TCG Type</label>
+                      <select 
+                        value={tcgType}
+                        onChange={(e) => setTcgType(e.target.value)}
+                        className="w-full bg-[#1a1614] border-2 border-[#3c2a21] p-3 text-[#d4c3b3] focus:border-[#d4c3b3] outline-none transition-all"
+                      >
+                        {KNOWN_TCGS.map(id => (
+                          <option key={id} value={id}>{TCG_LABELS[id] || id}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-[#8b7355] uppercase mb-1">Default Storage</label>
                       <select 
                         value={defaultStorage}
                         onChange={(e) => setDefaultStorage(e.target.value)}
@@ -589,7 +684,7 @@ export default function CSVImportModal({ token, storageLocations, categories, on
               </h3>
               <div className="max-w-md space-y-2">
                 <p className="text-[#8b7355] font-bold text-lg italic animate-pulse">
-                  "Unpacking boxes and organizing the vault"
+                  &quot;Unpacking boxes and organizing the vault&quot;
                 </p>
                 <div className="flex justify-center gap-1">
                   {[1,2,3].map(i => (
