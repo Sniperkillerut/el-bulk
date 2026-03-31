@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useAdmin } from '@/hooks/useAdmin';
 import { adminFetchClientDetail, adminAddCustomerNote } from '@/lib/api';
-import { CustomerDetail, CustomerNote } from '@/lib/types';
+import { CustomerDetail } from '@/lib/types';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function AdminClientDetailPage() {
@@ -24,7 +24,10 @@ export default function AdminClientDetailPage() {
         const data = await adminFetchClientDetail(token, id as string);
         setDetail(data);
       } catch (err) {
-        console.error(err);
+        const error = err as Error;
+        if (error?.message !== 'Not Found' && !error?.message?.includes('not found')) {
+          console.error('Failed to fetch client details:', error);
+        }
       } finally {
         setLoading(false);
       }
@@ -33,7 +36,7 @@ export default function AdminClientDetailPage() {
 
   useEffect(() => {
     fetchDetail();
-  }, [token, id]);
+  }, [token, id]); // eslint-disable-next-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (initialOrderId) {
@@ -201,45 +204,106 @@ export default function AdminClientDetailPage() {
 
             <div className="cardbox p-6 space-y-8">
                 <div>
-                  <h3 className="text-xl mb-4 font-display tracking-wider">ACTIVE REQUESTS</h3>
-                  <div className="space-y-2">
-                    {(detail.requests || []).length === 0 ? (
-                      <div className="text-[10px] font-mono-stack opacity-40 italic">NO ACTIVE REQUESTS.</div>
-                    ) : (
-                      (detail.requests || []).map(req => (
-                        <div key={req.id} className="p-3 bg-hp-color/5 border border-hp-color/20 rounded-sm">
-                          <div className="flex justify-between items-start mb-1">
-                            <span className="font-bold text-xs uppercase text-hp-color">{req.card_name}</span>
-                            <span className="text-[8px] font-mono-stack px-1 bg-hp-color text-white rounded-sm">{req.status}</span>
-                          </div>
-                          {req.set_name && <p className="text-[9px] font-mono-stack opacity-60">SET: {req.set_name}</p>}
-                          <p className="text-[9px] font-mono-stack mt-1 italic">"{req.details || 'No additional details'}"</p>
+                  <h3 className="text-xl mb-4 font-display tracking-wider">CLIENT REQUESTS <span className="text-sm">({(detail.requests || []).length})</span></h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-xs font-mono-stack text-text-muted mb-2 font-bold tracking-widest uppercase">Active</h4>
+                      <div className="space-y-2">
+                        {(detail.requests || []).filter(r => r.status === 'pending' || r.status === 'accepted').length === 0 ? (
+                          <div className="text-[10px] font-mono-stack opacity-40 italic">NO ACTIVE REQUESTS.</div>
+                        ) : (
+                          (detail.requests || []).filter(r => r.status === 'pending' || r.status === 'accepted').map(req => (
+                            <Link href={`/admin/bounties?tab=requests&scrollToId=${req.id}`} key={req.id} className="block p-3 bg-hp-color/5 border border-hp-color/30 rounded-sm hover:-translate-y-0.5 hover:shadow-sm transition-all">
+                              <div className="flex justify-between items-start mb-1">
+                                <span className="font-bold text-xs uppercase text-hp-color flex items-center gap-1">
+                                  {req.card_name}
+                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-50"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                </span>
+                                <span className="text-[8px] font-mono-stack px-1 bg-hp-color text-white rounded-sm">{req.status}</span>
+                              </div>
+                              {req.set_name && <p className="text-[9px] font-mono-stack opacity-60">SET: {req.set_name}</p>}
+                              {req.details && <p className="text-[9px] font-mono-stack mt-1 italic">&quot;{req.details}&quot;</p>}
+                            </Link>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
+                    {(detail.requests || []).filter(r => r.status !== 'pending' && r.status !== 'accepted').length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-mono-stack text-text-muted mb-2 mt-4 font-bold tracking-widest uppercase">Past</h4>
+                        <div className="space-y-2">
+                          {(detail.requests || []).filter(r => r.status !== 'pending' && r.status !== 'accepted').map(req => (
+                            <Link href={`/admin/bounties?tab=requests&scrollToId=${req.id}`} key={req.id} className="block p-3 bg-kraft-light/30 border border-kraft-dark/20 rounded-sm opacity-60 hover:opacity-100 hover:bg-white transition-all">
+                              <div className="flex justify-between items-start mb-1">
+                                <span className="font-bold text-xs uppercase text-ink-deep flex items-center gap-1">
+                                  {req.card_name}
+                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-50"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                </span>
+                                <span className="text-[8px] font-mono-stack px-1 bg-kraft-dark text-white rounded-sm">{req.status}</span>
+                              </div>
+                              {req.set_name && <p className="text-[9px] font-mono-stack opacity-60">SET: {req.set_name}</p>}
+                            </Link>
+                          ))}
                         </div>
-                      ))
+                      </div>
                     )}
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-xl mb-4 font-display tracking-wider">BOUNTY OFFERS</h3>
-                  <div className="space-y-2">
-                    {(detail.offers || []).length === 0 ? (
-                      <div className="text-[10px] font-mono-stack opacity-40 italic">NO OFFERS RECORDED.</div>
-                    ) : (
-                      (detail.offers || []).map(offer => (
-                        <div key={offer.id} className="p-3 bg-emerald-50 border border-emerald-200 rounded-sm">
-                          <div className="flex justify-between items-start mb-1">
-                            <span className="font-bold text-xs uppercase text-emerald-800">{offer.bounty_name || 'Bounty Item'}</span>
-                            <span className={`text-[8px] font-mono-stack px-1 rounded-sm ${
-                              offer.status === 'fulfilled' ? 'bg-emerald-600' : 'bg-amber-600'
-                            } text-white`}>{offer.status}</span>
-                          </div>
-                          <div className="flex justify-between items-end mt-1">
-                            <span className="text-[9px] font-mono-stack opacity-60">QTY: {offer.quantity}</span>
-                            <span className="text-[8px] font-mono-stack text-text-muted">{new Date(offer.created_at).toLocaleDateString()}</span>
-                          </div>
+                  <h3 className="text-xl mb-4 font-display tracking-wider">BOUNTY OFFERS <span className="text-sm">({(detail.offers || []).length})</span></h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-xs font-mono-stack text-text-muted mb-2 font-bold tracking-widest uppercase">Active</h4>
+                      <div className="space-y-2">
+                        {(detail.offers || []).filter(o => o.status === 'pending').length === 0 ? (
+                          <div className="text-[10px] font-mono-stack opacity-40 italic">NO PENDING OFFERS.</div>
+                        ) : (
+                          (detail.offers || []).filter(o => o.status === 'pending').map(offer => (
+                            <Link href={`/admin/bounties?tab=offers&scrollToId=${offer.id}`} key={offer.id} className="block p-3 bg-emerald-50 border border-emerald-300 hover:border-emerald-500 rounded-sm hover:-translate-y-0.5 hover:shadow-sm transition-all">
+                              <div className="flex justify-between items-start mb-1">
+                                <span className="font-bold text-xs uppercase text-emerald-800 flex items-center gap-1">
+                                  {offer.bounty_name || 'Bounty Item'}
+                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-50"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                </span>
+                                <span className="text-[8px] font-mono-stack px-1 rounded-sm bg-amber-600 text-white">{offer.status}</span>
+                              </div>
+                              <div className="flex justify-between items-end mt-1">
+                                <span className="text-[9px] font-mono-stack opacity-80 font-bold text-emerald-900">QTY: {offer.quantity}</span>
+                                <span className="text-[8px] font-mono-stack text-emerald-800/60">{new Date(offer.created_at).toLocaleDateString()}</span>
+                              </div>
+                            </Link>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
+                    {(detail.offers || []).filter(o => o.status !== 'pending').length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-mono-stack text-text-muted mb-2 mt-4 font-bold tracking-widest uppercase">Past</h4>
+                        <div className="space-y-2">
+                          {(detail.offers || []).filter(o => o.status !== 'pending').map(offer => (
+                            <Link href={`/admin/bounties?tab=offers&scrollToId=${offer.id}`} key={offer.id} className="block p-3 bg-kraft-light/30 border border-kraft-dark/20 rounded-sm opacity-60 hover:opacity-100 hover:bg-white transition-all">
+                              <div className="flex justify-between items-start mb-1">
+                                <span className="font-bold text-xs uppercase text-ink-deep flex items-center gap-1">
+                                  {offer.bounty_name || 'Bounty Item'}
+                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-50"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                </span>
+                                <span className={`text-[8px] font-mono-stack px-1 rounded-sm text-white ${offer.status === 'fulfilled' || offer.status === 'accepted' ? 'bg-indigo-600' : 'bg-red-600'}`}>
+                                  {offer.status}
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-end mt-1">
+                                <span className="text-[9px] font-mono-stack opacity-60">QTY: {offer.quantity}</span>
+                                <span className="text-[8px] font-mono-stack text-text-muted">{new Date(offer.created_at).toLocaleDateString()}</span>
+                              </div>
+                            </Link>
+                          ))}
                         </div>
-                      ))
+                      </div>
                     )}
                   </div>
                 </div>

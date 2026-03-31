@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { 
   adminCreateBounty, adminUpdateBounty, adminDeleteBounty, fetchBounties,
   adminFetchClientRequests, adminUpdateClientRequestStatus, adminFetchTCGs,
@@ -17,7 +18,11 @@ import SmartContactLink from '@/components/admin/SmartContactLink';
 
 export default function AdminBountiesPage() {
   const { token, logout, loading: adminLoading } = useAdmin();
-  const [activeTab, setActiveTab] = useState<'bounties' | 'requests' | 'offers'>('bounties');
+  const searchParams = useSearchParams();
+  const initialTab = (searchParams.get('tab') as any) || 'bounties';
+  const scrollToId = searchParams.get('scrollToId');
+
+  const [activeTab, setActiveTab] = useState<'bounties' | 'requests' | 'offers'>(initialTab);
 
   const [bounties, setBounties] = useState<Bounty[]>([]);
   const [requests, setRequests] = useState<ClientRequest[]>([]);
@@ -36,6 +41,20 @@ export default function AdminBountiesPage() {
   const [onlyShowActive, setOnlyShowActive] = useState(true);
   const [onlyShowPendingRequests, setOnlyShowPendingRequests] = useState(true);
   const [onlyShowPendingOffers, setOnlyShowPendingOffers] = useState(true);
+
+  // Scroll to element if parameter present when data loads
+  useEffect(() => {
+    if (scrollToId && !loading && (requests.length > 0 || offers.length > 0)) {
+       setTimeout(() => {
+           const el = document.getElementById(scrollToId);
+           if (el) {
+               el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+               el.classList.add('ring-4', 'ring-gold', 'scale-[1.01]', 'transition-all');
+               setTimeout(() => el.classList.remove('ring-4', 'ring-gold', 'scale-[1.01]'), 2000);
+           }
+       }, 500);
+    }
+  }, [loading, scrollToId, requests.length, offers.length]);
 
   useEffect(() => {
     if (token) loadData(token);
@@ -317,7 +336,7 @@ export default function AdminBountiesPage() {
               if (!b) return null;
               
               return (
-                <div key={offer.id} className={`flex flex-col gap-0 border-l-4 ${offer.status === 'pending' ? 'border-gold shadow-lg shadow-gold/5' : offer.status === 'accepted' ? 'border-indigo-400 opacity-80' : 'border-red-400'} rounded-lg overflow-hidden mb-4 bg-white border border-kraft-dark/10`}>
+                <div id={offer.id} key={offer.id} className={`flex flex-col gap-0 border-l-4 ${offer.status === 'pending' ? 'border-gold shadow-lg shadow-gold/5' : offer.status === 'accepted' ? 'border-indigo-400 opacity-80' : 'border-red-400'} scroll-mt-24 rounded-lg overflow-hidden mb-4 bg-white border border-kraft-dark/10`}>
                   <div className={`p-5 flex flex-col md:flex-row gap-6 ${offer.status === 'pending' ? 'bg-white' : offer.status === 'accepted' ? 'bg-indigo-50/30' : 'bg-red-50/30'}`}>
                     <div className="w-16 h-20 bg-kraft-paper rounded flex shrink-0 items-center justify-center overflow-hidden border border-kraft-dark/10">
                       <CardImage imageUrl={b.image_url} name={b.name} tcg={b.tcg} enableHover={true} />
@@ -327,8 +346,9 @@ export default function AdminBountiesPage() {
                       <div className="flex items-center gap-3 mb-1">
                         <h3 className="font-bold text-lg m-0 text-ink-deep font-mono-stack">
                           Seller: {offer.customer_id ? (
-                            <Link href={`/admin/clients/${offer.customer_id}`} className="hover:text-gold-dark hover:underline transition-all">
+                            <Link href={`/admin/clients/${offer.customer_id}`} className="inline-flex items-center gap-1 text-indigo-700 hover:text-indigo-900 underline decoration-indigo-300 hover:decoration-indigo-700 underline-offset-4 transition-all">
                               {offer.customer_name}
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-70"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                             </Link>
                           ) : (
                             offer.customer_name
@@ -417,8 +437,9 @@ export default function AdminBountiesPage() {
                                 <div className="flex justify-between items-start">
                                   <span className="text-sm font-bold flex items-center gap-2 text-ink-deep uppercase font-mono-stack">
                                     {r.customer_id ? (
-                                      <Link href={`/admin/clients/${r.customer_id}`} className="hover:text-gold-dark hover:underline transition-all">
+                                      <Link href={`/admin/clients/${r.customer_id}`} className="inline-flex items-center gap-1 text-indigo-700 hover:text-indigo-900 underline decoration-indigo-300 hover:decoration-indigo-700 underline-offset-4 transition-all">
                                         {r.customer_name}
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-70 mb-0.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                                       </Link>
                                     ) : (
                                       r.customer_name
@@ -461,7 +482,7 @@ export default function AdminBountiesPage() {
               {requests
                 .filter(req => onlyShowPendingRequests ? req.status !== 'solved' : true)
                 .map(req => (
-                <div key={req.id} className={`p-5 flex gap-6 items-center rounded-xl border border-kraft-dark/10 shadow-sm border-l-4 ${
+                <div id={req.id} key={req.id} className={`p-5 flex gap-6 items-center rounded-xl border border-kraft-dark/10 scroll-mt-24 shadow-sm border-l-4 ${
                   req.status === 'pending' ? 'bg-white border-gold shadow-gold/5' : 
                   req.status === 'accepted' ? 'bg-emerald-50/20 border-emerald-500' : 
                   req.status === 'solved' ? 'bg-indigo-50/20 border-indigo-600 opacity-80 backdrop-grayscale' :
@@ -481,8 +502,9 @@ export default function AdminBountiesPage() {
                     </div>
                     <p className="text-sm">Client: <strong>
                       {req.customer_id ? (
-                        <Link href={`/admin/clients/${req.customer_id}`} className="hover:text-gold-dark hover:underline transition-all">
+                        <Link href={`/admin/clients/${req.customer_id}`} className="inline-flex items-center gap-1 text-indigo-700 hover:text-indigo-900 underline decoration-indigo-300 hover:decoration-indigo-700 underline-offset-4 transition-all">
                           {req.customer_name}
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-70"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                         </Link>
                       ) : (
                         req.customer_name

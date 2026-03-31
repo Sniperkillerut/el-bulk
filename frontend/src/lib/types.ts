@@ -478,7 +478,9 @@ export interface CustomerStats extends UserProfile {
   is_subscriber: boolean;
   latest_note?: string | null;
   request_count: number;
+  active_request_count: number;
   offer_count: number;
+  active_offer_count: number;
   created_at: string;
 }
 
@@ -488,4 +490,13 @@ export interface CustomerDetail extends UserProfile {
   requests: ClientRequest[];
   offers: BountyOffer[];
   is_subscriber: boolean;
+}
+
+export interface AdminStats {
+  total_sku_records: number;
+  query_speed_ms: number;
+  database_size: string;
+  cache_hit_ratio: number;
+  active_connections: number;
+  max_connections: number;
 }

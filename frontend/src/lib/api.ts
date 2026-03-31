@@ -1,4 +1,4 @@
-import { Product, ProductListResponse, NewsletterSubscriber, CustomerStats, CustomerDetail } from './types';
+import { Product, ProductListResponse, NewsletterSubscriber, CustomerStats, CustomerDetail, AdminStats } from './types';
 import { remoteLogger } from './remoteLogger';
 
 const isServer = typeof window === 'undefined';
@@ -11,7 +11,7 @@ async function logAndThrow(res: Response, defaultMsg: string): Promise<never> {
   try {
     const data = await res.clone().json();
     errorMessage = data.error || defaultMsg;
-  } catch (e) {
+  } catch {
     errorMessage = res.statusText || defaultMsg;
   }
 
@@ -22,7 +22,7 @@ async function logAndThrow(res: Response, defaultMsg: string): Promise<never> {
   });
 
   const error = new Error(errorMessage);
-  (error as any)._remoteLogged = true;
+  (error as Error & { _remoteLogged?: boolean })._remoteLogged = true;
   if (res.status === 401) throw error;
   throw error;
 }
@@ -66,6 +66,7 @@ async function apiFetch<T>(endpoint: string, options: FetchOptions = {}, token?:
 }
 
 export interface ProductFilters {
+  [key: string]: string | number | boolean | undefined | null;
   tcg?: string;
   category?: string;
   search?: string;
@@ -113,7 +114,7 @@ export async function fetchCategories(): Promise<import('./types').CustomCategor
     const data = await apiFetch<import('./types').CustomCategory[]>('/api/categories', { cache: 'default' });
     setCached('categories', data);
     return data;
-  } catch (e) {
+  } catch {
     return [];
   }
 }
@@ -124,11 +125,11 @@ export async function fetchTCGs(activeOnly: boolean = true): Promise<import('./t
   if (cached) return cached;
 
   try {
-    const data = await apiFetch<any>('/api/tcgs', { params: { active_only: activeOnly }, cache: 'default' });
+    const data = await apiFetch<import('./types').TCG[] | { tcgs: import('./types').TCG[] }>('/api/tcgs', { params: { active_only: activeOnly }, cache: 'default' });
     const tcgs = Array.isArray(data) ? data : (data.tcgs || []);
     setCached(key, tcgs);
     return tcgs;
-  } catch (e) {
+  } catch {
     return [];
   }
 }
@@ -461,8 +462,8 @@ export async function adminCompleteOrder(token: string, id: string, decrements: 
   }, token);
 }
 
-export async function adminFetchStats(token: string): Promise<{ total_sku_records: number; query_speed_ms: number; database_size: string; cache_hit_ratio: number; active_connections: number; max_connections: number }> {
-  return apiFetch<any>('/api/admin/stats', { cache: 'no-store' }, token);
+export async function adminFetchStats(token: string): Promise<AdminStats> {
+  return apiFetch<AdminStats>('/api/admin/stats', { cache: 'no-store' }, token);
 }
 
 // ---------------------------------------------------------------------------

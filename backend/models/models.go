@@ -332,8 +332,10 @@ type OrderListResponse struct {
 
 type OrderWithCustomer struct {
 	Order
-	CustomerName string `db:"customer_name" json:"customer_name"`
-	ItemCount    int    `db:"item_count"    json:"item_count"`
+	CustomerName  string `db:"customer_name" json:"customer_name"`
+	CustomerPhone string `db:"customer_phone" json:"customer_phone"`
+	CustomerEmail string `db:"customer_email" json:"customer_email"`
+	ItemCount     int    `db:"item_count"    json:"item_count"`
 }
 
 // ── Notices (Blog/News) ─────────────────────────────
@@ -440,8 +442,10 @@ type CustomerStats struct {
 	TotalSpend   float64 `db:"total_spend" json:"total_spend"`
 	IsSubscriber bool    `db:"is_subscriber" json:"is_subscriber"`
 	LatestNote   *string `db:"latest_note" json:"latest_note"`
-	RequestCount int     `db:"request_count" json:"request_count"`
-	OfferCount   int     `db:"offer_count" json:"offer_count"`
+	RequestCount       int     `db:"request_count" json:"request_count"`
+	ActiveRequestCount int     `db:"active_request_count" json:"active_request_count"`
+	OfferCount         int     `db:"offer_count" json:"offer_count"`
+	ActiveOfferCount   int     `db:"active_offer_count" json:"active_offer_count"`
 }
 
 type CustomerDetail struct {

@@ -201,7 +201,7 @@ func (h *OrderHandler) List(w http.ResponseWriter, r *http.Request) {
 		idx++
 	}
 	if search != "" {
-		conditions = append(conditions, "(o.order_number ILIKE $"+strconv.Itoa(idx)+" OR c.first_name ILIKE $"+strconv.Itoa(idx)+" OR c.last_name ILIKE $"+strconv.Itoa(idx)+" OR c.phone ILIKE $"+strconv.Itoa(idx)+")")
+		conditions = append(conditions, "(o.order_number ILIKE $"+strconv.Itoa(idx)+" OR o.customer_name ILIKE $"+strconv.Itoa(idx)+" OR o.customer_phone ILIKE $"+strconv.Itoa(idx)+" OR o.customer_email ILIKE $"+strconv.Itoa(idx)+")")
 		args = append(args, "%"+search+"%")
 		idx++
 	}
@@ -211,9 +211,9 @@ func (h *OrderHandler) List(w http.ResponseWriter, r *http.Request) {
 		where = "WHERE " + strings.Join(conditions, " AND ")
 	}
 
-	// Count
+	// Count using the view for consistency
 	var total int
-	countQ := `SELECT COUNT(*) FROM "order" o JOIN customer c ON o.customer_id = c.id ` + where
+	countQ := `SELECT COUNT(*) FROM view_order_list o ` + where
 	if err := h.DB.Get(&total, countQ, args...); err != nil {
 		logger.Error("Order count error: %v", err)
 		jsonError(w, "Database error", http.StatusInternalServerError)

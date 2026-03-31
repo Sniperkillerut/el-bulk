@@ -6,7 +6,7 @@ import {
   adminFetchOrders, adminFetchOrderDetail, adminUpdateOrder, adminCompleteOrder
 } from '@/lib/api';
 import {
-  OrderWithCustomer, OrderDetail, OrderItemDetail,
+  OrderWithCustomer, OrderDetail,
   ORDER_STATUS_LABELS, PAYMENT_METHODS, FOIL_LABELS, TREATMENT_LABELS, StorageLocation
 } from '@/lib/types';
 import CardImage from '@/components/CardImage';
@@ -14,10 +14,9 @@ import CardImage from '@/components/CardImage';
 interface Props {
   token: string;
   initialOrderId?: string | null;
-  onClose?: () => void;
 }
 
-export default function OrdersPanel({ token, initialOrderId, onClose }: Props) {
+export default function OrdersPanel({ token, initialOrderId }: Props) {
   // List state
   const [orders, setOrders] = useState<OrderWithCustomer[]>([]);
   const [total, setTotal] = useState(0);
@@ -30,6 +29,7 @@ export default function OrdersPanel({ token, initialOrderId, onClose }: Props) {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
+      setLoading(true); // Trigger loading here
     }, 300);
     return () => clearTimeout(timer);
   }, [search]);
@@ -48,26 +48,26 @@ export default function OrdersPanel({ token, initialOrderId, onClose }: Props) {
   const [completeError, setCompleteError] = useState('');
 
   const loadOrders = useCallback(async () => {
-    setLoading(true);
+    // No longer setting loading synchronously at start to avoid cascaded renders
     try {
       const res = await adminFetchOrders(token, { status: statusFilter, search: debouncedSearch, page, page_size: 20 });
       setOrders(res.orders);
       setTotal(res.total);
-    } catch { }
+    } catch (err) {
+      console.error('Failed to load orders:', err);
+    }
     setLoading(false);
   }, [token, statusFilter, debouncedSearch, page]);
 
-  useEffect(() => { loadOrders(); }, [loadOrders]);
-
   useEffect(() => {
-    if (initialOrderId) {
-      // Small delay to ensure list is loaded or just call selectOrder
-      selectOrder(initialOrderId);
-    }
-  }, [initialOrderId, token]);
+    const timer = setTimeout(() => {
+      loadOrders();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [loadOrders]);
 
-  const selectOrder = async (id: string) => {
-    setItemEdits({});
+  const selectOrder = useCallback(async (id: string) => {
+    // No longer setting state synchronously here to avoid cascaded renders when called from effect
     if (detailsCache[id]) {
       setDetail(detailsCache[id]);
       const edits: Record<string, number> = {};
@@ -87,7 +87,17 @@ export default function OrdersPanel({ token, initialOrderId, onClose }: Props) {
       setItemEdits(edits);
     } catch { }
     setLoadingDetail(false);
-  };
+  }, [token, detailsCache]);
+
+  useEffect(() => {
+    if (initialOrderId) {
+      const timer = setTimeout(() => {
+        setItemEdits({});
+        selectOrder(initialOrderId);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [initialOrderId, token, selectOrder]);
 
   const handleSaveChanges = async () => {
     if (!detail) return;
@@ -206,14 +216,14 @@ export default function OrdersPanel({ token, initialOrderId, onClose }: Props) {
               type="search"
               placeholder="Buscar por # orden, nombre, teléfono..."
               value={search}
-              onChange={e => { setSearch(e.target.value); setPage(1); }}
+              onChange={e => { setSearch(e.target.value); setPage(1); setLoading(true); }}
               style={{ fontSize: '0.85rem' }}
             />
             <div className="flex gap-1 flex-wrap">
               {['', 'pending', 'confirmed', 'completed', 'cancelled'].map(s => (
                 <button
                   key={s}
-                  onClick={() => { setStatusFilter(s); setPage(1); }}
+                  onClick={() => { setStatusFilter(s); setPage(1); setLoading(true); }}
                   className="badge cursor-pointer transition-colors"
                   style={{
                     padding: '3px 8px',
@@ -238,7 +248,7 @@ export default function OrdersPanel({ token, initialOrderId, onClose }: Props) {
               orders.map(o => (
                 <div
                   key={o.id}
-                  onClick={() => selectOrder(o.id)}
+                  onClick={() => { setItemEdits({}); setLoadingDetail(true); selectOrder(o.id); }}
                   className="p-3 cursor-pointer transition-colors"
                   style={{
                     borderBottom: '1px solid var(--ink-border)',
@@ -274,9 +284,9 @@ export default function OrdersPanel({ token, initialOrderId, onClose }: Props) {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-center gap-2 p-2" style={{ borderTop: '1px solid var(--ink-border)' }}>
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="btn-secondary" style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem', opacity: page === 1 ? 0.4 : 1 }}>←</button>
+              <button onClick={() => { setPage(p => Math.max(1, p - 1)); setLoading(true); }} disabled={page === 1} className="btn-secondary" style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem', opacity: page === 1 ? 0.4 : 1 }}>←</button>
               <span className="text-xs font-mono-stack flex items-center" style={{ color: 'var(--text-muted)' }}>{page}/{totalPages}</span>
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="btn-secondary" style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem', opacity: page === totalPages ? 0.4 : 1 }}>→</button>
+              <button onClick={() => { setPage(p => Math.min(totalPages, p + 1)); setLoading(true); }} disabled={page === totalPages} className="btn-secondary" style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem', opacity: page === totalPages ? 0.4 : 1 }}>→</button>
             </div>
           )}
         </div>

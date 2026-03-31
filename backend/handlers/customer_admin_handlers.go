@@ -23,7 +23,9 @@ func (h *CustomerAdminHandler) ListCustomers(w http.ResponseWriter, r *http.Requ
 			(SELECT EXISTS(SELECT 1 FROM newsletter_subscriber n WHERE n.customer_id = c.id OR n.email = c.email)) as is_subscriber,
 			(SELECT content FROM customer_note n WHERE n.customer_id = c.id ORDER BY created_at DESC LIMIT 1) as latest_note,
 			(SELECT COUNT(*) FROM client_request r WHERE r.customer_id = c.id) as request_count,
-			(SELECT COUNT(*) FROM bounty_offer bo WHERE bo.customer_id = c.id) as offer_count
+			(SELECT COUNT(*) FROM client_request r WHERE r.customer_id = c.id AND r.status IN ('pending', 'accepted')) as active_request_count,
+			(SELECT COUNT(*) FROM bounty_offer bo WHERE bo.customer_id = c.id) as offer_count,
+			(SELECT COUNT(*) FROM bounty_offer bo WHERE bo.customer_id = c.id AND bo.status IN ('pending', 'accepted')) as active_offer_count
 		FROM customer c
 		ORDER BY created_at DESC
 	`)

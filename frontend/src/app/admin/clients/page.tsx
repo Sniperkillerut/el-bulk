@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAdmin } from '@/hooks/useAdmin';
 import { adminFetchClients } from '@/lib/api';
@@ -14,6 +13,8 @@ export default function AdminClientsPage() {
   const [clients, setClients] = useState<CustomerStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   useEffect(() => {
     if (token) {
@@ -29,6 +30,9 @@ export default function AdminClientsPage() {
     c.email?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const totalPages = Math.ceil(filteredClients.length / itemsPerPage) || 1;
+  const paginatedClients = filteredClients.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   if (loading) return <LoadingSpinner />;
 
   return (
@@ -43,7 +47,7 @@ export default function AdminClientsPage() {
             type="text" 
             placeholder="SEARCH CLIENTS..." 
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
             className="text-xs font-mono-stack"
            />
         </div>
@@ -64,7 +68,7 @@ export default function AdminClientsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-ink-border/30">
-            {filteredClients.map((client) => (
+            {paginatedClients.map((client) => (
               <tr 
                 key={client.id} 
                 className="hover:bg-gold/5 transition-colors group cursor-pointer"
@@ -90,8 +94,8 @@ export default function AdminClientsPage() {
                 </td>
                 <td className="p-4 text-center">
                   {client.request_count > 0 ? (
-                    <span className="badge bg-gold/10 text-gold-dark border-gold/20 text-[10px] font-bold px-2.5">
-                      {client.request_count}
+                    <span className="font-mono-stack text-[11px] font-bold">
+                      {client.active_request_count} <span className="opacity-60 font-normal ml-0.5">({client.request_count})</span>
                     </span>
                   ) : (
                     <span className="text-[10px] opacity-20 font-mono-stack">0</span>
@@ -99,8 +103,8 @@ export default function AdminClientsPage() {
                 </td>
                 <td className="p-4 text-center">
                   {client.offer_count > 0 ? (
-                    <span className="badge bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] font-bold px-2.5">
-                      {client.offer_count}
+                    <span className="font-mono-stack text-[11px] font-bold">
+                      {client.active_offer_count} <span className="opacity-60 font-normal ml-0.5">({client.offer_count})</span>
                     </span>
                   ) : (
                     <span className="text-[10px] opacity-20 font-mono-stack">0</span>
@@ -118,7 +122,7 @@ export default function AdminClientsPage() {
                 </td>
                 <td className="p-4 text-xs font-mono-stack max-w-xs transition-opacity group-hover:opacity-100 opacity-70">
                    {client.latest_note ? (
-                     <div className="truncate italic">"{client.latest_note}"</div>
+                     <div className="truncate italic">&quot;{client.latest_note}&quot;</div>
                    ) : (
                      <span className="opacity-30 italic">No notes recorded...</span>
                    )}
@@ -128,6 +132,33 @@ export default function AdminClientsPage() {
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex justify-between items-center mt-6 px-2">
+          <div className="text-[10px] font-mono-stack text-text-muted uppercase tracking-widest font-bold">
+            SHOWING {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredClients.length)} OF {filteredClients.length}
+          </div>
+          <div className="flex items-center gap-3">
+            <button 
+              disabled={currentPage === 1} 
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              className="btn-secondary py-1.5 px-4 text-[10px] font-bold disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              PREV
+            </button>
+            <span className="text-[10px] font-mono-stack font-bold px-2 py-1 bg-white border border-kraft-dark/20 rounded shadow-sm">
+              {currentPage} / {totalPages}
+            </span>
+            <button 
+              disabled={currentPage === totalPages} 
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              className="btn-secondary py-1.5 px-4 text-[10px] font-bold disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              NEXT
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
