@@ -36,6 +36,7 @@ BEGIN
             'set_code', dc.set_code,
             'collector_number', dc.collector_number,
             'quantity', dc.quantity,
+            'type_line', dc.type_line,
             'image_url', dc.image_url
         ))
         FROM deck_card dc

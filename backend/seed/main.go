@@ -346,10 +346,147 @@ func seedFullData(db *sqlx.DB, tcgIDs map[string]string, cats map[string]string,
 		}
 
 		for _, dc := range deckCards {
+			imgURL := fmt.Sprintf("https://api.scryfall.com/cards/%s/%s?format=image&version=normal", dc.Set, dc.CN)
 			db.Exec(`
-				INSERT INTO deck_card (product_id, name, set_code, collector_number, quantity, type_line)
-				VALUES ($1, $2, $3, $4, $5, $6)
-			`, deckID, dc.Name, dc.Set, dc.CN, dc.Qty, dc.TypeLine)
+				INSERT INTO deck_card (product_id, name, set_code, collector_number, quantity, type_line, image_url)
+				VALUES ($1, $2, $3, $4, $5, $6, $7)
+			`, deckID, dc.Name, dc.Set, dc.CN, dc.Qty, dc.TypeLine, imgURL)
+		}
+	}
+
+	// 6b. Premium Dragon Deck (100 Cards)
+	logger.Info("Seeding Premium Commander Deck (Dragon Hoard)...")
+	var dragonDeckID string
+	err = db.QueryRow(`
+		INSERT INTO product (name, tcg, category, price_source, price_cop_override, stock, image_url, description)
+		VALUES ($1, 'mtg', 'store_exclusives', 'manual', $2, 3, $3, $4) RETURNING id
+	`, 
+		"Premium Commander: Dragon Hoard", 
+		450000, 
+		"https://cards.scryfall.io/art_crop/front/4/8/48002002-0002-48a4-a3ad-0002b8004f1a.jpg",
+		"A high-power 100-card Commander deck centered around the Ur-Dragon and Miirym. Includes rare dragons, fetch lands, and dual lands.",
+	).Scan(&dragonDeckID)
+
+	if err == nil {
+		db.Exec(`INSERT INTO product_storage (product_id, storage_id, quantity) VALUES ($1, $2, 3)`, dragonDeckID, storageIDs[1])
+		db.Exec(`INSERT INTO product_category (product_id, category_id) VALUES ($1, $2)`, dragonDeckID, cats["hot-items"])
+
+		dragonDeckCards := []struct{ Name, Set, CN, TypeLine string; Qty int }{
+			// Lands (35 Unique)
+			{"Ancient Tomb", "tmp", "315", "Land", 1},
+			{"Cavern of Souls", "avr", "226", "Land", 1},
+			{"City of Brass", "mma", "221", "Land", 1},
+			{"Mana Confluence", "jou", "163", "Land", 1},
+			{"Command Tower", "cm2", "242", "Land", 1},
+			{"Reflecting Pool", "tpr", "241", "Land", 1},
+			{"Forbidden Orchard", "chk", "276", "Land", 1},
+			{"Exotic Orchard", "cn2", "219", "Land", 1},
+			{"Path of Ancestry", "c17", "63", "Land", 1},
+			{"Haven of the Spirit Dragon", "dtk", "249", "Land", 1},
+			{"Crucible of the Spirit Dragon", "frf", "167", "Land", 1},
+			{"Stomping Ground", "rna", "259", "Land — Mountain Forest", 1},
+			{"Steam Vents", "grn", "257", "Land — Island Mountain", 1},
+			{"Watery Grave", "grn", "259", "Land — Island Swamp", 1},
+			{"Blood Crypt", "rna", "245", "Land — Swamp Mountain", 1},
+			{"Overgrown Tomb", "grn", "253", "Land — Swamp Forest", 1},
+			{"Temple Garden", "grn", "258", "Land — Forest Plains", 1},
+			{"Hallowed Fountain", "rna", "251", "Land — Plains Island", 1},
+			{"Sacred Foundry", "grn", "254", "Land — Mountain Plains", 1},
+			{"Breeding Pool", "rna", "246", "Land — Forest Island", 1},
+			{"Godless Shrine", "rna", "248", "Land — Plains Swamp", 1},
+			{"Wooded Foothills", "ons", "330", "Land", 1},
+			{"Polluted Delta", "ons", "335", "Land", 1},
+			{"Bloodstained Mire", "ons", "313", "Land", 1},
+			{"Windswept Heath", "ons", "328", "Land", 1},
+			{"Flooded Strand", "ons", "316", "Land", 1},
+			{"Scalding Tarn", "zen", "223", "Land", 1},
+			{"Marsh Flats", "zen", "219", "Land", 1},
+			{"Verdant Catacombs", "zen", "229", "Land", 1},
+			{"Misty Rainforest", "zen", "220", "Land", 1},
+			{"Arid Mesa", "zen", "211", "Land", 1},
+			{"Mountain", "clb", "453", "Basic Land — Mountain", 1},
+			{"Mountain", "clb", "454", "Basic Land — Mountain", 1},
+			{"Island", "clb", "451", "Basic Land — Island", 1},
+			{"Forest", "clb", "457", "Basic Land — Forest", 1},
+
+			// Creatures (30 Unique)
+			{"The Ur-Dragon", "c17", "48", "Legendary Creature — Elder Dragon Avatar", 1},
+			{"Miirym, Sentinel Wyrm", "clb", "284", "Legendary Creature — Dragon Spirit", 1},
+			{"Lathliss, Dragon Queen", "m19", "149", "Legendary Creature — Dragon", 1},
+			{"Korvold, Fae-Cursed King", "eld", "329", "Legendary Creature — Dragon Noble", 1},
+			{"Utvara Hellkite", "rtr", "110", "Creature — Dragon", 1},
+			{"Scourge of Valkas", "m14", "151", "Creature — Dragon", 1},
+			{"Balefire Dragon", "isd", "129", "Creature — Dragon", 1},
+			{"Terror of the Peaks", "m21", "164", "Creature — Dragon", 1},
+			{"Hellkite Tyrant", "gtc", "94", "Creature — Dragon", 1},
+			{"Old Gnawbone", "afr", "197", "Creature — Dragon", 1},
+			{"Kyodai, Soul of Kamigawa", "neo", "23", "Legendary Creature — Dragon Spirit", 1},
+			{"Dragonlord Dromoka", "dtk", "217", "Legendary Creature — Elder Dragon", 1},
+			{"Dragonlord Silumgar", "dtk", "220", "Legendary Creature — Elder Dragon", 1},
+			{"Dragonlord Kolaghan", "dtk", "218", "Legendary Creature — Elder Dragon", 1},
+			{"Dragonlord Atarka", "dtk", "216", "Legendary Creature — Elder Dragon", 1},
+			{"Dragonlord Ojutai", "dtk", "219", "Legendary Creature — Elder Dragon", 1},
+			{"Silumgar, the Drifting Death", "frf", "154", "Legendary Creature — Dragon Skeleton", 1},
+			{"Kolaghan, the Storm's Fury", "frf", "155", "Legendary Creature — Dragon", 1},
+			{"Atarka, World Render", "frf", "149", "Legendary Creature — Dragon", 1},
+			{"Ojutai, Soul of Winter", "frf", "156", "Legendary Creature — Dragon Spirit", 1},
+			{"Dromoka, the Eternal", "frf", "151", "Legendary Creature — Dragon", 1},
+			{"Tiamat", "afr", "235", "Legendary Creature — Dragon God", 1},
+			{"Ancient Silver Dragon", "clb", "57", "Creature — Elder Dragon", 1},
+			{"Ancient Copper Dragon", "clb", "161", "Creature — Elder Dragon", 1},
+			{"Ancient Brass Dragon", "clb", "111", "Creature — Elder Dragon", 1},
+			{"Ancient Gold Dragon", "clb", "3", "Creature — Elder Dragon", 1},
+			{"Ancient Bronze Dragon", "clb", "214", "Creature — Elder Dragon", 1},
+			{"Klauth, Unrivaled Ancient", "afc", "50", "Legendary Creature — Dragon", 1},
+			{"Rivaz of the Claw", "dmu", "215", "Legendary Creature — Viashino Warlock", 1},
+			{"Dragonborn Looter", "clb", "65", "Creature — Dragon Rogue", 1},
+
+			// Artifacts/Enchantments (15 Unique)
+			{"Sol Ring", "clb", "882", "Artifact", 1},
+			{"Arcane Signet", "clb", "861", "Artifact", 1},
+			{"Dragon's Hoard", "m19", "232", "Artifact", 1},
+			{"Herald's Horn", "c17", "53", "Artifact", 1},
+			{"Urza's Incubator", "vma", "287", "Artifact", 1},
+			{"Chromatic Lantern", "grn", "233", "Artifact", 1},
+			{"The Great Henge", "eld", "161", "Legendary Artifact", 1},
+			{"Temur Ascendancy", "ktk", "207", "Enchantment", 1},
+			{"Dragon Tempest", "dtk", "136", "Enchantment", 1},
+			{"Kindred Discovery", "c17", "11", "Enchantment", 1},
+			{"Rhythm of the Wild", "rna", "201", "Enchantment", 1},
+			{"Smothering Tithe", "rna", "22", "Enchantment", 1},
+			{"Rhystic Study", "pcy", "45", "Enchantment", 1},
+			{"Sylvan Library", "ema", "187", "Enchantment", 1},
+			{"Garruk's Uprising", "m21", "186", "Enchantment", 1},
+
+			// Instants/Sorceries (20 Unique)
+			{"Swords to Plowshares", "clb", "707", "Instant", 1},
+			{"Path to Exile", "2xm", "25", "Instant", 1},
+			{"Cyclonic Rift", "rtr", "35", "Instant", 1},
+			{"Heroic Intervention", "aer", "109", "Instant", 1},
+			{"Teferi's Protection", "c17", "8", "Instant", 1},
+			{"Counterspell", "clb", "441", "Instant", 1},
+			{"Vampiric Tutor", "cmr", "156", "Instant", 1},
+			{"Enlightened Tutor", "ema", "9", "Instant", 1},
+			{"Worldly Tutor", "cc1", "6", "Instant", 1},
+			{"Mystical Tutor", "ema", "62", "Instant", 1},
+			{"Cultivate", "clb", "821", "Sorcery", 1},
+			{"Kodama's Reach", "clb", "835", "Sorcery", 1},
+			{"Farseek", "rav", "164", "Sorcery", 1},
+			{"Three Visits", "cmr", "261", "Sorcery", 1},
+			{"Nature's Lore", "por", "184", "Sorcery", 1},
+			{"Blasphemous Act", "clb", "788", "Sorcery", 1},
+			{"Toxic Deluge", "2xm", "110", "Sorcery", 1},
+			{"Demonic Tutor", "vma", "116", "Sorcery", 1},
+			{"Farewell", "neo", "13", "Sorcery", 1},
+			{"Crux of Fate", "frf", "65", "Sorcery", 1},
+		}
+
+		for _, dc := range dragonDeckCards {
+			imgURL := fmt.Sprintf("https://api.scryfall.com/cards/%s/%s?format=image&version=normal", dc.Set, dc.CN)
+			db.Exec(`
+				INSERT INTO deck_card (product_id, name, set_code, collector_number, quantity, type_line, image_url)
+				VALUES ($1, $2, $3, $4, $5, $6, $7)
+			`, dragonDeckID, dc.Name, dc.Set, dc.CN, dc.Qty, dc.TypeLine, imgURL)
 		}
 	}
 
