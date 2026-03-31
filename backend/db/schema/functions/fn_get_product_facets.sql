@@ -53,12 +53,12 @@ BEGIN
         LEFT JOIN custom_category c_col ON pc_col.category_id = c_col.id
         WHERE 
           CASE WHEN p_filter_logic = 'and' THEN
-            (p_foil = '' OR LOWER(foil_treatment) = ANY(string_to_array(LOWER(p_foil), ',')))
-            AND (p_treatment = '' OR (LOWER(card_treatment) = ANY(string_to_array(LOWER(p_treatment), ',')) OR (LOWER(p_treatment) LIKE '%full_art%' AND full_art = true) OR (LOWER(p_treatment) LIKE '%textless%' AND textless = true)))
-            AND (p_rarity = '' OR LOWER(rarity) = ANY(string_to_array(LOWER(p_rarity), ',')))
-            AND (p_language = '' OR LOWER(language) = ANY(string_to_array(LOWER(p_language), ',')))
-            AND (p_color = '' OR color_identity ILIKE '%' || p_color || '%')
-            AND (p_collection = '' OR LOWER(c_col.slug) = ANY(string_to_array(LOWER(p_collection), ',')))
+            (p_foil = '' OR (SELECT bool_and(LOWER(foil_treatment) = item) FROM unnest(string_to_array(LOWER(p_foil), ',')) as item))
+            AND (p_treatment = '' OR (SELECT bool_and(LOWER(card_treatment) = item OR (item = 'full_art' AND full_art = true) OR (item = 'textless' AND textless = true)) FROM unnest(string_to_array(LOWER(p_treatment), ',')) as item))
+            AND (p_rarity = '' OR (SELECT bool_and(LOWER(rarity) = item) FROM unnest(string_to_array(LOWER(p_rarity), ',')) as item))
+            AND (p_language = '' OR (SELECT bool_and(LOWER(language) = item) FROM unnest(string_to_array(LOWER(p_language), ',')) as item))
+            AND (p_color = '' OR (SELECT bool_and(color_identity ILIKE '%' || item || '%') FROM unnest(string_to_array(UPPER(p_color), ',')) as item))
+            AND (p_collection = '' OR (SELECT bool_and(EXISTS (SELECT 1 FROM product_category pc2 JOIN custom_category c2 ON pc2.category_id = c2.id WHERE pc2.product_id = base_products.id AND c2.slug = item)) FROM unnest(string_to_array(LOWER(p_collection), ',')) as item))
           ELSE
             true
           END
@@ -70,12 +70,12 @@ BEGIN
         LEFT JOIN custom_category c_col ON pc_col.category_id = c_col.id
         WHERE 
           CASE WHEN p_filter_logic = 'and' THEN
-            (p_condition = '' OR LOWER(condition) = ANY(string_to_array(LOWER(p_condition), ',')))
-            AND (p_treatment = '' OR (LOWER(card_treatment) = ANY(string_to_array(LOWER(p_treatment), ',')) OR (LOWER(p_treatment) LIKE '%full_art%' AND full_art = true) OR (LOWER(p_treatment) LIKE '%textless%' AND textless = true)))
-            AND (p_rarity = '' OR LOWER(rarity) = ANY(string_to_array(LOWER(p_rarity), ',')))
-            AND (p_language = '' OR LOWER(language) = ANY(string_to_array(LOWER(p_language), ',')))
-            AND (p_color = '' OR color_identity ILIKE '%' || p_color || '%')
-            AND (p_collection = '' OR LOWER(c_col.slug) = ANY(string_to_array(LOWER(p_collection), ',')))
+            (p_condition = '' OR (SELECT bool_and(LOWER(condition) = item) FROM unnest(string_to_array(LOWER(p_condition), ',')) as item))
+            AND (p_treatment = '' OR (SELECT bool_and(LOWER(card_treatment) = item OR (item = 'full_art' AND full_art = true) OR (item = 'textless' AND textless = true)) FROM unnest(string_to_array(LOWER(p_treatment), ',')) as item))
+            AND (p_rarity = '' OR (SELECT bool_and(LOWER(rarity) = item) FROM unnest(string_to_array(LOWER(p_rarity), ',')) as item))
+            AND (p_language = '' OR (SELECT bool_and(LOWER(language) = item) FROM unnest(string_to_array(LOWER(p_language), ',')) as item))
+            AND (p_color = '' OR (SELECT bool_and(color_identity ILIKE '%' || item || '%') FROM unnest(string_to_array(UPPER(p_color), ',')) as item))
+            AND (p_collection = '' OR (SELECT bool_and(EXISTS (SELECT 1 FROM product_category pc2 JOIN custom_category c2 ON pc2.category_id = c2.id WHERE pc2.product_id = base_products.id AND c2.slug = item)) FROM unnest(string_to_array(LOWER(p_collection), ',')) as item))
           ELSE
             true
           END
@@ -87,12 +87,12 @@ BEGIN
         LEFT JOIN custom_category c_col ON pc_col.category_id = c_col.id
         WHERE 
           CASE WHEN p_filter_logic = 'and' THEN
-            (p_condition = '' OR LOWER(condition) = ANY(string_to_array(LOWER(p_condition), ',')))
-            AND (p_foil = '' OR LOWER(foil_treatment) = ANY(string_to_array(LOWER(p_foil), ',')))
-            AND (p_treatment = '' OR (LOWER(card_treatment) = ANY(string_to_array(LOWER(p_treatment), ',')) OR (LOWER(p_treatment) LIKE '%full_art%' AND full_art = true) OR (LOWER(p_treatment) LIKE '%textless%' AND textless = true)))
-            AND (p_language = '' OR LOWER(language) = ANY(string_to_array(LOWER(p_language), ',')))
-            AND (p_color = '' OR color_identity ILIKE '%' || p_color || '%')
-            AND (p_collection = '' OR LOWER(c_col.slug) = ANY(string_to_array(LOWER(p_collection), ',')))
+            (p_condition = '' OR (SELECT bool_and(LOWER(condition) = item) FROM unnest(string_to_array(LOWER(p_condition), ',')) as item))
+            AND (p_foil = '' OR (SELECT bool_and(LOWER(foil_treatment) = item) FROM unnest(string_to_array(LOWER(p_foil), ',')) as item))
+            AND (p_treatment = '' OR (SELECT bool_and(LOWER(card_treatment) = item OR (item = 'full_art' AND full_art = true) OR (item = 'textless' AND textless = true)) FROM unnest(string_to_array(LOWER(p_treatment), ',')) as item))
+            AND (p_language = '' OR (SELECT bool_and(LOWER(language) = item) FROM unnest(string_to_array(LOWER(p_language), ',')) as item))
+            AND (p_color = '' OR (SELECT bool_and(color_identity ILIKE '%' || item || '%') FROM unnest(string_to_array(UPPER(p_color), ',')) as item))
+            AND (p_collection = '' OR (SELECT bool_and(EXISTS (SELECT 1 FROM product_category pc2 JOIN custom_category c2 ON pc2.category_id = c2.id WHERE pc2.product_id = base_products.id AND c2.slug = item)) FROM unnest(string_to_array(LOWER(p_collection), ',')) as item))
           ELSE
             true
           END
@@ -104,12 +104,12 @@ BEGIN
         LEFT JOIN custom_category c_col ON pc_col.category_id = c_col.id
         WHERE 
           CASE WHEN p_filter_logic = 'and' THEN
-            (p_condition = '' OR LOWER(condition) = ANY(string_to_array(LOWER(p_condition), ',')))
-            AND (p_foil = '' OR LOWER(foil_treatment) = ANY(string_to_array(LOWER(p_foil), ',')))
-            AND (p_treatment = '' OR (LOWER(card_treatment) = ANY(string_to_array(LOWER(p_treatment), ',')) OR (LOWER(p_treatment) LIKE '%full_art%' AND full_art = true) OR (LOWER(p_treatment) LIKE '%textless%' AND textless = true)))
-            AND (p_rarity = '' OR LOWER(rarity) = ANY(string_to_array(LOWER(p_rarity), ',')))
-            AND (p_color = '' OR color_identity ILIKE '%' || p_color || '%')
-            AND (p_collection = '' OR LOWER(c_col.slug) = ANY(string_to_array(LOWER(p_collection), ',')))
+            (p_condition = '' OR (SELECT bool_and(LOWER(condition) = item) FROM unnest(string_to_array(LOWER(p_condition), ',')) as item))
+            AND (p_foil = '' OR (SELECT bool_and(LOWER(foil_treatment) = item) FROM unnest(string_to_array(LOWER(p_foil), ',')) as item))
+            AND (p_treatment = '' OR (SELECT bool_and(LOWER(card_treatment) = item OR (item = 'full_art' AND full_art = true) OR (item = 'textless' AND textless = true)) FROM unnest(string_to_array(LOWER(p_treatment), ',')) as item))
+            AND (p_rarity = '' OR (SELECT bool_and(LOWER(rarity) = item) FROM unnest(string_to_array(LOWER(p_rarity), ',')) as item))
+            AND (p_color = '' OR (SELECT bool_and(color_identity ILIKE '%' || item || '%') FROM unnest(string_to_array(UPPER(p_color), ',')) as item))
+            AND (p_collection = '' OR (SELECT bool_and(EXISTS (SELECT 1 FROM product_category pc2 JOIN custom_category c2 ON pc2.category_id = c2.id WHERE pc2.product_id = base_products.id AND c2.slug = item)) FROM unnest(string_to_array(LOWER(p_collection), ',')) as item))
           ELSE
             true
           END
@@ -128,12 +128,12 @@ BEGIN
         LEFT JOIN custom_category c_col ON pc_col.category_id = c_col.id
         WHERE 
           CASE WHEN p_filter_logic = 'and' THEN
-            (p_condition = '' OR LOWER(condition) = ANY(string_to_array(LOWER(p_condition), ',')))
-            AND (p_foil = '' OR LOWER(foil_treatment) = ANY(string_to_array(LOWER(p_foil), ',')))
-            AND (p_treatment = '' OR (LOWER(card_treatment) = ANY(string_to_array(LOWER(p_treatment), ',')) OR (LOWER(p_treatment) LIKE '%full_art%' AND full_art = true) OR (LOWER(p_treatment) LIKE '%textless%' AND textless = true)))
-            AND (p_rarity = '' OR LOWER(rarity) = ANY(string_to_array(LOWER(p_rarity), ',')))
-            AND (p_language = '' OR LOWER(language) = ANY(string_to_array(LOWER(p_language), ',')))
-            AND (p_collection = '' OR LOWER(c_col.slug) = ANY(string_to_array(LOWER(p_collection), ',')))
+            (p_condition = '' OR (SELECT bool_and(LOWER(condition) = item) FROM unnest(string_to_array(LOWER(p_condition), ',')) as item))
+            AND (p_foil = '' OR (SELECT bool_and(LOWER(foil_treatment) = item) FROM unnest(string_to_array(LOWER(p_foil), ',')) as item))
+            AND (p_treatment = '' OR (SELECT bool_and(LOWER(card_treatment) = item OR (item = 'full_art' AND full_art = true) OR (item = 'textless' AND textless = true)) FROM unnest(string_to_array(LOWER(p_treatment), ',')) as item))
+            AND (p_rarity = '' OR (SELECT bool_and(LOWER(rarity) = item) FROM unnest(string_to_array(LOWER(p_rarity), ',')) as item))
+            AND (p_language = '' OR (SELECT bool_and(LOWER(language) = item) FROM unnest(string_to_array(LOWER(p_language), ',')) as item))
+            AND (p_collection = '' OR (SELECT bool_and(EXISTS (SELECT 1 FROM product_category pc2 JOIN custom_category c2 ON pc2.category_id = c2.id WHERE pc2.product_id = base_products.id AND c2.slug = item)) FROM unnest(string_to_array(LOWER(p_collection), ',')) as item))
           ELSE
             true
           END
@@ -146,12 +146,12 @@ BEGIN
             LEFT JOIN custom_category c_col ON pc_col.category_id = c_col.id
             WHERE 
               CASE WHEN p_filter_logic = 'and' THEN
-                (p_condition = '' OR LOWER(condition) = ANY(string_to_array(LOWER(p_condition), ',')))
-                AND (p_foil = '' OR LOWER(foil_treatment) = ANY(string_to_array(LOWER(p_foil), ',')))
-                AND (p_rarity = '' OR LOWER(rarity) = ANY(string_to_array(LOWER(p_rarity), ',')))
-                AND (p_language = '' OR LOWER(language) = ANY(string_to_array(LOWER(p_language), ',')))
-                AND (p_color = '' OR color_identity ILIKE '%' || p_color || '%')
-                AND (p_collection = '' OR LOWER(c_col.slug) = ANY(string_to_array(LOWER(p_collection), ',')))
+                (p_condition = '' OR (SELECT bool_and(LOWER(condition) = item) FROM unnest(string_to_array(LOWER(p_condition), ',')) as item))
+                AND (p_foil = '' OR (SELECT bool_and(LOWER(foil_treatment) = item) FROM unnest(string_to_array(LOWER(p_foil), ',')) as item))
+                AND (p_rarity = '' OR (SELECT bool_and(LOWER(rarity) = item) FROM unnest(string_to_array(LOWER(p_rarity), ',')) as item))
+                AND (p_language = '' OR (SELECT bool_and(LOWER(language) = item) FROM unnest(string_to_array(LOWER(p_language), ',')) as item))
+                AND (p_color = '' OR (SELECT bool_and(color_identity ILIKE '%' || item || '%') FROM unnest(string_to_array(UPPER(p_color), ',')) as item))
+                AND (p_collection = '' OR (SELECT bool_and(EXISTS (SELECT 1 FROM product_category pc2 JOIN custom_category c2 ON pc2.category_id = c2.id WHERE pc2.product_id = base_products.id AND c2.slug = item)) FROM unnest(string_to_array(LOWER(p_collection), ',')) as item))
               ELSE
                 true
               END
@@ -162,12 +162,12 @@ BEGIN
             LEFT JOIN custom_category c_col ON pc_col.category_id = c_col.id
             WHERE full_art = true AND 
               CASE WHEN p_filter_logic = 'and' THEN
-                (p_condition = '' OR LOWER(condition) = ANY(string_to_array(LOWER(p_condition), ',')))
-                AND (p_foil = '' OR LOWER(foil_treatment) = ANY(string_to_array(LOWER(p_foil), ',')))
-                AND (p_rarity = '' OR LOWER(rarity) = ANY(string_to_array(LOWER(p_rarity), ',')))
-                AND (p_language = '' OR LOWER(language) = ANY(string_to_array(LOWER(p_language), ',')))
-                AND (p_color = '' OR color_identity ILIKE '%' || p_color || '%')
-                AND (p_collection = '' OR LOWER(c_col.slug) = ANY(string_to_array(LOWER(p_collection), ',')))
+                (p_condition = '' OR (SELECT bool_and(LOWER(condition) = item) FROM unnest(string_to_array(LOWER(p_condition), ',')) as item))
+                AND (p_foil = '' OR (SELECT bool_and(LOWER(foil_treatment) = item) FROM unnest(string_to_array(LOWER(p_foil), ',')) as item))
+                AND (p_rarity = '' OR (SELECT bool_and(LOWER(rarity) = item) FROM unnest(string_to_array(LOWER(p_rarity), ',')) as item))
+                AND (p_language = '' OR (SELECT bool_and(LOWER(language) = item) FROM unnest(string_to_array(LOWER(p_language), ',')) as item))
+                AND (p_color = '' OR (SELECT bool_and(color_identity ILIKE '%' || item || '%') FROM unnest(string_to_array(UPPER(p_color), ',')) as item))
+                AND (p_collection = '' OR (SELECT bool_and(EXISTS (SELECT 1 FROM product_category pc2 JOIN custom_category c2 ON pc2.category_id = c2.id WHERE pc2.product_id = base_products.id AND c2.slug = item)) FROM unnest(string_to_array(LOWER(p_collection), ',')) as item))
               ELSE true END
             UNION ALL
             SELECT 'textless' as val, COUNT(DISTINCT base_products.id) as c FROM base_products 
@@ -175,12 +175,12 @@ BEGIN
             LEFT JOIN custom_category c_col ON pc_col.category_id = c_col.id
             WHERE textless = true AND 
               CASE WHEN p_filter_logic = 'and' THEN
-                (p_condition = '' OR LOWER(condition) = ANY(string_to_array(LOWER(p_condition), ',')))
-                AND (p_foil = '' OR LOWER(foil_treatment) = ANY(string_to_array(LOWER(p_foil), ',')))
-                AND (p_rarity = '' OR LOWER(rarity) = ANY(string_to_array(LOWER(p_rarity), ',')))
-                AND (p_language = '' OR LOWER(language) = ANY(string_to_array(LOWER(p_language), ',')))
-                AND (p_color = '' OR color_identity ILIKE '%' || p_color || '%')
-                AND (p_collection = '' OR LOWER(c_col.slug) = ANY(string_to_array(LOWER(p_collection), ',')))
+                (p_condition = '' OR (SELECT bool_and(LOWER(condition) = item) FROM unnest(string_to_array(LOWER(p_condition), ',')) as item))
+                AND (p_foil = '' OR (SELECT bool_and(LOWER(foil_treatment) = item) FROM unnest(string_to_array(LOWER(p_foil), ',')) as item))
+                AND (p_rarity = '' OR (SELECT bool_and(LOWER(rarity) = item) FROM unnest(string_to_array(LOWER(p_rarity), ',')) as item))
+                AND (p_language = '' OR (SELECT bool_and(LOWER(language) = item) FROM unnest(string_to_array(LOWER(p_language), ',')) as item))
+                AND (p_color = '' OR (SELECT bool_and(color_identity ILIKE '%' || item || '%') FROM unnest(string_to_array(UPPER(p_color), ',')) as item))
+                AND (p_collection = '' OR (SELECT bool_and(EXISTS (SELECT 1 FROM product_category pc2 JOIN custom_category c2 ON pc2.category_id = c2.id WHERE pc2.product_id = base_products.id AND c2.slug = item)) FROM unnest(string_to_array(LOWER(p_collection), ',')) as item))
               ELSE true END
         ) t GROUP BY val
     ),
@@ -191,12 +191,12 @@ BEGIN
         JOIN custom_category c_col ON pc_col.category_id = c_col.id
         WHERE 
           CASE WHEN p_filter_logic = 'and' THEN
-            (p_condition = '' OR LOWER(condition) = ANY(string_to_array(LOWER(p_condition), ',')))
-            AND (p_foil = '' OR LOWER(foil_treatment) = ANY(string_to_array(LOWER(p_foil), ',')))
-            AND (p_treatment = '' OR (LOWER(card_treatment) = ANY(string_to_array(LOWER(p_treatment), ',')) OR (LOWER(p_treatment) LIKE '%full_art%' AND full_art = true) OR (LOWER(p_treatment) LIKE '%textless%' AND textless = true)))
-            AND (p_rarity = '' OR LOWER(rarity) = ANY(string_to_array(LOWER(p_rarity), ',')))
-            AND (p_language = '' OR LOWER(language) = ANY(string_to_array(LOWER(p_language), ',')))
-            AND (p_color = '' OR color_identity ILIKE '%' || p_color || '%')
+            (p_condition = '' OR (SELECT bool_and(LOWER(condition) = item) FROM unnest(string_to_array(LOWER(p_condition), ',')) as item))
+            AND (p_foil = '' OR (SELECT bool_and(LOWER(foil_treatment) = item) FROM unnest(string_to_array(LOWER(p_foil), ',')) as item))
+            AND (p_treatment = '' OR (SELECT bool_and(LOWER(card_treatment) = item OR (item = 'full_art' AND full_art = true) OR (item = 'textless' AND textless = true)) FROM unnest(string_to_array(LOWER(p_treatment), ',')) as item))
+            AND (p_rarity = '' OR (SELECT bool_and(LOWER(rarity) = item) FROM unnest(string_to_array(LOWER(p_rarity), ',')) as item))
+            AND (p_language = '' OR (SELECT bool_and(LOWER(language) = item) FROM unnest(string_to_array(LOWER(p_language), ',')) as item))
+            AND (p_color = '' OR (SELECT bool_and(color_identity ILIKE '%' || item || '%') FROM unnest(string_to_array(UPPER(p_color), ',')) as item))
           ELSE
             true
           END

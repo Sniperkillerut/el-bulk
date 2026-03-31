@@ -1,14 +1,14 @@
 package handlers
 
 import (
-"github.com/el-bulk/backend/utils/render"
+	"github.com/el-bulk/backend/utils/render"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
-
 	"time"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 
@@ -26,12 +26,9 @@ func NewProductHandler(db *sqlx.DB) *ProductHandler {
 	return &ProductHandler{DB: db}
 }
 
-// populatePrices fetches current exchange rates and sets the computed COP Price
-// on each product in the slice.
 func (h *ProductHandler) populatePrices(products []models.Product) {
 	s, err := loadSettings(h.DB)
 	if err != nil {
-		// Fall back to safe defaults if settings are unavailable
 		s = models.Settings{USDToCOPRate: 4200, EURToCOPRate: 4600}
 	}
 	for i := range products {
@@ -127,7 +124,6 @@ func (h *ProductHandler) populateCartCounts(products []models.Product) {
 }
 
 func (h *ProductHandler) saveProductCategories(productID string, categoryIDs []string) {
-	logger.Info("saveProductCategories called for Product: %s with categories: %v", productID, categoryIDs)
 	_, err := h.DB.Exec("DELETE FROM product_category WHERE product_id = $1", productID)
 	if err != nil {
 		logger.Error("Error deleting product_category: %v", err)
@@ -141,7 +137,6 @@ func (h *ProductHandler) saveProductCategories(productID string, categoryIDs []s
 }
 
 func (h *ProductHandler) saveProductStorage(productID string, items []models.StorageLocation) {
-	// First clear existing storage for this product
 	_, err := h.DB.Exec("DELETE FROM product_storage WHERE product_id = $1", productID)
 	if err != nil {
 		logger.Error("Error clearing product_storage for %s: %v", productID, err)
@@ -236,7 +231,6 @@ func (h *ProductHandler) populateCategories(products []models.Product, isAdmin b
 	}
 }
 
-// GET /api/products
 func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	q := r.URL.Query()
@@ -246,7 +240,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	search := q.Get("search")
 	storageID := q.Get("storage_id")
 	foil := q.Get("foil")
-		treatment := q.Get("treatment")
+	treatment := q.Get("treatment")
 	condition := q.Get("condition")
 	collection := q.Get("collection")
 	rarity := q.Get("rarity")
@@ -282,10 +276,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	orderBy := h.buildOrderBy(sortBy, sortDir, search, len(args))
 
-	// For the listing query, swap the base table with the enriched view
-	// so we get stored_in_json and categories_json columns
 	viewFrom := strings.Replace(fromClause, "FROM product p", "FROM view_product_enriched p", 1)
-
 	listQuery := `SELECT p.* ` + viewFrom + " " + where + " ORDER BY " + orderBy + " LIMIT $" + strconv.Itoa(len(args)+1) + " OFFSET $" + strconv.Itoa(len(args)+2)
 
 	listArgs := append([]interface{}{}, args...)
@@ -304,7 +295,6 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	products := make([]models.Product, len(rows))
-
 	for i, r := range rows {
 		products[i] = r.Product
 		if r.StoredInJSON != nil {
@@ -339,13 +329,10 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GET /api/products/:id
 func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-
 	isAdmin := strings.Contains(r.URL.Path, "/admin/")
 
-	// Check TCG activity if not admin
 	if !isAdmin {
 		var active bool
 		err := h.DB.Get(&active, "SELECT COALESCE(t.is_active, true) FROM product p LEFT JOIN tcg t ON p.tcg = t.id WHERE p.id = $1", id)
@@ -375,10 +362,8 @@ func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, product)
 }
 
-// GET /api/tcgs
 func (h *ProductHandler) ListTCGs(w http.ResponseWriter, r *http.Request) {
 	activeOnly := r.URL.Query().Get("active_only") == "true"
-
 	var tcgs []models.TCG
 	query := "SELECT * FROM tcg ORDER BY name"
 	if activeOnly {
@@ -391,14 +376,12 @@ func (h *ProductHandler) ListTCGs(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
-
 	if tcgs == nil {
 		tcgs = []models.TCG{}
 	}
 	render.Success(w, map[string]interface{}{"tcgs": tcgs})
 }
 
-// POST /api/admin/products
 func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var input models.ProductInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -455,10 +438,8 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, products[0])
 }
 
-// PUT /api/admin/products/:id
 func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-
 	var input models.ProductInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -505,46 +486,38 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, products[0])
 }
 
-// DELETE /api/admin/products/:id
 func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-
 	result, err := h.DB.Exec("DELETE FROM product WHERE id = $1", id)
 	if err != nil {
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
-
 	rows, _ := result.RowsAffected()
 	if rows == 0 {
 		render.Error(w, "Product not found", http.StatusNotFound)
 		return
 	}
-
 	render.Success(w, map[string]string{"message": "Product deleted"})
 }
 
-// POST /api/admin/products/bulk
 func (h *ProductHandler) BulkCreate(w http.ResponseWriter, r *http.Request) {
 	var inputs []models.ProductInput
 	if err := json.NewDecoder(r.Body).Decode(&inputs); err != nil {
 		render.Error(w, "Invalid request body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-
 	if len(inputs) == 0 {
 		render.Success(w, map[string]interface{}{"message": "No products to import", "count": 0})
 		return
 	}
 
-	// Prepare data for Stored Procedure
 	jsonData, err := json.Marshal(inputs)
 	if err != nil {
 		render.Error(w, "Failed to encode products for database", http.StatusInternalServerError)
 		return
 	}
 
-	// Call Stored Procedure
 	var ids []struct {
 		ID string `db:"upserted_id"`
 	}
@@ -561,7 +534,6 @@ func (h *ProductHandler) BulkCreate(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GET /api/admin/products/:id/storage
 func (h *ProductHandler) GetStorage(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var items []models.StorageLocation
@@ -581,7 +553,6 @@ func (h *ProductHandler) GetStorage(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, items)
 }
 
-// PUT /api/admin/products/:id/storage
 func (h *ProductHandler) UpdateStorage(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var updates []models.ProductStorage
@@ -596,7 +567,6 @@ func (h *ProductHandler) UpdateStorage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 1. Clear existing
 	_, err = tx.Exec(`DELETE FROM product_storage WHERE product_id = $1`, id)
 	if err != nil {
 		tx.Rollback()
@@ -604,7 +574,6 @@ func (h *ProductHandler) UpdateStorage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2. Insert active
 	var validUpdates []models.ProductStorage
 	for _, u := range updates {
 		if u.Quantity > 0 {
@@ -635,7 +604,6 @@ func (h *ProductHandler) UpdateStorage(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, "Failed to commit transaction", http.StatusInternalServerError)
 		return
 	}
-
 	h.GetStorage(w, r)
 }
 
@@ -654,21 +622,14 @@ func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treat
 		logger.Error("Error unmarshaling facets: %v", err)
 		return models.Facets{}
 	}
-
 	return facets
 }
 
-// buildOrderBy constructs a safe ORDER BY clause from sort_by/sort_dir query params.
-// Supported sort_by values: name, price, cmc, rarity, created_at (default).
-// When search is active and no explicit sort is provided, uses similarity-based ordering.
 func (h *ProductHandler) buildOrderBy(sortBy, sortDir, search string, argsLen int) string {
-	// Validate direction
 	dir := "DESC"
 	if strings.EqualFold(sortDir, "asc") {
 		dir = "ASC"
 	}
-
-	// If no explicit sort requested, fall back to default behavior
 	if sortBy == "" {
 		if search != "" {
 			return "similarity(p.name, $" + strconv.Itoa(argsLen-1) + ") DESC, p.created_at DESC"
@@ -702,7 +663,6 @@ func (h *ProductHandler) buildOrderBy(sortBy, sortDir, search string, argsLen in
 			WHEN 'bonus' THEN 1
 			ELSE 0 END`
 	case "price":
-		// Replicate ComputePrice logic in SQL using exchange rates
 		s, err := loadSettings(h.DB)
 		if err != nil {
 			s = models.Settings{USDToCOPRate: 4200, EURToCOPRate: 4600}
@@ -718,13 +678,11 @@ func (h *ProductHandler) buildOrderBy(sortBy, sortDir, search string, argsLen in
 	case "created_at":
 		col = "p.created_at"
 	default:
-		// Unknown sort field — ignore and fall back to default
 		if search != "" {
 			return "similarity(p.name, $" + strconv.Itoa(argsLen-1) + ") DESC, p.created_at DESC"
 		}
 		return "p.created_at DESC"
 	}
-
 	return col + " " + dir + ", p.created_at DESC"
 }
 
@@ -759,10 +717,8 @@ func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, tr
 		mandatory = append(mandatory, "p.category = "+placeholder)
 	}
 	if search != "" {
-		// Mandatory AND for search terms
 		searchTerms := strings.Fields(search)
 		for _, term := range searchTerms {
-			// Using 8 identical arguments for the various ILIKE fields
 			placeholderIdx := len(builder.Args) + 1
 			for j := 0; j < 8; j++ {
 				builder.Args = append(builder.Args, "%"+term+"%")
@@ -775,111 +731,96 @@ func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, tr
 			p6 := fmt.Sprintf("$%d", placeholderIdx+5)
 			p7 := fmt.Sprintf("$%d", placeholderIdx+6)
 			p8 := fmt.Sprintf("$%d", placeholderIdx+7)
-			
 			mandatory = append(mandatory, fmt.Sprintf("(p.name ILIKE %s OR p.set_name ILIKE %s OR p.set_code ILIKE %s OR p.artist ILIKE %s OR p.collector_number ILIKE %s OR p.oracle_text ILIKE %s OR p.type_line ILIKE %s OR p.promo_type ILIKE %s)", p1, p2, p3, p4, p5, p6, p7, p8))
 		}
 	}
 
+	opLogic := " OR "
+	if strings.ToLower(filterLogic) == "and" {
+		opLogic = " AND "
+	}
+
 	if foil != "" {
 		vals := strings.Split(foil, ",")
-		placeholders := make([]string, len(vals))
-		for i, v := range vals {
+		var conds []string
+		for _, v := range vals {
 			placeholder := fmt.Sprintf("$%d", len(builder.Args)+1)
-			placeholders[i] = placeholder
+			conds = append(conds, "LOWER(p.foil_treatment) = "+placeholder)
 			builder.Args = append(builder.Args, strings.ToLower(v))
 		}
-		optional = append(optional, "LOWER(p.foil_treatment) IN ("+strings.Join(placeholders, ",")+")")
+		optional = append(optional, "("+strings.Join(conds, opLogic)+")")
 	}
 	if treatment != "" {
 		vals := strings.Split(treatment, ",")
-		placeholders := make([]string, 0, len(vals))
-		hasTextless := false
-		hasFullArt := false
+		var conds []string
 		for _, v := range vals {
 			lv := strings.ToLower(v)
-			switch lv {
-			case "textless":
-				hasTextless = true
-			case "full_art":
-				hasFullArt = true
-			}
 			placeholder := fmt.Sprintf("$%d", len(builder.Args)+1)
-			placeholders = append(placeholders, placeholder)
+			cond := "LOWER(p.card_treatment) = " + placeholder
+			if lv == "textless" {
+				cond = "(" + cond + " OR p.textless = true)"
+			} else if lv == "full_art" {
+				cond = "(" + cond + " OR p.full_art = true)"
+			}
+			conds = append(conds, cond)
 			builder.Args = append(builder.Args, lv)
 		}
-
-		filter := "(LOWER(p.card_treatment) IN (" + strings.Join(placeholders, ",") + ")"
-		if hasTextless {
-			filter += " OR p.textless = true"
-		}
-		if hasFullArt {
-			filter += " OR p.full_art = true"
-		}
-		filter += ")"
-		optional = append(optional, filter)
+		optional = append(optional, "("+strings.Join(conds, opLogic)+")")
 	}
 	if condition != "" {
 		vals := strings.Split(condition, ",")
-		placeholders := make([]string, len(vals))
-		for i, v := range vals {
+		var conds []string
+		for _, v := range vals {
 			placeholder := fmt.Sprintf("$%d", len(builder.Args)+1)
-			placeholders[i] = placeholder
+			conds = append(conds, "p.condition = "+placeholder)
 			builder.Args = append(builder.Args, strings.ToUpper(v))
 		}
-		optional = append(optional, "p.condition IN ("+strings.Join(placeholders, ",")+")")
+		optional = append(optional, "("+strings.Join(conds, opLogic)+")")
 	}
 	if collection != "" {
 		vals := strings.Split(collection, ",")
-		placeholders := make([]string, len(vals))
-		for i, v := range vals {
+		var conds []string
+		for _, v := range vals {
 			placeholder := fmt.Sprintf("$%d", len(builder.Args)+1)
-			placeholders[i] = placeholder
+			conds = append(conds, "EXISTS (SELECT 1 FROM product_category pc_col JOIN custom_category c_col ON pc_col.category_id = c_col.id WHERE pc_col.product_id = p.id AND c_col.slug = "+placeholder+")")
 			builder.Args = append(builder.Args, strings.ToLower(v))
 		}
-		optional = append(optional, fmt.Sprintf(
-			"EXISTS (SELECT 1 FROM product_category pc_col JOIN custom_category c_col ON pc_col.category_id = c_col.id WHERE pc_col.product_id = p.id AND c_col.slug IN (%s))",
-			strings.Join(placeholders, ","),
-		))
+		optional = append(optional, "("+strings.Join(conds, opLogic)+")")
 	}
 	if rarity != "" {
 		vals := strings.Split(rarity, ",")
-		placeholders := make([]string, len(vals))
-		for i, v := range vals {
+		var conds []string
+		for _, v := range vals {
 			placeholder := fmt.Sprintf("$%d", len(builder.Args)+1)
-			placeholders[i] = placeholder
+			conds = append(conds, "LOWER(p.rarity) = "+placeholder)
 			builder.Args = append(builder.Args, strings.ToLower(v))
 		}
-		optional = append(optional, "LOWER(p.rarity) IN ("+strings.Join(placeholders, ",")+")")
+		optional = append(optional, "("+strings.Join(conds, opLogic)+")")
 	}
 	if language != "" {
 		vals := strings.Split(language, ",")
-		placeholders := make([]string, len(vals))
-		for i, v := range vals {
+		var conds []string
+		for _, v := range vals {
 			placeholder := fmt.Sprintf("$%d", len(builder.Args)+1)
-			placeholders[i] = placeholder
+			conds = append(conds, "LOWER(p.language) = "+placeholder)
 			builder.Args = append(builder.Args, strings.ToLower(v))
 		}
-		optional = append(optional, "LOWER(p.language) IN ("+strings.Join(placeholders, ",")+")")
+		optional = append(optional, "("+strings.Join(conds, opLogic)+")")
 	}
 	if color != "" {
 		vals := strings.Split(color, ",")
-		colorConds := make([]string, len(vals))
-		for i, v := range vals {
+		var conds []string
+		for _, v := range vals {
 			placeholder := fmt.Sprintf("$%d", len(builder.Args)+1)
-			colorConds[i] = "p.color_identity ILIKE " + placeholder
+			conds = append(conds, "p.color_identity ILIKE "+placeholder)
 			builder.Args = append(builder.Args, "%"+strings.ToUpper(v)+"%")
 		}
-		optional = append(optional, "("+strings.Join(colorConds, " OR ")+")")
+		optional = append(optional, "("+strings.Join(conds, opLogic)+")")
 	}
 
 	finalConditions := mandatory
 	if len(optional) > 0 {
-		opLogic := " OR "
-		if strings.ToLower(filterLogic) == "and" {
-			opLogic = " AND "
-		}
-		optionalBlock := "(" + strings.Join(optional, opLogic) + ")"
-		finalConditions = append(finalConditions, optionalBlock)
+		finalConditions = append(finalConditions, "("+strings.Join(optional, opLogic)+")")
 	}
 
 	return builder.BaseQuery, finalConditions, builder.Args
