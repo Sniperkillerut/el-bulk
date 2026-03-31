@@ -26,7 +26,7 @@ BEGIN
         FROM product p
         LEFT JOIN tcg t ON p.tcg = t.id
         WHERE 
-            (p_tcg = '' OR p.tcg = p_tcg)
+            (p_tcg = '' OR LOWER(p.tcg) = LOWER(p_tcg))
             AND (p_category = '' OR p.category = p_category)
             AND (p_search = '' OR (
                 p.name % p_search OR 

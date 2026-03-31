@@ -149,8 +149,8 @@ func seedMinimalData(db *sqlx.DB, tcgIDs map[string]string, cats map[string]stri
 	name := "Black Lotus"
 	var pID string
 	db.QueryRow(`
-		INSERT INTO product (name, tcg, category, set_name, set_code, price_source, price_cop_override, stock, image_url)
-		VALUES ($1, 'mtg', 'singles', 'Alpha', 'LEA', 'manual', 25000000, 1, 'https://cards.scryfall.io/normal/front/1/9/19911e6e-7c35-4281-b31c-266382f052cc.jpg?1717190810') RETURNING id
+		INSERT INTO product (name, tcg, category, set_name, set_code, price_source, price_cop_override, stock, image_url, color_identity)
+		VALUES ($1, 'mtg', 'singles', 'Alpha', 'LEA', 'manual', 25000000, 1, 'https://cards.scryfall.io/normal/front/1/9/19911e6e-7c35-4281-b31c-266382f052cc.jpg?1717190810', 'C') RETURNING id
 	`, name).Scan(&pID)
 	
 	db.Exec(`INSERT INTO product_storage (product_id, storage_id, quantity) VALUES ($1, $2, 1)`, pID, storageIDs[0])
@@ -241,10 +241,10 @@ func seedFullData(db *sqlx.DB, tcgIDs map[string]string, cats map[string]string,
 			INSERT INTO product (
 				name, tcg, category, set_name, set_code, collector_number, condition,
 				foil_treatment, card_treatment, language, price_source, price_cop_override,
-				image_url, stock, rarity, is_legendary, oracle_text
-			) VALUES ($1, 'mtg', 'singles', $2, $3, $4, $5, $6, $7, 'en', 'manual', $8, $9, $10, $11, $12, $13)
+				image_url, stock, rarity, is_legendary, oracle_text, color_identity
+			) VALUES ($1, 'mtg', 'singles', $2, $3, $4, $5, $6, $7, 'en', 'manual', $8, $9, $10, $11, $12, $13, $14)
 			RETURNING id
-		`, res.Name, res.SetName, res.SetCode, res.CollectorNumber, cond, f, t, price, res.ImageURL, stock, res.Rarity, res.IsLegendary, res.OracleText)
+		`, res.Name, res.SetName, res.SetCode, res.CollectorNumber, cond, f, t, price, res.ImageURL, stock, res.Rarity, res.IsLegendary, res.OracleText, res.ColorIdentity)
 
 		if err == nil {
 			productIDs = append(productIDs, pID)

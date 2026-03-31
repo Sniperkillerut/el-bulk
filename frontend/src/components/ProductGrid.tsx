@@ -139,8 +139,8 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                   onClick={() => { setLogic('or'); setPage(1); }}
                   className={`flex-1 py-1.5 px-2 text-[10px] font-bold rounded transition-all font-mono-stack ${
                     logic === 'or' 
-                      ? 'bg-ink-deep text-white shadow-sm' 
-                      : 'text-text-muted hover:text-ink-deep'
+                      ? 'bg-emerald-600 text-white shadow-sm' 
+                      : 'text-text-muted hover:text-emerald-600'
                   }`}
                 >
                   BROAD (OR)
@@ -149,8 +149,8 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                   onClick={() => { setLogic('and'); setPage(1); }}
                   className={`flex-1 py-1.5 px-2 text-[10px] font-bold rounded transition-all font-mono-stack ${
                     logic === 'and' 
-                      ? 'bg-ink-deep text-white shadow-sm' 
-                      : 'text-text-muted hover:text-ink-deep'
+                      ? 'bg-orange-600 text-white shadow-sm' 
+                      : 'text-text-muted hover:text-orange-600'
                   }`}
                 >
                   NARROW (AND)
@@ -179,7 +179,13 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
               <div className="flex flex-col gap-1">
                 <FilterSection 
                   title="Condition" 
-                  items={['NM', 'LP', 'MP', 'HP', 'DMG'].map(c => ({ id: c, label: c }))} 
+                  items={[
+                    { id: 'NM', label: 'NM', color: '#22c55e' },
+                    { id: 'LP', label: 'LP', color: '#84cc16' },
+                    { id: 'MP', label: 'MP', color: '#eab308' },
+                    { id: 'HP', label: 'HP', color: '#f97316' },
+                    { id: 'DMG', label: 'DMG', color: '#ef4444' }
+                  ]} 
                   selected={filters.condition}
                   onToggle={(val) => toggleFilter('condition', val)}
                   counts={facets?.condition}
@@ -201,11 +207,18 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                   counts={facets?.treatment}
                 />
 
-                {tcg === 'mtg' && (
+                {tcg?.toLowerCase() === 'mtg' && (
                   <>
                     <FilterSection 
                       title="Rarity" 
-                      items={['Common', 'Uncommon', 'Rare', 'Mythic', 'Special', 'Bonus'].map(r => ({ id: r, label: r }))} 
+                      items={[
+                        { id: 'Common', label: 'Common', color: '#1a1714' },
+                        { id: 'Uncommon', label: 'Uncommon', color: '#707883' },
+                        { id: 'Rare', label: 'Rare', color: '#b59119' },
+                        { id: 'Mythic', label: 'Mythic', color: '#d14210' },
+                        { id: 'Special', label: 'Special', color: '#6e2191' },
+                        { id: 'Bonus', label: 'Bonus', color: '#6e2191' }
+                      ]} 
                       selected={filters.rarity}
                       onToggle={(val) => toggleFilter('rarity', val)}
                       counts={facets?.rarity}
@@ -214,12 +227,12 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                     <FilterSection 
                       title="Color" 
                       items={[
-                        { id: 'W', label: 'White' },
-                        { id: 'U', label: 'Blue' },
-                        { id: 'B', label: 'Black' },
-                        { id: 'R', label: 'Red' },
-                        { id: 'G', label: 'Green' },
-                        { id: 'C', label: 'Colorless' }
+                        { id: 'W', label: 'White', color: '#f8f6d3' },
+                        { id: 'U', label: 'Blue', color: '#0e68ab' },
+                        { id: 'B', label: 'Black', color: '#150b00' },
+                        { id: 'R', label: 'Red', color: '#d3202a' },
+                        { id: 'G', label: 'Green', color: '#00733e' },
+                        { id: 'C', label: 'Colorless', color: '#90adbb' }
                       ]} 
                       selected={filters.color}
                       onToggle={(val) => toggleFilter('color', val)}
@@ -361,7 +374,7 @@ function FilterSection({
   counts 
 }: { 
   title: string, 
-  items: { id: string, label: string }[], 
+  items: { id: string, label: string, color?: string }[], 
   selected: string[], 
   onToggle: (id: string) => void, 
   counts?: Record<string, number> 
@@ -399,7 +412,13 @@ function FilterSection({
                 onChange={() => onToggle(item.id)}
                 className="w-4 h-4 border-2 border-kraft-dark rounded-sm checked:bg-ink-deep appearance-none relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-[10px] checked:after:text-white"
               />
-              <span className="text-xs font-mono-stack text-text-secondary group-hover:text-ink-deep transition-colors truncate">
+              <span className="text-xs font-mono-stack text-text-secondary group-hover:text-ink-deep transition-colors truncate flex items-center gap-1.5">
+                {item.color && (
+                  <span 
+                    className="w-3 h-3 rounded-full border border-black/10 shadow-sm" 
+                    style={{ backgroundColor: item.color }}
+                  />
+                )}
                 {item.label}
                 {counts && (
                   <span className="ml-1 opacity-60 text-[10px]">

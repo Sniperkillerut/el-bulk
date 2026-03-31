@@ -253,6 +253,9 @@ func mapScryfallToResult(card *scryfallCard, foilTreatment string) *CardLookupRe
 	if len(card.ColorIdentity) > 0 {
 		cs := strings.Join(card.ColorIdentity, ",")
 		colorStr = &cs
+	} else {
+		colorless := "C"
+		colorStr = &colorless
 	}
 
 	lowerType := strings.ToLower(card.TypeLine)
