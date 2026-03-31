@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { useCart } from '@/lib/CartContext';
 import { useUser } from '@/context/UserContext';
-import { TCG, TCG_SHORT } from '@/lib/types';
+import { TCG } from '@/lib/types';
 import { fetchTCGs } from '@/lib/api';
 import { useUI } from '@/context/UIContext';
 import CartDrawer from './CartDrawer';
@@ -145,13 +146,17 @@ export default function Navbar() {
             {!userLoading && (
               <div className="relative group flex items-center">
                 {user ? (
-                  <div className="flex flex-col items-end group-hover:flex">
-                    <img 
-                      src={user.avatar_url || 'https://www.gravatar.com/avatar/?d=mp'} 
-                      alt={user.first_name}
-                      className="w-8 h-8 rounded-full border border-ink-border cursor-pointer object-cover"
-                      referrerPolicy="no-referrer"
-                    />
+                  <div className="flex flex-col items-end group-hover:flex relative">
+                    <div className="w-8 h-8 relative rounded-full border border-ink-border overflow-hidden cursor-pointer">
+                      <Image 
+                        src={user.avatar_url || 'https://www.gravatar.com/avatar/?d=mp'} 
+                        alt={user.first_name || 'User'}
+                        fill
+                        className="object-cover"
+                        referrerPolicy="no-referrer"
+                        sizes="32px"
+                      />
+                    </div>
                     <div className="absolute top-10 right-0 w-32 bg-ink-surface border border-ink-border rounded-md shadow-xl p-2 hidden group-hover:block transition-all z-50">
                       <p className="text-xs text-text-muted truncate mb-2">{user.email}</p>
                       <button 

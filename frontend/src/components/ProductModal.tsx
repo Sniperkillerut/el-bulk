@@ -21,12 +21,28 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
   const [error, setError] = useState(false);
   const [added, setAdded] = useState(false);
   const { addItem } = useCart();
+  
+  const [prevId, setPrevId] = useState(productId);
+  const [prevInitialProduct, setPrevInitialProduct] = useState(initialProduct);
+
+  // Sync: Reset state if productId or initialProduct changes (Derived state pattern)
+  if (productId !== prevId || initialProduct !== prevInitialProduct) {
+    setPrevId(productId);
+    setPrevInitialProduct(initialProduct);
+    if (initialProduct) {
+      setProduct(initialProduct);
+      setLoading(false);
+      setError(false);
+    } else {
+      setProduct(null);
+      setLoading(true);
+      setError(false);
+    }
+  }
 
   useEffect(() => {
-    if (initialProduct) return;
-    if (!productId) return;
+    if (initialProduct || !productId) return;
 
-    setLoading(true);
     fetchProduct(productId)
       .then(p => {
         setProduct(p);

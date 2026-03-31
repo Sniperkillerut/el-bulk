@@ -1,18 +1,17 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Bebas_Neue, Space_Mono } from 'next/font/google';
 import './globals.css';
-import Navbar from '@/components/Navbar';
 import StorefrontLayoutWrapper from '@/components/StorefrontLayoutWrapper';
 import { CartProvider } from '@/lib/CartContext';
-import ProductModalManager from '@/components/ProductModalManager';
-import BountyModalManager from '@/components/BountyModalManager';
 import RemoteLogManager from '@/components/RemoteLogManager';
 
 import { UserProvider } from '@/context/UserContext';
 import { UIProvider } from '@/context/UIContext';
 import './foil-effects.css';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const bebas = Bebas_Neue({ weight: '400', subsets: ['latin'], variable: '--font-bebas' });
+const spaceMono = Space_Mono({ weight: ['400', '700'], subsets: ['latin'], variable: '--font-mono' });
 
 export const metadata: Metadata = {
   title: 'El Bulk — TCG Store',
@@ -22,14 +21,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.className} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${bebas.variable} ${spaceMono.variable}`} suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap"
-          rel="stylesheet"
-        />
         <style>{`
           .centered-container {
             max-width: 1280px !important;

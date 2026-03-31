@@ -29,16 +29,18 @@ export default function CardImage({
   enableHover = false, enableModal = false 
 }: CardImageProps) {
   const { foilEffectsEnabled } = useUI();
+  const [prevUrl, setPrevUrl] = useState(imageUrl);
   const [imgError, setImgError] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [rect, setRect] = useState<DOMRect | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Critical: Reset error state when the URL changes (e.g., after an admin edit)
-  useEffect(() => {
+  // Sync: Reset error state when the URL changes (Derived state pattern)
+  if (imageUrl !== prevUrl) {
+    setPrevUrl(imageUrl);
     setImgError(false);
-  }, [imageUrl]);
+  }
 
   const showImage = imageUrl && !imgError;
 
@@ -173,40 +175,31 @@ function FoilOverlay({ treatment }: { treatment: string }) {
 
 function HoverPortal({ imageUrl, name, startRect }: { imageUrl: string; name: string; startRect: DOMRect }) {
   const [isMounted, setIsMounted] = useState(false);
-  const [portalNode, setPortalNode] = useState<HTMLElement | null>(null);
-
+  
   useEffect(() => {
-    setPortalNode(document.body);
     const timer = setTimeout(() => setIsMounted(true), 10);
     return () => clearTimeout(timer);
   }, []);
 
-  if (!portalNode) return null;
-
-  // Calculate destination (centered, 50% of screen)
-  const destSize = Math.min(window.innerWidth * 0.5, window.innerHeight * 0.8);
-  const destTop = (window.innerHeight - destSize) / 2;
-  const destLeft = (window.innerWidth - destSize) / 2;
-
-  const style: React.CSSProperties = isMounted ? {
-    top: destTop,
-    left: destLeft,
-    width: destSize,
-    height: destSize,
-    opacity: 1,
-  } : {
-    top: startRect.top,
-    left: startRect.left,
-    width: startRect.width,
-    height: startRect.height,
-    opacity: 0,
-  };
+  if (typeof document === 'undefined') return null;
 
   return createPortal(
-    <div className="hover-expand-portal" style={style}>
+    <div className="hover-expand-portal" style={isMounted ? {
+      top: (window.innerHeight - Math.min(window.innerWidth * 0.5, window.innerHeight * 0.8)) / 2,
+      left: (window.innerWidth - Math.min(window.innerWidth * 0.5, window.innerHeight * 0.8)) / 2,
+      width: Math.min(window.innerWidth * 0.5, window.innerHeight * 0.8),
+      height: Math.min(window.innerWidth * 0.5, window.innerHeight * 0.8),
+      opacity: 1,
+    } : {
+      top: startRect.top,
+      left: startRect.left,
+      width: startRect.width,
+      height: startRect.height,
+      opacity: 0,
+    }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={imageUrl} alt={name} className="hover-expand-image" />
     </div>,
-    portalNode
+    document.body
   );
 }
