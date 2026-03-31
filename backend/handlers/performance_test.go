@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"

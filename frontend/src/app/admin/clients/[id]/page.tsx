@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useAdmin } from '@/hooks/useAdmin';
@@ -18,7 +18,7 @@ export default function AdminClientDetailPage() {
   const [newNote, setNewNote] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<string>('');
 
-  const fetchDetail = async () => {
+  const fetchDetail = useCallback(async () => {
     if (token && id) {
       try {
         const data = await adminFetchClientDetail(token, id as string);
@@ -32,11 +32,11 @@ export default function AdminClientDetailPage() {
         setLoading(false);
       }
     }
-  };
+  }, [token, id]);
 
   useEffect(() => {
     fetchDetail();
-  }, [token, id]); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchDetail]);
 
   useEffect(() => {
     if (initialOrderId) {

@@ -412,13 +412,3 @@ func (h *OrderHandler) Complete(w http.ResponseWriter, r *http.Request) {
 }
 
 // Helpers
-func nullStr(s string) *string {
-	if s == "" {
-		return nil
-	}
-	return &s
-}
-
-func strPtr(s string) *string {
-	return &s
-}

@@ -28,7 +28,7 @@ async function logAndThrow(res: Response, defaultMsg: string): Promise<never> {
 }
 
 interface FetchOptions extends RequestInit {
-  params?: Record<string, any>;
+  params?: Record<string, string | number | boolean | undefined | null>;
 }
 
 async function apiFetch<T>(endpoint: string, options: FetchOptions = {}, token?: string): Promise<T> {
@@ -93,21 +93,21 @@ export async function fetchProduct(id: string): Promise<Product> {
 }
 
 // Metadata caching (in-memory session)
-const metadataCache = new Map<string, { data: any; timestamp: number }>();
+const metadataCache = new Map<string, { data: unknown; timestamp: number }>();
 const CACHE_TTL = 300000; // 5 minutes
 
-function getCached(key: string) {
+function getCached<T>(key: string): T | null {
   const entry = metadataCache.get(key);
-  if (entry && Date.now() - entry.timestamp < CACHE_TTL) return entry.data;
+  if (entry && Date.now() - entry.timestamp < CACHE_TTL) return entry.data as T;
   return null;
 }
 
-function setCached(key: string, data: any) {
+function setCached(key: string, data: unknown) {
   metadataCache.set(key, { data, timestamp: Date.now() });
 }
 
 export async function fetchCategories(): Promise<import('./types').CustomCategory[]> {
-  const cached = getCached('categories');
+  const cached = getCached<import('./types').CustomCategory[]>('categories');
   if (cached) return cached;
 
   try {
@@ -121,7 +121,7 @@ export async function fetchCategories(): Promise<import('./types').CustomCategor
 
 export async function fetchTCGs(activeOnly: boolean = true): Promise<import('./types').TCG[]> {
   const key = `tcgs_${activeOnly}`;
-  const cached = getCached(key);
+  const cached = getCached<import('./types').TCG[]>(key);
   if (cached) return cached;
 
   try {
@@ -135,7 +135,7 @@ export async function fetchTCGs(activeOnly: boolean = true): Promise<import('./t
 }
 
 export async function fetchPublicSettings(): Promise<import('./types').Settings> {
-  const cached = getCached('settings');
+  const cached = getCached<import('./types').Settings>('settings');
   if (cached) return cached;
 
   const data = await apiFetch<import('./types').Settings>('/api/settings', { cache: 'default' });
@@ -250,7 +250,7 @@ export async function lookupPokemonCard(
 // ---------------------------------------------------------------------------
 
 export async function getAdminSettings(token: string): Promise<import('./types').Settings> {
-  const cached = getCached('admin_settings');
+  const cached = getCached<import('./types').Settings>('admin_settings');
   if (cached) return cached;
 
   const data = await apiFetch<import('./types').Settings>('/api/admin/settings', { cache: 'default' }, token);
@@ -287,7 +287,7 @@ export async function triggerPriceRefresh(
 // ---------------------------------------------------------------------------
 
 export async function adminFetchStorage(token: string): Promise<import('./types').StoredIn[]> {
-  const cached = getCached('admin_storage');
+  const cached = getCached<import('./types').StoredIn[]>('admin_storage');
   if (cached) return cached;
 
   const data = await apiFetch<import('./types').StoredIn[]>('/api/admin/storage', { cache: 'default' }, token);
@@ -323,7 +323,7 @@ export async function adminDeleteStorage(token: string, id: string): Promise<voi
 // ---------------------------------------------------------------------------
 
 export async function adminFetchCategories(token: string): Promise<import('./types').CustomCategory[]> {
-  const cached = getCached('admin_categories');
+  const cached = getCached<import('./types').CustomCategory[]>('admin_categories');
   if (cached) return cached;
 
   const data = await apiFetch<import('./types').CustomCategory[]>('/api/admin/categories', { cache: 'default' }, token);
@@ -377,7 +377,7 @@ export async function adminDeleteCategory(token: string, id: string): Promise<vo
 // ---------------------------------------------------------------------------
 
 export async function adminFetchTCGs(token: string): Promise<import('./types').TCG[]> {
-  const cached = getCached('admin_tcgs');
+  const cached = getCached<import('./types').TCG[]>('admin_tcgs');
   if (cached) return cached;
 
   const data = await apiFetch<import('./types').TCG[]>('/api/admin/tcgs', { cache: 'default' }, token);
@@ -430,7 +430,7 @@ export async function adminUpdateProductStorage(token: string, productId: string
 // ---------------------------------------------------------------------------
 
 export async function createOrder(data: import('./types').CreateOrderRequest): Promise<{ order_number: string; order_id: string; total_cop: number; status: string }> {
-  return apiFetch<any>('/api/orders', {
+  return apiFetch<{ order_number: string; order_id: string; total_cop: number; status: string }>('/api/orders', {
     method: 'POST',
     body: JSON.stringify(data),
   });

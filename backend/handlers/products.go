@@ -899,14 +899,6 @@ func (h *ProductHandler) buildOrderBy(sortBy, sortDir, search string, argsLen in
 	return col + " " + dir + ", p.created_at DESC"
 }
 
-func (h *ProductHandler) enrichProducts(products []models.Product, isAdmin bool) {
-	if len(products) == 0 {
-		return
-	}
-	h.populatePrices(products)
-	h.populateStorage(products)
-	h.populateCategories(products, isAdmin)
-}
 
 func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color string, isAdmin bool) (string, []string, []interface{}) {
 	var conditions []string

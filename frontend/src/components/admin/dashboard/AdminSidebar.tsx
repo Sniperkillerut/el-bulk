@@ -4,8 +4,8 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { getAdminSettings, updateAdminSettings, adminFetchStats } from '@/lib/api';
-import { Settings, AdminStats } from '@/lib/types';
+import { adminFetchStats } from '@/lib/api';
+import { AdminStats } from '@/lib/types';
 
 export default function AdminSidebar() {
   const pathname = usePathname();
