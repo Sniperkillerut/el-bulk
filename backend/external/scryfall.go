@@ -9,12 +9,14 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/el-bulk/backend/models"
 )
 
 var ScryfallBase = "https://api.scryfall.com"
 
 // scryfallClient is a shared HTTP client with a reasonable timeout.
-var scryfallClient = &http.Client{Timeout: 10 * time.Second}
+var scryfallClient = &http.Client{Timeout: 30 * time.Second}
 
 // scryfallCard is the minimal subset of the Scryfall card object we need.
 type scryfallCard struct {
@@ -299,28 +301,30 @@ func mapScryfallToResult(card *scryfallCard, foilTreatment string) *CardLookupRe
 	return &CardLookupResult{
 		Name:            card.Name,
 		ImageURL:        imageURL,
-		SetName:         card.SetName,
-		SetCode:         card.Set,
-		CollectorNumber: card.CollectorNumber,
 		PriceTCGPlayer:  tcgUSD,
 		PriceCardmarket: cmEUR,
-		Language:        card.Lang,
-		ColorIdentity:   colorStr,
-		Rarity:          &card.Rarity,
-		CMC:             &card.CMC,
-		IsLegendary:     isLegendary,
-		IsHistoric:      isHistoric,
-		IsLand:          strings.Contains(lowerType, "land"),
-		IsBasicLand:     strings.Contains(lowerType, "basic land"),
-		ArtVariation:    artVar,
-		OracleText:      &oracle,
-		Artist:          &artist,
-		TypeLine:        &typeLine,
-		BorderColor:     &card.BorderColor,
-		Frame:           &card.Frame,
-		FullArt:         card.FullArt,
-		Textless:        card.Textless,
-		PromoType:       promoType,
+		MTGMetadata: models.MTGMetadata{
+			SetName:         &card.SetName,
+			SetCode:         &card.Set,
+			CollectorNumber: &card.CollectorNumber,
+			Language:        card.Lang,
+			ColorIdentity:   colorStr,
+			Rarity:          &card.Rarity,
+			CMC:             &card.CMC,
+			IsLegendary:     isLegendary,
+			IsHistoric:      isHistoric,
+			IsLand:          strings.Contains(lowerType, "land"),
+			IsBasicLand:     strings.Contains(lowerType, "basic land"),
+			ArtVariation:    artVar,
+			OracleText:      &oracle,
+			Artist:          &artist,
+			TypeLine:        &typeLine,
+			BorderColor:     &card.BorderColor,
+			Frame:           &card.Frame,
+			FullArt:         card.FullArt,
+			Textless:        card.Textless,
+			PromoType:       promoType,
+		},
 	}
 }
 

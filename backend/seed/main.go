@@ -208,20 +208,34 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 	logger.Info("Fetching bulk metadata for %d cards...", len(identifiers))
 	
 	var results []external.CardLookupResult
-	// Scryfall /cards/collection limit is 75 identifiers
-	for i := 0; i < len(identifiers); i += 75 {
-		end := i + 75
+	// Reduced chunk size for better reliability and added basic retry
+	chunkSize := 25
+	for i := 0; i < len(identifiers); i += chunkSize {
+		end := i + chunkSize
 		if end > len(identifiers) {
 			end = len(identifiers)
 		}
 		chunk := identifiers[i:end]
-		res, err := external.BatchLookupMTGCard(chunk)
+		
+		var res []external.CardLookupResult
+		var err error
+		
+		// 3 attempts per chunk
+		for attempt := 1; attempt <= 3; attempt++ {
+			res, err = external.BatchLookupMTGCard(chunk)
+			if err == nil {
+				break
+			}
+			logger.Warn("  ⚠️ Attempt %d failed for chunk at index %d: %v", attempt, i, err)
+			time.Sleep(2 * time.Second)
+		}
+
 		if err != nil {
-			logger.Error("Batch lookup chunk failed: %v", err)
+			logger.Error("  ❌ Batch lookup chunk failed after 3 attempts: %v", err)
 			continue
 		}
 		results = append(results, res...)
-		time.Sleep(100 * time.Millisecond) // Respect rate limits
+		time.Sleep(200 * time.Millisecond) // Respect rate limits
 	}
 
 	fTreatments := []models.FoilTreatment{models.FoilNonFoil, models.FoilFoil, models.FoilEtchedFoil, models.FoilSurgeFoil}
@@ -241,10 +255,18 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 			INSERT INTO product (
 				name, tcg, category, set_name, set_code, collector_number, condition,
 				foil_treatment, card_treatment, language, price_source, price_cop_override,
-				image_url, stock, rarity, is_legendary, oracle_text, color_identity
-			) VALUES ($1, 'mtg', 'singles', $2, $3, $4, $5, $6, $7, 'en', 'manual', $8, $9, $10, $11, $12, $13, $14)
+				image_url, stock, rarity, is_legendary, is_historic, is_land, is_basic_land,
+				art_variation, oracle_text, artist, type_line, border_color, frame,
+				full_art, textless, promo_type, cmc, color_identity
+			) VALUES ($1, 'mtg', 'singles', $2, $3, $4, $5, $6, $7, $8, 'manual', $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27)
 			RETURNING id
-		`, res.Name, res.SetName, res.SetCode, res.CollectorNumber, cond, f, t, price, res.ImageURL, stock, res.Rarity, res.IsLegendary, res.OracleText, res.ColorIdentity)
+		`, 
+		res.Name, res.SetName, res.SetCode, res.CollectorNumber, cond, f, t, res.Language, 
+		price, res.ImageURL, stock, res.Rarity, 
+		res.IsLegendary, res.IsHistoric, res.IsLand, res.IsBasicLand, 
+		res.ArtVariation, res.OracleText, res.Artist, res.TypeLine, 
+		res.BorderColor, res.Frame, res.FullArt, res.Textless, res.PromoType, 
+		res.CMC, res.ColorIdentity)
 
 		if err == nil {
 			productIDs = append(productIDs, pID)
@@ -337,11 +359,17 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 		for _, r := range results {
 			db.Exec(`
 				INSERT INTO deck_card (
-					product_id, name, set_code, collector_number, quantity, 
-					type_line, image_url, foil_treatment, card_treatment, rarity, art_variation
+					product_id, name, set_name, set_code, collector_number, quantity, 
+					language, color_identity, cmc, is_legendary, is_historic, is_land, is_basic_land,
+					art_variation, oracle_text, artist, type_line, border_color, frame,
+					full_art, textless, promo_type, image_url, foil_treatment, card_treatment, rarity
 				)
-				VALUES ($1, $2, $3, $4, 1, $5, $6, 'non_foil', 'normal', $7, $8)
-			`, deckID, r.Name, r.SetCode, r.CollectorNumber, r.TypeLine, r.ImageURL, r.Rarity, r.ArtVariation)
+				VALUES ($1, $2, $3, $4, $5, 1, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, 'non_foil', 'normal', $23)
+			`, 
+			deckID, r.Name, r.SetName, r.SetCode, r.CollectorNumber, 
+			r.Language, r.ColorIdentity, r.CMC, r.IsLegendary, r.IsHistoric, r.IsLand, r.IsBasicLand, 
+			r.ArtVariation, r.OracleText, r.Artist, r.TypeLine, r.BorderColor, r.Frame, 
+			r.FullArt, r.Textless, r.PromoType, r.ImageURL, r.Rarity)
 		}
 	}
 

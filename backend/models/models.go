@@ -42,6 +42,34 @@ const (
 	PriceSourceManual      = "manual"      // price_cop_override is authoritative
 )
 
+// MTGMetadata holds specific data for Magic: The Gathering cards.
+// Shared across Product, DeckCard, and external lookup results.
+type MTGMetadata struct {
+	SetName         *string       `db:"set_name"         json:"set_name,omitempty"`
+	SetCode         *string       `db:"set_code"         json:"set_code,omitempty"`
+	CollectorNumber *string       `db:"collector_number" json:"collector_number,omitempty"`
+	FoilTreatment   FoilTreatment `db:"foil_treatment"   json:"foil_treatment"`
+	CardTreatment   CardTreatment `db:"card_treatment"   json:"card_treatment"`
+	
+	Language        string   `db:"language"          json:"language"`
+	ColorIdentity   *string  `db:"color_identity"   json:"color_identity,omitempty"`
+	Rarity          *string  `db:"rarity"            json:"rarity,omitempty"`
+	CMC             *float64 `db:"cmc"               json:"cmc,omitempty"`
+	IsLegendary     bool     `db:"is_legendary"      json:"is_legendary"`
+	IsHistoric      bool     `db:"is_historic"       json:"is_historic"`
+	IsLand          bool     `db:"is_land"           json:"is_land"`
+	IsBasicLand     bool     `db:"is_basic_land"     json:"is_basic_land"`
+	ArtVariation    *string  `db:"art_variation"     json:"art_variation,omitempty"`
+	OracleText      *string  `db:"oracle_text"       json:"oracle_text,omitempty"`
+	Artist          *string  `db:"artist"            json:"artist,omitempty"`
+	TypeLine        *string  `db:"type_line"         json:"type_line,omitempty"`
+	BorderColor     *string  `db:"border_color"      json:"border_color,omitempty"`
+	Frame           *string  `db:"frame"             json:"frame,omitempty"`
+	FullArt         bool     `db:"full_art"          json:"full_art"`
+	Textless        bool     `db:"textless"          json:"textless"`
+	PromoType       *string  `db:"promo_type"         json:"promo_type,omitempty"`
+}
+
 // Product is the full DB row returned to API clients.
 // The Price field is the computed COP price:
 //   COALESCE(price_cop_override, price_reference * rate)
@@ -51,11 +79,9 @@ type Product struct {
 	Name            string        `db:"name"             json:"name"`
 	TCG             string        `db:"tcg"              json:"tcg"`
 	Category        string        `db:"category"         json:"category"`
-	SetName         *string       `db:"set_name"         json:"set_name,omitempty"`
-	SetCode         *string       `db:"set_code"         json:"set_code,omitempty"`
 	Condition       *string       `db:"condition"        json:"condition,omitempty"`
-	FoilTreatment   FoilTreatment `db:"foil_treatment"   json:"foil_treatment"`
-	CardTreatment   CardTreatment `db:"card_treatment"   json:"card_treatment"`
+
+	MTGMetadata                   `db:",inline"`
 
 	// Pricing fields
 	PriceReference   *float64 `db:"price_reference"    json:"price_reference,omitempty"`
@@ -69,27 +95,7 @@ type Product struct {
 	Categories      []CustomCategory  `db:"-"                  json:"categories,omitempty"`
 	ImageURL        *string           `db:"image_url"          json:"image_url,omitempty"`
 	Description     *string           `db:"description"        json:"description,omitempty"`
-	CollectorNumber *string           `db:"collector_number"   json:"collector_number,omitempty"`
-	PromoType       *string           `db:"promo_type"         json:"promo_type,omitempty"`
 	
-	// MTG Metadata
-	Language      string   `db:"language"          json:"language"`
-	ColorIdentity *string  `db:"color_identity"   json:"color_identity,omitempty"`
-	Rarity        *string  `db:"rarity"            json:"rarity,omitempty"`
-	CMC           *float64 `db:"cmc"               json:"cmc,omitempty"`
-	IsLegendary  bool     `db:"is_legendary"      json:"is_legendary"`
-	IsHistoric   bool     `db:"is_historic"       json:"is_historic"`
-	IsLand       bool     `db:"is_land"           json:"is_land"`
-	IsBasicLand  bool     `db:"is_basic_land"     json:"is_basic_land"`
-	ArtVariation *string  `db:"art_variation"     json:"art_variation,omitempty"`
-	OracleText   *string  `db:"oracle_text"       json:"oracle_text,omitempty"`
-	Artist       *string  `db:"artist"            json:"artist,omitempty"`
-	TypeLine     *string  `db:"type_line"         json:"type_line,omitempty"`
-	BorderColor  *string  `db:"border_color"      json:"border_color,omitempty"`
-	Frame        *string  `db:"frame"             json:"frame,omitempty"`
-	FullArt      bool     `db:"full_art"          json:"full_art"`
-	Textless     bool     `db:"textless"          json:"textless"`
-
 	CreatedAt       time.Time         `db:"created_at"         json:"created_at"`
 	UpdatedAt       time.Time         `db:"updated_at"         json:"updated_at"`
 
@@ -104,16 +110,12 @@ type DeckCard struct {
 	ID              string        `db:"id"               json:"id"`
 	ProductID       string        `db:"product_id"       json:"product_id"`
 	Name            string        `db:"name"             json:"name"`
-	SetCode         string        `db:"set_code"         json:"set_code,omitempty"`
-	CollectorNumber string        `db:"collector_number" json:"collector_number,omitempty"`
 	Quantity        int           `db:"quantity"         json:"quantity"`
-	TypeLine        string        `db:"type_line"        json:"type_line,omitempty"`
 	ImageURL        string        `db:"image_url"        json:"image_url,omitempty"`
-	FoilTreatment   FoilTreatment `db:"foil_treatment"   json:"foil_treatment"`
-	CardTreatment   CardTreatment `db:"card_treatment"   json:"card_treatment"`
-	Rarity          string        `db:"rarity"           json:"rarity,omitempty"`
-	ArtVariation    string        `db:"art_variation"    json:"art_variation,omitempty"`
+	
+	MTGMetadata                   `db:",inline"`
 }
+
 
 // ComputePrice calculates the COP price for this product given the exchange rates.
 // Priority: price_cop_override > price_reference * rate > 0
@@ -136,11 +138,9 @@ type ProductInput struct {
 	Name            string        `json:"name"`
 	TCG             string        `json:"tcg"`
 	Category        string        `json:"category"`
-	SetName         *string       `json:"set_name,omitempty"`
-	SetCode         *string       `json:"set_code,omitempty"`
 	Condition       *string       `json:"condition,omitempty"`
-	FoilTreatment   FoilTreatment `json:"foil_treatment"`
-	CardTreatment   CardTreatment `json:"card_treatment"`
+
+	MTGMetadata
 
 	// Pricing
 	PriceReference   *float64 `json:"price_reference,omitempty"`
@@ -152,26 +152,6 @@ type ProductInput struct {
 	StorageItems    []StorageLocation `json:"storage_items,omitempty"`
 	ImageURL        *string           `json:"image_url,omitempty"`
 	Description     *string           `json:"description,omitempty"`
-	CollectorNumber *string           `json:"collector_number,omitempty"`
-	PromoType       *string           `json:"promo_type,omitempty"`
-
-	// MTG Metadata
-	Language      string   `json:"language,omitempty"`
-	ColorIdentity *string  `json:"color_identity,omitempty"`
-	Rarity        *string  `json:"rarity,omitempty"`
-	CMC           *float64 `json:"cmc,omitempty"`
-	IsLegendary  bool     `json:"is_legendary"`
-	IsHistoric   bool     `json:"is_historic"`
-	IsLand       bool     `json:"is_land"`
-	IsBasicLand  bool     `json:"is_basic_land"`
-	ArtVariation *string  `json:"art_variation,omitempty"`
-	OracleText   *string  `json:"oracle_text,omitempty"`
-	Artist       *string  `json:"artist,omitempty"`
-	TypeLine     *string  `json:"type_line,omitempty"`
-	BorderColor  *string  `json:"border_color,omitempty"`
-	Frame        *string  `json:"frame,omitempty"`
-	FullArt      bool     `json:"full_art"`
-	Textless     bool     `json:"textless"`
 
 	DeckCards    []DeckCard `json:"deck_cards,omitempty"`
 }

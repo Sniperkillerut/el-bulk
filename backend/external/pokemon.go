@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"os"
 	"time"
+
+	"github.com/el-bulk/backend/models"
 )
 
 var PokemonTCGBase = "https://api.pokemontcg.io/v2"
@@ -103,10 +105,12 @@ func LookupPokemonCard(name, setID string) (*CardLookupResult, error) {
 	}
 
 	return &CardLookupResult{
-		Name:            card.Name,
-		ImageURL:        imageURL,
-		SetName:         card.Set.Name,
-		SetCode:         card.Set.ID,
-		CollectorNumber: card.Number,
+		Name:     card.Name,
+		ImageURL: imageURL,
+		MTGMetadata: models.MTGMetadata{
+			SetName:         &card.Set.Name,
+			SetCode:         &card.Set.ID,
+			CollectorNumber: &card.Number,
+		},
 	}, nil
 }

@@ -50,7 +50,7 @@ func TestLookupMTGCard(t *testing.T) {
 		res, err := LookupMTGCard("Lightning Bolt", "m11", "1", "non_foil")
 		assert.NoError(t, err)
 		assert.Equal(t, "Lightning Bolt", res.Name)
-		assert.Equal(t, "m11", res.SetCode)
+		assert.Equal(t, "m11", *res.SetCode)
 	})
 
 	t.Run("Fuzzy Match", func(t *testing.T) {
