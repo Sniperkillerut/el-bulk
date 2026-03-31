@@ -44,6 +44,27 @@ export default function ProductEditModal({
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
 
+  // Mapping: Product -> ScryfallCard (for instant local pre-population)
+  const productToScryfallCard = (p: Product): ScryfallCard => ({
+    id: p.id,
+    name: p.name,
+    set: p.set_code || '',
+    set_name: p.set_name || '',
+    collector_number: p.collector_number || '',
+    image_uris: p.image_url ? { normal: p.image_url, small: p.image_url } : undefined,
+    type_line: p.type_line || '',
+    oracle_text: p.oracle_text || '',
+    cmc: p.cmc,
+    rarity: p.rarity,
+    color_identity: p.color_identity ? p.color_identity.split(',') : [],
+    full_art: p.full_art,
+    textless: p.textless,
+    artist: p.artist,
+    border_color: p.border_color,
+    frame: p.frame,
+    promo_types: p.promo_type ? p.promo_type.split(',') : []
+  });
+
   // Initialize form from editProduct or defaults
   useEffect(() => {
     if (editProduct) {
@@ -89,6 +110,13 @@ export default function ProductEditModal({
       setProductStorage((editProduct.stored_in || []).map(d => ({
         stored_in_id: d.stored_in_id, name: d.name, quantity: d.quantity
       })));
+      
+      // INSTANT PRE-POPULATION: Use local data to fill Scryfall data sections before fetching
+      if (editProduct.tcg === 'mtg' && editProduct.category === 'singles') {
+        setScryfallPrints([productToScryfallCard(editProduct)]);
+      } else {
+        setScryfallPrints([]);
+      }
     } else {
       setForm({ ...EMPTY_FORM });
       const initialStorage: StorageLocation[] = [];
@@ -97,10 +125,23 @@ export default function ProductEditModal({
         if (loc) initialStorage.push({ stored_in_id: loc.id, name: loc.name, quantity: 0 });
       }
       setProductStorage(initialStorage);
+      setScryfallPrints([]);
     }
     setFormError('');
-    setScryfallPrints([]);
   }, [editProduct, storageFilter, storageLocations]);
+
+  // AUTO-SYNC: Trigger Scryfall fetch in background if metadata is missing or we only have the fake print
+  useEffect(() => {
+    if (editProduct && editProduct.tcg === 'mtg' && editProduct.category === 'singles' && scryfallPrints.length <= 1) {
+      const hasFullMetadata = editProduct.oracle_text && editProduct.image_url && editProduct.type_line;
+      
+      // If metadata is missing OR we only have our faked local print (need full alternatives list), do fetch
+      if (!hasFullMetadata || (scryfallPrints.length === 1 && scryfallPrints[0].id === editProduct.id)) {
+        handlePopulate();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editProduct]);
 
   // Handle automatic tab selection on product switch/load
   useEffect(() => {
