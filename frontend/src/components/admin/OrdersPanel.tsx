@@ -29,7 +29,6 @@ export default function OrdersPanel({ token, initialOrderId }: Props) {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
-      setLoading(true); // Trigger loading here
     }, 300);
     return () => clearTimeout(timer);
   }, [search]);

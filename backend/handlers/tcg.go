@@ -1,6 +1,7 @@
 package handlers
 
 import (
+"github.com/el-bulk/backend/utils/render"
 	"encoding/json"
 	"net/http"
 
@@ -31,25 +32,25 @@ func (h *TCGHandler) List(w http.ResponseWriter, r *http.Request) {
 	`)
 	if err != nil {
 		logger.Error("Error listing TCGs for admin: %v", err)
-		jsonError(w, "Database error", http.StatusInternalServerError)
+		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
 	if tcgs == nil {
 		tcgs = []models.TCG{}
 	}
-	jsonOK(w, tcgs)
+	render.Success(w, tcgs)
 }
 
 // POST /api/admin/tcgs
 func (h *TCGHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var input models.TCGInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		jsonError(w, "Invalid request body", http.StatusBadRequest)
+		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	if input.ID == "" || input.Name == "" {
-		jsonError(w, "ID (slug) and Name are required", http.StatusBadRequest)
+		render.Error(w, "ID (slug) and Name are required", http.StatusBadRequest)
 		return
 	}
 
@@ -62,11 +63,11 @@ func (h *TCGHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		logger.Error("Error creating TCG: %v", err)
-		jsonError(w, "Failed to create TCG (ID may already exist)", http.StatusInternalServerError)
+		render.Error(w, "Failed to create TCG (ID may already exist)", http.StatusInternalServerError)
 		return
 	}
 
-	jsonOK(w, tcg)
+	render.Success(w, tcg)
 }
 
 // PUT /api/admin/tcgs/{id}
@@ -74,7 +75,7 @@ func (h *TCGHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var input models.TCGInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		jsonError(w, "Invalid request body", http.StatusBadRequest)
+		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
@@ -88,11 +89,11 @@ func (h *TCGHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		logger.Error("Error updating TCG %s: %v", id, err)
-		jsonError(w, "TCG not found or update failed", http.StatusNotFound)
+		render.Error(w, "TCG not found or update failed", http.StatusNotFound)
 		return
 	}
 
-	jsonOK(w, tcg)
+	render.Success(w, tcg)
 }
 
 // DELETE /api/admin/tcgs/{id}
@@ -101,7 +102,7 @@ func (h *TCGHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	logger.Info("[TCG_DELETE] 📥 Received DELETE request for ID: %s", id)
 
 	if id == "" {
-		jsonError(w, "ID is required", http.StatusBadRequest)
+		render.Error(w, "ID is required", http.StatusBadRequest)
 		return
 	}
 
@@ -110,27 +111,27 @@ func (h *TCGHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	err := h.DB.Get(&productCount, "SELECT COUNT(*) FROM product WHERE tcg = $1", id)
 	logger.Info("[TCG_DELETE] Checking products for %s: count=%d", id, productCount)
 	if err != nil {
-		jsonError(w, "Database error checking products", http.StatusInternalServerError)
+		render.Error(w, "Database error checking products", http.StatusInternalServerError)
 		return
 	}
 
 	if productCount > 0 {
-		jsonError(w, "Cannot delete TCG with existing products. Delete products first.", http.StatusConflict)
+		render.Error(w, "Cannot delete TCG with existing products. Delete products first.", http.StatusConflict)
 		return
 	}
 
 	result, err := h.DB.Exec("DELETE FROM tcg WHERE id = $1", id)
 	if err != nil {
 		logger.Error("Error deleting TCG %s: %v", id, err)
-		jsonError(w, "Database error", http.StatusInternalServerError)
+		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
 
 	rows, _ := result.RowsAffected()
 	if rows == 0 {
-		jsonError(w, "TCG not found", http.StatusNotFound)
+		render.Error(w, "TCG not found", http.StatusNotFound)
 		return
 	}
 
-	jsonOK(w, map[string]string{"message": "TCG deleted successfully"})
+	render.Success(w, map[string]string{"message": "TCG deleted successfully"})
 }

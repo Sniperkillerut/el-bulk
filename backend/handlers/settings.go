@@ -1,6 +1,7 @@
 package handlers
 
 import (
+"github.com/el-bulk/backend/utils/render"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -102,10 +103,10 @@ func (h *SettingsHandler) Get(w http.ResponseWriter, r *http.Request) {
 	s, err := loadSettings(h.DB)
 	if err != nil {
 		fmt.Printf("Settings error: %v\n", err)
-		jsonError(w, "failed to load settings: "+err.Error(), http.StatusInternalServerError)
+		render.Error(w, "failed to load settings: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	jsonOK(w, s)
+	render.Success(w, s)
 }
 
 // PUT /api/admin/settings
@@ -122,7 +123,7 @@ func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 		ContactHours     *string  `json:"contact_hours"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		jsonError(w, "invalid request body", http.StatusBadRequest)
+		render.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
@@ -133,43 +134,43 @@ func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	if input.USDToCOPRate != nil {
 		if err := upsert("usd_to_cop_rate", strconv.FormatFloat(*input.USDToCOPRate, 'f', 4, 64)); err != nil {
-			jsonError(w, "failed to update USD rate", http.StatusInternalServerError)
+			render.Error(w, "failed to update USD rate", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.EURToCOPRate != nil {
 		if err := upsert("eur_to_cop_rate", strconv.FormatFloat(*input.EURToCOPRate, 'f', 4, 64)); err != nil {
-			jsonError(w, "failed to update EUR rate", http.StatusInternalServerError)
+			render.Error(w, "failed to update EUR rate", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.ContactAddress != nil {
 		if err := upsert("contact_address", *input.ContactAddress); err != nil {
-			jsonError(w, "failed to update contact_address", http.StatusInternalServerError)
+			render.Error(w, "failed to update contact_address", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.ContactPhone != nil {
 		if err := upsert("contact_phone", *input.ContactPhone); err != nil {
-			jsonError(w, "failed to update contact_phone", http.StatusInternalServerError)
+			render.Error(w, "failed to update contact_phone", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.ContactEmail != nil {
 		if err := upsert("contact_email", *input.ContactEmail); err != nil {
-			jsonError(w, "failed to update contact_email", http.StatusInternalServerError)
+			render.Error(w, "failed to update contact_email", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.ContactInstagram != nil {
 		if err := upsert("contact_instagram", *input.ContactInstagram); err != nil {
-			jsonError(w, "failed to update contact_instagram", http.StatusInternalServerError)
+			render.Error(w, "failed to update contact_instagram", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.ContactHours != nil {
 		if err := upsert("contact_hours", *input.ContactHours); err != nil {
-			jsonError(w, "failed to update contact_hours", http.StatusInternalServerError)
+			render.Error(w, "failed to update contact_hours", http.StatusInternalServerError)
 			return
 		}
 	}
@@ -180,7 +181,7 @@ func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 	cacheMutex.Unlock()
 
 	s, _ := loadSettings(h.DB)
-	jsonOK(w, s)
+	render.Success(w, s)
 }
 
 // ResetSettingsCache clears the global settings cache, primarily for testing.

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+"github.com/el-bulk/backend/utils/render"
 	"database/sql"
 	"encoding/json"
 	"net/http"
@@ -45,13 +46,13 @@ func (h *CategoriesHandler) List(w http.ResponseWriter, r *http.Request) {
 	
 	err := h.DB.Select(&categories, query)
 	if err != nil {
-		jsonError(w, "Database error", http.StatusInternalServerError)
+		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
 	if categories == nil {
 		categories = []models.CustomCategory{}
 	}
-	jsonOK(w, categories)
+	render.Success(w, categories)
 }
 
 func generateSlug(name string) string {
@@ -65,11 +66,11 @@ func generateSlug(name string) string {
 func (h *CategoriesHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var input models.CustomCategoryInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		jsonError(w, "Invalid request", http.StatusBadRequest)
+		render.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
 	if input.Name == "" {
-		jsonError(w, "Name is required", http.StatusBadRequest)
+		render.Error(w, "Name is required", http.StatusBadRequest)
 		return
 	}
 
@@ -100,15 +101,15 @@ func (h *CategoriesHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// handle unique constraint violation
 		if strings.Contains(err.Error(), "unique constraint") {
-			jsonError(w, "Category name or slug already exists", http.StatusConflict)
+			render.Error(w, "Category name or slug already exists", http.StatusConflict)
 			return
 		}
-		jsonError(w, "Failed to create category", http.StatusInternalServerError)
+		render.Error(w, "Failed to create category", http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	jsonOK(w, cat)
+	render.Success(w, cat)
 }
 
 // PUT /api/admin/categories/:id
@@ -116,7 +117,7 @@ func (h *CategoriesHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var input models.CustomCategoryInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		jsonError(w, "Invalid input", http.StatusBadRequest)
+		render.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
 
@@ -155,18 +156,18 @@ func (h *CategoriesHandler) Update(w http.ResponseWriter, r *http.Request) {
 	err := h.DB.QueryRowx(query, args...).StructScan(&cat)
 
 	if err == sql.ErrNoRows {
-		jsonError(w, "Category not found", http.StatusNotFound)
+		render.Error(w, "Category not found", http.StatusNotFound)
 		return
 	} else if err != nil {
 		if strings.Contains(err.Error(), "unique constraint") {
-			jsonError(w, "Category name or slug already exists", http.StatusConflict)
+			render.Error(w, "Category name or slug already exists", http.StatusConflict)
 			return
 		}
-		jsonError(w, "Database error", http.StatusInternalServerError)
+		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
 
-	jsonOK(w, cat)
+	render.Success(w, cat)
 }
 
 // DELETE /api/admin/categories/:id
@@ -174,14 +175,14 @@ func (h *CategoriesHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	res, err := h.DB.Exec("DELETE FROM custom_category WHERE id = $1", id)
 	if err != nil {
-		jsonError(w, "Database error", http.StatusInternalServerError)
+		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
 	rows, _ := res.RowsAffected()
 	if rows == 0 {
-		jsonError(w, "Category not found", http.StatusNotFound)
+		render.Error(w, "Category not found", http.StatusNotFound)
 		return
 	}
 
-	jsonOK(w, map[string]string{"message": "Category deleted"})
+	render.Success(w, map[string]string{"message": "Category deleted"})
 }

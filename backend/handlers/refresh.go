@@ -1,10 +1,8 @@
 package handlers
 
 import (
-	"encoding/json"
-	"fmt"
+"github.com/el-bulk/backend/utils/render"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -20,155 +18,6 @@ type RefreshHandler struct {
 
 func NewRefreshHandler(db *sqlx.DB) *RefreshHandler {
 	return &RefreshHandler{DB: db}
-}
-
-// ─── Scryfall bulk data structures ──────────────────────────────────────────
-
-// scryfallBulkMeta is the top-level response from GET /bulk-data.
-type scryfallBulkMeta struct {
-	Data []struct {
-		Type        string `json:"type"`
-		DownloadURI string `json:"download_uri"`
-		UpdatedAt   string `json:"updated_at"`
-	} `json:"data"`
-}
-
-// scryfallBulkCard is the price-relevant subset of each card in the bulk file.
-type scryfallBulkCard struct {
-	Name   string `json:"name"`
-	Set    string `json:"set"`    // set code, e.g. "m11"
-	Prices struct {
-		USD       *string `json:"usd"`
-		USDFoil   *string `json:"usd_foil"`
-		USDEtched *string `json:"usd_etched"`
-		EUR       *string `json:"eur"`
-		EURFoil   *string `json:"eur_foil"`
-	} `json:"prices"`
-}
-
-// priceKey uniquely identifies a card+foil combination for the in-memory map.
-type priceKey struct {
-	name    string // lowercase
-	setCode string // lowercase; empty = any set
-	foil    string // foil_treatment value
-}
-
-// cardPrices holds extracted USD/EUR prices for one priceKey.
-type cardPrices struct {
-	tcgPlayerUSD *float64
-	cardmarketEUR *float64
-}
-
-func parseF(s *string) *float64 {
-	if s == nil || *s == "" {
-		return nil
-	}
-	v, err := strconv.ParseFloat(*s, 64)
-	if err != nil {
-		return nil
-	}
-	return &v
-}
-
-// ─── Bulk download + price map ───────────────────────────────────────────────
-
-// buildScryfallPriceMap downloads Scryfall's "default_cards" bulk file and
-// builds a lookup map keyed by (name, setCode, foilTreatment).
-// The download is streamed so memory usage stays bounded.
-func buildScryfallPriceMap() (map[priceKey]cardPrices, error) {
-	client := &http.Client{Timeout: 5 * time.Minute} // bulk file can be 600MB
-
-	// Step 1: discover today's bulk-data download URL
-	metaReq, _ := http.NewRequest(http.MethodGet, external.ScryfallBase+"/bulk-data", nil)
-	metaReq.Header.Set("User-Agent", "ElBulkTCGStore/1.0 (contact@elbulk.com)")
-	metaReq.Header.Set("Accept", "application/json")
-
-	metaResp, err := client.Do(metaReq)
-	if err != nil {
-		return nil, fmt.Errorf("fetching bulk-data index: %w", err)
-	}
-	defer metaResp.Body.Close()
-
-	var meta scryfallBulkMeta
-	if err := json.NewDecoder(metaResp.Body).Decode(&meta); err != nil {
-		return nil, fmt.Errorf("decoding bulk-data index: %w", err)
-	}
-
-	downloadURL := ""
-	for _, item := range meta.Data {
-		if item.Type == "default_cards" {
-			downloadURL = item.DownloadURI
-			break
-		}
-	}
-	if downloadURL == "" {
-		return nil, fmt.Errorf("default_cards bulk file not found in scryfall response")
-	}
-
-	logger.Info("[price-refresh] downloading scryfall bulk data from %s", downloadURL)
-
-	// Step 2: stream the bulk card JSON array
-	dlReq, _ := http.NewRequest(http.MethodGet, downloadURL, nil)
-	dlReq.Header.Set("User-Agent", "ElBulkTCGStore/1.0 (contact@elbulk.com)")
-
-	dlResp, err := client.Do(dlReq)
-	if err != nil {
-		return nil, fmt.Errorf("downloading bulk data: %w", err)
-	}
-	defer dlResp.Body.Close()
-
-	// Step 3: stream-decode the JSON array without loading 600MB into memory at once
-	priceMap := make(map[priceKey]cardPrices, 300_000)
-	decoder := json.NewDecoder(dlResp.Body)
-
-	// Read opening '['
-	if _, err := decoder.Token(); err != nil {
-		return nil, fmt.Errorf("reading bulk JSON opening token: %w", err)
-	}
-
-	cardCount := 0
-	for decoder.More() {
-		var card scryfallBulkCard
-		if err := decoder.Decode(&card); err != nil {
-			// Skip malformed cards rather than failing the whole run
-			continue
-		}
-		cardCount++
-
-		name := strings.ToLower(card.Name)
-		set := strings.ToLower(card.Set)
-
-		// Register entries for each foil variant this print has prices for
-		variants := []struct {
-			foil string
-			usd  *string
-			eur  *string
-		}{
-			{"non_foil", card.Prices.USD, card.Prices.EUR},
-			{"foil", card.Prices.USDFoil, card.Prices.EURFoil},
-			{"holo_foil", card.Prices.USDFoil, card.Prices.EURFoil},
-			{"ripple_foil", card.Prices.USDFoil, card.Prices.EURFoil},
-			{"galaxy_foil", card.Prices.USDFoil, card.Prices.EURFoil},
-			{"platinum_foil", card.Prices.USDFoil, card.Prices.EURFoil},
-			{"etched_foil", card.Prices.USDEtched, card.Prices.EURFoil},
-		}
-
-		for _, v := range variants {
-			tcg := parseF(v.usd)
-			cm := parseF(v.eur)
-			if tcg == nil && cm == nil {
-				continue
-			}
-			// Index by specific set
-			priceMap[priceKey{name: name, setCode: set, foil: v.foil}] = cardPrices{tcgPlayerUSD: tcg, cardmarketEUR: cm}
-			// Also index by name+foil only (no set), so products missing set_code still match;
-			// later entries overwrite earlier ones which is fine (any printing is better than none)
-			priceMap[priceKey{name: name, setCode: "", foil: v.foil}] = cardPrices{tcgPlayerUSD: tcg, cardmarketEUR: cm}
-		}
-	}
-
-	logger.Info("[price-refresh] bulk data loaded: %d card printings indexed", cardCount)
-	return priceMap, nil
 }
 
 // ─── Refresh logic ───────────────────────────────────────────────────────────
@@ -209,10 +58,10 @@ func RunPriceRefresh(db *sqlx.DB) (updated int, errs int) {
 		}
 	}
 
-	var priceMap map[priceKey]cardPrices
+	var priceMap map[external.PriceKey]external.CardPrices
 	if len(mtgRows) > 0 {
 		var err error
-		priceMap, err = buildScryfallPriceMap()
+		priceMap, err = external.BuildPriceMap()
 		if err != nil {
 			logger.Error("[price-refresh] scryfall bulk download failed: %v", err)
 			return 0, len(mtgRows)
@@ -228,9 +77,9 @@ func RunPriceRefresh(db *sqlx.DB) (updated int, errs int) {
 		name := strings.ToLower(p.Name)
 
 		// Try specific set first, fall back to any set
-		prices, ok := priceMap[priceKey{name: name, setCode: setCode, foil: foil}]
+		prices, ok := priceMap[external.PriceKey{Name: name, SetCode: setCode, Foil: foil}]
 		if !ok {
-			prices, ok = priceMap[priceKey{name: name, setCode: "", foil: foil}]
+			prices, ok = priceMap[external.PriceKey{Name: name, SetCode: "", Foil: foil}]
 		}
 		if !ok {
 			logger.Warn("[price-refresh] no price found for %q set=%s foil=%s", p.Name, setCode, foil)
@@ -242,10 +91,10 @@ func RunPriceRefresh(db *sqlx.DB) (updated int, errs int) {
 		switch p.PriceSource {
 		case "tcgplayer":
 			// We use TCGplayer Market Price (standard Scryfall 'usd' fields)
-			refPrice = prices.tcgPlayerUSD
+			refPrice = prices.TCGPlayerUSD
 		case "cardmarket":
 			// Scryfall's 'eur' already encapsulates Trend -> 1d -> 7d -> Avg fallback
-			refPrice = prices.cardmarketEUR
+			refPrice = prices.CardmarketEUR
 		}
 
 		if refPrice == nil {
@@ -269,7 +118,7 @@ func RunPriceRefresh(db *sqlx.DB) (updated int, errs int) {
 // POST /api/admin/prices/refresh
 func (h *RefreshHandler) Trigger(w http.ResponseWriter, r *http.Request) {
 	updated, errs := RunPriceRefresh(h.DB)
-	jsonOK(w, map[string]int{"updated": updated, "errors": errs})
+	render.Success(w, map[string]int{"updated": updated, "errors": errs})
 }
 
 // StartMidnightScheduler launches a goroutine that runs RunPriceRefresh

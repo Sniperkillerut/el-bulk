@@ -1,11 +1,11 @@
 package handlers
 
 import (
+"github.com/el-bulk/backend/utils/render"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -14,7 +14,9 @@ import (
 
 	"github.com/el-bulk/backend/middleware"
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/utils/httputil"
 	"github.com/el-bulk/backend/utils/logger"
+	"github.com/el-bulk/backend/utils/sqlutil"
 )
 
 type OrderHandler struct {
@@ -37,17 +39,17 @@ func generateOrderNumber() string {
 func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var input models.CreateOrderInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		jsonError(w, "Invalid request body", http.StatusBadRequest)
+		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	// Validate required fields
 	if input.FirstName == "" || input.Phone == "" || input.PaymentMethod == "" {
-		jsonError(w, "first_name, phone, and payment_method are required", http.StatusBadRequest)
+		render.Error(w, "first_name, phone, and payment_method are required", http.StatusBadRequest)
 		return
 	}
 	if len(input.Items) == 0 {
-		jsonError(w, "At least one item is required", http.StatusBadRequest)
+		render.Error(w, "At least one item is required", http.StatusBadRequest)
 		return
 	}
 
@@ -66,19 +68,19 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(productIDs) == 0 {
-		jsonError(w, "No valid items selected", http.StatusBadRequest)
+		render.Error(w, "No valid items selected", http.StatusBadRequest)
 		return
 	}
 
 	productMap := make(map[string]models.Product)
 	query, args, err := sqlx.In(`SELECT * FROM product WHERE id IN (?)`, productIDs)
 	if err != nil {
-		jsonError(w, "Internal query error", http.StatusInternalServerError)
+		render.Error(w, "Internal query error", http.StatusInternalServerError)
 		return
 	}
 	var products []models.Product
 	if err := h.DB.Select(&products, h.DB.Rebind(query), args...); err != nil {
-		jsonError(w, "Failed to fetch products", http.StatusInternalServerError)
+		render.Error(w, "Failed to fetch products", http.StatusInternalServerError)
 		return
 	}
 	for _, p := range products {
@@ -162,12 +164,12 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		logger.Error("Place order SP failed: %v", err)
-		jsonError(w, "Failed to place order: "+err.Error(), http.StatusInternalServerError)
+		render.Error(w, "Failed to place order: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	jsonOK(w, map[string]interface{}{
+	render.Success(w, map[string]interface{}{
 		"order_number": result.OrderNumber,
 		"order_id":     result.OrderID,
 		"total_cop":    totalCOP,
@@ -181,65 +183,48 @@ func (h *OrderHandler) List(w http.ResponseWriter, r *http.Request) {
 	status := q.Get("status")
 	search := q.Get("search")
 
-	page, _ := strconv.Atoi(q.Get("page"))
-	if page < 1 {
-		page = 1
-	}
-	pageSize, _ := strconv.Atoi(q.Get("page_size"))
-	if pageSize < 1 || pageSize > 100 {
-		pageSize = 20
-	}
-	offset := (page - 1) * pageSize
+	page, pageSize, offset := httputil.GetPagination(r, 20, 100)
 
-	var conditions []string
-	var args []interface{}
-	idx := 1
-
+	builder := sqlutil.NewBuilder("FROM view_order_list o")
 	if status != "" {
-		conditions = append(conditions, "o.status = $"+strconv.Itoa(idx))
-		args = append(args, status)
-		idx++
+		builder.AddCondition("o.status = ?", status)
 	}
 	if search != "" {
-		conditions = append(conditions, "(o.order_number ILIKE $"+strconv.Itoa(idx)+" OR o.customer_name ILIKE $"+strconv.Itoa(idx)+" OR o.customer_phone ILIKE $"+strconv.Itoa(idx)+" OR o.customer_email ILIKE $"+strconv.Itoa(idx)+")")
-		args = append(args, "%"+search+"%")
-		idx++
+		sPattern := "%" + search + "%"
+		builder.AddCondition("(o.order_number ILIKE ? OR o.customer_name ILIKE ? OR o.customer_phone ILIKE ? OR o.customer_email ILIKE ?)", sPattern)
 	}
 
-	where := ""
-	if len(conditions) > 0 {
-		where = "WHERE " + strings.Join(conditions, " AND ")
-	}
+	whereClause, args := builder.Build()
 
-	// Count using the view for consistency
+	// Count using the view
 	var total int
-	countQ := `SELECT COUNT(*) FROM view_order_list o ` + where
+	countQ := `SELECT COUNT(*) ` + whereClause
 	if err := h.DB.Get(&total, countQ, args...); err != nil {
 		logger.Error("Order count error: %v", err)
-		jsonError(w, "Database error", http.StatusInternalServerError)
+		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
 
 	// Fetch
 	listQ := fmt.Sprintf(`
-		SELECT * FROM view_order_list o
+		SELECT * 
 		%s
 		ORDER BY o.created_at DESC
 		LIMIT $%d OFFSET $%d
-	`, where, idx, idx+1)
+	`, whereClause, len(args)+1, len(args)+2)
 	args = append(args, pageSize, offset)
 
 	var orders []models.OrderWithCustomer
 	if err := h.DB.Select(&orders, listQ, args...); err != nil {
 		logger.Error("Order list error: %v", err)
-		jsonError(w, "Database error", http.StatusInternalServerError)
+		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
 	if orders == nil {
 		orders = []models.OrderWithCustomer{}
 	}
 
-	jsonOK(w, models.OrderListResponse{
+	render.Success(w, models.OrderListResponse{
 		Orders:   orders,
 		Total:    total,
 		Page:     page,
@@ -255,9 +240,9 @@ func (h *OrderHandler) GetDetail(w http.ResponseWriter, r *http.Request) {
 	var order models.Order
 	if err := h.DB.Get(&order, `SELECT * FROM "order" WHERE id = $1`, id); err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			jsonError(w, "Order not found", http.StatusNotFound)
+			render.Error(w, "Order not found", http.StatusNotFound)
 		} else {
-			jsonError(w, "Database error", http.StatusInternalServerError)
+			render.Error(w, "Database error", http.StatusInternalServerError)
 		}
 		return
 	}
@@ -265,7 +250,7 @@ func (h *OrderHandler) GetDetail(w http.ResponseWriter, r *http.Request) {
 	// Fetch customer
 	var customer models.Customer
 	if err := h.DB.Get(&customer, `SELECT * FROM customer WHERE id = $1`, order.CustomerID); err != nil {
-		jsonError(w, "Customer not found", http.StatusInternalServerError)
+		render.Error(w, "Customer not found", http.StatusInternalServerError)
 		return
 	}
 
@@ -278,7 +263,7 @@ func (h *OrderHandler) GetDetail(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := h.DB.Select(&rows, `SELECT * FROM view_order_item_enriched WHERE order_id = $1 ORDER BY product_name`, id); err != nil {
 		logger.Error("Error loading order items for %s: %v", id, err)
-		jsonError(w, "Failed to load order items", http.StatusInternalServerError)
+		render.Error(w, "Failed to load order items", http.StatusInternalServerError)
 		return
 	}
 
@@ -296,7 +281,7 @@ func (h *OrderHandler) GetDetail(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	jsonOK(w, models.OrderDetail{
+	render.Success(w, models.OrderDetail{
 		Order:    order,
 		Customer: customer,
 		Items:    detailItems,
@@ -315,13 +300,13 @@ func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 		} `json:"items"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		jsonError(w, "Invalid request body", http.StatusBadRequest)
+		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	tx, err := h.DB.Beginx()
 	if err != nil {
-		jsonError(w, "Database error", http.StatusInternalServerError)
+		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
 	defer tx.Rollback()
@@ -330,7 +315,7 @@ func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if input.Status != nil {
 		_, err = tx.Exec(`UPDATE "order" SET status = $1 WHERE id = $2`, *input.Status, id)
 		if err != nil {
-			jsonError(w, "Failed to update order status: "+err.Error(), http.StatusInternalServerError)
+			render.Error(w, "Failed to update order status: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 	}
@@ -345,14 +330,14 @@ func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 		var stock int
 		err = tx.Get(&stock, `SELECT p.stock FROM product p JOIN order_item oi ON p.id = oi.product_id WHERE oi.id = $1`, item.ID)
 		if err == nil && item.Quantity > stock {
-			jsonError(w, fmt.Sprintf("Quantity %d exceeds available stock %d", item.Quantity, stock), http.StatusBadRequest)
+			render.Error(w, fmt.Sprintf("Quantity %d exceeds available stock %d", item.Quantity, stock), http.StatusBadRequest)
 			return
 		}
 
 		_, err = tx.Exec(`UPDATE order_item SET quantity = $1 WHERE id = $2 AND order_id = $3`,
 			item.Quantity, item.ID, id)
 		if err != nil {
-			jsonError(w, "Failed to update item quantity", http.StatusInternalServerError)
+			render.Error(w, "Failed to update item quantity", http.StatusInternalServerError)
 			return
 		}
 	}
@@ -365,7 +350,7 @@ func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := tx.Commit(); err != nil {
-		jsonError(w, "Failed to save changes", http.StatusInternalServerError)
+		render.Error(w, "Failed to save changes", http.StatusInternalServerError)
 		return
 	}
 
@@ -378,14 +363,14 @@ func (h *OrderHandler) Complete(w http.ResponseWriter, r *http.Request) {
 
 	var input models.CompleteOrderInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		jsonError(w, "Invalid request body", http.StatusBadRequest)
+		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	// Prepare decrements for SP
 	jsonData, err := json.Marshal(input.Decrements)
 	if err != nil {
-		jsonError(w, "Failed to encode decrements", http.StatusInternalServerError)
+		render.Error(w, "Failed to encode decrements", http.StatusInternalServerError)
 		return
 	}
 
@@ -402,13 +387,9 @@ func (h *OrderHandler) Complete(w http.ResponseWriter, r *http.Request) {
 			status = http.StatusBadRequest
 			errMsg = "Order is already completed"
 		}
-		// Assuming utils.ErrorResponse is a helper function similar to jsonError
-		// If not, replace with jsonError(w, errMsg, status)
-		jsonError(w, errMsg, status)
+		render.Error(w, errMsg, status)
 		return
 	}
 
 	h.GetDetail(w, r)
 }
-
-// Helpers

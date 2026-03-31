@@ -1,6 +1,7 @@
 package handlers
 
 import (
+"github.com/el-bulk/backend/utils/render"
 	"encoding/json"
 	"net/http"
 
@@ -22,21 +23,21 @@ func (h *LookupHandler) MTG(w http.ResponseWriter, r *http.Request) {
 	cn := r.URL.Query().Get("cn")
 
 	if name == "" {
-		jsonError(w, "query param 'name' is required", http.StatusBadRequest)
+		render.Error(w, "query param 'name' is required", http.StatusBadRequest)
 		return
 	}
 
 	result, err := external.LookupMTGCard(name, setCode, cn, foil)
 	if err != nil {
 		if err.Error() == "card not found" {
-			jsonError(w, "card not found", http.StatusNotFound)
+			render.Error(w, "card not found", http.StatusNotFound)
 			return
 		}
-		jsonError(w, "scryfall lookup failed: "+err.Error(), http.StatusBadGateway)
+		render.Error(w, "scryfall lookup failed: "+err.Error(), http.StatusBadGateway)
 		return
 	}
 
-	jsonOK(w, result)
+	render.Success(w, result)
 }
 
 // POST /api/admin/lookup/mtg/batch
@@ -45,17 +46,17 @@ func (h *LookupHandler) BatchMTG(w http.ResponseWriter, r *http.Request) {
 		Identifiers []external.CardIdentifier `json:"identifiers"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		jsonError(w, "invalid request body", http.StatusBadRequest)
+		render.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	results, err := external.BatchLookupMTGCard(input.Identifiers)
 	if err != nil {
-		jsonError(w, "scryfall batch lookup failed: "+err.Error(), http.StatusBadGateway)
+		render.Error(w, "scryfall batch lookup failed: "+err.Error(), http.StatusBadGateway)
 		return
 	}
 
-	jsonOK(w, results)
+	render.Success(w, results)
 }
 
 
@@ -65,19 +66,19 @@ func (h *LookupHandler) Pokemon(w http.ResponseWriter, r *http.Request) {
 	setID := r.URL.Query().Get("set")
 
 	if name == "" {
-		jsonError(w, "query param 'name' is required", http.StatusBadRequest)
+		render.Error(w, "query param 'name' is required", http.StatusBadRequest)
 		return
 	}
 
 	result, err := external.LookupPokemonCard(name, setID)
 	if err != nil {
 		if err.Error() == "card not found" {
-			jsonError(w, "card not found", http.StatusNotFound)
+			render.Error(w, "card not found", http.StatusNotFound)
 			return
 		}
-		jsonError(w, "pokémon TCG API lookup failed: "+err.Error(), http.StatusBadGateway)
+		render.Error(w, "pokémon TCG API lookup failed: "+err.Error(), http.StatusBadGateway)
 		return
 	}
 
-	jsonOK(w, result)
+	render.Success(w, result)
 }

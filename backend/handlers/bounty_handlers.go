@@ -1,6 +1,7 @@
 package handlers
 
 import (
+"github.com/el-bulk/backend/utils/render"
 	"database/sql"
 	"encoding/json"
 	"net/http"
@@ -35,7 +36,7 @@ func (h *BountyHandler) List(w http.ResponseWriter, r *http.Request) {
 	err := h.DB.Select(&bounties, query, activeParam)
 	if err != nil {
 		logger.Error("Failed to list bounties: %v", err)
-		jsonError(w, "Failed to fetch bounties", http.StatusInternalServerError)
+		render.Error(w, "Failed to fetch bounties", http.StatusInternalServerError)
 		return
 	}
 	// Default to empty array instead of null
@@ -43,18 +44,18 @@ func (h *BountyHandler) List(w http.ResponseWriter, r *http.Request) {
 		bounties = []models.Bounty{}
 	}
 
-	jsonOK(w, bounties)
+	render.Success(w, bounties)
 }
 
 func (h *BountyHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var input models.BountyInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		jsonError(w, "Invalid request body", http.StatusBadRequest)
+		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	if input.Name == "" || input.TCG == "" {
-		jsonError(w, "name and tcg are required", http.StatusBadRequest)
+		render.Error(w, "name and tcg are required", http.StatusBadRequest)
 		return
 	}
 
@@ -78,19 +79,19 @@ func (h *BountyHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		logger.Error("Failed to create bounty: %v", err)
-		jsonError(w, "Failed to create bounty", http.StatusInternalServerError)
+		render.Error(w, "Failed to create bounty", http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	jsonOK(w, bounty)
+	render.Success(w, bounty)
 }
 
 func (h *BountyHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var input models.BountyInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		jsonError(w, "Invalid request body", http.StatusBadRequest)
+		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
@@ -118,15 +119,15 @@ func (h *BountyHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			jsonError(w, "Bounty not found", http.StatusNotFound)
+			render.Error(w, "Bounty not found", http.StatusNotFound)
 			return
 		}
 		logger.Error("Failed to update bounty: %v", err)
-		jsonError(w, "Failed to update bounty", http.StatusInternalServerError)
+		render.Error(w, "Failed to update bounty", http.StatusInternalServerError)
 		return
 	}
 
-	jsonOK(w, bounty)
+	render.Success(w, bounty)
 }
 
 func (h *BountyHandler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -134,13 +135,13 @@ func (h *BountyHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	res, err := h.DB.Exec(`DELETE FROM bounty WHERE id = $1`, id)
 	if err != nil {
 		logger.Error("Failed to delete bounty: %v", err)
-		jsonError(w, "Failed to delete bounty", http.StatusInternalServerError)
+		render.Error(w, "Failed to delete bounty", http.StatusInternalServerError)
 		return
 	}
 
 	count, _ := res.RowsAffected()
 	if count == 0 {
-		jsonError(w, "Bounty not found", http.StatusNotFound)
+		render.Error(w, "Bounty not found", http.StatusNotFound)
 		return
 	}
 
@@ -165,25 +166,25 @@ func (h *BountyHandler) ListOffers(w http.ResponseWriter, r *http.Request) {
 	err := h.DB.Select(&offers, query)
 	if err != nil {
 		logger.Error("Failed to list bounty offers: %v", err)
-		jsonError(w, "Failed to fetch bounty offers", http.StatusInternalServerError)
+		render.Error(w, "Failed to fetch bounty offers", http.StatusInternalServerError)
 		return
 	}
 	if offers == nil {
 		offers = []models.BountyOffer{}
 	}
 
-	jsonOK(w, offers)
+	render.Success(w, offers)
 }
 
 func (h *BountyHandler) SubmitOffer(w http.ResponseWriter, r *http.Request) {
 	var input models.BountyOfferInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		jsonError(w, "Invalid request body", http.StatusBadRequest)
+		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	if input.BountyID == "" || input.CustomerName == "" || input.CustomerContact == "" {
-		jsonError(w, "BountyID, customer_name, and customer_contact are required", http.StatusBadRequest)
+		render.Error(w, "BountyID, customer_name, and customer_contact are required", http.StatusBadRequest)
 		return
 	}
 
@@ -197,26 +198,26 @@ func (h *BountyHandler) SubmitOffer(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		logger.Error("Failed to call fn_submit_bounty_offer: %v", err)
-		jsonError(w, "Failed to submit offer", http.StatusInternalServerError)
+		render.Error(w, "Failed to submit offer", http.StatusInternalServerError)
 		return
 	}
 
 	var offer models.BountyOffer
 	if err := json.Unmarshal(result, &offer); err != nil {
 		logger.Error("Failed to unmarshal bounty offer: %v", err)
-		jsonError(w, "Internal server error", http.StatusInternalServerError)
+		render.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	jsonOK(w, offer)
+	render.Success(w, offer)
 }
 
 func (h *BountyHandler) UpdateOfferStatus(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var input models.UpdateBountyOfferStatusInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		jsonError(w, "Invalid request body", http.StatusBadRequest)
+		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
@@ -228,7 +229,7 @@ func (h *BountyHandler) UpdateOfferStatus(w http.ResponseWriter, r *http.Request
 	_, err := h.DB.Exec(query, input.Status, id)
 	if err != nil {
 		logger.Error("Failed to update offer status: %v", err)
-		jsonError(w, "Failed to update offer status", http.StatusInternalServerError)
+		render.Error(w, "Failed to update offer status", http.StatusInternalServerError)
 		return
 	}
 
@@ -248,11 +249,11 @@ func (h *BountyHandler) UpdateOfferStatus(w http.ResponseWriter, r *http.Request
 
 	if err != nil {
 		logger.Error("Failed to fetch updated offer: %v", err)
-		jsonError(w, "Failed to fetch updated offer", http.StatusInternalServerError)
+		render.Error(w, "Failed to fetch updated offer", http.StatusInternalServerError)
 		return
 	}
 
-	jsonOK(w, offer)
+	render.Success(w, offer)
 }
 
 // === CLIENT REQUESTS ===
@@ -267,7 +268,7 @@ func (h *BountyHandler) ListRequests(w http.ResponseWriter, r *http.Request) {
 	err := h.DB.Select(&requests, query)
 	if err != nil {
 		logger.Error("Failed to list client requests: %v", err)
-		jsonError(w, "Failed to fetch client requests", http.StatusInternalServerError)
+		render.Error(w, "Failed to fetch client requests", http.StatusInternalServerError)
 		return
 	}
 
@@ -275,18 +276,18 @@ func (h *BountyHandler) ListRequests(w http.ResponseWriter, r *http.Request) {
 		requests = []models.ClientRequest{}
 	}
 
-	jsonOK(w, requests)
+	render.Success(w, requests)
 }
 
 func (h *BountyHandler) CreateRequest(w http.ResponseWriter, r *http.Request) {
 	var input models.ClientRequestInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		jsonError(w, "Invalid request body", http.StatusBadRequest)
+		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	if input.CustomerName == "" || input.CustomerContact == "" || input.CardName == "" {
-		jsonError(w, "customer_name, customer_contact, and card_name are required", http.StatusBadRequest)
+		render.Error(w, "customer_name, customer_contact, and card_name are required", http.StatusBadRequest)
 		return
 	}
 
@@ -296,26 +297,26 @@ func (h *BountyHandler) CreateRequest(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		logger.Error("Failed to call fn_submit_client_request: %v", err)
-		jsonError(w, "Failed to submit request", http.StatusInternalServerError)
+		render.Error(w, "Failed to submit request", http.StatusInternalServerError)
 		return
 	}
 
 	var req models.ClientRequest
 	if err := json.Unmarshal(result, &req); err != nil {
 		logger.Error("Failed to unmarshal client request: %v", err)
-		jsonError(w, "Internal server error", http.StatusInternalServerError)
+		render.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	jsonOK(w, req)
+	render.Success(w, req)
 }
 
 func (h *BountyHandler) UpdateRequestStatus(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var input models.UpdateClientRequestStatusInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		jsonError(w, "Invalid request body", http.StatusBadRequest)
+		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
@@ -330,13 +331,13 @@ func (h *BountyHandler) UpdateRequestStatus(w http.ResponseWriter, r *http.Reque
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			jsonError(w, "Request not found", http.StatusNotFound)
+			render.Error(w, "Request not found", http.StatusNotFound)
 			return
 		}
 		logger.Error("Failed to update client request status: %v", err)
-		jsonError(w, "Failed to update request status", http.StatusInternalServerError)
+		render.Error(w, "Failed to update request status", http.StatusInternalServerError)
 		return
 	}
 
-	jsonOK(w, req)
+	render.Success(w, req)
 }

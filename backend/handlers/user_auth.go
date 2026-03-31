@@ -1,6 +1,7 @@
 package handlers
 
 import (
+"github.com/el-bulk/backend/utils/render"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -161,18 +162,18 @@ func (h *UserAuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request)
 func (h *UserAuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok || userID == "" {
-		jsonError(w, "Not logged in", http.StatusUnauthorized)
+		render.Error(w, "Not logged in", http.StatusUnauthorized)
 		return
 	}
 
 	var customer models.Customer
 	err := h.DB.Get(&customer, "SELECT * FROM customer WHERE id = $1", userID)
 	if err != nil {
-		jsonError(w, "User not found", http.StatusNotFound)
+		render.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
 
-	jsonOK(w, customer)
+	render.Success(w, customer)
 }
 
 // POST /api/auth/logout
@@ -186,5 +187,5 @@ func (h *UserAuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 	})
-	jsonOK(w, map[string]string{"message": "Logged out"})
+	render.Success(w, map[string]string{"message": "Logged out"})
 }

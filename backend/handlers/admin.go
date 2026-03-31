@@ -1,6 +1,7 @@
 package handlers
 
 import (
+"github.com/el-bulk/backend/utils/render"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -25,25 +26,25 @@ func NewAdminHandler(db *sqlx.DB) *AdminHandler {
 func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req models.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		jsonError(w, "Invalid request body", http.StatusBadRequest)
+		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	var admin models.Admin
 	err := h.DB.Get(&admin, "SELECT * FROM admin WHERE username = $1", req.Username)
 	if err != nil {
-		jsonError(w, "Invalid credentials", http.StatusUnauthorized)
+		render.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(admin.PasswordHash), []byte(req.Password)); err != nil {
-		jsonError(w, "Invalid credentials", http.StatusUnauthorized)
+		render.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
 
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
-		jsonError(w, "internal server error", http.StatusInternalServerError)
+		render.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -56,7 +57,7 @@ func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signed, err := token.SignedString([]byte(secret))
 	if err != nil {
-		jsonError(w, "Failed to generate token", http.StatusInternalServerError)
+		render.Error(w, "Failed to generate token", http.StatusInternalServerError)
 		return
 	}
 
@@ -70,5 +71,5 @@ func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 	})
 
-	jsonOK(w, models.LoginResponse{Token: signed})
+	render.Success(w, models.LoginResponse{Token: signed})
 }
