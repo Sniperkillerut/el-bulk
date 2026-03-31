@@ -420,7 +420,8 @@ type ClientRequestInput struct {
 
 type BountyOfferInput struct {
 	BountyID        string  `json:"bounty_id"`
-	CustomerID      string  `json:"customer_id"`
+	CustomerName    string  `json:"customer_name"`
+	CustomerContact string  `json:"customer_contact"`
 	Quantity        int     `json:"quantity"`
 	Condition       *string `json:"condition,omitempty"`
 	Notes           *string `json:"notes,omitempty"`

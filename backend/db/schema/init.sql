@@ -33,6 +33,9 @@
 \i functions/fn_place_order.sql
 \i functions/fn_complete_order.sql
 \i functions/fn_fulfill_bounty_offer.sql
+\i functions/fn_get_product_facets.sql
+\i functions/fn_submit_client_request.sql
+\i functions/fn_submit_bounty_offer.sql
 
 -- 5. Views
 \i views/view_product_enriched.sql

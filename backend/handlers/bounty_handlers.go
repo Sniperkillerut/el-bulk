@@ -182,8 +182,8 @@ func (h *BountyHandler) SubmitOffer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if input.BountyID == "" || input.CustomerID == "" {
-		jsonError(w, "BountyID and CustomerID are required", http.StatusBadRequest)
+	if input.BountyID == "" || input.CustomerName == "" || input.CustomerContact == "" {
+		jsonError(w, "BountyID, customer_name, and customer_contact are required", http.StatusBadRequest)
 		return
 	}
 
@@ -191,24 +191,20 @@ func (h *BountyHandler) SubmitOffer(w http.ResponseWriter, r *http.Request) {
 		input.Quantity = 1
 	}
 
-	query := `
-		INSERT INTO bounty_offer (bounty_id, customer_id, quantity, condition, notes, admin_notes, status)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING id, bounty_id, customer_id, quantity, condition, status, notes, admin_notes, created_at, updated_at
-	`
-	var offer models.BountyOffer
-	status := "pending"
-	if input.Status != nil {
-		status = *input.Status
-	}
-
-	err := h.DB.QueryRowx(query,
-		input.BountyID, input.CustomerID, input.Quantity, input.Condition, input.Notes, input.AdminNotes, status,
-	).StructScan(&offer)
+	var result []byte
+	err := h.DB.Get(&result, "SELECT fn_submit_bounty_offer($1, $2, $3, $4, $5, $6, $7)",
+		input.BountyID, input.CustomerName, input.CustomerContact, input.Quantity, input.Condition, input.Notes, input.Status)
 
 	if err != nil {
-		logger.Error("Failed to submit bounty offer: %v", err)
+		logger.Error("Failed to call fn_submit_bounty_offer: %v", err)
 		jsonError(w, "Failed to submit offer", http.StatusInternalServerError)
+		return
+	}
+
+	var offer models.BountyOffer
+	if err := json.Unmarshal(result, &offer); err != nil {
+		logger.Error("Failed to unmarshal bounty offer: %v", err)
+		jsonError(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -294,23 +290,20 @@ func (h *BountyHandler) CreateRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Auto-linking logic: Check if customer exists by email
-	var customerID *string
-	_ = h.DB.Get(&customerID, "SELECT id FROM customer WHERE email = $1", input.CustomerContact)
-
-	query := `
-		INSERT INTO client_request (customer_id, customer_name, customer_contact, card_name, set_name, details, status)
-		VALUES ($1, $2, $3, $4, $5, $6, 'pending')
-		RETURNING id, customer_id, customer_name, customer_contact, card_name, set_name, details, status, created_at
-	`
-	var req models.ClientRequest
-	err := h.DB.QueryRowx(query,
-		customerID, input.CustomerName, input.CustomerContact, input.CardName, input.SetName, input.Details,
-	).StructScan(&req)
+	var result []byte
+	err := h.DB.Get(&result, "SELECT fn_submit_client_request($1, $2, $3, $4, $5)",
+		input.CustomerName, input.CustomerContact, input.CardName, input.SetName, input.Details)
 
 	if err != nil {
-		logger.Error("Failed to create client request: %v", err)
+		logger.Error("Failed to call fn_submit_client_request: %v", err)
 		jsonError(w, "Failed to submit request", http.StatusInternalServerError)
+		return
+	}
+
+	var req models.ClientRequest
+	if err := json.Unmarshal(result, &req); err != nil {
+		logger.Error("Failed to unmarshal client request: %v", err)
+		jsonError(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 

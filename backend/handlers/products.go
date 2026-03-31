@@ -649,153 +649,22 @@ func (h *ProductHandler) UpdateStorage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProductHandler) getFacets(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, color string, isAdmin bool) models.Facets {
-	f := models.Facets{
-		Condition:  make(map[string]int),
-		Foil:       make(map[string]int),
-		Treatment:  make(map[string]int),
-		Rarity:     make(map[string]int),
-		Language:   make(map[string]int),
-		Color:      make(map[string]int),
-		Collection: make(map[string]int),
+	var result []byte
+	err := h.DB.Get(&result, "SELECT fn_get_product_facets($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
+		tcg, category, search, storageID, foil, treatment, condition, rarity, language, color, isAdmin)
+
+	if err != nil {
+		logger.Error("Error calling fn_get_product_facets: %v", err)
+		return models.Facets{}
 	}
 
-	dimensions := []struct {
-		name string
-		col  string
-		val  string
-	}{
-		{"Condition", "p.condition", condition},
-		{"Foil", "p.foil_treatment", foil},
-		{"Treatment", "p.card_treatment", treatment},
-		{"Rarity", "p.rarity", rarity},
-		{"Language", "p.language", language},
+	var facets models.Facets
+	if err := json.Unmarshal(result, &facets); err != nil {
+		logger.Error("Error unmarshaling facets: %v", err)
+		return models.Facets{}
 	}
 
-	for _, d := range dimensions {
-		from, conds, args := h.buildFilters(tcg, category, search, storageID,
-			getFoil(d.name, foil), getTreatment(d.name, treatment), getCondition(d.name, condition),
-			collection, getRarity(d.name, rarity), getLanguage(d.name, language), color, isAdmin)
-
-		where := ""
-		if len(conds) > 0 {
-			where = "WHERE " + strings.Join(conds, " AND ")
-		}
-
-		var query string
-		if d.name == "Treatment" {
-			// Special handling for Treatment facets to include boolean flags
-			// Ensure we handle empty WHERE clauses correctly for the UNION branches
-			whereWithTextless := where
-			if whereWithTextless == "" {
-				whereWithTextless = "WHERE p.textless = true"
-			} else {
-				whereWithTextless += " AND p.textless = true"
-			}
-			whereWithFullArt := where
-			if whereWithFullArt == "" {
-				whereWithFullArt = "WHERE p.full_art = true"
-			} else {
-				whereWithFullArt += " AND p.full_art = true"
-			}
-
-			query = fmt.Sprintf(`
-				WITH counts AS (
-					SELECT LOWER(p.card_treatment) as val %s %s
-				)
-				SELECT val, COUNT(*) FROM counts GROUP BY val
-				UNION ALL
-				SELECT 'textless', COUNT(*) %s %s AND LOWER(p.card_treatment) != 'textless'
-				UNION ALL
-				SELECT 'full_art', COUNT(*) %s %s AND LOWER(p.card_treatment) != 'full_art'
-			`, from, where, from, whereWithTextless, from, whereWithFullArt)
-		} else {
-			query = fmt.Sprintf("SELECT COALESCE(%s, 'unknown') as val, COUNT(*) %s %s GROUP BY val", d.col, from, where)
-		}
-
-		rows, err := h.DB.Query(query, args...)
-		if err == nil {
-			for rows.Next() {
-				var v string
-				var c int
-				if err := rows.Scan(&v, &c); err == nil {
-					switch d.name {
-					case "Condition":
-						f.Condition[v] = c
-					case "Foil":
-						f.Foil[v] = c
-					case "Treatment":
-						// Accumulate counts since we might have UNION results
-						f.Treatment[v] += c
-					case "Rarity":
-						f.Rarity[v] = c
-					case "Language":
-						f.Language[v] = c
-					}
-				}
-			}
-			rows.Close()
-		}
-	}
-
-	// 2. Color Facets (Combined into 1 query)
-	from, conds, args := h.buildFilters(tcg, category, search, storageID, foil, treatment, condition, collection, rarity, language, "", isAdmin)
-	colorWhere := ""
-	if len(conds) > 0 {
-		colorWhere = "WHERE " + strings.Join(conds, " AND ")
-	}
-	colorQuery := fmt.Sprintf(`
-		SELECT 
-			COUNT(*) FILTER (WHERE p.color_identity ILIKE '%%W%%') as w,
-			COUNT(*) FILTER (WHERE p.color_identity ILIKE '%%U%%') as u,
-			COUNT(*) FILTER (WHERE p.color_identity ILIKE '%%B%%') as b,
-			COUNT(*) FILTER (WHERE p.color_identity ILIKE '%%R%%') as r,
-			COUNT(*) FILTER (WHERE p.color_identity ILIKE '%%G%%') as g,
-			COUNT(*) FILTER (WHERE p.color_identity ILIKE '%%C%%') as c
-		%s %s`, from, colorWhere)
-
-	var colRes struct {
-		W int `db:"w"`
-		U int `db:"u"`
-		B int `db:"b"`
-		R int `db:"r"`
-		G int `db:"g"`
-		C int `db:"c"`
-	}
-	if err := h.DB.Get(&colRes, colorQuery, args...); err == nil {
-		f.Color["W"] = colRes.W
-		f.Color["U"] = colRes.U
-		f.Color["B"] = colRes.B
-		f.Color["R"] = colRes.R
-		f.Color["G"] = colRes.G
-		f.Color["C"] = colRes.C
-	}
-
-	// 3. Collection Facet
-	from, conds, args = h.buildFilters(tcg, category, search, storageID, foil, treatment, condition, "", rarity, language, color, isAdmin)
-	where := ""
-	if len(conds) > 0 {
-		where = "WHERE " + strings.Join(conds, " AND ")
-	}
-	collQuery := fmt.Sprintf(`
-		SELECT c.slug, COUNT(*) 
-		%s 
-		JOIN product_category pc ON p.id = pc.product_id 
-		JOIN custom_category c ON pc.category_id = c.id 
-		%s 
-		GROUP BY c.slug`, from, where)
-	rows, err := h.DB.Query(collQuery, args...)
-	if err == nil {
-		for rows.Next() {
-			var s string
-			var c int
-			if err := rows.Scan(&s, &c); err == nil {
-				f.Collection[s] = c
-			}
-		}
-		rows.Close()
-	}
-
-	return f
+	return facets
 }
 
 func getFoil(d, v string) string {
