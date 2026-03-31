@@ -258,12 +258,41 @@ h3 {
   border-radius: 4px;
   /* shadow to look like a thick card/box */
   box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.05), inset 0 0 20px rgba(230, 218, 195, 0.1);
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s ease, box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
 }
 
 .card:hover {
-  border-color: var(--kraft-dark);
-  box-shadow: 4px 6px 12px rgba(99, 85, 64, 0.15), inset 0 0 0 1px rgba(212, 175, 55, 0.2);
+  border-color: var(--gold-dark);
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 12px 24px rgba(99, 85, 64, 0.16), 0 0 0 1px rgba(212, 175, 55, 0.2);
+}
+
+/* Subtle shine streak that passes through once on hover */
+.card::after {
+  content: "";
+  position: absolute;
+  top: -110%;
+  left: -100%;
+  width: 60%;
+  height: 320%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: rotate(35deg);
+  transition: all 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0;
+}
+
+.card:hover::after {
+  left: 150%;
+  opacity: 1;
 }
 
 /* Shoebox lid effect */
