@@ -77,8 +77,8 @@ func main() {
 		// User Auth
 		userAuthHandler := handlers.NewUserAuthHandler(database)
 		r.Route("/auth", func(r chi.Router) {
-			r.With(middleware.RateLimit(10, 5*time.Minute)).Get("/google/login", userAuthHandler.GoogleLogin)
-			r.Get("/google/callback", userAuthHandler.GoogleCallback)
+			r.With(middleware.RateLimit(10, 5*time.Minute)).Get("/{provider}/login", userAuthHandler.Login)
+			r.Get("/{provider}/callback", userAuthHandler.Callback)
 			r.Post("/logout", userAuthHandler.Logout)
 			r.With(middleware.RequireUserAuth).Get("/me", userAuthHandler.Me)
 		})

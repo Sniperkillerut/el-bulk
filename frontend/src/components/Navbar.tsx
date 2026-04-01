@@ -14,7 +14,7 @@ import ThemeSelector from './ui/ThemeSelector';
 
 export default function Navbar() {
   const { totalItems, openCart, isOpen, closeCart } = useCart();
-  const { user, loading: userLoading, loginWithGoogle, logout } = useUser();
+  const { user, loading: userLoading, logout } = useUser();
   const { foilEffectsEnabled, toggleFoilEffects } = useUI();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [tcgs, setTcgs] = useState<TCG[]>([]);
@@ -113,12 +113,12 @@ export default function Navbar() {
                     </div>
                   </div>
                 ) : (
-                  <button 
-                    onClick={loginWithGoogle}
-                    className="text-sm font-medium text-white/80 transition-colors hover:text-accent-primary flex items-center gap-1 bg-transparent border-none cursor-pointer p-0"
+                  <Link 
+                    href="/login"
+                    className="text-sm font-medium text-white/80 transition-colors hover:text-accent-primary flex items-center gap-1 no-underline"
                   >
                     Login
-                  </button>
+                  </Link>
                 )}
               </div>
             )}
