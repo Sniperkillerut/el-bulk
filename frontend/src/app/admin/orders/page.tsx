@@ -19,7 +19,7 @@ export default function AdminOrdersPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col p-8 min-h-0 max-w-5xl mx-auto w-full">
+    <div className="flex-1 flex flex-col p-3 min-h-0 max-w-7xl mx-auto w-full">
       <AdminHeader 
         title="ORDER MANAGEMENT" 
         subtitle="Reviewing and Fulfilling Customer Card Orders" 

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { 
-  adminCreateBounty, adminUpdateBounty, adminDeleteBounty, fetchBounties,
+  adminUpdateBounty, adminDeleteBounty, fetchBounties,
   adminFetchClientRequests, adminUpdateClientRequestStatus, adminFetchTCGs,
   adminFetchBountyOffers, adminUpdateBountyOfferStatus, fetchPublicSettings
 } from '@/lib/api';
@@ -173,7 +173,7 @@ export default function AdminBountiesPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col p-8 min-h-0 max-w-7xl mx-auto w-full">
+    <div className="flex-1 flex flex-col p-3 min-h-0 max-w-7xl mx-auto w-full">
       <AdminHeader 
         title="WANTED / BOUNTIES" 
         subtitle="Cards We Want to Buy // Client Requests"
@@ -187,7 +187,7 @@ export default function AdminBountiesPage() {
         }
       />
 
-      <div className="flex flex-wrap gap-2 mb-8 border-b border-ink-deep/20 flex-shrink-0">
+      <div className="flex flex-wrap gap-2 mb-2 border-b border-ink-deep/20 flex-shrink-0">
         {[
           { id: 'bounties', label: 'WANTED LIST', count: bounties.filter(b => b.is_active).length },
           { id: 'offers', label: 'OFFERS VERIFICATION', count: offers.filter(o => o.status === 'pending').length, suffix: 'PENDING' },
@@ -242,15 +242,15 @@ export default function AdminBountiesPage() {
             
             <div className="bg-white rounded-xl border border-kraft-dark/20 shadow-sm overflow-hidden">
               <table className="w-full text-left border-collapse">
-                <thead>
+                <thead className="sticky top-0 z-10 bg-kraft-light backdrop-blur-md shadow-sm border-b border-kraft-dark/20">
                   <tr className="bg-kraft-light/50 border-b border-kraft-dark/20">
-                    <th className="p-4 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted font-bold">Card</th>
-                    <th className="p-4 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted font-bold">Set / Info</th>
-                    <th className="p-4 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted text-center font-bold">Cond.</th>
-                    <th className="p-4 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted font-bold">Target Price</th>
-                    <th className="p-4 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted text-center font-bold">Qty</th>
-                    <th className="p-4 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted text-center font-bold">Status</th>
-                    <th className="p-4 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted text-right font-bold">Actions</th>
+                    <th className="p-2 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted font-bold">Card</th>
+                    <th className="p-2 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted font-bold">Set / Info</th>
+                    <th className="p-2 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted text-center font-bold">Cond.</th>
+                    <th className="p-2 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted font-bold">Target Price</th>
+                    <th className="p-2 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted text-center font-bold">Qty</th>
+                    <th className="p-2 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted text-center font-bold">Status</th>
+                    <th className="p-2 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted text-right font-bold">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-kraft-dark/10">
@@ -258,7 +258,7 @@ export default function AdminBountiesPage() {
                     .filter(b => onlyShowActive ? b.is_active : true)
                     .map(b => (
                       <tr key={b.id} className={`group hover:bg-white transition-colors ${!b.is_active ? 'opacity-60 grayscale-[0.5]' : ''}`}>
-                        <td className="p-4">
+                        <td className="p-2">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-14 bg-kraft-paper rounded flex shrink-0 items-center justify-center overflow-hidden border border-kraft-dark/10">
                               <CardImage imageUrl={b.image_url} name={b.name} tcg={b.tcg} enableHover={true} />
@@ -269,30 +269,30 @@ export default function AdminBountiesPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="p-4">
+                        <td className="p-2">
                           <div className="text-xs text-ink-deep font-bold">{b.set_name || 'Any Edition'}</div>
                           <div className="text-[10px] text-text-muted font-mono-stack uppercase opacity-70">{b.card_treatment?.replace(/_/g, ' ') || 'Normal'}</div>
                         </td>
-                        <td className="p-4 text-center">
+                        <td className="p-2 text-center">
                           <span className="badge bg-kraft-paper text-[10px] font-mono-stack border-kraft-dark/20">{b.condition || 'ANY'}</span>
                         </td>
-                        <td className="p-4">
+                        <td className="p-2">
                           <div className="font-mono-stack text-sm text-gold-dark font-bold">
                             {b.target_price ? `$${b.target_price.toLocaleString()}` : 'N/A'}
                           </div>
                           {b.hide_price && <span className="text-[8px] text-red-500 font-mono-stack uppercase font-bold">Hidden</span>}
                         </td>
-                        <td className="p-4 text-center font-mono-stack text-sm font-bold opacity-80">
+                        <td className="p-2 text-center font-mono-stack text-sm font-bold opacity-80">
                           {b.quantity_needed}
                         </td>
-                        <td className="p-4 text-center">
+                        <td className="p-2 text-center">
                           {b.is_active ? (
                             <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-tighter">Active Bounty</span>
                           ) : (
                             <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest opacity-60">Completed / Past</span>
                           )}
                         </td>
-                        <td className="p-4 text-right">
+                        <td className="p-2 text-right">
                           <div className="flex gap-2 justify-end">
                             {b.is_active ? (
                               <>
@@ -388,7 +388,7 @@ export default function AdminBountiesPage() {
                         )}
                       </div>
 
-                      {offer.notes && <p className="text-xs text-text-muted mt-2 italic shadow-inner bg-kraft-light/30 p-2 rounded">"{offer.notes}"</p>}
+                      {offer.notes && <p className="text-xs text-text-muted mt-2 italic shadow-inner bg-kraft-light/30 p-2 rounded">&quot;{offer.notes}&quot;</p>}
                       <p className="text-[10px] text-text-muted mt-3 uppercase tracking-widest font-mono-stack opacity-60">Submitted on: {new Date(offer.created_at).toLocaleString()}</p>
                     </div>
                     
@@ -513,7 +513,7 @@ export default function AdminBountiesPage() {
             contact={req.customer_contact} 
             className="text-gold-dark hover:underline font-bold transition-all"
           /></p>
-                    <p className="text-xs text-text-muted mt-2 italic border-l-2 border-kraft-dark/10 pl-3">"{req.details || 'No additional details provided.'}"</p>
+                    <p className="text-xs text-text-muted mt-2 italic border-l-2 border-kraft-dark/10 pl-3">&quot;{req.details || 'No additional details provided.'}&quot;</p>
                     <p className="text-[10px] text-text-muted mt-3 uppercase tracking-widest font-mono-stack font-bold opacity-40">Requested: {new Date(req.created_at).toLocaleString()}</p>
                   </div>
                   

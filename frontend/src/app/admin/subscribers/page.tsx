@@ -25,7 +25,7 @@ export default function AdminSubscribersPage() {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="p-8">
+    <div className="flex-1 flex flex-col p-3 min-h-0 max-w-7xl mx-auto w-full">
       <AdminHeader 
         title="SUBSCRIBERS"
         subtitle="Newsletter Management"
@@ -40,23 +40,23 @@ export default function AdminSubscribersPage() {
         }
       />
 
-      <div className="cardbox overflow-hidden max-w-4xl">
+      <div className="flex-1 min-h-0 overflow-auto cardbox scrollbar-thin max-w-4xl">
         <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-kraft-mid/30 border-b border-ink-border">
-              <th className="p-4 font-display text-xs uppercase tracking-wider">Email Address</th>
-              <th className="p-4 font-display text-xs uppercase tracking-wider">Linked User</th>
-              <th className="p-4 font-display text-xs uppercase tracking-wider">Subscription Date</th>
-              <th className="p-4 font-display text-xs uppercase tracking-wider text-right">Actions</th>
+          <thead className="sticky top-0 z-10 bg-kraft-light backdrop-blur-md shadow-sm border-b border-ink-border">
+            <tr className="border-b border-ink-border">
+              <th className="p-2 font-display text-xs uppercase tracking-wider">Email Address</th>
+              <th className="p-2 font-display text-xs uppercase tracking-wider">Linked User</th>
+              <th className="p-2 font-display text-xs uppercase tracking-wider">Subscription Date</th>
+              <th className="p-2 font-display text-xs uppercase tracking-wider text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-ink-border/30">
             {subscribers.map((sub) => (
               <tr key={sub.id} className="hover:bg-gold/5 transition-colors group">
-                <td className="p-4 text-sm font-mono-stack font-bold">
+                <td className="p-2 text-sm font-mono-stack font-bold">
                   {sub.email}
                 </td>
-                <td className="p-4">
+                <td className="p-2">
                   {sub.customer_id ? (
                     <Link 
                       href={`/admin/clients/${sub.customer_id}`}
@@ -71,10 +71,10 @@ export default function AdminSubscribersPage() {
                     <span className="text-[10px] opacity-30 font-mono-stack italic">UNLINKED GUEST</span>
                   )}
                 </td>
-                <td className="p-4 text-[10px] font-mono-stack text-text-muted">
+                <td className="p-2 text-[10px] font-mono-stack text-text-muted">
                   {new Date(sub.created_at).toLocaleDateString()}
                 </td>
-                <td className="p-4 text-right">
+                <td className="p-2 text-right">
                   <button className="text-[10px] font-mono-stack text-hp-color hover:underline bg-transparent border-none cursor-pointer p-0 opacity-40 hover:opacity-100">
                     REMOVE
                   </button>

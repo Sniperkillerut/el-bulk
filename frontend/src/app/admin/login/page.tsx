@@ -28,16 +28,16 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--ink-deep)' }}>
-      <div className="card p-8 w-full max-w-sm">
+      <div className="card p-4 w-full max-w-sm">
         {/* Logo */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-4">
           <div style={{ display: 'inline-block', background: 'var(--gold)', borderRadius: 4, padding: '4px 12px', marginBottom: 8 }}>
             <span className="font-display text-3xl" style={{ color: 'var(--ink-deep)', lineHeight: 1 }}>EL BULK</span>
           </div>
           <p className="text-xs font-mono-stack" style={{ color: 'var(--text-muted)' }}>ADMIN PANEL</p>
         </div>
 
-        <div className="gold-line mb-6" />
+        <div className="gold-line mb-3" />
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>

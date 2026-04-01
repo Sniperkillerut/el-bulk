@@ -10,7 +10,7 @@ interface AdminHeaderProps {
 
 export default function AdminHeader({ title, subtitle, actions }: AdminHeaderProps) {
   return (
-    <header className="flex justify-between items-start mb-8 flex-shrink-0">
+    <header className="flex justify-between items-start mb-2 flex-shrink-0">
       <div className="space-y-1">
         <h1 className="font-display text-5xl tracking-tight text-ink-deep m-0 uppercase leading-none">
           {title}

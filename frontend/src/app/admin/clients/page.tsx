@@ -37,7 +37,7 @@ export default function AdminClientsPage() {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="p-8">
+    <div className="flex-1 flex flex-col p-3 min-h-0 max-w-7xl mx-auto w-full">
       <AdminHeader 
         title="CRM: Client Registry" 
         subtitle="Managing Relationships & Interactions"
@@ -54,10 +54,10 @@ export default function AdminClientsPage() {
         }
       />
 
-      <div className="cardbox overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-auto cardbox scrollbar-thin">
         <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-kraft-mid/30 border-b border-ink-border">
+          <thead className="sticky top-0 z-10 bg-kraft-light backdrop-blur-md shadow-sm border-b border-ink-border">
+            <tr className="border-b border-ink-border">
               <th className="p-4 font-display text-xs uppercase tracking-wider">Customer</th>
               <th className="p-4 font-display text-xs uppercase tracking-wider">Contact</th>
               <th className="p-4 font-display text-xs uppercase tracking-wider text-center">Orders</th>
@@ -135,7 +135,7 @@ export default function AdminClientsPage() {
       </div>
 
       {totalPages > 1 && (
-        <div className="flex justify-between items-center mt-6 px-2">
+        <div className="flex justify-between items-center mt-2 px-0 flex-shrink-0">
           <div className="text-[10px] font-mono-stack text-text-muted uppercase tracking-widest font-bold">
             SHOWING {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredClients.length)} OF {filteredClients.length}
           </div>

@@ -36,7 +36,7 @@ export default function AdminNoticesPage() {
   };
 
   return (
-    <div className="p-6">
+    <div className="flex-1 flex flex-col p-3 min-h-0 max-w-7xl mx-auto w-full">
       <AdminHeader 
         title="NOTICES (BLOG/NEWS)"
         subtitle="Manage your shop updates and news posts."
@@ -47,10 +47,10 @@ export default function AdminNoticesPage() {
         }
       />
 
-      <div className="bg-surface rounded-sm border-2 border-kraft-shadow overflow-hidden shadow-sm">
+      <div className="flex-1 min-h-0 overflow-auto bg-surface rounded-sm border-2 border-kraft-shadow shadow-sm scrollbar-thin">
         <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-kraft-light text-[10px] font-mono-stack font-bold uppercase tracking-wider">
+          <thead className="sticky top-0 z-10 bg-kraft-light backdrop-blur-md shadow-sm border-b border-kraft-shadow">
+            <tr className="text-[10px] font-mono-stack font-bold uppercase tracking-wider">
               <th className="p-4 border-b border-kraft-shadow">Date</th>
               <th className="p-4 border-b border-kraft-shadow">Title</th>
               <th className="p-4 border-b border-kraft-shadow">Slug</th>

@@ -123,7 +123,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="flex-1 flex flex-col p-8 min-h-0 max-w-7xl mx-auto w-full">
+    <div className="flex-1 flex flex-col p-3 min-h-0 max-w-7xl mx-auto w-full">
       <AdminHeader
         title="INVENTORY MANAGEMENT"
         subtitle="Store Dashboard // Operations Active"
@@ -154,8 +154,8 @@ export default function AdminDashboard() {
       />
 
       {/* Filters and Search Bar */}
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mb-8 flex-shrink-0">
-        <div className="xl:col-span-3 card p-6 bg-white/40 backdrop-blur shadow-sm border-kraft-dark/20 flex flex-wrap gap-6 items-end">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-2 mb-2 flex-shrink-0">
+        <div className="xl:col-span-3 card p-3 bg-white/40 backdrop-blur shadow-sm border-kraft-dark/20 flex flex-wrap gap-2 items-end">
           <div className="flex-1 min-w-[240px]">
             <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">Product Search</label>
             <div className="relative">
@@ -193,11 +193,10 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="card p-6 bg-gold text-ink-deep flex flex-col justify-center border-none shadow-xl shadow-gold/20 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 -rotate-45 translate-x-12 -translate-y-12"></div>
+        <div className="card p-3 text-ink-deep flex flex-col justify-center border-none shadow-xl shadow-gold/20 relative overflow-hidden group">
           <div className="text-[10px] font-mono-stack uppercase font-bold opacity-60 mb-1">INVENTORY COUNT</div>
           <div className="text-4xl font-display leading-none">{total.toLocaleString()}</div>
-          <div className="mt-4 pt-4 border-t border-ink-deep/10 flex justify-between items-center">
+          <div className="border-t border-ink-deep/10 flex justify-between items-center">
             <span className="text-[10px] font-mono-stack opacity-60">RESPONSE TIME</span>
             <span className="font-mono-stack text-[10px] font-bold">~{queryTime}ms</span>
           </div>
@@ -221,7 +220,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Pagination Footer - Fixed at Bottom */}
-      <footer className="mt-6 flex justify-between items-center bg-white/40 p-4 rounded border border-kraft-dark/20 backdrop-blur-sm flex-shrink-0">
+      <footer className="flex justify-between items-center mt-2 px-0 flex-shrink-0">
         <div className="text-xs font-mono-stack text-text-muted font-bold">
           SHOWING <span className="text-ink-deep">{((page - 1) * pageSize) + 1} - {Math.min(page * pageSize, total)}</span> OF {total} ENTRIES
         </div>

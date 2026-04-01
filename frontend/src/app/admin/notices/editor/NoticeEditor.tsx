@@ -82,7 +82,7 @@ export default function NoticeEditor() {
   if (loading) return <div className="p-12 text-center animate-pulse">Loading Editor...</div>;
 
   return (
-    <div className="p-6 max-w-5xl mx-auto pb-24">
+    <div className="p-3 max-w-7xl mx-auto pb-12">
       <AdminHeader 
         title={isEdit ? 'EDIT NOTICE' : 'NEW NOTICE'}
         subtitle="Compose your shop update using raw HTML."
@@ -91,9 +91,9 @@ export default function NoticeEditor() {
         }
       />
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-surface p-6 rounded-sm border-2 border-kraft-shadow shadow-sm">
+          <div className="bg-surface p-3 rounded-sm border-2 border-kraft-shadow shadow-sm">
             <div className="space-y-4">
               <div>
                 <label className="block text-[10px] font-bold font-mono-stack mb-1 uppercase">Post Title</label>
@@ -123,7 +123,7 @@ export default function NoticeEditor() {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-kraft-mid/20 p-6 rounded-sm border-2 border-kraft-shadow">
+          <div className="bg-kraft-mid/20 p-3 rounded-sm border-2 border-kraft-shadow">
             <h4 className="font-display text-sm uppercase mb-4 border-b border-kraft-shadow pb-2">Publish Settings</h4>
             
             <div className="space-y-4">
