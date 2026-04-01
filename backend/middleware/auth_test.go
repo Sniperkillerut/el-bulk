@@ -31,6 +31,8 @@ func TestAdminAuth(t *testing.T) {
 		authHeader     string
 		expectedStatus int
 		expectedAdmin  string
+		method         string
+		csrfHeader     string
 	}{
 		{
 			name:           "Valid Token",
@@ -58,6 +60,20 @@ func TestAdminAuth(t *testing.T) {
 			authHeader:     "Bearer " + createToken("admin123", -time.Hour),
 			expectedStatus: http.StatusUnauthorized,
 		},
+		{
+			name:           "POST - Missing CSRF Header",
+			authHeader:     "Bearer " + createToken("admin123", time.Hour),
+			method:         "POST",
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:           "POST - Valid CSRF Header",
+			authHeader:     "Bearer " + createToken("admin123", time.Hour),
+			method:         "POST",
+			csrfHeader:     "XMLHttpRequest",
+			expectedStatus: http.StatusOK,
+			expectedAdmin:  "admin123",
+		},
 	}
 
 	for _, tt := range tests {
@@ -70,9 +86,17 @@ func TestAdminAuth(t *testing.T) {
 
 			handlerToTest := AdminAuth(nextHandler)
 
-			req := httptest.NewRequest("GET", "/", nil)
+			method := "GET"
+			if tt.method != "" {
+				method = tt.method
+			}
+
+			req := httptest.NewRequest(method, "/", nil)
 			if tt.authHeader != "" {
 				req.Header.Set("Authorization", tt.authHeader)
+			}
+			if tt.csrfHeader != "" {
+				req.Header.Set("X-Requested-With", tt.csrfHeader)
 			}
 			rr := httptest.NewRecorder()
 

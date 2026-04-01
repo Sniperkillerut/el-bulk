@@ -132,6 +132,7 @@ func TestProductHandler_Create(t *testing.T) {
 			WillReturnRows(sqlmock.NewRows([]string{"product_id", "id", "name", "slug", "show_badge", "is_active", "searchable"}).AddRow("p-new", "cat1", "Cat 1", "cat1", true, true, true))
 
 		req, _ := http.NewRequest("POST", "/api/admin/products", bytes.NewBuffer(body))
+		req.Header.Set("X-Requested-With", "XMLHttpRequest")
 		rr := httptest.NewRecorder()
 		h.Create(rr, req)
 
@@ -171,6 +172,7 @@ func TestProductHandler_Update(t *testing.T) {
 		r := chi.NewRouter()
 		r.Put("/api/admin/products/{id}", h.Update)
 		req, _ := http.NewRequest("PUT", "/api/admin/products/p1", bytes.NewBuffer(body))
+		req.Header.Set("X-Requested-With", "XMLHttpRequest")
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 
@@ -222,6 +224,7 @@ func TestProductHandler_BulkCreate(t *testing.T) {
 			WillReturnRows(sqlmock.NewRows([]string{"upserted_id"}).AddRow("b1").AddRow("b2"))
 
 		req, _ := http.NewRequest("POST", "/api/admin/products/bulk", bytes.NewBuffer(body))
+		req.Header.Set("X-Requested-With", "XMLHttpRequest")
 		rr := httptest.NewRecorder()
 		h.BulkCreate(rr, req)
 
