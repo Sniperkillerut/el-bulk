@@ -156,13 +156,14 @@ func (h *UserAuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Set Cookie
+	isSecure := strings.HasPrefix(os.Getenv("FRONTEND_ORIGIN"), "https://")
 	http.SetCookie(w, &http.Cookie{
 		Name:     "user_token",
 		Value:    signed,
 		Path:     "/",
 		Expires:  time.Now().Add(24 * 7 * time.Hour),
 		HttpOnly: true,
-		Secure:   false, // Set to true in prod
+		Secure:   isSecure,
 		SameSite: http.SameSiteLaxMode,
 	})
 
@@ -190,13 +191,14 @@ func (h *UserAuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 
 // POST /api/auth/logout
 func (h *UserAuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	isSecure := strings.HasPrefix(os.Getenv("FRONTEND_ORIGIN"), "https://")
 	http.SetCookie(w, &http.Cookie{
 		Name:     "user_token",
 		Value:    "",
 		Path:     "/",
 		Expires:  time.Unix(0, 0),
 		HttpOnly: true,
-		Secure:   false,
+		Secure:   isSecure,
 		SameSite: http.SameSiteLaxMode,
 	})
 	render.Success(w, map[string]string{"message": "Logged out"})

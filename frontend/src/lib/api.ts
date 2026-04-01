@@ -48,6 +48,7 @@ async function apiFetch<T>(endpoint: string, options: FetchOptions = {}, _token?
   if (!headers.has('Content-Type') && (rest.method === 'POST' || rest.method === 'PUT' || rest.method === 'PATCH')) {
     headers.set('Content-Type', 'application/json');
   }
+  headers.set('X-Requested-With', 'XMLHttpRequest'); // CSRF protection
 
   const res = await fetch(url.toString(), {
     credentials: 'include',

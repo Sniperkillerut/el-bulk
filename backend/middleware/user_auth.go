@@ -54,6 +54,14 @@ func OptionalUserAuth(next http.Handler) http.Handler {
 // RequireUserAuth is strict
 func RequireUserAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Verify custom header for CSRF protection on state-changing requests
+		if r.Method != "GET" && r.Method != "HEAD" && r.Method != "OPTIONS" {
+			if r.Header.Get("X-Requested-With") != "XMLHttpRequest" {
+				http.Error(w, `{"error":"CSRF protection: missing or invalid X-Requested-With header"}`, http.StatusForbidden)
+				return
+			}
+		}
+
 		cookie, err := r.Cookie("user_token")
 		if err != nil {
 			http.Error(w, `{"error":"Unauthorized"}`, http.StatusUnauthorized)
