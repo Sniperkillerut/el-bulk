@@ -1,0 +1,24 @@
+{
+    email your-email@example.com
+}
+
+yourdomain.com {
+    # Reverse proxy to the frontend (Next.js)
+    reverse_proxy frontend:3000
+
+    # Reverse proxy to the backend API
+    # We use a handle_path to strip the /api prefix if the backend doesn't expect it,
+    # but based on your main.go, the backend routes already start with /api.
+    # So we just use a normal reverse_proxy.
+    handle /api/* {
+        reverse_proxy backend:8080
+    }
+
+    # Optional: Gzip compression
+    encode gzip
+
+    # Log requests
+    log {
+        output file /data/access.log
+    }
+}
