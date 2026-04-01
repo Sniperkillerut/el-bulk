@@ -9,6 +9,23 @@ interface ProductTableRowProps {
   onDelete: (id: string, name: string) => void;
 }
 
+const formatUpdated = (dateStr: string) => {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffHrs = diffMs / (1000 * 60 * 60);
+
+  if (diffHrs < 24) {
+    if (diffMs < 60000) return 'Just now';
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 60) return `${mins}m ago`;
+    return `${Math.floor(diffHrs)}h ago`;
+  }
+  
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + 
+         d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+};
+
 export function ProductTableRow({ product: p, onEdit, onDelete }: ProductTableRowProps) {
   const tcgName = p.tcg.length <= 4 ? p.tcg.toUpperCase() : (TCG_SHORT[p.tcg] || p.tcg.substring(0, 3).toUpperCase());
 
@@ -36,7 +53,18 @@ export function ProductTableRow({ product: p, onEdit, onDelete }: ProductTableRo
               <span className="text-[9px] bg-ink-surface px-1.5 py-0.5 rounded border border-ink-border font-bold text-gold tracking-tight" title={p.tcg}>
                 {tcgName}
               </span>
-              <span className="font-bold text-ink-deep leading-tight truncate max-w-[220px] group-hover:text-gold transition-colors">{p.name}</span>
+              <span className="font-bold text-ink-deep leading-tight truncate max-w-[180px] group-hover:text-gold transition-colors">{p.name}</span>
+              <span 
+                className="px-1.5 py-0.5 rounded text-[8px] font-bold text-white shadow-sm shrink-0 uppercase"
+                style={{ 
+                  backgroundColor: p.condition === 'NM' ? 'var(--status-nm)' :
+                                   p.condition === 'LP' ? 'var(--status-lp)' :
+                                   p.condition === 'MP' ? 'var(--status-mp)' :
+                                   p.condition === 'HP' ? 'var(--status-hp)' : 'var(--status-dmg)'
+                }}
+              >
+                {p.condition}
+              </span>
               {/* Edit Icon that appears on hover */}
               <span className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 text-gold">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -47,7 +75,11 @@ export function ProductTableRow({ product: p, onEdit, onDelete }: ProductTableRo
             </div>
             <div className="text-[10px] font-mono-stack text-text-muted flex items-center gap-2">
               <span className="truncate max-w-[150px] opacity-70">{p.set_name || 'N/A'}</span>
-              {p.set_code && <span className="opacity-40 px-1 bg-ink-surface/50 rounded-sm">[{p.set_code.toUpperCase()}]</span>}
+              {p.set_code && (
+                <span className="opacity-70 px-1 bg-ink-surface/50 rounded-sm font-bold">
+                  [{p.set_code.toUpperCase()}] {p.collector_number && `#${p.collector_number}`}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -64,14 +96,17 @@ export function ProductTableRow({ product: p, onEdit, onDelete }: ProductTableRo
           )}
         </div>
       </td>
-      <td className="font-mono-stack">
-        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${p.condition === 'NM' ? 'bg-nm-color/80' :
-            p.condition === 'LP' ? 'bg-lp-color/80' :
-              p.condition === 'MP' ? 'bg-mp-color/80' :
-                'bg-hp-color/80'
-          } text-white shadow-sm`}>
-          {p.condition}
-        </span>
+      <td className="text-center">
+        {p.rarity ? (
+          <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
+            p.rarity === 'mythic' ? 'bg-hp-color/10 text-hp-color border border-hp-color/20' :
+            p.rarity === 'rare' ? 'bg-gold/10 text-gold border border-gold/20' :
+            p.rarity === 'uncommon' ? 'bg-ink-deep/10 text-ink-deep border border-ink-deep/20' :
+            'bg-text-muted/10 text-text-muted border border-text-muted/20'
+          }`}>
+            {p.rarity}
+          </span>
+        ) : <span className="text-[10px] text-text-muted opacity-30">—</span>}
       </td>
       <td className="text-right">
         <div className="flex flex-col items-end">
@@ -95,6 +130,13 @@ export function ProductTableRow({ product: p, onEdit, onDelete }: ProductTableRo
               </span>
             )) : <span className="text-[8px] text-text-muted opacity-30 italic">unassigned</span>}
           </div>
+        </div>
+      </td>
+      <td className="text-center">
+        <div className="flex flex-col items-center">
+           <span className="text-[10px] font-mono-stack font-bold text-text-muted opacity-80 whitespace-nowrap">
+             {formatUpdated(p.updated_at || p.created_at)}
+           </span>
         </div>
       </td>
       <td onClick={(e) => e.stopPropagation()}>
@@ -159,16 +201,19 @@ export default function ProductTable({
               <th onClick={() => onSort('category')} title="Category / Treatment" className="cursor-pointer hover:bg-ink-surface transition-colors">
                 <div className="flex items-center">TYPE {renderSortIcon('category')}</div>
               </th>
-              <th onClick={() => onSort('condition')} className="w-24 text-center cursor-pointer hover:bg-ink-surface transition-colors">
-                <div className="flex items-center justify-center">CND {renderSortIcon('condition')}</div>
+              <th onClick={() => onSort('rarity')} className="w-24 text-center cursor-pointer hover:bg-ink-surface transition-colors">
+                <div className="flex items-center justify-center">RARITY {renderSortIcon('rarity')}</div>
               </th>
               <th onClick={() => onSort('price')} className="w-32 text-right cursor-pointer hover:bg-ink-surface transition-colors">
                 <div className="flex items-center justify-end">PRICE {renderSortIcon('price')}</div>
               </th>
-              <th onClick={() => onSort('stock')} className="w-28 text-center cursor-pointer hover:bg-ink-surface transition-colors">
+              <th onClick={() => onSort('stock')} className="w-24 text-center cursor-pointer hover:bg-ink-surface transition-colors">
                 <div className="flex items-center justify-center">STOCK {renderSortIcon('stock')}</div>
               </th>
-              <th className="w-20 text-center">CMD</th>
+              <th onClick={() => onSort('updated_at')} className="w-32 text-center cursor-pointer hover:bg-ink-surface transition-colors">
+                <div className="flex items-center justify-center">UPDATED {renderSortIcon('updated_at')}</div>
+              </th>
+              <th className="w-16 text-center">CMD</th>
             </tr>
           </thead>
           <tbody>

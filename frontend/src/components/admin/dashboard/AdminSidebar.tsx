@@ -71,9 +71,9 @@ export default function AdminSidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded transition-all no-underline group ${isActive
-                ? 'bg-gold text-ink-deep font-bold shadow-lg shadow-gold/10'
-                : 'text-text-secondary hover:bg-ink-surface hover:text-gold'
+              className={`flex items-center gap-3 px-4 py-3 rounded-r-lg border-l-4 transition-all no-underline group ${isActive
+                ? 'bg-accent-primary text-text-on-accent font-bold shadow-md shadow-accent-primary/20 border-white/20'
+                : 'text-text-secondary hover:bg-white/5 hover:text-accent-primary border-transparent'
                 }`}
             >
               <span className={`text-lg ${isActive ? '' : 'opacity-50 group-hover:opacity-100'}`}>{item.icon}</span>
@@ -85,9 +85,9 @@ export default function AdminSidebar() {
         <p className="font-mono-stack text-[10px] text-text-muted font-bold px-2 mt-8 mb-4 tracking-widest uppercase opacity-40">System Actions</p>
         <Link
           href="/admin/settings"
-          className={`w-full flex items-center gap-3 px-4 py-3 rounded transition-all group no-underline ${pathname === '/admin/settings'
-            ? 'bg-gold text-ink-deep font-bold shadow-lg shadow-gold/10'
-            : 'text-text-secondary hover:bg-ink-surface hover:text-gold'
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-r-lg border-l-4 transition-all group no-underline ${pathname === '/admin/settings'
+            ? 'bg-accent-primary text-text-on-accent font-bold shadow-md shadow-accent-primary/20 border-white/20'
+            : 'text-text-secondary hover:bg-white/5 hover:text-accent-primary border-transparent'
             }`}
         >
           <span className={`text-lg ${pathname === '/admin/settings' ? '' : 'opacity-50 group-hover:opacity-100'}`}>⚙️</span>

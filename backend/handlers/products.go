@@ -717,6 +717,8 @@ func (h *ProductHandler) buildOrderBy(sortBy, sortDir, search string, argsLen in
 			END, 0)`, usdRate, eurRate)
 	case "created_at":
 		col = "p.created_at"
+	case "updated_at":
+		col = "p.updated_at"
 	default:
 		if search != "" {
 			return "similarity(p.name, $" + strconv.Itoa(argsLen-1) + ") DESC, p.created_at DESC"
