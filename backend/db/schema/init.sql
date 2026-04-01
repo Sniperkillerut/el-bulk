@@ -8,6 +8,7 @@
 \i functions/fn_update_updated_at.sql
 
 -- 2. Independent Tables
+\i tables/migration.sql
 \i tables/setting.sql
 \i tables/tcg.sql
 \i tables/storage_location.sql

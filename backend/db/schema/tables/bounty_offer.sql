@@ -1,5 +1,4 @@
 -- Bounty Offer Table
-DROP TABLE IF EXISTS bounty_offer CASCADE;
 CREATE TABLE IF NOT EXISTS bounty_offer (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   bounty_id         UUID REFERENCES bounty(id) ON DELETE CASCADE NOT NULL,

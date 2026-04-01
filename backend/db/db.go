@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
-	"github.com/el-bulk/backend/utils/logger"
 )
 
 func init() {
@@ -119,20 +119,67 @@ func Migrate(db *sqlx.DB) error {
 		return err
 	}
 
+	// 1. Get already applied migrations
+	var applied []string
+	err = db.Select(&applied, "SELECT name FROM migration")
+	if err != nil {
+		return fmt.Errorf("failed to fetch applied migrations: %v", err)
+	}
+
+	appliedMap := make(map[string]bool)
+	for _, name := range applied {
+		appliedMap[name] = true
+	}
+
 	count := 0
 	for _, f := range files {
 		if filepath.Ext(f.Name()) == ".sql" {
+			if appliedMap[f.Name()] {
+				continue // Skip already applied
+			}
+
 			path := filepath.Join(migrationsDir, f.Name())
-			if err := executeSQLFile(db, path); err != nil {
+
+			// Execute migration in a transaction for safety
+			tx, err := db.Beginx()
+			if err != nil {
+				return fmt.Errorf("failed to start transaction for %s: %v", f.Name(), err)
+			}
+
+			if err := executeSQLFileTx(tx, path); err != nil {
+				tx.Rollback()
 				return fmt.Errorf("failed to execute migration %s: %v", f.Name(), err)
 			}
+
+			// Record migration
+			if _, err := tx.Exec("INSERT INTO migration (name) VALUES ($1)", f.Name()); err != nil {
+				tx.Rollback()
+				return fmt.Errorf("failed to record migration %s: %v", f.Name(), err)
+			}
+
+			if err := tx.Commit(); err != nil {
+				return fmt.Errorf("failed to commit migration %s: %v", f.Name(), err)
+			}
+
 			logger.Info("Applied migration: %s", f.Name())
 			count++
 		}
 	}
 
 	if count > 0 {
-		logger.Info("Successfully applied %d migrations", count)
+		logger.Info("Successfully applied %d new migrations", count)
+	} else {
+		logger.Info("No new migrations to apply")
 	}
 	return nil
+}
+
+func executeSQLFileTx(tx *sqlx.Tx, path string) error {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(string(content))
+	return err
 }
