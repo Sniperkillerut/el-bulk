@@ -131,11 +131,9 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
   const { total, summary } = getDeckAnalytics(form.deck_cards);
 
   return (
-    <div className="space-y-6">
-      <div className="card p-5 bg-white/40 border-white/20 backdrop-blur-md">
-        <h3 className="font-mono-stack text-xs uppercase tracking-widest text-text-muted mb-4 opacity-70">Deck Builder (Add Cards)</h3>
-        
-        {form.tcg === 'mtg' ? (
+    <div className="space-y-4">
+      {form.tcg === 'mtg' ? (
+        <div className="animate-in fade-in slide-in-from-top-2 duration-300">
           <div>
             <ScryfallPopulate 
               name={searchName}
@@ -156,9 +154,9 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
             />
             
             {scryfallPrints.length > 0 && (
-              <div className="mt-4 border-t border-ink-border/10 pt-4">
-                <label className="text-[10px] font-mono-stack block mb-2 uppercase tracking-widest opacity-50">Select Specific Printing to Add</label>
-                <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2 overflow-y-auto max-h-64 p-2 custom-scrollbar">
+              <div className="mt-3 border-t border-ink-border/10 pt-3">
+                <label className="text-[10px] font-mono-stack block mb-1 uppercase tracking-widest opacity-50">Select Specific Printing to Add</label>
+                <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2 overflow-y-auto max-h-48 p-2 custom-scrollbar">
                   {scryfallPrints.map((print, i) => {
                     const img = getScryfallImage(print);
                     return (
@@ -188,20 +186,20 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
               </div>
             )}
           </div>
-        ) : (
-          <div className="flex items-end gap-2">
-            <div className="flex-1">
-              <label className="text-xs mb-1 block">Card Name</label>
-              <input type="text" value={searchName} onChange={e => setSearchName(e.target.value)} placeholder="Type a custom card name..." />
-            </div>
-            <button className="btn-primary py-2 px-4" onClick={() => addCard(null, true)} disabled={!searchName}>Add Custom Card</button>
+        </div>
+      ) : (
+        <div className="flex items-end gap-2 p-2 bg-white/40 border border-white/20 rounded-md">
+          <div className="flex-1">
+            <label className="text-[10px] font-mono-stack mb-1 block uppercase opacity-60">Card Name (Custom)</label>
+            <input type="text" value={searchName} onChange={e => setSearchName(e.target.value)} placeholder="Type a custom card name..." />
           </div>
-        )}
-      </div>
+          <button className="btn-primary py-2 px-4 text-xs font-bold" onClick={() => addCard(null, true)} disabled={!searchName}>Add Custom Card</button>
+        </div>
+      )}
 
       <div>
-        <div className="mb-4">
-          <h3 className="font-mono-stack text-xs uppercase tracking-widest text-text-muted opacity-70 flex justify-between items-center mb-1">
+        <div className="mb-2">
+          <h3 className="font-mono-stack text-[10px] uppercase tracking-widest text-text-muted opacity-70 flex justify-between items-center mb-0.5">
             <span>Current Deck List</span>
             <span className="bg-ink-border/10 px-2 py-0.5 rounded-full text-[10px] font-bold text-ink-deep/60">
               {total} CARDS
@@ -218,24 +216,24 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
             Deck is currently empty.
           </div>
         ) : (
-          <div className="space-y-6 max-h-[600px] overflow-y-auto custom-scrollbar p-1">
+          <div className="space-y-3 max-h-[700px] overflow-y-auto custom-scrollbar p-1">
             {Object.entries(getDeckAnalytics(form.deck_cards).groups).map(([groupName, groupCards]) => {
               if (groupCards.length === 0) return null;
               const groupQty = groupCards.reduce((sum, c) => sum + c.quantity, 0);
 
               return (
-                <div key={groupName} className="space-y-2">
-                  <div className="flex items-center gap-2 py-1 px-2 bg-ink-border/5 rounded">
+                <div key={groupName} className="space-y-1">
+                  <div className="flex items-center gap-2 py-0.5 px-2 bg-ink-border/5 rounded">
                     <span className="font-mono-stack text-[10px] font-bold uppercase tracking-wider text-text-muted">
                       {groupName} ({groupQty})
                     </span>
                     <div className="h-px flex-1 bg-ink-border/10"></div>
                   </div>
                   
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-1.5">
                     {groupCards.map(card => (
-                      <div key={card.id} className="flex items-center gap-3 p-2 bg-white/60 border border-white/40 rounded-lg shrink-0 group/row hover:border-gold/30 transition-colors">
-                        <div className="w-10 h-14 shrink-0 rounded-sm overflow-hidden border border-ink-border/20 shadow-sm shadow-black/5">
+                      <div key={card.id} className="flex items-center gap-2 p-1 bg-white/60 border border-white/40 rounded shadow-sm shrink-0 group/row hover:border-gold/30 transition-colors">
+                        <div className="w-8 h-12 shrink-0 rounded-sm overflow-hidden border border-ink-border/20 shadow-sm shadow-black/5">
                           <CardImage 
                             imageUrl={card.image_url} 
                             name={card.name} 

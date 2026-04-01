@@ -54,7 +54,7 @@ export default function ScryfallPopulate({
         const data = await res.json();
         setSuggestions(data.data?.slice(0, 8) || []);
         setShowSuggestions(true);
-      } catch (e) {
+      } catch {
         setSuggestions([]);
       } finally {
         setSearching(false);
@@ -70,11 +70,10 @@ export default function ScryfallPopulate({
   };
 
   return (
-    <div className="mx-4 md:mx-6 mt-4 p-4 rounded-sm relative" 
-      ref={containerRef}
-      style={{ background: 'var(--kraft-light)', border: '2px dashed var(--kraft-dark)' }}>
+    <div className="relative" 
+      ref={containerRef}>
       
-      <div className="flex items-end gap-3 flex-wrap sm:flex-nowrap">
+      <div className="flex items-end gap-2 flex-wrap sm:flex-nowrap">
         <div style={{ width: '90px' }}>
           <label className="text-[10px] font-mono-stack mb-1 block uppercase opacity-60">Set</label>
           {scryfallPrints.length > 0 ? (

@@ -427,9 +427,9 @@ export default function ProductEditModal({
       <div className="card p-0 w-full max-w-6xl max-h-[94vh] flex flex-col border-white/20 shadow-2xl animate-in fade-in zoom-in duration-300" 
         style={{ position: 'relative', background: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(20px)', overflow: 'hidden' }}>
 
-        <div className="flex items-center justify-between p-4 md:p-6 pb-2">
+        <div className="flex items-center justify-between p-4 pb-2 border-b border-ink-border/5">
           <div className="flex flex-col">
-            <h2 className="font-display text-4xl m-0 tracking-tighter text-ink-deep">{editProduct ? 'EDIT PRODUCT' : 'NEW PRODUCT'}</h2>
+            <h2 className="font-display text-2xl m-0 tracking-tighter text-ink-deep">{editProduct ? 'EDIT PRODUCT' : 'NEW PRODUCT'}</h2>
             <p className="font-mono-stack text-[10px] text-text-muted opacity-50">PRODUCT ID: {form.id || 'NEW'}</p>
           </div>
           <button onClick={onClose} 
@@ -485,13 +485,27 @@ export default function ProductEditModal({
           </div>
           <div style={{ minWidth: '100px' }}>
             <label className="text-[10px] font-mono-stack mb-1 block uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>CONDITION</label>
-            <select className="bg-white/50 border-white/40 focus:bg-white transition-all" value={form.condition} onChange={e => setForm(f => ({ ...f, condition: e.target.value as Condition }))}>
+            <select className="bg-white/50 border-white/40 focus:bg-white transition-all text-xs" value={form.condition} onChange={e => setForm(f => ({ ...f, condition: e.target.value as Condition }))}>
               {['NM', 'LP', 'MP', 'HP', 'DMG'].map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
+
+          {!isMTGSingles && (
+            <div className="flex-1 min-w-[240px]">
+              <label className="text-[10px] font-mono-stack mb-1 block uppercase opacity-50 tracking-widest" style={{ color: 'var(--text-muted)' }}>PRODUCT NAME</label>
+              <input 
+                type="text" 
+                value={form.name} 
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))} 
+                className="bg-white/50 border-white/40 focus:bg-white transition-all"
+                style={{ fontSize: '0.9rem', fontWeight: 600, height: '36px' }} 
+                placeholder="Product Name" 
+              />
+            </div>
+          )}
         </div>
 
-        {isMTGSingles ? (
+        {isMTGSingles && (
           <ScryfallPopulate 
             name={form.name} 
             setCode={form.set_code} 
@@ -509,11 +523,6 @@ export default function ProductEditModal({
             }}
             onSetSearchChange={handleSetSearchChange}
           />
-        ) : (
-          <div className="px-4 md:px-6 pt-4">
-            <label className="text-xs font-mono-stack mb-1 block uppercase opacity-50" style={{ color: 'var(--text-muted)' }}>PRODUCT NAME</label>
-            <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} style={{ fontSize: '1.25rem', fontWeight: 800, background: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.3)' }} placeholder="Entity Name" />
-          </div>
         )}
 
         <div className="px-4 md:px-6 mt-6 flex gap-3 border-b border-ink-border/20">
@@ -524,9 +533,9 @@ export default function ProductEditModal({
                 key={tab.id} 
                 onClick={() => setActiveTab(tab.id)}
                 className={`
-                  font-mono-stack text-sm px-10 py-6 transition-all tracking-widest uppercase relative -mb-px rounded-t-md border-x border-t-[8px] group
+                  font-mono-stack text-xs px-6 py-2 transition-all tracking-widest uppercase relative -mb-px rounded-t-md border-x border-t-[4px] group
                   ${isActive 
-                    ? 'text-gold bg-white border-gold border-x-ink-border/20 border-b-white z-20 shadow-[0_0_25px_rgba(186,155,74,0.5),0_0_12px_rgba(186,155,74,0.3)] font-black' 
+                    ? 'text-gold bg-white border-gold border-x-ink-border/20 border-b-white z-20 shadow-[0_-5px_15px_rgba(186,155,74,0.1)] font-black' 
                     : 'text-text-muted bg-kraft-dark/30 border-transparent hover:text-ink-deep hover:bg-kraft-dark/50 font-bold'
                   }
                 `}
@@ -543,7 +552,7 @@ export default function ProductEditModal({
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className="flex gap-8 flex-col md:flex-row p-4 md:p-6 pb-12">
+          <div className="flex gap-4 flex-col md:flex-row p-4 md:p-6 pb-4">
           <div className="flex-1 min-w-0 animate-in fade-in slide-in-from-bottom-2 duration-500">
             {activeTab === 'variant' && (
               <VariantTab 
