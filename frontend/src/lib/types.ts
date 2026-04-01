@@ -94,6 +94,7 @@ export interface Facets {
   color: Record<string, number>;
   collection: Record<string, number>;
   set_name?: FacetItem[];
+  in_stock?: number;
 }
 
 export interface ProductListResponse {
