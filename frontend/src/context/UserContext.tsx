@@ -1,7 +1,5 @@
-'use client';
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { remoteLogger } from '@/lib/remoteLogger';
+import { userFetchMe, userLogout as apiUserLogout } from '@/lib/api';
 
 // Update types to match our backend Customer struct
 export interface UserProfile {
@@ -41,17 +39,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUser = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/me`, {
-        credentials: 'include',
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data);
-      } else {
-        setUser(null);
-      }
-    } catch (err) {
-      remoteLogger.error('Failed to fetch user session', { error: err });
+      const data = await userFetchMe();
+      setUser(data);
+    } catch {
       setUser(null);
     } finally {
       setLoading(false);
@@ -69,11 +59,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-    } catch (e) {
+      await apiUserLogout();
+    } catch {
       // ignore
     }
     setUser(null);

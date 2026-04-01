@@ -141,7 +141,20 @@ export async function fetchPublicSettings(): Promise<import('./types').Settings>
   return data;
 }
 
-// Admin API (requires token)
+// User Auth API (uses cookies)
+export async function userFetchMe(): Promise<import('./types').UserProfile | null> {
+  try {
+    return await apiFetch<import('./types').UserProfile>('/api/auth/me');
+  } catch {
+    return null;
+  }
+}
+
+export async function userLogout(): Promise<void> {
+  await apiFetch('/api/auth/logout', { method: 'POST' });
+}
+
+// Admin API (uses cookies)
 export async function adminLogin(username: string, password: string): Promise<string> {
   const data = await apiFetch<{ token: string }>('/api/admin/login', {
     method: 'POST',

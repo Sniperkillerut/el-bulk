@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -42,8 +43,14 @@ func getOAuthConfig() *oauth2.Config {
 // GET /api/auth/google/login
 func (h *UserAuthHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 	config := getOAuthConfig()
-	// Create a state token (should ideally be CSRF protected and saved in a short-lived cookie)
-	state := "elbulk-oauth-state"
+	redirectURL := r.URL.Query().Get("redirect_url")
+	if redirectURL == "" {
+		redirectURL = "/"
+	}
+
+	// Create a state token containing the redirect URL
+	// In a production app, this should be signed or stored in a session to prevent tampering
+	state := "elbulk-oauth-state|" + redirectURL
 	url := config.AuthCodeURL(state, oauth2.AccessTypeOffline)
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
@@ -51,9 +58,14 @@ func (h *UserAuthHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 // GET /api/auth/google/callback
 func (h *UserAuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	state := r.FormValue("state")
-	if state != "elbulk-oauth-state" {
+	if !strings.HasPrefix(state, "elbulk-oauth-state|") {
 		http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=invalid_state", http.StatusTemporaryRedirect)
 		return
+	}
+
+	redirectURL := strings.TrimPrefix(state, "elbulk-oauth-state|")
+	if redirectURL == "" {
+		redirectURL = "/"
 	}
 
 	code := r.FormValue("code")
@@ -155,7 +167,7 @@ func (h *UserAuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request)
 	})
 
 	// Redirect back to frontend
-	http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/", http.StatusFound)
+	http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+redirectURL, http.StatusFound)
 }
 
 // GET /api/auth/me
