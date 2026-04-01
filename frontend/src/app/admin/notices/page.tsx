@@ -9,12 +9,13 @@ import { useRouter } from 'next/navigation';
 import AdminHeader from '@/components/admin/AdminHeader';
 
 export default function AdminNoticesPage() {
-  const { token: adminToken } = useAdmin();
+  const { token: adminToken, loading: adminLoading } = useAdmin();
   const router = useRouter();
   const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (adminLoading) return;
     if (!adminToken) {
       router.push('/admin/login');
       return;
@@ -23,7 +24,7 @@ export default function AdminNoticesPage() {
       .then(setNotices)
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [adminToken, router]);
+  }, [adminToken, adminLoading, router]);
 
   const handleDelete = async (id: string) => {
     if (!adminToken || !confirm('Are you sure you want to delete this notice?')) return;
@@ -34,6 +35,12 @@ export default function AdminNoticesPage() {
       alert('Failed to delete notice');
     }
   };
+
+  if (adminLoading) return (
+    <div className="min-h-screen flex items-center justify-center p-12">
+      <div className="text-gold font-mono-stack animate-pulse uppercase text-sm font-bold tracking-widest">Authenticating Session...</div>
+    </div>
+  );
 
   return (
     <div className="flex-1 flex flex-col p-3 min-h-0 max-w-7xl mx-auto w-full">

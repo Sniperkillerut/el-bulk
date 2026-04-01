@@ -9,7 +9,7 @@ import AdminHeader from '@/components/admin/AdminHeader';
 
 export default function NoticeEditor() {
   const { id } = useParams();
-  const { token: adminToken } = useAdmin();
+  const { token: adminToken, loading: adminLoading } = useAdmin();
   const router = useRouter();
   const isEdit = !!id;
 
@@ -33,6 +33,7 @@ export default function NoticeEditor() {
   const [slugTouched, setSlugTouched] = useState(false);
 
   useEffect(() => {
+    if (adminLoading) return;
     if (!adminToken) {
       router.push('/admin/login');
       return;
@@ -54,7 +55,7 @@ export default function NoticeEditor() {
         })
         .finally(() => setLoading(false));
     }
-  }, [id, adminToken, isEdit, router]);
+  }, [id, adminToken, adminLoading, isEdit, router]);
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -88,7 +89,13 @@ export default function NoticeEditor() {
     }
   };
 
-  if (loading) return <div className="p-12 text-center animate-pulse">Loading Editor...</div>;
+  if (adminLoading || loading) return (
+    <div className="min-h-screen flex items-center justify-center p-12">
+      <div className="text-gold font-mono-stack animate-pulse uppercase text-sm font-bold tracking-widest">
+        {adminLoading ? 'Authenticating Session...' : 'Unpacking Notice...'}
+      </div>
+    </div>
+  );
 
   return (
     <div className="p-3 max-w-7xl mx-auto pb-12">
