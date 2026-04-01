@@ -87,7 +87,7 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
         </div>
       ) : error || !product ? (
         <div className="card p-16 text-center stamp-border bg-surface">
-          <h1 className="font-display text-5xl mb-4 text-hp-color">ITEM NOT FOUND</h1>
+          <h1 className="font-display text-3xl mb-4 text-hp-color uppercase">ITEM NOT FOUND</h1>
           <p className="text-text-muted mb-6 font-mono-stack">This item may have been sold or removed.</p>
           <button onClick={onClose} className="btn-secondary px-8">Close</button>
         </div>
@@ -121,7 +121,7 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
                     {product.set_code ? `[${product.set_code}] ` : ''}{product.set_name}
                   </p>
                 )}
-                <h1 className="font-display text-4xl md:text-5xl text-ink-deep leading-none">
+                <h1 className="font-display text-3xl md:text-4xl text-ink-deep leading-none">
                   {product.name}
                 </h1>
                 {product.type_line && (

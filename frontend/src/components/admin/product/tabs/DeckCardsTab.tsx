@@ -245,7 +245,7 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
                         </div>
                         <div className="flex flex-col flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-sm truncate">{card.name}</span>
+                            <span className="font-bold text-[11px] truncate">{card.name}</span>
                             {card.rarity && (
                               <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase ${
                                 card.rarity === 'mythic' ? 'bg-hp-color/10 text-hp-color' :

@@ -27,6 +27,45 @@
   /* Layout constraints */
   --content-max-width: 1280px;
   --mobile-breakpoint: 640px;
+  --desktop-breakpoint: 1024px;
+
+  /* Spacing System (Relative Units) */
+  --space-fine: 1px;
+  --space-line: 2px;
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 4rem;
+
+  /* Border Radius */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+
+  /* Z-Index Management */
+  --z-base: 1;
+  --z-above: 10;
+  --z-sticky: 100;
+  --z-drawer: 1000;
+  --z-modal: 10000;
+  --z-tooltip: 10010;
+
+  /* Animations & Transitions */
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+  --ease-out: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-in-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Fluid Typography Tokens */
+  --h1-size: clamp(2.5rem, 8vw - 1rem, 5.5rem);
+  --h2-size: clamp(1.8rem, 5vw - 0.5rem, 3.5rem);
+  --h3-size: clamp(1.4rem, 3vw, 2.2rem);
+
   /* El Bulk Brand Palette - Cardboard Theme */
   --kraft-light: #e6dac3;
   --kraft-mid: #cbbca1;
@@ -101,25 +140,37 @@ body {
   }
 }
 
-/* Typography */
-h1,
-h2,
-h3 {
+/* Typography - Base Tags */
+h1, h2, h3 {
   font-family: 'Bebas Neue', sans-serif;
   letter-spacing: 0.05em;
   color: var(--ink-deep);
   line-height: 1.1;
 }
 
-@media (max-width: 640px) {
-  h1 {
-    font-size: 3.5rem !important;
-  }
+h1 { font-size: 2.25rem; }
+h2 { font-size: 1.5rem; }
+h3 { font-size: 1.1rem; }
 
-  h2 {
-    font-size: 2.2rem !important;
-  }
+/* Fluid Typography Utilities (Use for Landing/Marketing) */
+.text-fluid-h1 {
+  font-size: var(--h1-size);
+  line-height: 0.9;
 }
+
+.text-fluid-h2 {
+  font-size: var(--h2-size);
+}
+
+.text-fluid-h3 {
+  font-size: var(--h3-size);
+}
+
+p {
+  line-height: 1.5;
+}
+
+/* Legacy mobile overrides removed in favor of Fluid Typography (clamp) */
 
 .font-display {
   font-family: 'Bebas Neue', sans-serif;
@@ -132,7 +183,7 @@ h3 {
 
 /* Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: var(--space-sm);
 }
 
 ::-webkit-scrollbar-track {
@@ -141,7 +192,7 @@ h3 {
 
 ::-webkit-scrollbar-thumb {
   background: var(--kraft-dark);
-  border-radius: 4px;
+  border-radius: var(--radius-md);
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -151,9 +202,9 @@ h3 {
 /* Thumbnail hover expand (Portal-based) */
 .hover-expand-portal {
   position: fixed;
-  z-index: 10005;
+  z-index: var(--z-tooltip);
   pointer-events: none;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all var(--duration-normal) var(--ease-out);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -163,7 +214,7 @@ h3 {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   /* Removed box-shadow as requested */
 }
 
@@ -173,12 +224,12 @@ h3 {
   inset: 0;
   background: rgba(0, 0, 0, 0.9);
   backdrop-filter: blur(8px);
-  z-index: 10010;
+  z-index: var(--z-modal);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
-  animation: fadeIn 0.3s ease-out;
+  padding: 5vw;
+  animation: fadeIn var(--duration-normal) ease-out;
 }
 
 .image-modal-content {
@@ -188,28 +239,28 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: scaleUp var(--duration-normal) var(--ease-out);
 }
 
 .image-modal-content img {
   max-width: 100%;
   max-height: 90vh;
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   /* Removed box-shadow as requested */
 }
 
 .image-modal-close {
   position: absolute;
-  top: -40px;
-  right: -40px;
+  top: -2.5rem;
+  right: -2.5rem;
   background: none;
   border: none;
   color: #fff;
-  font-size: 2.5rem;
+  font-size: var(--space-xl);
   cursor: pointer;
-  padding: 10px;
-  transition: color 0.2s;
+  padding: var(--space-md);
+  transition: color var(--duration-fast);
 }
 
 .image-modal-close:hover {
@@ -241,24 +292,24 @@ h3 {
 /* Box Themes */
 .cardbox {
   background: var(--ink-surface);
-  border: 1px solid var(--ink-border);
-  border-radius: 4px;
+  border: var(--space-fine) solid var(--ink-border);
+  border-radius: var(--radius-md);
   /* rigid box */
   box-shadow:
     inset 0px 0px 10px rgba(182, 163, 128, 0.1),
-    2px 2px 5px rgba(99, 85, 64, 0.05);
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    var(--space-line) var(--space-line) var(--space-sm) rgba(99, 85, 64, 0.05);
+  transition: transform var(--duration-fast) ease, border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
   position: relative;
 }
 
 /* Card inside a box */
 .card {
   background: var(--ink-card);
-  border: 1px solid var(--ink-border);
-  border-radius: 4px;
+  border: var(--space-fine) solid var(--ink-border);
+  border-radius: var(--radius-md);
   /* shadow to look like a thick card/box */
   box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.05), inset 0 0 20px rgba(230, 218, 195, 0.1);
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s ease, box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform var(--duration-slow) var(--ease-in-out), border-color var(--duration-normal) ease, box-shadow var(--duration-slow) var(--ease-in-out);
   position: relative;
   overflow: hidden;
 }
@@ -314,7 +365,7 @@ h3 {
 
 /* Shoebox lid effect */
 .box-lid {
-  border-bottom: 4px solid var(--kraft-dark);
+  border-bottom: var(--radius-md) solid var(--kraft-dark);
   box-shadow: 0 4px 6px -1px rgba(99, 85, 64, 0.1);
   position: relative;
   overflow: visible;
@@ -323,10 +374,10 @@ h3 {
 .box-lid::after {
   content: '';
   position: absolute;
-  bottom: -4px;
+  bottom: calc(-1 * var(--radius-md));
   left: 0;
   right: 0;
-  height: 4px;
+  height: var(--radius-md);
   background: repeating-linear-gradient(45deg, var(--kraft-base), var(--kraft-base) 10px, var(--kraft-mid) 10px, var(--kraft-mid) 20px);
   opacity: 0.4;
   pointer-events: none;
@@ -341,13 +392,13 @@ h3 {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 3rem;
   color: var(--kraft-dark);
-  border: 1px dashed var(--kraft-dark);
-  margin: 4px;
+  border: var(--space-fine) dashed var(--kraft-dark);
+  margin: var(--space-xs);
 }
 
 /* Gold accent line */
 .gold-line {
-  height: 2px;
+  height: var(--space-line);
   background: var(--text-primary);
   /* darker ink for high contrast */
 }
@@ -358,10 +409,10 @@ h3 {
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  padding: 2px 6px;
-  border-radius: 2px;
+  padding: var(--space-fine) var(--space-sm);
+  border-radius: var(--radius-sm);
   font-weight: 700;
-  border: 1px solid var(--text-muted);
+  border: var(--space-fine) solid var(--text-muted);
 }
 
 /* Condition badges - matching the kraft theme better */
@@ -410,10 +461,10 @@ h3 {
   letter-spacing: 0.1em;
   font-size: 1.1rem;
   padding: 0.6rem 1.8rem;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   border: none;
   cursor: pointer;
-  transition: opacity 0.2s, transform 0.1s, background 0.2s;
+  transition: opacity var(--duration-fast), transform calc(var(--duration-fast) / 2), background var(--duration-fast);
   text-decoration: none;
   display: inline-block;
   text-transform: uppercase;
@@ -432,10 +483,10 @@ h3 {
   letter-spacing: 0.1em;
   font-size: 1.1rem;
   padding: 0.6rem 1.8rem;
-  border-radius: 2px;
-  border: 2px solid var(--ink-deep);
+  border-radius: var(--radius-sm);
+  border: var(--space-line) solid var(--ink-deep);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--duration-fast);
   text-decoration: none;
   display: inline-block;
   text-transform: uppercase;
@@ -449,7 +500,7 @@ h3 {
 /* Box tape / warning stripe */
 .tape-stripe {
   background: repeating-linear-gradient(45deg, var(--gold) 0, var(--gold) 20px, #2c251d 20px, #2c251d 40px);
-  height: 8px;
+  height: var(--space-sm);
   width: 100%;
 }
 
@@ -461,13 +512,13 @@ input[type="password"],
 select,
 textarea {
   background: var(--ink-card);
-  border: 1px solid var(--kraft-dark);
+  border: var(--space-fine) solid var(--kraft-dark);
   color: var(--text-primary);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   padding: 0.65rem 1rem;
   font-family: 'Inter', sans-serif;
   font-size: 0.9rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
   outline: none;
   width: 100%;
   box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.05);
@@ -477,13 +528,13 @@ input:focus,
 select:focus,
 textarea:focus {
   border-color: var(--text-primary);
-  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.05), 0 0 0 2px rgba(92, 78, 61, 0.1);
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.05), 0 0 0 var(--space-line) rgba(92, 78, 61, 0.1);
 }
 
 /* Stamp/label decorative element */
 .stamp-border {
-  border: 4px double var(--kraft-dark);
-  border-radius: 2px;
+  border: var(--radius-md) double var(--kraft-dark);
+  border-radius: var(--radius-sm);
   background: var(--ink-surface);
   position: relative;
 }
@@ -528,7 +579,7 @@ textarea:focus {
 }
 
 .animate-fade-up {
-  animation: fadeInUp 0.4s ease-out both;
+  animation: fadeInUp var(--duration-normal) ease-out both;
 }
 
 @keyframes shimmer {
@@ -545,7 +596,7 @@ textarea:focus {
   background: linear-gradient(90deg, var(--kraft-base) 25%, var(--kraft-light) 50%, var(--kraft-base) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
 }
 
 /* Cart badge */
@@ -554,7 +605,7 @@ textarea:focus {
   color: #fff;
   font-size: 0.65rem;
   font-weight: 700;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   width: 18px;
   height: 18px;
   display: flex;

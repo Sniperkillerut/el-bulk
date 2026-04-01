@@ -77,7 +77,7 @@ export default function AdminClientDetailPage() {
                 {detail.first_name[0]}{detail.last_name[0]}
               </div>
               <div>
-                <h1 className="text-5xl mb-1 uppercase leading-none">{detail.first_name} {detail.last_name}</h1>
+                <h1 className="text-4xl font-display mb-1 uppercase leading-none">{detail.first_name} {detail.last_name}</h1>
                 <div className="flex items-center gap-3">
                   <span className="text-[10px] font-mono-stack text-text-muted bg-kraft-light px-2 py-0.5 border border-kraft-shadow">ID: {detail.id}</span>
                   {detail.is_subscriber && (

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { fetchProducts, fetchCategories, fetchTCGs, fetchBounties } from '@/lib/api';
 import ProductCard from '@/components/ProductCard';
 import BountyCard from '@/components/BountyCard';
-import { TCG_SHORT, CustomCategory } from '@/lib/types';
+import { CustomCategory } from '@/lib/types';
 import HomeSearchBar from '@/components/HomeSearchBar';
 import NoticeSection from '@/components/NoticeSection';
 
@@ -62,7 +62,7 @@ export default async function HomePage() {
             <div className="badge flex items-center justify-center inline-flex" style={{ background: 'var(--kraft-light)', color: 'var(--hp-color)', borderColor: 'var(--hp-color)', marginBottom: '1.5rem', borderWidth: '2px', transform: 'rotate(-2deg)' }}>
               STORE_01 // YOUR LOCAL TCG SHOP
             </div>
-            <h1 className="font-display text-5xl sm:text-7xl md:text-8xl leading-none mb-4" style={{ color: 'var(--ink-deep)' }}>
+            <h1 className="font-display text-5xl sm:text-7xl md:text-8xl leading-none mb-4 text-fluid-h1" style={{ color: 'var(--ink-deep)' }}>
               EL <span style={{ color: 'var(--gold-dark)' }}>BULK</span>
             </h1>
             <p className="text-base md:text-lg mb-8" style={{ color: 'var(--text-secondary)', maxWidth: 480 }}>

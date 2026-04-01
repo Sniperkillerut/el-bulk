@@ -549,7 +549,7 @@ export default function CSVImportModal({ token, storageLocations, categories, on
                             value={item.name || ''} 
                             onChange={(e) => updatePreviewItem(idx, { name: e.target.value })}
                             placeholder="Card Name"
-                            className="bg-transparent text-[#d4c3b3] font-bold w-full focus:outline-none focus:bg-[#3c2a21] px-1"
+                            className="bg-transparent text-[#d4c3b3] font-bold w-full text-[11px] focus:outline-none focus:bg-[#3c2a21] px-1"
                           />
                           <div className="flex gap-2 mt-1">
                             <input 

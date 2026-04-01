@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { adminFetchNotices, adminCreateNotice, adminUpdateNotice } from '@/lib/api';
-import { Notice, NoticeInput } from '@/lib/types';
+import { NoticeInput } from '@/lib/types';
 import { useAdmin } from '@/hooks/useAdmin';
+import AdminHeader from '@/components/admin/AdminHeader';
 
 export default function NoticeEditor() {
   const { id } = useParams();
@@ -55,7 +56,7 @@ export default function NoticeEditor() {
     }));
   };
 
-  const set = (key: keyof NoticeInput, val: any) => setForm(f => ({ ...f, [key]: val }));
+  const set = <K extends keyof NoticeInput>(key: K, val: NoticeInput[K]) => setForm(f => ({ ...f, [key]: val }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,8 +71,9 @@ export default function NoticeEditor() {
         await adminCreateNotice(adminToken, form);
       }
       router.push('/admin/notices');
-    } catch (err: any) {
-      setError(err.message || 'Failed to save notice');
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message || 'Failed to save notice');
     } finally {
       setSaving(false);
     }
@@ -81,13 +83,13 @@ export default function NoticeEditor() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto pb-24">
-      <header className="mb-8 border-b-2 border-kraft-dark pb-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-display uppercase">{isEdit ? 'Edit Notice' : 'New Notice'}</h1>
-          <p className="text-sm font-mono-stack text-text-secondary">Compose your shop update using raw HTML.</p>
-        </div>
-        <button onClick={() => router.push('/admin/notices')} className="btn-secondary text-xs">DISCARD</button>
-      </header>
+      <AdminHeader 
+        title={isEdit ? 'EDIT NOTICE' : 'NEW NOTICE'}
+        subtitle="Compose your shop update using raw HTML."
+        actions={
+          <button onClick={() => router.push('/admin/notices')} className="btn-secondary text-xs">DISCARD</button>
+        }
+      />
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">

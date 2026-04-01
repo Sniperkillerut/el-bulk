@@ -6,6 +6,7 @@ import { useAdmin } from '@/hooks/useAdmin';
 import { adminFetchSubscribers } from '@/lib/api';
 import { NewsletterSubscriber } from '@/lib/types';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import AdminHeader from '@/components/admin/AdminHeader';
 
 export default function AdminSubscribersPage() {
   const { token } = useAdmin();
@@ -25,19 +26,19 @@ export default function AdminSubscribersPage() {
 
   return (
     <div className="p-8">
-      <div className="flex justify-between items-end mb-8">
-        <div>
-          <h1 className="text-4xl mb-2">SUBSCRIBERS</h1>
-          <p className="font-mono-stack text-xs text-text-muted uppercase tracking-widest">Newsletter Management</p>
-        </div>
-        <div className="text-right">
-           <span className="font-mono-stack text-[10px] text-text-muted uppercase font-bold tracking-tighter">Secure Link Active</span>
-           <div className="flex items-center gap-2 mt-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-lp-color animate-pulse"></div>
-              <span className="text-xs font-bold font-mono-stack">{subscribers.length} Emails</span>
-           </div>
-        </div>
-      </div>
+      <AdminHeader 
+        title="SUBSCRIBERS"
+        subtitle="Newsletter Management"
+        actions={
+          <div className="text-right">
+             <span className="font-mono-stack text-[10px] text-text-muted uppercase font-bold tracking-tighter">Secure Link Active</span>
+             <div className="flex items-center gap-2 mt-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-lp-color animate-pulse"></div>
+                <span className="text-xs font-bold font-mono-stack">{subscribers.length} Emails</span>
+             </div>
+          </div>
+        }
+      />
 
       <div className="cardbox overflow-hidden max-w-4xl">
         <table className="w-full text-left border-collapse">

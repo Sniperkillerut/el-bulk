@@ -10,9 +10,9 @@ interface CardInfoProps {
 export default function CardInfo({ name, setName, setCode, hoverEffect = true }: CardInfoProps) {
   return (
     <>
-      <h3 
-        className={`text-sm font-semibold leading-snug transition-colors line-clamp-2 ${hoverEffect ? 'hover:text-gold' : ''}`}
-        style={{ color: 'var(--text-primary)' }}
+      <h3
+        className={`text-[11px] font-bold leading-none tracking-tight transition-colors line-clamp-2 ${hoverEffect ? 'hover:text-gold' : ''}`}
+        style={{ color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}
       >
         {name}
       </h3>

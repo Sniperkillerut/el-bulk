@@ -20,7 +20,7 @@ export default function NoticesPage() {
     <div className="centered-container px-4 py-12">
       <header className="mb-12 border-b-2 border-kraft-dark pb-4 flex flex-col md:flex-row md:items-baseline justify-between gap-4">
         <div>
-          <h1 className="font-display text-5xl sm:text-6xl uppercase" style={{ color: 'var(--ink-deep)' }}>
+          <h1 className="font-display text-5xl sm:text-6xl uppercase text-fluid-h1" style={{ color: 'var(--ink-deep)' }}>
             NOTICES & <span style={{ color: 'var(--gold-dark)' }}>UPDATES</span>
           </h1>
           <p className="font-mono-stack text-sm text-text-secondary mt-2">Latest news, spoilers, and reviews from the shop.</p>

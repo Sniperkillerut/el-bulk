@@ -6,6 +6,7 @@ import { Notice } from '@/lib/types';
 import { adminFetchNotices, adminDeleteNotice } from '@/lib/api';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useRouter } from 'next/navigation';
+import AdminHeader from '@/components/admin/AdminHeader';
 
 export default function AdminNoticesPage() {
   const { token: adminToken } = useAdmin();
@@ -29,22 +30,22 @@ export default function AdminNoticesPage() {
     try {
       await adminDeleteNotice(adminToken, id);
       setNotices(notices.filter(n => n.id !== id));
-    } catch (err) {
+    } catch {
       alert('Failed to delete notice');
     }
   };
 
   return (
     <div className="p-6">
-      <header className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-display uppercase text-ink-deep">Notices (Blog/News)</h1>
-          <p className="text-sm text-text-secondary font-mono-stack">Manage your shop updates and news posts.</p>
-        </div>
-        <Link href="/admin/notices/new" className="btn-primary">
-          + CREATE NEW NOTICE
-        </Link>
-      </header>
+      <AdminHeader 
+        title="NOTICES (BLOG/NEWS)"
+        subtitle="Manage your shop updates and news posts."
+        actions={
+          <Link href="/admin/notices/new" className="btn-primary">
+            + CREATE NEW NOTICE
+          </Link>
+        }
+      />
 
       <div className="bg-surface rounded-sm border-2 border-kraft-shadow overflow-hidden shadow-sm">
         <table className="w-full text-left border-collapse">

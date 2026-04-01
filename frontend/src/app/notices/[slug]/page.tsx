@@ -45,7 +45,7 @@ export default function NoticeDetailPage() {
             <div className="text-[10px] font-mono-stack font-bold px-3 py-1 bg-kraft-light text-text-secondary border border-kraft-shadow self-start uppercase">
               Published on {new Date(notice.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </div>
-            <h1 className="font-display text-4xl sm:text-6xl md:text-7xl uppercase leading-tight max-w-4xl" style={{ color: 'var(--ink-deep)' }}>
+            <h1 className="font-display text-4xl sm:text-6xl md:text-7xl uppercase leading-tight max-w-4xl text-fluid-h1" style={{ color: 'var(--ink-deep)' }}>
               {notice.title}
             </h1>
           </div>

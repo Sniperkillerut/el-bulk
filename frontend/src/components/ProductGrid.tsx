@@ -132,7 +132,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
         <p className="text-[10px] sm:text-xs font-mono-stack mb-1" style={{ color: 'var(--text-muted)' }}>
           {TCG_LABELS[tcg] || tcg.toUpperCase()} / {category.toUpperCase()}
         </p>
-        <h1 className="font-display text-4xl sm:text-5xl md:text-6xl" style={{ color: 'var(--text-primary)' }}>
+        <h1 className="font-display text-fluid-h1" style={{ color: 'var(--text-primary)' }}>
           {title}
         </h1>
         {subtitle && <p style={{ color: 'var(--text-secondary)' }} className="mt-2 text-sm md:text-base">{subtitle}</p>}

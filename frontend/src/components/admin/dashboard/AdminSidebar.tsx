@@ -2,42 +2,42 @@
 
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
 import { adminFetchStats } from '@/lib/api';
 import { AdminStats } from '@/lib/types';
+import { useAdmin } from '@/hooks/useAdmin';
 
 export default function AdminSidebar() {
   const pathname = usePathname();
-  const router = useRouter();
-
-  const handleLogout = () => {
-    localStorage.removeItem('el_bulk_admin_token');
-    router.push('/admin/login');
-  };
+  const { token, logout } = useAdmin();
 
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
 
-  const fetchStats = async () => {
-    const token = localStorage.getItem('el_bulk_admin_token');
+  const fetchStats = useCallback(async () => {
     if (!token) return;
     setLoadingStats(true);
     try {
       const data = await adminFetchStats(token);
       setStats(data);
     } catch (err) {
-      console.error('Failed to fetch sidebar stats', err);
+      const error = err as Error;
+      if (error.message.includes('invalid token') || error.message.includes('Unauthorized')) {
+        logout();
+      } else {
+        console.error('Failed to fetch sidebar stats', err);
+      }
     } finally {
       setLoadingStats(false);
     }
-  };
+  }, [token, logout]);
 
   useEffect(() => {
     fetchStats();
     const interval = setInterval(fetchStats, 30000); // 30s auto-refresh
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchStats]);
 
   const navItems = [
     { label: 'INVENTORY', href: '/admin/dashboard', icon: '📦' },
@@ -134,7 +134,7 @@ export default function AdminSidebar() {
         </div>
 
         <button
-          onClick={handleLogout}
+          onClick={logout}
           className="w-full flex items-center gap-3 px-4 py-3 text-hp-color hover:bg-hp-color/10 rounded-lg transition-all font-display text-sm tracking-tight border border-hp-color/20"
         >
           <span>🚪</span>

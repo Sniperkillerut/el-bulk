@@ -124,14 +124,14 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex-1 flex flex-col p-8 min-h-0 max-w-7xl mx-auto w-full">
-      <AdminHeader 
-        title="INVENTORY MANAGEMENT" 
+      <AdminHeader
+        title="INVENTORY MANAGEMENT"
         subtitle="Store Dashboard // Operations Active"
         actions={
           <>
             <div className="flex flex-col items-end mr-4">
-              <button 
-                onClick={handleSyncSets} 
+              <button
+                onClick={handleSyncSets}
                 disabled={isSyncing}
                 className="btn-secondary px-4 py-1.5 text-[10px] flex items-center gap-2 mb-1"
               >
@@ -207,17 +207,17 @@ export default function AdminDashboard() {
 
       {/* Product Table Area - Now Flexible and Scrollable */}
       <div className="flex-1 min-h-0 card border-kraft-dark/20 shadow-sm bg-white overflow-hidden flex flex-col">
-          <div className="flex-1 overflow-auto">
-            <ProductTable
-              products={products}
-              sortKey={sortKey}
-              sortDir={sortDir}
-              onSort={handleSort}
-              onEdit={(p) => { setEditingProduct(p); setShowEditModal(true); }}
-              onDelete={handleDeleteProduct}
-              loading={loading}
-            />
-          </div>
+        <div className="flex-1 overflow-auto">
+          <ProductTable
+            products={products}
+            sortKey={sortKey}
+            sortDir={sortDir}
+            onSort={handleSort}
+            onEdit={(p) => { setEditingProduct(p); setShowEditModal(true); }}
+            onDelete={handleDeleteProduct}
+            loading={loading}
+          />
+        </div>
       </div>
 
       {/* Pagination Footer - Fixed at Bottom */}

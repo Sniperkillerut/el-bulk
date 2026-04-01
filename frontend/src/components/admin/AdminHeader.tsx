@@ -12,7 +12,7 @@ export default function AdminHeader({ title, subtitle, actions }: AdminHeaderPro
   return (
     <header className="flex justify-between items-start mb-8 flex-shrink-0">
       <div className="space-y-1">
-        <h1 className="font-display text-5xl tracking-tighter text-ink-deep m-0 uppercase leading-none">
+        <h1 className="font-display text-5xl tracking-tight text-ink-deep m-0 uppercase leading-none">
           {title}
         </h1>
         {subtitle && (

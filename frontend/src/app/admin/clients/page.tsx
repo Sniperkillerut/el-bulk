@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import AdminHeader from '@/components/admin/AdminHeader';
 import { useAdmin } from '@/hooks/useAdmin';
 import { adminFetchClients } from '@/lib/api';
 import { CustomerStats } from '@/lib/types';
@@ -37,21 +38,21 @@ export default function AdminClientsPage() {
 
   return (
     <div className="p-8">
-      <div className="flex justify-between items-end mb-8">
-        <div>
-          <h1 className="text-4xl mb-2 uppercase">CRM: Client Registry</h1>
-          <p className="font-mono-stack text-xs text-text-muted uppercase tracking-widest">Managing Relationships & Interactions</p>
-        </div>
-        <div className="w-64">
-           <input 
-            type="text" 
-            placeholder="SEARCH CLIENTS..." 
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-            className="text-xs font-mono-stack"
-           />
-        </div>
-      </div>
+      <AdminHeader 
+        title="CRM: Client Registry" 
+        subtitle="Managing Relationships & Interactions"
+        actions={
+          <div className="w-64">
+            <input 
+              type="text" 
+              placeholder="SEARCH CLIENTS..." 
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+              className="text-xs font-mono-stack"
+            />
+          </div>
+        }
+      />
 
       <div className="cardbox overflow-hidden">
         <table className="w-full text-left border-collapse">

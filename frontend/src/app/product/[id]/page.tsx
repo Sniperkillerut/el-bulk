@@ -16,10 +16,19 @@ export default function ProductDetailPage() {
   const [added, setAdded] = useState(false);
   const { addItem } = useCart();
 
+  const [prevId, setPrevId] = useState(id);
+
+  // Derived state to reset loading when ID changes, avoiding cascading render warning in useEffect
+  if (id !== prevId) {
+    setPrevId(id);
+    setLoading(true);
+    setProduct(null);
+    setError(false);
+  }
+
   useEffect(() => {
     if (!id) return;
 
-    setLoading(true);
     fetchProduct(id)
       .then(p => {
         setProduct(p);
@@ -55,7 +64,7 @@ export default function ProductDetailPage() {
 
   if (error || !product) return (
     <div className="max-w-4xl mx-auto px-4 py-16 text-center stamp-border mt-12 bg-surface p-12">
-      <h1 className="font-display text-5xl mb-4 text-hp-color">ITEM NOT FOUND</h1>
+      <div role="heading" aria-level={1} className="font-display text-3xl mb-4 text-hp-color uppercase">ITEM NOT FOUND</div>
       <p style={{ color: 'var(--text-muted)' }} className="mb-6 font-mono-stack">This item may have been sold or removed.</p>
       <Link href="/" className="btn-secondary">← Back to Shoebox</Link>
     </div>
@@ -102,7 +111,7 @@ export default function ProductDetailPage() {
                   {product.set_code ? `[${product.set_code}] ` : ''}{product.set_name}
                 </p>
               )}
-              <h1 className="font-display text-4xl md:text-5xl" style={{ color: 'var(--ink-deep)' }}>
+              <h1 className="font-display text-3xl md:text-4xl" style={{ color: 'var(--ink-deep)' }}>
                 {product.name}
               </h1>
               {product.type_line && (
