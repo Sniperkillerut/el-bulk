@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import useSWR from 'swr';
 import { fetchProducts, fetchCategories } from '@/lib/api';
 import ProductCard from '@/components/ProductCard';
-import { Product, FOIL_LABELS, TREATMENT_LABELS, TCG_LABELS, CustomCategory } from '@/lib/types';
+import { FOIL_LABELS, TREATMENT_LABELS, TCG_LABELS, CustomCategory } from '@/lib/types';
 
 interface FiltersState {
   search: string;
@@ -73,7 +73,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
     logic: logic !== 'or' ? logic : undefined,
   }), [tcg, category, page, debouncedSearch, filters, sortBy, sortDir, logic]);
 
-  const { data: res, error, isLoading: loadingResult } = useSWR(
+  const { data: res, isLoading: loadingResult } = useSWR(
     ['/api/products', fetcherArgs],
     ([, args]) => fetchProducts(args),
     { 

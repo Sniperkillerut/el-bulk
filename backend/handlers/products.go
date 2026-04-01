@@ -257,49 +257,6 @@ func (h *ProductHandler) populateCategories(products []models.Product, isAdmin b
 	}
 }
 
-func (h *ProductHandler) populateDeckCards(products []models.Product) {
-	if len(products) == 0 {
-		return
-	}
-	var deckPids []string
-	for _, p := range products {
-		if p.Category == "store_exclusives" {
-			deckPids = append(deckPids, p.ID)
-		}
-	}
-	if len(deckPids) == 0 {
-		return
-	}
-
-	sql := "SELECT id, product_id, name, set_code, collector_number, quantity, type_line, image_url, foil_treatment, card_treatment, rarity, art_variation FROM deck_card WHERE product_id IN (?)"
-	query, args, err := sqlx.In(sql, deckPids)
-	if err != nil {
-		logger.Error("Error creating IN query for populateDeckCards: %v", err)
-		return
-	}
-	query = h.DB.Rebind(query)
-	var rows []models.DeckCard
-	if err := h.DB.Select(&rows, query, args...); err != nil {
-		logger.Error("Error selecting deck_cards: %v", err)
-		return
-	}
-
-	cardMap := make(map[string][]models.DeckCard)
-	for _, r := range rows {
-		cardMap[r.ProductID] = append(cardMap[r.ProductID], r)
-	}
-
-	for i := range products {
-		if products[i].Category == "store_exclusives" {
-			if cards, ok := cardMap[products[i].ID]; ok {
-				products[i].DeckCards = cards
-			} else {
-				products[i].DeckCards = []models.DeckCard{}
-			}
-		}
-	}
-}
-
 func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	q := r.URL.Query()
@@ -844,9 +801,10 @@ func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, tr
 			lv := strings.ToLower(v)
 			placeholder := fmt.Sprintf("$%d", len(builder.Args)+1)
 			cond := "LOWER(p.card_treatment) = " + placeholder
-			if lv == "textless" {
+			switch lv {
+			case "textless":
 				cond = "(" + cond + " OR p.textless = true)"
-			} else if lv == "full_art" {
+			case "full_art":
 				cond = "(" + cond + " OR p.full_art = true)"
 			}
 			conds = append(conds, cond)
