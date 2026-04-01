@@ -22,7 +22,7 @@ export default function StorefrontLayoutWrapper({ children }: { children: React.
         {children}
       </main>
       <footer style={{ background: 'var(--ink-navy)', borderTop: '1px solid var(--ink-border)', padding: '2rem 1rem' }}>
-        <div className="centered-container flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="w-full px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
             <span className="font-display text-xl text-gold">EL BULK</span>
             <span className="text-xs ml-2" style={{ color: 'var(--text-muted)', fontFamily: 'Space Mono, monospace' }}>TCG STORE</span>

@@ -27,7 +27,7 @@ export default function Navbar() {
     <>
       <nav style={{ background: 'var(--ink-navy)', borderBottom: '1px solid var(--ink-border)' }}
         className="sticky top-0 z-40">
-        <div className="centered-container px-4 flex items-center justify-between h-16">
+        <div className="w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-1 sm:gap-2 no-underline shrink-0">
             <div style={{ background: 'var(--gold)', borderRadius: '4px', padding: '2px 6px sm:8px' }}>
