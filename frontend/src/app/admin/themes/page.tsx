@@ -350,69 +350,69 @@ export default function AdminThemesPage() {
 
                 {/* 2. Surface Palette */}
                 <Collapsible 
-                  title="Surface Layout" 
+                  title="Backgrounds & Surfaces" 
                   isOpen={expanded.surface} 
                   onToggle={() => setExpanded(p => ({...p, surface: !p.surface}))}
                 >
                   <div className="space-y-2">
-                    <ColorInput label="Page Canvas" value={form.bg_page} onChange={val => setForm({...form, bg_page: val})} />
-                    <ColorInput label="Header Strip" value={form.bg_header} onChange={val => setForm({...form, bg_header: val})} />
-                    <ColorInput label="Card Solid" value={form.bg_surface} onChange={val => setForm({...form, bg_surface: val})} />
-                    <ColorInput label="Wireframes" value={form.border_main} onChange={val => setForm({...form, border_main: val})} />
+                    <ColorInput label="Global Page Background" value={form.bg_page} onChange={val => setForm({...form, bg_page: val})} />
+                    <ColorInput label="Navigation Header" value={form.bg_header} onChange={val => setForm({...form, bg_header: val})} />
+                    <ColorInput label="Card & Panel Surface" value={form.bg_surface} onChange={val => setForm({...form, bg_surface: val})} />
+                    <ColorInput label="Borders & Dividers" value={form.border_main} onChange={val => setForm({...form, border_main: val})} />
                   </div>
                 </Collapsible>
 
                 {/* 3. Brand Palette */}
                 <Collapsible 
-                  title="Signature" 
+                  title="Brand & Highlights" 
                   isOpen={expanded.signature} 
                   onToggle={() => setExpanded(p => ({...p, signature: !p.signature}))}
                 >
                   <div className="space-y-2">
-                    <ColorInput label="Main Soul" value={form.accent_primary} onChange={val => setForm({...form, accent_primary: val})} />
-                    <ColorInput label="Trace Soul" value={form.accent_primary_hover} onChange={val => setForm({...form, accent_primary_hover: val})} />
-                    <ColorInput label="Contrast In" value={form.text_on_accent} onChange={val => setForm({...form, text_on_accent: val})} />
+                    <ColorInput label="Primary Accent Color" value={form.accent_primary} onChange={val => setForm({...form, accent_primary: val})} />
+                    <ColorInput label="Hover / Secondary Accent" value={form.accent_primary_hover} onChange={val => setForm({...form, accent_primary_hover: val})} />
+                    <ColorInput label="Text on Accent Backgrounds" value={form.text_on_accent} onChange={val => setForm({...form, text_on_accent: val})} />
                   </div>
                 </Collapsible>
 
                 {/* 4. Type Palette */}
                 <Collapsible 
-                  title="Type System" 
+                  title="Typography & Content" 
                   isOpen={expanded.type} 
                   onToggle={() => setExpanded(p => ({...p, type: !p.type}))}
                 >
                   <div className="space-y-2">
-                    <ColorInput label="Primary Ink" value={form.text_main} onChange={val => setForm({...form, text_main: val})} />
-                    <ColorInput label="Sub Ink" value={form.text_secondary} onChange={val => setForm({...form, text_secondary: val})} />
-                    <ColorInput label="Ghost Ink" value={form.text_muted} onChange={val => setForm({...form, text_muted: val})} />
+                    <ColorInput label="Primary Heading Text" value={form.text_main} onChange={val => setForm({...form, text_main: val})} />
+                    <ColorInput label="Secondary / Body Text" value={form.text_secondary} onChange={val => setForm({...form, text_secondary: val})} />
+                    <ColorInput label="Muted / Small Text" value={form.text_muted} onChange={val => setForm({...form, text_muted: val})} />
                   </div>
                 </Collapsible>
 
                 {/* 5. Logic Palette */}
                 <Collapsible 
-                  title="Condition Logic" 
+                  title="Condition Status Indicators" 
                   isOpen={expanded.logic} 
                   onToggle={() => setExpanded(p => ({...p, logic: !p.logic}))}
                 >
                   <div className="space-y-2">
-                    <ColorInput label="Mint (NM)" value={form.status_nm} onChange={val => setForm({...form, status_nm: val})} />
-                    <ColorInput label="Played (LP)" value={form.status_lp} onChange={val => setForm({...form, status_lp: val})} />
-                    <ColorInput label="Worn (MP)" value={form.status_mp} onChange={val => setForm({...form, status_mp: val})} />
-                    <ColorInput label="Heavy (HP)" value={form.status_hp} onChange={val => setForm({...form, status_hp: val})} />
+                    <ColorInput label="Near Mint (NM) Status" value={form.status_nm} onChange={val => setForm({...form, status_nm: val})} />
+                    <ColorInput label="Lightly Played (LP) Status" value={form.status_lp} onChange={val => setForm({...form, status_lp: val})} />
+                    <ColorInput label="Moderately Played (MP) Status" value={form.status_mp} onChange={val => setForm({...form, status_mp: val})} />
+                    <ColorInput label="Heavily Played (HP) Status" value={form.status_hp} onChange={val => setForm({...form, status_hp: val})} />
                   </div>
                 </Collapsible>
 
                 {/* 6. Layout Geometry */}
                 <Collapsible 
-                  title="Geometry & Spacing" 
+                  title="Layout & Card Geometry" 
                   icon={<Icons.Maximize />} 
                   isOpen={expanded.geometry} 
                   onToggle={() => setExpanded(p => ({...p, geometry: !p.geometry}))}
                 >
                   <div className="space-y-2">
-                    <LayoutPropertyInput label="Corner Radius" value={form.radius_base} onChange={val => setForm({...form, radius_base: val})} helperText="Card rounding (px/rem)" />
-                    <LayoutPropertyInput label="Card Spacing" value={form.padding_card} onChange={val => setForm({...form, padding_card: val})} helperText="Internal padding" />
-                    <LayoutPropertyInput label="Grid Gap" value={form.gap_grid} onChange={val => setForm({...form, gap_grid: val})} helperText="Spacing between cards" />
+                    <LayoutPropertyInput label="Card Corner Rounding" value={form.radius_base} onChange={val => setForm({...form, radius_base: val})} helperText="(px/rem)" />
+                    <LayoutPropertyInput label="Internal Card Padding" value={form.padding_card} onChange={val => setForm({...form, padding_card: val})} helperText="(px/rem)" />
+                    <LayoutPropertyInput label="Grid Spacing (Gap)" value={form.gap_grid} onChange={val => setForm({...form, gap_grid: val})} helperText="(px/rem)" />
                   </div>
                 </Collapsible>
               </div>
