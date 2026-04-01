@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
@@ -42,6 +43,7 @@ func main() {
 	r.Use(chiMiddleware.Logger)
 	r.Use(chiMiddleware.Recoverer)
 	r.Use(middleware.CORS)
+	r.Use(middleware.SecurityHeaders)
 
 	// Health check
 	r.Get("/health", healthHandler.Ping)
@@ -56,11 +58,11 @@ func main() {
 
 		r.Get("/bounties", bountyHandler.List)
 		r.Post("/bounties/offers", bountyHandler.SubmitOffer)
-		r.Post("/client-requests", bountyHandler.CreateRequest)
+		r.With(middleware.RateLimit(5, 10*time.Minute)).Post("/client-requests", bountyHandler.CreateRequest)
 		
 		// Newsletter
 		newsletterHandler := &handlers.NewsletterHandler{DB: database}
-		r.Post("/newsletter/subscribe", newsletterHandler.Subscribe)
+		r.With(middleware.RateLimit(3, 30*time.Minute)).Post("/newsletter/subscribe", newsletterHandler.Subscribe)
 
 		// Public order creation (with optional user context)
 		r.With(middleware.OptionalUserAuth).Post("/orders", orderHandler.Create)
@@ -72,7 +74,7 @@ func main() {
 		// User Auth
 		userAuthHandler := handlers.NewUserAuthHandler(database)
 		r.Route("/auth", func(r chi.Router) {
-			r.Get("/google/login", userAuthHandler.GoogleLogin)
+			r.With(middleware.RateLimit(10, 5*time.Minute)).Get("/google/login", userAuthHandler.GoogleLogin)
 			r.Get("/google/callback", userAuthHandler.GoogleCallback)
 			r.Post("/logout", userAuthHandler.Logout)
 			r.With(middleware.RequireUserAuth).Get("/me", userAuthHandler.Me)
@@ -80,7 +82,7 @@ func main() {
 
 		// Admin routes (protected)
 		r.Route("/admin", func(r chi.Router) {
-			r.Post("/login", adminHandler.Login)
+			r.With(middleware.RateLimit(5, 15*time.Minute)).Post("/login", adminHandler.Login)
 			r.Post("/logout", adminHandler.Logout)
 
 			r.Group(func(r chi.Router) {
