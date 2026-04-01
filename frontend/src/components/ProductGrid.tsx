@@ -158,14 +158,14 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
             className="w-full btn-secondary py-3 !flex items-center justify-center border border-kraft-dark group"
           >
             <div className="flex items-center justify-center gap-3">
-              <svg 
-                width="18" 
-                height="18" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2.5" 
-                strokeLinecap="round" 
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
                 strokeLinejoin="round"
                 className="shrink-0 transition-transform group-hover:scale-110"
               >
@@ -197,7 +197,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
             </button>
           </div>
 
-          <div className="flex flex-col gap-6 md:pr-2 pb-8">
+          <div className="flex flex-col gap-3 md:pr-2 pb-8">
             {/* Logic Toggle */}
             <div className="flex flex-col gap-2">
               <p className="text-[10px] font-bold text-text-muted uppercase font-mono-stack">Search Strategy</p>
@@ -243,7 +243,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
             {category === 'singles' && (
               <div className="flex flex-col gap-1">
                 {/* Stock - Always at top */}
-                <div className="border-b border-ink-border/20 py-5 px-2">
+                <div className="border-b border-ink-border/20 py-2 px-2">
                   <p className="font-display text-xl sm:text-2xl text-ink-deep mb-3 uppercase tracking-tight">Availability</p>
                   <label className="flex items-center justify-between cursor-pointer group">
                     <div className="flex items-center gap-2.5">
@@ -496,7 +496,7 @@ function FilterSection({
   if (visibleItems.length === 0) return null;
 
   return (
-    <div className="border-b border-ink-border/20 py-5 px-2">
+    <div className="border-b border-ink-border/20 py-2 px-2">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex justify-between items-center group mb-1"
