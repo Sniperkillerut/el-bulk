@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { adminFetchNotices, adminCreateNotice, adminUpdateNotice } from '@/lib/api';
 import { NoticeInput } from '@/lib/types';
 import { useAdmin } from '@/hooks/useAdmin';
@@ -9,7 +9,7 @@ import AdminHeader from '@/components/admin/AdminHeader';
 
 export default function NoticeEditor() {
   const { id } = useParams();
-  const { token: adminToken, loading: adminLoading } = useAdmin();
+  const { token: adminToken } = useAdmin();
   const router = useRouter();
   const isEdit = !!id;
 
@@ -33,12 +33,7 @@ export default function NoticeEditor() {
   const [slugTouched, setSlugTouched] = useState(false);
 
   useEffect(() => {
-    if (adminLoading) return;
-    if (!adminToken) {
-      router.push('/admin/login');
-      return;
-    }
-    if (isEdit) {
+    if (isEdit && adminToken) {
       adminFetchNotices(adminToken)
         .then(notices => {
           const notice = notices.find(n => n.id === id);
@@ -55,7 +50,7 @@ export default function NoticeEditor() {
         })
         .finally(() => setLoading(false));
     }
-  }, [id, adminToken, adminLoading, isEdit, router]);
+  }, [id, adminToken, isEdit, router]);
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -89,10 +84,10 @@ export default function NoticeEditor() {
     }
   };
 
-  if (adminLoading || loading) return (
+  if (loading) return (
     <div className="min-h-screen flex items-center justify-center p-12">
       <div className="text-gold font-mono-stack animate-pulse uppercase text-sm font-bold tracking-widest">
-        {adminLoading ? 'Authenticating Session...' : 'Unpacking Notice...'}
+        Unpacking Notice...
       </div>
     </div>
   );

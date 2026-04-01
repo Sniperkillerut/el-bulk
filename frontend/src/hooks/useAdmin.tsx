@@ -22,36 +22,38 @@ export function AdminProvider({ children }: { children: React.ReactNode }): Reac
   const router = useRouter();
 
   useEffect(() => {
-    const t = localStorage.getItem('el_bulk_admin_token');
-    if (!t) {
-      setLoading(false);
-      return;
-    }
-    setToken(t);
-    loadSettings(t);
+    // With middleware protecting the route, we just need to load initial context
+    loadSettings();
   }, []);
 
-  const loadSettings = async (t: string) => {
+  const loadSettings = async () => {
     try {
-      // Try to get admin settings, fallback to public if needed
-      const data = await getAdminSettings(t).catch(() => fetchPublicSettings());
+      // Try to get admin settings. If this fails on a protected route, 
+      // the middleware would have already caught it, but we handle it here for the login page too.
+      const data = await getAdminSettings("").catch(() => fetchPublicSettings());
       setSettings(data);
+      setToken("session_active"); // Marker for existing logic that expects a truthy token
     } catch (err) {
-      console.error('Failed to load settings', err);
+      console.error('Failed to load session settings', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const logout = useCallback(() => {
-    localStorage.removeItem('el_bulk_admin_token');
+  const logout = useCallback(async () => {
+    try {
+      const { adminLogout } = await import('@/lib/api');
+      await adminLogout();
+    } catch (err) {
+      console.error('Logout failed', err);
+    }
     setToken(null);
     router.push('/admin/login');
   }, [router]);
 
   const refreshSettings = useCallback(async () => {
-    if (token) await loadSettings(token);
-  }, [token]);
+    await loadSettings();
+  }, []);
 
   return (
     <AdminContext.Provider value={{ token, settings, loading, logout, refreshSettings }}>

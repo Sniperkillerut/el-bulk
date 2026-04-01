@@ -81,6 +81,7 @@ func main() {
 		// Admin routes (protected)
 		r.Route("/admin", func(r chi.Router) {
 			r.Post("/login", adminHandler.Login)
+			r.Post("/logout", adminHandler.Logout)
 
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.AdminAuth)

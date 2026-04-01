@@ -31,7 +31,7 @@ interface FetchOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined | null>;
 }
 
-async function apiFetch<T>(endpoint: string, options: FetchOptions = {}, token?: string): Promise<T> {
+async function apiFetch<T>(endpoint: string, options: FetchOptions = {}, _token?: string): Promise<T> {
   const { params, headers: customHeaders, ...rest } = options;
   
   const url = new URL(`${API_BASE}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`);
@@ -44,9 +44,7 @@ async function apiFetch<T>(endpoint: string, options: FetchOptions = {}, token?:
   }
 
   const headers = new Headers(customHeaders);
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
-  }
+  // Manual token header removed - now using secure cookies automatically managed by the browser
   if (!headers.has('Content-Type') && (rest.method === 'POST' || rest.method === 'PUT' || rest.method === 'PATCH')) {
     headers.set('Content-Type', 'application/json');
   }
@@ -150,6 +148,10 @@ export async function adminLogin(username: string, password: string): Promise<st
     body: JSON.stringify({ username, password }),
   });
   return data.token;
+}
+
+export async function adminLogout(): Promise<void> {
+  await apiFetch('/api/admin/logout', { method: 'POST' });
 }
 
 export async function adminFetchProducts(token: string, filters: ProductFilters = {}): Promise<ProductListResponse> {

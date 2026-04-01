@@ -17,7 +17,7 @@ import CardImage from '@/components/CardImage';
 import SmartContactLink from '@/components/admin/SmartContactLink';
 
 export default function AdminBountiesPage() {
-  const { token, logout, loading: adminLoading } = useAdmin();
+  const { token, logout } = useAdmin();
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get('tab') as any) || 'bounties';
   const scrollToId = searchParams.get('scrollToId');
@@ -164,13 +164,6 @@ export default function AdminBountiesPage() {
     }
   };
 
-  if (adminLoading || !token) {
-    return (
-      <div className="min-h-screen bg-ink-deep flex items-center justify-center">
-        <div className="text-gold font-mono-stack animate-pulse uppercase">Authenticating...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex-1 flex flex-col p-3 min-h-0 max-w-7xl mx-auto w-full">

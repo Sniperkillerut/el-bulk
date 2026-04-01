@@ -1,7 +1,7 @@
 package handlers
 
 import (
-"github.com/el-bulk/backend/utils/render"
+	"github.com/el-bulk/backend/utils/render"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -72,4 +72,18 @@ func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
 	})
 
 	render.Success(w, models.LoginResponse{Token: signed})
+}
+
+// POST /api/admin/logout
+func (h *AdminHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "admin_token",
+		Value:    "",
+		Path:     "/",
+		Expires:  time.Unix(0, 0),
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+	})
+	render.Success(w, map[string]string{"message": "Logged out"})
 }
