@@ -55,6 +55,9 @@ func main() {
 		r.Get("/tcgs", productHandler.ListTCGs)
 		r.Get("/categories", categoriesHandler.List)
 		r.Get("/settings", settingsHandler.Get)
+		
+		themeHandler := handlers.NewThemeHandler(database)
+		r.Get("/themes", themeHandler.List)
 
 		r.Get("/bounties", bountyHandler.List)
 		r.Post("/bounties/offers", bountyHandler.SubmitOffer)
@@ -88,6 +91,13 @@ func main() {
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.AdminAuth)
 				r.Get("/stats", healthHandler.GetStats)
+
+				// Themes CRUD
+				themeHandler := handlers.NewThemeHandler(database)
+				r.Get("/themes", themeHandler.List)
+				r.Post("/themes", themeHandler.Create)
+				r.Put("/themes/{id}", themeHandler.Update)
+				r.Delete("/themes/{id}", themeHandler.Delete)
 
 				// Products CRUD
 				r.Get("/products", productHandler.List)

@@ -9,133 +9,78 @@ import { TCG } from '@/lib/types';
 import { fetchTCGs } from '@/lib/api';
 import { useUI } from '@/context/UIContext';
 import CartDrawer from './CartDrawer';
+import Dropdown from './ui/Dropdown';
+import ThemeSelector from './ui/ThemeSelector';
 
 export default function Navbar() {
   const { totalItems, openCart, isOpen, closeCart } = useCart();
   const { user, loading: userLoading, loginWithGoogle, logout } = useUser();
   const { foilEffectsEnabled, toggleFoilEffects } = useUI();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [singlesDropOpen, setSinglesDropOpen] = useState(false);
-  const [sealedDropOpen, setSealedDropOpen] = useState(false);
   const [tcgs, setTcgs] = useState<TCG[]>([]);
 
   useEffect(() => {
     fetchTCGs(true).then(setTcgs);
   }, []);
 
+  const singlesItems = tcgs.map(tcg => ({
+    label: `${tcg.name} Singles`,
+    href: `/${tcg.id}/singles`,
+  }));
+
+  const sealedItems = tcgs.map(tcg => ({
+    label: `${tcg.name} Sealed`,
+    href: `/${tcg.id}/sealed`,
+  }));
+
   return (
     <>
-      <nav style={{ background: 'var(--ink-navy)', borderBottom: '1px solid var(--ink-border)' }}
-        className="sticky top-0 z-40">
+      <nav 
+        id="main-navbar"
+        data-theme-area="header"
+        className="sticky top-0 z-40 bg-bg-header border-b border-border-main"
+      >
         <div className="w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-1 sm:gap-2 no-underline shrink-0">
-            <div style={{ background: 'var(--gold)', borderRadius: '4px', padding: '2px 6px sm:8px' }}>
-              <span className="font-display text-xl sm:text-2xl" style={{ color: 'var(--ink-deep)', lineHeight: 1 }}>
+            <div className="bg-accent-primary rounded-[4px] px-1.5 py-0.5 sm:px-2 sm:py-1">
+              <span className="font-display text-xl sm:text-2xl text-text-on-accent leading-none">
                 EL BULK
               </span>
             </div>
-            <span className="hidden xs:block" style={{ color: 'var(--text-muted)', fontSize: '0.6rem sm:0.7rem', fontFamily: 'Space Mono, monospace' }}>
+            <span className="hidden xs:block text-text-muted text-[10px] sm:text-[11px] font-mono whitespace-nowrap">
               TCG STORE
             </span>
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-6">
-            {/* Singles Dropdown */}
-            <div className="relative" onMouseLeave={() => setSinglesDropOpen(false)}>
-              <Link
-                href="/singles"
-                onMouseEnter={() => setSinglesDropOpen(true)}
-                className="flex items-center gap-1 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--gold-dark)]"
-                style={{ textDecoration: 'none', background: 'none', border: 'none', cursor: 'pointer' }}
-              >
-                Singles
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-                  <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-                </svg>
-              </Link>
-              {singlesDropOpen && (
-                <div
-                  className="absolute top-full left-0 pt-1"
-                  style={{ minWidth: '180px', zIndex: 50 }}
-                >
-                  <div className="rounded-sm shadow-xl" 
-                    style={{ background: 'var(--ink-surface)', border: '1px solid var(--ink-border)' }}>
-                    {tcgs.map(tcg => (
-                      <Link
-                        key={tcg.id}
-                        href={`/${tcg.id}/singles`}
-                        onClick={() => setSinglesDropOpen(false)}
-                        className="block px-4 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--kraft-light)] hover:text-[var(--ink-deep)]"
-                        style={{ textDecoration: 'none' }}
-                      >
-                        {tcg.name} Singles
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+          <div className="hidden md:flex items-center gap-6" data-theme-area="nav-links">
+            <Dropdown 
+              label={<Link href="/singles" className="no-underline text-sm font-medium text-white/80 hover:text-accent-primary transition-colors">Singles</Link>}
+              items={singlesItems}
+            />
+            
+            <Dropdown 
+              label={<Link href="/sealed" className="no-underline text-sm font-medium text-white/80 hover:text-accent-primary transition-colors">Sealed</Link>}
+              items={sealedItems}
+            />
 
-            {/* Sealed Dropdown */}
-            <div className="relative" onMouseLeave={() => setSealedDropOpen(false)}>
-              <Link
-                href="/sealed"
-                onMouseEnter={() => setSealedDropOpen(true)}
-                className="flex items-center gap-1 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--gold-dark)]"
-                style={{ textDecoration: 'none', background: 'none', border: 'none', cursor: 'pointer' }}
-              >
-                Sealed
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-                  <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-                </svg>
-              </Link>
-              {sealedDropOpen && (
-                <div
-                  className="absolute top-full left-0 pt-1"
-                  style={{ minWidth: '180px', zIndex: 50 }}
-                >
-                  <div className="rounded-sm shadow-xl" 
-                    style={{ background: 'var(--ink-surface)', border: '1px solid var(--ink-border)' }}>
-                    {tcgs.map(tcg => (
-                      <Link
-                        key={tcg.id}
-                        href={`/${tcg.id}/sealed`}
-                        onClick={() => setSealedDropOpen(false)}
-                        className="block px-4 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--kraft-light)] hover:text-[var(--ink-deep)]"
-                        style={{ textDecoration: 'none' }}
-                      >
-                        {tcg.name} Sealed
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <Link href="/accessories" className="text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--gold-dark)]"
-              style={{ textDecoration: 'none' }}>
+            <Link href="/accessories" className="no-underline text-sm font-medium text-white/80 hover:text-accent-primary transition-colors">
               Accessories
             </Link>
-            <Link href="/store-exclusives" className="text-sm font-medium text-[var(--gold-dark)] transition-colors hover:text-[var(--gold)]"
-              style={{ textDecoration: 'none' }}>
+            <Link href="/store-exclusives" className="no-underline text-sm font-medium text-accent-primary hover:text-white transition-colors">
               Store Exclusives
             </Link>
-            <Link href="/notices" className="text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--gold-dark)]"
-              style={{ textDecoration: 'none' }}>
+            <Link href="/notices" className="no-underline text-sm font-medium text-white/80 hover:text-accent-primary transition-colors">
               Notices
             </Link>
-            <Link href="/contact" className="text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--gold-dark)]"
-              style={{ textDecoration: 'none' }}>
+            <Link href="/contact" className="no-underline text-sm font-medium text-white/80 hover:text-accent-primary transition-colors">
               Contact
             </Link>
-            <Link href="/bounties" className="text-sm font-medium transition-colors hover:opacity-80"
-              style={{ color: 'var(--hp-color)', textDecoration: 'none' }}>
+            <Link href="/bounties" className="no-underline text-sm font-medium text-status-hp hover:opacity-80 transition-colors">
               🎯 Wanted Cards
             </Link>
-            <Link href="/bulk" className="text-sm font-medium transition-colors hover:opacity-80"
-              style={{ color: 'var(--gold-dark)', textDecoration: 'none' }}>
+            <Link href="/bulk" className="no-underline text-sm font-medium text-accent-primary hover:opacity-80 transition-colors">
               💰 Sell Your Bulk
             </Link>
           </div>
@@ -147,7 +92,7 @@ export default function Navbar() {
               <div className="relative group flex items-center">
                 {user ? (
                   <div className="flex flex-col items-end group-hover:flex relative">
-                    <div className="w-8 h-8 relative rounded-full border border-ink-border overflow-hidden cursor-pointer">
+                    <div className="w-8 h-8 relative rounded-full border border-border-main overflow-hidden cursor-pointer">
                       <Image 
                         src={user.avatar_url || 'https://www.gravatar.com/avatar/?d=mp'} 
                         alt={user.first_name || 'User'}
@@ -157,11 +102,11 @@ export default function Navbar() {
                         sizes="32px"
                       />
                     </div>
-                    <div className="absolute top-10 right-0 w-32 bg-ink-surface border border-ink-border rounded-md shadow-xl p-2 hidden group-hover:block transition-all z-50">
+                    <div className="absolute top-10 right-0 w-32 bg-bg-surface border border-border-main rounded-md shadow-xl p-2 hidden group-hover:block transition-all z-50">
                       <p className="text-xs text-text-muted truncate mb-2">{user.email}</p>
                       <button 
                         onClick={logout}
-                        className="w-full text-left text-sm text-text-secondary hover:text-gold-dark transition-colors bg-transparent border-none cursor-pointer p-0"
+                        className="w-full text-left text-sm text-text-secondary hover:text-accent-primary-hover transition-colors bg-transparent border-none cursor-pointer p-0"
                       >
                         Logout
                       </button>
@@ -170,7 +115,7 @@ export default function Navbar() {
                 ) : (
                   <button 
                     onClick={loginWithGoogle}
-                    className="text-sm font-medium text-text-secondary transition-colors hover:text-gold-dark flex items-center gap-1 bg-transparent border-none cursor-pointer p-0"
+                    className="text-sm font-medium text-white/80 transition-colors hover:text-accent-primary flex items-center gap-1 bg-transparent border-none cursor-pointer p-0"
                   >
                     Login
                   </button>
@@ -181,29 +126,24 @@ export default function Navbar() {
             {/* Foil Toggle */}
             <button
               onClick={toggleFoilEffects}
-              className="p-2 rounded-lg transition-all"
+              className="p-2 rounded-lg transition-all flex items-center justify-center bg-bg-surface border border-border-main cursor-pointer"
               style={{ 
-                background: 'var(--ink-surface)', 
-                border: '1px solid var(--ink-border)', 
-                cursor: 'pointer',
-                color: foilEffectsEnabled ? 'var(--gold)' : 'var(--text-muted)',
+                color: foilEffectsEnabled ? 'var(--accent-primary)' : 'var(--text-muted)',
                 opacity: foilEffectsEnabled ? 1 : 0.6,
                 transform: foilEffectsEnabled ? 'scale(1.1)' : 'scale(1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
               }}
               aria-label="Toggle foil effects"
               title={foilEffectsEnabled ? "Disable foil effects" : "Enable foil effects"}
             >
-              <span style={{ fontSize: '1.1rem' }}>✨</span>
+              <span className="text-[1.1rem]">✨</span>
             </button>
+
+            <ThemeSelector />
 
             <button
               id="cart-toggle"
               onClick={openCart}
-              className="relative p-2 rounded-lg transition-colors"
-              style={{ background: 'var(--ink-surface)', border: '1px solid var(--ink-border)', cursor: 'pointer', color: 'var(--text-primary)' }}
+              className="relative p-2 rounded-lg transition-colors bg-bg-surface border border-border-main cursor-pointer text-text-main"
               aria-label="Open cart"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -218,8 +158,7 @@ export default function Navbar() {
 
             {/* Mobile hamburger */}
             <button
-              className="md:hidden p-2 rounded"
-              style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}
+              className="md:hidden p-2 rounded bg-transparent border-none text-white cursor-pointer"
               onClick={() => setMobileOpen(o => !o)}
               aria-label="Toggle menu"
             >
@@ -235,15 +174,13 @@ export default function Navbar() {
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <div style={{ background: 'var(--ink-surface)', borderTop: '1px solid var(--ink-border)' }} 
-            className="md:hidden px-4 py-4 max-h-[calc(100vh-64px)] overflow-y-auto">
+          <div className="md:hidden px-4 py-4 max-h-[calc(100vh-64px)] overflow-y-auto bg-bg-surface border-t border-border-main" data-theme-area="mobile-nav">
             <div className="mb-4">
-              <p className="font-mono-stack text-[10px] text-hp-color font-bold mb-2 uppercase tracking-widest">Singles Inventory</p>
+              <p className="font-mono text-[10px] text-status-hp font-bold mb-2 uppercase tracking-widest">Singles Inventory</p>
               <div className="grid grid-cols-2 gap-2">
                 {tcgs.map(tcg => (
                   <Link key={`s-${tcg.id}`} href={`/${tcg.id}/singles`} onClick={() => setMobileOpen(false)}
-                    className="block py-2 px-3 text-xs bg-kraft-light/30 rounded-sm border border-kraft-mid/20" 
-                    style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>
+                    className="block py-2 px-3 text-xs bg-bg-page/30 rounded-sm border border-border-main/20 text-text-secondary no-underline">
                     {tcg.name}
                   </Link>
                 ))}
@@ -251,40 +188,37 @@ export default function Navbar() {
             </div>
             
             <div className="mb-4">
-              <p className="font-mono-stack text-[10px] text-hp-color font-bold mb-2 uppercase tracking-widest">Sealed Product</p>
+              <p className="font-mono text-[10px] text-status-hp font-bold mb-2 uppercase tracking-widest">Sealed Product</p>
               <div className="grid grid-cols-2 gap-2">
                 {tcgs.map(tcg => (
                   <Link key={`se-${tcg.id}`} href={`/${tcg.id}/sealed`} onClick={() => setMobileOpen(false)}
-                    className="block py-2 px-3 text-xs bg-kraft-light/30 rounded-sm border border-kraft-mid/20" 
-                    style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>
+                    className="block py-2 px-3 text-xs bg-bg-page/30 rounded-sm border border-border-main/20 text-text-secondary no-underline">
                     {tcg.name}
                   </Link>
                 ))}
               </div>
             </div>
             
-            <hr style={{ borderColor: 'var(--ink-border)', margin: '1rem 0' }} />
+            <hr className="border-border-main my-4" />
             <div className="flex flex-col gap-2">
               <Link href="/accessories" onClick={() => setMobileOpen(false)}
-                className="block py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--gold-dark)]" style={{ textDecoration: 'none' }}>
+                className="block py-2 text-sm font-medium text-text-secondary hover:text-accent-primary transition-colors no-underline">
                 Accessories
               </Link>
               <Link href="/store-exclusives" onClick={() => setMobileOpen(false)}
-                className="block py-2 text-sm font-medium text-[var(--gold-dark)] transition-colors hover:text-[var(--gold)]" style={{ textDecoration: 'none' }}>
+                className="block py-2 text-sm font-medium text-accent-primary hover:text-accent-primary-hover transition-colors no-underline">
                 Store Exclusives
               </Link>
               <Link href="/contact" onClick={() => setMobileOpen(false)}
-                className="block py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--gold-dark)]" style={{ textDecoration: 'none' }}>
+                className="block py-2 text-sm font-medium text-text-secondary hover:text-accent-primary transition-colors no-underline">
                 Contact
               </Link>
               <Link href="/bounties" onClick={() => setMobileOpen(false)}
-                className="block py-3 text-center border-2 rounded-sm mt-4 font-bold" 
-                style={{ color: 'var(--hp-color)', borderColor: 'var(--hp-color)', textDecoration: 'none' }}>
+                className="block py-3 text-center border-2 border-status-hp rounded-sm mt-4 font-bold text-status-hp no-underline">
                 🎯 WANTED CARDS
               </Link>
               <Link href="/bulk" onClick={() => setMobileOpen(false)}
-                className="block py-3 text-center border-2 border-gold-dark rounded-sm mt-2 font-bold" 
-                style={{ color: 'var(--gold-dark)', textDecoration: 'none' }}>
+                className="block py-3 text-center border-2 border-accent-primary rounded-sm mt-2 font-bold text-accent-primary no-underline">
                 💰 SELL YOUR BULK
               </Link>
             </div>

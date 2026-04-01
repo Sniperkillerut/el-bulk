@@ -20,6 +20,7 @@
 \i tables/notice.sql
 \i tables/newsletter_subscriber.sql
 \i tables/bounty_offer.sql
+\i tables/theme.sql
 
 -- 3. Dependent Tables
 \i tables/product.sql

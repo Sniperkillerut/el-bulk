@@ -23,6 +23,7 @@ export default function BountyCard({ bounty, delay = 0 }: BountyCardProps) {
       onClick={handleOpenOffer}
       className="card flex flex-col overflow-hidden animate-fade-up group cursor-pointer" 
       style={{ animationDelay: `${delay}ms`, animationFillMode: 'both' }}
+      data-theme-area="bounty-card"
     >
       <div className="thumb-hover-wrap">
         <CardImage imageUrl={bounty.image_url} name={bounty.name} tcg={bounty.tcg} />
@@ -38,23 +39,22 @@ export default function BountyCard({ bounty, delay = 0 }: BountyCardProps) {
         <CardInfo name={bounty.name} setName={bounty.set_name} hoverEffect={false} />
         
         {/* Footer */}
-        <div className="flex items-center justify-between mt-auto pt-2" style={{ borderTop: '1px solid var(--ink-border)' }}>
+        <div className="flex items-center justify-between mt-auto pt-2 border-t border-border-main" data-theme-area="card-footer">
           <div className="flex flex-col">
-            <span className="text-[10px] font-mono-stack uppercase opacity-50 leading-none mb-1">Offer</span>
+            <span className="text-[10px] font-mono-stack uppercase opacity-50 leading-none mb-1 text-text-secondary">Offer</span>
             {bounty.hide_price ? (
-              <span className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>ASK</span>
+              <span className="text-sm font-semibold text-text-secondary">ASK</span>
             ) : (
               <span className="price text-sm leading-none">${bounty.target_price?.toLocaleString('es-CO')}</span>
             )}
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono opacity-50" title="Quantity needed">
+            <span className="text-[10px] font-mono opacity-50 text-text-muted" title="Quantity needed">
               ×{bounty.quantity_needed}
             </span>
             <button 
-              className="btn-primary"
-              style={{ fontSize: '0.8rem', padding: '0.3rem 0.8rem' }}
+              className="btn-primary text-[0.8rem] px-[0.8rem] py-[0.3rem]"
             >
               SELL
             </button>

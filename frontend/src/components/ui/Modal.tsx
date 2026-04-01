@@ -54,15 +54,16 @@ export default function Modal({
     >
       <div 
         ref={modalRef}
-        className={`rounded-lg w-full ${maxWidth} relative overflow-hidden animate-in zoom-in duration-300 ${containerClassName || 'bg-ink-surface border border-ink-border shadow-2xl'}`}
+        className={`rounded-lg w-full ${maxWidth} relative overflow-hidden animate-in zoom-in duration-300 ${containerClassName || 'bg-bg-surface border border-border-main shadow-2xl'}`}
+        data-theme-area="modal-container"
         onClick={e => e.stopPropagation()}
       >
         {showHeader && (
-          <div className="flex items-center justify-between p-4 border-b border-ink-border/50 bg-ink-deep">
-            <h3 className="font-display text-2xl m-0 text-gold uppercase tracking-tighter">{title}</h3>
+          <div className="flex items-center justify-between p-4 border-b border-border-main/50 bg-bg-header" data-theme-area="modal-header">
+            <h3 className="font-display text-2xl m-0 text-accent-primary uppercase tracking-tighter">{title}</h3>
             <button 
               onClick={onClose} 
-              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+              className="w-8 h-8 rounded-full bg-transparent border-none flex items-center justify-center hover:bg-white/10 text-white/60 hover:text-white transition-colors cursor-pointer"
               aria-label="Close modal"
             >
               ✕
@@ -70,7 +71,7 @@ export default function Modal({
           </div>
         )}
 
-        <div>
+        <div data-theme-area="modal-body">
           {children}
         </div>
       </div>

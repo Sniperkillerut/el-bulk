@@ -21,30 +21,30 @@ export default function CardBadgeList({
   categories 
 }: CardBadgeListProps) {
   return (
-    <div className="flex flex-wrap gap-1">
-      {condition && <ConditionBadge condition={condition as any} />}
+    <div className="flex flex-wrap gap-1" data-theme-area="card-badges">
+      {condition && <ConditionBadge condition={condition} />}
       {foil && <FoilBadge foil={foil} />}
       
       {treatment && treatment !== 'normal' && TREATMENT_LABELS[treatment] && (
-        <span className="badge" style={{ background: 'rgba(100,130,200,0.12)', color: '#8ba4d0', border: '1px solid rgba(100,130,200,0.25)' }}>
+        <span className="badge opacity-80" style={{ background: 'var(--bg-header)', color: 'white', borderColor: 'var(--bg-page-dark)' }}>
           {TREATMENT_LABELS[treatment]}
         </span>
       )}
       
       {textless && (
-        <span className="badge" style={{ background: 'rgba(248,113,113,0.15)', color: 'var(--hp-color)', border: '1px solid rgba(248,113,113,0.3)' }}>
+        <span className="badge" style={{ background: 'var(--status-hp)', color: 'white', opacity: 0.15, border: '1px solid var(--status-hp)' }}>
           TEXTLESS
         </span>
       )}
       
       {fullArt && treatment !== 'full_art' && (
-        <span className="badge" style={{ background: 'rgba(120,180,120,0.15)', color: 'var(--nm-color)', border: '1px solid rgba(120,180,120,0.3)' }}>
+        <span className="badge" style={{ background: 'var(--status-nm)', color: 'white', opacity: 0.15, border: '1px solid var(--status-nm)' }}>
           FULL ART
         </span>
       )}
       
       {categories?.map(c => (
-        <span key={c.id} className="badge" style={{ background: 'var(--gold)', color: 'var(--ink-deep)', border: '1px solid rgba(212,175,55,0.3)' }}>
+        <span key={c.id} className="badge" style={{ background: 'var(--accent-primary)', color: 'var(--text-on-accent)', borderColor: 'var(--accent-primary-hover)' }}>
           {c.name}
         </span>
       ))}

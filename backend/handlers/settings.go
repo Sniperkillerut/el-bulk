@@ -89,6 +89,8 @@ func loadSettings(db *sqlx.DB) (models.Settings, error) {
 			s.ContactHours = val
 		case "last_set_sync":
 			s.LastSetSync = val
+		case "default_theme_id":
+			s.DefaultThemeID = val
 		}
 	}
 

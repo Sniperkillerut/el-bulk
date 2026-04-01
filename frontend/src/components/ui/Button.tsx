@@ -19,14 +19,14 @@ export default function Button({
   disabled,
   ...props
 }: ButtonProps) {
-  const baseStyles = 'inline-flex items-center justify-center font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed uppercase tracking-wider';
+  const baseStyles = 'inline-flex items-center justify-center font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed uppercase tracking-wider cursor-pointer';
   
   const variants = {
-    primary: 'btn-primary shadow-lg shadow-gold/10 hover:shadow-gold/20',
-    secondary: 'btn-secondary border-ink-border hover:bg-white/5',
-    danger: 'bg-red-600/10 text-red-400 border border-red-500/30 hover:bg-red-600/20 hover:text-red-300 shadow-lg shadow-red-500/5',
-    success: 'bg-emerald-600/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-600/20 hover:text-emerald-300 shadow-lg shadow-emerald-500/5',
-    ghost: 'hover:bg-white/5 text-text-muted hover:text-white',
+    primary: 'btn-primary shadow-lg shadow-accent-primary/10 hover:shadow-accent-primary/20',
+    secondary: 'btn-secondary border-border-main hover:bg-bg-page/5',
+    danger: 'bg-status-hp/10 text-status-hp border border-status-hp/30 hover:bg-status-hp/20 hover:text-status-hp shadow-lg shadow-status-hp/5',
+    success: 'bg-status-nm/10 text-status-nm border border-status-nm/30 hover:bg-status-nm/20 hover:text-status-nm shadow-lg shadow-status-nm/5',
+    ghost: 'hover:bg-bg-page/5 text-text-muted hover:text-text-main',
   };
 
   const sizes = {
@@ -48,6 +48,8 @@ export default function Button({
     <button
       disabled={disabled || loading}
       className={combinedClasses}
+      data-theme-area="button"
+      data-variant={variant}
       {...props}
     >
       {loading ? (

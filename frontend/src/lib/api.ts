@@ -31,7 +31,7 @@ interface FetchOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined | null>;
 }
 
-async function apiFetch<T>(endpoint: string, options: FetchOptions = {}, _token?: string): Promise<T> {
+export async function apiFetch<T>(endpoint: string, options: FetchOptions = {}, _token?: string): Promise<T> {
   const { params, headers: customHeaders, ...rest } = options;
   
   const url = new URL(`${API_BASE}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`);

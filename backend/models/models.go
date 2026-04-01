@@ -168,6 +168,7 @@ type Settings struct {
 	ContactInstagram string   `json:"contact_instagram"`
 	ContactHours     string   `json:"contact_hours"`
 	LastSetSync      string   `json:"last_set_sync"`
+	DefaultThemeID   string   `json:"default_theme_id"`
 }
 
 type TCG struct {
@@ -472,4 +473,67 @@ type CustomerDetail struct {
 	Requests     []ClientRequest `json:"requests"`
 	Offers       []BountyOffer   `json:"offers"`
 	IsSubscriber bool            `json:"is_subscriber"`
+}
+
+// ── Themes ─────────────────────────────────────────────
+
+type Theme struct {
+	ID                 string    `db:"id"                   json:"id"`
+	Name               string    `db:"name"                 json:"name"`
+	IsSystem           bool      `db:"is_system"            json:"is_system"`
+	
+	// Colors
+	BgPage             string    `db:"bg_page"              json:"bg_page"`
+	BgHeader           string    `db:"bg_header"            json:"bg_header"`
+	BgSurface          string    `db:"bg_surface"           json:"bg_surface"`
+	
+	TextMain           string    `db:"text_main"            json:"text_main"`
+	TextSecondary      string    `db:"text_secondary"       json:"text_secondary"`
+	TextMuted          string    `db:"text_muted"           json:"text_muted"`
+	TextOnAccent       string    `db:"text_on_accent"       json:"text_on_accent"`
+	
+	AccentPrimary      string    `db:"accent_primary"       json:"accent_primary"`
+	AccentPrimaryHover string    `db:"accent_primary_hover" json:"accent_primary_hover"`
+	BorderMain         string    `db:"border_main"          json:"border_main"`
+	
+	StatusNM           string    `db:"status_nm"            json:"status_nm"`
+	StatusLP           string    `db:"status_lp"            json:"status_lp"`
+	StatusMP           string    `db:"status_mp"            json:"status_mp"`
+	StatusHP           string    `db:"status_hp"            json:"status_hp"`
+	
+	// Layout & Geometry
+	RadiusBase         string    `db:"radius_base"          json:"radius_base"`
+	PaddingCard        string    `db:"padding_card"         json:"padding_card"`
+	GapGrid            string    `db:"gap_grid"             json:"gap_grid"`
+	
+	CreatedAt          time.Time `db:"created_at"           json:"created_at"`
+	UpdatedAt          time.Time `db:"updated_at"           json:"updated_at"`
+}
+
+type ThemeInput struct {
+	Name               string `json:"name"`
+	
+	// Colors
+	BgPage             string `json:"bg_page"`
+	BgHeader           string `json:"bg_header"`
+	BgSurface          string `json:"bg_surface"`
+	
+	TextMain           string `json:"text_main"`
+	TextSecondary      string `json:"text_secondary"`
+	TextMuted          string `json:"text_muted"`
+	TextOnAccent       string `json:"text_on_accent"`
+	
+	AccentPrimary      string `json:"accent_primary"`
+	AccentPrimaryHover string `json:"accent_primary_hover"`
+	BorderMain         string `json:"border_main"`
+	
+	StatusNM           string `json:"status_nm"`
+	StatusLP           string `json:"status_lp"`
+	StatusMP           string `json:"status_mp"`
+	StatusHP           string `json:"status_hp"`
+	
+	// Layout & Geometry
+	RadiusBase         string `json:"radius_base"`
+	PaddingCard        string `json:"padding_card"`
+	GapGrid            string `json:"gap_grid"`
 }

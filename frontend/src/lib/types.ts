@@ -77,6 +77,7 @@ export interface Settings {
   contact_instagram: string;
   contact_hours: string;
   last_set_sync?: string;
+  default_theme_id?: string;
 }
 
 export interface FacetItem {
@@ -529,3 +530,39 @@ export interface AdminStats {
   active_connections: number;
   max_connections: number;
 }
+
+// ── Themes ─────────────────────────────────────────────
+
+export interface Theme {
+  id: string;
+  name: string;
+  is_system: boolean;
+  
+  bg_page: string;
+  bg_header: string;
+  bg_surface: string;
+  
+  text_main: string;
+  text_secondary: string;
+  text_muted: string;
+  text_on_accent: string;
+  
+  accent_primary: string;
+  accent_primary_hover: string;
+  border_main: string;
+  
+  status_nm: string;
+  status_lp: string;
+  status_mp: string;
+  status_hp: string;
+  
+  // Layout & Geometry
+  radius_base: string;
+  padding_card: string;
+  gap_grid: string;
+  
+  created_at: string;
+  updated_at: string;
+}
+
+export type ThemeInput = Omit<Theme, 'id' | 'is_system' | 'created_at' | 'updated_at'>;

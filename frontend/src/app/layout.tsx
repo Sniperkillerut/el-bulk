@@ -12,6 +12,8 @@ import './foil-effects.css';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const bebas = Bebas_Neue({ weight: '400', subsets: ['latin'], variable: '--font-bebas' });
 const spaceMono = Space_Mono({ weight: ['400', '700'], subsets: ['latin'], variable: '--font-mono' });
+import { ThemeProvider } from '@/components/ThemeProvider';
+import { fetchPublicSettings } from '@/lib/api';
 
 export const metadata: Metadata = {
   title: 'El Bulk — TCG Store',
@@ -19,10 +21,20 @@ export const metadata: Metadata = {
   keywords: ['MTG', 'Magic the Gathering', 'Pokemon', 'Lorcana', 'TCG', 'card store', 'singles', 'sealed', 'bulk'],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  let defaultTheme = '00000000-0000-0000-0000-000000000001'; // Default to Cardboard
+  try {
+    const settings = await fetchPublicSettings();
+    if (settings.default_theme_id) {
+      defaultTheme = settings.default_theme_id;
+    }
+  } catch (err) {
+    console.error('Failed to fetch default theme settings', err);
+  }
   return (
     <html lang="en" className={`${inter.variable} ${bebas.variable} ${spaceMono.variable}`} suppressHydrationWarning>
       <head>
+        {/* ... heads remain same ... */}
         <style>{`
           .centered-container {
             max-width: 1280px !important;
@@ -55,15 +67,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body suppressHydrationWarning>
         <RemoteLogManager />
-        <UserProvider>
-          <UIProvider>
-            <CartProvider>
-              <StorefrontLayoutWrapper>
-                {children}
-              </StorefrontLayoutWrapper>
-            </CartProvider>
-          </UIProvider>
-        </UserProvider>
+        <ThemeProvider defaultTheme={defaultTheme}>
+          <UserProvider>
+            <UIProvider>
+              <CartProvider>
+                <StorefrontLayoutWrapper>
+                  {children}
+                </StorefrontLayoutWrapper>
+              </CartProvider>
+            </UIProvider>
+          </UserProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

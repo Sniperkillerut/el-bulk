@@ -47,6 +47,7 @@ export default function AdminSidebar() {
     { label: 'CLIENTS', href: '/admin/clients', icon: '👥' },
     { label: 'SUBSCRIBERS', href: '/admin/subscribers', icon: '📧' },
     { label: 'NOTICES', href: '/admin/notices', icon: '📢' },
+    { label: 'THEMES & SKINS', href: '/admin/themes', icon: '🎨' },
   ];
 
   return (

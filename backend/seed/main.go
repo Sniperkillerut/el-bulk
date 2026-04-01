@@ -36,6 +36,7 @@ func main() {
 	storageIDs := seedStorage(database)
 	seedSettings(database)
 	seedSets(database)
+	seedThemes(database)
 
 	if *mode == "minimal" {
 		seedMinimalData(database, categoryMap, storageIDs)
@@ -809,6 +810,108 @@ func seedCRM(db *sqlx.DB, adminID string) {
 				INSERT INTO customer_note (customer_id, content, admin_id)
 				VALUES ($1, $2, $3)
 			`, c.ID, interactions[rand.Intn(len(interactions))], adminID)
+		}
+	}
+}
+
+func seedThemes(db *sqlx.DB) {
+	logger.Info("🎨 Seeding Theme Palette Pack...")
+	themes := []models.Theme{
+		{
+			ID: "00000000-0000-0000-0000-000000000001", Name: "Cardboard", IsSystem: true,
+			BgPage: "#e6dac3", BgHeader: "#1a1f2e", BgSurface: "#fdfbf7",
+			TextMain: "#3b3127", TextSecondary: "#5c4e3d", TextMuted: "#8b795c", TextOnAccent: "#2c251d",
+			AccentPrimary: "#d4af37", AccentPrimaryHover: "#b8961e", BorderMain: "#d4c5ab",
+			StatusNM: "#2e7d32", StatusLP: "#558b2f", StatusMP: "#ef6c00", StatusHP: "#c62828",
+			RadiusBase: "8px", PaddingCard: "12px", GapGrid: "16px",
+		},
+		{
+			ID: "00000000-0000-0000-0000-000000000002", Name: "Obsidiana", IsSystem: true,
+			BgPage: "#0a0a0a", BgHeader: "#121212", BgSurface: "#1a1a1a",
+			TextMain: "#f8fafc", TextSecondary: "#94a3b8", TextMuted: "#475569", TextOnAccent: "#ffffff",
+			AccentPrimary: "#3b82f6", AccentPrimaryHover: "#2563eb", BorderMain: "#334155",
+			StatusNM: "#10b981", StatusLP: "#fbbf24", StatusMP: "#f59e0b", StatusHP: "#ef4444",
+			RadiusBase: "2px", PaddingCard: "14px", GapGrid: "20px",
+		},
+		{
+			ID: "00000000-0000-0000-0000-000000000003", Name: "Yule", IsSystem: true,
+			BgPage: "#052e16", BgHeader: "#991b1b", BgSurface: "#064e3b",
+			TextMain: "#f0fdf4", TextSecondary: "#bbf7d0", TextMuted: "#166534", TextOnAccent: "#ffffff",
+			AccentPrimary: "#fbbf24", AccentPrimaryHover: "#f59e0b", BorderMain: "#14532d",
+			StatusNM: "#4ade80", StatusLP: "#fbbf24", StatusMP: "#f97316", StatusHP: "#ef4444",
+			RadiusBase: "12px", PaddingCard: "12px", GapGrid: "16px",
+		},
+		{
+			ID: "00000000-0000-0000-0000-000000000004", Name: "Spring Egg", IsSystem: true,
+			BgPage: "#fffbea", BgHeader: "#f5f3ff", BgSurface: "#ffffff",
+			TextMain: "#4c1d95", TextSecondary: "#7c3aed", TextMuted: "#a78bfa", TextOnAccent: "#ffffff",
+			AccentPrimary: "#8b5cf6", AccentPrimaryHover: "#a78bfa", BorderMain: "#f3f4f6",
+			StatusNM: "#10b981", StatusLP: "#fbbf24", StatusMP: "#f59e0b", StatusHP: "#ef4444",
+			RadiusBase: "24px", PaddingCard: "16px", GapGrid: "24px",
+		},
+		{
+			ID: "00000000-0000-0000-0000-000000000005", Name: "Neon Flux", IsSystem: true,
+			BgPage: "#020617", BgHeader: "#0f172a", BgSurface: "#020617",
+			TextMain: "#f8fafc", TextSecondary: "#64748b", TextMuted: "#334155", TextOnAccent: "#000000",
+			AccentPrimary: "#22c55e", AccentPrimaryHover: "#4ade80", BorderMain: "#1e293b",
+			StatusNM: "#22c55e", StatusLP: "#eab308", StatusMP: "#f97316", StatusHP: "#ef4444",
+			RadiusBase: "0px", PaddingCard: "10px", GapGrid: "12px",
+		},
+		{
+			ID: "00000000-0000-0000-0000-000000000006", Name: "Arena", IsSystem: true,
+			BgPage: "#171717", BgHeader: "#262626", BgSurface: "#1c1c1c",
+			TextMain: "#ffffff", TextSecondary: "#a3a3a3", TextMuted: "#525252", TextOnAccent: "#ffffff",
+			AccentPrimary: "#ea580c", AccentPrimaryHover: "#f97316", BorderMain: "#404040",
+			StatusNM: "#22c55e", StatusLP: "#eab308", StatusMP: "#f97316", StatusHP: "#dc2626",
+			RadiusBase: "4px", PaddingCard: "14px", GapGrid: "16px",
+		},
+		{
+			ID: "00000000-0000-0000-0000-000000000007", Name: "Celebrate", IsSystem: true,
+			BgPage: "#fdf2f8", BgHeader: "#be185d", BgSurface: "#ffffff",
+			TextMain: "#831843", TextSecondary: "#db2777", TextMuted: "#f472b6", TextOnAccent: "#ffffff",
+			AccentPrimary: "#db2777", AccentPrimaryHover: "#f472b6", BorderMain: "#fce7f3",
+			StatusNM: "#10b981", StatusLP: "#fbbf24", StatusMP: "#f59e0b", StatusHP: "#ef4444",
+			RadiusBase: "16px", PaddingCard: "14px", GapGrid: "20px",
+		},
+	}
+
+	for _, t := range themes {
+		_, err := db.NamedExec(`
+			INSERT INTO theme (
+				id, name, is_system, bg_page, bg_header, bg_surface, 
+				text_main, text_secondary, text_muted, text_on_accent, 
+				accent_primary, accent_primary_hover, border_main, 
+				status_nm, status_lp, status_mp, status_hp,
+				radius_base, padding_card, gap_grid
+			) VALUES (
+				:id, :name, :is_system, :bg_page, :bg_header, :bg_surface, 
+				:text_main, :text_secondary, :text_muted, :text_on_accent, 
+				:accent_primary, :accent_primary_hover, :border_main, 
+				:status_nm, :status_lp, :status_mp, :status_hp,
+				:radius_base, :padding_card, :gap_grid
+			) ON CONFLICT (id) DO UPDATE SET
+				name = EXCLUDED.name,
+				is_system = EXCLUDED.is_system,
+				bg_page = EXCLUDED.bg_page,
+				bg_header = EXCLUDED.bg_header,
+				bg_surface = EXCLUDED.bg_surface,
+				text_main = EXCLUDED.text_main,
+				text_secondary = EXCLUDED.text_secondary,
+				text_muted = EXCLUDED.text_muted,
+				text_on_accent = EXCLUDED.text_on_accent,
+				accent_primary = EXCLUDED.accent_primary,
+				accent_primary_hover = EXCLUDED.accent_primary_hover,
+				border_main = EXCLUDED.border_main,
+				status_nm = EXCLUDED.status_nm,
+				status_lp = EXCLUDED.status_lp,
+				status_mp = EXCLUDED.status_mp,
+				status_hp = EXCLUDED.status_hp,
+				radius_base = EXCLUDED.radius_base,
+				padding_card = EXCLUDED.padding_card,
+				gap_grid = EXCLUDED.gap_grid
+		`, t)
+		if err != nil {
+			logger.Error("Failed to seed theme '%s': %v", t.Name, err)
 		}
 	}
 }
