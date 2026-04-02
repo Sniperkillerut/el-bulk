@@ -5,24 +5,27 @@ CREATE OR REPLACE FUNCTION fn_submit_client_request(
     p_customer_contact TEXT,
     p_card_name TEXT,
     p_set_name TEXT DEFAULT NULL,
-    p_details TEXT DEFAULT NULL
+    p_details TEXT DEFAULT NULL,
+    p_customer_id UUID DEFAULT NULL
 ) RETURNS JSONB AS $$
 DECLARE
-    v_customer_id UUID;
+    v_customer_id UUID := p_customer_id;
     v_request_id UUID;
     v_created_at TIMESTAMPTZ;
     v_first_name TEXT;
     v_last_name TEXT;
 BEGIN
-    -- Try to find an existing customer by email or phone
-    SELECT id INTO v_customer_id 
-    FROM customer 
-    WHERE email = p_customer_contact OR phone = p_customer_contact 
-    LIMIT 1;
-
-    -- If no customer found, create one to ensure data integrity
+    -- Only lookup/create if no explicit ID provided
     IF v_customer_id IS NULL THEN
-        v_first_name := split_part(p_customer_name, ' ', 1);
+        -- Try to find an existing customer by email or phone
+        SELECT id INTO v_customer_id 
+        FROM customer 
+        WHERE email = p_customer_contact OR phone = p_customer_contact 
+        LIMIT 1;
+
+        -- If no customer found, create one to ensure data integrity
+        IF v_customer_id IS NULL THEN
+            v_first_name := split_part(p_customer_name, ' ', 1);
         v_last_name := trim(substring(p_customer_name from char_length(v_first_name) + 1));
         
         IF v_last_name = '' THEN
@@ -40,6 +43,7 @@ BEGIN
             CASE WHEN p_customer_contact LIKE '%@%' THEN p_customer_contact ELSE NULL END,
             CASE WHEN p_customer_contact NOT LIKE '%@%' THEN p_customer_contact ELSE NULL END
         ) RETURNING id INTO v_customer_id;
+    END IF;
     END IF;
 
     -- Insert the request (customer_id will be NULL if no match found, which is fine for anonymous requests)

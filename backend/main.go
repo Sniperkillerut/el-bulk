@@ -70,8 +70,8 @@ func main() {
 		r.Get("/translations", translationHandler.List)
 
 		r.Get("/bounties", bountyHandler.List)
-		r.Post("/bounties/offers", bountyHandler.SubmitOffer)
-		r.With(middleware.RateLimit(5, 10*time.Minute)).Post("/client-requests", bountyHandler.CreateRequest)
+		r.With(middleware.OptionalUserAuth).Post("/bounties/offers", bountyHandler.SubmitOffer)
+		r.With(middleware.OptionalUserAuth, middleware.RateLimit(5, 10*time.Minute)).Post("/client-requests", bountyHandler.CreateRequest)
 		
 		// Newsletter
 		newsletterHandler := &handlers.NewsletterHandler{DB: database}

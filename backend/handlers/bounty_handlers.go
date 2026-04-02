@@ -1,15 +1,16 @@
 package handlers
 
 import (
-"github.com/el-bulk/backend/utils/render"
 	"database/sql"
 	"encoding/json"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/jmoiron/sqlx"
+	"github.com/el-bulk/backend/middleware"
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/logger"
+	"github.com/el-bulk/backend/utils/render"
+	"github.com/go-chi/chi/v5"
+	"github.com/jmoiron/sqlx"
 )
 
 type BountyHandler struct {
@@ -192,9 +193,15 @@ func (h *BountyHandler) SubmitOffer(w http.ResponseWriter, r *http.Request) {
 		input.Quantity = 1
 	}
 
+	// Try to get authenticated user ID from context
+	var userID *string
+	if val, ok := r.Context().Value(middleware.UserIDKey).(string); ok {
+		userID = &val
+	}
+
 	var result []byte
-	err := h.DB.Get(&result, "SELECT fn_submit_bounty_offer($1, $2, $3, $4, $5, $6, $7)",
-		input.BountyID, input.CustomerName, input.CustomerContact, input.Quantity, input.Condition, input.Notes, input.Status)
+	err := h.DB.Get(&result, "SELECT fn_submit_bounty_offer($1, $2, $3, $4, $5, $6, $7, $8)",
+		input.BountyID, input.CustomerName, input.CustomerContact, input.Quantity, input.Condition, input.Notes, input.Status, userID)
 
 	if err != nil {
 		logger.Error("Failed to call fn_submit_bounty_offer: %v", err)
@@ -291,9 +298,15 @@ func (h *BountyHandler) CreateRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Optional user ID from context
+	var userID *string
+	if val, ok := r.Context().Value(middleware.UserIDKey).(string); ok {
+		userID = &val
+	}
+
 	var result []byte
-	err := h.DB.Get(&result, "SELECT fn_submit_client_request($1, $2, $3, $4, $5)",
-		input.CustomerName, input.CustomerContact, input.CardName, input.SetName, input.Details)
+	err := h.DB.Get(&result, "SELECT fn_submit_client_request($1, $2, $3, $4, $5, $6)",
+		input.CustomerName, input.CustomerContact, input.CardName, input.SetName, input.Details, userID)
 
 	if err != nil {
 		logger.Error("Failed to call fn_submit_client_request: %v", err)
