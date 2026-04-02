@@ -541,7 +541,7 @@ function MiniSinglesPreview({ form, mode = 'desktop' }: { form: ThemeInput, mode
         <div className="flex items-center gap-4">
           <div className="w-8 h-8 rounded bg-accent-primary" style={{ backgroundColor: form.accent_primary }} />
           {!isMobile && (
-            <nav className="flex gap-4 text-[10px] font-bold uppercase tracking-widest" style={{ color: '#ffffff' }}>
+            <nav className="flex gap-4 text-[10px] font-bold uppercase tracking-widest" style={{ color: form.text_on_header }}>
               <span className="opacity-60">SINGLES</span>
               <span className="opacity-60">SEALED</span>
               <span className="opacity-60">DECKS</span>
@@ -557,30 +557,53 @@ function MiniSinglesPreview({ form, mode = 'desktop' }: { form: ThemeInput, mode
           <aside className="w-48 p-4 border-r border-border-main hidden md:block overflow-y-auto" style={{ borderColor: form.border_main }}>
             <div className="space-y-6">
               <div>
-                <p className="text-[8px] font-bold uppercase tracking-[0.2em] mb-2" style={{ color: form.text_muted }}>Keywords</p>
-                <div className="h-8 rounded border px-2 flex items-center" style={{ backgroundColor: form.bg_surface, borderColor: form.border_main }}>
+                <p className="text-[8px] font-bold uppercase tracking-[0.2em] mb-2" style={{ color: form.text_muted }}>Vault Matrix</p>
+                <div className="h-8 rounded border px-2 flex items-center shadow-inner" style={{ backgroundColor: form.bg_card, borderColor: form.border_main }}>
                   <span className="text-[10px]" style={{ color: form.text_muted }}>Search cards...</span>
                 </div>
               </div>
 
               <div>
-                <p className="text-[8px] font-bold uppercase tracking-[0.2em] mb-3" style={{ color: form.text_muted }}>Availability</p>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-sm border" style={{ borderColor: form.accent_primary, backgroundColor: form.accent_primary }} />
-                  <span className="text-[10px] font-bold" style={{ color: form.text_main }}>In Stock Only</span>
+                <p className="text-[8px] font-bold uppercase tracking-[0.2em] mb-3" style={{ color: form.text_muted }}>FILTER STATE</p>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3.5 h-3.5 rounded-sm border transition-all" style={{ borderColor: form.checkbox_border, backgroundColor: form.bg_card }} />
+                    <span className="text-[10px]" style={{ color: form.text_secondary }}>Normal Check</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3.5 h-3.5 rounded-sm border flex items-center justify-center transition-all" style={{ borderColor: form.checkbox_checked, backgroundColor: form.checkbox_checked }}>
+                      <span className="text-[8px] font-bold" style={{ color: form.btn_primary_text }}>✓</span>
+                    </div>
+                    <span className="text-[10px] font-bold" style={{ color: form.text_main }}>Active Check</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <p className="text-[10px] font-display font-bold uppercase" style={{ color: form.text_main }}>Components ▼</p>
+                <div className="space-y-3">
+                  <button className="w-full py-2 rounded text-[9px] font-bold uppercase tracking-widest shadow-sm" style={{ backgroundColor: form.btn_primary_bg, color: form.btn_primary_text }}>
+                    Primary
+                  </button>
+                  <button className="w-full py-2 rounded text-[9px] font-bold uppercase tracking-widest border" style={{ backgroundColor: form.btn_secondary_bg, color: form.btn_secondary_text, borderColor: form.border_main }}>
+                    Secondary
+                  </button>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <p className="text-[10px] font-display font-bold uppercase" style={{ color: form.text_main }}>Condition ▼</p>
-                <div className="space-y-2 pl-1">
-                  {['NM', 'LP', 'MP', 'HP'].map(c => (
-                    <div key={c} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-sm border" style={{ borderColor: form.border_main, backgroundColor: form.bg_surface }} />
-                        <span className="text-[10px] font-bold" style={{ color: form.text_secondary }}>{c}</span>
-                      </div>
-                      <span className="text-[8px] font-bold" style={{ color: form.accent_primary }}>(12)</span>
+                <p className="text-[8px] font-bold uppercase tracking-[0.2em] mb-3" style={{ color: form.text_muted }}>STATUS LABELS</p>
+                <div className="space-y-2">
+                  {[
+                    { l: 'Near Mint', c: form.status_nm },
+                    { l: 'Lightly Played', c: form.status_lp },
+                    { l: 'Mod. Played', c: form.status_mp },
+                    { l: 'Heavily Played', c: form.status_hp },
+                    { l: 'Damaged Card', c: form.status_dmg }
+                  ].map(s => (
+                    <div key={s.l} className="flex items-center gap-2">
+                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.c }} />
+                       <span className="text-[9px] font-medium" style={{ color: form.text_secondary }}>{s.l}</span>
                     </div>
                   ))}
                 </div>
@@ -590,50 +613,86 @@ function MiniSinglesPreview({ form, mode = 'desktop' }: { form: ThemeInput, mode
         )}
 
         {/* Mini Grid Container */}
-        <main className="flex-1 p-6 overflow-y-auto custom-scrollbar">
+        <main className="flex-1 p-6 overflow-y-auto custom-scrollbar bg-[radial-gradient(circle_at_center,var(--border-main)_0.2px,transparent_0.2px)] bg-[size:12px_12px]" style={{ backgroundColor: form.bg_page }}>
           <div className="mb-6">
-             <p className="text-[8px] font-mono mb-1 uppercase tracking-widest" style={{ color: form.text_muted }}>MTG / SINGLES</p>
-             <h2 className={`${isMobile ? 'text-xl' : 'text-3xl'} font-display leading-tight`} style={{ color: form.text_main }}>PREVIEW SINGLES</h2>
-             <div className="h-0.5 mt-2" style={{ backgroundColor: form.text_main }} />
+             <nav className="flex items-center gap-2 mb-2">
+               <span className="text-[8px] font-mono uppercase tracking-widest" style={{ color: form.text_muted }}>MTG</span>
+               <span className="w-1 h-1 rounded-full" style={{ backgroundColor: form.text_muted }} />
+               <span className="text-[8px] font-mono uppercase tracking-widest" style={{ color: form.text_muted }}>SINGLES</span>
+             </nav>
+             <h2 className={`${isMobile ? 'text-xl' : 'text-3xl'} font-display leading-tight`} style={{ color: form.text_main }}>PREVIEW ENGINE</h2>
+             <p className="text-[10px] mt-1 italic font-serif" style={{ color: form.text_secondary }}>The curator&apos;s choice for high-fidelity inventory management.</p>
+             <div className="h-0.5 mt-3 opacity-20" style={{ backgroundColor: form.text_main }} />
           </div>
 
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-[10px] font-mono" style={{ color: form.text_muted }}>3 results</span>
+          {!isMobile && (
+            <div className="mb-8 p-4 rounded border border-dashed" style={{ borderColor: form.border_main, backgroundColor: form.bg_surface }}>
+              <p className="text-[8px] font-bold uppercase tracking-widest mb-3 opacity-60" style={{ color: form.text_muted }}>Audit: Status Badge Matrix</p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { l: 'NM', c: form.status_nm },
+                  { l: 'LP', c: form.status_lp },
+                  { l: 'MP', c: form.status_mp },
+                  { l: 'HP', c: form.status_hp },
+                  { l: 'DMG', c: form.status_dmg }
+                ].map(s => (
+                  <span key={s.l} className="text-[8px] font-bold px-2 py-0.5 rounded border" style={{ backgroundColor: s.c + '15', borderColor: s.c, color: s.c }}>
+                    {s.l} CLASS
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between mb-4 pb-2 border-b border-border-main/10">
+            <span className="text-[10px] font-mono font-bold" style={{ color: form.text_main }}>COLLECTION (3)</span>
             <div className="flex items-center gap-2">
-               <span className="text-[8px] font-bold uppercase" style={{ color: form.text_muted }}>Sort</span>
-               <div className="h-6 w-20 md:w-24 rounded border px-2 flex items-center justify-between" style={{ backgroundColor: form.bg_surface, borderColor: form.border_main }}>
-                  <span className="text-[9px]" style={{ color: form.text_main }}>Newest</span>
-                  <span className="text-[8px]" style={{ color: form.text_muted }}>▼</span>
+               <span className="text-[8px] font-bold uppercase" style={{ color: form.text_muted }}>View</span>
+               <div className="flex gap-1">
+                 <div className="w-3 h-3 rounded" style={{ backgroundColor: form.accent_primary }} />
+                 <div className="w-3 h-3 rounded border" style={{ borderColor: form.border_main }} />
                </div>
             </div>
           </div>
 
           <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`} style={{ gap: form.gap_grid }}>
-            {mockProducts.slice(0, isMobile ? 2 : 3).map(p => (
-              <div key={p.id} className="border flex flex-col overflow-hidden transition-all hover:-translate-y-1" style={{ backgroundColor: form.bg_surface, borderColor: form.border_main, borderRadius: form.radius_base }}>
-                <div className={`${isMobile ? 'aspect-[21/9]' : 'aspect-[3/4]'} bg-bg-page/20 relative`} style={{ backgroundColor: form.bg_page + '33' }}>
+            {mockProducts.slice(0, isMobile ? 3 : 3).map(p => (
+              <div key={p.id} className="border flex flex-col overflow-hidden transition-all hover:scale-[1.02] shadow-sm" style={{ backgroundColor: form.bg_card, borderColor: form.border_main, borderRadius: form.radius_base }}>
+                <div className={`${isMobile ? 'aspect-[16/6]' : 'aspect-square'} bg-bg-page/20 relative`} style={{ backgroundColor: form.bg_page + '33' }}>
                   <div className="absolute inset-0 flex items-center justify-center p-4">
-                    <div className="w-full h-full rounded bg-bg-header/20 border border-white/5" style={{ backgroundColor: form.bg_header + '22' }} />
+                    <div className="w-full h-full rounded bg-bg-header/10 border border-white/5" style={{ backgroundColor: form.bg_header + '15' }} />
                   </div>
-                  <div className="absolute top-2 left-2 flex gap-1">
-                    <span className="text-[7px] font-bold px-1 py-0.5 rounded border" style={{ 
-                      backgroundColor: p.condition === 'NM' ? form.status_nm + '22' : p.condition === 'LP' ? form.status_lp + '22' : form.status_hp + '22',
+                  <div className="absolute top-2 left-2 flex flex-col gap-1">
+                    <span className="text-[7px] font-bold px-1 py-0.5 rounded border backdrop-blur-sm" style={{ 
+                      backgroundColor: (p.condition === 'NM' ? form.status_nm : p.condition === 'LP' ? form.status_lp : form.status_hp) + '15',
                       borderColor: p.condition === 'NM' ? form.status_nm : p.condition === 'LP' ? form.status_lp : form.status_hp,
                       color: p.condition === 'NM' ? form.status_nm : p.condition === 'LP' ? form.status_lp : form.status_hp
                     }}>
-                      {p.condition}
+                      COND: {p.condition}
                     </span>
                   </div>
-                </div>
-                <div className="flex flex-col flex-1 gap-2" style={{ padding: form.padding_card }}>
-                  <div>
-                    <h5 className="text-[10px] font-bold truncate leading-tight" style={{ color: form.text_main }}>{p.name}</h5>
-                    <p className="text-[8px] truncate opacity-60" style={{ color: form.text_secondary }}>{p.set_name}</p>
+                  <div className="absolute top-2 right-2">
+                     <div className="w-4 h-4 rounded-full border border-black/10 flex items-center justify-center bg-white/20">
+                        <span className="text-[10px]" style={{ color: form.accent_primary }}>★</span>
+                     </div>
                   </div>
-                  <div className="mt-auto pt-2 border-t flex items-center justify-between" style={{ borderColor: form.border_main }}>
-                    <span className="text-[10px] font-bold font-mono" style={{ color: form.text_main }}>${p.price.toLocaleString()}</span>
-                    <button className="text-[8px] font-display font-bold px-2 py-1 rounded" style={{ backgroundColor: form.bg_header, color: '#ffffff' }}>
-                      {p.stock > 0 ? 'ADD' : 'SOLD'}
+                </div>
+                <div className="flex flex-col flex-1" style={{ padding: form.padding_card }}>
+                  <div>
+                    <h5 className="text-[11px] font-bold truncate leading-tight mb-1" style={{ color: form.text_main }}>{p.name}</h5>
+                    <div className="flex items-center gap-2">
+                       <p className="text-[8px] truncate" style={{ color: form.text_muted }}>{p.set_name}</p>
+                       <span className="w-1 h-1 rounded-full bg-border-main" />
+                       <p className="text-[7px] font-mono tracking-tighter" style={{ color: form.accent_primary }}>#{p.id}09</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-dashed flex items-center justify-between" style={{ borderColor: form.border_main }}>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] font-display font-bold leading-none tracking-tighter" style={{ color: form.text_main }}>${p.price.toLocaleString()}</span>
+                      <span className="text-[6px] opacity-60 font-mono" style={{ color: form.text_secondary }}>+Tax included</span>
+                    </div>
+                    <button className="text-[9px] font-display font-bold px-3 py-1.5 rounded transition-transform active:scale-90" style={{ backgroundColor: form.btn_primary_bg, color: form.btn_primary_text }}>
+                      {p.stock > 0 ? 'BUY NOW' : 'NOTIFY'}
                     </button>
                   </div>
                 </div>
@@ -641,16 +700,23 @@ function MiniSinglesPreview({ form, mode = 'desktop' }: { form: ThemeInput, mode
             ))}
           </div>
 
-          <div className="mt-8 flex justify-center gap-1">
-            {[1, 2, 3].map(n => (
-              <div key={n} className="w-6 h-6 flex items-center justify-center rounded border text-[9px] font-mono" style={{ 
-                backgroundColor: n === 1 ? form.bg_header : form.bg_surface,
-                borderColor: form.border_main,
-                color: n === 1 ? '#ffffff' : form.text_main
-              }}>
-                {n}
-              </div>
-            ))}
+          <div className="mt-12 p-6 rounded border bg-bg-surface flex flex-col gap-4" style={{ backgroundColor: form.bg_surface, borderColor: form.border_main }}>
+             <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: form.text_main }}>Cart Summary Preview</span>
+                <span className="text-[12px] font-display font-bold" style={{ color: form.accent_primary }}>$50,335,000</span>
+             </div>
+             <div className="flex flex-col gap-1">
+                <div className="h-1 rounded-full bg-border-main/20 overflow-hidden">
+                   <div className="h-full bg-accent-primary" style={{ width: '60%', backgroundColor: form.accent_primary }} />
+                </div>
+                <div className="flex justify-between">
+                   <span className="text-[7px] font-mono" style={{ color: form.text_muted }}>MATRIX PROGRESSION</span>
+                   <span className="text-[7px] font-mono" style={{ color: form.text_muted }}>60%</span>
+                </div>
+             </div>
+             <button className="w-full py-3 rounded text-[10px] font-bold uppercase tracking-widest transition-all" style={{ backgroundColor: form.btn_primary_bg, color: form.btn_primary_text }}>
+                Proceed to Checkout
+             </button>
           </div>
         </main>
       </div>
