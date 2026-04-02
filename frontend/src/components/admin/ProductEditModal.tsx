@@ -407,6 +407,25 @@ export default function ProductEditModal({
     }));
   };
 
+  const handleSelectPrint = (p: ScryfallCard) => {
+    const treatment = getTreatmentType(p);
+    const foil = resolveFoilTreatment(p);
+    
+    setForm(f => ({
+      ...f,
+      name: p.name || f.name,
+      set_code: p.set || f.set_code,
+      set_name: p.set_name || f.set_name,
+      card_treatment: treatment,
+      collector_number: p.collector_number || f.collector_number,
+      promo_type: p.promo_types?.join(',') || 'none',
+      foil_treatment: foil as FoilTreatment,
+      image_url: getScryfallImage(p) || f.image_url,
+      price_reference: applyPrintPrices(p, foil as FoilTreatment, f.price_source),
+      ...extractMTGMetadata(p)
+    }));
+  };
+
   const handleSourceChange = (src: PriceSource) => {
     const bestPrint = findMatchingPrint(scryfallPrints, form.set_code, form.card_treatment, form.collector_number, form.promo_type, form.foil_treatment);
     setForm(f => ({
@@ -566,6 +585,7 @@ export default function ProductEditModal({
                 onArtChange={handleArtChange}
                 onPromoChange={handlePromoChange}
                 onFoilChange={handleFoilChange}
+                onSelectPrint={handleSelectPrint}
               />
             )}
             {activeTab === 'pricing' && (

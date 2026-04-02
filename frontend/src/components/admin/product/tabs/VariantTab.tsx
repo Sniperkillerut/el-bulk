@@ -14,20 +14,62 @@ interface VariantTabProps {
   onArtChange: (a: string) => void;
   onPromoChange: (p: string) => void;
   onFoilChange: (f: FoilTreatment) => void;
+  onSelectPrint: (p: ScryfallCard) => void;
 }
 
 export default function VariantTab({
   form, prints, isMTGSingles, onUpdate,
-  onTreatmentChange, onArtChange, onPromoChange, onFoilChange
+  onTreatmentChange, onArtChange, onPromoChange, onFoilChange, onSelectPrint
 }: VariantTabProps) {
   const { t } = useLanguage();
 
   return (
     <div className="flex flex-col gap-6">
+      {isMTGSingles && prints.length > 1 && (
+        <div className="bg-ink-surface/40 p-4 rounded-lg border border-ink-border/50 animate-in fade-in duration-500">
+          <label className="text-[10px] font-mono-stack mb-3 block uppercase text-gold tracking-widest">{t('components.admin.product_modal.variant.prints_gallery', 'SELECT SPECIFIC PRINTING TO ADD')}</label>
+          <div className="flex overflow-x-auto pb-2 gap-3 custom-scrollbar snap-x">
+            {prints.map((p, idx) => {
+              const isSelected = p.set?.toLowerCase() === form.set_code?.toLowerCase() && p.collector_number === form.collector_number;
+              const img = p.image_uris?.small || p.image_uris?.normal || '';
+              
+              return (
+                <button 
+                  key={`${p.set}-${p.collector_number}-${idx}`}
+                  onClick={(e) => { e.preventDefault(); onSelectPrint(p); }}
+                  className={`
+                    group relative flex-shrink-0 w-24 aspect-[63/88] rounded overflow-hidden border-2 transition-all snap-start
+                    ${isSelected ? 'border-gold shadow-[0_0_15px_rgba(212,175,55,0.4)] scale-105 z-10' : 'border-ink-border/40 grayscale-[0.6] opacity-60 hover:opacity-100 hover:grayscale-0 hover:border-gold/50'}
+                  `}
+                >
+                  {img ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={img} alt={p.set_name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-ink-border/10 flex items-center justify-center text-[8px] font-mono-stack text-center p-1">
+                      {p.set_name}
+                    </div>
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 bg-black/80 px-1 py-0.5 text-[8px] font-mono-stack text-white opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap overflow-hidden text-ellipsis">
+                    {p.set?.toUpperCase()} #{p.collector_number}
+                  </div>
+                  {isSelected && (
+                    <div className="absolute top-1 right-1 bg-gold text-black rounded-full w-4 h-4 flex items-center justify-center text-[10px] shadow-lg">
+                      ✓
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {isMTGSingles && (
         <MTGVariantSelector
           tcg={form.tcg}
           setCode={form.set_code}
+          setName={form.set_name}
           cardTreatment={form.card_treatment}
           collectorNumber={form.collector_number}
           promoType={form.promo_type}
