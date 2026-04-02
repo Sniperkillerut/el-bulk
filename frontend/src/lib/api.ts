@@ -619,3 +619,39 @@ export async function adminAddCustomerNote(token: string, customerId: string, co
     body: JSON.stringify({ content, order_id: orderId }),
   }, token);
 }
+export async function adminFetchAccountingExportURL(token: string, filters: { start_date?: string; end_date?: string }): Promise<string> {
+  const url = new URL(`${API_BASE}/api/admin/accounting/export`);
+  if (filters.start_date) url.searchParams.set('start_date', filters.start_date);
+  if (filters.end_date) url.searchParams.set('end_date', filters.end_date);
+  // Note: For file downloads, we often need to pass the token in a way the browser can handle
+  // or use fetch + blob if the backend requires the AdminAuth cookie which is 'credentials: include'.
+  // Since we use cookies, a simple window.open or link.click works if the cookie is set.
+  return url.toString();
+}
+
+export async function adminDownloadAccountingCSV(token: string, filters: { start_date?: string; end_date?: string }): Promise<void> {
+  const url = await adminFetchAccountingExportURL(token, filters);
+  const response = await fetch(url, { credentials: 'include' });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to download accounting export');
+  }
+  const blob = await response.blob();
+  const downloadUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = downloadUrl;
+  
+  let filename = `accounting_export_${new Date().toISOString().split('T')[0]}.csv`;
+  if (filters.start_date && filters.end_date) {
+    filename = `accounting_${filters.start_date.split('T')[0]}_to_${filters.end_date.split('T')[0]}.csv`;
+  } else if (filters.start_date) {
+    filename = `accounting_from_${filters.start_date.split('T')[0]}.csv`;
+  } else if (filters.end_date) {
+    filename = `accounting_to_${filters.end_date.split('T')[0]}.csv`;
+  }
+
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}

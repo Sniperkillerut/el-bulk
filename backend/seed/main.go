@@ -554,10 +554,18 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 
 	// 7. Bounties
 	logger.Info("Seeding bounties...")
-	for i := 0; i < 15; i++ {
+	bountyNames := []string{"Orcish Bowmasters", "Sheoldred, the Apocalypse", "The One Ring", "Ragavan, Nimble Pilferer", "Mana Crypt"}
+	for _, name := range bountyNames {
 		db.Exec(`
 			INSERT INTO bounty (name, tcg, set_name, condition, quantity_needed, target_price, is_active)
 			VALUES ($1, 'mtg', 'Modern Horizons 3', 'NM', $2, $3, true)
+		`, name, rand.Intn(5)+2, (rand.Intn(10)+5)*10000)
+	}
+
+	for i := 0; i < 10; i++ {
+		db.Exec(`
+			INSERT INTO bounty (name, tcg, set_name, condition, quantity_needed, target_price, is_active)
+			VALUES ($1, 'mtg', 'Generic Set', 'NM', $2, $3, true)
 		`, fmt.Sprintf("Bounty Card #%d", i), rand.Intn(10)+1, rand.Intn(100000)+5000)
 	}
 
@@ -587,10 +595,16 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 			status := "completed"
 			if rand.Intn(10) > 8 { status = "pending" }
 			
-			db.QueryRow(`
-				INSERT INTO "order" (order_number, customer_id, status, payment_method, total_cop, created_at)
-				VALUES ($1, $2, $3, 'Transfer', $4, $5) RETURNING id
-			`, fmt.Sprintf("ORD-%d-%d", i, j), cID, status, 0.0, time.Now().AddDate(0, 0, -rand.Intn(30))).Scan(&oID)
+			orderDate := time.Now().AddDate(0, 0, -rand.Intn(60))
+			completedAt := "NULL"
+			if status == "completed" {
+				completedAt = fmt.Sprintf("'%s'", orderDate.Add(time.Hour*24).Format(time.RFC3339))
+			}
+
+			db.QueryRow(fmt.Sprintf(`
+				INSERT INTO "order" (order_number, customer_id, status, payment_method, total_cop, created_at, completed_at)
+				VALUES ($1, $2, $3, 'Transfer', $4, $5, %s) RETURNING id
+			`, completedAt), fmt.Sprintf("ORD-%d-%d", i, j), cID, status, 0.0, orderDate).Scan(&oID)
 
 			// Items
 			total := 0.0
@@ -774,14 +788,37 @@ func seedCRM(db *sqlx.DB, adminID string) {
 			bID := bountyIDs[i%len(bountyIDs)]
 			status := []string{"pending", "accepted", "fulfilled"}[i%3]
 			
+			createdAt := time.Now().AddDate(0, 0, -rand.Intn(45))
 			db.Exec(`
-				INSERT INTO bounty_offer (bounty_id, customer_id, quantity, status, admin_notes)
-				VALUES ($1, $2, $3, $4, $5)
-			`, bID, c.ID, (rand.Intn(3) + 1), status, "Verified collection. Quality looks good.")
+				INSERT INTO bounty_offer (bounty_id, customer_id, quantity, status, admin_notes, created_at)
+				VALUES ($1, $2, $3, $4, $5, $6)
+			`, bID, c.ID, (rand.Intn(3) + 1), status, "Verified collection. Quality looks good.", createdAt)
 		}
 	}
 
-	// 5. Seed some guest requests (Unlinked)
+	// 5. Seed extra data for Accounting test (linked Offer + Request)
+	if len(bountyIDs) > 0 {
+		// Specifically seed a "cancelled out" pair
+		// Find the "Orcish Bowmasters" bounty
+		var bowmastersID string
+		db.Get(&bowmastersID, "SELECT id FROM bounty WHERE name = 'Orcish Bowmasters' LIMIT 1")
+		if bowmastersID != "" {
+			c := customers[rand.Intn(len(customers))]
+			// Outcome
+			db.Exec(`
+				INSERT INTO bounty_offer (bounty_id, customer_id, quantity, status, admin_notes, created_at)
+				VALUES ($1, $2, 1, 'fulfilled', 'Linked transaction test', $3)
+			`, bowmastersID, c.ID, time.Now().AddDate(0, 0, -5))
+			
+			// Income
+			db.Exec(`
+				INSERT INTO client_request (customer_name, customer_contact, card_name, status, created_at)
+				VALUES ($1, $2, 'Orcish Bowmasters', 'solved', $3)
+			`, c.FirstName+" "+c.LastName, c.Email, time.Now().AddDate(0, 0, -5))
+		}
+	}
+
+	// 6. Seed some guest requests (Unlinked)
 	for i := 0; i < 5; i++ {
 		db.Exec(`
 			INSERT INTO client_request (customer_name, customer_contact, card_name, details, status)

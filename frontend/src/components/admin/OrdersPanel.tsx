@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import {
-  adminFetchOrders, adminFetchOrderDetail, adminUpdateOrder, adminCompleteOrder
+  adminFetchOrders, adminFetchOrderDetail, adminUpdateOrder, adminCompleteOrder,
+  adminDownloadAccountingCSV
 } from '@/lib/api';
 import {
   OrderWithCustomer, OrderDetail,
@@ -25,6 +26,10 @@ export default function OrdersPanel({ token, initialOrderId }: Props) {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [loading, setLoading] = useState(true);
+
+  // Accounting export state
+  const [exportDates, setExportDates] = useState({ start: '', end: '' });
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -204,6 +209,19 @@ export default function OrdersPanel({ token, initialOrderId }: Props) {
   const totalPages = Math.ceil(total / 20);
   const hasEdits = detail ? detail.items.some(i => itemEdits[i.id] !== i.quantity) : false;
 
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      await adminDownloadAccountingCSV(token, {
+        start_date: exportDates.start ? `${exportDates.start}T00:00:00Z` : undefined,
+        end_date: exportDates.end ? `${exportDates.end}T23:59:59Z` : undefined,
+      });
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Error exporting accounting data');
+    }
+    setExporting(false);
+  };
+
   return (
     <div className="flex flex-col h-full w-full">
       <div className="flex flex-col lg:flex-row flex-1 min-h-0">
@@ -234,6 +252,38 @@ export default function OrdersPanel({ token, initialOrderId }: Props) {
                   {s ? (ORDER_STATUS_LABELS[s] || s) : 'Todas'}
                 </button>
               ))}
+            </div>
+
+            {/* Accounting Export UI */}
+            <div className="mt-2 p-2 rounded bg-gold/5 border border-gold/20">
+              <p className="text-[10px] font-mono-stack text-gold-dark mb-1 font-bold uppercase tracking-wider">Accounting Export (CSV)</p>
+              <div className="flex gap-2 items-end">
+                <div className="flex-1">
+                  <label className="text-[8px] font-mono-stack text-text-muted block uppercase">Start</label>
+                  <input 
+                    type="date" 
+                    value={exportDates.start} 
+                    onChange={e => setExportDates(prev => ({ ...prev, start: e.target.value }))}
+                    className="w-full text-[10px] p-1 bg-white border-kraft-dark/20"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="text-[8px] font-mono-stack text-text-muted block uppercase">End</label>
+                  <input 
+                    type="date" 
+                    value={exportDates.end} 
+                    onChange={e => setExportDates(prev => ({ ...prev, end: e.target.value }))}
+                    className="w-full text-[10px] p-1 bg-white border-kraft-dark/20"
+                  />
+                </div>
+                <button 
+                  onClick={handleExport}
+                  disabled={exporting}
+                  className="btn-primary text-[10px] p-1.5 px-3 whitespace-nowrap shadow-sm"
+                >
+                  {exporting ? '...' : 'CSV'}
+                </button>
+              </div>
             </div>
           </div>
 

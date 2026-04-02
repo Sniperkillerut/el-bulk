@@ -33,6 +33,7 @@ func main() {
 	tcgHandler := handlers.NewTCGHandler(database)
 	bountyHandler := handlers.NewBountyHandler(database)
 	healthHandler := handlers.NewHealthHandler(database)
+	accountingHandler := handlers.NewAccountingHandler(database)
 
 	// Start nightly price refresh at midnight
 	handlers.StartMidnightScheduler(database)
@@ -174,6 +175,9 @@ func main() {
 				r.Post("/clients/{id}/notes", customerAdminHandler.AddNote)
 
 				r.Get("/subscribers", newsletterHandler.AdminGetSubscribers)
+
+				// Accounting Export
+				r.Get("/accounting/export", accountingHandler.ExportCSV)
 			})
 		})
 
