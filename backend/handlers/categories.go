@@ -1,9 +1,10 @@
 package handlers
 
 import (
-"github.com/el-bulk/backend/utils/render"
+	"github.com/el-bulk/backend/utils/render"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -29,7 +30,7 @@ func (h *CategoriesHandler) List(w http.ResponseWriter, r *http.Request) {
 	isAdmin := strings.Contains(r.URL.Path, "/admin/")
 	
 	query := `
-		SELECT c.id, c.name, c.slug, c.is_active, c.show_badge, c.searchable, c.created_at, COUNT(pc.product_id) as item_count
+		SELECT c.id, c.name, c.slug, c.is_active, c.show_badge, c.searchable, c.bg_color, c.text_color, c.icon, c.created_at, COUNT(pc.product_id) as item_count
 		FROM custom_category c
 		LEFT JOIN product_category pc ON c.id = pc.category_id
 	`
@@ -37,7 +38,7 @@ func (h *CategoriesHandler) List(w http.ResponseWriter, r *http.Request) {
 		query += " WHERE c.is_active = true OR c.searchable = true OR c.show_badge = true "
 	}
 	query += `
-		GROUP BY c.id, c.name, c.slug, c.is_active, c.show_badge, c.searchable, c.created_at
+		GROUP BY c.id, c.name, c.slug, c.is_active, c.show_badge, c.searchable, c.bg_color, c.text_color, c.icon, c.created_at
 	`
 	if !isAdmin {
 		query += " HAVING COUNT(pc.product_id) > 0 "
@@ -94,8 +95,8 @@ func (h *CategoriesHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	var cat models.CustomCategory
 	err := h.DB.QueryRowx(
-		"INSERT INTO custom_category (name, slug, is_active, show_badge, searchable) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-		input.Name, slug, isActive, showBadge, searchable,
+		"INSERT INTO custom_category (name, slug, is_active, show_badge, searchable, bg_color, text_color, icon) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
+		input.Name, slug, isActive, showBadge, searchable, input.BgColor, input.TextColor, input.Icon,
 	).StructScan(&cat)
 
 	if err != nil {
@@ -133,22 +134,37 @@ func (h *CategoriesHandler) Update(w http.ResponseWriter, r *http.Request) {
 	
 	idx := 3
 	if input.IsActive != nil {
-		query += `, is_active = $` + strings.Repeat(" ", 0) + string(rune('0'+idx))
+		query += fmt.Sprintf(", is_active = $%d", idx)
 		args = append(args, *input.IsActive)
 		idx++
 	}
 	if input.ShowBadge != nil {
-		query += `, show_badge = $` + strings.Repeat(" ", 0) + string(rune('0'+idx))
+		query += fmt.Sprintf(", show_badge = $%d", idx)
 		args = append(args, *input.ShowBadge)
 		idx++
 	}
 	if input.Searchable != nil {
-		query += `, searchable = $` + strings.Repeat(" ", 0) + string(rune('0'+idx))
+		query += fmt.Sprintf(", searchable = $%d", idx)
 		args = append(args, *input.Searchable)
 		idx++
 	}
+	if input.BgColor != nil {
+		query += fmt.Sprintf(", bg_color = $%d", idx)
+		args = append(args, input.BgColor)
+		idx++
+	}
+	if input.TextColor != nil {
+		query += fmt.Sprintf(", text_color = $%d", idx)
+		args = append(args, input.TextColor)
+		idx++
+	}
+	if input.Icon != nil {
+		query += fmt.Sprintf(", icon = $%d", idx)
+		args = append(args, input.Icon)
+		idx++
+	}
 
-	query += ` WHERE id = $` + string(rune('0'+idx))
+	query += fmt.Sprintf(" WHERE id = $%d", idx)
 	args = append(args, id)
 	
 	query += ` RETURNING *`

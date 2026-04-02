@@ -368,11 +368,14 @@ export async function adminCreateCategory(
   slug?: string, 
   is_active: boolean = true,
   show_badge: boolean = true,
-  searchable: boolean = true
+  searchable: boolean = true,
+  bg_color?: string,
+  text_color?: string,
+  icon?: string
 ): Promise<import('./types').CustomCategory> {
   const data = await apiFetch<import('./types').CustomCategory>('/api/admin/categories', {
     method: 'POST',
-    body: JSON.stringify({ name, slug, is_active, show_badge, searchable }),
+    body: JSON.stringify({ name, slug, is_active, show_badge, searchable, bg_color, text_color, icon }),
   }, token);
   metadataCache.delete('admin_categories');
   metadataCache.delete('categories');
@@ -386,11 +389,14 @@ export async function adminUpdateCategory(
   slug?: string, 
   is_active?: boolean,
   show_badge?: boolean,
-  searchable?: boolean
+  searchable?: boolean,
+  bg_color?: string,
+  text_color?: string,
+  icon?: string
 ): Promise<import('./types').CustomCategory> {
   const data = await apiFetch<import('./types').CustomCategory>(`/api/admin/categories/${id}`, {
     method: 'PUT',
-    body: JSON.stringify({ name, slug, is_active, show_badge, searchable }),
+    body: JSON.stringify({ name, slug, is_active, show_badge, searchable, bg_color, text_color, icon }),
   }, token);
   metadataCache.delete('admin_categories');
   metadataCache.delete('categories');

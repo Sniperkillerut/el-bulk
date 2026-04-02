@@ -6,6 +6,9 @@ CREATE TABLE IF NOT EXISTS custom_category (
   is_active   BOOLEAN NOT NULL DEFAULT true,
   show_badge  BOOLEAN NOT NULL DEFAULT true,
   searchable  BOOLEAN NOT NULL DEFAULT true,
+  bg_color    TEXT,
+  text_color  TEXT,
+  icon        TEXT,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

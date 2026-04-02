@@ -23,7 +23,10 @@ BEGIN
                 'slug', cc.slug,
                 'show_badge', cc.show_badge,
                 'is_active', cc.is_active,
-            'searchable', cc.searchable
+                'searchable', cc.searchable,
+                'bg_color', cc.bg_color,
+                'text_color', cc.text_color,
+                'icon', cc.icon
         ))
         FROM product_category pc
         JOIN custom_category cc ON pc.category_id = cc.id

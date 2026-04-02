@@ -97,12 +97,12 @@ export default function AdminDashboard() {
     setStorageLocations(await adminFetchStorage(token!) || []);
   };
 
-  const handleCreateCategory = async (name: string) => {
-    await adminCreateCategory(token!, name);
+  const handleCreateCategory = async (name: string, data?: Partial<CustomCategory>) => {
+    await adminCreateCategory(token!, name, data?.slug, data?.is_active, data?.show_badge, data?.searchable, data?.bg_color, data?.text_color, data?.icon);
     setCategories(await adminFetchCategories(token!) || []);
   };
-  const handleUpdateCategory = async (id: string, name: string) => {
-    await adminUpdateCategory(token!, id, name);
+  const handleUpdateCategory = async (id: string, name: string, data?: Partial<CustomCategory>) => {
+    await adminUpdateCategory(token!, id, name, data?.slug, data?.is_active, data?.show_badge, data?.searchable, data?.bg_color, data?.text_color, data?.icon);
     setCategories(await adminFetchCategories(token!) || []);
   };
   const handleDeleteCategory = async (id: string, name: string) => {

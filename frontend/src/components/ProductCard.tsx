@@ -4,10 +4,11 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { Product } from '@/lib/types';
 import { useCart } from '@/lib/CartContext';
 import CardImage from './CardImage';
-import { openProductModal } from './ProductModalManager';
-import CardBadgeList from './cards/CardBadgeList';
 import CardInfo from './cards/CardInfo';
+import CardBadgeList from './cards/CardBadgeList';
+import { openProductModal } from './ProductModalManager';
 import { useLanguage } from '@/context/LanguageContext';
+import { CategoryIcon } from './CategoryIcon';
 
 interface ProductCardProps {
   product: Product;
@@ -36,9 +37,32 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <div className="card flex flex-col overflow-hidden animate-fade-up" data-theme-area="product-card">
-      {/* Image area */}
-      <a href={href} onClick={handleOpenModal} className="thumb-hover-wrap no-underline">
+      <a href={href} onClick={handleOpenModal} className="thumb-hover-wrap no-underline relative block">
         <CardImage imageUrl={product.image_url} name={product.name} tcg={product.tcg} foilTreatment={product.foil_treatment} />
+        
+        {/* Floating Categories */}
+        {product.categories && product.categories.length > 0 && (
+          <div className="absolute top-2 left-2 z-10 flex flex-col gap-1 pointer-events-none">
+            {product.categories.map(c => (
+              <span key={c.id} className="badge shadow-lg backdrop-blur-md" 
+                    style={{ 
+                      background: c.bg_color ? `${c.bg_color}E6` : 'rgba(var(--accent-primary-rgb, 184, 134, 11), 0.85)', 
+                      color: c.text_color || 'var(--text-on-accent, #fff)', 
+                      borderColor: 'rgba(255,255,255,0.2)',
+                      fontSize: '0.6rem',
+                      padding: '0.15rem 0.5rem',
+                      letterSpacing: '0.05em',
+                      fontWeight: 'bold',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem'
+                    }}>
+                <CategoryIcon icon={c.icon} />
+                {c.name.toUpperCase()}
+              </span>
+            ))}
+          </div>
+        )}
       </a>
 
       <div className="flex flex-col flex-1 gap-2" style={{ padding: 'var(--padding-card)' }}>
@@ -48,7 +72,6 @@ export default function ProductCard({ product }: ProductCardProps) {
           treatment={product.card_treatment}
           textless={product.textless}
           fullArt={product.full_art}
-          categories={product.categories}
         />
 
         <a href={href} onClick={handleOpenModal} className="no-underline">

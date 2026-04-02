@@ -205,7 +205,7 @@ func (h *ProductHandler) populateCategories(products []models.Product, isAdmin b
 	}
 
 	sql := `
-		SELECT pc.product_id, c.id, c.name, c.slug, c.show_badge, c.is_active, c.searchable
+		SELECT pc.product_id, c.id, c.name, c.slug, c.show_badge, c.is_active, c.searchable, c.bg_color, c.text_color, c.icon
 		FROM product_category pc
 		JOIN custom_category c ON pc.category_id = c.id
 		WHERE pc.product_id IN (?)
@@ -223,13 +223,16 @@ func (h *ProductHandler) populateCategories(products []models.Product, isAdmin b
 
 	query = h.DB.Rebind(query)
 	var catRows []struct {
-		ProductID  string `db:"product_id"`
-		ID         string `db:"id"`
-		Name       string `db:"name"`
-		Slug       string `db:"slug"`
-		ShowBadge  bool   `db:"show_badge"`
-		IsActive   bool   `db:"is_active"`
-		Searchable bool   `db:"searchable"`
+		ProductID  string  `db:"product_id"`
+		ID         string  `db:"id"`
+		Name       string  `db:"name"`
+		Slug       string  `db:"slug"`
+		ShowBadge  bool    `db:"show_badge"`
+		IsActive   bool    `db:"is_active"`
+		Searchable bool    `db:"searchable"`
+		BgColor    *string `db:"bg_color"`
+		TextColor  *string `db:"text_color"`
+		Icon       *string `db:"icon"`
 	}
 	if err := h.DB.Select(&catRows, query, args...); err != nil {
 		logger.Error("Error selecting categories: %v", err)
@@ -245,6 +248,9 @@ func (h *ProductHandler) populateCategories(products []models.Product, isAdmin b
 			ShowBadge:  r.ShowBadge,
 			IsActive:   r.IsActive,
 			Searchable: r.Searchable,
+			BgColor:    r.BgColor,
+			TextColor:  r.TextColor,
+			Icon:       r.Icon,
 		})
 	}
 

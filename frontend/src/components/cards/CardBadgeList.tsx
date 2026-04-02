@@ -8,7 +8,6 @@ interface CardBadgeListProps {
   treatment?: string;
   textless?: boolean;
   fullArt?: boolean;
-  categories?: { id: string; name: string }[];
 }
 
 export default function CardBadgeList({ 
@@ -16,8 +15,7 @@ export default function CardBadgeList({
   foil, 
   treatment, 
   textless, 
-  fullArt, 
-  categories 
+  fullArt
 }: CardBadgeListProps) {
   const { t } = useLanguage();
 
@@ -44,11 +42,7 @@ export default function CardBadgeList({
         </span>
       )}
       
-      {categories?.map(c => (
-        <span key={c.id} className="badge" style={{ background: 'var(--accent-primary)', color: 'var(--text-on-accent)', borderColor: 'var(--accent-primary-hover)' }}>
-          {c.name}
-        </span>
-      ))}
+      {/* Categories moved to floating position on card image */}
     </div>
   );
 }

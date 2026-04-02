@@ -1,5 +1,10 @@
--- View: view_product_enriched
--- Encapsulates the complex product retrieval logic including storage and categories
+-- Migration: Add styling and icon support for custom categories (collections)
+ALTER TABLE custom_category ADD COLUMN bg_color TEXT;
+ALTER TABLE custom_category ADD COLUMN text_color TEXT;
+ALTER TABLE custom_category ADD COLUMN icon TEXT;
+
+-- Update the view to include these new fields in the JSON aggregation
+-- (We'll also update the schema file, but this migration applies it immediately)
 CREATE OR REPLACE VIEW view_product_enriched AS
 SELECT p.*,
        (SELECT COALESCE(jsonb_agg(jsonb_build_object(

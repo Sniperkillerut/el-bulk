@@ -230,6 +230,9 @@ export interface CustomCategory {
   is_active: boolean;
   show_badge: boolean;
   searchable: boolean;
+  bg_color?: string;
+  text_color?: string;
+  icon?: string;
   item_count?: number;
   created_at?: string;
 }
@@ -240,6 +243,9 @@ export interface CustomCategoryInput {
   is_active?: boolean;
   show_badge?: boolean;
   searchable?: boolean;
+  bg_color?: string;
+  text_color?: string;
+  icon?: string;
 }
 
 // ── Orders ──────────────────────────────────────────────

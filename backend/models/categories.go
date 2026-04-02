@@ -10,6 +10,9 @@ type CustomCategory struct {
 	IsActive   bool      `db:"is_active"   json:"is_active"`
 	ShowBadge  bool      `db:"show_badge"  json:"show_badge"`
 	Searchable bool      `db:"searchable"  json:"searchable"`
+	BgColor    *string   `db:"bg_color"    json:"bg_color"`
+	TextColor  *string   `db:"text_color"  json:"text_color"`
+	Icon       *string   `db:"icon"        json:"icon"`
 	CreatedAt  time.Time `db:"created_at"  json:"created_at"`
 	ItemCount  int       `db:"item_count"  json:"item_count"` // Computed field
 }
@@ -21,6 +24,9 @@ type CustomCategoryInput struct {
 	IsActive   *bool  `json:"is_active"`
 	ShowBadge  *bool  `json:"show_badge"`
 	Searchable *bool  `json:"searchable"`
+	BgColor    *string `json:"bg_color"`
+	TextColor  *string `json:"text_color"`
+	Icon       *string `json:"icon"`
 }
 
 // ProductCategory maps a product to a custom category in memory.
