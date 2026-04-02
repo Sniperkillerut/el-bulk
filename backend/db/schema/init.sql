@@ -13,6 +13,7 @@
 \i tables/tcg.sql
 \i tables/storage_location.sql
 \i tables/customer.sql
+\i tables/customer_auth.sql
 \i tables/admin.sql
 \i tables/custom_category.sql
 \i tables/bounty.sql

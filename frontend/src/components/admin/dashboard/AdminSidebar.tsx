@@ -67,17 +67,38 @@ export default function AdminSidebar() {
         <p className="font-mono-stack text-[10px] text-text-muted font-bold px-2 mb-4 tracking-widest uppercase opacity-40">System Navigation</p>
         {navItems.map((item) => {
           const isActive = pathname === item.href;
+          
+          let badgeLabel = "";
+          if (item.label === 'ORDERS') {
+            const count = stats?.pending_orders_count || 0;
+            if (count > 0) badgeLabel = String(count);
+          } else if (item.label === 'WANTED / BOUNTIES') {
+            const offers = stats?.pending_offers_count || 0;
+            const requests = stats?.pending_requests_count || 0;
+            if (offers > 0 || requests > 0) {
+              badgeLabel = `${offers}+${requests}`;
+            }
+          }
+
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-r-lg border-l-4 transition-all no-underline group ${isActive
+              className={`flex items-center gap-3 px-4 py-3 rounded-r-lg border-l-4 transition-all no-underline group relative ${isActive
                 ? 'bg-accent-primary text-text-on-accent font-bold shadow-md shadow-accent-primary/20 border-white/20'
                 : 'text-text-secondary hover:bg-white/5 hover:text-accent-primary border-transparent'
                 }`}
             >
               <span className={`text-lg ${isActive ? '' : 'opacity-50 group-hover:opacity-100'}`}>{item.icon}</span>
               <span className="font-display text-sm tracking-tight">{item.label}</span>
+              {badgeLabel && (
+                <span 
+                  className="ml-auto bg-hp-color text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[1.2rem] text-center shadow-sm"
+                  style={{ backgroundColor: 'var(--status-hp)' }}
+                >
+                  {badgeLabel}
+                </span>
+              )}
             </Link>
           );
         })}

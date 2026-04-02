@@ -151,8 +151,23 @@ export async function userFetchMe(): Promise<import('./types').UserProfile | nul
   }
 }
 
+export async function userUpdateMe(data: Partial<import('./types').UserProfile>): Promise<import('./types').UserProfile> {
+  return apiFetch<import('./types').UserProfile>('/api/auth/me', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
 export async function userLogout(): Promise<void> {
   await apiFetch('/api/auth/logout', { method: 'POST' });
+}
+
+export async function userFetchOrders(): Promise<import('./types').UserOrder[]> {
+  return apiFetch<import('./types').UserOrder[]>('/api/orders/me');
+}
+
+export async function userFetchOrderDetail(id: string): Promise<import('./types').OrderDetail> {
+  return apiFetch<import('./types').OrderDetail>(`/api/orders/me/${id}`);
 }
 
 // Admin API (uses cookies)

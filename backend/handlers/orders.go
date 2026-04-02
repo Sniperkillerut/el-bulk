@@ -403,3 +403,102 @@ func (h *OrderHandler) Complete(w http.ResponseWriter, r *http.Request) {
 
 	h.GetDetail(w, r)
 }
+
+// GET /api/orders/me — list orders for the current customer
+func (h *OrderHandler) ListMe(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok || userID == "" {
+		render.Error(w, "Not logged in", http.StatusUnauthorized)
+		return
+	}
+
+	var orders []struct {
+		models.Order
+		ItemCount int `db:"item_count" json:"item_count"`
+	}
+
+	err := h.DB.Select(&orders, `
+		SELECT o.*, (SELECT SUM(quantity) FROM order_item WHERE order_id = o.id) as item_count
+		FROM "order" o 
+		WHERE o.customer_id = $1 
+		ORDER BY o.created_at DESC
+	`, userID)
+
+	if err != nil {
+		logger.Error("User order list error for %s: %v", userID, err)
+		render.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+	if orders == nil {
+		orders = make([]struct {
+			models.Order
+			ItemCount int `db:"item_count" json:"item_count"`
+		}, 0)
+	}
+
+	render.Success(w, orders)
+}
+
+// GET /api/orders/me/{id} — get a single order for the current user
+func (h *OrderHandler) GetMeDetail(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok || userID == "" {
+		render.Error(w, "Not logged in", http.StatusUnauthorized)
+		return
+	}
+
+	id := chi.URLParam(r, "id")
+
+	// Fetch order - ensuring it belongs to this user
+	var order models.Order
+	if err := h.DB.Get(&order, `SELECT * FROM "order" WHERE id = $1 AND customer_id = $2`, id, userID); err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			render.Error(w, "Order not found", http.StatusNotFound)
+		} else {
+			logger.Error("User order detail error for %s (userID: %s): %v", id, userID, err)
+			render.Error(w, "Database error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Fetch customer (just for completeness, user already has their own info)
+	var customer models.Customer
+	if err := h.DB.Get(&customer, `SELECT * FROM customer WHERE id = $1`, order.CustomerID); err != nil {
+		render.Error(w, "Customer not found", http.StatusInternalServerError)
+		return
+	}
+
+	// Fetch order items with enrichment from view
+	var rows []struct {
+		models.OrderItem
+		ImageURL     *string `db:"image_url"`
+		Stock        int     `db:"stock"`
+		StoredInJSON []byte  `db:"stored_in"`
+	}
+	if err := h.DB.Select(&rows, `SELECT * FROM view_order_item_enriched WHERE order_id = $1 ORDER BY product_name`, id); err != nil {
+		logger.Error("Error loading order items for %s: %v", id, err)
+		render.Error(w, "Failed to load order items", http.StatusInternalServerError)
+		return
+	}
+
+	// Assemble detail items
+	detailItems := make([]models.OrderItemDetail, len(rows))
+	for i, r := range rows {
+		detailItems[i] = models.OrderItemDetail{
+			OrderItem: r.OrderItem,
+			ImageURL:  r.ImageURL,
+			Stock:     r.Stock,
+			StoredIn:  []models.StorageLocation{},
+		}
+		// StoredIn is internal, but we populate it for models consistency even if frontend might ignore it
+		if r.StoredInJSON != nil {
+			json.Unmarshal(r.StoredInJSON, &detailItems[i].StoredIn)
+		}
+	}
+
+	render.Success(w, models.OrderDetail{
+		Order:    order,
+		Customer: customer,
+		Items:    detailItems,
+	})
+}

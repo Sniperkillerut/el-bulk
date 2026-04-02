@@ -161,38 +161,82 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		finalAvatar = fbInfo.Picture.Data.URL
 	}
 
-	// Upsert customer in database
-	var customer models.Customer
-	err = h.DB.Get(&customer, "SELECT * FROM customer WHERE auth_provider_id = $1 AND auth_provider = $2", finalID, provider)
+	// 1. Check if identity is already linked to SOMEONE
+	var linkedCustomerID string
+	err = h.DB.Get(&linkedCustomerID, "SELECT customer_id FROM customer_auth WHERE provider = $1 AND provider_id = $2", provider, finalID)
+	
+	// 2. Check if we are currently logged in (LINKING flow)
+	currentUserID, _ := r.Context().Value(middleware.UserIDKey).(string)
 
-	if err != nil {
-		// Not found by Provider ID, try email
+	if currentUserID != "" {
+		// LINKING FLOW
+		if err == nil {
+			if linkedCustomerID == currentUserID {
+				// Already linked to this user, just return
+				http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+redirectURL, http.StatusFound)
+				return
+			}
+			// Already linked to ANOTHER user
+			http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/profile?error=already_linked", http.StatusTemporaryRedirect)
+			return
+		}
+		
+		// Link it
+		_, linkErr := h.DB.Exec("INSERT INTO customer_auth (customer_id, provider, provider_id) VALUES ($1, $2, $3)", currentUserID, provider, finalID)
+		if linkErr != nil {
+			logger.Error("Failed to link account: %v", linkErr)
+			http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/profile?error=link_failed", http.StatusTemporaryRedirect)
+			return
+		}
+		
+		// Success linking
+		http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+redirectURL, http.StatusFound)
+		return
+	}
+
+	// LOGIN / SIGNUP FLOW
+	var customer models.Customer
+	if err == nil {
+		// Found via customer_auth
+		err = h.DB.Get(&customer, "SELECT * FROM customer WHERE id = $1", linkedCustomerID)
+		if err != nil {
+			logger.Error("Customer linked in auth but missing in customer table: %v", err)
+			http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=db_error", http.StatusTemporaryRedirect)
+			return
+		}
+	} else {
+		// Not found in customer_auth, try email
 		err = h.DB.Get(&customer, "SELECT * FROM customer WHERE email = $1", finalEmail)
 		if err != nil {
 			// First time user, create account
+			tx, _ := h.DB.Beginx()
+			defer tx.Rollback()
+
 			query := `
-				INSERT INTO customer (first_name, last_name, email, auth_provider, auth_provider_id, avatar_url)
-				VALUES ($1, $2, $3, $4, $5, $6)
+				INSERT INTO customer (first_name, last_name, email, avatar_url)
+				VALUES ($1, $2, $3, $4)
 				RETURNING *
 			`
-			err = h.DB.Get(&customer, query, finalFirstName, finalLastName, finalEmail, provider, finalID, finalAvatar)
+			err = tx.Get(&customer, query, finalFirstName, finalLastName, finalEmail, finalAvatar)
 			if err != nil {
 				logger.Error("Failed to create user: %v", err)
 				http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=db_error", http.StatusTemporaryRedirect)
 				return
 			}
-		} else {
-			// Update existing user with Auth info
-			query := `
-				UPDATE customer SET auth_provider = $1, auth_provider_id = $2, avatar_url = $3
-				WHERE id = $4
-				RETURNING *
-			`
-			err = h.DB.Get(&customer, query, provider, finalID, finalAvatar, customer.ID)
+
+			// Add auth link
+			_, err = tx.Exec("INSERT INTO customer_auth (customer_id, provider, provider_id) VALUES ($1, $2, $3)", customer.ID, provider, finalID)
 			if err != nil {
-				logger.Error("Failed to update user: %v", err)
+				logger.Error("Failed to create auth link: %v", err)
 				http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=db_error", http.StatusTemporaryRedirect)
 				return
+			}
+			tx.Commit()
+		} else {
+			// Found by email, link this provider to it
+			_, err = h.DB.Exec("INSERT INTO customer_auth (customer_id, provider, provider_id) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING", customer.ID, provider, finalID)
+			if err != nil {
+				logger.Error("Failed to link provider to existing user by email: %v", err)
 			}
 		}
 	}
@@ -244,7 +288,48 @@ func (h *UserAuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Fetch linked providers
+	var providers []string
+	err = h.DB.Select(&providers, "SELECT provider FROM customer_auth WHERE customer_id = $1", userID)
+	if err == nil {
+		customer.LinkedProviders = providers
+	} else {
+		customer.LinkedProviders = []string{}
+	}
+
 	render.Success(w, customer)
+}
+
+// PUT /api/auth/me
+func (h *UserAuthHandler) UpdateMe(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok || userID == "" {
+		render.Error(w, "Not logged in", http.StatusUnauthorized)
+		return
+	}
+
+	var input struct {
+		Phone    string `json:"phone"`
+		IDNumber string `json:"id_number"`
+		Address  string `json:"address"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		render.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	_, err := h.DB.Exec(`
+		UPDATE customer SET phone = $1, id_number = $2, address = $3
+		WHERE id = $4
+	`, input.Phone, input.IDNumber, input.Address, userID)
+
+	if err != nil {
+		logger.Error("Failed to update user %s: %v", userID, err)
+		render.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+
+	h.Me(w, r)
 }
 
 // POST /api/auth/logout

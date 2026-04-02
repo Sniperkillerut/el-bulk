@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext } from 'react';
 
 interface UIContextType {
   foilEffectsEnabled: boolean;
@@ -11,16 +11,21 @@ interface UIContextType {
 const UIContext = createContext<UIContextType | undefined>(undefined);
 
 export function UIProvider({ children }: { children: React.ReactNode }) {
-  const [foilEffectsEnabled, setFoilEffectsEnabled] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('foilEffectsEnabled');
-      return saved !== null ? saved === 'true' : true;
+  const [foilEffectsEnabled, setFoilEffectsEnabled] = React.useState<boolean>(true);
+  const [initialized, setInitialized] = React.useState(false);
+
+  // Load from localStorage on mount
+  React.useEffect(() => {
+    const saved = localStorage.getItem('foilEffectsEnabled');
+    if (saved !== null) {
+      setFoilEffectsEnabled(saved === 'true');
     }
-    return true;
-  });
+    setInitialized(true);
+  }, []);
 
   // Save to localStorage when changed
   const handleSetFoilEffectsEnabled = (enabled: boolean) => {
+    if (!initialized) return;
     setFoilEffectsEnabled(enabled);
     localStorage.setItem('foilEffectsEnabled', enabled.toString());
   };

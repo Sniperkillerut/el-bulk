@@ -152,7 +152,24 @@ export default function CheckoutPage() {
         {/* Right: Order Summary */}
         <div className="w-full lg:w-[420px] flex-shrink-0">
           <div className="card p-6 sticky top-4">
-            <h2 className="font-display text-2xl mb-4">RESUMEN DEL PEDIDO</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="font-display text-2xl">RESUMEN DEL PEDIDO</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm('¿Estás seguro de que quieres vaciar el carrito?')) {
+                    clearCart();
+                  }
+                }}
+                className="flex items-center gap-1 text-[10px] font-mono-stack hover:opacity-80 transition-all uppercase tracking-wider"
+                style={{ color: 'var(--hp-color)', background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
+                </svg>
+                VACIAR CARRITO
+              </button>
+            </div>
             <p className="text-xs font-mono-stack mb-4" style={{ color: 'var(--text-muted)' }}>
               {items.reduce((s, i) => s + i.quantity, 0)} ARTÍCULO{items.length !== 1 ? 'S' : ''}
             </p>

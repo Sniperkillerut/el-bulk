@@ -70,6 +70,8 @@ func main() {
 
 		// Public order creation (with optional user context)
 		r.With(middleware.OptionalUserAuth).Post("/orders", orderHandler.Create)
+		r.With(middleware.RequireUserAuth).Get("/orders/me", orderHandler.ListMe)
+		r.With(middleware.RequireUserAuth).Get("/orders/me/{id}", orderHandler.GetMeDetail)
 
 		// Frontend logging
 		logHandler := handlers.NewLogHandler()
@@ -79,9 +81,10 @@ func main() {
 		userAuthHandler := handlers.NewUserAuthHandler(database)
 		r.Route("/auth", func(r chi.Router) {
 			r.With(middleware.RateLimit(10, 5*time.Minute)).Get("/{provider}/login", userAuthHandler.Login)
-			r.Get("/{provider}/callback", userAuthHandler.Callback)
+			r.With(middleware.OptionalUserAuth).Get("/{provider}/callback", userAuthHandler.Callback)
 			r.Post("/logout", userAuthHandler.Logout)
 			r.With(middleware.RequireUserAuth).Get("/me", userAuthHandler.Me)
+			r.With(middleware.RequireUserAuth).Put("/me", userAuthHandler.UpdateMe)
 		})
 
 		// Admin routes (protected)

@@ -89,10 +89,11 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             {/* User Auth */}
             {!userLoading && (
-              <div className="relative group flex items-center">
-                {user ? (
-                  <div className="flex flex-col items-end group-hover:flex relative">
-                    <div className="w-8 h-8 relative rounded-full border border-border-main overflow-hidden cursor-pointer">
+              user ? (
+                <Dropdown 
+                  align="end"
+                  trigger={
+                    <div className="w-8 h-8 relative rounded-full border border-border-main overflow-hidden cursor-pointer shadow-md hover:border-accent-primary transition-colors">
                       <Image 
                         src={user.avatar_url || 'https://www.gravatar.com/avatar/?d=mp'} 
                         alt={user.first_name || 'User'}
@@ -102,25 +103,35 @@ export default function Navbar() {
                         sizes="32px"
                       />
                     </div>
-                    <div className="absolute top-10 right-0 w-32 bg-bg-surface border border-border-main rounded-md shadow-xl p-2 hidden group-hover:block transition-all z-50">
-                      <p className="text-xs text-text-muted truncate mb-2">{user.email}</p>
-                      <button 
-                        onClick={logout}
-                        className="w-full text-left text-sm text-text-secondary hover:text-accent-primary-hover transition-colors bg-transparent border-none cursor-pointer p-0"
-                      >
-                        Logout
-                      </button>
+                  }
+                >
+                  <div className="p-2 w-48">
+                    <div className="mb-2 px-2 py-1 border-b border-border-main/30">
+                      <p className="text-[9px] font-mono text-text-muted uppercase tracking-widest">{user.first_name} {user.last_name}</p>
+                      <p className="text-[10px] text-accent-primary truncate font-medium">{user.email}</p>
                     </div>
+                    <Link 
+                      href="/profile"
+                      className="block w-full text-left text-sm text-text-main hover:text-accent-primary hover:bg-accent-primary/5 rounded px-2 py-2 transition-colors no-underline mb-1"
+                    >
+                      My Profile
+                    </Link>
+                    <button 
+                      onClick={logout}
+                      className="w-full text-left text-sm text-text-secondary hover:text-red-400 hover:bg-red-400/5 rounded px-2 py-2 transition-colors bg-transparent border-none cursor-pointer"
+                    >
+                      Logout
+                    </button>
                   </div>
-                ) : (
-                  <Link 
-                    href="/login"
-                    className="text-sm font-medium text-white/80 transition-colors hover:text-accent-primary flex items-center gap-1 no-underline"
-                  >
-                    Login
-                  </Link>
-                )}
-              </div>
+                </Dropdown>
+              ) : (
+                <Link 
+                  href="/login"
+                  className="text-sm font-medium text-white/80 transition-colors hover:text-accent-primary flex items-center gap-1 no-underline"
+                >
+                  Login
+                </Link>
+              )
             )}
 
             {/* Foil Toggle */}

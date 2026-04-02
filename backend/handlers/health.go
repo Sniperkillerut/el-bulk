@@ -18,13 +18,16 @@ func NewHealthHandler(db *sqlx.DB) *HealthHandler {
 }
 
 type DBStats struct {
-	DatabaseSize    string  `json:"database_size"`
-	CacheHitRatio   float64 `json:"cache_hit_ratio"`
-	ActiveConns     int     `json:"active_connections"`
-	MaxConns        int     `json:"max_connections"`
-	TotalProducts   int     `json:"total_products"`
-	TotalSKURecords int     `json:"total_sku_records"`
-	QuerySpeedMS    int     `json:"query_speed_ms"`
+	DatabaseSize         string  `json:"database_size"`
+	CacheHitRatio        float64 `json:"cache_hit_ratio"`
+	ActiveConns          int     `json:"active_connections"`
+	MaxConns             int     `json:"max_connections"`
+	TotalProducts        int     `json:"total_products"`
+	TotalSKURecords      int     `json:"total_sku_records"`
+	QuerySpeedMS         int     `json:"query_speed_ms"`
+	PendingOrdersCount   int     `json:"pending_orders_count"`
+	PendingOffersCount   int     `json:"pending_offers_count"`
+	PendingRequestsCount int     `json:"pending_requests_count"`
 }
 
 func (h *HealthHandler) Ping(w http.ResponseWriter, r *http.Request) {
@@ -76,7 +79,12 @@ func (h *HealthHandler) GetStats(w http.ResponseWriter, r *http.Request) {
 	}
 	stats.TotalSKURecords = stats.TotalProducts
 
-	// 5. Query Speed
+	// 5. Pending items
+	_ = h.DB.Get(&stats.PendingOrdersCount, "SELECT COUNT(*) FROM \"order\" WHERE status = 'pending'")
+	_ = h.DB.Get(&stats.PendingOffersCount, "SELECT COUNT(*) FROM bounty_offer WHERE status = 'pending'")
+	_ = h.DB.Get(&stats.PendingRequestsCount, "SELECT COUNT(*) FROM client_request WHERE status = 'pending'")
+
+	// 6. Query Speed
 	start := time.Now()
 	var dummy int
 	_ = h.DB.Get(&dummy, "SELECT 1")

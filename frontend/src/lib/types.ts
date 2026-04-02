@@ -138,6 +138,7 @@ export interface UserProfile {
   auth_provider?: string;
   auth_provider_id?: string;
   avatar_url?: string;
+  linked_providers?: string[];
 }
 
 export const TREATMENT_LABELS: Record<string, string> = {
@@ -261,6 +262,10 @@ export interface Order {
   notes?: string;
   created_at: string;
   completed_at?: string;
+}
+
+export interface UserOrder extends Order {
+  item_count: number;
 }
 
 export interface OrderItem {
@@ -529,6 +534,9 @@ export interface AdminStats {
   cache_hit_ratio: number;
   active_connections: number;
   max_connections: number;
+  pending_orders_count: number;
+  pending_offers_count: number;
+  pending_requests_count: number;
 }
 
 // ── Themes ─────────────────────────────────────────────

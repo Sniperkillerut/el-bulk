@@ -1,36 +1,27 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { userFetchMe, userLogout as apiUserLogout } from '@/lib/api';
-
-// Update types to match our backend Customer struct
-export interface UserProfile {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email?: string;
-  phone?: string;
-  id_number?: string;
-  address?: string;
-  auth_provider?: string;
-  auth_provider_id?: string;
-  avatar_url?: string;
-}
+import { userFetchMe, userLogout as apiUserLogout, userUpdateMe } from '@/lib/api';
+import { UserProfile } from '@/lib/types';
 
 interface UserContextType {
   user: UserProfile | null;
   loading: boolean;
   loginWithGoogle: () => void;
+  loginWithFacebook: () => void;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  updateProfile: (data: Partial<UserProfile>) => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType>({
   user: null,
   loading: true,
   loginWithGoogle: () => {},
+  loginWithFacebook: () => {},
   logout: () => {},
   refreshUser: async () => {},
+  updateProfile: async () => {},
 });
 
 export const useUser = () => useContext(UserContext);
@@ -55,8 +46,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const loginWithGoogle = () => {
-    // Redirect to backend endpoint that initiates OAuth
     window.location.href = `${process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/google/login`;
+  };
+
+  const loginWithFacebook = () => {
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/facebook/login`;
   };
 
   const logout = async () => {
@@ -68,8 +62,21 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
+  const updateProfile = async (data: Partial<UserProfile>) => {
+    const updated = await userUpdateMe(data);
+    setUser(updated);
+  };
+
   return (
-    <UserContext.Provider value={{ user, loading, loginWithGoogle, logout, refreshUser: fetchUser }}>
+    <UserContext.Provider value={{ 
+      user, 
+      loading, 
+      loginWithGoogle, 
+      loginWithFacebook,
+      logout, 
+      refreshUser: fetchUser,
+      updateProfile 
+    }}>
       {children}
     </UserContext.Provider>
   );

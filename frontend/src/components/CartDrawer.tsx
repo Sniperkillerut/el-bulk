@@ -5,7 +5,7 @@ import Link from 'next/link';
 import CardImage from './CardImage';
 
 export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const { items, removedItems, totalItems, totalPrice, removeItem, restoreItem, permanentRemove, updateQty } = useCart();
+  const { items, removedItems, totalItems, totalPrice, removeItem, restoreItem, permanentRemove, updateQty, clearCart } = useCart();
 
   return (
     <>
@@ -33,9 +33,27 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
         <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid var(--ink-border)' }}>
           <div>
             <h2 className="font-display text-2xl text-gold">YOUR CART</h2>
-            <p className="text-xs" style={{ color: 'var(--text-muted)', fontFamily: 'Space Mono, monospace' }}>
-              {totalItems} item{totalItems !== 1 ? 's' : ''}
-            </p>
+            <div className="flex items-center gap-3">
+              <p className="text-xs" style={{ color: 'var(--text-muted)', fontFamily: 'Space Mono, monospace' }}>
+                {totalItems} item{totalItems !== 1 ? 's' : ''}
+              </p>
+              {items.length > 0 && (
+                <button
+                  onClick={() => {
+                    if (window.confirm('¿Estás seguro de que quieres vaciar el carrito?')) {
+                      clearCart();
+                    }
+                  }}
+                  className="flex items-center gap-1 text-[10px] font-mono-stack hover:opacity-80 transition-all uppercase tracking-wider"
+                  style={{ color: 'var(--hp-color)', background: 'none', border: 'none', cursor: 'pointer' }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+                  </svg>
+                  VACIAR
+                </button>
+              )}
+            </div>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px' }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

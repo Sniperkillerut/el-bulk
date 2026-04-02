@@ -271,6 +271,17 @@ type Customer struct {
 	AuthProviderID *string   `db:"auth_provider_id" json:"auth_provider_id,omitempty"`
 	AvatarURL      *string   `db:"avatar_url"       json:"avatar_url,omitempty"`
 	CreatedAt      time.Time `db:"created_at"       json:"created_at"`
+
+	// Virtual fields
+	LinkedProviders []string `db:"-" json:"linked_providers,omitempty"`
+}
+
+type CustomerAuth struct {
+	ID         string    `db:"id"`
+	CustomerID string    `db:"customer_id"`
+	Provider   string    `db:"provider"`
+	ProviderID string    `db:"provider_id"`
+	CreatedAt  time.Time `db:"created_at"`
 }
 
 type Order struct {
