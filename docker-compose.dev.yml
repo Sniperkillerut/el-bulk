@@ -30,6 +30,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    env_file:
+      - ./backend/.env
     environment:
       DATABASE_URL: postgres://elbulk:elbulkpass@db:5432/elbulk?sslmode=disable
       JWT_SECRET: ${JWT_SECRET:-dev-secret}

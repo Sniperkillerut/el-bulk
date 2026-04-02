@@ -12,9 +12,15 @@ import (
 	"github.com/el-bulk/backend/handlers"
 	"github.com/el-bulk/backend/middleware"
 	"github.com/el-bulk/backend/utils/logger"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	// Load environment variables from .env file if it exists
+	if err := godotenv.Load(); err != nil {
+		logger.Warn("No .env file found or error loading it: %v. Relying on system environment variables.", err)
+	}
+
 	database, err := db.ConnectResilient()
 	if err != nil {
 		logger.Warn("Could not connect to database on startup: %v", err)
