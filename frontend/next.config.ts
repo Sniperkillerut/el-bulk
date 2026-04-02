@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: 'cards.scryfall.io' },
       { protocol: 'https', hostname: 'assets.pokemon.com' },
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      { protocol: 'https', hostname: 'www.gravatar.com' },
+      { protocol: 'https', hostname: 'm.media-amazon.com' },
+      { protocol: 'https', hostname: 'images.pokemontcg.io' },
     ],
   },
   async rewrites() {

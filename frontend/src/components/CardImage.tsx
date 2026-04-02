@@ -37,6 +37,7 @@ export default function CardImage({
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Sync: Reset error state when the URL changes (Derived state pattern)
+  // This pattern is recommended by React 18+ for adjusting state based on prop changes
   if (imageUrl !== prevUrl) {
     setPrevUrl(imageUrl);
     setImgError(false);
@@ -85,6 +86,7 @@ export default function CardImage({
           alt={name}
           onClick={handleClick}
           onError={() => setImgError(true)}
+          suppressHydrationWarning
           style={{
             width: '100%',
             height: '100%',

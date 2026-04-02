@@ -11,6 +11,10 @@ DECLARE
     v_order_id UUID;
     v_order_num TEXT;
 BEGIN
+    -- Guard: Ensure order_items_data is an array
+    IF JSONB_TYPEOF(order_items_data) != 'array' THEN
+        RAISE EXCEPTION 'order_items_data must be a JSONB array, got %', JSONB_TYPEOF(order_items_data);
+    END IF;
     -- Upsert Customer logic based on whether ID is provided
     IF customer_data->>'id' IS NOT NULL AND customer_data->>'id' != '' THEN
         UPDATE customer SET

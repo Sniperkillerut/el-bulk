@@ -1,13 +1,14 @@
 package handlers
 
 import (
-"github.com/el-bulk/backend/utils/render"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/el-bulk/backend/utils/render"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
@@ -109,8 +110,8 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 4. Prepare data for Stored Procedure
-	var totalCOP float64
-	var orderItems []map[string]interface{}
+	totalCOP := 0.0
+	orderItems := make([]map[string]interface{}, 0)
 	for _, item := range input.Items {
 		p, ok := productMap[item.ProductID]
 		if !ok || item.Quantity <= 0 {
@@ -130,6 +131,11 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 			"quantity":           item.Quantity,
 			"stored_in_snapshot": storageMap[p.ID],
 		})
+	}
+
+	if len(orderItems) == 0 {
+		render.Error(w, "No valid items selected (they might be missing from inventory, please clear the cart and try again)", http.StatusBadRequest)
+		return
 	}
 
 	var customerIDStr string
@@ -368,7 +374,11 @@ func (h *OrderHandler) Complete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Prepare decrements for SP
-	jsonData, err := json.Marshal(input.Decrements)
+	decrements := input.Decrements
+	if decrements == nil {
+		decrements = []models.StockDecrement{}
+	}
+	jsonData, err := json.Marshal(decrements)
 	if err != nil {
 		render.Error(w, "Failed to encode decrements", http.StatusInternalServerError)
 		return
