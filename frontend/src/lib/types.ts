@@ -6,7 +6,7 @@ export type Condition = 'NM' | 'LP' | 'MP' | 'HP' | 'DMG';
 export type PriceSource = 'tcgplayer' | 'cardmarket' | 'manual';
 
 export interface DeckCard {
-  id: string;
+  id?: string;
   product_id?: string;
   name: string;
   set_code?: string;
@@ -386,6 +386,7 @@ export interface ScryfallCard {
   rarity?: string;
   cmc?: number;
   oracle_text?: string;
+  oracle_id?: string;
 }
 
 export interface Bounty {

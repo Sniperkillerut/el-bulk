@@ -50,8 +50,6 @@ const mockOrderDetail = {
 };
 
 describe('OrdersPanel', () => {
-  const token = 'test-token';
-
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(api.adminFetchOrders).mockResolvedValue({
@@ -64,12 +62,12 @@ describe('OrdersPanel', () => {
   });
 
   it('renders leading state initially', async () => {
-    render(<OrdersPanel token={token} />);
+    render(<OrdersPanel />);
     expect(screen.getByText(/Cargando\.\.\./i)).toBeInTheDocument();
   });
 
   it('renders orders after loading', async () => {
-    render(<OrdersPanel token={token} />);
+    render(<OrdersPanel />);
     
     await waitFor(() => {
       expect(screen.getByText('EB-1')).toBeInTheDocument();
@@ -78,7 +76,7 @@ describe('OrdersPanel', () => {
   });
 
   it('shows order details when an order is clicked', async () => {
-    render(<OrdersPanel token={token} />);
+    render(<OrdersPanel />);
     
     await waitFor(() => {
       const orderItem = screen.getByText('EB-1');
@@ -86,34 +84,34 @@ describe('OrdersPanel', () => {
     });
 
     await waitFor(() => {
-      expect(api.adminFetchOrderDetail).toHaveBeenCalledWith(token, 'o1');
+      expect(api.adminFetchOrderDetail).toHaveBeenCalledWith('o1');
       expect(screen.getByText(/Black Lotus/i)).toBeInTheDocument();
       expect(screen.getByText('John Doe →')).toBeInTheDocument();
     });
   });
 
   it('filters orders by search input', async () => {
-    render(<OrdersPanel token={token} />);
+    render(<OrdersPanel />);
     
     const searchInput = screen.getByPlaceholderText(/Buscar por # orden/i);
     fireEvent.change(searchInput, { target: { value: 'EB-2' } });
 
     // Wait for debounce (300ms)
     await waitFor(() => {
-      expect(api.adminFetchOrders).toHaveBeenCalledWith(token, expect.objectContaining({
+      expect(api.adminFetchOrders).toHaveBeenCalledWith(expect.objectContaining({
         search: 'EB-2'
       }));
     }, { timeout: 1000 });
   });
 
   it('filters orders by status', async () => {
-    render(<OrdersPanel token={token} />);
+    render(<OrdersPanel />);
     
     const pendingButton = screen.getByRole('button', { name: /Pendiente/i });
     fireEvent.click(pendingButton);
 
     await waitFor(() => {
-      expect(api.adminFetchOrders).toHaveBeenCalledWith(token, expect.objectContaining({
+      expect(api.adminFetchOrders).toHaveBeenCalledWith(expect.objectContaining({
         status: 'pending'
       }));
     });

@@ -340,15 +340,15 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <button type="button" onClick={() => updateCardQty(card.id, card.quantity - 1)} className="w-6 h-6 rounded bg-ink-border/10 hover:bg-ink-border/20 transition-colors flex items-center justify-center font-mono font-bold" disabled={card.quantity <= 1}>-</button>
-                          <input type="number" value={card.quantity} onChange={e => updateCardQty(card.id, parseInt(e.target.value) || 1)} className="w-12 text-center text-xs py-1 px-1 bg-white/50 m-0 border-none outline-none focus:ring-0" min={1} />
-                          <button type="button" onClick={() => updateCardQty(card.id, card.quantity + 1)} className="w-6 h-6 rounded bg-ink-border/10 hover:bg-ink-border/20 transition-colors flex items-center justify-center font-mono font-bold">+</button>
+                          <button type="button" onClick={() => updateCardQty(card.id!, card.quantity - 1)} className="w-6 h-6 rounded bg-ink-border/10 hover:bg-ink-border/20 transition-colors flex items-center justify-center font-mono font-bold" disabled={card.quantity <= 1}>-</button>
+                          <input type="number" value={card.quantity} onChange={e => updateCardQty(card.id!, parseInt(e.target.value) || 1)} className="w-12 text-center text-xs py-1 px-1 bg-white/50 m-0 border-none outline-none focus:ring-0" min={1} />
+                          <button type="button" onClick={() => updateCardQty(card.id!, card.quantity + 1)} className="w-6 h-6 rounded bg-ink-border/10 hover:bg-ink-border/20 transition-colors flex items-center justify-center font-mono font-bold">+</button>
                         </div>
                         <div className="flex items-center gap-1">
                           <button type="button" onClick={() => editCard(card)} className="w-8 h-8 rounded-full text-gold hover:bg-gold/10 flex items-center justify-center transition-colors" title={t('components.admin.product_modal.deck.edit_tooltip', 'Edit/Repopulate')}>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                           </button>
-                          <button type="button" onClick={() => removeCard(card.id)} className="w-8 h-8 rounded-full text-hp-color hover:bg-hp-color/10 flex items-center justify-center transition-colors" title={t('components.admin.product_modal.deck.remove_tooltip', 'Remove')}>
+                          <button type="button" onClick={() => removeCard(card.id!)} className="w-8 h-8 rounded-full text-hp-color hover:bg-hp-color/10 flex items-center justify-center transition-colors" title={t('components.admin.product_modal.deck.remove_tooltip', 'Remove')}>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                           </button>
                         </div>

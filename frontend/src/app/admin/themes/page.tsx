@@ -84,7 +84,7 @@ export default function AdminThemesPage() {
       try {
         const [tData, sData] = await Promise.all([
           fetchThemes(),
-          getAdminSettings(token!)
+          getAdminSettings()
         ]);
         setThemes(tData);
         setSettings(sData);
@@ -185,9 +185,9 @@ export default function AdminThemesPage() {
   const handleSetDefault = async (id: string) => {
     setLoading(true);
     try {
-      await updateAdminSettings(token!, { default_theme_id: id });
+      await updateAdminSettings({ default_theme_id: id });
       setMessage({ text: 'Default theme updated', type: 'success' });
-      const sData = await getAdminSettings(token!);
+      const sData = await getAdminSettings();
       setSettings(sData);
     } catch (err: unknown) {
       const error = err as Error;

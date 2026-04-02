@@ -122,7 +122,7 @@ export default function VariantTab({
               { label: t('components.admin.product_modal.variant.textless_label', 'TEXTLESS'), key: 'textless' }
             ].map(flag => (
               <label key={flag.key} className="flex items-center gap-1.5 text-[9px] font-mono-stack cursor-pointer hover:text-gold transition-colors">
-                <input type="checkbox" checked={(form as any)[flag.key]} onChange={e => onUpdate({ [flag.key]: e.target.checked })} className="w-3 h-3" />
+                <input type="checkbox" checked={!!form[flag.key as keyof typeof form]} onChange={e => onUpdate({ [flag.key]: e.target.checked })} className="w-3 h-3" />
                 {flag.label}
               </label>
             ))}

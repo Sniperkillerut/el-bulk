@@ -102,25 +102,20 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fetch user info based on provider
+	// Fetch and Normalize User Info based on provider
 	client := config.Client(context.Background(), token)
-	userInfoURL := "https://www.googleapis.com/oauth2/v2/userinfo"
-	if provider == "facebook" {
-		userInfoURL = "https://graph.facebook.com/me?fields=id,name,first_name,last_name,email,picture.type(large)"
-	}
-
-	resp, err := client.Get(userInfoURL)
-	if err != nil {
-		logger.Error("Failed to get user info: %v", err)
-		http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=userinfo_failed", http.StatusTemporaryRedirect)
-		return
-	}
-	defer resp.Body.Close()
-
-	// Normalize User Info
 	var finalFirstName, finalLastName, finalEmail, finalAvatar, finalID string
 
-	if provider == "google" {
+	switch provider {
+	case "google":
+		resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
+		if err != nil {
+			logger.Error("Failed to get Google user info: %v", err)
+			http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=userinfo_failed", http.StatusTemporaryRedirect)
+			return
+		}
+		defer resp.Body.Close()
+
 		var gInfo struct {
 			ID         string `json:"id"`
 			Email      string `json:"email"`
@@ -138,7 +133,16 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		finalLastName = gInfo.FamilyName
 		finalEmail = gInfo.Email
 		finalAvatar = gInfo.Picture
-	} else if provider == "facebook" {
+
+	case "facebook":
+		resp, err := client.Get("https://graph.facebook.com/me?fields=id,name,first_name,last_name,email,picture.type(large)")
+		if err != nil {
+			logger.Error("Failed to get Facebook user info: %v", err)
+			http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=userinfo_failed", http.StatusTemporaryRedirect)
+			return
+		}
+		defer resp.Body.Close()
+
 		var fbInfo struct {
 			ID        string `json:"id"`
 			Email     string `json:"email"`
@@ -160,6 +164,10 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		finalLastName = fbInfo.LastName
 		finalEmail = fbInfo.Email
 		finalAvatar = fbInfo.Picture.Data.URL
+
+	default:
+		http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=unsupported_provider", http.StatusTemporaryRedirect)
+		return
 	}
 
 	// 1. Check if identity is already linked to SOMEONE

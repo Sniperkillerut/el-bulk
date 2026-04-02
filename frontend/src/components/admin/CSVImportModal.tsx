@@ -23,7 +23,6 @@ import { identifyFoilFromString } from '@/lib/mtg-logic';
 import CardImage from '@/components/CardImage';
 
 interface Props {
-  token: string;
   storageLocations: StoredIn[];
   categories: CustomCategory[];
   onClose: () => void;
@@ -41,9 +40,9 @@ const FIELDS = [
   { key: 'stock', label: 'Quantity', required: false },
 ] as const;
 
-export default function CSVImportModal({ token, storageLocations, categories, onClose, onImported }: Props) {
+export default function CSVImportModal({ storageLocations, categories, onClose, onImported }: Props) {
   const [step, setStep] = useState<Step>('upload');
-  const [csvData, setCsvData] = useState<any[]>([]);
+  const [csvData, setCsvData] = useState<Record<string, string>[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   const [mapping, setMapping] = useState<Record<string, string>>({});
   const [previewData, setPreviewData] = useState<BulkProductInput[]>([]);
@@ -67,7 +66,7 @@ export default function CSVImportModal({ token, storageLocations, categories, on
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        setCsvData(results.data);
+        setCsvData(results.data as Record<string, string>[]);
         if (results.meta.fields) {
           setHeaders(results.meta.fields);
           // Initial auto-mapping
@@ -142,7 +141,7 @@ export default function CSVImportModal({ token, storageLocations, categories, on
         }));
 
         try {
-          const results = await adminBatchLookupMTG(token, identifiers);
+          const results = await adminBatchLookupMTG(identifiers);
           
           results.forEach((res) => {
             // Find the best match in the chunk
@@ -214,7 +213,7 @@ export default function CSVImportModal({ token, storageLocations, categories, on
         const item = newData[i];
         if (!item.image_url && item.name) {
           try {
-            const res = await lookupMTGCard(token, item.name, item.set_code, item.collector_number, item.foil_treatment);
+            const res = await lookupMTGCard(item.name, item.set_code, item.collector_number, item.foil_treatment);
             newData[i] = {
               ...item,
               name: res.name || item.name,
@@ -279,27 +278,20 @@ export default function CSVImportModal({ token, storageLocations, categories, on
             foil_treatment: item.foil_treatment,
             card_treatment: item.card_treatment,
             rarity: item.rarity,
-            language: item.language || 'en',
-            color_identity: item.color_identity,
-            cmc: item.cmc,
-            is_legendary: !!item.is_legendary,
-            is_historic: !!item.is_historic,
-            is_land: !!item.is_land,
-            is_basic_land: !!item.is_basic_land,
             art_variation: item.art_variation,
             type_line: item.type_line,
-          })) as any,
+          })),
           category_ids: [...defaultCategories],
           storage_items: defaultStorage ? [{ stored_in_id: defaultStorage, name: '', quantity: 1 }] : []
         };
         dataToImport = [deckProduct];
       }
 
-      const res = await adminBulkCreateProducts(token, dataToImport);
+      const res = await adminBulkCreateProducts(dataToImport);
       setImportResults(res);
       setStep('summary');
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
       setStep('preview');
     } finally {
       setLoading(false);

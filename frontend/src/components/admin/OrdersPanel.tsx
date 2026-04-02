@@ -13,11 +13,10 @@ import {
 import CardImage from '@/components/CardImage';
 
 interface Props {
-  token: string;
   initialOrderId?: string | null;
 }
 
-export default function OrdersPanel({ token, initialOrderId }: Props) {
+export default function OrdersPanel({ initialOrderId }: Props) {
   // List state
   const [orders, setOrders] = useState<OrderWithCustomer[]>([]);
   const [total, setTotal] = useState(0);
@@ -54,14 +53,14 @@ export default function OrdersPanel({ token, initialOrderId }: Props) {
   const loadOrders = useCallback(async () => {
     // No longer setting loading synchronously at start to avoid cascaded renders
     try {
-      const res = await adminFetchOrders(token, { status: statusFilter, search: debouncedSearch, page, page_size: 20 });
+      const res = await adminFetchOrders({ status: statusFilter, search: debouncedSearch, page, page_size: 20 });
       setOrders(res.orders);
       setTotal(res.total);
     } catch (err) {
       console.error('Failed to load orders:', err);
     }
     setLoading(false);
-  }, [token, statusFilter, debouncedSearch, page]);
+  }, [statusFilter, debouncedSearch, page]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -82,7 +81,7 @@ export default function OrdersPanel({ token, initialOrderId }: Props) {
 
     setLoadingDetail(true);
     try {
-      const d = await adminFetchOrderDetail(token, id);
+      const d = await adminFetchOrderDetail(id);
       setDetail(d);
       setDetailsCache(prev => ({ ...prev, [id]: d }));
       // Init item edits
@@ -91,7 +90,7 @@ export default function OrdersPanel({ token, initialOrderId }: Props) {
       setItemEdits(edits);
     } catch { }
     setLoadingDetail(false);
-  }, [token, detailsCache]);
+  }, [detailsCache]);
 
   useEffect(() => {
     if (initialOrderId) {
@@ -101,14 +100,14 @@ export default function OrdersPanel({ token, initialOrderId }: Props) {
       }, 0);
       return () => clearTimeout(timer);
     }
-  }, [initialOrderId, token, selectOrder]);
+  }, [initialOrderId, selectOrder]);
 
   const handleSaveChanges = async () => {
     if (!detail) return;
     setSaving(true);
     try {
       const items = Object.entries(itemEdits).map(([id, quantity]) => ({ id, quantity }));
-      const updated = await adminUpdateOrder(token, detail.order.id, { items });
+      const updated = await adminUpdateOrder(detail.order.id, { items });
       setDetail(updated);
       setDetailsCache(prev => ({ ...prev, [updated.order.id]: updated }));
       // Update list in-place
@@ -127,7 +126,7 @@ export default function OrdersPanel({ token, initialOrderId }: Props) {
     if (!detail) return;
     setSaving(true);
     try {
-      const updated = await adminUpdateOrder(token, detail.order.id, { status });
+      const updated = await adminUpdateOrder(detail.order.id, { status });
       setDetail(updated);
       setDetailsCache(prev => ({ ...prev, [updated.order.id]: updated }));
       // Update list in-place
@@ -188,7 +187,7 @@ export default function OrdersPanel({ token, initialOrderId }: Props) {
     });
 
     try {
-      const updated = await adminCompleteOrder(token, detail.order.id, decArr);
+      const updated = await adminCompleteOrder(detail.order.id, decArr);
       setDetail(updated);
       setShowCompleteModal(false);
       // Update list in-place
@@ -212,7 +211,7 @@ export default function OrdersPanel({ token, initialOrderId }: Props) {
   const handleExport = async () => {
     setExporting(true);
     try {
-      await adminDownloadAccountingCSV(token, {
+      await adminDownloadAccountingCSV({
         start_date: exportDates.start ? `${exportDates.start}T00:00:00Z` : undefined,
         end_date: exportDates.end ? `${exportDates.end}T23:59:59Z` : undefined,
       });

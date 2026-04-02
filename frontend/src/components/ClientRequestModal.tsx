@@ -41,7 +41,7 @@ export default function ClientRequestModal({ onClose, onSuccess }: ClientRequest
   }, [user, setFieldValue, form.customer_name]);
 
   const onSubmit = async (data: Record<string, string>) => {
-    await createClientRequest(data as any); // Casting here if createClientRequest expects a specific type but we use a generic record
+    await createClientRequest(data as unknown as import('@/lib/types').ClientRequestInput);
     onSuccess();
   };
 

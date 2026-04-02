@@ -32,7 +32,7 @@ export default function AdminDashboard() {
     storageFilter, setStorageFilter, sortKey, sortDir,
     queryTime,
     setPage, handleSort, refresh: refreshProducts
-  } = useAdminProducts(token || '');
+  } = useAdminProducts();
 
   // Modal States
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -42,10 +42,10 @@ export default function AdminDashboard() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const loadStaticData = useCallback(async (t: string) => {
+  const loadStaticData = useCallback(async () => {
     try {
       const [tcgData, storageData, catData] = await Promise.all([
-        adminFetchTCGs(t), adminFetchStorage(t), adminFetchCategories(t)
+        adminFetchTCGs(), adminFetchStorage(), adminFetchCategories()
       ]);
       setTCGs(tcgData || []);
       setStorageLocations(storageData || []);
@@ -61,7 +61,7 @@ export default function AdminDashboard() {
       // Use a small delay to avoid "cascading render" warnings when multiple state updates 
       // are triggered by the same dependency (token) across different hooks/effects.
       const timer = setTimeout(() => {
-        void loadStaticData(token);
+        void loadStaticData();
       }, 0);
       return () => clearTimeout(timer);
     }
@@ -74,7 +74,7 @@ export default function AdminDashboard() {
   const handleDeleteProduct = async (id: string, name: string) => {
     if (!confirm(t('pages.admin.inventory.confirm_delete', 'Are you sure you want to delete {name}?', { name }))) return;
     try {
-      await adminDeleteProduct(token!, id);
+      await adminDeleteProduct(id);
       refreshProducts();
     } catch { 
       alert(t('pages.admin.inventory.error_delete', 'Failed to delete product.')); 
@@ -83,39 +83,39 @@ export default function AdminDashboard() {
 
   // Shared Handlers
   const handleCreateStorage = async (name: string) => {
-    await adminCreateStorage(token!, name);
-    setStorageLocations(await adminFetchStorage(token!) || []);
+    await adminCreateStorage(name);
+    setStorageLocations(await adminFetchStorage() || []);
   };
   const handleUpdateStorage = async (id: string, name: string) => {
-    await adminUpdateStorage(token!, id, name);
-    setStorageLocations(await adminFetchStorage(token!) || []);
+    await adminUpdateStorage(id, name);
+    setStorageLocations(await adminFetchStorage() || []);
   };
   const handleDeleteStorage = async (id: string, name: string, count: number) => {
     if (count > 0 && !confirm(t('pages.admin.inventory.confirm_delete_storage_items', 'Location "{name}" contains {count} items. Deleting it will clear these assignments. Continue?', { name, count }))) return;
     else if (!confirm(t('pages.admin.inventory.confirm_delete_storage', 'Delete storage location "{name}"?', { name }))) return;
-    await adminDeleteStorage(token!, id);
-    setStorageLocations(await adminFetchStorage(token!) || []);
+    await adminDeleteStorage(id);
+    setStorageLocations(await adminFetchStorage() || []);
   };
 
   const handleCreateCategory = async (name: string, data?: Partial<CustomCategory>) => {
-    await adminCreateCategory(token!, name, data?.slug, data?.is_active, data?.show_badge, data?.searchable, data?.bg_color, data?.text_color, data?.icon);
-    setCategories(await adminFetchCategories(token!) || []);
+    await adminCreateCategory(name, data?.slug, data?.is_active, data?.show_badge, data?.searchable, data?.bg_color, data?.text_color, data?.icon);
+    setCategories(await adminFetchCategories() || []);
   };
   const handleUpdateCategory = async (id: string, name: string, data?: Partial<CustomCategory>) => {
-    await adminUpdateCategory(token!, id, name, data?.slug, data?.is_active, data?.show_badge, data?.searchable, data?.bg_color, data?.text_color, data?.icon);
-    setCategories(await adminFetchCategories(token!) || []);
+    await adminUpdateCategory(id, name, data?.slug, data?.is_active, data?.show_badge, data?.searchable, data?.bg_color, data?.text_color, data?.icon);
+    setCategories(await adminFetchCategories() || []);
   };
   const handleDeleteCategory = async (id: string, name: string) => {
     if (!confirm(t('pages.admin.inventory.confirm_delete_category', 'Delete collection "{name}"?', { name }))) return;
-    await adminDeleteCategory(token!, id);
-    setCategories(await adminFetchCategories(token!) || []);
+    await adminDeleteCategory(id);
+    setCategories(await adminFetchCategories() || []);
   };
 
   const handleSyncSets = async () => {
     if (!token) return;
     setIsSyncing(true);
     try {
-      const res = await adminSyncSets(token);
+      const res = await adminSyncSets();
       alert(t('pages.admin.inventory.sync_success', 'Successfully synced {count} sets!', { count: res.count }));
       // Reload to refresh settings (last sync date)
       window.location.reload();
@@ -245,7 +245,6 @@ export default function AdminDashboard() {
       {showEditModal && (
         <ProductEditModal
           editProduct={editingProduct}
-          token={token!}
           storageLocations={storageLocations}
           categories={categories}
           tcgs={tcgs}
@@ -258,7 +257,6 @@ export default function AdminDashboard() {
 
       {showImportModal && (
         <CSVImportModal
-          token={token!}
           storageLocations={storageLocations}
           categories={categories}
           onClose={() => setShowImportModal(false)}

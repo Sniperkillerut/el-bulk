@@ -21,7 +21,7 @@ export default function AdminSidebar() {
     if (!token) return;
     setLoadingStats(true);
     try {
-      const data = await adminFetchStats(token);
+      const data = await adminFetchStats();
       setStats(data);
     } catch (err) {
       const error = err as Error;

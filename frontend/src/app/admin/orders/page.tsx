@@ -26,7 +26,7 @@ export default function AdminOrdersPage() {
       />
       
       <div className="flex-1 min-h-0 bg-white shadow-sm border border-kraft-dark/20 rounded overflow-auto">
-        <OrdersPanel token={token} initialOrderId={initialOrderId} />
+        <OrdersPanel initialOrderId={initialOrderId} />
       </div>
     </div>
   );

@@ -23,7 +23,7 @@ export default function AdminSettingsPage() {
     setSaving(true);
     setSuccess(false);
     try {
-      await updateAdminSettings(token, editingSettings);
+      await updateAdminSettings(editingSettings);
       await refreshSettings();
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);

@@ -35,7 +35,7 @@ export const EMPTY_FORM: FormState = {
 };
 
 export default function ProductEditModal({
-  editProduct, token, storageLocations, categories, tcgs, settings,
+  editProduct, storageLocations, categories, tcgs, settings,
   storageFilter, onClose, onSaved, onSaveAndNew
 }: ProductEditModalProps) {
   const { t } = useLanguage();
@@ -208,11 +208,11 @@ export default function ProductEditModal({
       else payload.price_cop_override = undefined;
 
       if (editProduct) {
-        const updated = await adminUpdateProduct(token, editProduct.id, payload);
-        await adminUpdateProductStorage(token, updated.id, productStorage.map(s => ({ stored_in_id: s.stored_in_id, quantity: s.quantity })));
+        const updated = await adminUpdateProduct(editProduct.id, payload);
+        await adminUpdateProductStorage(updated.id, productStorage.map(s => ({ stored_in_id: s.stored_in_id, quantity: s.quantity })));
       } else {
-        const newP = await adminCreateProduct(token, payload);
-        await adminUpdateProductStorage(token, newP.id, productStorage.map(s => ({ stored_in_id: s.stored_in_id, quantity: s.quantity })));
+        const newP = await adminCreateProduct(payload);
+        await adminUpdateProductStorage(newP.id, productStorage.map(s => ({ stored_in_id: s.stored_in_id, quantity: s.quantity })));
       }
 
       if (andNew && onSaveAndNew) {

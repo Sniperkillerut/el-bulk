@@ -36,7 +36,7 @@ export default function NoticeEditor() {
 
   useEffect(() => {
     if (isEdit && adminToken) {
-      adminFetchNotices(adminToken)
+      adminFetchNotices()
         .then(notices => {
           const notice = notices.find(n => n.id === id);
           if (notice) {
@@ -73,9 +73,9 @@ export default function NoticeEditor() {
 
     try {
       if (isEdit) {
-        await adminUpdateNotice(adminToken, id as string, form);
+        await adminUpdateNotice(id as string, form);
       } else {
-        await adminCreateNotice(adminToken, form);
+        await adminCreateNotice(form);
       }
       router.push('/admin/notices');
     } catch (err) {

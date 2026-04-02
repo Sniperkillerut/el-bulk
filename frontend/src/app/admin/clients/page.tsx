@@ -19,7 +19,7 @@ export default function AdminClientsPage() {
 
   useEffect(() => {
     if (token) {
-      adminFetchClients(token)
+      adminFetchClients()
         .then(setClients)
         .catch(err => console.error(err))
         .finally(() => setLoading(false));

@@ -4,11 +4,9 @@ import { useState, useEffect } from 'react';
 import { Settings } from '@/lib/types';
 import { getAdminSettings, updateAdminSettings, triggerPriceRefresh } from '@/lib/api';
 
-interface PricingSettingsProps {
-  token: string;
-}
+type PricingSettingsProps = Record<string, never>;
 
-export default function PricingSettings({ token }: PricingSettingsProps) {
+export default function PricingSettings({ }: PricingSettingsProps) {
   const [settings, setSettings] = useState<Settings>({ 
     usd_to_cop_rate: 4200, 
     eur_to_cop_rate: 4600,
@@ -24,11 +22,11 @@ export default function PricingSettings({ token }: PricingSettingsProps) {
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
 
   useEffect(() => {
-    getAdminSettings(token)
+    getAdminSettings()
       .then(setSettings)
       .catch(() => {/* use defaults */})
       .finally(() => setLoading(false));
-  }, [token]);
+  }, []);
 
   function showToast(msg: string, ok = true) {
     setToast({ msg, ok });
@@ -38,7 +36,7 @@ export default function PricingSettings({ token }: PricingSettingsProps) {
   async function handleSave() {
     setSaving(true);
     try {
-      const updated = await updateAdminSettings(token, settings);
+      const updated = await updateAdminSettings(settings);
       setSettings(updated);
       showToast('Exchange rates saved ✓');
     } catch (e) {
@@ -52,7 +50,7 @@ export default function PricingSettings({ token }: PricingSettingsProps) {
     if (!confirm('Fetch fresh prices from Scryfall for all non-manual products?')) return;
     setRefreshing(true);
     try {
-      const result = await triggerPriceRefresh(token);
+      const result = await triggerPriceRefresh();
       showToast(`Price refresh complete — ${result.updated} updated, ${result.errors} errors`);
     } catch (e) {
       showToast((e as Error).message, false);

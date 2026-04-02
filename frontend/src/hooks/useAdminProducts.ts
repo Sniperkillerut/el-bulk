@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Product } from '@/lib/types';
 import { adminFetchProducts } from '@/lib/api';
 
-export function useAdminProducts(token: string) {
+export function useAdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
@@ -18,10 +18,9 @@ export function useAdminProducts(token: string) {
   const [queryTime, setQueryTime] = useState(0);
 
   const fetchProducts = useCallback(async () => {
-    if (!token) return;
     setLoading(true);
     try {
-      const data = await adminFetchProducts(token, {
+      const data = await adminFetchProducts({
         page, 
         page_size: pageSize, 
         search, 
@@ -39,7 +38,7 @@ export function useAdminProducts(token: string) {
     } finally {
       setLoading(false);
     }
-  }, [token, page, pageSize, search, tcgFilter, categoryFilter, storageFilter, sortKey, sortDir]);
+  }, [page, pageSize, search, tcgFilter, categoryFilter, storageFilter, sortKey, sortDir]);
 
   useEffect(() => {
     fetchProducts();

@@ -18,7 +18,7 @@ export default function AdminTranslationsPage() {
     if (!token) return;
     try {
       setLoading(true);
-      const data = await adminFetchTranslations(token);
+      const data = await adminFetchTranslations();
       setTranslations(data);
     } catch (err: unknown) {
       const error = err as Error;
@@ -120,7 +120,7 @@ export default function AdminTranslationsPage() {
     const saveId = `${key}-${locale}`;
     setSavingKey(saveId);
     try {
-      await adminUpdateTranslation(token, { key, locale, value });
+      await adminUpdateTranslation({ key, locale, value });
       // Update local state
       setTranslations(prev => {
         const index = prev.findIndex(t => t.key === key && t.locale === locale);
@@ -144,7 +144,7 @@ export default function AdminTranslationsPage() {
     try {
       // Delete for all locales
       for (const loc of locales) {
-        await adminDeleteTranslation(token, key, loc);
+        await adminDeleteTranslation(key, loc);
       }
       setTranslations(prev => prev.filter(t => t.key !== key));
     } catch {

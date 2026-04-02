@@ -15,7 +15,7 @@ export default function AdminSubscribersPage() {
 
   useEffect(() => {
     if (token) {
-      adminFetchSubscribers(token)
+      adminFetchSubscribers()
         .then(setSubscribers)
         .catch(err => console.error(err))
         .finally(() => setLoading(false));

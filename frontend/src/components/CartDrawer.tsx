@@ -22,6 +22,7 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
 
       {/* Drawer */}
       <div
+        suppressHydrationWarning
         className="fixed right-0 top-0 h-full z-50 flex flex-col"
         style={{
           width: 'min(400px, 100vw)',
@@ -32,7 +33,7 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid var(--border-main)' }}>
+        <div suppressHydrationWarning className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid var(--border-main)' }}>
           <div>
             <h2 className="font-display text-2xl text-gold">{t('pages.cart.drawer.title', 'YOUR CART')}</h2>
             <div className="flex items-center gap-3">
@@ -187,7 +188,7 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
 
         {/* Footer */}
         {items.length > 0 && (
-          <div className="p-5" style={{ borderTop: '1px solid var(--border-main)' }}>
+          <div suppressHydrationWarning className="p-5" style={{ borderTop: '1px solid var(--border-main)' }}>
             <div className="flex justify-between items-center mb-4">
               <span style={{ fontFamily: 'Bebas Neue, sans-serif', letterSpacing: '0.05em', fontSize: '1.1rem' }}>
                 {t('pages.cart.drawer.total', 'TOTAL')}

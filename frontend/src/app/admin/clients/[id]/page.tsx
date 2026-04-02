@@ -24,7 +24,7 @@ export default function AdminClientDetailPage() {
   const fetchDetail = useCallback(async () => {
     if (token && id) {
       try {
-        const data = await adminFetchClientDetail(token, id as string);
+        const data = await adminFetchClientDetail(id as string);
         setDetail(data);
       } catch (err) {
         const error = err as Error;
@@ -52,7 +52,7 @@ export default function AdminClientDetailPage() {
     if (!token || !id || !newNote) return;
 
     try {
-      await adminAddCustomerNote(token, id as string, newNote, selectedOrder || undefined);
+      await adminAddCustomerNote(id as string, newNote, selectedOrder || undefined);
       setNewNote('');
       setSelectedOrder('');
       fetchDetail(); // Refresh notes

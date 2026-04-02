@@ -31,7 +31,7 @@ interface FetchOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined | null>;
 }
 
-export async function apiFetch<T>(endpoint: string, options: FetchOptions = {}, _token?: string): Promise<T> {
+export async function apiFetch<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
   const { params, headers: customHeaders, ...rest } = options;
   
   const url = new URL(`${API_BASE}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`);
@@ -183,33 +183,33 @@ export async function adminLogout(): Promise<void> {
   await apiFetch('/api/admin/logout', { method: 'POST' });
 }
 
-export async function adminFetchProducts(token: string, filters: ProductFilters = {}): Promise<ProductListResponse> {
-  return apiFetch<ProductListResponse>('/api/admin/products', { params: filters, cache: 'no-store' }, token);
+export async function adminFetchProducts(filters: ProductFilters = {}): Promise<ProductListResponse> {
+  return apiFetch<ProductListResponse>('/api/admin/products', { params: filters, cache: 'no-store' });
 }
 
-export async function adminCreateProduct(token: string, data: Partial<Product>): Promise<Product> {
+export async function adminCreateProduct(data: Partial<Product>): Promise<Product> {
   return apiFetch<Product>('/api/admin/products', {
     method: 'POST',
     body: JSON.stringify(data),
-  }, token);
+  });
 }
 
-export async function adminUpdateProduct(token: string, id: string, data: Partial<Product>): Promise<Product> {
+export async function adminUpdateProduct(id: string, data: Partial<Product>): Promise<Product> {
   return apiFetch<Product>(`/api/admin/products/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
-  }, token);
+  });
 }
 
-export async function adminDeleteProduct(token: string, id: string): Promise<void> {
-  return apiFetch<void>(`/api/admin/products/${id}`, { method: 'DELETE' }, token);
+export async function adminDeleteProduct(id: string): Promise<void> {
+  return apiFetch<void>(`/api/admin/products/${id}`, { method: 'DELETE' });
 }
 
-export async function adminBulkCreateProducts(token: string, products: import('./types').BulkProductInput[]): Promise<{ message: string; count: number }> {
+export async function adminBulkCreateProducts(products: import('./types').BulkProductInput[]): Promise<{ message: string; count: number }> {
   return apiFetch<{ message: string; count: number }>('/api/admin/products/bulk', {
     method: 'POST',
     body: JSON.stringify(products),
-  }, token);
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -245,7 +245,6 @@ export interface CardLookupResult {
 }
 
 export async function lookupMTGCard(
-  token: string,
   name: string,
   set?: string,
   cn?: string,
@@ -253,62 +252,57 @@ export async function lookupMTGCard(
 ): Promise<CardLookupResult> {
   return apiFetch<CardLookupResult>('/api/admin/lookup/mtg', {
     params: { name, set, cn, foil },
-  }, token);
+  });
 }
 
 export async function adminBatchLookupMTG(
-  token: string,
   identifiers: { name?: string; set?: string; cn?: string }[]
 ): Promise<CardLookupResult[]> {
   return apiFetch<CardLookupResult[]>('/api/admin/lookup/mtg/batch', {
     method: 'POST',
     body: JSON.stringify({ identifiers }),
-  }, token);
+  });
 }
 
 export async function lookupPokemonCard(
-  token: string,
   name: string,
   set?: string,
 ): Promise<CardLookupResult> {
   return apiFetch<CardLookupResult>('/api/admin/lookup/pokemon', {
     params: { name, set },
-  }, token);
+  });
 }
 
 // ---------------------------------------------------------------------------
 // Admin: exchange rate settings
 // ---------------------------------------------------------------------------
 
-export async function getAdminSettings(token: string): Promise<import('./types').Settings> {
+export async function getAdminSettings(): Promise<import('./types').Settings> {
   const cached = getCached<import('./types').Settings>('admin_settings');
   if (cached) return cached;
 
-  const data = await apiFetch<import('./types').Settings>('/api/admin/settings', { cache: 'default' }, token);
+  const data = await apiFetch<import('./types').Settings>('/api/admin/settings', { cache: 'default' });
   setCached('admin_settings', data);
   return data;
 }
 
 export async function updateAdminSettings(
-  token: string,
   settings: Partial<import('./types').Settings>,
 ): Promise<import('./types').Settings> {
   return apiFetch<import('./types').Settings>('/api/admin/settings', {
     method: 'PUT',
     body: JSON.stringify(settings),
-  }, token);
+  });
 }
 
 // ---------------------------------------------------------------------------
 // Admin: price refresh
 // ---------------------------------------------------------------------------
 
-export async function triggerPriceRefresh(
-  token: string,
-): Promise<{ updated: number; errors: number }> {
+export async function triggerPriceRefresh(): Promise<{ updated: number; errors: number }> {
   return apiFetch<{ updated: number; errors: number }>('/api/admin/prices/refresh', {
     method: 'POST',
-  }, token);
+  });
 }
 
 // adminFetchStats removed from here to avoid duplication
@@ -317,35 +311,35 @@ export async function triggerPriceRefresh(
 // Admin: Storage Locations
 // ---------------------------------------------------------------------------
 
-export async function adminFetchStorage(token: string): Promise<import('./types').StoredIn[]> {
+export async function adminFetchStorage(): Promise<import('./types').StoredIn[]> {
   const cached = getCached<import('./types').StoredIn[]>('admin_storage');
   if (cached) return cached;
 
-  const data = await apiFetch<import('./types').StoredIn[]>('/api/admin/storage', { cache: 'default' }, token);
+  const data = await apiFetch<import('./types').StoredIn[]>('/api/admin/storage', { cache: 'default' });
   setCached('admin_storage', data);
   return data;
 }
 
-export async function adminCreateStorage(token: string, name: string): Promise<import('./types').StoredIn> {
+export async function adminCreateStorage(name: string): Promise<import('./types').StoredIn> {
   const data = await apiFetch<import('./types').StoredIn>('/api/admin/storage', {
     method: 'POST',
     body: JSON.stringify({ name }),
-  }, token);
+  });
   metadataCache.delete('admin_storage');
   return data;
 }
 
-export async function adminUpdateStorage(token: string, id: string, name: string): Promise<import('./types').StoredIn> {
+export async function adminUpdateStorage(id: string, name: string): Promise<import('./types').StoredIn> {
   const data = await apiFetch<import('./types').StoredIn>(`/api/admin/storage/${id}`, {
     method: 'PUT',
     body: JSON.stringify({ name }),
-  }, token);
+  });
   metadataCache.delete('admin_storage');
   return data;
 }
 
-export async function adminDeleteStorage(token: string, id: string): Promise<void> {
-  await apiFetch<void>(`/api/admin/storage/${id}`, { method: 'DELETE' }, token);
+export async function adminDeleteStorage(id: string): Promise<void> {
+  await apiFetch<void>(`/api/admin/storage/${id}`, { method: 'DELETE' });
   metadataCache.delete('admin_storage');
 }
 
@@ -353,17 +347,16 @@ export async function adminDeleteStorage(token: string, id: string): Promise<voi
 // Admin: Custom Categories
 // ---------------------------------------------------------------------------
 
-export async function adminFetchCategories(token: string): Promise<import('./types').CustomCategory[]> {
+export async function adminFetchCategories(): Promise<import('./types').CustomCategory[]> {
   const cached = getCached<import('./types').CustomCategory[]>('admin_categories');
   if (cached) return cached;
 
-  const data = await apiFetch<import('./types').CustomCategory[]>('/api/admin/categories', { cache: 'default' }, token);
+  const data = await apiFetch<import('./types').CustomCategory[]>('/api/admin/categories', { cache: 'default' });
   setCached('admin_categories', data);
   return data;
 }
 
 export async function adminCreateCategory(
-  token: string, 
   name: string, 
   slug?: string, 
   is_active: boolean = true,
@@ -376,14 +369,13 @@ export async function adminCreateCategory(
   const data = await apiFetch<import('./types').CustomCategory>('/api/admin/categories', {
     method: 'POST',
     body: JSON.stringify({ name, slug, is_active, show_badge, searchable, bg_color, text_color, icon }),
-  }, token);
+  });
   metadataCache.delete('admin_categories');
   metadataCache.delete('categories');
   return data;
 }
 
 export async function adminUpdateCategory(
-  token: string, 
   id: string, 
   name: string, 
   slug?: string, 
@@ -397,14 +389,14 @@ export async function adminUpdateCategory(
   const data = await apiFetch<import('./types').CustomCategory>(`/api/admin/categories/${id}`, {
     method: 'PUT',
     body: JSON.stringify({ name, slug, is_active, show_badge, searchable, bg_color, text_color, icon }),
-  }, token);
+  });
   metadataCache.delete('admin_categories');
   metadataCache.delete('categories');
   return data;
 }
 
-export async function adminDeleteCategory(token: string, id: string): Promise<void> {
-  await apiFetch<void>(`/api/admin/categories/${id}`, { method: 'DELETE' }, token);
+export async function adminDeleteCategory(id: string): Promise<void> {
+  await apiFetch<void>(`/api/admin/categories/${id}`, { method: 'DELETE' });
   metadataCache.delete('admin_categories');
   metadataCache.delete('categories');
 }
@@ -413,48 +405,48 @@ export async function adminDeleteCategory(token: string, id: string): Promise<vo
 // Admin: TCG Management
 // ---------------------------------------------------------------------------
 
-export async function adminFetchTCGs(token: string): Promise<import('./types').TCG[]> {
+export async function adminFetchTCGs(): Promise<import('./types').TCG[]> {
   const cached = getCached<import('./types').TCG[]>('admin_tcgs');
   if (cached) return cached;
 
-  const data = await apiFetch<import('./types').TCG[]>('/api/admin/tcgs', { cache: 'default' }, token);
+  const data = await apiFetch<import('./types').TCG[]>('/api/admin/tcgs', { cache: 'default' });
   setCached('admin_tcgs', data);
   return data;
 }
 
-export async function adminCreateTCG(token: string, id: string, name: string): Promise<import('./types').TCG> {
+export async function adminCreateTCG(id: string, name: string): Promise<import('./types').TCG> {
   const data = await apiFetch<import('./types').TCG>('/api/admin/tcgs', {
     method: 'POST',
     body: JSON.stringify({ id, name }),
-  }, token);
+  });
   metadataCache.delete('admin_tcgs');
   metadataCache.delete('tcgs_true');
   metadataCache.delete('tcgs_false');
   return data;
 }
 
-export async function adminUpdateTCG(token: string, id: string, name: string, is_active: boolean): Promise<import('./types').TCG> {
+export async function adminUpdateTCG(id: string, name: string, is_active: boolean): Promise<import('./types').TCG> {
   const data = await apiFetch<import('./types').TCG>(`/api/admin/tcgs/${id}`, {
     method: 'PUT',
     body: JSON.stringify({ name, is_active }),
-  }, token);
+  });
   metadataCache.delete('admin_tcgs');
   metadataCache.delete('tcgs_true');
   metadataCache.delete('tcgs_false');
   return data;
 }
 
-export async function adminDeleteTCG(token: string, id: string): Promise<void> {
-  await apiFetch<void>(`/api/admin/tcgs/${id}`, { method: 'DELETE' }, token);
+export async function adminDeleteTCG(id: string): Promise<void> {
+  await apiFetch<void>(`/api/admin/tcgs/${id}`, { method: 'DELETE' });
   metadataCache.delete('admin_tcgs');
   metadataCache.delete('tcgs_true');
   metadataCache.delete('tcgs_false');
 }
 
-export async function adminSyncSets(token: string): Promise<{ count: number; last_sync: string }> {
+export async function adminSyncSets(): Promise<{ count: number; last_sync: string }> {
   const data = await apiFetch<{ count: number; last_sync: string }>('/api/admin/tcgs/sync-sets', {
     method: 'POST',
-  }, token);
+  });
   metadataCache.delete('admin_tcgs');
   metadataCache.delete('settings');
   metadataCache.delete('admin_settings');
@@ -465,11 +457,11 @@ export async function adminSyncSets(token: string): Promise<{ count: number; las
 // Admin: Product Storage Management
 // ---------------------------------------------------------------------------
 
-export async function adminUpdateProductStorage(token: string, productId: string, updates: import('./types').ProductStorageInput[]): Promise<import('./types').StorageLocation[]> {
+export async function adminUpdateProductStorage(productId: string, updates: import('./types').ProductStorageInput[]): Promise<import('./types').StorageLocation[]> {
   return apiFetch<import('./types').StorageLocation[]>(`/api/admin/products/${productId}/storage`, {
     method: 'PUT',
     body: JSON.stringify(updates),
-  }, token);
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -487,30 +479,30 @@ export async function createOrder(data: import('./types').CreateOrderRequest): P
 // Admin: Orders
 // ---------------------------------------------------------------------------
 
-export async function adminFetchOrders(token: string, filters: { status?: string; search?: string; page?: number; page_size?: number } = {}): Promise<import('./types').OrderListResponse> {
-  return apiFetch<import('./types').OrderListResponse>('/api/admin/orders', { params: filters, cache: 'no-store' }, token);
+export async function adminFetchOrders(filters: { status?: string; search?: string; page?: number; page_size?: number } = {}): Promise<import('./types').OrderListResponse> {
+  return apiFetch<import('./types').OrderListResponse>('/api/admin/orders', { params: filters, cache: 'no-store' });
 }
 
-export async function adminFetchOrderDetail(token: string, id: string): Promise<import('./types').OrderDetail> {
-  return apiFetch<import('./types').OrderDetail>(`/api/admin/orders/${id}`, { cache: 'no-store' }, token);
+export async function adminFetchOrderDetail(id: string): Promise<import('./types').OrderDetail> {
+  return apiFetch<import('./types').OrderDetail>(`/api/admin/orders/${id}`, { cache: 'no-store' });
 }
 
-export async function adminUpdateOrder(token: string, id: string, data: { status?: string; items?: { id: string; quantity: number }[] }): Promise<import('./types').OrderDetail> {
+export async function adminUpdateOrder(id: string, data: { status?: string; items?: { id: string; quantity: number }[] }): Promise<import('./types').OrderDetail> {
   return apiFetch<import('./types').OrderDetail>(`/api/admin/orders/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
-  }, token);
+  });
 }
 
-export async function adminCompleteOrder(token: string, id: string, decrements: { product_id: string; stored_in_id: string; quantity: number }[]): Promise<import('./types').OrderDetail> {
+export async function adminCompleteOrder(id: string, decrements: { product_id: string; stored_in_id: string; quantity: number }[]): Promise<import('./types').OrderDetail> {
   return apiFetch<import('./types').OrderDetail>(`/api/admin/orders/${id}/complete`, {
     method: 'POST',
     body: JSON.stringify({ decrements }),
-  }, token);
+  });
 }
 
-export async function adminFetchStats(token: string): Promise<AdminStats> {
-  return apiFetch<AdminStats>('/api/admin/stats', { cache: 'no-store' }, token);
+export async function adminFetchStats(): Promise<AdminStats> {
+  return apiFetch<AdminStats>('/api/admin/stats', { cache: 'no-store' });
 }
 
 // ---------------------------------------------------------------------------
@@ -521,22 +513,22 @@ export async function fetchBounties(params?: { active?: boolean }): Promise<impo
   return apiFetch<import('./types').Bounty[]>('/api/bounties', { params, cache: 'no-store' });
 }
 
-export async function adminCreateBounty(token: string, data: import('./types').BountyInput): Promise<import('./types').Bounty> {
+export async function adminCreateBounty(data: import('./types').BountyInput): Promise<import('./types').Bounty> {
   return apiFetch<import('./types').Bounty>('/api/admin/bounties', {
     method: 'POST',
     body: JSON.stringify(data),
-  }, token);
+  });
 }
 
-export async function adminUpdateBounty(token: string, id: string, data: import('./types').BountyInput): Promise<import('./types').Bounty> {
+export async function adminUpdateBounty(id: string, data: import('./types').BountyInput): Promise<import('./types').Bounty> {
   return apiFetch<import('./types').Bounty>(`/api/admin/bounties/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
-  }, token);
+  });
 }
 
-export async function adminDeleteBounty(token: string, id: string): Promise<void> {
-  return apiFetch<void>(`/api/admin/bounties/${id}`, { method: 'DELETE' }, token);
+export async function adminDeleteBounty(id: string): Promise<void> {
+  return apiFetch<void>(`/api/admin/bounties/${id}`, { method: 'DELETE' });
 }
 
 export async function createBountyOffer(data: import('./types').BountyOfferInput): Promise<import('./types').BountyOffer> {
@@ -546,15 +538,15 @@ export async function createBountyOffer(data: import('./types').BountyOfferInput
   });
 }
 
-export async function adminFetchBountyOffers(token: string): Promise<import('./types').BountyOffer[]> {
-  return apiFetch<import('./types').BountyOffer[]>('/api/admin/bounties/offers', { cache: 'no-store' }, token);
+export async function adminFetchBountyOffers(): Promise<import('./types').BountyOffer[]> {
+  return apiFetch<import('./types').BountyOffer[]>('/api/admin/bounties/offers', { cache: 'no-store' });
 }
 
-export async function adminUpdateBountyOfferStatus(token: string, id: string, status: string): Promise<import('./types').BountyOffer> {
+export async function adminUpdateBountyOfferStatus(id: string, status: string): Promise<import('./types').BountyOffer> {
   return apiFetch<import('./types').BountyOffer>(`/api/admin/bounties/offers/${id}/status`, {
     method: 'PUT',
     body: JSON.stringify({ status }),
-  }, token);
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -568,15 +560,15 @@ export async function createClientRequest(data: import('./types').ClientRequestI
   });
 }
 
-export async function adminFetchClientRequests(token: string): Promise<import('./types').ClientRequest[]> {
-  return apiFetch<import('./types').ClientRequest[]>('/api/admin/client-requests', { cache: 'no-store' }, token);
+export async function adminFetchClientRequests(): Promise<import('./types').ClientRequest[]> {
+  return apiFetch<import('./types').ClientRequest[]>('/api/admin/client-requests', { cache: 'no-store' });
 }
 
-export async function adminUpdateClientRequestStatus(token: string, id: string, status: string): Promise<import('./types').ClientRequest> {
+export async function adminUpdateClientRequestStatus(id: string, status: string): Promise<import('./types').ClientRequest> {
   return apiFetch<import('./types').ClientRequest>(`/api/admin/client-requests/${id}/status`, {
     method: 'PUT',
     body: JSON.stringify({ status }),
-  }, token);
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -591,26 +583,26 @@ export async function fetchNoticeBySlug(slug: string): Promise<import('./types')
   return apiFetch<import('./types').Notice>(`/api/notices/${slug}`, { cache: 'no-store' });
 }
 
-export async function adminFetchNotices(token: string): Promise<import('./types').Notice[]> {
-  return apiFetch<import('./types').Notice[]>('/api/admin/notices', { cache: 'no-store' }, token);
+export async function adminFetchNotices(): Promise<import('./types').Notice[]> {
+  return apiFetch<import('./types').Notice[]>('/api/admin/notices', { cache: 'no-store' });
 }
 
-export async function adminCreateNotice(token: string, data: import('./types').NoticeInput): Promise<import('./types').Notice> {
+export async function adminCreateNotice(data: import('./types').NoticeInput): Promise<import('./types').Notice> {
   return apiFetch<import('./types').Notice>('/api/admin/notices', {
     method: 'POST',
     body: JSON.stringify(data),
-  }, token);
+  });
 }
 
-export async function adminUpdateNotice(token: string, id: string, data: import('./types').NoticeInput): Promise<import('./types').Notice> {
+export async function adminUpdateNotice(id: string, data: import('./types').NoticeInput): Promise<import('./types').Notice> {
   return apiFetch<import('./types').Notice>(`/api/admin/notices/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
-  }, token);
+  });
 }
 
-export async function adminDeleteNotice(token: string, id: string): Promise<void> {
-  return apiFetch<void>(`/api/admin/notices/${id}`, { method: 'DELETE' }, token);
+export async function adminDeleteNotice(id: string): Promise<void> {
+  return apiFetch<void>(`/api/admin/notices/${id}`, { method: 'DELETE' });
 }
 
 // Newsletter
@@ -621,37 +613,35 @@ export async function subscribeToNewsletter(email: string): Promise<void> {
   });
 }
 
-export async function adminFetchSubscribers(token: string): Promise<NewsletterSubscriber[]> {
-  return apiFetch<NewsletterSubscriber[]>('/api/admin/subscribers', {}, token);
+export async function adminFetchSubscribers(): Promise<NewsletterSubscriber[]> {
+  return apiFetch<NewsletterSubscriber[]>('/api/admin/subscribers', {});
 }
 
 // CRM - Clients
-export async function adminFetchClients(token: string): Promise<CustomerStats[]> {
-  return apiFetch<CustomerStats[]>('/api/admin/clients', {}, token);
+export async function adminFetchClients(): Promise<CustomerStats[]> {
+  return apiFetch<CustomerStats[]>('/api/admin/clients', {});
 }
 
-export async function adminFetchClientDetail(token: string, id: string): Promise<CustomerDetail> {
-  return apiFetch<CustomerDetail>(`/api/admin/clients/${id}`, {}, token);
+export async function adminFetchClientDetail(id: string): Promise<CustomerDetail> {
+  return apiFetch<CustomerDetail>(`/api/admin/clients/${id}`, {});
 }
 
-export async function adminAddCustomerNote(token: string, customerId: string, content: string, orderId?: string): Promise<void> {
+export async function adminAddCustomerNote(customerId: string, content: string, orderId?: string): Promise<void> {
   return apiFetch<void>(`/api/admin/clients/${customerId}/notes`, {
     method: 'POST',
     body: JSON.stringify({ content, order_id: orderId }),
-  }, token);
+  });
 }
-export async function adminFetchAccountingExportURL(token: string, filters: { start_date?: string; end_date?: string }): Promise<string> {
+
+export async function adminFetchAccountingExportURL(filters: { start_date?: string; end_date?: string }): Promise<string> {
   const url = new URL(`${API_BASE}/api/admin/accounting/export`);
   if (filters.start_date) url.searchParams.set('start_date', filters.start_date);
   if (filters.end_date) url.searchParams.set('end_date', filters.end_date);
-  // Note: For file downloads, we often need to pass the token in a way the browser can handle
-  // or use fetch + blob if the backend requires the AdminAuth cookie which is 'credentials: include'.
-  // Since we use cookies, a simple window.open or link.click works if the cookie is set.
   return url.toString();
 }
 
-export async function adminDownloadAccountingCSV(token: string, filters: { start_date?: string; end_date?: string }): Promise<void> {
-  const url = await adminFetchAccountingExportURL(token, filters);
+export async function adminDownloadAccountingCSV(filters: { start_date?: string; end_date?: string }): Promise<void> {
+  const url = await adminFetchAccountingExportURL(filters);
   const response = await fetch(url, { credentials: 'include' });
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -682,23 +672,23 @@ export async function adminDownloadAccountingCSV(token: string, filters: { start
 // ---------------------------------------------------------------------------
 
 export async function fetchTranslations(locale?: string): Promise<Record<string, string> | Record<string, Record<string, string>>> {
-  return apiFetch<any>('/api/translations', { params: { locale }, cache: 'no-store' });
+  return apiFetch<Record<string, Record<string, string>>>('/api/translations', { params: { locale }, cache: 'no-store' });
 }
 
-export async function adminFetchTranslations(token: string): Promise<import('./types').Translation[]> {
-  return apiFetch<import('./types').Translation[]>('/api/admin/translations', { cache: 'no-store' }, token);
+export async function adminFetchTranslations(): Promise<import('./types').Translation[]> {
+  return apiFetch<import('./types').Translation[]>('/api/admin/translations', { cache: 'no-store' });
 }
 
-export async function adminUpdateTranslation(token: string, data: { key: string; locale: string; value: string }): Promise<void> {
+export async function adminUpdateTranslation(data: { key: string; locale: string; value: string }): Promise<void> {
   return apiFetch<void>('/api/admin/translations', {
     method: 'PUT',
     body: JSON.stringify(data),
-  }, token);
+  });
 }
 
-export async function adminDeleteTranslation(token: string, key: string, locale: string): Promise<void> {
+export async function adminDeleteTranslation(key: string, locale: string): Promise<void> {
   return apiFetch<void>(`/api/admin/translations/${key}`, { 
     params: { locale },
     method: 'DELETE' 
-  }, token);
+  });
 }

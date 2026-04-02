@@ -60,18 +60,18 @@ export default function AdminBountiesPage() {
   }, [loading, scrollToId, requests.length, offers.length]);
 
   useEffect(() => {
-    if (token) loadData(token);
+    if (token) loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  const loadData = async (t: string) => {
+  const loadData = async () => {
     setLoading(true);
     try {
       const [bData, rData, tData, oData, sData] = await Promise.all([
         fetchBounties(),
-        adminFetchClientRequests(t),
-        adminFetchTCGs(t),
-        adminFetchBountyOffers(t),
+        adminFetchClientRequests(),
+        adminFetchTCGs(),
+        adminFetchBountyOffers(),
         fetchPublicSettings()
       ]);
       setBounties(bData || []);
@@ -87,12 +87,12 @@ export default function AdminBountiesPage() {
     }
   };
 
-  const handleRefresh = () => token && loadData(token);
+  const handleRefresh = () => loadData();
 
   const handleDeleteBounty = async (id: string, name: string) => {
     if (!confirm(t('pages.admin.bounties.confirm_delete', 'Delete bounty for {name}?', { name }))) return;
     try {
-      await adminDeleteBounty(token!, id);
+      await adminDeleteBounty(id);
       handleRefresh();
     } catch {
       alert(t('pages.admin.bounties.error_delete', 'Failed to delete bounty.'));
@@ -101,7 +101,7 @@ export default function AdminBountiesPage() {
 
   const handleUpdateStatus = async (id: string, status: string) => {
     try {
-      await adminUpdateClientRequestStatus(token!, id, status);
+      await adminUpdateClientRequestStatus(id, status);
       handleRefresh();
     } catch {
       alert(t('pages.admin.bounties.error_status', 'Failed to update request status.'));
@@ -118,7 +118,7 @@ export default function AdminBountiesPage() {
   const handleResolveOffer = async (action: 'inventory' | 'notify_requests') => {
     if (!resolvingOffer) return;
     try {
-      await adminUpdateBountyOfferStatus(token!, resolvingOffer.offer.id, 'accepted');
+      await adminUpdateBountyOfferStatus(resolvingOffer.offer.id, 'accepted');
       if (action === 'notify_requests') {
         const selectedIds = selectedRequests[resolvingOffer.offer.id] || [];
         const toFulfill = selectedIds.length > 0 
@@ -126,14 +126,14 @@ export default function AdminBountiesPage() {
           : requests.filter(r => r.card_name.toLowerCase().includes(resolvingOffer.bounty.name.toLowerCase()) && (r.status === 'pending' || r.status === 'accepted'));
 
         for (const req of toFulfill) {
-          await adminUpdateClientRequestStatus(token!, req.id, 'solved');
+          await adminUpdateClientRequestStatus(req.id, 'solved');
         }
 
         const countsFulfilled = toFulfill.length;
         const newQty = Math.max(0, resolvingOffer.bounty.quantity_needed - countsFulfilled);
         const isActive = newQty > 0;
         
-        await adminUpdateBounty(token!, resolvingOffer.bounty.id, {
+        await adminUpdateBounty(resolvingOffer.bounty.id, {
           ...resolvingOffer.bounty,
           quantity_needed: newQty,
           is_active: isActive
@@ -148,7 +148,7 @@ export default function AdminBountiesPage() {
   const handleRejectOffer = async () => {
     if (!resolvingOffer) return;
     try {
-      await adminUpdateBountyOfferStatus(token!, resolvingOffer.offer.id, 'rejected');
+      await adminUpdateBountyOfferStatus(resolvingOffer.offer.id, 'rejected');
       handleRefresh();
     } catch {
       alert(t('pages.admin.bounties.error_reject', 'Failed to reject offer'));
@@ -157,7 +157,7 @@ export default function AdminBountiesPage() {
 
   const handleReactivateBounty = async (b: Bounty) => {
     try {
-      await adminUpdateBounty(token!, b.id, {
+      await adminUpdateBounty(b.id, {
         ...b,
         is_active: true,
         quantity_needed: b.quantity_needed || 1
@@ -394,7 +394,7 @@ export default function AdminBountiesPage() {
                         <button onClick={() => setResolvingOffer({ offer, bounty: b })} className="btn-primary py-2 px-6 text-xs bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-500/20 font-bold uppercase tracking-widest">{t('pages.admin.bounties.resolve_btn', 'RESOLVE OFFER')}</button>
                       )}
                       {offer.status !== 'pending' && (
-                        <button onClick={async () => { await adminUpdateBountyOfferStatus(token!, offer.id, 'pending'); handleRefresh(); }} className="btn-secondary py-1 text-[10px] font-mono-stack font-bold">{t('pages.admin.bounties.revert_btn', 'REVERT TO PENDING')}</button>
+                        <button onClick={async () => { await adminUpdateBountyOfferStatus(offer.id, 'pending'); handleRefresh(); }} className="btn-secondary py-1 text-[10px] font-mono-stack font-bold">{t('pages.admin.bounties.revert_btn', 'REVERT TO PENDING')}</button>
                       )}
                     </div>
                   </div>
@@ -543,7 +543,6 @@ export default function AdminBountiesPage() {
         <BountyEditModal
           editBounty={editingBounty}
           initialData={initialBountyData}
-          token={token!}
           tcgs={tcgs}
           settings={settings}
           onClose={() => { setShowEditModal(false); setEditingBounty(null); setInitialBountyData(undefined); }}

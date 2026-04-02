@@ -4,11 +4,9 @@ import { useState, useEffect } from 'react';
 import { TCG } from '@/lib/types';
 import { adminFetchTCGs, adminCreateTCG, adminUpdateTCG, adminDeleteTCG } from '@/lib/api';
 
-interface Props {
-  token: string;
-}
+type Props = Record<string, never>;
 
-export default function TCGManager({ token }: Props) {
+export default function TCGManager({ }: Props) {
   const [tcgs, setTcgs] = useState<TCG[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -21,10 +19,10 @@ export default function TCGManager({ token }: Props) {
   const loadTCGs = async () => {
     setLoading(true);
     try {
-      const data = await adminFetchTCGs(token);
+      const data = await adminFetchTCGs();
       setTcgs(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -32,14 +30,14 @@ export default function TCGManager({ token }: Props) {
 
   useEffect(() => {
     loadTCGs();
-  }, [token]);
+  }, []);
 
   const handleToggle = async (tcg: TCG) => {
     try {
-      await adminUpdateTCG(token, tcg.id, tcg.name, !tcg.is_active);
+      await adminUpdateTCG(tcg.id, tcg.name, !tcg.is_active);
       setTcgs(prev => prev.map(t => t.id === tcg.id ? { ...t, is_active: !t.is_active } : t));
-    } catch (err: any) {
-      setError('Failed to toggle TCG: ' + err.message);
+    } catch (err: unknown) {
+      setError('Failed to toggle TCG: ' + (err instanceof Error ? err.message : String(err)));
     }
   };
 
@@ -50,11 +48,11 @@ export default function TCGManager({ token }: Props) {
     }
 
     try {
-      await adminUpdateTCG(token, tcg.id, editingName, tcg.is_active);
+      await adminUpdateTCG(tcg.id, editingName, tcg.is_active);
       setTcgs(prev => prev.map(t => t.id === tcg.id ? { ...t, name: editingName } : t));
       setEditingId(null);
-    } catch (err: any) {
-      setError('Failed to rename TCG: ' + err.message);
+    } catch (err: unknown) {
+      setError('Failed to rename TCG: ' + (err instanceof Error ? err.message : String(err)));
     }
   };
 
@@ -64,22 +62,22 @@ export default function TCGManager({ token }: Props) {
 
     try {
       const id = newTcg.id.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const created = await adminCreateTCG(token, id, newTcg.name);
+      const created = await adminCreateTCG(id, newTcg.name);
       setTcgs(prev => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
       setNewTcg({ id: '', name: '' });
       setIsAdding(false);
-    } catch (err: any) {
-      setError('Failed to create TCG: ' + err.message);
+    } catch (err: unknown) {
+      setError('Failed to create TCG: ' + (err instanceof Error ? err.message : String(err)));
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
-      await adminDeleteTCG(token, id);
+      await adminDeleteTCG(id);
       setTcgs(prev => prev.filter(t => t.id !== id));
       setConfirmDeleteId(null);
-    } catch (err: any) {
-      setError('Failed to delete TCG: ' + err.message);
+    } catch (err: unknown) {
+      setError('Failed to delete TCG: ' + (err instanceof Error ? err.message : String(err)));
       setConfirmDeleteId(null);
     }
   };

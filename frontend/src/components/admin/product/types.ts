@@ -1,4 +1,4 @@
-import { Product, StoredIn, CustomCategory, Condition, FoilTreatment, CardTreatment, PriceSource, DeckCard } from '@/lib/types';
+import { Product, StoredIn, CustomCategory, Condition, FoilTreatment, CardTreatment, PriceSource, DeckCard, TCG, Settings } from '@/lib/types';
 
 export type TabId = 'variant' | 'pricing' | 'deck';
 
@@ -44,11 +44,10 @@ export interface FormState {
 
 export interface ProductEditModalProps {
   editProduct: Product | null;
-  token: string;
   storageLocations: StoredIn[];
   categories: CustomCategory[];
-  tcgs: any[];
-  settings?: any;
+  tcgs: TCG[];
+  settings?: Settings;
   storageFilter?: string;
   onClose: () => void;
   onSaved: () => void;

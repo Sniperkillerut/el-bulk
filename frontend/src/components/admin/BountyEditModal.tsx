@@ -11,7 +11,6 @@ import { useLanguage } from '@/context/LanguageContext';
 
 interface BountyEditModalProps {
   editBounty: Bounty | null;
-  token: string;
   tcgs: TCG[];
   settings: Settings | undefined;
   onClose: () => void;
@@ -28,7 +27,7 @@ export const EMPTY_BOUNTY: BountyInput = {
 };
 
 export default function BountyEditModal({
-  editBounty, token, tcgs, settings, onClose, onSaved, initialData
+  editBounty, tcgs, settings, onClose, onSaved, initialData
 }: BountyEditModalProps) {
   const { t } = useLanguage();
   const [form, setForm] = useState<BountyInput>(EMPTY_BOUNTY);
@@ -59,7 +58,7 @@ export default function BountyEditModal({
         image_url: editBounty.image_url || '',
         price_source: editBounty.price_source || 'tcgplayer',
         price_reference: editBounty.price_reference || 0,
-        ...extractMTGMetadata(editBounty as any)
+        ...extractMTGMetadata(editBounty as unknown as ScryfallCard)
       });
     } else {
       setForm({ ...EMPTY_BOUNTY, ...initialData });
@@ -82,9 +81,9 @@ export default function BountyEditModal({
       };
 
       if (editBounty) {
-        await adminUpdateBounty(token, editBounty.id, payload);
+        await adminUpdateBounty(editBounty.id, payload);
       } else {
-        await adminCreateBounty(token, payload);
+        await adminCreateBounty(payload);
       }
       onSaved();
     } catch (e: unknown) {
@@ -130,7 +129,7 @@ export default function BountyEditModal({
       if (prints.length === 0) throw new Error('No printings found for that search.');
 
       if (prints.length > 0) {
-        const oracleId = (prints[0] as any).oracle_id;
+        const oracleId = (prints[0] as ScryfallCard).oracle_id;
         if (oracleId) {
           const oraclePrints = await fetchAllPrints(`oracle_id:${oracleId}`);
           if (oraclePrints.length > prints.length) prints = oraclePrints;
