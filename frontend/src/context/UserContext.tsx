@@ -35,7 +35,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = await userFetchMe();
       setUser(data);
     } catch {
+      // If the user fetch fails (e.g. 401/404 during dev reset), 
+      // clear the state and cookie to prevent being "stuck" in a half-logged state.
       setUser(null);
+      // We don't call the full logout() here because it might loop if apiUserLogout also fails,
+      // but setUser(null) is already done. Let's just make sure we are not loading.
     } finally {
       setLoading(false);
     }

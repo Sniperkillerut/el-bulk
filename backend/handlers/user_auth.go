@@ -165,8 +165,16 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	var linkedCustomerID string
 	err = h.DB.Get(&linkedCustomerID, "SELECT customer_id FROM customer_auth WHERE provider = $1 AND provider_id = $2", provider, finalID)
 	
-	// 2. Check if we are currently logged in (LINKING flow)
 	currentUserID, _ := r.Context().Value(middleware.UserIDKey).(string)
+	if currentUserID != "" {
+		var exists bool
+		err := h.DB.Get(&exists, "SELECT EXISTS(SELECT 1 FROM customer WHERE id = $1)", currentUserID)
+		if err != nil || !exists {
+			// User has a valid token but does not exist in DB (stale session after data wipe)
+			logger.Warn("Stale session for deleted user %s. Treating as guest.", currentUserID)
+			currentUserID = "" // Revert to guest flow
+		}
+	}
 
 	if currentUserID != "" {
 		// LINKING FLOW
@@ -196,16 +204,22 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 
 	// LOGIN / SIGNUP FLOW
 	var customer models.Customer
+	found := false
 	if err == nil {
 		// Found via customer_auth
 		err = h.DB.Get(&customer, "SELECT * FROM customer WHERE id = $1", linkedCustomerID)
-		if err != nil {
-			logger.Error("Customer linked in auth but missing in customer table: %v", err)
-			http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=db_error", http.StatusTemporaryRedirect)
-			return
+		if err == nil {
+			found = true
+		} else {
+			// Orphaned auth record (possibly due to developer deleting users but not auth records)
+			// Treat as if not found and let it fall through to signup/email check
+			logger.Warn("Customer linked in auth but missing in database: %s. Cleaning up orphan record.", linkedCustomerID)
+			h.DB.Exec("DELETE FROM customer_auth WHERE provider = $1 AND provider_id = $2", provider, finalID)
 		}
-	} else {
-		// Not found in customer_auth, try email
+	}
+
+	if !found {
+		// Not found in customer_auth (or record was orphan), try email lookup
 		err = h.DB.Get(&customer, "SELECT * FROM customer WHERE email = $1", finalEmail)
 		if err != nil {
 			// First time user, create account
