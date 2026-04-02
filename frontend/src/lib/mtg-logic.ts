@@ -56,10 +56,37 @@ export function resolveFoilTreatment(card: ScryfallCard | undefined): FoilTreatm
   if (pt.includes('neonink')) return 'neon_ink';
   if (pt.includes('doublerainbow')) return 'double_rainbow';
   if (pt.includes('glossy')) return 'glossy';
+  if (pt.includes('ripplefoil')) return 'ripple_foil';
+  if (pt.includes('platinumfoil')) return 'platinum_foil';
 
   const finishes = card.finishes || [];
   if (finishes.includes('etched')) return 'etched_foil';
   if (finishes.includes('foil')) return 'foil';
+  return 'non_foil';
+}
+
+/**
+ * Heuristically identifies a foil treatment from a raw string (e.g. from CSV).
+ */
+export function identifyFoilFromString(str: string | undefined): FoilTreatment {
+  if (!str) return 'non_foil';
+  const s = str.toLowerCase().replace(/[^a-z0-9]/g, '');
+  
+  if (s.includes('ripple')) return 'ripple_foil';
+  if (s.includes('platinum')) return 'platinum_foil';
+  if (s.includes('galaxy')) return 'galaxy_foil';
+  if (s.includes('surge')) return 'surge_foil';
+  if (s.includes('textured')) return 'textured_foil';
+  if (s.includes('confetti')) return 'confetti_foil';
+  if (s.includes('oilslick')) return 'oil_slick';
+  if (s.includes('stepandcompleat')) return 'step_and_compleat';
+  if (s.includes('neonink')) return 'neon_ink';
+  if (s.includes('doublerainbow')) return 'double_rainbow';
+  if (s.includes('etched')) return 'etched_foil';
+  if (s.includes('glossy')) return 'glossy';
+  if (s.includes('holo')) return 'holo_foil';
+  
+  if (s.includes('foil')) return 'foil';
   return 'non_foil';
 }
 

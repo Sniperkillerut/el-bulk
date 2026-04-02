@@ -14,7 +14,12 @@ import {
   TCG_LABELS,
   KNOWN_TCGS
 } from '@/lib/types';
-import { lookupMTGCard, adminBulkCreateProducts, adminBatchLookupMTG } from '@/lib/api';
+import { 
+  lookupMTGCard, 
+  adminBulkCreateProducts, 
+  adminBatchLookupMTG 
+} from '@/lib/api';
+import { identifyFoilFromString } from '@/lib/mtg-logic';
 import CardImage from '@/components/CardImage';
 
 interface Props {
@@ -102,7 +107,7 @@ export default function CSVImportModal({ token, storageLocations, categories, on
         set_code: row[mapping['set_code']] || '',
         collector_number: row[mapping['collector_number']] || '',
         condition: (row[mapping['condition']] || 'NM').toUpperCase() as Condition,
-        foil_treatment: (row[mapping['foil_treatment']]?.toLowerCase().includes('foil') ? 'foil' : 'non_foil') as FoilTreatment,
+        foil_treatment: identifyFoilFromString(row[mapping['foil_treatment']]),
         stock: parseInt(row[mapping['stock']]) || 1,
         category_ids: [...defaultCategories],
         storage_items: defaultStorage ? [{ stored_in_id: defaultStorage, name: '', quantity: parseInt(row[mapping['stock']]) || 1 }] : []

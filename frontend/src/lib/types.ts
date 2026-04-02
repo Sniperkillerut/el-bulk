@@ -125,6 +125,9 @@ export const FOIL_LABELS: Record<string, string> = {
   neon_ink: 'Neon Ink Foil',
   confetti_foil: 'Confetti Foil',
   double_rainbow: 'Double Rainbow Foil',
+  ripple_foil: 'Ripple Foil',
+  platinum_foil: 'Platinum Foil',
+  holo_foil: 'Holo Foil',
 };
 
 export interface UserProfile {
