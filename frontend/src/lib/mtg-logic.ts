@@ -66,6 +66,26 @@ export function resolveFoilTreatment(card: ScryfallCard | undefined): FoilTreatm
 }
 
 /**
+ * For initial card selection/preview: determines the most "representative"
+ * foil treatment if a specific one hasn't been chosen yet.
+ */
+export function getInitialFoilTreatment(card: ScryfallCard | undefined): FoilTreatment {
+  if (!card) return 'non_foil';
+  
+  // If we can resolve a specific treatment from metadata (promo types, etc), use it
+  const resolved = resolveFoilTreatment(card);
+  if (resolved !== 'non_foil') return resolved;
+  
+  // Otherwise check finishes
+  const finishes = card.finishes || [];
+  if (finishes.length === 1 && finishes.includes('foil')) return 'foil';
+  if (finishes.length === 1 && finishes.includes('etched')) return 'etched_foil';
+  
+  // Default to non_foil if both are available or only nonfoil is
+  return 'non_foil';
+}
+
+/**
  * Heuristically identifies a foil treatment from a raw string (e.g. from CSV).
  */
 export function identifyFoilFromString(str: string | undefined): FoilTreatment {

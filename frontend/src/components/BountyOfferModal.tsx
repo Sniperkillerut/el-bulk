@@ -1,9 +1,10 @@
 'use client';
 
-import { Bounty, BountyOfferInput, Condition } from '@/lib/types';
+import { Bounty, BountyOfferInput } from '@/lib/types';
 import { createBountyOffer } from '@/lib/api';
 import Modal from './ui/Modal';
 import Button from './ui/Button';
+import CardImage from './CardImage';
 import { useForm } from '@/hooks/useForm';
 
 interface BountyOfferModalProps {
@@ -15,7 +16,6 @@ export default function BountyOfferModal({ bounty, onClose }: BountyOfferModalPr
   const {
     form,
     handleChange,
-    setFieldValue,
     submitting,
     error,
     success,
@@ -44,16 +44,20 @@ export default function BountyOfferModal({ bounty, onClose }: BountyOfferModalPr
             ✓
           </div>
           <h4 className="text-xl font-bold mb-2">Offer Received!</h4>
-          <p className="text-text-muted text-sm">We'll review it and contact you soon.</p>
+          <p className="text-text-muted text-sm">We&apos;ll review it and contact you soon.</p>
         </div>
       ) : (
         <form onSubmit={(e) => { e.preventDefault(); handleSubmit(onSubmit); }} className="space-y-4">
           <div className="flex items-center gap-4 bg-ink-surface/50 p-3 rounded mb-6 border border-ink-border">
-            {bounty.image_url ? (
-              <img src={bounty.image_url} alt={bounty.name} className="w-12 h-[68px] object-contain rounded-sm" />
-            ) : (
-              <div className="w-12 h-[68px] bg-ink-border/20 rounded-sm flex items-center justify-center text-[8px] text-center text-text-muted">NO IMAGE</div>
-            )}
+            <div className="w-12 h-[68px] flex-shrink-0">
+              <CardImage 
+                imageUrl={bounty.image_url} 
+                name={bounty.name} 
+                tcg={bounty.tcg} 
+                foilTreatment={bounty.foil_treatment}
+                enableHover={false}
+              />
+            </div>
             <div className="flex-1">
               <div className="font-bold">{bounty.name}</div>
               <div className="text-xs text-text-muted">

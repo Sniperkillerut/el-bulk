@@ -92,7 +92,7 @@ export default function HomeSearchBar({ placeholder }: HomeSearchBarProps) {
                     }}
                   >
                     <div className="w-14 flex-shrink-0 thumb-hover-wrap">
-                      <CardImage imageUrl={product.image_url} name={product.name} tcg={product.tcg} height={70} />
+                      <CardImage imageUrl={product.image_url} name={product.name} tcg={product.tcg} foilTreatment={product.foil_treatment} height={70} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-1">

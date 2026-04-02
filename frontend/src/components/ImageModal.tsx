@@ -1,14 +1,18 @@
 'use client';
 
 import { useEffect } from 'react';
+import { FoilOverlay } from './CardImage';
+import { useUI } from '@/context/UIContext';
 
 interface ImageModalProps {
   imageUrl: string;
   name: string;
+  foilTreatment?: string;
   onClose: () => void;
 }
 
-export default function ImageModal({ imageUrl, name, onClose }: ImageModalProps) {
+export default function ImageModal({ imageUrl, name, foilTreatment, onClose }: ImageModalProps) {
+  const { foilEffectsEnabled } = useUI();
   // Prevent scrolling on body when modal is open
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -109,6 +113,9 @@ export default function ImageModal({ imageUrl, name, onClose }: ImageModalProps)
             borderRadius: '8px'
           }}
         />
+        {foilEffectsEnabled && foilTreatment && foilTreatment !== 'non_foil' && (
+          <FoilOverlay treatment={foilTreatment} />
+        )}
       </div>
     </div>
   );

@@ -28,7 +28,7 @@ export default function BountyCard({ bounty, delay = 0 }: BountyCardProps) {
       data-theme-area="bounty-card"
     >
       <div className="thumb-hover-wrap">
-        <CardImage imageUrl={bounty.image_url} name={bounty.name} tcg={bounty.tcg} />
+        <CardImage imageUrl={bounty.image_url} name={bounty.name} tcg={bounty.tcg} foilTreatment={bounty.foil_treatment} />
       </div>
 
       <div className="p-3 flex flex-col flex-1 gap-2">

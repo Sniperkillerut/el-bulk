@@ -80,7 +80,7 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
               <div key={item.product.id} className="card p-3 flex gap-3">
                 {/* Image */}
                 <div style={{ width: 48, flexShrink: 0 }}>
-                  <CardImage imageUrl={item.product.image_url} name={item.product.name} tcg={item.product.tcg} height={64} enableHover={true} enableModal={true} />
+                  <CardImage imageUrl={item.product.image_url} name={item.product.name} tcg={item.product.tcg} foilTreatment={item.product.foil_treatment} height={64} enableHover={true} enableModal={true} />
                 </div>
 
                 {/* Info */}
@@ -149,7 +149,7 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
                 {removedItems.map(item => (
                   <div key={item.product.id} className="flex items-center gap-3 opacity-50 hover:opacity-100 transition-opacity p-1">
                     <div style={{ width: 32 }}>
-                      <CardImage imageUrl={item.product.image_url} name={item.product.name} tcg={item.product.tcg} height={40} />
+                      <CardImage imageUrl={item.product.image_url} name={item.product.name} tcg={item.product.tcg} foilTreatment={item.product.foil_treatment} height={40} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold truncate text-primary">{item.product.name}</p>

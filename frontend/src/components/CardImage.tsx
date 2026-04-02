@@ -147,6 +147,7 @@ export default function CardImage({
         <ImageModal 
           imageUrl={imageUrl} 
           name={name} 
+          foilTreatment={foilTreatment}
           onClose={() => setShowModal(false)} 
         />,
         document.body
@@ -155,7 +156,7 @@ export default function CardImage({
   );
 }
 
-function FoilOverlay({ treatment }: { treatment: string }) {
+export function FoilOverlay({ treatment }: { treatment: string }) {
   // Normalize treatment slug for CSS classes
   const effectClass = treatment.toLowerCase().replace(/_/g, '-');
   

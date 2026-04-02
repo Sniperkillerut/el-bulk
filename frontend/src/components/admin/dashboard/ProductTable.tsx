@@ -43,6 +43,7 @@ export function ProductTableRow({ product: p, onEdit, onDelete }: ProductTableRo
               imageUrl={p.image_url}
               name={p.name}
               tcg={p.tcg}
+              foilTreatment={p.foil_treatment}
               height="100%"
               enableHover={true}
               enableModal={true}

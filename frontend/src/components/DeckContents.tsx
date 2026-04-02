@@ -85,6 +85,7 @@ export default function DeckContents({ cards, tcg, className = '' }: DeckContent
                           imageUrl={card.image_url} 
                           name={card.name} 
                           tcg={tcg} 
+                          foilTreatment={card.foil_treatment}
                           enableHover={true}
                         />
                       </div>

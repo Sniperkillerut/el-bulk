@@ -540,6 +540,7 @@ export default function CSVImportModal({ token, storageLocations, categories, on
                               <CardImage 
                                 imageUrl={item.image_url} 
                                 name={item.name!} 
+                                foilTreatment={item.foil_treatment}
                                 height="100%"
                                 enableHover={true}
                                 enableModal={true}

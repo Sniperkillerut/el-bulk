@@ -232,15 +232,14 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
                           setActivePromo((print.promo_types || [])[0] || 'none');
                         }}
                       >
-                        <div className="aspect-[63/88] rounded-md overflow-hidden bg-ink-border/10">
-                          {img ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={img} alt={print.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center p-1 text-[8px] font-mono text-center text-text-muted">
-                              {print.set.toUpperCase()}<br/>#{print.collector_number}
-                            </div>
-                          )}
+                        <div className="aspect-[63/88] rounded-md overflow-hidden bg-ink-border/10 relative">
+                          <CardImage 
+                            imageUrl={img} 
+                            name={print.name} 
+                            tcg="mtg" 
+                            foilTreatment={resolveFoilTreatment(print)}
+                            enableHover={false} 
+                          />
                         </div>
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none rounded-md">
                           <span className="text-white font-bold text-xs">{t('components.admin.product_modal.deck.select_btn', 'SELECT')}</span>
@@ -300,11 +299,12 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
                   <div className="flex flex-col gap-1.5">
                     {groupCards.map(card => (
                       <div key={card.id} className="flex items-center gap-2 p-1 bg-white/60 border border-white/40 rounded shadow-sm shrink-0 group/row hover:border-gold/30 transition-colors">
-                        <div className="w-8 h-12 shrink-0 rounded-sm overflow-hidden border border-ink-border/20 shadow-sm shadow-black/5">
+                        <div className="w-8 h-12 shrink-0 rounded-sm overflow-hidden border border-ink-border/20 shadow-sm shadow-black/5 relative">
                           <CardImage 
                             imageUrl={card.image_url} 
                             name={card.name} 
                             tcg={form.tcg} 
+                            foilTreatment={card.foil_treatment}
                             enableHover={true} 
                           />
                         </div>

@@ -189,7 +189,7 @@ export default function CheckoutPage() {
                 return (
                   <div key={p.id} className="flex gap-3 pb-3" style={{ borderBottom: '1px solid var(--ink-border)' }}>
                     <div style={{ width: 52, flexShrink: 0 }}>
-                      <CardImage imageUrl={p.image_url} name={p.name} tcg={p.tcg} height={70} enableHover={true} enableModal={true} />
+                      <CardImage imageUrl={p.image_url} name={p.name} tcg={p.tcg} foilTreatment={p.foil_treatment} height={70} enableHover={true} enableModal={true} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold truncate">{p.name}</p>
@@ -275,7 +275,7 @@ export default function CheckoutPage() {
                   {removedItems.map(item => (
                     <div key={item.product.id} className="card p-3 flex items-center gap-4 bg-ink-surface/30">
                       <div style={{ width: 40 }}>
-                        <CardImage imageUrl={item.product.image_url} name={item.product.name} tcg={item.product.tcg} height={50} />
+                        <CardImage imageUrl={item.product.image_url} name={item.product.name} tcg={item.product.tcg} foilTreatment={item.product.foil_treatment} height={50} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate">{item.product.name}</p>

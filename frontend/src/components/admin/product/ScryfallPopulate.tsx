@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { ScryfallCard } from '@/lib/types';
-import { getScryfallImage } from '@/lib/mtg-logic';
+import { getScryfallImage, getInitialFoilTreatment } from '@/lib/mtg-logic';
 import { useLanguage } from '@/context/LanguageContext';
+import CardImage from '@/components/CardImage';
 
 interface ScryfallPopulateProps {
   name: string;
@@ -124,8 +125,8 @@ export default function ScryfallPopulate({
                   onMouseEnter={() => setHoverCard(card)}
                   onMouseLeave={() => setHoverCard(null)}
                   className="flex items-center gap-3 p-2 hover:bg-gold/10 cursor-pointer group transition-colors">
-                  <div className="w-8 h-8 flex-shrink-0 bg-ink-border/10">
-                    <img src={getScryfallImage(card)} alt="" className="w-full h-full object-cover rounded-sm" />
+                  <div className="w-8 h-8 flex-shrink-0 bg-ink-border/10 overflow-hidden relative">
+                    <CardImage imageUrl={getScryfallImage(card)} name={card.name} tcg="mtg" foilTreatment={getInitialFoilTreatment(card)} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-bold truncate group-hover:text-gold transition-colors">{card.name}</div>
@@ -153,7 +154,7 @@ export default function ScryfallPopulate({
             top: '50%', transform: 'translateY(-50%)'
           }}>
           <div className="card p-1 shadow-[0_0_50px_rgba(0,0,0,0.5)] border-gold/50 bg-ink-surface" style={{ width: '280px' }}>
-             <img src={getScryfallImage(hoverCard)} alt={hoverCard.name} className="w-full h-auto rounded drop-shadow-lg" />
+             <CardImage imageUrl={getScryfallImage(hoverCard)} name={hoverCard.name} tcg="mtg" foilTreatment={getInitialFoilTreatment(hoverCard)} enableHover={false} />
              <div className="p-3 text-center">
                 <p className="text-[10px] font-mono-stack text-gold">{hoverCard.type_line}</p>
                 <p className="text-[9px] font-mono-stack text-text-muted mt-1 italic">{hoverCard.artist}</p>

@@ -44,7 +44,7 @@ export default function BountyOfferResolveModal({ offer, bounty, requests, selec
     <Modal isOpen={true} onClose={onClose} title={t('components.admin.resolve_modal.title', 'Resolve Offer')} maxWidth="max-w-lg">
       <div className="mb-6 p-4 bg-gold/10 border border-gold/30 rounded flex gap-4">
         <div className="w-16 h-20 bg-ink-surface/50 rounded flex-shrink-0 overflow-hidden border border-gold/20">
-          <CardImage imageUrl={bounty.image_url} name={bounty.name} tcg={bounty.tcg} enableHover={true} />
+          <CardImage imageUrl={bounty.image_url} name={bounty.name} tcg={bounty.tcg} foilTreatment={bounty.foil_treatment} enableHover={true} />
         </div>
         <div className="flex-1">
           <h4 className="font-bold mb-1">{t('components.admin.resolve_modal.offer_details', 'Offer details:')}</h4>
