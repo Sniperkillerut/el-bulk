@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/utils/crypto"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 )
@@ -38,6 +39,13 @@ func (h *CustomerAdminHandler) ListCustomers(w http.ResponseWriter, r *http.Requ
 		customers = []models.CustomerStats{}
 	}
 
+	// Decrypt sensitive fields for admin view
+	for i := range customers {
+		customers[i].Phone = crypto.DecryptSafe(customers[i].Phone)
+		customers[i].IDNumber = crypto.DecryptSafe(customers[i].IDNumber)
+		customers[i].Address = crypto.DecryptSafe(customers[i].Address)
+	}
+
 	json.NewEncoder(w).Encode(customers)
 }
 
@@ -56,6 +64,11 @@ func (h *CustomerAdminHandler) GetCustomerDetail(w http.ResponseWriter, r *http.
 		http.Error(w, "Customer not found", http.StatusNotFound)
 		return
 	}
+
+	// Decrypt sensitive fields
+	detail.Customer.Phone = crypto.DecryptSafe(detail.Customer.Phone)
+	detail.Customer.IDNumber = crypto.DecryptSafe(detail.Customer.IDNumber)
+	detail.Customer.Address = crypto.DecryptSafe(detail.Customer.Address)
 
 	// Fetch orders
 	err = h.DB.Select(&detail.Orders, "SELECT * FROM \"order\" WHERE customer_id = $1 ORDER BY created_at DESC", id)

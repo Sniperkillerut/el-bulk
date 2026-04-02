@@ -88,6 +88,9 @@ func Initialize(db *sqlx.DB) error {
 		// Basic parser for \i commands
 		if strings.HasPrefix(line, "\\i ") {
 			sqlFile := strings.TrimSpace(strings.TrimPrefix(line, "\\i "))
+			if strings.Contains(sqlFile, "..") {
+				return fmt.Errorf("invalid path in schema file: %s", sqlFile)
+			}
 			err := executeSQLFile(db, filepath.Join(schemaDir, sqlFile))
 			if err != nil {
 				return fmt.Errorf("failed to execute schema file %s: %v", sqlFile, err)

@@ -7,6 +7,7 @@ import (
 
 	"github.com/el-bulk/backend/middleware"
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/utils/crypto"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/el-bulk/backend/utils/render"
 	"github.com/go-chi/chi/v5"
@@ -174,6 +175,11 @@ func (h *BountyHandler) ListOffers(w http.ResponseWriter, r *http.Request) {
 		offers = []models.BountyOffer{}
 	}
 
+	// Decrypt sensitive contact info for admin view (if it was encrypted)
+	for i := range offers {
+		offers[i].CustomerContact = *crypto.DecryptSafe(&offers[i].CustomerContact)
+	}
+
 	render.Success(w, offers)
 }
 
@@ -260,6 +266,9 @@ func (h *BountyHandler) UpdateOfferStatus(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Decrypt sensitive contact info
+	offer.CustomerContact = *crypto.DecryptSafe(&offer.CustomerContact)
+
 	render.Success(w, offer)
 }
 
@@ -281,6 +290,11 @@ func (h *BountyHandler) ListRequests(w http.ResponseWriter, r *http.Request) {
 
 	if requests == nil {
 		requests = []models.ClientRequest{}
+	}
+
+	// Decrypt sensitive contact info for admin view
+	for i := range requests {
+		requests[i].CustomerContact = *crypto.DecryptSafe(&requests[i].CustomerContact)
 	}
 
 	render.Success(w, requests)

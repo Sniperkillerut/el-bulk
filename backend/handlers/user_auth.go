@@ -17,6 +17,7 @@ import (
 
 	"github.com/el-bulk/backend/middleware"
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/utils/crypto"
 	"github.com/el-bulk/backend/utils/logger"
 	"golang.org/x/oauth2/facebook"
 )
@@ -311,6 +312,11 @@ func (h *UserAuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 		customer.LinkedProviders = []string{}
 	}
 
+	// Decrypt sensitive fields
+	customer.Phone = crypto.DecryptSafe(customer.Phone)
+	customer.IDNumber = crypto.DecryptSafe(customer.IDNumber)
+	customer.Address = crypto.DecryptSafe(customer.Address)
+
 	render.Success(w, customer)
 }
 
@@ -332,10 +338,15 @@ func (h *UserAuthHandler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Encrypt sensitive fields before saving
+	encPhone, _ := crypto.Encrypt(input.Phone)
+	encIDNumber, _ := crypto.Encrypt(input.IDNumber)
+	encAddress, _ := crypto.Encrypt(input.Address)
+
 	_, err := h.DB.Exec(`
 		UPDATE customer SET phone = $1, id_number = $2, address = $3
 		WHERE id = $4
-	`, input.Phone, input.IDNumber, input.Address, userID)
+	`, encPhone, encIDNumber, encAddress, userID)
 
 	if err != nil {
 		logger.Error("Failed to update user %s: %v", userID, err)

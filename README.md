@@ -24,6 +24,20 @@ go run ./seed/main.go
 - Backend API: http://localhost:8080
 - Admin panel: http://localhost:3000/admin/login
 
+---
+
+## 🛡️ Data Security & PII Encryption
+The system uses **Application-Level Encryption (AES-256-GCM)** to secure sensitive customer data (ID numbers, phones, and addresses) at rest.
+
+1. **Setup Key**: Ensure `ENCRYPTION_KEY` is set to a 32-character secret in your `.env` or `docker-compose.dev.yml`.
+2. **Migrate Data**: If you have existing plain-text data, run the PII migration script:
+   ```bash
+   cd backend
+   go run scripts/migrate_pii/main.go
+   ```
+
+---
+
 Default admin credentials: `admin` / `elbulk2024!`
 
 ---

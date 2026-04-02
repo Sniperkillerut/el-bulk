@@ -15,6 +15,7 @@ import (
 
 	"github.com/el-bulk/backend/middleware"
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/utils/crypto"
 	"github.com/el-bulk/backend/utils/httputil"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/el-bulk/backend/utils/sqlutil"
@@ -143,14 +144,19 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 		customerIDStr = ctxID.(string)
 	}
 
+	// Encrypt guest PII if provided
+	encPhone, _ := crypto.Encrypt(input.Phone)
+	encIDNumber, _ := crypto.Encrypt(input.IDNumber)
+	encAddress, _ := crypto.Encrypt(input.Address)
+
 	customerJSON, _ := json.Marshal(map[string]interface{}{
 		"id":         customerIDStr,
 		"first_name": input.FirstName,
 		"last_name":  input.LastName,
 		"email":      input.Email,
-		"phone":      input.Phone,
-		"id_number":  input.IDNumber,
-		"address":    input.Address,
+		"phone":      encPhone,
+		"id_number":  encIDNumber,
+		"address":    encAddress,
 	})
 	itemsJSON, _ := json.Marshal(orderItems)
 	metaJSON, _ := json.Marshal(map[string]interface{}{
@@ -259,6 +265,11 @@ func (h *OrderHandler) GetDetail(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, "Customer not found", http.StatusInternalServerError)
 		return
 	}
+
+	// Decrypt sensitive fields
+	customer.Phone = crypto.DecryptSafe(customer.Phone)
+	customer.IDNumber = crypto.DecryptSafe(customer.IDNumber)
+	customer.Address = crypto.DecryptSafe(customer.Address)
 
 	// Fetch order items with enrichment from view
 	var rows []struct {
@@ -467,6 +478,11 @@ func (h *OrderHandler) GetMeDetail(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, "Customer not found", http.StatusInternalServerError)
 		return
 	}
+
+	// Decrypt sensitive fields
+	customer.Phone = crypto.DecryptSafe(customer.Phone)
+	customer.IDNumber = crypto.DecryptSafe(customer.IDNumber)
+	customer.Address = crypto.DecryptSafe(customer.Address)
 
 	// Fetch order items with enrichment from view
 	var rows []struct {

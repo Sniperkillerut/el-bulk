@@ -25,10 +25,15 @@ func SendEmail(to string, subject string, bodyHTML string) error {
 
 	auth := smtp.PlainAuth("", user, pass, host)
 
+	// Sanitize headers to prevent injection
+	safeTo := strings.ReplaceAll(strings.ReplaceAll(to, "\n", ""), "\r", "")
+	safeFrom := strings.ReplaceAll(strings.ReplaceAll(from, "\n", ""), "\r", "")
+	safeSubject := strings.ReplaceAll(strings.ReplaceAll(subject, "\n", ""), "\r", "")
+
 	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
-	msg := []byte("To: " + to + "\n" +
-		"From: " + from + "\n" +
-		"Subject: " + subject + "\n" +
+	msg := []byte("To: " + safeTo + "\n" +
+		"From: " + safeFrom + "\n" +
+		"Subject: " + safeSubject + "\n" +
 		mime + "\n" +
 		bodyHTML)
 
