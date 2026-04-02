@@ -8,6 +8,8 @@ import { useCart } from '@/lib/CartContext';
 import Link from 'next/link';
 import DeckContents from '@/components/DeckContents';
 
+import CardImage from '@/components/CardImage';
+
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
@@ -64,7 +66,7 @@ export default function ProductDetailPage() {
 
   if (error || !product) return (
     <div className="max-w-4xl mx-auto px-4 py-16 text-center stamp-border mt-12 bg-surface p-12">
-      <div role="heading" aria-level={1} className="font-display text-3xl mb-4 text-hp-color uppercase">ITEM NOT FOUND</div>
+      <div role="heading" aria-level={1} className="font-display text-3xl mb-4 text-hp-color uppercase">{resolveLabel('ITEM NOT FOUND', {})}</div>
       <p style={{ color: 'var(--text-muted)' }} className="mb-6 font-mono-stack">This item may have been sold or removed.</p>
       <Link href="/" className="btn-secondary">← Back to Shoebox</Link>
     </div>
@@ -90,14 +92,15 @@ export default function ProductDetailPage() {
       <div className="grid md:grid-cols-2 gap-10">
         {/* Image */}
         <div>
-          <div className="cardbox overflow-hidden" style={{ aspectRatio: '3/4', padding: '0.5rem', background: 'var(--kraft-light)' }}>
-            <div className="w-full h-full bg-ink-card border border-ink-border relative" style={{ boxShadow: 'inset 0 0 10px rgba(0,0,0,0.05)' }}>
-              {product.image_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={product.image_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '1rem' }} />
-              ) : (
-                <div className="product-img-placeholder h-full w-full" style={{ fontSize: '5rem', border: 'none', margin: 0 }}>🃏</div>
-              )}
+          <div className="cardbox overflow-hidden shadow-md w-full aspect-[3/4] bg-ink-surface p-2">
+            <div className="w-full h-full border border-ink-border relative" style={{ boxShadow: 'inset 0 0 10px rgba(0,0,0,0.05)' }}>
+              <CardImage 
+                imageUrl={product.image_url} 
+                name={product.name} 
+                tcg={product.tcg}
+                foilTreatment={product.foil_treatment}
+                enableModal={true}
+              />
             </div>
           </div>
         </div>

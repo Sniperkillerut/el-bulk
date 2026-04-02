@@ -17,6 +17,17 @@
   --color-status-mp: var(--status-mp);
   --color-status-hp: var(--status-hp);
   --color-status-dmg: var(--status-dmg);
+  
+  /* Brand Aliases */
+  --color-hp-color: var(--status-hp);
+  --color-nm-color: var(--status-nm);
+  --color-lp-color: var(--status-lp);
+  --color-mp-color: var(--status-mp);
+  --color-dmg-color: var(--status-dmg);
+  --color-gold: var(--accent-primary);
+  --color-gold-dark: var(--accent-primary-hover);
+  --color-kraft-dark: var(--kraft-dark);
+  --color-kraft-paper: var(--bg-page);
 
   /* Spacing & Geometry */
   --radius-base: var(--radius-base);
