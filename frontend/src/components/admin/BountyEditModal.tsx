@@ -6,6 +6,7 @@ import { Bounty, BountyInput, FoilTreatment, CardTreatment, Condition, TCG, Scry
 import { extractMTGMetadata, getScryfallImage, resolveFoilTreatment, findMatchingPrint, applyPrintPrices, resolveCardTreatment, getSuggestedPrice } from '@/lib/mtg-logic';
 import ScryfallPopulate from './product/ScryfallPopulate';
 import MTGVariantSelector from './MTGVariantSelector';
+import CardImage from '@/components/CardImage';
 import { useLanguage } from '@/context/LanguageContext';
 
 interface BountyEditModalProps {
@@ -423,12 +424,14 @@ export default function BountyEditModal({
 
           <div className="w-full md:w-64 shrink-0 flex flex-col items-center">
             <div className="relative aspect-[63/88] w-full max-w-[200px] bg-ink-border/5 rounded shadow-inner flex items-center justify-center overflow-hidden mb-6">
-              {form.image_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={form.image_url} alt="Preview" className="w-full h-full object-contain" />
-              ) : (
-                <div className="text-[10px] font-mono-stack text-text-muted text-center p-4">{t('components.admin.bounty_modal.no_image', 'NO IMAGE')}</div>
-              )}
+              <CardImage 
+                imageUrl={form.image_url} 
+                name={form.name} 
+                tcg={form.tcg} 
+                foilTreatment={form.foil_treatment} 
+                enableHover={false} 
+                height="100%"
+              />
             </div>
 
             {formError && (

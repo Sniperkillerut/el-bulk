@@ -140,7 +140,7 @@ export default function CardImage({
       )}
 
       {isHovered && imageUrl && rect && (
-        <HoverPortal imageUrl={imageUrl} name={name} startRect={rect} />
+        <HoverPortal imageUrl={imageUrl} name={name} startRect={rect} foilTreatment={foilTreatment} />
       )}
 
       {showModal && imageUrl && typeof document !== 'undefined' && createPortal(
@@ -176,7 +176,8 @@ export function FoilOverlay({ treatment }: { treatment: string }) {
   return <div className={`foil-overlay ${getFoilClass(treatment)}`} />;
 }
 
-function HoverPortal({ imageUrl, name, startRect }: { imageUrl: string; name: string; startRect: DOMRect }) {
+function HoverPortal({ imageUrl, name, startRect, foilTreatment }: { imageUrl: string; name: string; startRect: DOMRect; foilTreatment?: string }) {
+  const { foilEffectsEnabled } = useUI();
   const [isMounted, setIsMounted] = useState(false);
   
   useEffect(() => {
@@ -188,10 +189,11 @@ function HoverPortal({ imageUrl, name, startRect }: { imageUrl: string; name: st
 
   return createPortal(
     <div className="hover-expand-portal" style={isMounted ? {
-      top: (window.innerHeight - Math.min(window.innerWidth * 0.5, window.innerHeight * 0.8)) / 2,
-      left: (window.innerWidth - Math.min(window.innerWidth * 0.5, window.innerHeight * 0.8)) / 2,
-      width: Math.min(window.innerWidth * 0.5, window.innerHeight * 0.8),
-      height: Math.min(window.innerWidth * 0.5, window.innerHeight * 0.8),
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      height: Math.min(window.innerHeight * 0.85, 800),
+      aspectRatio: '63/88',
       opacity: 1,
     } : {
       top: startRect.top,
@@ -200,8 +202,13 @@ function HoverPortal({ imageUrl, name, startRect }: { imageUrl: string; name: st
       height: startRect.height,
       opacity: 0,
     }}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={imageUrl} alt={name} className="hover-expand-image" />
+      <div style={{ position: 'relative', width: '100%', height: '100%', borderRadius: 'inherit', overflow: 'hidden' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={imageUrl} alt={name} className="hover-expand-image" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        {foilEffectsEnabled && foilTreatment && foilTreatment !== 'non_foil' && (
+          <FoilOverlay treatment={foilTreatment} />
+        )}
+      </div>
     </div>,
     document.body
   );

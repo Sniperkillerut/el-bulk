@@ -258,7 +258,7 @@ export default function AdminBountiesPage() {
                         <td className="p-2">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-14 bg-kraft-paper rounded flex shrink-0 items-center justify-center overflow-hidden border border-kraft-dark/10">
-                              <CardImage imageUrl={b.image_url} name={b.name} tcg={b.tcg} enableHover={true} />
+                              <CardImage imageUrl={b.image_url} name={b.name} tcg={b.tcg} foilTreatment={b.foil_treatment} enableHover={true} />
                             </div>
                             <div className="min-w-0">
                               <div className="font-bold text-sm text-ink-deep leading-tight truncate">{b.name}</div>
@@ -336,7 +336,7 @@ export default function AdminBountiesPage() {
                 <div id={offer.id} key={offer.id} className={`flex flex-col gap-0 border-l-4 ${offer.status === 'pending' ? 'border-gold shadow-lg shadow-gold/5' : offer.status === 'accepted' ? 'border-indigo-400 opacity-80' : 'border-red-400'} scroll-mt-24 rounded-lg overflow-hidden mb-4 bg-white border border-kraft-dark/10`}>
                   <div className={`p-5 flex flex-col md:flex-row gap-6 ${offer.status === 'pending' ? 'bg-white' : offer.status === 'accepted' ? 'bg-indigo-50/30' : 'bg-red-50/30'}`}>
                     <div className="w-16 h-20 bg-kraft-paper rounded flex shrink-0 items-center justify-center overflow-hidden border border-kraft-dark/10">
-                      <CardImage imageUrl={b.image_url} name={b.name} tcg={b.tcg} enableHover={true} />
+                      <CardImage imageUrl={b.image_url} name={b.name} tcg={b.tcg} foilTreatment={b.foil_treatment} enableHover={true} />
                     </div>
                     
                     <div className="flex-1">
