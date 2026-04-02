@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const adminToken = request.cookies.get('admin_token')?.value;
   const userToken = request.cookies.get('user_token')?.value;
   const { pathname } = request.nextUrl;
@@ -12,7 +12,7 @@ export function middleware(request: NextRequest) {
     if (pathname === '/admin/login') {
       // If already logged in, redirect to dashboard
       if (adminToken) {
-        return NextResponse.redirect(new URL('/admin', request.url));
+        return NextResponse.redirect(new URL('/admin/dashboard', request.url));
       }
       return NextResponse.next();
     }
