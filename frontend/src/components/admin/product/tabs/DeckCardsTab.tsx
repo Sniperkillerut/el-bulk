@@ -4,9 +4,17 @@ import { useState } from 'react';
 import { FormState } from '../types';
 import { DeckCard, ScryfallCard } from '@/lib/types';
 import ScryfallPopulate from '../ScryfallPopulate';
-import { getScryfallImage, getDeckAnalytics, resolveCardTreatment, resolveFoilTreatment, resolveArtVariation } from '@/lib/mtg-logic';
-import { FOIL_LABELS, TREATMENT_LABELS, resolveLabel } from '@/lib/types';
+import { 
+  getScryfallImage, 
+  getDeckAnalytics, 
+  resolveCardTreatment, 
+  resolveFoilTreatment, 
+  resolveArtVariation,
+  findMatchingPrint
+} from '@/lib/mtg-logic';
+import { FOIL_LABELS, TREATMENT_LABELS, resolveLabel, CardTreatment, FoilTreatment } from '@/lib/types';
 import CardImage from '@/components/CardImage';
+import MTGVariantSelector from '../../MTGVariantSelector';
 import { useLanguage } from '@/context/LanguageContext';
 
 interface DeckCardsTabProps {
@@ -21,6 +29,13 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
   const [searchName, setSearchName] = useState('');
   const [searchSet, setSearchSet] = useState('');
   const [searchCn, setSearchCn] = useState('');
+  
+  // Selection state for MTG variants
+  const [selectedPrint, setSelectedPrint] = useState<ScryfallCard | null>(null);
+  const [activeTreatment, setActiveTreatment] = useState<CardTreatment>('normal');
+  const [activeFoil, setActiveFoil] = useState<FoilTreatment>('non_foil');
+  const [activePromo, setActivePromo] = useState<string>('none');
+  const [activeCn, setActiveCn] = useState<string>('');
 
   const handlePopulate = async (forceSearchName?: string) => {
     const name = forceSearchName || searchName.trim();
@@ -35,7 +50,7 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
       else if (name) searchQ = `!"${name}"`;
       else if (set) searchQ = `set:${set}`;
 
-      let nextUrl: string | null = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(searchQ)}+game:paper&unique:prints&order=released`;
+      let nextUrl: string | null = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(searchQ)}+game:paper&unique=prints&order=released`;
       let results: ScryfallCard[] = [];
       while (nextUrl) {
         const r: Response = await fetch(nextUrl);
@@ -53,7 +68,7 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
       
       const oracleId = (results[0] as unknown as { oracle_id?: string }).oracle_id;
       if (oracleId) {
-        let oNextUrl: string | null = `https://api.scryfall.com/cards/search?q=oracle_id:${oracleId}+game:paper&unique:prints&order=released`;
+        let oNextUrl: string | null = `https://api.scryfall.com/cards/search?q=oracle_id:${oracleId}+game:paper&unique=prints&order=released`;
         let oResults: ScryfallCard[] = [];
         while (oNextUrl) {
           const r: Response = await fetch(oNextUrl);
@@ -79,18 +94,23 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
   };
 
   const addCard = (card: ScryfallCard | null, isManual: boolean = false) => {
+    // If selecting a print from MTG grid, we use our stateful selections
+    const bestPrint = card && !isManual 
+      ? findMatchingPrint(scryfallPrints, card.set, activeTreatment, activeCn || card.collector_number, activePromo, activeFoil) 
+      : (card || undefined);
+
     const defaultDeckCard: DeckCard = {
       id: crypto.randomUUID(),
-      name: isManual ? searchName : card?.name || 'Unknown',
-      set_code: card?.set || searchSet || '',
-      collector_number: card?.collector_number || searchCn || '',
+      name: isManual ? searchName : bestPrint?.name || 'Unknown',
+      set_code: bestPrint?.set || searchSet || '',
+      collector_number: bestPrint?.collector_number || searchCn || '',
       quantity: 1,
-      type_line: card?.type_line || '',
-      image_url: card ? (getScryfallImage(card) || '') : '',
-      foil_treatment: card ? resolveFoilTreatment(card) : 'non_foil',
-      card_treatment: card ? resolveCardTreatment(card) : 'normal',
-      rarity: card?.rarity || 'common',
-      art_variation: card ? resolveArtVariation(card) : ''
+      type_line: bestPrint?.type_line || '',
+      image_url: bestPrint ? (getScryfallImage(bestPrint) || '') : '',
+      foil_treatment: isManual ? 'non_foil' : (activeFoil || resolveFoilTreatment(bestPrint)),
+      card_treatment: isManual ? 'normal' : (activeTreatment || resolveCardTreatment(bestPrint!)),
+      rarity: bestPrint?.rarity || 'common',
+      art_variation: bestPrint ? resolveArtVariation(bestPrint) : ''
     };
     
     // check if it already exists, if so increment
@@ -107,6 +127,7 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
     setSearchSet('');
     setSearchCn('');
     setScryfallPrints([]);
+    setSelectedPrint(null);
   };
 
   const removeCard = (id: string) => {
@@ -146,26 +167,70 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
               lookingUp={lookingUp}
               onNameChange={val => { setSearchName(val); setScryfallPrints([]); }}
               onSetCodeChange={val => setSearchSet(val)}
-              onCollectorNumberChange={val => setSearchCn(val)}
-              onPopulate={() => handlePopulate()}
+              onCollectorNumberChange={val => { setSearchCn(val); setSelectedPrint(null); }}
+              onPopulate={() => { handlePopulate(); setSelectedPrint(null); }}
               onCardSelect={card => {
                 setSearchName(card.name);
                 handlePopulate(card.name);
+                setSelectedPrint(null);
               }}
-              onSetSearchChange={val => setSearchSet(val)}
+              onSetSearchChange={val => { setSearchSet(val); setSelectedPrint(null); }}
             />
             
             {scryfallPrints.length > 0 && (
               <div className="mt-3 border-t border-ink-border/10 pt-3">
                 <label className="text-[10px] font-mono-stack block mb-1 uppercase tracking-widest opacity-50">{t('components.admin.product_modal.deck.select_printing_label', 'Select Specific Printing to Add')}</label>
+                
+                {selectedPrint && (
+                  <div className="mb-4 bg-ink-surface/30 p-4 border border-gold/30 rounded relative animate-in fade-in zoom-in duration-300">
+                    <button 
+                      onClick={() => setSelectedPrint(null)}
+                      className="absolute top-2 right-2 text-text-muted hover:text-hp-color"
+                      title="Close Selector"
+                    >
+                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                    
+                    <MTGVariantSelector
+                      tcg={form.tcg}
+                      setCode={selectedPrint.set}
+                      cardTreatment={activeTreatment}
+                      collectorNumber={activeCn}
+                      promoType={activePromo}
+                      foilTreatment={activeFoil}
+                      prints={scryfallPrints}
+                      onTreatmentChange={val => setActiveTreatment(val)}
+                      onArtChange={val => setActiveCn(val)}
+                      onPromoChange={val => setActivePromo(val)}
+                      onFoilChange={val => setActiveFoil(val)}
+                    />
+                    
+                    <div className="mt-4 flex justify-end">
+                      <button 
+                        className="btn-primary py-2 px-8 font-black uppercase tracking-widest text-xs"
+                        onClick={() => addCard(selectedPrint)}
+                      >
+                        {t('components.admin.product_modal.deck.confirm_add_btn', 'Confirm & Add to Deck')}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2 overflow-y-auto max-h-48 p-2 custom-scrollbar">
                   {scryfallPrints.map((print, i) => {
                     const img = getScryfallImage(print);
+                    const isSelected = selectedPrint?.id === print.id;
                     return (
                       <div 
                         key={i} 
-                        className="cursor-pointer group relative hover:scale-105 transition-transform"
-                        onClick={() => addCard(print)}
+                        className={`cursor-pointer group relative hover:scale-105 transition-transform ${isSelected ? 'ring-2 ring-gold rounded-md' : ''}`}
+                        onClick={() => {
+                          setSelectedPrint(print);
+                          setActiveTreatment(resolveCardTreatment(print));
+                          setActiveFoil(resolveFoilTreatment(print));
+                          setActiveCn(print.collector_number || '');
+                          setActivePromo((print.promo_types || [])[0] || 'none');
+                        }}
                       >
                         <div className="aspect-[63/88] rounded-md overflow-hidden bg-ink-border/10">
                           {img ? (
@@ -178,7 +243,7 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
                           )}
                         </div>
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none rounded-md">
-                          <span className="text-white font-bold text-xs">{t('components.admin.product_modal.deck.add_btn', '+ ADD')}</span>
+                          <span className="text-white font-bold text-xs">{t('components.admin.product_modal.deck.select_btn', 'SELECT')}</span>
                         </div>
                         <div className="text-[9px] mt-1 text-center font-mono-stack truncate opacity-70">{print.set.toUpperCase()} · {print.collector_number}</div>
                       </div>
@@ -299,4 +364,3 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
     </div>
   );
 }
-
