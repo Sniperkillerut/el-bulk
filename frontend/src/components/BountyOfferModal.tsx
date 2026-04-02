@@ -6,6 +6,9 @@ import Modal from './ui/Modal';
 import Button from './ui/Button';
 import CardImage from './CardImage';
 import { useForm } from '@/hooks/useForm';
+import { useUser } from '@/context/UserContext';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface BountyOfferModalProps {
   bounty: Bounty;
@@ -13,21 +16,31 @@ interface BountyOfferModalProps {
 }
 
 export default function BountyOfferModal({ bounty, onClose }: BountyOfferModalProps) {
+  const router = useRouter();
+  const { user } = useUser();
   const {
     form,
     handleChange,
+    setFieldValue,
     submitting,
     error,
     success,
     handleSubmit
   } = useForm<BountyOfferInput>({
     bounty_id: bounty.id,
-    customer_name: '',
-    customer_contact: '',
+    customer_name: user ? `${user.first_name} ${user.last_name || ''}`.trim() : '',
+    customer_contact: user ? (user.email || user.phone || '') : '',
     condition: 'NM',
     quantity: 1,
     notes: '',
   });
+
+  useEffect(() => {
+    if (user && !form.customer_name) {
+      setFieldValue('customer_name', `${user.first_name} ${user.last_name || ''}`.trim());
+      setFieldValue('customer_contact', user.email || user.phone || '');
+    }
+  }, [user, setFieldValue, form.customer_name]);
 
   const onSubmit = async (data: BountyOfferInput) => {
     await createBountyOffer(data);
@@ -48,6 +61,20 @@ export default function BountyOfferModal({ bounty, onClose }: BountyOfferModalPr
         </div>
       ) : (
         <form onSubmit={(e) => { e.preventDefault(); handleSubmit(onSubmit); }} className="space-y-4">
+          {!user && (
+            <div className="bg-gold/10 border border-gold/20 p-3 rounded-md mb-2 flex items-center justify-between gap-4 animate-fade-in">
+              <div className="text-[11px] text-gold/90 leading-tight">
+                <strong>Login</strong> to automatically fill your info and track your offers.
+              </div>
+              <button 
+                type="button"
+                onClick={() => router.push('/login')}
+                className="btn-primary text-[10px] px-3 py-1.5 bg-gold text-ink-base hover:bg-gold-light whitespace-nowrap font-bold"
+              >
+                LOGIN
+              </button>
+            </div>
+          )}
           <div className="flex items-center gap-4 bg-ink-surface/50 p-3 rounded mb-6 border border-ink-border">
             <div className="w-12 h-[68px] flex-shrink-0">
               <CardImage 
