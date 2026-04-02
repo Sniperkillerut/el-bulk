@@ -65,7 +65,9 @@ func clearTables(db *sqlx.DB) {
 		"custom_category",
 		"notice",
 		"newsletter_subscriber",
+		"customer_auth",
 		"customer_note",
+		"deck_card",
 		"tcg",
 		"admin",
 	}
@@ -552,20 +554,38 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 		seedDeckCards(dragonDeckID, dragonDeckIds)
 	}
 
+	// 6c. Store Exclusives: Wooden Tokens
+	logger.Info("Seeding Store Exclusives: Wooden Tokens...")
+	var tokensID string
+	err = db.QueryRow(`
+		INSERT INTO product (name, tcg, category, price_source, price_cop_override, stock, image_url, description)
+		VALUES ($1, 'mtg', 'store_exclusives', 'manual', $2, 20, $3, $4) RETURNING id
+	`, 
+		"Hand-Crafted Wooden Tokens (Set of 10)", 
+		45000, 
+		"https://images.unsplash.com/photo-1598214886806-c87b84b7078b?q=80&w=800&auto=format&fit=crop",
+		"Beautifully laser-engraved wooden tokens for tracking various MTG status effects and creatures. Includes 2x Goblin, 2x Zombie, 2x Treasure, and 4x Generic +1/+1 counters.",
+	).Scan(&tokensID)
+
+	if err == nil {
+		db.Exec(`INSERT INTO product_storage (product_id, storage_id, quantity) VALUES ($1, $2, 20)`, tokensID, storageIDs[0])
+		db.Exec(`INSERT INTO product_category (product_id, category_id) VALUES ($1, $2)`, tokensID, cats["featured"])
+	}
+
 	// 7. Bounties
 	logger.Info("Seeding bounties...")
 	bountyNames := []string{"Orcish Bowmasters", "Sheoldred, the Apocalypse", "The One Ring", "Ragavan, Nimble Pilferer", "Mana Crypt"}
 	for _, name := range bountyNames {
 		db.Exec(`
-			INSERT INTO bounty (name, tcg, set_name, condition, quantity_needed, target_price, is_active)
-			VALUES ($1, 'mtg', 'Modern Horizons 3', 'NM', $2, $3, true)
+			INSERT INTO bounty (name, tcg, set_name, condition, quantity_needed, target_price, is_active, foil_treatment, language)
+			VALUES ($1, 'mtg', 'Modern Horizons 3', 'NM', $2, $3, true, 'non_foil', 'en')
 		`, name, rand.Intn(5)+2, (rand.Intn(10)+5)*10000)
 	}
 
 	for i := 0; i < 10; i++ {
 		db.Exec(`
-			INSERT INTO bounty (name, tcg, set_name, condition, quantity_needed, target_price, is_active)
-			VALUES ($1, 'mtg', 'Generic Set', 'NM', $2, $3, true)
+			INSERT INTO bounty (name, tcg, set_name, condition, quantity_needed, target_price, is_active, language)
+			VALUES ($1, 'mtg', 'Generic Set', 'NM', $2, $3, true, 'en')
 		`, fmt.Sprintf("Bounty Card #%d", i), rand.Intn(10)+1, rand.Intn(100000)+5000)
 	}
 
@@ -616,10 +636,13 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 				db.QueryRow("SELECT name, set_name, price_cop_override FROM product WHERE id = $1", pID).Scan(&pName, &pSet, &pPrice)
 				
 				qty := rand.Intn(2) + 1
+				var pCond, pFoil, pTreat string
+				db.QueryRow("SELECT condition, foil_treatment, card_treatment FROM product WHERE id = $1", pID).Scan(&pCond, &pFoil, &pTreat)
+
 				db.Exec(`
-					INSERT INTO order_item (order_id, product_id, product_name, product_set, unit_price_cop, quantity)
-					VALUES ($1, $2, $3, $4, $5, $6)
-				`, oID, pID, pName, pSet, pPrice, qty)
+					INSERT INTO order_item (order_id, product_id, product_name, product_set, unit_price_cop, quantity, condition, foil_treatment, card_treatment)
+					VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+				`, oID, pID, pName, pSet, pPrice, qty, pCond, pFoil, pTreat)
 				total += pPrice * float64(qty)
 			}
 			db.Exec(`UPDATE "order" SET total_cop = $1 WHERE id = $2`, total, oID)
@@ -748,6 +771,14 @@ func seedCRM(db *sqlx.DB, adminID string) {
 				INSERT INTO newsletter_subscriber (email, customer_id)
 				VALUES ($1, $2) ON CONFLICT DO NOTHING
 			`, c.Email, c.ID)
+		}
+
+		// Seed some OAuth accounts for multi-account testing
+		if i < 5 {
+			db.Exec(`INSERT INTO customer_auth (customer_id, provider, provider_id) VALUES ($1, 'google', $2)`, c.ID, "google-id-"+c.ID)
+			if i%2 == 0 {
+				db.Exec(`INSERT INTO customer_auth (customer_id, provider, provider_id) VALUES ($1, 'facebook', $2)`, c.ID, "facebook-id-"+c.ID)
+			}
 		}
 	}
 

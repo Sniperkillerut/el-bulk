@@ -111,9 +111,10 @@ BEGIN
         DELETE FROM deck_card WHERE product_id = p_id;
         IF item ? 'deck_cards' THEN
             INSERT INTO deck_card (
-                product_id, name, set_code, set_name, collector_number, quantity, type_line, image_url,
-                language, color_identity, cmc, is_legendary, is_historic, is_land, is_basic_land,
-                oracle_text, artist, border_color, frame, full_art, textless, promo_type
+                product_id, name, set_code, set_name, collector_number, rarity, quantity, 
+                language, type_line, color_identity, cmc, is_legendary, is_historic, is_land, is_basic_land,
+                art_variation, oracle_text, artist, border_color, frame, full_art, textless, promo_type,
+                image_url, foil_treatment, card_treatment
             )
             SELECT 
                 p_id,
@@ -121,23 +122,27 @@ BEGIN
                 dc->>'set_code',
                 dc->>'set_name',
                 dc->>'collector_number',
+                dc->>'rarity',
                 COALESCE((dc->>'quantity')::int, 1),
-                dc->>'type_line',
-                dc->>'image_url',
                 COALESCE(dc->>'language', 'en'),
+                dc->>'type_line',
                 dc->>'color_identity',
                 (dc->>'cmc')::numeric,
                 COALESCE((dc->>'is_legendary')::boolean, false),
                 COALESCE((dc->>'is_historic')::boolean, false),
                 COALESCE((dc->>'is_land')::boolean, false),
                 COALESCE((dc->>'is_basic_land')::boolean, false),
+                dc->>'art_variation',
                 dc->>'oracle_text',
                 dc->>'artist',
                 dc->>'border_color',
                 dc->>'frame',
                 COALESCE((dc->>'full_art')::boolean, false),
                 COALESCE((dc->>'textless')::boolean, false),
-                dc->>'promo_type'
+                dc->>'promo_type',
+                dc->>'image_url',
+                COALESCE(dc->>'foil_treatment', 'non_foil'),
+                COALESCE(dc->>'card_treatment', 'normal')
             FROM jsonb_array_elements(item->'deck_cards') AS dc;
         END IF;
 
