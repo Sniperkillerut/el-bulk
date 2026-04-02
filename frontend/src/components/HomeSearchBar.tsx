@@ -8,7 +8,11 @@ import CardImage from './CardImage';
 import { openProductModal } from './ProductModalManager';
 import { useLanguage } from '@/context/LanguageContext';
 
-export default function HomeSearchBar() {
+interface HomeSearchBarProps {
+  placeholder?: string;
+}
+
+export default function HomeSearchBar({ placeholder }: HomeSearchBarProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
@@ -55,8 +59,8 @@ export default function HomeSearchBar() {
       <div className="relative">
         <input
           type="text"
-          placeholder={t('components.search.placeholder', 'Search for cards, sets, or products...')}
-          className="w-full bg-white border-2 border-kraft-shadow p-4 pr-12 rounded-sm font-mono-stack text-sm focus:outline-none focus:border-gold transition-colors"
+          placeholder={placeholder || t('components.search.placeholder', 'Search for cards, sets, or products...')}
+          className="w-full bg-white border-2 border-kraft-shadow p-4 pr-12 rounded-sm font-mono-stack text-sm focus:outline-none focus:border-gold transition-colors shadow-inner"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => query.trim() && setShowResults(true)}
