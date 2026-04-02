@@ -7,6 +7,7 @@ import ScryfallPopulate from '../ScryfallPopulate';
 import { getScryfallImage, getDeckAnalytics, resolveCardTreatment, resolveFoilTreatment, resolveArtVariation } from '@/lib/mtg-logic';
 import { FOIL_LABELS, TREATMENT_LABELS, resolveLabel } from '@/lib/types';
 import CardImage from '@/components/CardImage';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface DeckCardsTabProps {
   form: FormState;
@@ -14,6 +15,7 @@ interface DeckCardsTabProps {
 }
 
 export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
+  const { t } = useLanguage();
   const [lookingUp, setLookingUp] = useState(false);
   const [scryfallPrints, setScryfallPrints] = useState<ScryfallCard[]>([]);
   const [searchName, setSearchName] = useState('');
@@ -33,7 +35,7 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
       else if (name) searchQ = `!"${name}"`;
       else if (set) searchQ = `set:${set}`;
 
-      let nextUrl: string | null = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(searchQ)}+game:paper&unique=prints&order=released`;
+      let nextUrl: string | null = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(searchQ)}+game:paper&unique:prints&order=released`;
       let results: ScryfallCard[] = [];
       while (nextUrl) {
         const r: Response = await fetch(nextUrl);
@@ -51,7 +53,7 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
       
       const oracleId = (results[0] as unknown as { oracle_id?: string }).oracle_id;
       if (oracleId) {
-        let oNextUrl: string | null = `https://api.scryfall.com/cards/search?q=oracle_id:${oracleId}+game:paper&unique=prints&order=released`;
+        let oNextUrl: string | null = `https://api.scryfall.com/cards/search?q=oracle_id:${oracleId}+game:paper&unique:prints&order=released`;
         let oResults: ScryfallCard[] = [];
         while (oNextUrl) {
           const r: Response = await fetch(oNextUrl);
@@ -155,7 +157,7 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
             
             {scryfallPrints.length > 0 && (
               <div className="mt-3 border-t border-ink-border/10 pt-3">
-                <label className="text-[10px] font-mono-stack block mb-1 uppercase tracking-widest opacity-50">Select Specific Printing to Add</label>
+                <label className="text-[10px] font-mono-stack block mb-1 uppercase tracking-widest opacity-50">{t('components.admin.product_modal.deck.select_printing_label', 'Select Specific Printing to Add')}</label>
                 <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2 overflow-y-auto max-h-48 p-2 custom-scrollbar">
                   {scryfallPrints.map((print, i) => {
                     const img = getScryfallImage(print);
@@ -176,7 +178,7 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
                           )}
                         </div>
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none rounded-md">
-                          <span className="text-white font-bold text-xs">+ ADD</span>
+                          <span className="text-white font-bold text-xs">{t('components.admin.product_modal.deck.add_btn', '+ ADD')}</span>
                         </div>
                         <div className="text-[9px] mt-1 text-center font-mono-stack truncate opacity-70">{print.set.toUpperCase()} · {print.collector_number}</div>
                       </div>
@@ -190,19 +192,19 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
       ) : (
         <div className="flex items-end gap-2 p-2 bg-white/40 border border-white/20 rounded-md">
           <div className="flex-1">
-            <label className="text-[10px] font-mono-stack mb-1 block uppercase opacity-60">Card Name (Custom)</label>
-            <input type="text" value={searchName} onChange={e => setSearchName(e.target.value)} placeholder="Type a custom card name..." />
+            <label className="text-[10px] font-mono-stack mb-1 block uppercase opacity-60">{t('components.admin.product_modal.deck.custom_name_label', 'Card Name (Custom)')}</label>
+            <input type="text" value={searchName} onChange={e => setSearchName(e.target.value)} placeholder={t('components.admin.product_modal.deck.custom_name_placeholder', 'Type a custom card name...')} />
           </div>
-          <button className="btn-primary py-2 px-4 text-xs font-bold" onClick={() => addCard(null, true)} disabled={!searchName}>Add Custom Card</button>
+          <button className="btn-primary py-2 px-4 text-xs font-bold" onClick={() => addCard(null, true)} disabled={!searchName}>{t('components.admin.product_modal.deck.add_custom_btn', 'Add Custom Card')}</button>
         </div>
       )}
 
       <div>
         <div className="mb-2">
           <h3 className="font-mono-stack text-[10px] uppercase tracking-widest text-text-muted opacity-70 flex justify-between items-center mb-0.5">
-            <span>Current Deck List</span>
+            <span>{t('components.admin.product_modal.deck.list_title', 'Current Deck List')}</span>
             <span className="bg-ink-border/10 px-2 py-0.5 rounded-full text-[10px] font-bold text-ink-deep/60">
-              {total} CARDS
+              {t('components.admin.product_modal.deck.card_count', '{count} CARDS', { count: total })}
             </span>
           </h3>
           {summary && (
@@ -213,7 +215,7 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
         </div>
         {form.deck_cards.length === 0 ? (
           <div className="text-sm text-text-muted py-8 text-center bg-white/30 rounded-lg border border-white/20 font-mono-stack">
-            Deck is currently empty.
+            {t('components.admin.product_modal.deck.empty_msg', 'Deck is currently empty.')}
           </div>
         ) : (
           <div className="space-y-3 max-h-[700px] overflow-y-auto custom-scrollbar p-1">
@@ -278,10 +280,10 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
                           <button type="button" onClick={() => updateCardQty(card.id, card.quantity + 1)} className="w-6 h-6 rounded bg-ink-border/10 hover:bg-ink-border/20 transition-colors flex items-center justify-center font-mono font-bold">+</button>
                         </div>
                         <div className="flex items-center gap-1">
-                          <button type="button" onClick={() => editCard(card)} className="w-8 h-8 rounded-full text-gold hover:bg-gold/10 flex items-center justify-center transition-colors" title="Edit/Repopulate">
+                          <button type="button" onClick={() => editCard(card)} className="w-8 h-8 rounded-full text-gold hover:bg-gold/10 flex items-center justify-center transition-colors" title={t('components.admin.product_modal.deck.edit_tooltip', 'Edit/Repopulate')}>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                           </button>
-                          <button type="button" onClick={() => removeCard(card.id)} className="w-8 h-8 rounded-full text-hp-color hover:bg-hp-color/10 flex items-center justify-center transition-colors" title="Remove">
+                          <button type="button" onClick={() => removeCard(card.id)} className="w-8 h-8 rounded-full text-hp-color hover:bg-hp-color/10 flex items-center justify-center transition-colors" title={t('components.admin.product_modal.deck.remove_tooltip', 'Remove')}>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                           </button>
                         </div>
@@ -297,3 +299,4 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
     </div>
   );
 }
+

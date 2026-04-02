@@ -6,6 +6,7 @@ import { Bounty, BountyInput, FoilTreatment, CardTreatment, Condition, TCG, Scry
 import { extractMTGMetadata, getScryfallImage, resolveFoilTreatment, findMatchingPrint, applyPrintPrices, resolveCardTreatment, getSuggestedPrice } from '@/lib/mtg-logic';
 import ScryfallPopulate from './product/ScryfallPopulate';
 import MTGVariantSelector from './MTGVariantSelector';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface BountyEditModalProps {
   editBounty: Bounty | null;
@@ -28,6 +29,7 @@ export const EMPTY_BOUNTY: BountyInput = {
 export default function BountyEditModal({
   editBounty, token, tcgs, settings, onClose, onSaved, initialData
 }: BountyEditModalProps) {
+  const { t } = useLanguage();
   const [form, setForm] = useState<BountyInput>(EMPTY_BOUNTY);
   const [scryfallPrints, setScryfallPrints] = useState<ScryfallCard[]>([]);
   const [lookingUp, setLookingUp] = useState(false);
@@ -37,7 +39,7 @@ export default function BountyEditModal({
   // Temporary fields for scryfall lookup
   const [setCode, setSetCode] = useState('');
   const [collectorNumber, setCollectorNumber] = useState('');
-
+  
   useEffect(() => {
     if (editBounty) {
       setForm({
@@ -67,7 +69,7 @@ export default function BountyEditModal({
 
   const handleSave = async () => {
     if (!form.name || !form.tcg) {
-      setFormError('Name and TCG are required.');
+      setFormError(t('components.admin.bounty_modal.error_required', 'Name and TCG are required.'));
       return;
     }
     setSaving(true);
@@ -85,7 +87,7 @@ export default function BountyEditModal({
       }
       onSaved();
     } catch (e: unknown) {
-      setFormError(e instanceof Error ? e.message : 'Failed to save bounty.');
+      setFormError(e instanceof Error ? e.message : t('components.admin.bounty_modal.error_save', 'Failed to save bounty.'));
     } finally {
       setSaving(false);
     }
@@ -112,7 +114,7 @@ export default function BountyEditModal({
         while (nextUrl) {
           const r = await fetch(nextUrl);
           if (!r.ok) break;
-          const b: any = await r.json();
+          const b = await r.json() as { data?: ScryfallCard[], has_more?: boolean, next_page?: string };
           if (b.data) {
             const paperOnly = (b.data as ScryfallCard[]).filter(c => !c.digital);
             results = results.concat(paperOnly);
@@ -274,7 +276,9 @@ export default function BountyEditModal({
 
         <div className="flex items-center justify-between p-4 md:p-6 pb-2 border-b border-ink-border/20">
           <div className="flex flex-col">
-            <h2 className="font-display text-4xl m-0 tracking-tighter text-ink-deep">{editBounty ? 'EDIT WANTED CARD' : 'ADD WANTED CARD'}</h2>
+            <h2 className="font-display text-4xl m-0 tracking-tighter text-ink-deep">
+              {editBounty ? t('components.admin.bounty_modal.title_edit', 'EDIT WANTED CARD') : t('components.admin.bounty_modal.title_add', 'ADD WANTED CARD')}
+            </h2>
           </div>
           <button onClick={onClose} 
             className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-hp-color/10 text-text-muted hover:text-hp-color transition-all duration-300">
@@ -286,15 +290,15 @@ export default function BountyEditModal({
           <div className="flex-1 space-y-4">
             <div className="flex gap-4">
               <div className="flex-1">
-                <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">TCG SYSTEM</label>
+                <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">{t('components.admin.bounty_modal.tcg_label', 'TCG SYSTEM')}</label>
                 <select className="bg-white/50 border-white/40 w-full" value={form.tcg} onChange={e => setForm(f => ({ ...f, tcg: e.target.value }))}>
                   {tcgs.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                 </select>
               </div>
               <div className="flex-1">
-                <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">CONDITION</label>
+                <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">{t('components.admin.bounty_modal.condition_label', 'CONDITION')}</label>
                 <select className="bg-white/50 border-white/40 w-full" value={form.condition} onChange={e => setForm(f => ({ ...f, condition: e.target.value as Condition }))}>
-                  <option value="">Any</option>
+                  <option value="">{t('pages.common.labels.any', 'Any')}</option>
                   {['NM', 'LP', 'MP', 'HP', 'DMG'].map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
@@ -340,20 +344,20 @@ export default function BountyEditModal({
               </>
             ) : (
               <div>
-                <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">CARD NAME</label>
-                <input type="text" className="w-full text-lg font-bold" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Entity Name" />
+                <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">{t('components.admin.bounty_modal.card_name', 'CARD NAME')}</label>
+                <input type="text" className="w-full text-lg font-bold" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder={t('components.admin.bounty_modal.name_placeholder', 'Entity Name')} />
                 
-                <label className="text-[10px] font-mono-stack mt-4 mb-1 block uppercase text-text-muted">SET NAME / INFO</label>
-                <input type="text" className="w-full" value={form.set_name} onChange={e => setForm(f => ({ ...f, set_name: e.target.value }))} placeholder="Optional Set Name" />
+                <label className="text-[10px] font-mono-stack mt-4 mb-1 block uppercase text-text-muted">{t('components.admin.bounty_modal.set_name', 'SET NAME / INFO')}</label>
+                <input type="text" className="w-full" value={form.set_name} onChange={e => setForm(f => ({ ...f, set_name: e.target.value }))} placeholder={t('components.admin.bounty_modal.set_placeholder', 'Optional Set Name')} />
                 
-                <label className="text-[10px] font-mono-stack mt-4 mb-1 block uppercase text-text-muted">IMAGE URL</label>
-                <input type="text" className="w-full" value={form.image_url} onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))} placeholder="https://..." />
+                <label className="text-[10px] font-mono-stack mt-4 mb-1 block uppercase text-text-muted">{t('components.admin.bounty_modal.image_url', 'IMAGE URL')}</label>
+                <input type="text" className="w-full" value={form.image_url} onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))} placeholder={t('components.admin.bounty_modal.image_placeholder', 'https://...')} />
               </div>
             )}
 
             <div className="mt-8 border-t border-ink-border/20 pt-6">
               <div className="flex justify-between items-center mb-3">
-                <h3 className="text-xs font-mono-stack uppercase text-text-muted tracking-widest m-0">PRICING</h3>
+                <h3 className="text-xs font-mono-stack uppercase text-text-muted tracking-widest m-0">{t('components.admin.bounty_modal.pricing_title', 'PRICING')}</h3>
                 <div className="text-xs font-mono-stack px-2 py-1 rounded bg-ink-surface text-gold shadow-sm">
                   {form.price_source === 'tcgplayer' && `(x ${settings?.usd_to_cop_rate || 0} COP)`}
                   {form.price_source === 'cardmarket' && `(x ${settings?.eur_to_cop_rate || 0} COP)`}
@@ -367,18 +371,18 @@ export default function BountyEditModal({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 <div>
-                  <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">PRICE SOURCE *</label>
+                  <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">{t('components.admin.bounty_modal.price_source', 'PRICE SOURCE *')}</label>
                   <select className="bg-white/80 border-white/40 w-full" value={form.price_source} onChange={e => handlePriceSourceChange(e.target.value as PriceSource)}>
-                    <option value="manual">Manual Override (COP)</option>
-                    <option value="tcgplayer">External: TCGPlayer (USD)</option>
-                    <option value="cardmarket">External: Cardmarket (EUR)</option>
+                    <option value="manual">{t('components.admin.bounty_modal.source_manual', 'Manual Override (COP)')}</option>
+                    <option value="tcgplayer">{t('components.admin.bounty_modal.source_tcgplayer', 'External: TCGPlayer (USD)')}</option>
+                    <option value="cardmarket">{t('components.admin.bounty_modal.source_cardmarket', 'External: Cardmarket (EUR)')}</option>
                   </select>
                 </div>
                 
                 {form.price_source !== 'manual' ? (
                   <div>
                     <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">
-                      REFERENCE PRICE ({form.price_source === 'tcgplayer' ? 'USD' : 'EUR'}) *
+                      {t('components.admin.bounty_modal.ref_price_label', 'REFERENCE PRICE ({source}) *', { source: form.price_source === 'tcgplayer' ? 'USD' : 'EUR' })}
                     </label>
                     <input 
                       type="number" step="0.01" className="w-full font-mono bg-white/90 border-white/40" 
@@ -392,7 +396,7 @@ export default function BountyEditModal({
                   </div>
                 ) : (
                   <div>
-                    <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">PRICE (COP) *</label>
+                    <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">{t('components.admin.bounty_modal.price_cop_label', 'PRICE (COP) *')}</label>
                     <input 
                       type="number" min="0" step="100" 
                       className="w-full font-mono bg-white/90 border-white/40" 
@@ -405,42 +409,39 @@ export default function BountyEditModal({
               </div>
 
               <div className="p-4 bg-ink-surface/30 rounded-sm border border-ink-border/50">
-                <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">QUANTITY NEEDED</label>
+                <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">{t('components.admin.bounty_modal.quantity_label', 'QUANTITY NEEDED')}</label>
                 <input type="number" min="1" className="w-full max-w-[200px] font-mono bg-white/80 border-white/40 h-[42px]" value={form.quantity_needed} onChange={e => setForm(f => ({ ...f, quantity_needed: parseInt(e.target.value) || 1 }))} />
               </div>
             </div>
 
-
-
-
-
             <div className="mt-4 flex items-center gap-2">
               <input type="checkbox" id="hide_price" checked={form.hide_price} onChange={e => setForm(f => ({ ...f, hide_price: e.target.checked }))} className="w-4 h-4 accent-gold" />
-              <label htmlFor="hide_price" className="text-sm font-bold text-text-secondary cursor-pointer">Hide target price from public view</label>
+              <label htmlFor="hide_price" className="text-sm font-bold text-text-secondary cursor-pointer">{t('components.admin.bounty_modal.hide_price_label', 'Hide target price from public view')}</label>
             </div>
-            <p className="text-xs text-text-muted pl-6">If checked, users will see "Contact for Price" instead of your target COP value.</p>
+            <p className="text-xs text-text-muted pl-6">{t('components.admin.bounty_modal.hide_price_desc', 'If checked, users will see "Contact for Price" instead of your target COP value.')}</p>
           </div>
 
           <div className="w-full md:w-64 shrink-0 flex flex-col items-center">
             <div className="relative aspect-[63/88] w-full max-w-[200px] bg-ink-border/5 rounded shadow-inner flex items-center justify-center overflow-hidden mb-6">
               {form.image_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img src={form.image_url} alt="Preview" className="w-full h-full object-contain" />
               ) : (
-                <div className="text-[10px] font-mono-stack text-text-muted text-center p-4">NO IMAGE</div>
+                <div className="text-[10px] font-mono-stack text-text-muted text-center p-4">{t('components.admin.bounty_modal.no_image', 'NO IMAGE')}</div>
               )}
             </div>
 
             {formError && (
               <div className="p-3 mb-4 bg-hp-color/10 text-hp-color text-xs rounded w-full">
-                <strong>Error:</strong> {formError}
+                <strong>{t('pages.common.labels.error', 'Error')}:</strong> {formError}
               </div>
             )}
 
             <button onClick={handleSave} disabled={saving} className="btn-primary w-full py-3 mb-2">
-              {saving ? 'SAVING...' : '💾 SAVE BOUNTY'}
+              {saving ? t('components.admin.bounty_modal.saving', 'SAVING...') : t('components.admin.bounty_modal.save_btn', '💾 SAVE BOUNTY')}
             </button>
             <button onClick={onClose} disabled={saving} className="btn-secondary w-full py-2 border-none">
-              CANCEL
+              {t('pages.common.actions.cancel', 'CANCEL')}
             </button>
           </div>
         </div>

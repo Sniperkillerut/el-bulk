@@ -17,8 +17,9 @@ export default async function SealedPage({ params }: { params: Promise<{ tcg: st
     <ProductGrid
       tcg={tcg}
       category="sealed"
+      titleKey="pages.sealed.title"
+      subtitleKey="pages.sealed.subtitle"
       title={`${activeTcg?.name.toUpperCase() || tcg.toUpperCase()} SEALED`}
-      subtitle={`Booster boxes, bundles, and sealed product for ${activeTcg?.name || tcg}.`}
     />
   );
 }

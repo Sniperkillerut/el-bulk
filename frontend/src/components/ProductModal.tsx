@@ -8,6 +8,7 @@ import Link from 'next/link';
 import Modal from './ui/Modal';
 import CardImage from './CardImage';
 import DeckContents from './DeckContents';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface ProductModalProps {
   productId: string;
@@ -21,6 +22,7 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
   const [error, setError] = useState(false);
   const [added, setAdded] = useState(false);
   const { addItem } = useCart();
+  const { t } = useLanguage();
   
   const [prevId, setPrevId] = useState(productId);
   const [prevInitialProduct, setPrevInitialProduct] = useState(initialProduct);
@@ -87,9 +89,9 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
         </div>
       ) : error || !product ? (
         <div className="card p-16 text-center stamp-border bg-surface">
-          <h1 className="font-display text-3xl mb-4 text-hp-color uppercase">ITEM NOT FOUND</h1>
-          <p className="text-text-muted mb-6 font-mono-stack">This item may have been sold or removed.</p>
-          <button onClick={onClose} className="btn-secondary px-8">Close</button>
+          <h1 className="font-display text-3xl mb-4 text-hp-color uppercase">{t('pages.product.details.not_found', 'ITEM NOT FOUND')}</h1>
+          <p className="text-text-muted mb-6 font-mono-stack">{t('pages.product.details.not_found_desc', 'This item may have been sold or removed.')}</p>
+          <button onClick={onClose} className="btn-secondary px-8">{t('pages.common.buttons.close', 'Close')}</button>
         </div>
       ) : (
         <div className="card bg-surface overflow-hidden">
@@ -113,7 +115,7 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
             <div className="p-8 flex flex-col h-full bg-surface border-l-4 border-kraft-dark">
               <div>
                 <nav className="text-[10px] mb-2 font-mono-stack uppercase text-text-muted">
-                  {product.tcg} / {product.category}
+                  {t(`tcg.${product.tcg}`, product.tcg.toUpperCase())} / {t(`pages.inventory.category.${product.category}`, product.category.toUpperCase())}
                 </nav>
                 
                 {product.set_name && (
@@ -131,37 +133,41 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
                 )}
                 {product.artist && (
                   <p className="text-[10px] mt-1 font-mono-stack text-text-muted">
-                    Art by {product.artist} {product.collector_number ? `(#${product.collector_number})` : ''}
+                    {t('pages.common.labels.art_by', 'Art by')} {product.artist} {product.collector_number ? `(#${product.collector_number})` : ''}
                   </p>
                 )}
               </div>
 
               <div className="flex flex-wrap gap-2 mt-4">
                 <span className="badge bg-ink-surface text-text-muted border border-kraft-dark">
-                  {product.language?.toUpperCase() || 'EN'}
+                  {t(`pages.inventory.grid.sort.language.${product.language}`, product.language?.toUpperCase() || 'EN')}
                 </span>
-                {product.condition && <span className={`badge badge-${product.condition.toLowerCase()} border`}>{product.condition}</span>}
+                {product.condition && (
+                  <span className={`badge badge-${product.condition.toLowerCase()} border`}>
+                    {t(`pages.product.condition.${product.condition.toLowerCase()}`, product.condition)}
+                  </span>
+                )}
                 {product.promo_type && product.promo_type !== 'none' && (
                   <span className="badge bg-hp-color text-white border-none">
                     {resolveLabel(product.promo_type, {})}
                   </span>
                 )}
-                {product.foil_treatment !== 'non_foil' && FOIL_LABELS[product.foil_treatment] && (
-                  <span className="badge badge-foil">✦ {FOIL_LABELS[product.foil_treatment]}</span>
+                {product.foil_treatment !== 'non_foil' && (
+                  <span className="badge badge-foil">✦ {t(`pages.product.finish.${product.foil_treatment}`, FOIL_LABELS[product.foil_treatment] || product.foil_treatment)}</span>
                 )}
-                {product.card_treatment !== 'normal' && TREATMENT_LABELS[product.card_treatment] && (
+                {product.card_treatment !== 'normal' && (
                   <span className="badge bg-ink-surface text-text-secondary border border-kraft-dark">
-                    {TREATMENT_LABELS[product.card_treatment]}
+                    {t(`pages.product.version.${product.card_treatment}`, TREATMENT_LABELS[product.card_treatment] || product.card_treatment)}
                   </span>
                 )}
                 {product.textless && (
                   <span className="badge bg-hp-color/10 text-hp-color border border-hp-color">
-                    TEXTLESS
+                    {t('pages.product.details.textless', 'TEXTLESS')}
                   </span>
                 )}
                 {product.full_art && product.card_treatment !== 'full_art' && (
                   <span className="badge bg-nm-color/10 text-nm-color border border-nm-color">
-                    FULL ART
+                    {t('pages.product.details.full_art', 'FULL ART')}
                   </span>
                 )}
               </div>
@@ -169,19 +175,23 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
               {product.tcg === 'mtg' && product.category === 'singles' && (
                 <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 py-3 border-t border-b border-dashed border-kraft-dark">
                   <div className="text-center">
-                    <p className="text-[10px] font-bold text-text-muted uppercase">Identity</p>
+                    <p className="text-[10px] font-bold text-text-muted uppercase">{t('pages.common.labels.identity', 'Identity')}</p>
                     <p className="text-sm font-mono-stack">{product.color_identity || 'C'}</p>
                   </div>
                   <div className="text-center border-l md:border-l border-dashed border-kraft-dark px-2">
-                    <p className="text-[10px] font-bold text-text-muted uppercase">Rarity</p>
-                    <p className="text-sm font-mono-stack capitalize">{product.rarity || 'Common'}</p>
+                    <p className="text-[10px] font-bold text-text-muted uppercase">{t('pages.common.labels.rarity', 'Rarity')}</p>
+                    <p className="text-sm font-mono-stack capitalize">
+                      {t(`pages.inventory.grid.sort.rarity.${product.rarity?.toLowerCase() || 'common'}`, product.rarity || 'Common')}
+                    </p>
                   </div>
                   <div className="text-center border-l border-dashed border-kraft-dark px-2">
-                    <p className="text-[10px] font-bold text-text-muted uppercase">Art Var.</p>
-                    <p className="text-sm font-mono-stack truncate">{product.art_variation || 'Normal'}</p>
+                    <p className="text-[10px] font-bold text-text-muted uppercase">{t('pages.common.labels.art_var', 'Art Var.')}</p>
+                    <p className="text-sm font-mono-stack truncate">
+                      {product.art_variation ? t(`pages.product.art_variation.${product.art_variation.toLowerCase().replace(' ', '_')}`, product.art_variation) : t('pages.common.status.normal', 'Normal')}
+                    </p>
                   </div>
                   <div className="text-center border-l border-dashed border-kraft-dark px-2">
-                    <p className="text-[10px] font-bold text-text-muted uppercase">CMC</p>
+                    <p className="text-[10px] font-bold text-text-muted uppercase">{t('pages.common.labels.cmc', 'CMC')}</p>
                     <p className="text-sm font-mono-stack">{product.cmc ?? 0}</p>
                   </div>
                 </div>
@@ -194,11 +204,15 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
                 <span className="price text-5xl tracking-tighter text-ink-deep leading-none font-display">${product.price.toLocaleString('en-US', { maximumFractionDigits: 0 })} COP</span>
                 <div className="flex flex-col gap-1">
                   <span className={`text-xs font-mono-stack font-bold px-2 py-1 rounded-sm w-fit text-white ${product.stock === 0 ? 'bg-hp-color' : 'bg-nm-color'}`}>
-                    {product.stock === 0 ? 'OUT OF STOCK' : `${product.stock} IN STOCK`}
+                    {product.stock === 0 
+                      ? t('pages.common.status.out_of_stock', 'OUT OF STOCK') 
+                      : t('pages.product.status.in_stock', '{count} IN STOCK').replace('{count}', product.stock.toString())}
                   </span>
                   {(product.cart_count ?? 0) > 0 && (
                     <span className="text-[10px] font-mono tracking-wider text-gold opacity-90">
-                      ● {product.cart_count} {product.cart_count === 1 ? 'OTHER USER HAS' : 'OTHER USERS HAVE'} THIS IN THEIR CART
+                      ● {(product.cart_count ?? 0) === 1 
+                        ? t('pages.product.cart_users_has', '{count} OTHER USER HAS THIS IN THEIR CART').replace('{count}', (product.cart_count ?? 0).toString())
+                        : t('pages.product.cart_users_have', '{count} OTHER USERS HAVE THIS IN THEIR CART').replace('{count}', (product.cart_count ?? 0).toString())}
                     </span>
                   )}
                 </div>
@@ -221,7 +235,7 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
                   </div>
                 ) : (
                   <div className="text-sm italic text-text-muted">
-                    No additional information available.
+                    {t('pages.product.details.no_info', 'No additional information available.')}
                   </div>
                 )}
               </div>
@@ -239,10 +253,16 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
                   disabled={product.stock === 0}
                   className={`btn-primary w-full text-lg py-4 shadow-sm transition-all ${product.stock === 0 ? 'opacity-40 cursor-not-allowed' : 'opacity-100 cursor-pointer'}`}
                 >
-                  {added ? '✓ ADDED TO CART' : product.stock === 0 ? 'SOLD OUT' : 'ADD TO CART'}
+                  {added 
+                    ? `✓ ${t('pages.common.buttons.added_to_cart', 'ADDED TO CART')}` 
+                    : product.stock === 0 
+                      ? t('pages.common.status.sold_out', 'SOLD OUT') 
+                      : t('pages.common.buttons.add_to_cart', 'ADD TO CART')}
                 </button>
                 <p className="text-[10px] text-center mt-3 font-mono-stack text-text-muted">
-                  <Link href={`/product/${product.id}`} className="hover:text-gold transition-colors" onClick={onClose}>View full page →</Link>
+                  <Link href={`/product/${product.id}`} className="hover:text-gold transition-colors" onClick={onClose}>
+                    {t('pages.product.details.view_full_page', 'View full page')} →
+                  </Link>
                 </p>
               </div>
             </div>

@@ -3,10 +3,12 @@
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import Link from 'next/link';
+import { useLanguage } from '@/context/LanguageContext';
 
 function LoginContent() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/';
+  const { t } = useLanguage();
 
   // In a real app, we'd append callbackUrl to the login request
   const handleLogin = (provider: string) => {
@@ -14,6 +16,24 @@ function LoginContent() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
     const redirectUrl = encodeURIComponent(callbackUrl);
     window.location.href = `${apiUrl}/api/auth/${provider}/login?redirect_url=${redirectUrl}`;
+  };
+
+  const footerText = t('pages.login.footer.text', 'By entering the platform, you agree to our {terms} and {privacy}.');
+  const termsLabel = t('pages.login.footer.terms', 'Terms of Engagement');
+  const privacyLabel = t('pages.login.footer.privacy', 'Data Protocols');
+
+  // Split and manually interpolate React elements for links
+  const renderFooter = () => {
+    const parts = footerText.split(/(\{terms\}|\{privacy\})/);
+    return parts.map((part) => {
+      if (part === '{terms}') {
+        return <a key="terms" href="/terms" className="text-accent-primary no-underline hover:underline font-bold">{termsLabel}</a>;
+      }
+      if (part === '{privacy}') {
+        return <a key="privacy" href="/privacy" className="text-accent-primary no-underline hover:underline font-bold">{privacyLabel}</a>;
+      }
+      return part;
+    });
   };
 
   return (
@@ -29,13 +49,17 @@ function LoginContent() {
           
           <div className="text-center mb-10 relative">
             <div className="inline-block px-3 py-1 bg-accent-primary/10 rounded-full mb-4">
-              <span className="font-mono text-[10px] text-accent-primary font-bold tracking-[0.2em] uppercase">Security Protocol v2.5</span>
+              <span className="font-mono text-[10px] text-accent-primary font-bold tracking-[0.2em] uppercase">{t('pages.login.security_v', 'Security Protocol v2.5')}</span>
             </div>
             <h1 className="font-display text-4xl sm:text-5xl tracking-tighter mb-2 text-text-main">
-              WELCOME <span className="text-accent-primary italic">BACK</span>
+              {t('pages.login.title', 'WELCOME BACK').split(' ').map((word, index) => (
+                <span key={index} className={index === 1 ? "text-accent-primary italic" : ""}>
+                  {word}{' '}
+                </span>
+              ))}
             </h1>
             <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-text-muted opacity-60">
-              Access the El Bulk Collective
+              {t('pages.login.subtitle', 'Access the El Bulk Collective')}
             </p>
           </div>
 
@@ -51,7 +75,7 @@ function LoginContent() {
                 <path fill="#FBBC05" d="M5.84 14.11c-.22-.67-.35-1.39-.35-2.11s.13-1.44.35-2.11V7.06H2.18c-.71 1.48-1.11 3.13-1.11 4.94s.4 3.46 1.11 4.94l3.66-2.83z"/>
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.83c.87-2.6 3.3-4.53 12-4.53z"/>
               </svg>
-              SIGN IN WITH GOOGLE
+              {t('pages.login.google', 'SIGN IN WITH GOOGLE')}
               <span className="opacity-0 group-hover/btn:opacity-100 transition-all ml-auto translate-x-[-10px] group-hover:translate-x-0">→</span>
             </button>
 
@@ -62,35 +86,44 @@ function LoginContent() {
               <svg width="20" height="20" fill="white" viewBox="0 0 24 24">
                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
               </svg>
-              SIGN IN WITH FACEBOOK
+              {t('pages.login.facebook', 'SIGN IN WITH FACEBOOK')}
               <span className="opacity-0 group-hover/btn:opacity-100 transition-all ml-auto translate-x-[-10px] group-hover:translate-x-0">→</span>
             </button>
           </div>
 
           <div className="mt-12 pt-8 border-t border-border-main/30 text-center">
             <p className="font-mono text-[10px] text-text-muted leading-relaxed max-w-[280px] mx-auto uppercase tracking-tighter">
-              By entering the platform, you agree to our <a href="/terms" className="text-accent-primary no-underline hover:underline font-bold">Terms of Engagement</a> and <a href="/privacy" className="text-accent-primary no-underline hover:underline font-bold">Data Protocols</a>.
+              {renderFooter()}
             </p>
           </div>
         </div>
 
         <div className="mt-8 text-center animate-in fade-in slide-in-from-bottom-4 duration-1000">
           <Link href="/" className="group inline-flex items-center gap-2 text-xs font-mono font-bold text-text-muted hover:text-accent-primary no-underline transition-colors uppercase tracking-widest">
-            <span className="transition-transform group-hover:-translate-x-1">←</span> Return to Field Ops
+            <span className="transition-transform group-hover:-translate-x-1">←</span> {t('pages.login.return', 'Return to Field Ops')}
           </Link>
         </div>
       </div>
       
       {/* Visual Accents */}
-      <div className="absolute top-12 left-12 font-display text-[120px] text-accent-primary/5 select-none pointer-events-none opacity-20 hidden lg:block">EL BULK</div>
-      <div className="absolute bottom-12 right-12 font-display text-[120px] text-status-hp/5 select-none pointer-events-none opacity-20 hidden lg:block rotate-180">LOGISTICS</div>
+      <div className="absolute top-12 left-12 font-display text-[120px] text-accent-primary/5 select-none pointer-events-none opacity-20 hidden lg:block">{t('pages.login.accent.store', 'EL BULK')}</div>
+      <div className="absolute bottom-12 right-12 font-display text-[120px] text-status-hp/5 select-none pointer-events-none opacity-20 hidden lg:block rotate-180">{t('pages.login.accent.logistics', 'LOGISTICS')}</div>
+    </div>
+  );
+}
+
+function SuspenseFallback() {
+  const { t } = useLanguage();
+  return (
+    <div className="min-h-screen bg-kraft-paper flex items-center justify-center p-12 text-gold font-mono-stack animate-pulse uppercase tracking-widest font-bold">
+      {t('pages.login.loading', 'Initializing Auth Matrix...')}
     </div>
   );
 }
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-kraft-paper flex items-center justify-center p-12 text-gold font-mono-stack animate-pulse uppercase tracking-widest font-bold">Initializing Auth Matrix...</div>}>
+    <Suspense fallback={<SuspenseFallback />}>
       <LoginContent />
     </Suspense>
   );

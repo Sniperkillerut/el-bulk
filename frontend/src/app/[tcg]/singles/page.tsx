@@ -17,8 +17,9 @@ export default async function SinglesPage({ params }: { params: Promise<{ tcg: s
     <ProductGrid
       tcg={tcg}
       category="singles"
+      titleKey="pages.singles.title"
+      subtitleKey="pages.singles.subtitle"
       title={`${activeTcg?.name.toUpperCase() || tcg.toUpperCase()} SINGLES`}
-      subtitle={`Browse individual ${activeTcg?.name || tcg} cards by condition, treatment, and foil finish.`}
     />
   );
 }

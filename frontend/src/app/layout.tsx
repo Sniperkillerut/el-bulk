@@ -21,6 +21,8 @@ export const metadata: Metadata = {
   keywords: ['MTG', 'Magic the Gathering', 'Pokemon', 'Lorcana', 'TCG', 'card store', 'singles', 'sealed', 'bulk'],
 };
 
+import { LanguageProvider } from '@/context/LanguageContext';
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   let defaultTheme = '00000000-0000-0000-0000-000000000001'; // Default to Cardboard
   try {
@@ -68,15 +70,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body suppressHydrationWarning>
         <RemoteLogManager />
         <ThemeProvider defaultTheme={defaultTheme}>
-          <UserProvider>
-            <UIProvider>
-              <CartProvider>
-                <StorefrontLayoutWrapper>
-                  {children}
-                </StorefrontLayoutWrapper>
-              </CartProvider>
-            </UIProvider>
-          </UserProvider>
+          <LanguageProvider>
+            <UserProvider>
+              <UIProvider>
+                <CartProvider>
+                  <StorefrontLayoutWrapper>
+                    {children}
+                  </StorefrontLayoutWrapper>
+                </CartProvider>
+              </UIProvider>
+            </UserProvider>
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

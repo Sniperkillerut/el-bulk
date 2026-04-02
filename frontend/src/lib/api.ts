@@ -670,3 +670,29 @@ export async function adminDownloadAccountingCSV(token: string, filters: { start
   link.click();
   link.remove();
 }
+
+// ---------------------------------------------------------------------------
+// Translations
+// ---------------------------------------------------------------------------
+
+export async function fetchTranslations(locale?: string): Promise<Record<string, string> | Record<string, Record<string, string>>> {
+  return apiFetch<any>('/api/translations', { params: { locale }, cache: 'no-store' });
+}
+
+export async function adminFetchTranslations(token: string): Promise<import('./types').Translation[]> {
+  return apiFetch<import('./types').Translation[]>('/api/admin/translations', { cache: 'no-store' }, token);
+}
+
+export async function adminUpdateTranslation(token: string, data: { key: string; locale: string; value: string }): Promise<void> {
+  return apiFetch<void>('/api/admin/translations', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  }, token);
+}
+
+export async function adminDeleteTranslation(token: string, key: string, locale: string): Promise<void> {
+  return apiFetch<void>(`/api/admin/translations/${key}`, { 
+    params: { locale },
+    method: 'DELETE' 
+  }, token);
+}

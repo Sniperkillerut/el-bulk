@@ -8,6 +8,7 @@ import { useUser } from '@/context/UserContext';
 import { TCG } from '@/lib/types';
 import { fetchTCGs } from '@/lib/api';
 import { useUI } from '@/context/UIContext';
+import { useLanguage } from '@/context/LanguageContext';
 import CartDrawer from './CartDrawer';
 import Dropdown from './ui/Dropdown';
 import ThemeSelector from './ui/ThemeSelector';
@@ -16,6 +17,7 @@ export default function Navbar() {
   const { totalItems, openCart, isOpen, closeCart } = useCart();
   const { user, loading: userLoading, logout } = useUser();
   const { foilEffectsEnabled, toggleFoilEffects } = useUI();
+  const { locale, setLocale, t, availableLocales } = useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [tcgs, setTcgs] = useState<TCG[]>([]);
 
@@ -24,12 +26,12 @@ export default function Navbar() {
   }, []);
 
   const singlesItems = tcgs.map(tcg => ({
-    label: `${tcg.name} Singles`,
+    label: `${tcg.name} ${t('pages.nav.main.singles', 'Singles')}`,
     href: `/${tcg.id}/singles`,
   }));
 
   const sealedItems = tcgs.map(tcg => ({
-    label: `${tcg.name} Sealed`,
+    label: `${tcg.name} ${t('pages.nav.main.sealed', 'Sealed')}`,
     href: `/${tcg.id}/sealed`,
   }));
 
@@ -49,39 +51,39 @@ export default function Navbar() {
               </span>
             </div>
             <span className="hidden xs:block text-text-muted text-[10px] sm:text-[11px] font-mono whitespace-nowrap">
-              TCG STORE
+              {t('pages.nav.main.tcg_store', 'TCG STORE')}
             </span>
           </Link>
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-6" data-theme-area="nav-links">
             <Dropdown 
-              label={<Link href="/singles" className="no-underline text-sm font-medium text-white/80 hover:text-accent-primary transition-colors">Singles</Link>}
+              label={<Link href="/singles" className="no-underline text-sm font-medium text-white/80 hover:text-accent-primary transition-colors">{t('pages.nav.main.singles', 'Singles')}</Link>}
               items={singlesItems}
             />
             
             <Dropdown 
-              label={<Link href="/sealed" className="no-underline text-sm font-medium text-white/80 hover:text-accent-primary transition-colors">Sealed</Link>}
+              label={<Link href="/sealed" className="no-underline text-sm font-medium text-white/80 hover:text-accent-primary transition-colors">{t('pages.nav.main.sealed', 'Sealed')}</Link>}
               items={sealedItems}
             />
 
             <Link href="/accessories" className="no-underline text-sm font-medium text-white/80 hover:text-accent-primary transition-colors">
-              Accessories
+              {t('pages.nav.main.accessories', 'Accessories')}
             </Link>
             <Link href="/store-exclusives" className="no-underline text-sm font-medium text-accent-primary hover:text-white transition-colors">
-              Store Exclusives
+              {t('pages.nav.main.store_exclusives', 'Store Exclusives')}
             </Link>
             <Link href="/notices" className="no-underline text-sm font-medium text-white/80 hover:text-accent-primary transition-colors">
-              Notices
+              {t('pages.nav.main.notices', 'Notices')}
             </Link>
             <Link href="/contact" className="no-underline text-sm font-medium text-white/80 hover:text-accent-primary transition-colors">
-              Contact
+              {t('pages.nav.main.contact', 'Contact')}
             </Link>
             <Link href="/bounties" className="no-underline text-sm font-medium text-status-hp hover:opacity-80 transition-colors">
-              🎯 Wanted Cards
+              🎯 {t('pages.nav.main.wanted', 'Wanted Cards')}
             </Link>
             <Link href="/bulk" className="no-underline text-sm font-medium text-accent-primary hover:opacity-80 transition-colors">
-              💰 Sell Your Bulk
+              💰 {t('pages.nav.main.bulk', 'Sell Your Bulk')}
             </Link>
           </div>
 
@@ -114,13 +116,13 @@ export default function Navbar() {
                       href="/profile"
                       className="block w-full text-left text-sm text-text-main hover:text-accent-primary hover:bg-accent-primary/5 rounded px-2 py-2 transition-colors no-underline mb-1"
                     >
-                      My Profile
+                      {t('pages.nav.user.profile', 'My Profile')}
                     </Link>
                     <button 
                       onClick={logout}
                       className="w-full text-left text-sm text-text-secondary hover:text-red-400 hover:bg-red-400/5 rounded px-2 py-2 transition-colors bg-transparent border-none cursor-pointer"
                     >
-                      Logout
+                      {t('pages.nav.user.logout', 'Logout')}
                     </button>
                   </div>
                 </Dropdown>
@@ -129,7 +131,7 @@ export default function Navbar() {
                   href="/login"
                   className="text-sm font-medium text-white/80 transition-colors hover:text-accent-primary flex items-center gap-1 no-underline"
                 >
-                  Login
+                  {t('pages.nav.user.login', 'Login')}
                 </Link>
               )
             )}
@@ -143,11 +145,39 @@ export default function Navbar() {
                 opacity: foilEffectsEnabled ? 1 : 0.6,
                 transform: foilEffectsEnabled ? 'scale(1.1)' : 'scale(1)',
               }}
-              aria-label="Toggle foil effects"
-              title={foilEffectsEnabled ? "Disable foil effects" : "Enable foil effects"}
+              aria-label={t('pages.nav.tooltips.foil_toggle', 'Toggle foil effects')}
+              title={foilEffectsEnabled 
+                ? t('pages.nav.tooltips.foil_disable', 'Disable foil effects') 
+                : t('pages.nav.tooltips.foil_enable', 'Enable foil effects')}
             >
               <span className="text-[1.1rem]">✨</span>
             </button>
+
+            <Dropdown 
+              align="end"
+              trigger={
+                <button
+                  className="p-2 rounded-lg transition-all flex items-center justify-center bg-bg-surface border border-border-main cursor-pointer"
+                  title={t('pages.nav.tooltips.change_lang', 'Change language')}
+                >
+                  <span className="text-xs font-bold uppercase">{locale}</span>
+                </button>
+              }
+            >
+              <div className="p-1 w-32">
+                {availableLocales.map(loc => (
+                  <button
+                    key={loc}
+                    onClick={() => setLocale(loc)}
+                    className={`block w-full text-left text-xs px-3 py-2 rounded transition-colors bg-transparent border-none cursor-pointer ${
+                      locale === loc ? 'text-accent-primary font-bold bg-accent-primary/10' : 'text-text-main hover:bg-bg-page'
+                    }`}
+                  >
+                    {loc === 'en' ? '🇺🇸 English' : loc === 'es' ? '🇪🇸 Español' : loc.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </Dropdown>
 
             <ThemeSelector />
 
@@ -155,7 +185,7 @@ export default function Navbar() {
               id="cart-toggle"
               onClick={openCart}
               className="relative p-2 rounded-lg transition-colors bg-bg-surface border border-border-main cursor-pointer text-text-main"
-              aria-label="Open cart"
+              aria-label={t('pages.cart.drawer.title', 'Open cart')}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
@@ -171,7 +201,7 @@ export default function Navbar() {
             <button
               className="md:hidden p-2 rounded bg-transparent border-none text-white cursor-pointer"
               onClick={() => setMobileOpen(o => !o)}
-              aria-label="Toggle menu"
+              aria-label={t('pages.nav.mobile.toggle_menu', 'Toggle menu')}
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 {mobileOpen
@@ -187,24 +217,24 @@ export default function Navbar() {
         {mobileOpen && (
           <div className="md:hidden px-4 py-4 max-h-[calc(100vh-64px)] overflow-y-auto bg-bg-surface border-t border-border-main" data-theme-area="mobile-nav">
             <div className="mb-4">
-              <p className="font-mono text-[10px] text-status-hp font-bold mb-2 uppercase tracking-widest">Singles Inventory</p>
+              <p className="font-mono text-[10px] text-status-hp font-bold mb-2 uppercase tracking-widest">{t('pages.nav.mobile.inventory_title', 'Singles Inventory')}</p>
               <div className="grid grid-cols-2 gap-2">
                 {tcgs.map(tcg => (
                   <Link key={`s-${tcg.id}`} href={`/${tcg.id}/singles`} onClick={() => setMobileOpen(false)}
                     className="block py-2 px-3 text-xs bg-bg-page/30 rounded-sm border border-border-main/20 text-text-secondary no-underline">
-                    {tcg.name}
+                    {tcg.name} {t('pages.nav.main.singles', 'Singles')}
                   </Link>
                 ))}
               </div>
             </div>
             
             <div className="mb-4">
-              <p className="font-mono text-[10px] text-status-hp font-bold mb-2 uppercase tracking-widest">Sealed Product</p>
+              <p className="font-mono text-[10px] text-status-hp font-bold mb-2 uppercase tracking-widest">{t('pages.nav.mobile.sealed_title', 'Sealed Product')}</p>
               <div className="grid grid-cols-2 gap-2">
                 {tcgs.map(tcg => (
                   <Link key={`se-${tcg.id}`} href={`/${tcg.id}/sealed`} onClick={() => setMobileOpen(false)}
                     className="block py-2 px-3 text-xs bg-bg-page/30 rounded-sm border border-border-main/20 text-text-secondary no-underline">
-                    {tcg.name}
+                    {tcg.name} {t('pages.nav.main.sealed', 'Sealed')}
                   </Link>
                 ))}
               </div>
@@ -214,23 +244,23 @@ export default function Navbar() {
             <div className="flex flex-col gap-2">
               <Link href="/accessories" onClick={() => setMobileOpen(false)}
                 className="block py-2 text-sm font-medium text-text-secondary hover:text-accent-primary transition-colors no-underline">
-                Accessories
+                {t('pages.nav.main.accessories', 'Accessories')}
               </Link>
               <Link href="/store-exclusives" onClick={() => setMobileOpen(false)}
                 className="block py-2 text-sm font-medium text-accent-primary hover:text-accent-primary-hover transition-colors no-underline">
-                Store Exclusives
+                {t('pages.nav.main.store_exclusives', 'Store Exclusives')}
               </Link>
               <Link href="/contact" onClick={() => setMobileOpen(false)}
                 className="block py-2 text-sm font-medium text-text-secondary hover:text-accent-primary transition-colors no-underline">
-                Contact
+                {t('pages.nav.main.contact', 'Contact')}
               </Link>
               <Link href="/bounties" onClick={() => setMobileOpen(false)}
                 className="block py-3 text-center border-2 border-status-hp rounded-sm mt-4 font-bold text-status-hp no-underline">
-                🎯 WANTED CARDS
+                🎯 {t('pages.nav.main.wanted', 'WANTED CARDS')}
               </Link>
               <Link href="/bulk" onClick={() => setMobileOpen(false)}
                 className="block py-3 text-center border-2 border-accent-primary rounded-sm mt-2 font-bold text-accent-primary no-underline">
-                💰 SELL YOUR BULK
+                💰 {t('pages.nav.main.bulk', 'SELL YOUR BULK')}
               </Link>
             </div>
           </div>

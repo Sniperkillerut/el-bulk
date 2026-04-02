@@ -223,6 +223,21 @@ p {
   background: var(--text-main);
 }
 
+/* Custom Thin Scrollbar for Sidebar/Panels */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--ink-border);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-dark);
+}
+
 /* Thumbnail hover expand (Portal-based) */
 .hover-expand-portal {
   position: fixed;

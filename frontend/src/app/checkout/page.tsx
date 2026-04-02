@@ -7,11 +7,13 @@ import { useUser } from '@/context/UserContext';
 import { createOrder } from '@/lib/api';
 import { PAYMENT_METHODS, FOIL_LABELS, TREATMENT_LABELS } from '@/lib/types';
 import CardImage from '@/components/CardImage';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, removedItems, totalPrice, updateQty, removeItem, restoreItem, permanentRemove, clearCart } = useCart();
   const { user } = useUser();
+  const { t } = useLanguage();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -46,7 +48,7 @@ export default function CheckoutPage() {
     if (e) e.preventDefault();
 
     if (items.length === 0) {
-      setError('Tu carrito está vacío.');
+      setError(t('pages.checkout.summary.empty_cart', 'Your cart is empty.'));
       return;
     }
 
@@ -60,7 +62,7 @@ export default function CheckoutPage() {
       clearCart();
       router.push(`/order/${result.order_number}`);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Error al crear la orden.');
+      setError(e instanceof Error ? e.message : t('pages.checkout.error.create_failed', 'Error creating the order.'));
     } finally {
       setSubmitting(false);
     }
@@ -69,12 +71,12 @@ export default function CheckoutPage() {
   if (items.length === 0) {
     return (
       <div className="centered-container px-4 py-16 text-center">
-        <h1 className="font-display text-5xl mb-4">CHECKOUT</h1>
+        <h1 className="font-display text-5xl mb-4">{t('pages.checkout.page.title_short', 'CHECKOUT')}</h1>
         <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>
-          Tu carrito está vacío. Agrega productos antes de continuar.
+          {t('pages.checkout.error.empty', 'Your cart is empty. Add products before continuing.')}
         </p>
         <button onClick={() => router.push('/')} className="btn-primary mt-6">
-          ← VOLVER A LA TIENDA
+          {t('pages.checkout.buttons.back', '← BACK TO STORE')}
         </button>
       </div>
     );
@@ -82,46 +84,46 @@ export default function CheckoutPage() {
 
   return (
     <div className="centered-container px-4 py-8">
-      <p className="text-xs font-mono-stack mb-1" style={{ color: 'var(--text-muted)' }}>EL BULK / CHECKOUT</p>
-      <h1 className="font-display text-5xl mb-2">FINALIZAR COMPRA</h1>
+      <p className="text-xs font-mono-stack mb-1" style={{ color: 'var(--text-muted)' }}>EL BULK / {t('pages.checkout.page.title_short', 'CHECKOUT')}</p>
+      <h1 className="font-display text-5xl mb-2">{t('pages.checkout.page.title', 'FINALIZE PURCHASE')}</h1>
       <div className="gold-line mb-8" />
 
       <form onSubmit={handleSubmit} className="flex flex-col lg:flex-row gap-8">
         {/* Left: Customer Form */}
         <div className="flex-1">
           <div className="card p-6">
-            <h2 className="font-display text-2xl mb-4">INFORMACIÓN DE CONTACTO</h2>
+            <h2 className="font-display text-2xl mb-4">{t('pages.checkout.section.contact', 'CONTACT INFORMATION')}</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>NOMBRE *</label>
-                <input type="text" value={form.first_name} onChange={e => set('first_name', e.target.value)} placeholder="Juan" required />
+                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>{t('pages.checkout.form.first_name', 'FIRST NAME')} *</label>
+                <input type="text" value={form.first_name} onChange={e => set('first_name', e.target.value)} placeholder={t('pages.checkout.placeholders.first_name', 'Juan')} required />
               </div>
               <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>APELLIDO *</label>
-                <input type="text" value={form.last_name} onChange={e => set('last_name', e.target.value)} placeholder="Pérez" required />
+                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>{t('pages.checkout.form.last_name', 'LAST NAME')} *</label>
+                <input type="text" value={form.last_name} onChange={e => set('last_name', e.target.value)} placeholder={t('pages.checkout.placeholders.last_name', 'Perez')} required />
               </div>
               <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>TELÉFONO / WHATSAPP *</label>
-                <input type="tel" value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="3001234567" required />
+                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>{t('pages.checkout.form.phone', 'PHONE / WHATSAPP')} *</label>
+                <input type="tel" value={form.phone} onChange={e => set('phone', e.target.value)} placeholder={t('pages.checkout.placeholders.phone', '3001234567')} required />
               </div>
               <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>EMAIL *</label>
-                <input type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="correo@ejemplo.com" required />
+                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>{t('pages.checkout.form.email', 'EMAIL')} *</label>
+                <input type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder={t('pages.checkout.placeholders.email', 'correo@ejemplo.com')} required />
               </div>
               <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>CÉDULA / ID *</label>
-                <input type="number" value={form.id_number} onChange={e => set('id_number', e.target.value)} placeholder="1234567890" required />
+                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>{t('pages.checkout.form.id_number', 'ID NUMBER / CEDULA')} *</label>
+                <input type="number" value={form.id_number} onChange={e => set('id_number', e.target.value)} placeholder={t('pages.checkout.placeholders.id', '1234567890')} required />
               </div>
               <div>
-                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>DIRECCIÓN *</label>
-                <input type="text" value={form.address} onChange={e => set('address', e.target.value)} placeholder="Cra 1 # 2-3" required />
+                <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>{t('pages.checkout.form.address', 'ADDRESS')} *</label>
+                <input type="text" value={form.address} onChange={e => set('address', e.target.value)} placeholder={t('pages.checkout.placeholders.address', 'Cra 1 # 2-3')} required />
               </div>
             </div>
 
             <div className="divider" />
 
-            <h3 className="font-display text-xl mb-3">MÉTODO DE PAGO</h3>
+            <h3 className="font-display text-xl mb-3">{t('pages.checkout.section.payment', 'PAYMENT METHOD')}</h3>
             <div className="flex flex-wrap gap-2">
               {Object.entries(PAYMENT_METHODS).map(([key, label]) => (
                 <button
@@ -137,14 +139,14 @@ export default function CheckoutPage() {
                     border: `2px solid ${form.payment_method === key ? 'var(--ink-deep)' : 'var(--ink-border)'}`,
                   }}
                 >
-                  {label}
+                  {t(`pages.checkout.payment_methods.${key}`, label)}
                 </button>
               ))}
             </div>
 
             <div className="mt-4">
-              <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>NOTAS (OPCIONAL)</label>
-              <textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={2} placeholder="Instrucciones especiales..." />
+              <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>{t('pages.checkout.form.notes', 'NOTES (OPTIONAL)')}</label>
+              <textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={2} placeholder={t('pages.checkout.form.notes_placeholder', 'Special instructions...')} />
             </div>
           </div>
         </div>
@@ -153,11 +155,11 @@ export default function CheckoutPage() {
         <div className="w-full lg:w-[420px] flex-shrink-0">
           <div className="card p-6 sticky top-4">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="font-display text-2xl">RESUMEN DEL PEDIDO</h2>
+              <h2 className="font-display text-2xl">{t('pages.checkout.section.summary', 'ORDER SUMMARY')}</h2>
               <button
                 type="button"
                 onClick={() => {
-                  if (window.confirm('¿Estás seguro de que quieres vaciar el carrito?')) {
+                  if (window.confirm(t('pages.checkout.summary.vaciar_confirm', 'Are you sure you want to empty your cart?'))) {
                     clearCart();
                   }
                 }}
@@ -167,20 +169,22 @@ export default function CheckoutPage() {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
                 </svg>
-                VACIAR CARRITO
+                {t('pages.checkout.summary.vaciar', 'EMPTY CART')}
               </button>
             </div>
             <p className="text-xs font-mono-stack mb-4" style={{ color: 'var(--text-muted)' }}>
-              {items.reduce((s, i) => s + i.quantity, 0)} ARTÍCULO{items.length !== 1 ? 'S' : ''}
+              {items.reduce((s, i) => s + i.quantity, 0)} {items.reduce((s, i) => s + i.quantity, 0) === 1 
+                ? t('pages.checkout.summary.item', 'ITEM') 
+                : t('pages.checkout.summary.items', 'ITEMS')}
             </p>
 
             <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
               {items.map(item => {
                 const p = item.product;
                 const badges: string[] = [];
-                if (p.condition) badges.push(p.condition);
-                if (p.foil_treatment && p.foil_treatment !== 'non_foil') badges.push(FOIL_LABELS[p.foil_treatment] || p.foil_treatment);
-                if (p.card_treatment && p.card_treatment !== 'normal') badges.push(TREATMENT_LABELS[p.card_treatment] || p.card_treatment);
+                if (p.condition) badges.push(t(`pages.product.condition.${p.condition.toLowerCase()}`, p.condition));
+                if (p.foil_treatment && p.foil_treatment !== 'non_foil') badges.push(t(`pages.product.finish.${p.foil_treatment}`, FOIL_LABELS[p.foil_treatment] || p.foil_treatment));
+                if (p.card_treatment && p.card_treatment !== 'normal') badges.push(t(`pages.product.version.${p.card_treatment}`, TREATMENT_LABELS[p.card_treatment] || p.card_treatment));
 
                 return (
                   <div key={p.id} className="flex gap-3 pb-3" style={{ borderBottom: '1px solid var(--ink-border)' }}>
@@ -192,7 +196,9 @@ export default function CheckoutPage() {
                       {p.set_name && <p className="text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>{p.set_name}</p>}
                       {(p.cart_count ?? 0) > 0 && (
                         <p className="text-[9px] font-mono mt-0.5 opacity-60" style={{ color: 'var(--gold)' }}>
-                          ● {p.cart_count} {p.cart_count === 1 ? 'OTHER USER HAS' : 'OTHER USERS HAVE'} THIS IN THEIR CART
+                          ● {(p.cart_count ?? 0) === 1 
+                              ? t('pages.product.cart_users_has', '{count} OTHER USER HAS THIS IN THEIR CART', { count: (p.cart_count ?? 0) })
+                              : t('pages.product.cart_users_have', '{count} OTHER USERS HAVE THIS IN THEIR CART', { count: (p.cart_count ?? 0) })}
                         </p>
                       )}
                       {badges.length > 0 && (
@@ -214,13 +220,13 @@ export default function CheckoutPage() {
                           style={{ width: 22, height: 22, background: 'var(--ink-border)', border: 'none', borderRadius: 2, cursor: item.quantity >= p.stock ? 'not-allowed' : 'pointer', opacity: item.quantity >= p.stock ? 0.4 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}
                         >+</button>
                         <span className="text-[10px] font-mono-stack ml-1" style={{ color: 'var(--text-muted)' }}>
-                          {p.stock} dispon.
+                          {p.stock} {t('pages.product.status.available', 'available')}
                         </span>
                         <button
                           type="button"
                           onClick={() => removeItem(p.id)}
                           className="ml-auto p-1 opacity-60 hover:opacity-100 transition-opacity"
-                          title="Eliminar"
+                          title={t('pages.common.buttons.remove', 'Remove')}
                           style={{ color: 'var(--hp-color)', background: 'none', border: 'none', cursor: 'pointer' }}
                         >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -240,7 +246,7 @@ export default function CheckoutPage() {
             <div className="divider" />
 
             <div className="flex justify-between items-center mb-4">
-              <span className="font-display text-xl">TOTAL</span>
+              <span className="font-display text-xl">{t('pages.checkout.total', 'TOTAL')}</span>
               <span className="price text-2xl">${totalPrice.toLocaleString('en-US', { maximumFractionDigits: 0 })} COP</span>
             </div>
 
@@ -252,17 +258,19 @@ export default function CheckoutPage() {
               className="btn-primary w-full py-3 text-lg"
               style={{ opacity: submitting ? 0.7 : 1 }}
             >
-              {submitting ? 'PROCESANDO...' : 'CONFIRMAR PEDIDO →'}
+              {submitting 
+                ? t('pages.checkout.buttons.processing', 'PROCESSING...') 
+                : t('pages.checkout.buttons.confirm', 'CONFIRM ORDER →')}
             </button>
 
             <p className="text-[10px] font-mono-stack text-center mt-3" style={{ color: 'var(--text-muted)' }}>
-              Al confirmar, un asesor se pondrá en contacto contigo para coordinar la entrega.
+              {t('pages.checkout.footer.notice', 'Upon confirmation, an advisor will contact you to coordinate delivery.')}
             </p>
 
             {/* Removed Items Cache */}
             {removedItems.length > 0 && (
               <div className="mt-8 opacity-60 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-300">
-                <h3 className="font-display text-xl mb-4 text-muted">PRODUCTOS ELIMINADOS</h3>
+                <h3 className="font-display text-xl mb-4 text-muted">{t('pages.checkout.section.removed', 'REMOVED PRODUCTS')}</h3>
                 <div className="space-y-2">
                   {removedItems.map(item => (
                     <div key={item.product.id} className="card p-3 flex items-center gap-4 bg-ink-surface/30">
@@ -274,7 +282,9 @@ export default function CheckoutPage() {
                         <p className="text-[10px] text-muted truncate">{item.product.set_name}</p>
                         {(item.product.cart_count ?? 0) > 0 && (
                           <p className="text-[9px] font-mono mt-0.5 opacity-60" style={{ color: 'var(--gold)' }}>
-                            ● {item.product.cart_count} {item.product.cart_count === 1 ? 'OTHER USER HAS' : 'OTHER USERS HAVE'} THIS IN THEIR CART
+                            ● {(item.product.cart_count ?? 0) === 1 
+                                ? t('pages.product.cart_users_has', '{count} OTHER USER HAS THIS IN THEIR CART', { count: (item.product.cart_count ?? 0) })
+                                : t('pages.product.cart_users_have', '{count} OTHER USERS HAVE THIS IN THEIR CART', { count: (item.product.cart_count ?? 0) })}
                           </p>
                         )}
                       </div>
@@ -285,13 +295,13 @@ export default function CheckoutPage() {
                           className="badge cursor-pointer hover:bg-gold hover:text-black transition-colors"
                           style={{ fontSize: '0.7rem' }}
                         >
-                          REAGREGAR
+                          {t('pages.checkout.buttons.re_add', 'RE-ADD')}
                         </button>
                         <button
                           type="button"
                           onClick={() => permanentRemove(item.product.id)}
                           className="p-1 text-hp-color"
-                          title="Eliminar permanentemente"
+                          title={t('pages.checkout.buttons.delete_perm', 'Permanently remove')}
                         >
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />

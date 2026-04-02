@@ -34,6 +34,7 @@ func main() {
 	bountyHandler := handlers.NewBountyHandler(database)
 	healthHandler := handlers.NewHealthHandler(database)
 	accountingHandler := handlers.NewAccountingHandler(database)
+	translationHandler := handlers.NewTranslationHandler(database)
 
 	// Start nightly price refresh at midnight
 	handlers.StartMidnightScheduler(database)
@@ -59,6 +60,8 @@ func main() {
 		
 		themeHandler := handlers.NewThemeHandler(database)
 		r.Get("/themes", themeHandler.List)
+		
+		r.Get("/translations", translationHandler.List)
 
 		r.Get("/bounties", bountyHandler.List)
 		r.Post("/bounties/offers", bountyHandler.SubmitOffer)
@@ -137,6 +140,11 @@ func main() {
 				// Exchange rate settings
 				r.Get("/settings", settingsHandler.Get)
 				r.Put("/settings", settingsHandler.Update)
+
+				// Translations
+				r.Get("/translations", translationHandler.AdminList)
+				r.Put("/translations", translationHandler.Update)
+				r.Delete("/translations/{key}", translationHandler.Delete)
 
 				// External card lookup (Scryfall + Pokémon TCG API)
 				r.Get("/lookup/mtg", lookupHandler.MTG)

@@ -18,16 +18,23 @@ func NewHealthHandler(db *sqlx.DB) *HealthHandler {
 }
 
 type DBStats struct {
-	DatabaseSize         string  `json:"database_size"`
-	CacheHitRatio        float64 `json:"cache_hit_ratio"`
-	ActiveConns          int     `json:"active_connections"`
-	MaxConns             int     `json:"max_connections"`
-	TotalProducts        int     `json:"total_products"`
-	TotalSKURecords      int     `json:"total_sku_records"`
-	QuerySpeedMS         int     `json:"query_speed_ms"`
-	PendingOrdersCount   int     `json:"pending_orders_count"`
-	PendingOffersCount   int     `json:"pending_offers_count"`
-	PendingRequestsCount int     `json:"pending_requests_count"`
+	DatabaseSize           string                   `json:"database_size"`
+	CacheHitRatio          float64                  `json:"cache_hit_ratio"`
+	ActiveConns            int                      `json:"active_connections"`
+	MaxConns               int                      `json:"max_connections"`
+	TotalProducts          int                      `json:"total_products"`
+	TotalSKURecords        int                      `json:"total_sku_records"`
+	QuerySpeedMS           int                      `json:"query_speed_ms"`
+	PendingOrdersCount     int                      `json:"pending_orders_count"`
+	PendingOffersCount     int                      `json:"pending_offers_count"`
+	PendingRequestsCount   int                      `json:"pending_requests_count"`
+	TranslationProgress    []TranslationLocaleStats `json:"translation_progress"`
+}
+
+type TranslationLocaleStats struct {
+	Locale      string  `json:"locale"`
+	Completion  float64 `json:"completion"`
+	MissingKeys int     `json:"missing_keys"`
 }
 
 func (h *HealthHandler) Ping(w http.ResponseWriter, r *http.Request) {
@@ -89,6 +96,31 @@ func (h *HealthHandler) GetStats(w http.ResponseWriter, r *http.Request) {
 	var dummy int
 	_ = h.DB.Get(&dummy, "SELECT 1")
 	stats.QuerySpeedMS = int(time.Since(start).Milliseconds())
+
+	// 7. Translation Progress
+	var totalKeys int
+	_ = h.DB.Get(&totalKeys, "SELECT COUNT(DISTINCT key) FROM translation")
+
+	if totalKeys > 0 {
+		var localeCounts []struct {
+			Locale string `db:"locale"`
+			Count  int    `db:"count"`
+		}
+		_ = h.DB.Select(&localeCounts, "SELECT locale, COUNT(*) as count FROM translation GROUP BY locale")
+
+		for _, lc := range localeCounts {
+			completion := (float64(lc.Count) / float64(totalKeys)) * 100
+			stats.TranslationProgress = append(stats.TranslationProgress, TranslationLocaleStats{
+				Locale:      lc.Locale,
+				Completion:  completion,
+				MissingKeys: totalKeys - lc.Count,
+			})
+		}
+		// If totalKeys > 0 but a locale is missing entirely, we should ideally know about it. 
+		// For now, we only report on locales that have at least one translation.
+	} else {
+		stats.TranslationProgress = []TranslationLocaleStats{}
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(stats)

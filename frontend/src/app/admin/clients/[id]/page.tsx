@@ -8,8 +8,11 @@ import { adminFetchClientDetail, adminAddCustomerNote } from '@/lib/api';
 import { CustomerDetail } from '@/lib/types';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
+import { useLanguage } from '@/context/LanguageContext';
+
 export default function AdminClientDetailPage() {
   const { token } = useAdmin();
+  const { t } = useLanguage();
   const { id } = useParams();
   const searchParams = useSearchParams();
   const initialOrderId = searchParams.get('orderId');
@@ -55,17 +58,17 @@ export default function AdminClientDetailPage() {
       fetchDetail(); // Refresh notes
     } catch (err) {
       console.error(err);
-      alert('Failed to add note');
+      alert(t('pages.admin.clients.details.error_add_note', 'Failed to add note'));
     }
   };
 
   if (loading) return <LoadingSpinner />;
-  if (!detail) return <div className="p-8 text-center">CLIENT NOT FOUND.</div>;
+  if (!detail) return <div className="p-8 text-center">{t('pages.admin.clients.details.not_found', 'CLIENT NOT FOUND.')}</div>;
 
   return (
     <div className="p-8 max-w-6xl">
       <Link href="/admin/clients" className="text-[10px] font-mono-stack text-gold-dark mb-4 block no-underline hover:text-hp-color transition-colors">
-        ← BACK TO CLIENTS
+        {t('pages.admin.clients.details.back_link', '← BACK TO CLIENTS')}
       </Link>
 
       <div className="flex flex-col lg:flex-row gap-8">
@@ -81,7 +84,7 @@ export default function AdminClientDetailPage() {
                 <div className="flex items-center gap-3">
                   <span className="text-[10px] font-mono-stack text-text-muted bg-kraft-light px-2 py-0.5 border border-kraft-shadow">ID: {detail.id}</span>
                   {detail.is_subscriber && (
-                    <span className="badge badge-foil text-[9px]">NEWSLETTER SUBSCRIBER</span>
+                    <span className="badge badge-foil text-[9px]">{t('pages.admin.clients.details.subscriber_badge', 'NEWSLETTER SUBSCRIBER')}</span>
                   )}
                 </div>
               </div>
@@ -89,28 +92,28 @@ export default function AdminClientDetailPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-ink-border/30">
                <div>
-                  <h4 className="text-xs font-mono-stack font-bold text-hp-color uppercase tracking-widest mb-4">Contact Profile</h4>
+                  <h4 className="text-xs font-mono-stack font-bold text-hp-color uppercase tracking-widest mb-4">{t('pages.admin.clients.details.contact_profile', 'Contact Profile')}</h4>
                   <div className="space-y-3">
                     <div>
-                      <p className="text-[10px] text-text-muted uppercase font-mono-stack">Email address</p>
+                      <p className="text-[10px] text-text-muted uppercase font-mono-stack">{t('pages.admin.clients.details.email_label', 'Email address')}</p>
                       <p className="font-mono-stack text-sm">{detail.email || 'N/A'}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-text-muted uppercase font-mono-stack">Phone number</p>
+                      <p className="text-[10px] text-text-muted uppercase font-mono-stack">{t('pages.admin.clients.details.phone_label', 'Phone number')}</p>
                       <p className="font-mono-stack text-sm">{detail.phone || 'N/A'}</p>
                     </div>
                   </div>
                </div>
                <div>
-                  <h4 className="text-xs font-mono-stack font-bold text-hp-color uppercase tracking-widest mb-4">Account Details</h4>
+                  <h4 className="text-xs font-mono-stack font-bold text-hp-color uppercase tracking-widest mb-4">{t('pages.admin.clients.details.account_details', 'Account Details')}</h4>
                   <div className="space-y-3">
                     <div>
-                      <p className="text-[10px] text-text-muted uppercase font-mono-stack">Identity Document</p>
-                      <p className="font-mono-stack text-sm">{detail.id_number || 'NOT PROVIDED'}</p>
+                      <p className="text-[10px] text-text-muted uppercase font-mono-stack">{t('pages.admin.clients.details.id_label', 'Identity Document')}</p>
+                      <p className="font-mono-stack text-sm">{detail.id_number || t('pages.common.labels.not_provided', 'NOT PROVIDED')}</p>
                     </div>
                     <div>
-                        <p className="text-[10px] text-text-muted uppercase font-mono-stack">Delivery Address</p>
-                        <p className="font-mono-stack text-sm leading-relaxed">{detail.address || 'NO ADDRESS RECORDED'}</p>
+                        <p className="text-[10px] text-text-muted uppercase font-mono-stack">{t('pages.admin.clients.details.address_label', 'Delivery Address')}</p>
+                        <p className="font-mono-stack text-sm leading-relaxed">{detail.address || t('pages.common.labels.no_address_recorded', 'NO ADDRESS RECORDED')}</p>
                     </div>
                   </div>
                </div>
@@ -119,7 +122,7 @@ export default function AdminClientDetailPage() {
 
           <div className="cardbox p-8">
             <h3 className="text-2xl mb-6 flex items-center gap-3">
-              JOURNAL OF INTERACTIONS 
+              {t('pages.admin.clients.details.journal_title', 'JOURNAL OF INTERACTIONS')}
               <span className="text-[10px] font-mono-stack bg-kraft-dark text-white px-2 py-0.5 rounded-full">{(detail.notes || []).length}</span>
             </h3>
             
@@ -127,7 +130,7 @@ export default function AdminClientDetailPage() {
                 <textarea 
                   value={newNote}
                   onChange={(e) => setNewNote(e.target.value)}
-                  placeholder="ADD A NEW NOTE OR COMMENT..."
+                  placeholder={t('pages.admin.clients.details.note_placeholder', 'ADD A NEW NOTE OR COMMENT...')}
                   className="mb-3 text-xs font-mono-stack h-24"
                 />
                 <div className="flex items-center justify-between gap-4">
@@ -136,28 +139,28 @@ export default function AdminClientDetailPage() {
                       onChange={(e) => setSelectedOrder(e.target.value)}
                       className="text-[10px] font-mono-stack flex-1"
                     >
-                      <option value="">General Interaction / No specific order</option>
+                      <option value="">{t('pages.admin.clients.details.general_interaction', 'General Interaction / No specific order')}</option>
                       {(detail.orders || []).map(o => (
-                        <option key={o.id} value={o.id}>About Order {o.order_number}</option>
+                        <option key={o.id} value={o.id}>{t('pages.admin.clients.details.order_option', 'About Order {number}', { number: o.order_number })}</option>
                       ))}
                     </select>
-                    <button type="submit" className="btn-primary py-2 px-6">ADD NOTE</button>
+                    <button type="submit" className="btn-primary py-2 px-6">{t('pages.admin.clients.details.add_note_btn', 'ADD NOTE')}</button>
                 </div>
             </form>
 
             <div className="space-y-4">
               {(detail.notes || []).length === 0 ? (
-                <div className="text-center py-8 text-[10px] font-mono-stack text-text-muted uppercase tracking-widest italic opacity-40">No entries recorded in the journal.</div>
+                <div className="text-center py-8 text-[10px] font-mono-stack text-text-muted uppercase tracking-widest italic opacity-40">{t('pages.admin.clients.details.empty_notes', 'No entries recorded in the journal.')}</div>
               ) : (
                 (detail.notes || []).map((note) => (
                   <div key={note.id} className="p-4 bg-ink-surface border-l-4 border-kraft-dark rounded-sm shadow-sm">
                     <div className="flex justify-between items-start mb-2">
                        <div className="flex items-center gap-2">
-                         <span className="text-[10px] font-bold uppercase">{note.admin_name || 'System Admin'}</span>
-                         <span className="text-[9px] font-mono-stack text-text-muted">Added on {new Date(note.created_at).toLocaleString()}</span>
+                         <span className="text-[10px] font-bold uppercase">{note.admin_name || t('pages.common.labels.system_admin', 'System Admin')}</span>
+                         <span className="text-[9px] font-mono-stack text-text-muted">{t('pages.common.labels.added_on', 'Added on')} {new Date(note.created_at).toLocaleString()}</span>
                        </div>
                        {note.order_id && (
-                         <span className="text-[9px] font-mono-stack bg-gold/10 text-gold-dark border border-gold/30 px-2 py-0.5">REFERENCE: {(detail.orders || []).find(o => o.id === note.order_id)?.order_number}</span>
+                         <span className="text-[9px] font-mono-stack bg-gold/10 text-gold-dark border border-gold/30 px-2 py-0.5">{t('pages.admin.clients.details.reference_label', 'REFERENCE')}: {(detail.orders || []).find(o => o.id === note.order_id)?.order_number}</span>
                        )}
                     </div>
                     <p className="text-xs font-mono-stack text-text-secondary leading-relaxed whitespace-pre-wrap">{note.content}</p>
@@ -171,10 +174,10 @@ export default function AdminClientDetailPage() {
         {/* Right Column: Orders */}
         <div className="lg:w-96 space-y-8">
             <div className="cardbox p-6">
-                <h3 className="text-2xl mb-6">ORDER HISTORY</h3>
+                <h3 className="text-2xl mb-6">{t('pages.admin.clients.details.order_history', 'ORDER HISTORY')}</h3>
                 <div className="space-y-3">
                   {(detail.orders || []).length === 0 ? (
-                    <div className="p-8 text-center text-xs font-mono-stack opacity-40">NO ORDERS FOUND.</div>
+                    <div className="p-8 text-center text-xs font-mono-stack opacity-40">{t('pages.admin.clients.details.no_orders', 'NO ORDERS FOUND.')}</div>
                   ) : (
                     (detail.orders || []).map(order => (
                       <Link 
@@ -189,7 +192,7 @@ export default function AdminClientDetailPage() {
                             order.status === 'pending' ? 'bg-amber-100 text-amber-800' : 
                             'bg-gray-100 text-gray-800'
                           }`}>
-                            {order.status}
+                            {t(`pages.common.status.${order.status}`, order.status)}
                           </span>
                         </div>
                         <div className="flex justify-between items-end">
@@ -204,14 +207,17 @@ export default function AdminClientDetailPage() {
 
             <div className="cardbox p-6 space-y-8">
                 <div>
-                  <h3 className="text-xl mb-4 font-display tracking-wider">CLIENT REQUESTS <span className="text-sm">({(detail.requests || []).length})</span></h3>
+                  <h3 className="text-xl mb-4 font-display tracking-wider">
+                    {t('pages.admin.clients.details.requests_title', 'CLIENT REQUESTS')} 
+                    <span className="text-sm"> ({(detail.requests || []).length})</span>
+                  </h3>
                   
                   <div className="space-y-4">
                     <div>
-                      <h4 className="text-xs font-mono-stack text-text-muted mb-2 font-bold tracking-widest uppercase">Active</h4>
+                      <h4 className="text-xs font-mono-stack text-text-muted mb-2 font-bold tracking-widest uppercase">{t('pages.admin.clients.details.active_group', 'Active')}</h4>
                       <div className="space-y-2">
                         {(detail.requests || []).filter(r => r.status === 'pending' || r.status === 'accepted').length === 0 ? (
-                          <div className="text-[10px] font-mono-stack opacity-40 italic">NO ACTIVE REQUESTS.</div>
+                          <div className="text-[10px] font-mono-stack opacity-40 italic">{t('pages.admin.clients.details.no_active_requests', 'NO ACTIVE REQUESTS.')}</div>
                         ) : (
                           (detail.requests || []).filter(r => r.status === 'pending' || r.status === 'accepted').map(req => (
                             <Link href={`/admin/bounties?tab=requests&scrollToId=${req.id}`} key={req.id} className="block p-3 bg-hp-color/5 border border-hp-color/30 rounded-sm hover:-translate-y-0.5 hover:shadow-sm transition-all">
@@ -220,9 +226,9 @@ export default function AdminClientDetailPage() {
                                   {req.card_name}
                                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-50"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                                 </span>
-                                <span className="text-[8px] font-mono-stack px-1 bg-hp-color text-white rounded-sm">{req.status}</span>
+                                <span className="text-[8px] font-mono-stack px-1 bg-hp-color text-white rounded-sm">{t(`pages.common.status.${req.status}`, req.status)}</span>
                               </div>
-                              {req.set_name && <p className="text-[9px] font-mono-stack opacity-60">SET: {req.set_name}</p>}
+                              {req.set_name && <p className="text-[9px] font-mono-stack opacity-60">{t('pages.common.labels.set', 'SET')}: {req.set_name}</p>}
                               {req.details && <p className="text-[9px] font-mono-stack mt-1 italic">&quot;{req.details}&quot;</p>}
                             </Link>
                           ))
@@ -232,7 +238,7 @@ export default function AdminClientDetailPage() {
 
                     {(detail.requests || []).filter(r => r.status !== 'pending' && r.status !== 'accepted').length > 0 && (
                       <div>
-                        <h4 className="text-xs font-mono-stack text-text-muted mb-2 mt-4 font-bold tracking-widest uppercase">Past</h4>
+                        <h4 className="text-xs font-mono-stack text-text-muted mb-2 mt-4 font-bold tracking-widest uppercase">{t('pages.admin.clients.details.past_group', 'Past')}</h4>
                         <div className="space-y-2">
                           {(detail.requests || []).filter(r => r.status !== 'pending' && r.status !== 'accepted').map(req => (
                             <Link href={`/admin/bounties?tab=requests&scrollToId=${req.id}`} key={req.id} className="block p-3 bg-kraft-light/30 border border-kraft-dark/20 rounded-sm opacity-60 hover:opacity-100 hover:bg-white transition-all">
@@ -241,9 +247,9 @@ export default function AdminClientDetailPage() {
                                   {req.card_name}
                                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-50"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                                 </span>
-                                <span className="text-[8px] font-mono-stack px-1 bg-kraft-dark text-white rounded-sm">{req.status}</span>
+                                <span className="text-[8px] font-mono-stack px-1 bg-kraft-dark text-white rounded-sm">{t(`pages.common.status.${req.status}`, req.status)}</span>
                               </div>
-                              {req.set_name && <p className="text-[9px] font-mono-stack opacity-60">SET: {req.set_name}</p>}
+                              {req.set_name && <p className="text-[9px] font-mono-stack opacity-60">{t('pages.common.labels.set', 'SET')}: {req.set_name}</p>}
                             </Link>
                           ))}
                         </div>
@@ -253,26 +259,29 @@ export default function AdminClientDetailPage() {
                 </div>
 
                 <div>
-                  <h3 className="text-xl mb-4 font-display tracking-wider">BOUNTY OFFERS <span className="text-sm">({(detail.offers || []).length})</span></h3>
+                  <h3 className="text-xl mb-4 font-display tracking-wider">
+                    {t('pages.admin.clients.details.offers_title', 'BOUNTY OFFERS')} 
+                    <span className="text-sm"> ({(detail.offers || []).length})</span>
+                  </h3>
                   
                   <div className="space-y-4">
                     <div>
-                      <h4 className="text-xs font-mono-stack text-text-muted mb-2 font-bold tracking-widest uppercase">Active</h4>
+                      <h4 className="text-xs font-mono-stack text-text-muted mb-2 font-bold tracking-widest uppercase">{t('pages.admin.clients.details.active_group', 'Active')}</h4>
                       <div className="space-y-2">
                         {(detail.offers || []).filter(o => o.status === 'pending').length === 0 ? (
-                          <div className="text-[10px] font-mono-stack opacity-40 italic">NO PENDING OFFERS.</div>
+                          <div className="text-[10px] font-mono-stack opacity-40 italic">{t('pages.admin.clients.details.no_pending_offers', 'NO PENDING OFFERS.')}</div>
                         ) : (
                           (detail.offers || []).filter(o => o.status === 'pending').map(offer => (
                             <Link href={`/admin/bounties?tab=offers&scrollToId=${offer.id}`} key={offer.id} className="block p-3 bg-emerald-50 border border-emerald-300 hover:border-emerald-500 rounded-sm hover:-translate-y-0.5 hover:shadow-sm transition-all">
                               <div className="flex justify-between items-start mb-1">
                                 <span className="font-bold text-xs uppercase text-emerald-800 flex items-center gap-1">
-                                  {offer.bounty_name || 'Bounty Item'}
+                                  {offer.bounty_name || t('pages.common.labels.bounty_item', 'Bounty Item')}
                                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-50"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                                 </span>
-                                <span className="text-[8px] font-mono-stack px-1 rounded-sm bg-amber-600 text-white">{offer.status}</span>
+                                <span className="text-[8px] font-mono-stack px-1 rounded-sm bg-amber-600 text-white">{t(`pages.common.status.${offer.status}`, offer.status)}</span>
                               </div>
                               <div className="flex justify-between items-end mt-1">
-                                <span className="text-[9px] font-mono-stack opacity-80 font-bold text-emerald-900">QTY: {offer.quantity}</span>
+                                <span className="text-[9px] font-mono-stack opacity-80 font-bold text-emerald-900">{t('pages.common.labels.quantity_short', 'QTY')}: {offer.quantity}</span>
                                 <span className="text-[8px] font-mono-stack text-emerald-800/60">{new Date(offer.created_at).toLocaleDateString()}</span>
                               </div>
                             </Link>
@@ -283,21 +292,21 @@ export default function AdminClientDetailPage() {
 
                     {(detail.offers || []).filter(o => o.status !== 'pending').length > 0 && (
                       <div>
-                        <h4 className="text-xs font-mono-stack text-text-muted mb-2 mt-4 font-bold tracking-widest uppercase">Past</h4>
+                        <h4 className="text-xs font-mono-stack text-text-muted mb-2 mt-4 font-bold tracking-widest uppercase">{t('pages.admin.clients.details.past_group', 'Past')}</h4>
                         <div className="space-y-2">
                           {(detail.offers || []).filter(o => o.status !== 'pending').map(offer => (
                             <Link href={`/admin/bounties?tab=offers&scrollToId=${offer.id}`} key={offer.id} className="block p-3 bg-kraft-light/30 border border-kraft-dark/20 rounded-sm opacity-60 hover:opacity-100 hover:bg-white transition-all">
                               <div className="flex justify-between items-start mb-1">
                                 <span className="font-bold text-xs uppercase text-ink-deep flex items-center gap-1">
-                                  {offer.bounty_name || 'Bounty Item'}
+                                  {offer.bounty_name || t('pages.common.labels.bounty_item', 'Bounty Item')}
                                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-50"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                                 </span>
                                 <span className={`text-[8px] font-mono-stack px-1 rounded-sm text-white ${offer.status === 'fulfilled' || offer.status === 'accepted' ? 'bg-indigo-600' : 'bg-red-600'}`}>
-                                  {offer.status}
+                                  {t(`pages.common.status.${offer.status}`, offer.status)}
                                 </span>
                               </div>
                               <div className="flex justify-between items-end mt-1">
-                                <span className="text-[9px] font-mono-stack opacity-60">QTY: {offer.quantity}</span>
+                                <span className="text-[9px] font-mono-stack opacity-60">{t('pages.common.labels.quantity_short', 'QTY')}: {offer.quantity}</span>
                                 <span className="text-[8px] font-mono-stack text-text-muted">{new Date(offer.created_at).toLocaleDateString()}</span>
                               </div>
                             </Link>
@@ -310,15 +319,15 @@ export default function AdminClientDetailPage() {
             </div>
 
             <div className="p-6 bg-kraft-dark/10 border-2 border-dotted border-kraft-dark rounded-lg flex flex-col gap-4 text-center">
-                 <h5 className="font-display text-sm tracking-widest text-kraft-dark">VALUED CLIENT SUMMARY</h5>
+                 <h5 className="font-display text-sm tracking-widest text-kraft-dark">{t('pages.admin.clients.details.summary_title', 'VALUED CLIENT SUMMARY')}</h5>
                  <div className="flex justify-around items-center border-y border-kraft-dark/20 py-4">
                     <div>
-                      <p className="text-[10px] font-mono-stack text-text-muted tracking-tighter uppercase mb-1">Lifetime</p>
+                      <p className="text-[10px] font-mono-stack text-text-muted tracking-tighter uppercase mb-1">{t('pages.admin.clients.details.lifetime_label', 'Lifetime')}</p>
                       <p className="text-xl font-bold font-mono-stack leading-none">${(detail.orders || []).reduce((sum, o) => sum + o.total_cop, 0).toLocaleString()}</p>
                     </div>
                     <div className="w-px h-8 bg-kraft-dark/20" />
                     <div>
-                      <p className="text-[10px] font-mono-stack text-text-muted tracking-tighter uppercase mb-1">Purchased</p>
+                      <p className="text-[10px] font-mono-stack text-text-muted tracking-tighter uppercase mb-1">{t('pages.admin.clients.details.purchased_label', 'Purchased')}</p>
                       <p className="text-xl font-bold font-mono-stack leading-none">{(detail.orders || []).length}</p>
                     </div>
                  </div>

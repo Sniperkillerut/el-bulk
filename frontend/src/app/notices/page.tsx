@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Notice } from '@/lib/types';
 import { fetchNotices } from '@/lib/api';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function NoticesPage() {
+  const { t, locale } = useLanguage();
   const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -21,12 +23,14 @@ export default function NoticesPage() {
       <header className="mb-12 border-b-2 border-kraft-dark pb-4 flex flex-col md:flex-row md:items-baseline justify-between gap-4">
         <div>
           <h1 className="font-display text-5xl sm:text-6xl uppercase text-fluid-h1" style={{ color: 'var(--ink-deep)' }}>
-            NOTICES & <span style={{ color: 'var(--gold-dark)' }}>UPDATES</span>
+            {t('pages.notices.list.header_main', 'NOTICES &')} <span style={{ color: 'var(--gold-dark)' }}>{t('pages.notices.list.header_accent', 'UPDATES')}</span>
           </h1>
-          <p className="font-mono-stack text-sm text-text-secondary mt-2">Latest news, spoilers, and reviews from the shop.</p>
+          <p className="font-mono-stack text-sm text-text-secondary mt-2">
+            {t('pages.notices.list.subtitle', 'Latest news, spoilers, and reviews from the shop.')}
+          </p>
         </div>
         <div className="text-[10px] font-bold font-mono-stack bg-kraft-light px-3 py-1 border border-kraft-shadow rotate-1 self-start md:self-auto">
-          {notices.length} POSTS TOTAL
+          {t('pages.notices.list.total_count', '{count} POSTS TOTAL', { count: notices.length })}
         </div>
       </header>
 
@@ -38,8 +42,8 @@ export default function NoticesPage() {
         </div>
       ) : notices.length === 0 ? (
         <div className="stamp-border p-12 text-center bg-surface">
-          <p className="font-display text-2xl text-text-muted">NO NOTICES POSTED YET</p>
-          <p className="font-mono-stack text-sm text-text-muted mt-2">Check back soon for news and updates.</p>
+          <p className="font-display text-2xl text-text-muted">{t('pages.notices.list.empty_title', 'NO NOTICES POSTED YET')}</p>
+          <p className="font-mono-stack text-sm text-text-muted mt-2">{t('pages.notices.list.empty_subtitle', 'Check back soon for news and updates.')}</p>
         </div>
       ) : (
         <div className="grid gap-8">
@@ -62,7 +66,7 @@ export default function NoticesPage() {
               <div className="p-6 md:p-8 flex flex-col flex-1">
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-[10px] font-mono-stack font-bold px-2 py-0.5 bg-kraft-light text-text-secondary border border-kraft-shadow">
-                    {new Date(notice.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    {new Date(notice.created_at).toLocaleDateString(locale === 'en' ? 'en-US' : 'es-ES', { month: 'long', day: 'numeric', year: 'numeric' })}
                   </span>
                 </div>
                 <h2 className="font-display text-3xl mb-4 group-hover:text-gold-dark transition-colors uppercase leading-tight">
@@ -74,7 +78,7 @@ export default function NoticesPage() {
                 />
                 <div className="mt-auto">
                   <Link href={`/notices/${notice.slug}`} className="btn-secondary py-2 px-6">
-                    OPEN NOTICE →
+                    {t('pages.notices.list.open_btn', 'OPEN NOTICE →')}
                   </Link>
                 </div>
               </div>

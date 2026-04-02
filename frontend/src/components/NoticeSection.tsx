@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Notice } from '@/lib/types';
 import { fetchNotices } from '@/lib/api';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function NoticeSection() {
   const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t, locale } = useLanguage();
 
   useEffect(() => {
     fetchNotices({ limit: 3 })
@@ -30,10 +32,10 @@ export default function NoticeSection() {
     <section className="space-y-6">
       <div className="flex items-baseline justify-between gap-4 border-b-2 border-kraft-dark pb-2">
         <h2 className="font-display text-4xl uppercase" style={{ color: 'var(--ink-deep)' }}>
-          NOTICES / <span style={{ color: 'var(--gold-dark)' }}>NEWS</span>
+          {t('pages.notices.section.title', 'NOTICES / NEWS')}
         </h2>
         <Link href="/notices" className="text-sm font-bold font-mono-stack hover:text-gold transition-colors" style={{ color: 'var(--text-secondary)' }}>
-          VIEW ALL →
+          {t('pages.notices.actions.view_all', 'VIEW ALL →')}
         </Link>
       </div>
 
@@ -53,7 +55,7 @@ export default function NoticeSection() {
             <div className={`p-6 flex flex-col flex-1 ${notice.featured_image_url ? '' : 'md:p-8'}`}>
               <div className="flex items-center gap-3 mb-2">
                 <span className="text-[10px] font-mono-stack font-bold px-2 py-0.5 bg-kraft-light text-text-secondary border border-kraft-shadow uppercase">
-                  {new Date(notice.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  {new Date(notice.created_at).toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
               </div>
               <h3 className="font-display text-2xl mb-3 uppercase leading-tight" style={{ color: 'var(--ink-deep)' }}>
@@ -65,7 +67,7 @@ export default function NoticeSection() {
               />
               <div className="mt-auto flex items-center">
                 <Link href={`/notices/${notice.slug}`} className="text-xs font-bold font-mono-stack text-gold-dark hover:text-hp-color transition-colors flex items-center gap-2">
-                  READ MORE <span className="text-lg">»</span>
+                  {t('pages.notices.actions.read_more', 'READ MORE')} <span className="text-lg">»</span>
                 </Link>
               </div>
             </div>
@@ -75,7 +77,7 @@ export default function NoticeSection() {
 
       <div className="text-center pt-4">
         <Link href="/notices" className="btn-secondary">
-          SHOW MORE PREVIOUS POSTS
+          {t('pages.notices.actions.show_more', 'SHOW MORE PREVIOUS POSTS')}
         </Link>
       </div>
     </section>

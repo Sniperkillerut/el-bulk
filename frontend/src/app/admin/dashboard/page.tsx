@@ -15,8 +15,10 @@ import StorageManagerModal from '@/components/admin/modals/StorageManagerModal';
 import CategoryManagerModal from '@/components/admin/modals/CategoryManagerModal';
 import ProductTable from '@/components/admin/dashboard/ProductTable';
 import { useAdminProducts } from '@/hooks/useAdminProducts';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function AdminDashboard() {
+  const { t } = useLanguage();
   const { token, settings, logout } = useAdmin();
   const [tcgs, setTCGs] = useState<TCG[]>([]);
   const [storageLocations, setStorageLocations] = useState<StoredIn[]>([]);
@@ -70,11 +72,13 @@ export default function AdminDashboard() {
   const handleSaveAndNew = () => { refreshProducts(); setEditingProduct(null); };
 
   const handleDeleteProduct = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete ${name}?`)) return;
+    if (!confirm(t('pages.admin.inventory.confirm_delete', 'Are you sure you want to delete {name}?', { name }))) return;
     try {
       await adminDeleteProduct(token!, id);
       refreshProducts();
-    } catch { alert('Failed to delete product.'); }
+    } catch { 
+      alert(t('pages.admin.inventory.error_delete', 'Failed to delete product.')); 
+    }
   };
 
   // Shared Handlers
@@ -87,8 +91,8 @@ export default function AdminDashboard() {
     setStorageLocations(await adminFetchStorage(token!) || []);
   };
   const handleDeleteStorage = async (id: string, name: string, count: number) => {
-    if (count > 0 && !confirm(`Location "${name}" contains ${count} items. Deleting it will clear these assignments. Continue?`)) return;
-    else if (!confirm(`Delete storage location "${name}"?`)) return;
+    if (count > 0 && !confirm(t('pages.admin.inventory.confirm_delete_storage_items', 'Location "{name}" contains {count} items. Deleting it will clear these assignments. Continue?', { name, count }))) return;
+    else if (!confirm(t('pages.admin.inventory.confirm_delete_storage', 'Delete storage location "{name}"?', { name }))) return;
     await adminDeleteStorage(token!, id);
     setStorageLocations(await adminFetchStorage(token!) || []);
   };
@@ -102,7 +106,7 @@ export default function AdminDashboard() {
     setCategories(await adminFetchCategories(token!) || []);
   };
   const handleDeleteCategory = async (id: string, name: string) => {
-    if (!confirm(`Delete collection "${name}"?`)) return;
+    if (!confirm(t('pages.admin.inventory.confirm_delete_category', 'Delete collection "{name}"?', { name }))) return;
     await adminDeleteCategory(token!, id);
     setCategories(await adminFetchCategories(token!) || []);
   };
@@ -112,11 +116,11 @@ export default function AdminDashboard() {
     setIsSyncing(true);
     try {
       const res = await adminSyncSets(token);
-      alert(`Successfully synced ${res.count} sets!`);
+      alert(t('pages.admin.inventory.sync_success', 'Successfully synced {count} sets!', { count: res.count }));
       // Reload to refresh settings (last sync date)
       window.location.reload();
-    } catch (err) {
-      alert('Failed to sync sets.');
+    } catch {
+      alert(t('pages.admin.inventory.sync_error', 'Failed to sync sets.'));
     } finally {
       setIsSyncing(false);
     }
@@ -125,8 +129,8 @@ export default function AdminDashboard() {
   return (
     <div className="flex-1 flex flex-col p-3 min-h-0 max-w-7xl mx-auto w-full">
       <AdminHeader
-        title="INVENTORY MANAGEMENT"
-        subtitle="Store Dashboard // Operations Active"
+        title={t('pages.admin.inventory.title', 'INVENTORY MANAGEMENT')}
+        subtitle={t('pages.admin.inventory.subtitle', 'Store Dashboard // Operations Active')}
         actions={
           <>
             <div className="flex flex-col items-end mr-4">
@@ -135,19 +139,19 @@ export default function AdminDashboard() {
                 disabled={isSyncing}
                 className="btn-secondary px-4 py-1.5 text-[10px] flex items-center gap-2 mb-1"
               >
-                <span>{isSyncing ? '⌛' : '🔄'}</span> {isSyncing ? 'SYNCING...' : 'SYNC SETS'}
+                <span>{isSyncing ? '⌛' : '🔄'}</span> {isSyncing ? t('pages.admin.inventory.syncing', 'SYNCING...') : t('pages.admin.inventory.sync_sets_btn', 'SYNC SETS')}
               </button>
               {settings?.last_set_sync && (
                 <span className="text-[9px] font-mono-stack text-text-muted opacity-60">
-                  LAST SYNC: {new Date(settings.last_set_sync).toLocaleString()}
+                  {t('pages.admin.inventory.last_sync', 'LAST SYNC: {date}', { date: new Date(settings.last_set_sync).toLocaleString() })}
                 </span>
               )}
             </div>
             <button onClick={() => setShowImportModal(true)} className="btn-secondary px-6 flex items-center gap-2">
-              <span>📥</span> IMPORT CSV
+              <span>📥</span> {t('pages.admin.inventory.import_csv_btn', 'IMPORT CSV')}
             </button>
             <button onClick={() => { setEditingProduct(null); setShowEditModal(true); }} className="btn-primary px-8 flex items-center gap-2 shadow-lg shadow-gold/20">
-              <span className="text-xl">+</span> ADD NEW PRODUCT
+              <span className="text-xl">+</span> {t('pages.admin.inventory.add_product_btn', 'ADD NEW PRODUCT')}
             </button>
           </>
         }
@@ -157,47 +161,47 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-2 mb-2 flex-shrink-0">
         <div className="xl:col-span-3 card p-3 bg-white/40 backdrop-blur shadow-sm border-kraft-dark/20 flex flex-wrap gap-2 items-end">
           <div className="flex-1 min-w-[240px]">
-            <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">Product Search</label>
+            <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">{t('pages.admin.inventory.search_label', 'Product Search')}</label>
             <div className="relative">
-              <input type="text" placeholder="Search by name, set, code..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30" />
+              <input type="text" placeholder={t('pages.admin.inventory.search_placeholder', 'Search by name, set, code...')} value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30" />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30">🔍</span>
             </div>
           </div>
           <div style={{ width: '130px' }}>
-            <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">TCG Filter</label>
+            <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">{t('pages.admin.inventory.tcg_filter_label', 'TCG Filter')}</label>
             <select value={tcgFilter} onChange={e => { setTcgFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30">
-              <option value="">ALL TCGS</option>
-              {tcgs.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              <option value="">{t('pages.common.labels.all_tcgs', 'ALL TCGS')}</option>
+              {tcgs.map(t_item => <option key={t_item.id} value={t_item.id}>{t_item.name}</option>)}
             </select>
           </div>
           <div style={{ width: '150px' }}>
-            <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">Category</label>
+            <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">{t('pages.admin.inventory.category_label', 'Category')}</label>
             <select value={categoryFilter} onChange={e => { setCategoryFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30">
-              <option value="">ALL CATEGORIES</option>
-              <option value="singles">SINGLES</option>
-              <option value="sealed">SEALED</option>
-              <option value="accessories">ACCESSORIES</option>
-              <option value="store_exclusives">STORE EXCLUSIVES</option>
+              <option value="">{t('pages.common.labels.all_categories', 'ALL CATEGORIES')}</option>
+              <option value="singles">{t('pages.common.categories.singles', 'SINGLES')}</option>
+              <option value="sealed">{t('pages.common.categories.sealed', 'SEALED')}</option>
+              <option value="accessories">{t('pages.common.categories.accessories', 'ACCESSORIES')}</option>
+              <option value="store_exclusives">{t('pages.common.categories.store_exclusives', 'STORE EXCLUSIVES')}</option>
             </select>
           </div>
           <div style={{ width: '160px' }}>
-            <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">Physical Location</label>
+            <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">{t('pages.admin.inventory.storage_label', 'Physical Location')}</label>
             <select value={storageFilter} onChange={e => { setStorageFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30">
-              <option value="">ALL LOCATIONS</option>
+              <option value="">{t('pages.common.labels.all_locations', 'ALL LOCATIONS')}</option>
               {storageLocations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
             </select>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => setShowStorageModal(true)} title="Manage Locations" className="w-10 h-10 border border-kraft-dark/30 rounded bg-white hover:bg-kraft-light transition-colors flex items-center justify-center">📦</button>
-            <button onClick={() => setShowCategoryModal(true)} title="Manage Collections" className="w-10 h-10 border border-kraft-dark/30 rounded bg-white hover:bg-kraft-light transition-colors flex items-center justify-center">🔖</button>
+            <button onClick={() => setShowStorageModal(true)} title={t('pages.admin.inventory.manage_locations_tooltip', 'Manage Locations')} className="w-10 h-10 border border-kraft-dark/30 rounded bg-white hover:bg-kraft-light transition-colors flex items-center justify-center">📦</button>
+            <button onClick={() => setShowCategoryModal(true)} title={t('pages.admin.inventory.manage_collections_tooltip', 'Manage Collections')} className="w-10 h-10 border border-kraft-dark/30 rounded bg-white hover:bg-kraft-light transition-colors flex items-center justify-center">🔖</button>
           </div>
         </div>
 
         <div className="card p-3 text-ink-deep flex flex-col justify-center border-none shadow-xl shadow-gold/20 relative overflow-hidden group">
-          <div className="text-[10px] font-mono-stack uppercase font-bold opacity-60 mb-1">INVENTORY COUNT</div>
+          <div className="text-[10px] font-mono-stack uppercase font-bold opacity-60 mb-1">{t('pages.admin.inventory.count_label', 'INVENTORY COUNT')}</div>
           <div className="text-4xl font-display leading-none">{total.toLocaleString()}</div>
           <div className="border-t border-ink-deep/10 flex justify-between items-center">
-            <span className="text-[10px] font-mono-stack opacity-60">RESPONSE TIME</span>
+            <span className="text-[10px] font-mono-stack opacity-60">{t('pages.admin.inventory.response_time_label', 'RESPONSE TIME')}</span>
             <span className="font-mono-stack text-[10px] font-bold">~{queryTime}ms</span>
           </div>
         </div>
@@ -222,14 +226,18 @@ export default function AdminDashboard() {
       {/* Pagination Footer - Fixed at Bottom */}
       <footer className="flex justify-between items-center mt-2 px-0 flex-shrink-0">
         <div className="text-xs font-mono-stack text-text-muted font-bold">
-          SHOWING <span className="text-ink-deep">{((page - 1) * pageSize) + 1} - {Math.min(page * pageSize, total)}</span> OF {total} ENTRIES
+          {t('pages.common.pagination.showing', 'SHOWING {start} - {end} OF {total} ENTRIES', {
+            start: ((page - 1) * pageSize) + 1,
+            end: Math.min(page * pageSize, total),
+            total: total
+          })}
         </div>
         <div className="flex gap-2">
-          <button disabled={page === 1} onClick={() => setPage(page - 1)} className="btn-secondary py-1 px-4 text-xs font-bold disabled:opacity-30">← PREV</button>
+          <button disabled={page === 1} onClick={() => setPage(page - 1)} className="btn-secondary py-1 px-4 text-xs font-bold disabled:opacity-30">{t('pages.common.pagination.prev', '← PREV')}</button>
           <div className="flex items-center px-4 font-mono-stack text-xs font-bold bg-white rounded border border-kraft-dark/20">
-            PAGE {page} / {Math.max(1, Math.ceil(total / pageSize))}
+            {t('pages.common.pagination.page_info', 'PAGE {current} / {total}', { current: page, total: Math.max(1, Math.ceil(total / pageSize)) })}
           </div>
-          <button disabled={page >= Math.ceil(total / pageSize)} onClick={() => setPage(page + 1)} className="btn-secondary py-1 px-4 text-xs font-bold disabled:opacity-30">NEXT →</button>
+          <button disabled={page >= Math.ceil(total / pageSize)} onClick={() => setPage(page + 1)} className="btn-secondary py-1 px-4 text-xs font-bold disabled:opacity-30">{t('pages.common.pagination.next', 'NEXT →')}</button>
         </div>
       </footer>
 

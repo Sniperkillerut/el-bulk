@@ -6,6 +6,7 @@ import { OrderDetail, ORDER_STATUS_LABELS, FOIL_LABELS } from '@/lib/types';
 import Modal from './ui/Modal';
 import LoadingSpinner from './LoadingSpinner';
 import Image from 'next/image';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface OrderDetailsModalProps {
   orderId: string | null;
@@ -17,6 +18,7 @@ export default function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDet
   const [detail, setDetail] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t, locale } = useLanguage();
 
   useEffect(() => {
     let isMounted = true;
@@ -35,7 +37,7 @@ export default function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDet
       } catch (err) {
         console.error('Failed to fetch order details:', err);
         if (isMounted) {
-          setError('Failed to load order details. Please try again.');
+          setError(t('pages.order.modal.error', 'Failed to load order details. Please try again.'));
         }
       } finally {
         if (isMounted) {
@@ -60,7 +62,7 @@ export default function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDet
     return () => {
       isMounted = false;
     };
-  }, [isOpen, orderId]);
+  }, [isOpen, orderId, t]);
 
   if (!isOpen && !detail) return null;
 
@@ -68,14 +70,16 @@ export default function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDet
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={detail?.order ? `Order ${detail.order.order_number}` : 'Order Details'}
+      title={detail?.order 
+        ? t('pages.order.modal.title', 'Order {number}', { number: detail.order.order_number }) 
+        : t('pages.order.modal.title_generic', 'Order Details')}
       maxWidth="max-w-3xl"
     >
       <div className="p-6 bg-bg-surface/90 backdrop-blur-md min-h-[400px]">
         {loading && !detail ? (
           <div className="flex flex-col items-center justify-center py-24">
             <LoadingSpinner />
-            <p className="mt-4 text-text-muted font-mono text-xs animate-pulse tracking-widest uppercase">Fetching secure details</p>
+            <p className="mt-4 text-text-muted font-mono text-xs animate-pulse tracking-widest uppercase">{t('pages.order.modal.fetching', 'Fetching secure details')}</p>
           </div>
         ) : error ? (
           <div className="text-center py-20 bg-red-400/5 rounded-xl border border-red-400/20">
@@ -85,7 +89,7 @@ export default function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDet
               onClick={onClose}
               className="px-8 py-3 bg-red-400/20 hover:bg-red-400/30 text-red-400 rounded-lg transition-colors border border-red-400/30"
             >
-              Close Window
+              {t('pages.order.modal.close', 'Close Window')}
             </button>
           </div>
         ) : detail ? (
@@ -97,7 +101,7 @@ export default function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDet
               </div>
               
               <div className="relative z-10">
-                <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-2">Order Status</p>
+                <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-2">{t('pages.order.modal.status_label', 'Order Status')}</p>
                 <div className="flex items-center gap-2.5">
                   <div className={`w-3 h-3 rounded-full shadow-[0_0_10px_rgba(0,0,0,0.2)] ${
                     detail.order.status === 'completed' ? 'bg-green-400 shadow-green-400/40' :
@@ -111,19 +115,19 @@ export default function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDet
               </div>
               
               <div className="md:border-l border-border-main/50 md:pl-6 relative z-10">
-                <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-2">Transaction Date</p>
+                <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-2">{t('pages.order.modal.date_label', 'Transaction Date')}</p>
                 <p className="text-text-main font-medium">
-                   {new Date(detail.order.created_at).toLocaleDateString(undefined, { 
+                   {new Date(detail.order.created_at).toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US', { 
                     year: 'numeric', month: 'short', day: 'numeric'
                   })}
                    <span className="text-text-muted ml-2 text-sm font-normal">
-                    {new Date(detail.order.created_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                    {new Date(detail.order.created_at).toLocaleTimeString(locale === 'es' ? 'es-ES' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
                    </span>
                 </p>
               </div>
               
               <div className="md:border-l border-border-main md:pl-6 relative z-10">
-                <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-2">Total Amount</p>
+                <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-2">{t('pages.order.modal.amount_label', 'Total Amount')}</p>
                 <div className="flex items-baseline gap-1">
                   <span className="text-accent-primary text-sm font-bold">$</span>
                   <p className="text-3xl font-display text-accent-primary leading-none">
@@ -139,7 +143,7 @@ export default function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDet
               <div className="flex items-center justify-between">
                 <h4 className="text-[10px] font-mono text-text-muted uppercase tracking-[0.2em] flex items-center gap-3">
                   <span className="w-8 h-px bg-accent-primary/40"></span> 
-                  Order Summary 
+                  {t('pages.order.modal.summary_label', 'Order Summary')} 
                   <span className="bg-accent-primary text-text-on-accent px-1.5 rounded-full text-[9px] font-bold">
                     {detail.items.reduce((acc, i) => acc + i.quantity, 0)}
                   </span>
@@ -176,7 +180,7 @@ export default function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDet
                           </h5>
                           <p className="text-[10px] text-text-muted font-mono mt-1 flex items-center gap-1.5">
                             <span className="px-1.5 py-0.5 rounded-sm bg-bg-page/60 border border-border-main/50 uppercase tracking-tighter">
-                              {item.product_set || 'Unknown Set'}
+                              {item.product_set || t('pages.order.modal.unknown_set', 'Unknown Set')}
                             </span>
                             <span className={`px-1.5 py-0.5 rounded-sm border uppercase tracking-tighter ${
                               item.condition === 'NM' ? 'bg-green-400/5 text-green-400 border-green-400/20' : 
@@ -191,7 +195,7 @@ export default function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDet
                             ${item.unit_price_cop.toLocaleString('es-CO')}
                           </div>
                           <div className="text-[9px] font-mono text-text-muted uppercase tracking-tighter mt-1.5 flex items-center justify-end gap-1">
-                            <span className="opacity-50">QTY:</span>
+                            <span className="opacity-50">{t('pages.order.modal.qty_label', 'QTY:')}</span>
                             <span className="text-text-secondary font-bold font-sans">×{item.quantity}</span>
                           </div>
                         </div>
@@ -218,14 +222,14 @@ export default function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDet
             {/* Support Info */}
             <div className="pt-6 border-t border-border-main/30 flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left animate-in fade-in duration-700 delay-300 fill-mode-both">
               <div className="text-[10px] text-text-muted leading-relaxed font-mono uppercase tracking-tight">
-                <p>Order Reference: <span className="text-text-main font-sans font-bold">#{detail.order.order_number}</span></p>
+                <p>{t('pages.order.modal.reference', 'Order Reference:')} <span className="text-text-main font-sans font-bold">#{detail.order.order_number}</span></p>
                 <div className="mt-1 flex items-center justify-center sm:justify-start gap-4">
-                  <p>Method: <span className="text-text-secondary font-sans font-medium">{detail.order.payment_method}</span></p>
+                  <p>{t('pages.order.modal.method', 'Method:')} <span className="text-text-secondary font-sans font-medium">{detail.order.payment_method}</span></p>
                   <p>Ref: <span className="text-text-secondary font-sans font-medium">{detail.order.id.split('-')[0].toUpperCase()}</span></p>
                 </div>
               </div>
               <p className="text-[10px] font-mono text-text-muted uppercase tracking-tighter bg-bg-page/30 px-3 py-1.5 rounded-full border border-border-main/50">
-                Issues? Contact <a href="mailto:support@elbulk.com" className="text-accent-primary hover:underline font-bold">support@elbulk.com</a>
+                {t('pages.order.modal.issues', 'Issues? Contact')} <a href="mailto:support@elbulk.com" className="text-accent-primary hover:underline font-bold">support@elbulk.com</a>
               </p>
             </div>
           </div>

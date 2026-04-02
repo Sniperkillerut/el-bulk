@@ -7,6 +7,7 @@ import CardImage from './CardImage';
 import { openProductModal } from './ProductModalManager';
 import CardBadgeList from './cards/CardBadgeList';
 import CardInfo from './cards/CardInfo';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface ProductCardProps {
   product: Product;
@@ -16,6 +17,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { t } = useLanguage();
   const outOfStock = product.stock === 0;
 
   const displayCartCount = product.cart_count || 0;
@@ -58,7 +60,9 @@ export default function ProductCard({ product }: ProductCardProps) {
           {displayCartCount > 0 && (
             <div className="flex items-center gap-1.5 text-[10px] font-mono tracking-wider mb-0.5 text-text-secondary opacity-80">
               <span className="text-accent-primary">●</span>
-              {displayCartCount} {displayCartCount === 1 ? 'OTHER USER HAS' : 'OTHER USERS HAVE'} THIS IN THEIR CART
+              {displayCartCount === 1 
+                ? t('pages.product.cart_users_has', '{count} OTHER USER HAS THIS IN THEIR CART', { count: displayCartCount })
+                : t('pages.product.cart_users_have', '{count} OTHER USERS HAVE THIS IN THEIR CART', { count: displayCartCount })}
             </div>
           )}
           
@@ -75,7 +79,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 className="btn-primary text-[0.8rem] px-[0.8rem] py-[0.3rem]"
                 style={{ opacity: outOfStock ? 0.4 : 1, cursor: outOfStock ? 'not-allowed' : 'pointer' }}
               >
-                {outOfStock ? 'SOLD OUT' : 'ADD'}
+                {outOfStock ? t('pages.common.status.sold_out', 'SOLD OUT') : t('pages.common.buttons.add', 'ADD')}
               </button>
             </div>
           </div>

@@ -4,10 +4,12 @@ import { usePathname } from 'next/navigation';
 import Navbar from './Navbar';
 import ProductModalManager from './ProductModalManager';
 import BountyModalManager from './BountyModalManager';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function StorefrontLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith('/admin');
+  const { t } = useLanguage();
 
   if (isAdmin) {
     return <>{children}</>;
@@ -29,10 +31,10 @@ export default function StorefrontLayoutWrapper({ children }: { children: React.
         <div className="w-full px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
             <span className="font-display text-xl text-accent-primary">EL BULK</span>
-            <span className="text-xs ml-2 text-text-muted font-mono">TCG STORE</span>
+            <span className="text-xs ml-2 text-text-muted font-mono">{t('pages.nav.main.tcg_store', 'TCG STORE')}</span>
           </div>
           <p className="text-xs text-center text-text-muted">
-            We buy bulk. We sell singles. We love cardboard.
+            {t('pages.layout.footer.slogan', 'We buy bulk. We sell singles. We love cardboard.')}
           </p>
           <p className="text-xs text-text-muted font-mono">
             © {new Date().getFullYear()} El Bulk

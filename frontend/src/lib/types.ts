@@ -537,6 +537,13 @@ export interface AdminStats {
   pending_orders_count: number;
   pending_offers_count: number;
   pending_requests_count: number;
+  translation_progress: TranslationLocaleStats[];
+}
+
+export interface TranslationLocaleStats {
+  locale: string;
+  completion: number;
+  missing_keys: number;
 }
 
 // ── Themes ─────────────────────────────────────────────
@@ -574,3 +581,10 @@ export interface Theme {
 }
 
 export type ThemeInput = Omit<Theme, 'id' | 'is_system' | 'created_at' | 'updated_at'>;
+
+export interface Translation {
+  key: string;
+  locale: string;
+  value: string;
+  updated_at: string;
+}

@@ -11,6 +11,7 @@ import {
 import { 
   getTreatmentType, applyPrintPrices, extractMTGMetadata, findMatchingPrint, getScryfallImage, resolveFoilTreatment,
 } from '@/lib/mtg-logic';
+import { useLanguage } from '@/context/LanguageContext';
 
 import ScryfallPopulate from './product/ScryfallPopulate';
 import VariantTab from './product/tabs/VariantTab';
@@ -37,6 +38,7 @@ export default function ProductEditModal({
   editProduct, token, storageLocations, categories, tcgs, settings,
   storageFilter, onClose, onSaved, onSaveAndNew
 }: ProductEditModalProps) {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<TabId>('variant');
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [scryfallPrints, setScryfallPrints] = useState<ScryfallCard[]>([]);
@@ -159,7 +161,7 @@ export default function ProductEditModal({
 
   const handleSave = async (andNew: boolean) => {
     if (!form.name || !form.tcg || !form.category) { 
-      setFormError('Name, TCG, and Category are required.'); 
+      setFormError(t('components.admin.product_modal.error_required', 'Name, TCG, and Category are required.')); 
       return; 
     }
     setSaving(true); 
@@ -242,7 +244,7 @@ export default function ProductEditModal({
         onSaved();
       }
     } catch (e: unknown) {
-      setFormError(e instanceof Error ? e.message : 'Failed to save product.');
+      setFormError(e instanceof Error ? e.message : t('components.admin.product_modal.error_save', 'Failed to save product.'));
     } finally { 
       setSaving(false); 
     }
@@ -309,7 +311,7 @@ export default function ProductEditModal({
       };
 
       let prints: ScryfallCard[] = await fetchAllPrints(searchQ);
-      if (prints.length === 0) throw new Error('No printings found for that search.');
+      if (prints.length === 0) throw new Error(t('components.admin.product_modal.error_no_prints', 'No printings found for that search.'));
 
       if (prints.length > 0) {
         const oracleId = (prints[0] as unknown as { oracle_id?: string }).oracle_id;
@@ -325,7 +327,7 @@ export default function ProductEditModal({
       if (!bestPrint && set) bestPrint = prints.find((p: ScryfallCard) => p?.set?.toLowerCase() === set);
       if (!bestPrint) bestPrint = prints[0];
 
-      if (!bestPrint) throw new Error('Could not identify a matching print.');
+      if (!bestPrint) throw new Error(t('components.admin.product_modal.error_no_match', 'Could not identify a matching print.'));
 
       const initialTreatment = getTreatmentType(bestPrint);
       const initialFoil = resolveFoilTreatment(bestPrint);
@@ -345,7 +347,7 @@ export default function ProductEditModal({
         ...extractMTGMetadata(bestPrint)
       }));
     } catch (e: unknown) {
-      setFormError(e instanceof Error ? e.message : 'Scryfall fetch failed');
+      setFormError(e instanceof Error ? e.message : t('components.admin.product_modal.error_fetch', 'Scryfall fetch failed'));
     } finally { 
       setLookingUp(false); 
     }
@@ -416,9 +418,9 @@ export default function ProductEditModal({
   const isStoreExclusive = form.category === 'store_exclusives';
 
   const TABS: { id: TabId; label: string; show: boolean }[] = [
-    { id: 'deck', label: 'DECK BUILDER', show: isStoreExclusive },
-    { id: 'variant', label: 'VARIANT & IDENTITY', show: isMTGSingles },
-    { id: 'pricing', label: 'PRICING & STOCK', show: true },
+    { id: 'deck', label: t('components.admin.product_modal.tab_deck', 'DECK BUILDER'), show: isStoreExclusive },
+    { id: 'variant', label: t('components.admin.product_modal.tab_variant', 'VARIANT & IDENTITY'), show: isMTGSingles },
+    { id: 'pricing', label: t('components.admin.product_modal.tab_pricing', 'PRICING & STOCK'), show: true },
   ];
 
   return (
@@ -429,8 +431,8 @@ export default function ProductEditModal({
 
         <div className="flex items-center justify-between p-4 pb-2 border-b border-ink-border/5">
           <div className="flex flex-col">
-            <h2 className="font-display text-2xl m-0 tracking-tighter text-ink-deep">{editProduct ? 'EDIT PRODUCT' : 'NEW PRODUCT'}</h2>
-            <p className="font-mono-stack text-[10px] text-text-muted opacity-50">PRODUCT ID: {form.id || 'NEW'}</p>
+            <h2 className="font-display text-2xl m-0 tracking-tighter text-ink-deep">{editProduct ? t('components.admin.product_modal.title_edit', 'EDIT PRODUCT') : t('components.admin.product_modal.title_new', 'NEW PRODUCT')}</h2>
+            <p className="font-mono-stack text-[10px] text-text-muted opacity-50">{t('components.admin.product_modal.product_id', 'PRODUCT ID: {id}', { id: form.id || 'NEW' })}</p>
           </div>
           <button onClick={onClose} 
             className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-hp-color/10 text-text-muted hover:text-hp-color transition-all duration-300">
@@ -442,7 +444,7 @@ export default function ProductEditModal({
 
         <div className="px-4 md:px-6 pt-2 flex gap-4 flex-wrap">
           <div style={{ minWidth: '160px' }}>
-            <label className="text-[10px] font-mono-stack mb-1 block uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>TCG SYSTEM</label>
+            <label className="text-[10px] font-mono-stack mb-1 block uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{t('components.admin.product_modal.tcg_system_label', 'TCG SYSTEM')}</label>
             <select 
               className="bg-white/50 border-white/40 focus:bg-white transition-all" 
               value={form.tcg} 
@@ -458,11 +460,11 @@ export default function ProductEditModal({
               }}
             >
               {tcgs.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-              <option value="accessories">Accessories</option>
+              <option value="accessories">{t('pages.common.accessories', 'Accessories')}</option>
             </select>
           </div>
           <div style={{ minWidth: '140px' }}>
-            <label className="text-[10px] font-mono-stack mb-1 block uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>CATEGORY</label>
+            <label className="text-[10px] font-mono-stack mb-1 block uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{t('components.admin.product_modal.category_label', 'CATEGORY')}</label>
             <select 
               className="bg-white/50 border-white/40 focus:bg-white transition-all" 
               value={form.category} 
@@ -477,14 +479,14 @@ export default function ProductEditModal({
                 }
               }}
             >
-              <option value="singles">Singles</option>
-              <option value="sealed">Sealed</option>
-              <option value="accessories">Accessories</option>
-              <option value="store_exclusives">Store Exclusives</option>
+              <option value="singles">{t('pages.common.singles', 'Singles')}</option>
+              <option value="sealed">{t('pages.common.sealed', 'Sealed')}</option>
+              <option value="accessories">{t('pages.common.accessories', 'Accessories')}</option>
+              <option value="store_exclusives">{t('pages.common.store_exclusives', 'Store Exclusives')}</option>
             </select>
           </div>
           <div style={{ minWidth: '100px' }}>
-            <label className="text-[10px] font-mono-stack mb-1 block uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>CONDITION</label>
+            <label className="text-[10px] font-mono-stack mb-1 block uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{t('components.admin.product_modal.condition_label', 'CONDITION')}</label>
             <select className="bg-white/50 border-white/40 focus:bg-white transition-all text-xs" value={form.condition} onChange={e => setForm(f => ({ ...f, condition: e.target.value as Condition }))}>
               {['NM', 'LP', 'MP', 'HP', 'DMG'].map(c => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -492,14 +494,14 @@ export default function ProductEditModal({
 
           {!isMTGSingles && (
             <div className="flex-1 min-w-[240px]">
-              <label className="text-[10px] font-mono-stack mb-1 block uppercase opacity-50 tracking-widest" style={{ color: 'var(--text-muted)' }}>PRODUCT NAME</label>
+              <label className="text-[10px] font-mono-stack mb-1 block uppercase opacity-50 tracking-widest" style={{ color: 'var(--text-muted)' }}>{t('components.admin.product_modal.product_name_label', 'PRODUCT NAME')}</label>
               <input 
                 type="text" 
                 value={form.name} 
                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))} 
                 className="bg-white/50 border-white/40 focus:bg-white transition-all"
                 style={{ fontSize: '0.9rem', fontWeight: 600, height: '36px' }} 
-                placeholder="Product Name" 
+                placeholder={t('components.admin.product_modal.product_name_label', 'Product Name')} 
               />
             </div>
           )}
@@ -622,7 +624,7 @@ export default function ProductEditModal({
           {activeTab !== 'deck' && (
             <div className="w-full md:w-80 shrink-0">
               <div className="flex justify-between items-center mb-3">
-                 <label className="text-[10px] font-mono-stack uppercase tracking-tighter opacity-50" style={{ color: 'var(--text-muted)' }}>IMAGE PREVIEW</label>
+                 <label className="text-[10px] font-mono-stack uppercase tracking-tighter opacity-50" style={{ color: 'var(--text-muted)' }}>{t('components.admin.product_modal.image_preview_label', 'IMAGE PREVIEW')}</label>
                  <span className="text-[10px] font-mono-stack px-2 py-0.5 rounded-full font-bold shadow-sm" style={{ background: 'var(--nm-color)', color: 'white' }}>{form.condition}</span>
               </div>
               <div className="card p-2 bg-white/40 border-white/30 backdrop-blur-sm overflow-hidden group mb-8 shadow-xl">
@@ -643,17 +645,17 @@ export default function ProductEditModal({
                   disabled={saving} 
                   className="btn-primary w-full py-5 text-sm font-bold shadow-[0_10px_30px_rgba(212,175,55,0.3)] hover:shadow-[0_15px_40px_rgba(212,175,55,0.4)] transition-all active:scale-95"
                 >
-                  {saving ? '📥 SAVING...' : '💾 SAVE PRODUCT'}
+                  {saving ? t('components.admin.product_modal.saving', '📥 SAVING...') : t('components.admin.product_modal.save_btn', '💾 SAVE PRODUCT')}
                 </button>
                 <button 
                   onClick={() => handleSave(true)} 
                   disabled={saving} 
                   className="btn-secondary w-full py-4 text-[10px] font-bold font-mono-stack tracking-widest border-ink-border/20"
                 >
-                  💾 SAVE & ADD NEW
+                  {t('components.admin.product_modal.save_and_new_btn', '💾 SAVE & ADD NEW')}
                 </button>
                 <button onClick={onClose} disabled={saving} className="w-full py-2 text-[9px] font-mono-stack text-text-muted hover:text-hp-color transition-colors tracking-widest opacity-60">
-                  CANCEL
+                  {t('components.admin.product_modal.cancel_btn', 'CANCEL')}
                 </button>
               </div>
             </div>

@@ -3,9 +3,11 @@
 import { useCart } from '@/lib/CartContext';
 import Link from 'next/link';
 import CardImage from './CardImage';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { items, removedItems, totalItems, totalPrice, removeItem, restoreItem, permanentRemove, updateQty, clearCart } = useCart();
+  const { t } = useLanguage();
 
   return (
     <>
@@ -32,15 +34,17 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
         {/* Header */}
         <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid var(--ink-border)' }}>
           <div>
-            <h2 className="font-display text-2xl text-gold">YOUR CART</h2>
+            <h2 className="font-display text-2xl text-gold">{t('pages.cart.drawer.title', 'YOUR CART')}</h2>
             <div className="flex items-center gap-3">
               <p className="text-xs" style={{ color: 'var(--text-muted)', fontFamily: 'Space Mono, monospace' }}>
-                {totalItems} item{totalItems !== 1 ? 's' : ''}
+                {totalItems} {totalItems === 1 
+                  ? t('pages.cart.drawer.item', 'item') 
+                  : t('pages.cart.drawer.items', 'items')}
               </p>
               {items.length > 0 && (
                 <button
                   onClick={() => {
-                    if (window.confirm('¿Estás seguro de que quieres vaciar el carrito?')) {
+                    if (window.confirm(t('pages.cart.drawer.confirm_clear', 'Are you sure you want to clear your cart?'))) {
                       clearCart();
                     }
                   }}
@@ -50,7 +54,7 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
                   </svg>
-                  VACIAR
+                  {t('pages.cart.drawer.clear', 'CLEAR')}
                 </button>
               )}
             </div>
@@ -69,7 +73,7 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.4">
                 <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
               </svg>
-              <p className="text-center text-sm">Your cart is empty.<br />Go find some cards.</p>
+              <p className="text-center text-sm">{t('pages.cart.drawer.empty_msg', 'Your cart is empty. Go find some cards.')}</p>
             </div>
           ) : (
             items.map(item => (
@@ -89,7 +93,9 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
                   )}
                   {(item.product.cart_count ?? 0) > 0 && (
                     <p className="text-[9px] font-mono mt-0.5 opacity-60" style={{ color: 'var(--gold)' }}>
-                      ● {item.product.cart_count} {item.product.cart_count === 1 ? 'OTHER USER HAS' : 'OTHER USERS HAVE'} THIS IN THEIR CART
+                      ● {(item.product.cart_count ?? 0) === 1 
+                          ? t('pages.product.cart_users_has', '{count} OTHER USER HAS THIS IN THEIR CART').replace('{count}', (item.product.cart_count ?? 0).toString())
+                          : t('pages.product.cart_users_have', '{count} OTHER USERS HAVE THIS IN THEIR CART').replace('{count}', (item.product.cart_count ?? 0).toString())}
                     </p>
                   )}
                     <div className="flex items-center gap-2 mt-2">
@@ -111,7 +117,7 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
                         }}
                       >+</button>
                       <span className="text-[10px] opacity-40 ml-1" style={{ fontFamily: 'Space Mono, monospace' }}>
-                        {item.product.stock} dispon.
+                        {item.product.stock} {t('pages.product.status.available', 'available')}
                       </span>
                     </div>
                 </div>
@@ -122,7 +128,7 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
                   <button
                     onClick={() => removeItem(item.product.id)}
                     style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 2 }}
-                    title="Remove"
+                    title={t('pages.cart.drawer.remove_tooltip', 'Remove')}
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
@@ -136,7 +142,9 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
           {/* Removed Items Cache */}
           {removedItems.length > 0 && (
             <div className="mt-6 pt-6" style={{ borderTop: '1px dashed var(--ink-border)' }}>
-              <h3 className="text-[10px] font-mono-stack mb-3 tracking-widest text-muted uppercase">Removed Items</h3>
+              <h3 className="text-[10px] font-mono-stack mb-3 tracking-widest text-muted uppercase">
+                {t('pages.cart.drawer.removed_items', 'Removed Items')}
+              </h3>
               <div className="flex flex-col gap-2">
                 {removedItems.map(item => (
                   <div key={item.product.id} className="flex items-center gap-3 opacity-50 hover:opacity-100 transition-opacity p-1">
@@ -147,7 +155,9 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
                       <p className="text-xs font-semibold truncate text-primary">{item.product.name}</p>
                       {(item.product.cart_count ?? 0) > 0 && (
                         <p className="text-[8px] font-mono mt-0.5 opacity-50" style={{ color: 'var(--gold)' }}>
-                          ● {item.product.cart_count} {item.product.cart_count === 1 ? 'OTHER USER HAS' : 'OTHER USERS HAVE'} THIS IN THEIR CART
+                          ● {(item.product.cart_count ?? 0) === 1 
+                              ? t('pages.product.cart_users_has', '{count} OTHER USER HAS THIS IN THEIR CART').replace('{count}', (item.product.cart_count ?? 0).toString())
+                              : t('pages.product.cart_users_have', '{count} OTHER USERS HAVE THIS IN THEIR CART').replace('{count}', (item.product.cart_count ?? 0).toString())}
                         </p>
                       )}
                     </div>
@@ -156,12 +166,12 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
                         onClick={() => restoreItem(item.product.id)}
                         className="text-[9px] font-mono-stack px-2 py-1 bg-ink-border rounded hover:bg-gold hover:text-black transition-colors uppercase"
                       >
-                        Restore
+                        {t('pages.cart.drawer.restore', 'Restore')}
                       </button>
                       <button 
                         onClick={() => permanentRemove(item.product.id)}
                         className="p-1 text-hp-color"
-                        title="Delete permanently"
+                        title={t('pages.cart.drawer.delete_perm_tooltip', 'Delete permanently')}
                       >
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
@@ -179,16 +189,18 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
         {items.length > 0 && (
           <div className="p-5" style={{ borderTop: '1px solid var(--ink-border)' }}>
             <div className="flex justify-between items-center mb-4">
-              <span style={{ fontFamily: 'Bebas Neue, sans-serif', letterSpacing: '0.05em', fontSize: '1.1rem' }}>TOTAL</span>
+              <span style={{ fontFamily: 'Bebas Neue, sans-serif', letterSpacing: '0.05em', fontSize: '1.1rem' }}>
+                {t('pages.cart.drawer.total', 'TOTAL')}
+              </span>
                <span className="price text-xl">${totalPrice.toLocaleString('en-US', { maximumFractionDigits: 0 })} COP</span>
             </div>
             <div style={{ background: 'var(--ink-card)', border: '1px dashed var(--ink-border)', borderRadius: 6, padding: '0.75rem 1rem', marginBottom: '0.75rem' }}>
               <p className="text-xs text-center" style={{ color: 'var(--text-muted)' }}>
-                📦 Revisa tu orden y completa los datos de envío.
+                📦 {t('pages.cart.drawer.checkout_notice', 'Review your order and complete shipping details.')}
               </p>
             </div>
             <Link href="/checkout" onClick={onClose} className="btn-primary text-center w-full block">
-              PROCEDER AL CHECKOUT →
+              {t('pages.cart.drawer.checkout_btn', 'PROCEED TO CHECKOUT →')}
             </Link>
           </div>
         )}

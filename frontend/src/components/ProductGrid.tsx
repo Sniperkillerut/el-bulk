@@ -5,6 +5,7 @@ import useSWR from 'swr';
 import { fetchProducts, fetchCategories } from '@/lib/api';
 import ProductCard from '@/components/ProductCard';
 import { FOIL_LABELS, TREATMENT_LABELS, TCG_LABELS, CustomCategory } from '@/lib/types';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface FiltersState {
   search: string;
@@ -22,12 +23,16 @@ interface FiltersState {
 interface ProductGridProps {
   tcg: string;
   category: 'singles' | 'sealed' | 'accessories' | 'store_exclusives';
-  title: string;
+  title?: string;
   subtitle?: string;
+  titleKey?: string;
+  subtitleKey?: string;
 }
 
-export default function ProductGrid({ tcg, category, title, subtitle }: ProductGridProps) {
+export default function ProductGrid({ tcg, category, title, subtitle, titleKey, subtitleKey }: ProductGridProps) {
+  const { t } = useLanguage();
   const [availableCollections, setAvailableCollections] = useState<CustomCategory[]>([]);
+  const [tcgName, setTcgName] = useState(tcg.toUpperCase());
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<FiltersState>({
     search: '',
@@ -107,8 +112,20 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
         console.error('Failed to load categories for grid:', err);
       }
     }
+    async function loadTCGs() {
+      if (tcg === 'all' || tcg === 'accessories') return;
+      try {
+        const { fetchTCGs } = await import('@/lib/api');
+        const tcgs = await fetchTCGs(true);
+        const active = tcgs.find(it => it.id === tcg);
+        if (active) setTcgName(active.name);
+      } catch (err) {
+        console.error('Failed to load tcg name for grid:', err);
+      }
+    }
     loadCats();
-  }, []);
+    loadTCGs();
+  }, [tcg]);
 
   const toggleFilter = (key: keyof FiltersState, value: string | boolean) => {
     setPage(1);
@@ -140,12 +157,16 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
       {/* Header */}
       <div className="mb-6 md:mb-8">
         <p className="text-[10px] sm:text-xs font-mono-stack mb-1" style={{ color: 'var(--text-muted)' }}>
-          {TCG_LABELS[tcg] || tcg.toUpperCase()} / {category.toUpperCase()}
+          {t(`tcg.${tcg}`, TCG_LABELS[tcg] || tcg.toUpperCase())} / {t(`pages.inventory.category.${category}`, category.toUpperCase())}
         </p>
         <h1 className="font-display text-fluid-h1" style={{ color: 'var(--text-primary)' }}>
-          {title}
+          {titleKey ? t(titleKey, title || '').replace('{tcg}', tcgName) : title}
         </h1>
-        {subtitle && <p style={{ color: 'var(--text-secondary)' }} className="mt-2 text-sm md:text-base">{subtitle}</p>}
+        {(subtitleKey || subtitle) && (
+          <p style={{ color: 'var(--text-secondary)' }} className="mt-2 text-sm md:text-base">
+            {subtitleKey ? t(subtitleKey, subtitle || '').replace('{tcg}', tcgName) : subtitle}
+          </p>
+        )}
         <div className="gold-line mt-4" />
       </div>
 
@@ -171,7 +192,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
               >
                 <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
               </svg>
-              <span className="font-display tracking-wider">FILTERS</span>
+              <span className="font-display tracking-wider">{t('pages.inventory.grid.filters.title', 'FILTERS')}</span>
             </div>
           </button>
         </div>
@@ -191,7 +212,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
         `}>
           {/* Mobile Drawer Header */}
           <div className="flex justify-between items-center mb-6 md:hidden border-b border-kraft-dark pb-4">
-            <h2 className="font-display text-2xl text-ink-deep">Filters</h2>
+            <h2 className="font-display text-2xl text-ink-deep">{t('pages.inventory.grid.filters.title', 'Filters')}</h2>
             <button onClick={() => setIsMobileFiltersOpen(false)} className="text-2xl text-text-muted hover:text-ink-deep flex items-center justify-center w-8 h-8 rounded-sm border border-kraft-dark bg-kraft-light">
               &times;
             </button>
@@ -200,7 +221,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
           <div className="flex flex-col gap-3 md:pr-2 pb-8">
             {/* Logic Toggle */}
             <div className="flex flex-col gap-2">
-              <p className="text-[10px] font-bold text-text-muted uppercase font-mono-stack">Search Strategy</p>
+              <p className="text-[10px] font-bold text-text-muted uppercase font-mono-stack">{t('pages.inventory.grid.filters.strategy.title', 'Search Strategy')}</p>
               <div className="flex p-1 bg-kraft-mid/30 rounded-md border border-kraft-dark/20">
                 <button
                   onClick={() => { setLogic('or'); setPage(1); }}
@@ -209,7 +230,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                     : 'text-text-muted hover:text-emerald-600'
                     }`}
                 >
-                  BROAD (OR)
+                  {t('pages.inventory.grid.filters.strategy.broad', 'BROAD (OR)')}
                 </button>
                 <button
                   onClick={() => { setLogic('and'); setPage(1); }}
@@ -218,22 +239,22 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                     : 'text-text-muted hover:text-orange-600'
                     }`}
                 >
-                  NARROW (AND)
+                  {t('pages.inventory.grid.filters.strategy.narrow', 'NARROW (AND)')}
                 </button>
               </div>
               <p className="text-[8px] italic text-text-muted/80 leading-tight">
                 {logic === 'or'
-                  ? "Broadens results: match ANY selected filter."
-                  : "Narrows results: match ALL selected filters."}
+                  ? t('pages.inventory.grid.filters.strategy.broad_desc', "Broadens results: match ANY selected filter.")
+                  : t('pages.inventory.grid.filters.strategy.narrow_desc', "Narrows results: match ALL selected filters.")}
               </p>
             </div>
 
             {/* Search (Mobile/Desktop sidebar) */}
             <div>
-              <p className="text-[10px] font-bold text-text-muted uppercase mb-2 font-mono-stack">Keywords</p>
+              <p className="text-[10px] font-bold text-text-muted uppercase mb-2 font-mono-stack">{t('pages.inventory.grid.filters.keywords', 'Keywords')}</p>
               <input
                 type="search"
-                placeholder="Search cards..."
+                placeholder={t('pages.inventory.grid.filters.search_placeholder', 'Search cards...')}
                 value={filters.search}
                 onChange={e => handleFilterChange('search', e.target.value)}
                 id={`search-${tcg}-${category}`}
@@ -244,7 +265,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
               <div className="flex flex-col gap-1">
                 {/* Stock - Always at top */}
                 <div className="border-b border-ink-border/20 py-2 px-2">
-                  <p className="font-display text-xl sm:text-2xl text-ink-deep mb-3 uppercase tracking-tight">Availability</p>
+                  <p className="font-display text-xl sm:text-2xl text-ink-deep mb-3 uppercase tracking-tight">{t('pages.inventory.grid.filters.availability', 'Availability')}</p>
                   <label className="flex items-center justify-between cursor-pointer group">
                     <div className="flex items-center gap-2.5">
                       <input
@@ -254,7 +275,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                         className="w-4 h-4 border-2 border-kraft-dark rounded-sm checked:bg-gold appearance-none relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-[10px] checked:after:text-white transition-all"
                       />
                       <span className="text-xs font-bold text-text-primary group-hover:text-gold transition-colors">
-                        In Stock Only
+                        {t('pages.inventory.grid.filters.in_stock', 'In Stock Only')}
                       </span>
                     </div>
                     {facets?.in_stock && (
@@ -282,7 +303,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
 
                 <FilterSection
                   title="Finish"
-                  items={Object.entries(FOIL_LABELS).map(([id, label]) => ({ id, label }))}
+                  items={Object.entries(FOIL_LABELS).map(([id, label]) => ({ id, label: t(`pages.product.finish.${id}`, label) }))}
                   selected={filters.foil}
                   onToggle={(val) => toggleFilter('foil', val)}
                   counts={facets?.foil}
@@ -290,7 +311,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
 
                 <FilterSection
                   title="Version"
-                  items={Object.entries(TREATMENT_LABELS).map(([id, label]) => ({ id, label }))}
+                  items={Object.entries(TREATMENT_LABELS).map(([id, label]) => ({ id, label: t(`pages.product.version.${id}`, label) }))}
                   selected={filters.treatment}
                   onToggle={(val) => toggleFilter('treatment', val)}
                   counts={facets?.treatment}
@@ -301,12 +322,12 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                     title="Rarity"
                     initialOpen={false}
                     items={[
-                      { id: 'Common', label: 'Common', color: '#1a1714' },
-                      { id: 'Uncommon', label: 'Uncommon', color: '#707883' },
-                      { id: 'Rare', label: 'Rare', color: '#b59119' },
-                      { id: 'Mythic', label: 'Mythic', color: '#d14210' },
-                      { id: 'Special', label: 'Special', color: '#6e2191' },
-                      { id: 'Bonus', label: 'Bonus', color: '#6e2191' }
+                      { id: 'Common', label: t('pages.inventory.grid.sort.rarity.common', 'Common'), color: '#1a1714' },
+                      { id: 'Uncommon', label: t('pages.inventory.grid.sort.rarity.uncommon', 'Uncommon'), color: '#707883' },
+                      { id: 'Rare', label: t('pages.inventory.grid.sort.rarity.rare', 'Rare'), color: '#b59119' },
+                      { id: 'Mythic', label: t('pages.inventory.grid.sort.rarity.mythic', 'Mythic'), color: '#d14210' },
+                      { id: 'Special', label: t('pages.inventory.grid.sort.rarity.special', 'Special'), color: '#6e2191' },
+                      { id: 'Bonus', label: t('pages.inventory.grid.sort.rarity.bonus', 'Bonus'), color: '#6e2191' }
                     ]}
                     selected={filters.rarity}
                     onToggle={(val) => toggleFilter('rarity', val)}
@@ -327,12 +348,12 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                     title="Color"
                     initialOpen={false}
                     items={[
-                      { id: 'W', label: 'White', color: '#f8f6d3' },
-                      { id: 'U', label: 'Blue', color: '#0e68ab' },
-                      { id: 'B', label: 'Black', color: '#150b00' },
-                      { id: 'R', label: 'Red', color: '#d3202a' },
-                      { id: 'G', label: 'Green', color: '#00733e' },
-                      { id: 'C', label: 'Colorless', color: '#90adbb' }
+                      { id: 'W', label: t('pages.inventory.grid.sort.color.white', 'White'), color: '#f8f6d3' },
+                      { id: 'U', label: t('pages.inventory.grid.sort.color.blue', 'Blue'), color: '#0e68ab' },
+                      { id: 'B', label: t('pages.inventory.grid.sort.color.black', 'Black'), color: '#150b00' },
+                      { id: 'R', label: t('pages.inventory.grid.sort.color.red', 'Red'), color: '#d3202a' },
+                      { id: 'G', label: t('pages.inventory.grid.sort.color.green', 'Green'), color: '#00733e' },
+                      { id: 'C', label: t('pages.inventory.grid.sort.color.colorless', 'Colorless'), color: '#90adbb' }
                     ]}
                     selected={filters.color}
                     onToggle={(val) => toggleFilter('color', val)}
@@ -344,17 +365,17 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                   <FilterSection
                     title="Language"
                     items={[
-                      { id: 'en', label: 'English' },
-                      { id: 'es', label: 'Spanish' },
-                      { id: 'jp', label: 'Japanese' },
-                      { id: 'it', label: 'Italian' },
-                      { id: 'fr', label: 'French' },
-                      { id: 'de', label: 'German' },
-                      { id: 'pt', label: 'Portuguese' },
-                      { id: 'ru', label: 'Russian' },
-                      { id: 'kr', label: 'Korean' },
-                      { id: 'zhs', label: 'CH Simpl.' },
-                      { id: 'zht', label: 'CH Trad.' }
+                      { id: 'en', label: t('pages.inventory.grid.sort.language.en', 'English') },
+                      { id: 'es', label: t('pages.inventory.grid.sort.language.es', 'Spanish') },
+                      { id: 'jp', label: t('pages.inventory.grid.sort.language.jp', 'Japanese') },
+                      { id: 'it', label: t('pages.inventory.grid.sort.language.it', 'Italian') },
+                      { id: 'fr', label: t('pages.inventory.grid.sort.language.fr', 'French') },
+                      { id: 'de', label: t('pages.inventory.grid.sort.language.de', 'German') },
+                      { id: 'pt', label: t('pages.inventory.grid.sort.language.pt', 'Portuguese') },
+                      { id: 'ru', label: t('pages.inventory.grid.sort.language.ru', 'Russian') },
+                      { id: 'kr', label: t('pages.inventory.grid.sort.language.kr', 'Korean') },
+                      { id: 'zhs', label: t('pages.inventory.grid.sort.language.zhs', 'CH Simpl.') },
+                      { id: 'zht', label: t('pages.inventory.grid.sort.language.zht', 'CH Trad.') }
                     ]}
                     selected={filters.language}
                     onToggle={(val) => toggleFilter('language', val)}
@@ -376,7 +397,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                     className="btn-secondary w-full mt-4"
                     style={{ fontSize: '0.85rem', padding: '0.4rem' }}
                   >
-                    Clear All Filters ×
+                    {t('pages.inventory.grid.filters.clear', 'Clear All Filters ×')}
                   </button>
                 )}
               </div>
@@ -389,10 +410,12 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
           {/* Sort & Results bar */}
           <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
             <p className="text-xs font-mono-stack" style={{ color: 'var(--text-muted)' }}>
-              {loading ? '...' : `${total} result${total !== 1 ? 's' : ''}`}
+              {loading ? '...' : `${total} ${total === 1 
+                                  ? t('pages.inventory.grid.status.result', 'result') 
+                                  : t('pages.inventory.grid.status.results', 'results')}`}
             </p>
             <div className="flex items-center gap-2">
-              <label className="text-[10px] font-mono-stack font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Sort</label>
+              <label className="text-[10px] font-mono-stack font-bold uppercase" style={{ color: 'var(--text-muted)' }}>{t('pages.inventory.grid.sort.label', 'Sort')}</label>
               <select
                 value={sortBy}
                 onChange={e => { setSortBy(e.target.value); setPage(1); }}
@@ -400,17 +423,17 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                 style={{ background: 'var(--kraft-light)', color: 'var(--ink-deep)' }}
                 id={`sort-${tcg}-${category}`}
               >
-                <option value="created_at">Newest</option>
-                <option value="name">Name</option>
-                <option value="price">Price</option>
-                {(tcg === 'mtg' || tcg === 'all') && <option value="cmc">Mana Cost</option>}
-                {(tcg === 'mtg' || tcg === 'all') && <option value="rarity">Rarity</option>}
+                <option value="created_at">{t('pages.inventory.grid.sort.newest', 'Newest')}</option>
+                <option value="name">{t('pages.inventory.grid.sort.name', 'Name')}</option>
+                <option value="price">{t('pages.inventory.grid.sort.price', 'Price')}</option>
+                {(tcg === 'mtg' || tcg === 'all') && <option value="cmc">{t('pages.inventory.grid.sort.cmc', 'Mana Cost')}</option>}
+                {(tcg === 'mtg' || tcg === 'all') && <option value="rarity">{t('pages.inventory.grid.sort.rarity', 'Rarity')}</option>}
               </select>
               <button
                 onClick={() => { setSortDir(d => d === 'asc' ? 'desc' : 'asc'); setPage(1); }}
                 className="flex items-center justify-center w-8 h-8 rounded-sm border-2 border-kraft-dark text-sm font-mono-stack transition-colors hover:bg-kraft-mid"
                 style={{ background: 'var(--kraft-light)', color: 'var(--ink-deep)' }}
-                title={sortDir === 'asc' ? 'Ascending' : 'Descending'}
+                title={sortDir === 'asc' ? t('pages.common.status.ascending', 'Ascending') : t('pages.common.status.descending', 'Descending')}
                 id={`sort-dir-${tcg}-${category}`}
               >
                 {sortDir === 'asc' ? '↑' : '↓'}
@@ -431,8 +454,8 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
             </div>
           ) : (!products || products.length === 0) ? (
             <div className="stamp-border rounded-lg p-16 text-center" style={{ color: 'var(--text-muted)' }}>
-              <p className="font-display text-3xl mb-2">NO RESULTS</p>
-              <p className="text-sm">Try clearing your filters or check back later.</p>
+              <p className="font-display text-3xl mb-2">{t('pages.inventory.grid.status.no_results', 'NO RESULTS FOUND')}</p>
+              <p className="text-sm">{t('pages.inventory.grid.status.no_results_desc', 'Try clearing your filters or check back later.')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fade-up">
@@ -448,7 +471,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                 disabled={page === 1}
                 className="btn-secondary"
                 style={{ padding: '0.4rem 1rem', fontSize: '0.85rem', opacity: page === 1 ? 0.4 : 1 }}
-              >← Prev</button>
+              >{t('pages.inventory.grid.pagination.prev', '← Prev')}</button>
               <span className="flex items-center px-3 text-sm font-mono-stack" style={{ color: 'var(--text-secondary)' }}>
                 {page} / {totalPages}
               </span>
@@ -457,7 +480,7 @@ export default function ProductGrid({ tcg, category, title, subtitle }: ProductG
                 disabled={page === totalPages}
                 className="btn-secondary"
                 style={{ padding: '0.4rem 1rem', fontSize: '0.85rem', opacity: page === totalPages ? 0.4 : 1 }}
-              >Next →</button>
+              >{t('pages.inventory.grid.pagination.next', 'Next →')}</button>
             </div>
           )}
         </div>
@@ -482,6 +505,7 @@ function FilterSection({
   counts?: Record<string, number>,
   initialOpen?: boolean
 }) {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(initialOpen);
 
   if (items.length === 0) return null;
@@ -501,7 +525,7 @@ function FilterSection({
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex justify-between items-center group mb-1"
       >
-        <span className="font-display text-xl sm:text-2xl text-ink-deep group-hover:text-gold transition-colors uppercase tracking-tight">{title}</span>
+        <span className="font-display text-xl sm:text-2xl text-ink-deep group-hover:text-gold transition-colors uppercase tracking-tight">{t(`grid.filters.${title.toLowerCase()}`, title)}</span>
         <span className={`text-sm transition-transform duration-300 ${isOpen ? 'rotate-180 text-gold' : 'text-text-muted'}`}>
           {isOpen ? '▲' : '▼'}
         </span>

@@ -1,8 +1,7 @@
-'use client';
-
 import { useState, useEffect } from 'react';
 import { useUser } from '@/context/UserContext';
 import { subscribeToNewsletter } from '@/lib/api';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface NewsletterFormProps {
   compact?: boolean;
@@ -10,6 +9,7 @@ interface NewsletterFormProps {
 
 export default function NewsletterForm({ compact = false }: NewsletterFormProps) {
   const { user } = useUser();
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
@@ -28,11 +28,11 @@ export default function NewsletterForm({ compact = false }: NewsletterFormProps)
     try {
       await subscribeToNewsletter(email);
       setStatus('success');
-      setMessage('THX! CHECK YOUR INBOX SOON.');
+      setMessage(t('pages.common.forms.newsletter.success', 'THX! CHECK YOUR INBOX SOON.'));
       if (!user) setEmail(''); // Clear only if not logged in
     } catch (err: any) {
       setStatus('error');
-      setMessage(err.message || 'SOMETHING WENT WRONG.');
+      setMessage(err.message || t('pages.common.forms.newsletter.error', 'SOMETHING WENT WRONG.'));
     }
   };
 
@@ -51,7 +51,7 @@ export default function NewsletterForm({ compact = false }: NewsletterFormProps)
           type="email" 
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="YOUR EMAIL" 
+          placeholder={t('pages.common.forms.newsletter.placeholder', 'YOUR EMAIL')}
           required
           disabled={status === 'loading'}
           className="flex-1 bg-surface border border-kraft-shadow px-3 py-2 text-xs font-mono-stack focus:outline-gold-dark disabled:opacity-50" 
@@ -61,7 +61,7 @@ export default function NewsletterForm({ compact = false }: NewsletterFormProps)
           disabled={status === 'loading' || !email}
           className="btn-primary py-2 px-4 text-xs disabled:opacity-50 min-w-[60px]"
         >
-          {status === 'loading' ? '...' : 'OK'}
+          {status === 'loading' ? '...' : t('pages.common.forms.newsletter.submit', 'OK')}
         </button>
       </div>
       {status === 'error' && (

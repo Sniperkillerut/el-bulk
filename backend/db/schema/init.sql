@@ -22,6 +22,7 @@
 \i tables/newsletter_subscriber.sql
 \i tables/bounty_offer.sql
 \i tables/theme.sql
+\i tables/translation.sql
 
 -- 3. Dependent Tables
 \i tables/product.sql

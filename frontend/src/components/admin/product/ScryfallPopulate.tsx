@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ScryfallCard } from '@/lib/types';
 import { getScryfallImage } from '@/lib/mtg-logic';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface ScryfallPopulateProps {
   name: string;
@@ -21,6 +22,7 @@ export default function ScryfallPopulate({
   name, setCode, collectorNumber, setName, scryfallPrints, lookingUp,
   onNameChange, onSetCodeChange, onCollectorNumberChange, onPopulate, onCardSelect, onSetSearchChange
 }: ScryfallPopulateProps) {
+  const { t } = useLanguage();
   const [suggestions, setSuggestions] = useState<ScryfallCard[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [searching, setSearching] = useState(false);
@@ -75,7 +77,7 @@ export default function ScryfallPopulate({
       
       <div className="flex items-end gap-2 flex-wrap sm:flex-nowrap">
         <div style={{ width: '90px' }}>
-          <label className="text-[10px] font-mono-stack mb-1 block uppercase opacity-60">Set</label>
+          <label className="text-[10px] font-mono-stack mb-1 block uppercase opacity-60">{t('components.admin.product_modal.variant.set_code_label', 'Set')}</label>
           {scryfallPrints.length > 0 ? (
             <select value={setCode} onChange={e => onSetSearchChange(e.target.value)} className="font-bold bg-white/50 border-white/20">
               {Array.from(new Map(scryfallPrints.filter(c => !!c).map(c => [c.set, c.set_name])).entries()).map(([code, name]) => (
@@ -102,8 +104,8 @@ export default function ScryfallPopulate({
 
         <div className="flex-1 min-w-[200px] relative">
           <div className="flex justify-between items-end mb-1">
-            <label className="text-[10px] font-mono-stack uppercase opacity-60">Card Name (Search Scryfall)</label>
-            {searching && <span className="text-[9px] font-mono-stack animate-pulse text-gold">Searching...</span>}
+            <label className="text-[10px] font-mono-stack uppercase opacity-60">{t('components.admin.product_modal.scryfall.search_hint', 'Card Name (Search Scryfall)')}</label>
+            {searching && <span className="text-[9px] font-mono-stack animate-pulse text-gold">{t('components.admin.product_modal.scryfall.looking_up', 'Searching...')}</span>}
             {setName && <span className="text-[10px] font-mono-stack truncate text-gold max-w-[250px]">{setName}</span>}
           </div>
           <input 
@@ -139,7 +141,7 @@ export default function ScryfallPopulate({
           disabled={lookingUp || (!name.trim() && (!setCode.trim() || !collectorNumber.trim()))}
           className="btn-primary px-8 h-[46px] text-sm tracking-widest font-bold shadow-lg"
           style={{ opacity: lookingUp ? 0.7 : 1 }}>
-          {lookingUp ? '⏳ PROCESSING...' : scryfallPrints.length > 0 ? '✓ RE-SYNC' : '📥 POPULATE'}
+          {lookingUp ? t('components.admin.product_modal.scryfall.looking_up', '⌛ PROCESSING...') : scryfallPrints.length > 0 ? '✓ RE-SYNC' : t('components.admin.product_modal.scryfall.populate_btn', '📥 POPULATE')}
         </button>
       </div>
 

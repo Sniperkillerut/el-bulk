@@ -29,7 +29,7 @@ func main() {
 	}
 
 	clearTables(database)
-	
+
 	adminID := seedAdmin(database)
 	seedTCGs(database)
 	categoryMap := seedCategories(database)
@@ -37,6 +37,7 @@ func main() {
 	seedSettings(database)
 	seedSets(database)
 	seedThemes(database)
+	seedTranslations(database)
 
 	if *mode == "minimal" {
 		seedMinimalData(database, categoryMap, storageIDs)
@@ -80,8 +81,12 @@ func clearTables(db *sqlx.DB) {
 func seedAdmin(db *sqlx.DB) string {
 	user := os.Getenv("ADMIN_USERNAME")
 	pass := os.Getenv("ADMIN_PASSWORD")
-	if user == "" { user = "admin" }
-	if pass == "" { pass = "elbulk2024!" }
+	if user == "" {
+		user = "admin"
+	}
+	if pass == "" {
+		pass = "elbulk2024!"
+	}
 
 	hash, _ := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
 	var id string
@@ -141,8 +146,8 @@ func seedSettings(db *sqlx.DB) {
 	settings := map[string]string{
 		"usd_to_cop_rate": "4450",
 		"eur_to_cop_rate": "4800",
-		"contact_email":    "contact@el-bulk.com",
-		"contact_phone":    "+57 300 123 4567",
+		"contact_email":   "contact@el-bulk.com",
+		"contact_phone":   "+57 300 123 4567",
 	}
 	for k, v := range settings {
 		db.Exec(`INSERT INTO setting (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`, k, v)
@@ -181,7 +186,7 @@ func seedMinimalData(db *sqlx.DB, cats map[string]string, storageIDs []string) s
 		INSERT INTO product (name, tcg, category, set_name, set_code, price_source, price_cop_override, stock, image_url, color_identity)
 		VALUES ($1, 'mtg', 'singles', 'Alpha', 'LEA', 'manual', 25000000, 1, 'https://cards.scryfall.io/normal/front/1/9/19911e6e-7c35-4281-b31c-266382f052cc.jpg?1717190810', 'C') RETURNING id
 	`, name).Scan(&pID)
-	
+
 	db.Exec(`INSERT INTO product_storage (product_id, storage_id, quantity) VALUES ($1, $2, 1)`, pID, storageIDs[0])
 	db.Exec(`INSERT INTO product_category (product_id, category_id) VALUES ($1, $2)`, pID, cats["featured"])
 	return pID
@@ -235,7 +240,7 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 	}
 
 	logger.Info("Fetching bulk metadata for %d cards...", len(identifiers))
-	
+
 	var results []external.CardLookupResult
 	// Reduced chunk size for better reliability and added basic retry
 	chunkSize := 25
@@ -245,10 +250,10 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 			end = len(identifiers)
 		}
 		chunk := identifiers[i:end]
-		
+
 		var res []external.CardLookupResult
 		var err error
-		
+
 		// 3 attempts per chunk
 		for attempt := 1; attempt <= 3; attempt++ {
 			res, err = external.BatchLookupMTGCard(chunk)
@@ -289,13 +294,13 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 				full_art, textless, promo_type, cmc, color_identity
 			) VALUES ($1, 'mtg', 'singles', $2, $3, $4, $5, $6, $7, $8, 'manual', $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27)
 			RETURNING id
-		`, 
-		res.Name, res.SetName, res.SetCode, res.CollectorNumber, cond, f, t, res.Language, 
-		price, res.ImageURL, stock, res.Rarity, 
-		res.IsLegendary, res.IsHistoric, res.IsLand, res.IsBasicLand, 
-		res.ArtVariation, res.OracleText, res.Artist, res.TypeLine, 
-		res.BorderColor, res.Frame, res.FullArt, res.Textless, res.PromoType, 
-		res.CMC, res.ColorIdentity)
+		`,
+			res.Name, res.SetName, res.SetCode, res.CollectorNumber, cond, f, t, res.Language,
+			price, res.ImageURL, stock, res.Rarity,
+			res.IsLegendary, res.IsHistoric, res.IsLand, res.IsBasicLand,
+			res.ArtVariation, res.OracleText, res.Artist, res.TypeLine,
+			res.BorderColor, res.Frame, res.FullArt, res.Textless, res.PromoType,
+			res.CMC, res.ColorIdentity)
 
 		if err == nil {
 			productIDs = append(productIDs, pID)
@@ -312,7 +317,10 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 
 	// 2. MTG Sealed
 	logger.Info("Seeding MTG Sealed...")
-	mtgSealed := []struct{ Name, Set, Img string; Price float64 }{
+	mtgSealed := []struct {
+		Name, Set, Img string
+		Price          float64
+	}{
 		{"Outlaws of Thunder Junction Play Booster Box", "OTJ", "https://m.media-amazon.com/images/I/71D+8+8+L+L._AC_SL1500_.jpg", 650000},
 		{"Modern Horizons 3 Collector Booster Box", "MH3", "https://m.media-amazon.com/images/I/81P+P+P+L+L._AC_SL1500_.jpg", 1850000},
 		{"Murders at Karlov Manor Commander Deck", "MKC", "https://m.media-amazon.com/images/I/71R+R+R+L+L._AC_SL1500_.jpg", 180000},
@@ -327,7 +335,10 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 
 	// 3. Pokémon Singles & Sealed
 	logger.Info("Seeding Pokémon...")
-	pkmnItems := []struct{ Name, Cat, Set, Img string; Price float64 }{
+	pkmnItems := []struct {
+		Name, Cat, Set, Img string
+		Price               float64
+	}{
 		{"Charizard ex", "singles", "151", "https://images.pokemontcg.io/sv3pt5/199_hires.png", 550000},
 		{"Pikachu with Grey Felt Hat", "singles", "Promo", "https://images.pokemontcg.io/svnp/85_hires.png", 800000},
 		{"Scarlet & Violet 151 Elite Trainer Box", "sealed", "151", "https://m.media-amazon.com/images/I/71S+S+S+L+L._AC_SL1500_.jpg", 280000},
@@ -343,7 +354,10 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 
 	// 4. Yu-Gi-Oh Singles & Sealed
 	logger.Info("Seeding Yu-Gi-Oh...")
-	ygoItems := []struct{ Name, Cat, Set, Img string; Price float64 }{
+	ygoItems := []struct {
+		Name, Cat, Set, Img string
+		Price               float64
+	}{
 		{"Blue-Eyes White Dragon (25th Anniversary)", "singles", "LOB", "https://m.media-amazon.com/images/I/51R+R+R+L+L.jpg", 120000},
 		{"Dark Magician (Ghost Rare)", "singles", "GFP2", "https://m.media-amazon.com/images/I/51G+G+G+L+L.jpg", 450000},
 		{"Legendary Collection: 25th Anniversary Edition", "sealed", "LC01", "https://m.media-amazon.com/images/I/81L+L+L+L+L._AC_SL1500_.jpg", 145000},
@@ -358,7 +372,10 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 
 	// 5. Accessories
 	logger.Info("Seeding Accessories...")
-	accs := []struct{ Name, Img string; Price float64 }{
+	accs := []struct {
+		Name, Img string
+		Price     float64
+	}{
 		{"Dragon Shield Matte - Jet Black", "https://m.media-amazon.com/images/I/71J+J+J+L+L._AC_SL1500_.jpg", 55000},
 		{"Ultimate Guard Flip'n'Tray 100+ - XenoSkin Blue", "https://m.media-amazon.com/images/I/71B+B+B+L+L._AC_SL1500_.jpg", 115000},
 		{"Gamegenic Squire 100+ Convertible - Red", "https://m.media-amazon.com/images/I/61G+G+G+L+L._AC_SL1500_.jpg", 85000},
@@ -380,9 +397,13 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 		var results []external.CardLookupResult
 		for i := 0; i < len(identifiers); i += 75 {
 			end := i + 75
-			if end > len(identifiers) { end = len(identifiers) }
+			if end > len(identifiers) {
+				end = len(identifiers)
+			}
 			res, err := external.BatchLookupMTGCard(identifiers[i:end])
-			if err == nil { results = append(results, res...) }
+			if err == nil {
+				results = append(results, res...)
+			}
 		}
 
 		for _, r := range results {
@@ -394,11 +415,11 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 					full_art, textless, promo_type, image_url, foil_treatment, card_treatment, rarity
 				)
 				VALUES ($1, $2, $3, $4, $5, 1, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, 'non_foil', 'normal', $23)
-			`, 
-			deckID, r.Name, r.SetName, r.SetCode, r.CollectorNumber, 
-			r.Language, r.ColorIdentity, r.CMC, r.IsLegendary, r.IsHistoric, r.IsLand, r.IsBasicLand, 
-			r.ArtVariation, r.OracleText, r.Artist, r.TypeLine, r.BorderColor, r.Frame, 
-			r.FullArt, r.Textless, r.PromoType, r.ImageURL, r.Rarity)
+			`,
+				deckID, r.Name, r.SetName, r.SetCode, r.CollectorNumber,
+				r.Language, r.ColorIdentity, r.CMC, r.IsLegendary, r.IsHistoric, r.IsLand, r.IsBasicLand,
+				r.ArtVariation, r.OracleText, r.Artist, r.TypeLine, r.BorderColor, r.Frame,
+				r.FullArt, r.Textless, r.PromoType, r.ImageURL, r.Rarity)
 		}
 	}
 
@@ -406,9 +427,9 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 	err := db.QueryRow(`
 		INSERT INTO product (name, tcg, category, price_source, price_cop_override, stock, image_url, description)
 		VALUES ($1, 'mtg', 'store_exclusives', 'manual', $2, 5, $3, $4) RETURNING id
-	`, 
-		"Custom Commander Precon: Goblin Swarm", 
-		150000, 
+	`,
+		"Custom Commander Precon: Goblin Swarm",
+		150000,
 		"https://cards.scryfall.io/art_crop/front/0/e/0e8f6e6e-7c35-4281-b31c-266382f052cc.jpg",
 		"A highly synergistic 100-card goblin deck ready to play out of the box. Includes tokens and a deck box.",
 	).Scan(&deckID)
@@ -431,9 +452,9 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 	err = db.QueryRow(`
 		INSERT INTO product (name, tcg, category, price_source, price_cop_override, stock, image_url, description)
 		VALUES ($1, 'mtg', 'store_exclusives', 'manual', $2, 3, $3, $4) RETURNING id
-	`, 
-		"Premium Commander: Dragon Hoard", 
-		450000, 
+	`,
+		"Premium Commander: Dragon Hoard",
+		450000,
 		"https://cards.scryfall.io/art_crop/front/4/8/48002002-0002-48a4-a3ad-0002b8004f1a.jpg",
 		"A high-power 100-card Commander deck centered around the Ur-Dragon and Miirym. Includes rare dragons, fetch lands, and dual lands.",
 	).Scan(&dragonDeckID)
@@ -560,9 +581,9 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 	err = db.QueryRow(`
 		INSERT INTO product (name, tcg, category, price_source, price_cop_override, stock, image_url, description)
 		VALUES ($1, 'mtg', 'store_exclusives', 'manual', $2, 20, $3, $4) RETURNING id
-	`, 
-		"Hand-Crafted Wooden Tokens (Set of 10)", 
-		45000, 
+	`,
+		"Hand-Crafted Wooden Tokens (Set of 10)",
+		45000,
 		"https://images.unsplash.com/photo-1598214886806-c87b84b7078b?q=80&w=800&auto=format&fit=crop",
 		"Beautifully laser-engraved wooden tokens for tracking various MTG status effects and creatures. Includes 2x Goblin, 2x Zombie, 2x Treasure, and 4x Generic +1/+1 counters.",
 	).Scan(&tokensID)
@@ -609,12 +630,16 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 		`, fmt.Sprintf("User%d", i), "Test", fmt.Sprintf("user%d@example.com", i), fmt.Sprintf("300%07d", i)).Scan(&cID)
 
 		numOrders := rand.Intn(4) + 1
-		if i < 5 { numOrders = rand.Intn(10) + 10 } // Create some VIP customers with 10-20 orders
+		if i < 5 {
+			numOrders = rand.Intn(10) + 10
+		} // Create some VIP customers with 10-20 orders
 		for j := 0; j < numOrders; j++ {
 			var oID string
 			status := "completed"
-			if rand.Intn(10) > 8 { status = "pending" }
-			
+			if rand.Intn(10) > 8 {
+				status = "pending"
+			}
+
 			orderDate := time.Now().AddDate(0, 0, -rand.Intn(60))
 			completedAt := "NULL"
 			if status == "completed" {
@@ -629,12 +654,14 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 			// Items
 			total := 0.0
 			for k := 0; k < rand.Intn(3)+1; k++ {
-				if len(productIDs) == 0 { break }
+				if len(productIDs) == 0 {
+					break
+				}
 				pID := productIDs[rand.Intn(len(productIDs))]
 				var pName, pSet string
 				var pPrice float64
 				db.QueryRow("SELECT name, set_name, price_cop_override FROM product WHERE id = $1", pID).Scan(&pName, &pSet, &pPrice)
-				
+
 				qty := rand.Intn(2) + 1
 				var pCond, pFoil, pTreat string
 				db.QueryRow("SELECT condition, foil_treatment, card_treatment FROM product WHERE id = $1", pID).Scan(&pCond, &pFoil, &pTreat)
@@ -653,11 +680,15 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 
 func seedNotices(db *sqlx.DB, productIDs []string) {
 	logger.Info("Seeding notices (blog/news)...")
-	
+
 	p1Id := "PROD-1"
-	if len(productIDs) > 0 { p1Id = productIDs[0] }
+	if len(productIDs) > 0 {
+		p1Id = productIDs[0]
+	}
 	p2Id := "PROD-2"
-	if len(productIDs) > 1 { p2Id = productIDs[1] }
+	if len(productIDs) > 1 {
+		p2Id = productIDs[1]
+	}
 
 	notices := []struct{ Title, Slug, HTML, Img string }{
 		{
@@ -725,19 +756,19 @@ func seedNotices(db *sqlx.DB, productIDs []string) {
 			Title: "Upcoming Tournament: Pokémon Regional Qualifier",
 			Slug:  "pokemon-reg-qualifier-2026",
 			Img:   "https://images.unsplash.com/photo-1613771404721-1f92d799e49f?q=80&w=800&auto=format&fit=crop",
-			HTML: "<h2>Battle for the Top!</h2><p>Registration opens this Friday. Limited slots available. Format: Standard.</p>",
+			HTML:  "<h2>Battle for the Top!</h2><p>Registration opens this Friday. Limited slots available. Format: Standard.</p>",
 		},
 		{
 			Title: "Weekly Deal: Buy 3 Boosters, Get 1 Free!",
 			Slug:  "weekly-deal-boosters",
 			Img:   "https://images.unsplash.com/photo-1541560052753-107f96307409?q=80&w=800&auto=format&fit=crop",
-			HTML: "<p>This week only, buy any 3 TCG boosters and get the 4th one free. Valid across MTG, Pokémon, and Yu-Gi-Oh.</p>",
+			HTML:  "<p>This week only, buy any 3 TCG boosters and get the 4th one free. Valid across MTG, Pokémon, and Yu-Gi-Oh.</p>",
 		},
 		{
 			Title: "Trading Corner: Bulk Trade-in Event",
 			Slug:  "bulk-trade-in-event",
 			Img:   "https://images.unsplash.com/photo-1598214886806-c87b84b7078b?q=80&w=800&auto=format&fit=crop",
-			HTML: "<p>Turn your bulk commons and uncommons into store credit! We're running a special trade-in event this Saturday starting at 10 AM.</p>",
+			HTML:  "<p>Turn your bulk commons and uncommons into store credit! We're running a special trade-in event this Saturday starting at 10 AM.</p>",
 		},
 	}
 
@@ -800,7 +831,7 @@ func seedCRM(db *sqlx.DB, adminID string) {
 		}
 		template := requestTemplates[i%len(requestTemplates)]
 		status := []string{"pending", "accepted", "solved"}[i%3]
-		
+
 		db.Exec(`
 			INSERT INTO client_request (customer_id, customer_name, customer_contact, card_name, details, status)
 			VALUES ($1, $2, $3, $4, $5, $6)
@@ -818,7 +849,7 @@ func seedCRM(db *sqlx.DB, adminID string) {
 			}
 			bID := bountyIDs[i%len(bountyIDs)]
 			status := []string{"pending", "accepted", "fulfilled"}[i%3]
-			
+
 			createdAt := time.Now().AddDate(0, 0, -rand.Intn(45))
 			db.Exec(`
 				INSERT INTO bounty_offer (bounty_id, customer_id, quantity, status, admin_notes, created_at)
@@ -840,7 +871,7 @@ func seedCRM(db *sqlx.DB, adminID string) {
 				INSERT INTO bounty_offer (bounty_id, customer_id, quantity, status, admin_notes, created_at)
 				VALUES ($1, $2, 1, 'fulfilled', 'Linked transaction test', $3)
 			`, bowmastersID, c.ID, time.Now().AddDate(0, 0, -5))
-			
+
 			// Income
 			db.Exec(`
 				INSERT INTO client_request (customer_name, customer_contact, card_name, status, created_at)
@@ -871,9 +902,11 @@ func seedCRM(db *sqlx.DB, adminID string) {
 
 	for i, c := range customers {
 		noteChance := 5
-		if i < 5 { noteChance = 1 } // Every top customer gets a note
-		
-		if i % noteChance == 0 {
+		if i < 5 {
+			noteChance = 1
+		} // Every top customer gets a note
+
+		if i%noteChance == 0 {
 			db.Exec(`
 				INSERT INTO customer_note (customer_id, content, admin_id)
 				VALUES ($1, $2, $3)
@@ -982,4 +1015,1439 @@ func seedThemes(db *sqlx.DB) {
 			logger.Error("Failed to seed theme '%s': %v", t.Name, err)
 		}
 	}
+}
+
+func seedTranslations(db *sqlx.DB) {
+	logger.Info("🌐 Seeding Storefront Translations...")
+
+	type Transl struct {
+		Key    string
+		Locale string
+		Value  string
+	}
+
+	data := []Transl{
+		// Common
+		{"pages.common.buttons.add", "en", "ADD"},
+		{"pages.common.buttons.add", "es", "AGREGAR"},
+		{"pages.common.buttons.add_to_cart", "en", "ADD TO CART"},
+		{"pages.common.buttons.add_to_cart", "es", "AGREGAR AL CARRITO"},
+		{"pages.common.buttons.added_to_cart", "en", "ADDED TO CART"},
+		{"pages.common.buttons.added_to_cart", "es", "AGREGADO"},
+		{"pages.common.buttons.close", "en", "Close"},
+		{"pages.common.buttons.close", "es", "Cerrar"},
+		{"pages.common.status.sold_out", "en", "SOLD OUT"},
+		{"pages.common.status.sold_out", "es", "AGOTADO"},
+		{"pages.common.status.out_of_stock", "en", "OUT OF STOCK"},
+		{"pages.common.status.out_of_stock", "es", "SIN STOCK"},
+		{"pages.common.status.in_stock", "en", "IN STOCK"},
+		{"pages.common.status.in_stock", "es", "EN STOCK"},
+		{"pages.common.labels.art_by", "en", "Art by"},
+		{"pages.common.labels.art_by", "es", "Arte por"},
+		{"pages.common.labels.rarity", "en", "Rarity"},
+		{"pages.common.labels.rarity", "es", "Rareza"},
+		{"pages.common.labels.identity", "en", "Identity"},
+		{"pages.common.labels.identity", "es", "Identidad"},
+		{"pages.common.labels.art_var", "en", "Art Var."},
+		{"pages.common.labels.art_var", "es", "Var. de Arte"},
+		{"pages.common.labels.cmc", "en", "CMC"},
+		{"pages.common.labels.cmc", "es", "CMC"},
+		{"pages.common.labels.any_edition", "en", "Any Edition"},
+		{"pages.common.labels.any_edition", "es", "Cualquier Edición"},
+		{"pages.common.labels.normal", "en", "Normal"},
+		{"pages.common.labels.normal", "es", "Normal"},
+		{"pages.common.labels.any_condition", "en", "ANY"},
+		{"pages.common.labels.any_condition", "es", "CUALQUIERA"},
+		{"pages.common.labels.hidden", "en", "Hidden"},
+		{"pages.common.labels.hidden", "es", "Oculto"},
+		{"pages.common.labels.direct_demand", "en", "DIRECT DEMAND"},
+		{"pages.common.labels.direct_demand", "es", "DEMANDA DIRECTA"},
+		{"pages.common.labels.any", "en", "Any"},
+		{"pages.common.labels.any", "es", "Cualquiera"},
+		{"pages.common.labels.offer", "en", "Offer"},
+		{"pages.common.labels.offer", "es", "Oferta"},
+		{"pages.common.labels.ask", "en", "ASK"},
+		{"pages.common.labels.ask", "es", "CONSULTAR"},
+		{"pages.common.actions.sell", "en", "SELL"},
+		{"pages.common.actions.sell", "es", "VENDER"},
+		{"pages.common.tooltips.quantity_needed", "en", "Quantity needed"},
+		{"pages.common.tooltips.quantity_needed", "es", "Cantidad necesaria"},
+		{"pages.common.status.sold_out", "en", "SOLD OUT"},
+		{"pages.common.status.sold_out", "es", "AGOTADO"},
+		{"pages.common.buttons.add", "en", "ADD"},
+		{"pages.common.buttons.add", "es", "AGREGAR"},
+		{"pages.common.labels.error", "en", "Error"},
+		{"pages.common.labels.error", "es", "Error"},
+		{"pages.common.actions.cancel", "en", "CANCEL"},
+		{"pages.common.actions.cancel", "es", "CANCELAR"},
+		{"pages.common.labels.id_number", "en", "ID NUMBER"},
+		{"pages.common.labels.id_number", "es", "CÉDULA / ID"},
+		{"pages.common.labels.address", "en", "ADDRESS"},
+		{"pages.common.labels.address", "es", "DIRECCIÓN"},
+		{"pages.common.forms.newsletter.title", "en", "Join the Pack"},
+		{"pages.common.forms.newsletter.title", "es", "Únete a la manada"},
+		{"pages.common.forms.newsletter.subtitle", "en", "Get restock alerts and shop news."},
+		{"pages.common.forms.newsletter.subtitle", "es", "Alertas de stock y novedades."},
+		{"pages.common.forms.newsletter.placeholder", "en", "YOUR EMAIL"},
+		{"pages.common.forms.newsletter.placeholder", "es", "TU EMAIL"},
+		{"pages.common.forms.newsletter.submit", "en", "OK"},
+		{"pages.common.forms.newsletter.submit", "es", "OK"},
+		{"pages.common.forms.newsletter.success", "en", "THX! CHECK YOUR INBOX SOON."},
+		{"pages.common.forms.newsletter.success", "es", "¡GRACIAS! REVISA TU CORREO PRONTO."},
+		{"pages.common.forms.newsletter.error", "en", "SOMETHING WENT WRONG."},
+		{"pages.common.forms.newsletter.error", "es", "ALGO SALIÓ MAL."},
+
+		// Product
+		{"pages.product.details.not_found", "en", "ITEM NOT FOUND"},
+		{"pages.product.details.not_found", "es", "ARTÍCULO NO ENCONTRADO"},
+		{"pages.product.details.not_found_desc", "en", "This item may have been sold or removed."},
+		{"pages.product.details.not_found_desc", "es", "Este artículo puede haber sido vendido o eliminado."},
+		{"pages.product.details.view_full_page", "en", "View full page"},
+		{"pages.product.details.view_full_page", "es", "Ver página completa"},
+		{"pages.product.details.no_info", "en", "No additional information available."},
+		{"pages.product.details.no_info", "es", "No hay información adicional disponible."},
+		{"pages.product.details.textless", "en", "TEXTLESS"},
+		{"pages.product.details.textless", "es", "SIN TEXTO"},
+		{"pages.product.details.full_art", "en", "FULL ART"},
+		{"pages.product.details.full_art", "es", "ARTE COMPLETO"},
+		{"pages.product.status.in_stock", "en", "{count} IN STOCK"},
+		{"pages.product.status.in_stock", "es", "{count} EN STOCK"},
+		{"pages.product.cart_users_has", "en", "{count} OTHER USER HAS THIS IN THEIR CART"},
+		{"pages.product.cart_users_has", "es", "{count} OTRO USUARIO TIENE ESTO EN SU CARRITO"},
+		{"pages.product.cart_users_have", "en", "{count} OTHER USERS HAVE THIS IN THEIR CART"},
+		{"pages.product.cart_users_have", "es", "{count} OTROS USUARIOS TIENEN ESTO EN SU CARRITO"},
+		{"pages.product.status.available", "en", "available"},
+		{"pages.product.status.available", "es", "dispon."},
+
+		{"pages.common.status.active_bounty", "en", "Active Bounty"},
+		{"pages.common.status.active_bounty", "es", "Bounty Activo"},
+		{"pages.common.status.completed_past", "en", "Completed / Past"},
+		{"pages.common.status.completed_past", "es", "Completado / Pasado"},
+		{"pages.common.status.mission_complete", "en", "MISSION COMPLETE\nCARD DELIVERED"},
+		{"pages.common.status.mission_complete", "es", "MISIÓN CUMPLIDA\nCARTA ENTREGADA"},
+
+		// Checkout
+		{"pages.checkout.page.title", "en", "CHECKOUT"},
+		{"pages.checkout.page.title", "es", "FINALIZAR COMPRA"},
+		{"pages.checkout.section.contact", "en", "CONTACT INFORMATION"},
+		{"pages.checkout.section.contact", "es", "INFORMACIÓN DE CONTACTO"},
+		{"pages.checkout.form.first_name", "en", "FIRST NAME"},
+		{"pages.checkout.form.first_name", "es", "NOMBRE"},
+		{"pages.checkout.form.last_name", "en", "LAST NAME"},
+		{"pages.checkout.form.last_name", "es", "APELLIDO"},
+		{"pages.checkout.form.phone", "en", "PHONE / WHATSAPP"},
+		{"pages.checkout.form.phone", "es", "TELÉFONO / WHATSAPP"},
+		{"pages.checkout.form.email", "en", "EMAIL"},
+		{"pages.checkout.form.email", "es", "EMAIL"},
+		{"pages.checkout.form.id_number", "en", "ID NUMBER / CÉDULA"},
+		{"pages.checkout.form.id_number", "es", "CÉDULA / ID"},
+		{"pages.checkout.form.address", "en", "ADDRESS"},
+		{"pages.checkout.form.address", "es", "DIRECCIÓN"},
+		{"pages.checkout.section.payment", "en", "PAYMENT METHOD"},
+		{"pages.checkout.section.payment", "es", "MÉTODO DE PAGO"},
+		{"pages.checkout.form.notes", "en", "NOTES (OPTIONAL)"},
+		{"pages.checkout.form.notes", "es", "NOTAS (OPCIONAL)"},
+		{"pages.checkout.form.notes_placeholder", "en", "Special instructions..."},
+		{"pages.checkout.form.notes_placeholder", "es", "Instrucciones especiales..."},
+		{"pages.checkout.section.summary", "en", "ORDER SUMMARY"},
+		{"pages.checkout.section.summary", "es", "RESUMEN DEL PEDIDO"},
+		{"pages.checkout.summary.empty_cart", "en", "Your cart is empty."},
+		{"pages.checkout.summary.empty_cart", "es", "Tu carrito está vacío."},
+		{"pages.checkout.summary.vaciar", "en", "CLEAR CART"},
+		{"pages.checkout.summary.vaciar", "es", "VACIAR CARRITO"},
+		{"pages.checkout.summary.item", "en", "ITEM"},
+		{"pages.checkout.summary.item", "es", "ARTÍCULO"},
+		{"pages.checkout.summary.items", "en", "ITEMS"},
+		{"pages.checkout.summary.items", "es", "ARTÍCULOS"},
+		{"pages.checkout.buttons.confirm", "en", "CONFIRM ORDER →"},
+		{"pages.checkout.buttons.confirm", "es", "CONFIRMAR PEDIDO →"},
+		{"pages.checkout.buttons.processing", "en", "PROCESSING..."},
+		{"pages.checkout.buttons.processing", "es", "PROCESANDO..."},
+		{"pages.checkout.footer.notice", "en", "Upon confirmation, an advisor will contact you to coordinate delivery."},
+		{"pages.checkout.footer.notice", "es", "Al confirmar, un asesor se pondrá en contacto contigo para coordinar la entrega."},
+
+		// Order Confirmation
+		{"pages.order.confirmation.title", "en", "ORDER RECEIVED!"},
+		{"pages.order.confirmation.title", "es", "¡ORDEN RECIBIDA!"},
+		{"pages.order.confirmation.order_no", "en", "ORDER NUMBER"},
+		{"pages.order.confirmation.order_no", "es", "NÚMERO DE ORDEN"},
+		{"pages.order.confirmation.desc", "en", "Your order has been successfully registered. An advisor will contact you to coordinate payment and delivery."},
+		{"pages.order.confirmation.desc", "es", "Tu pedido ha sido registrado exitosamente. Un asesor se pondrá en contacto contigo para coordinar el pago y la entrega."},
+		{"pages.order.confirmation.back", "en", "← BACK TO STORE"},
+		{"pages.order.confirmation.back", "es", "← VOLVER A LA TIENDA"},
+		{"pages.order.confirmation.contact", "en", "CONTACT"},
+		{"pages.order.confirmation.contact", "es", "CONTACTAR"},
+
+		// Order Details Modal
+		{"pages.order.modal.title", "en", "Order {number}"},
+		{"pages.order.modal.title", "es", "Pedido {number}"},
+		{"pages.order.modal.title_generic", "en", "Order Details"},
+		{"pages.order.modal.title_generic", "es", "Detalles del Pedido"},
+		{"pages.order.modal.fetching", "en", "Fetching secure details"},
+		{"pages.order.modal.fetching", "es", "Obteniendo detalles seguros"},
+		{"pages.order.modal.error", "en", "Failed to load order details. Please try again."},
+		{"pages.order.modal.error", "es", "Error al cargar los detalles. Intenta de nuevo."},
+		{"pages.order.modal.close", "en", "Close Window"},
+		{"pages.order.modal.close", "es", "Cerrar Ventana"},
+		{"pages.order.modal.status_label", "en", "Order Status"},
+		{"pages.order.modal.status_label", "es", "Estado del Pedido"},
+		{"pages.order.modal.date_label", "en", "Transaction Date"},
+		{"pages.order.modal.date_label", "es", "Fecha de Transacción"},
+		{"pages.order.modal.amount_label", "en", "Total Amount"},
+		{"pages.order.modal.amount_label", "es", "Monto Total"},
+		{"pages.order.modal.summary_label", "en", "Order Summary"},
+		{"pages.order.modal.summary_label", "es", "Resumen del Pedido"},
+		{"pages.order.modal.unknown_set", "en", "Unknown Set"},
+		{"pages.order.modal.unknown_set", "es", "Set Desconocido"},
+		{"pages.order.modal.qty_label", "en", "QTY:"},
+		{"pages.order.modal.qty_label", "es", "CANT:"},
+		{"pages.order.modal.reference", "en", "Order Reference:"},
+		{"pages.order.modal.reference", "es", "Referencia de Pedido:"},
+		{"pages.order.modal.method", "en", "Method:"},
+		{"pages.order.modal.method", "es", "Método:"},
+		{"pages.order.modal.issues", "en", "Issues? Contact"},
+		{"pages.order.modal.issues", "es", "¿Problemas? Contacta a"},
+
+		// Profile Page
+		{"pages.profile.title", "en", "Your Account"},
+		{"pages.profile.title", "es", "Tu Cuenta"},
+		{"pages.profile.subtitle", "en", "Manage your profile and view your order history."},
+		{"pages.profile.subtitle", "es", "Administra tu perfil y revisa tu historial de compras."},
+		{"pages.profile.section.settings", "en", "Profile Settings"},
+		{"pages.profile.section.settings", "es", "Configuración de Perfil"},
+		{"pages.profile.form.full_name", "en", "Full Name"},
+		{"pages.profile.form.full_name", "es", "Nombre Completo"},
+		{"pages.profile.form.email", "en", "Email Address"},
+		{"pages.profile.form.email", "es", "Correo Electrónico"},
+		{"pages.profile.form.phone", "en", "Phone Number"},
+		{"pages.profile.form.phone", "es", "Número de Teléfono"},
+		{"pages.profile.form.id", "en", "ID Number / Cedula"},
+		{"pages.profile.form.id", "es", "Documento de Identidad"},
+		{"pages.profile.form.shipping", "en", "Shipping Address"},
+		{"pages.profile.form.shipping", "es", "Dirección de Envío"},
+		{"pages.profile.placeholders.phone", "en", "e.g. +57 300..."},
+		{"pages.profile.placeholders.phone", "es", "ej. +57 300..."},
+		{"pages.profile.placeholders.id", "en", "Required for shipping in Colombia"},
+		{"pages.profile.placeholders.id", "es", "Requerido para envíos en Colombia"},
+		{"pages.profile.placeholders.address", "en", "Full address, city, and instructions"},
+		{"pages.profile.placeholders.address", "es", "Dirección completa, ciudad e instrucciones"},
+		{"pages.profile.actions.save", "en", "Save Profile"},
+		{"pages.profile.actions.save", "es", "Guardar Perfil"},
+		{"pages.profile.actions.saving", "en", "Saving..."},
+		{"pages.profile.actions.saving", "es", "Guardando..."},
+		{"pages.profile.messages.success", "en", "Profile updated successfully!"},
+		{"pages.profile.messages.success", "es", "¡Perfil actualizado con éxito!"},
+		{"pages.profile.messages.error", "en", "Failed to update profile."},
+		{"pages.profile.messages.error", "es", "Error al actualizar perfil."},
+		{"pages.profile.section.linked", "en", "Linked Accounts"},
+		{"pages.profile.section.linked", "es", "Cuentas Vinculadas"},
+		{"pages.profile.status.connected", "en", "Connected"},
+		{"pages.profile.status.connected", "es", "Conectado"},
+		{"pages.profile.actions.link", "en", "Link"},
+		{"pages.profile.actions.link", "es", "Vincular"},
+		{"pages.profile.section.orders", "en", "Order History"},
+		{"pages.profile.section.orders", "es", "Historial de Pedidos"},
+		{"pages.profile.orders.empty", "en", "You haven't placed any orders yet."},
+		{"pages.profile.orders.empty", "es", "Aún no has realizado pedidos."},
+		{"pages.profile.orders.browse", "en", "Browse our inventory →"},
+		{"pages.profile.orders.browse", "es", "Explora nuestro inventario →"},
+		{"pages.profile.table.order_no", "en", "Order No."},
+		{"pages.profile.table.order_no", "es", "No. Pedido"},
+		{"pages.profile.table.date", "en", "Date"},
+		{"pages.profile.table.date", "es", "Fecha"},
+		{"pages.profile.table.status", "en", "Status"},
+		{"pages.profile.table.status", "es", "Estado"},
+		{"pages.profile.table.items", "en", "Items"},
+		{"pages.profile.table.items", "es", "Artículos"},
+		{"pages.profile.table.total", "en", "Total"},
+		{"pages.profile.table.total", "es", "Total"},
+
+		// Checkout Placeholders
+		{"pages.checkout.placeholders.first_name", "en", "Juan"},
+		{"pages.checkout.placeholders.first_name", "es", "Juan"},
+		{"pages.checkout.placeholders.last_name", "en", "Perez"},
+		{"pages.checkout.placeholders.last_name", "es", "Pérez"},
+		{"pages.checkout.placeholders.phone", "en", "3001234567"},
+		{"pages.checkout.placeholders.phone", "es", "3001234567"},
+		{"pages.checkout.placeholders.email", "en", "john@example.com"},
+		{"pages.checkout.placeholders.email", "es", "correo@ejemplo.com"},
+		{"pages.checkout.placeholders.id", "en", "123456789"},
+		{"pages.checkout.placeholders.id", "es", "123456789"},
+		{"pages.checkout.placeholders.address", "en", "St # 1-2"},
+		{"pages.checkout.placeholders.address", "es", "Cra 1 # 2-3"},
+
+		// Login Page (Themed)
+		{"pages.login.loading", "en", "Initializing Auth Matrix..."},
+		{"pages.login.loading", "es", "Iniciando Matriz de Autenticación..."},
+		{"pages.login.security_v", "en", "Security Protocol v2.5"},
+		{"pages.login.security_v", "es", "Protocolo de Seguridad v2.5"},
+		{"pages.login.title", "en", "WELCOME BACK"},
+		{"pages.login.title", "es", "BIENVENIDO DE NUEVO"},
+		{"pages.login.subtitle", "en", "Access the El Bulk Collective"},
+		{"pages.login.subtitle", "es", "Accede al Colectivo El Bulk"},
+		{"pages.login.google", "en", "SIGN IN WITH GOOGLE"},
+		{"pages.login.google", "es", "INICIAR SESIÓN CON GOOGLE"},
+		{"pages.login.facebook", "en", "SIGN IN WITH FACEBOOK"},
+		{"pages.login.facebook", "es", "INICIAR SESIÓN CON FACEBOOK"},
+		{"pages.login.footer.text", "en", "By entering the platform, you agree to our {terms} and {privacy}."},
+		{"pages.login.footer.text", "es", "Al ingresar a la plataforma, aceptas nuestros {terms} y {privacy}."},
+		{"pages.login.footer.terms", "en", "Terms of Engagement"},
+		{"pages.login.footer.terms", "es", "Términos de Participación"},
+		{"pages.login.footer.privacy", "en", "Data Protocols"},
+		{"pages.login.footer.privacy", "es", "Protocolos de Datos"},
+		{"pages.login.return", "en", "Return to Field Ops"},
+		{"pages.login.return", "es", "Regresar a Operaciones"},
+		{"pages.login.accent.store", "en", "EL BULK"},
+		{"pages.login.accent.store", "es", "EL BULK"},
+		{"pages.login.accent.logistics", "en", "LOGISTICS"},
+		{"pages.login.accent.logistics", "es", "LOGÍSTICA"},
+
+		// ProductGrid UI (Common Search UI)
+		{"pages.inventory.grid.filters.title", "en", "FILTERS"},
+		{"pages.inventory.grid.filters.title", "es", "FILTROS"},
+		{"pages.inventory.grid.filters.strategy.title", "en", "Search Strategy"},
+		{"pages.inventory.grid.filters.strategy.title", "es", "Estrategia de Búsqueda"},
+		{"pages.inventory.grid.filters.strategy.broad", "en", "BROAD (OR)"},
+		{"pages.inventory.grid.filters.strategy.broad", "es", "AMPLIA (O)"},
+		{"pages.inventory.grid.filters.strategy.narrow", "en", "NARROW (AND)"},
+		{"pages.inventory.grid.filters.strategy.narrow", "es", "ESTRICTA (Y)"},
+		{"pages.inventory.grid.filters.strategy.broad_desc", "en", "Broadens results: match ANY selected filter."},
+		{"pages.inventory.grid.filters.strategy.broad_desc", "es", "Amplía resultados: coincide con CUALQUIER filtro."},
+		{"pages.inventory.grid.filters.strategy.narrow_desc", "en", "Narrows results: match ALL selected filters."},
+		{"pages.inventory.grid.filters.strategy.narrow_desc", "es", "Reduce resultados: coincide con TODOS los filtros."},
+		{"pages.inventory.grid.filters.keywords", "en", "Keywords"},
+		{"pages.inventory.grid.filters.keywords", "es", "Palabras Clave"},
+		{"pages.inventory.grid.filters.search_placeholder", "en", "Search cards..."},
+		{"pages.inventory.grid.filters.search_placeholder", "es", "Buscar cartas..."},
+		{"pages.inventory.grid.filters.availability", "en", "Availability"},
+		{"pages.inventory.grid.filters.availability", "es", "Disponibilidad"},
+		{"pages.inventory.grid.filters.in_stock", "en", "In Stock Only"},
+		{"pages.inventory.grid.filters.in_stock", "es", "Solo en Stock"},
+		{"pages.inventory.grid.filters.clear", "en", "Clear All Filters ×"},
+		{"pages.inventory.grid.filters.clear", "es", "Limpiar Filtros ×"},
+		{"pages.inventory.grid.sort.label", "en", "Sort"},
+		{"pages.inventory.grid.sort.label", "es", "Ordenar"},
+		{"pages.inventory.grid.sort.newest", "en", "Newest"},
+		{"pages.inventory.grid.sort.newest", "es", "Más Nuevo"},
+		{"pages.inventory.grid.sort.name", "en", "Name"},
+		{"pages.inventory.grid.sort.name", "es", "Nombre"},
+		{"pages.inventory.grid.sort.price", "en", "Price"},
+		{"pages.inventory.grid.sort.price", "es", "Precio"},
+		{"pages.inventory.grid.sort.cmc", "en", "Mana Cost"},
+		{"pages.inventory.grid.sort.cmc", "es", "Costo de Maná"},
+		{"pages.inventory.grid.sort.rarity", "en", "Rarity"},
+		{"pages.inventory.grid.sort.rarity", "es", "Rareza"},
+		{"pages.inventory.grid.status.result", "en", "result"},
+		{"pages.inventory.grid.status.result", "es", "resultado"},
+		{"pages.inventory.grid.status.results", "en", "results"},
+		{"pages.inventory.grid.status.results", "es", "resultados"},
+		{"pages.inventory.grid.status.no_results", "en", "NO RESULTS FOUND"},
+		{"pages.inventory.grid.status.no_results", "es", "SIN RESULTADOS"},
+		{"pages.inventory.grid.status.no_results_desc", "en", "Try clearing your filters or check back later."},
+		{"pages.inventory.grid.status.no_results_desc", "es", "Intenta limpiar los filtros o vuelve más tarde."},
+		{"pages.inventory.grid.pagination.prev", "en", "← Prev"},
+		{"pages.inventory.grid.pagination.prev", "es", "← Ant"},
+		{"pages.inventory.grid.pagination.next", "en", "Next →"},
+		{"pages.inventory.grid.pagination.next", "es", "Siguiente →"},
+
+		// Filter Section Headers
+		{"grid.filters.condition", "en", "CONDITION"},
+		{"grid.filters.condition", "es", "ESTADO"},
+		{"grid.filters.finish", "en", "FINISH"},
+		{"grid.filters.finish", "es", "TIPO DE FOIL"},
+		{"grid.filters.version", "en", "VERSION"},
+		{"grid.filters.version", "es", "VERSIÓN"},
+		{"grid.filters.rarity", "en", "RARITY"},
+		{"grid.filters.rarity", "es", "RAREZA"},
+		{"grid.filters.set", "en", "SET"},
+		{"grid.filters.set", "es", "EDICIÓN"},
+		{"grid.filters.color", "en", "COLOR"},
+		{"grid.filters.color", "es", "COLOR"},
+		{"grid.filters.language", "en", "LANGUAGE"},
+		{"grid.filters.language", "es", "IDIOMA"},
+		{"grid.filters.collections", "en", "COLLECTIONS"},
+		{"grid.filters.collections", "es", "COLECCIONES"},
+
+		// Labels: FOIL
+		{"pages.product.finish.non_foil", "en", "Non-Foil"},
+		{"pages.product.finish.non_foil", "es", "No Foil"},
+		{"pages.product.finish.foil", "en", "Foil"},
+		{"pages.product.finish.foil", "es", "Foil"},
+		{"pages.product.finish.etched_foil", "en", "Etched Foil"},
+		{"pages.product.finish.etched_foil", "es", "Foil Etched"},
+
+		// Labels: Treatment
+		{"pages.product.version.normal", "en", "Regular"},
+		{"pages.product.version.normal", "es", "Regular"},
+		{"pages.product.version.borderless", "en", "Borderless"},
+		{"pages.product.version.borderless", "es", "Sin Borde"},
+		{"pages.product.version.showcase", "en", "Showcase"},
+		{"pages.product.version.showcase", "es", "Showcase"},
+
+		// TCG Labels
+		{"tcg.mtg", "en", "Magic: The Gathering"},
+		{"tcg.mtg", "es", "Magic: The Gathering"},
+		{"tcg.pokemon", "en", "Pokémon"},
+		{"tcg.pokemon", "es", "Pokémon"},
+
+		// Singles Landing
+		{"pages.singles.landing.category", "en", "CATEGORY // SINGLES"},
+		{"pages.singles.landing.category", "es", "CATEGORÍA // SINGLES"},
+		{"pages.singles.landing.title", "en", "INDIVIDUAL CARDS"},
+		{"pages.singles.landing.title", "es", "CARTAS SUELTAS"},
+		{"pages.singles.landing.desc", "en", "Browse our collection of hundreds of singles across your favorite TCGs. Pick your game to see the full inventory."},
+		{"pages.singles.landing.desc", "es", "Explora nuestra colección de cientos de singles de tus TCGs favoritos. Elige tu juego para ver el inventario completo."},
+		{"pages.singles.landing.view_all", "en", "VIEW ALL SINGLES →"},
+		{"pages.singles.landing.view_all", "es", "VER TODAS LAS SINGLES →"},
+		{"pages.singles.landing.featured", "en", "FEATURED SINGLES"},
+		{"pages.singles.landing.featured", "es", "SINGLES DESTACADAS"},
+		{"pages.singles.landing.no_featured", "en", "NO FEATURED SINGLES FOUND"},
+		{"pages.singles.landing.no_featured", "es", "NO SE ENCONTRARON SINGLES DESTACADAS"},
+
+		// Titles for ProductGrid
+		{"pages.singles.title", "en", "{tcg} SINGLES"},
+		{"pages.singles.title", "es", "SINGLES DE {tcg}"},
+		{"pages.sealed.title", "en", "{tcg} SEALED PRODUCT"},
+		{"pages.sealed.title", "es", "PRODUCTO SELLADO DE {tcg}"},
+		{"pages.accessories.title", "en", "PROTECTION & ACCESSORIES"},
+		{"pages.accessories.title", "es", "ACCESORIOS Y PROTECCIÓN"},
+		{"pages.store_exclusives.title", "en", "STORE EXCLUSIVES"},
+		{"pages.store_exclusives.title", "es", "EXCLUSIVOS DE LA TIENDA"},
+		{"pages.checkout.section.removed", "en", "REMOVED PRODUCTS"},
+		{"pages.checkout.section.removed", "es", "PRODUCTOS ELIMINADOS"},
+		{"pages.checkout.buttons.re_add", "en", "RE-ADD"},
+		{"pages.checkout.buttons.re_add", "es", "REAGREGAR"},
+		{"pages.checkout.error.empty", "en", "Your cart is empty. Please add products before continuing."},
+		{"pages.checkout.error.empty", "es", "Tu carrito está vacío. Agrega productos antes de continuar."},
+		{"pages.checkout.buttons.back", "en", "← BACK TO SHOP"},
+		{"pages.checkout.buttons.back", "es", "← VOLVER A LA TIENDA"},
+
+		{"pages.checkout.buttons.back", "en", "← BACK TO SHOP"},
+		{"pages.checkout.buttons.back", "es", "← VOLVER A LA TIENDA"},
+
+		// Bounties
+		{"pages.bounties.page.title", "en", "WANTED / BOUNTIES"},
+		{"pages.bounties.page.title", "es", "BUSCAMOS / BOUNTIES"},
+		{"pages.bounties.page.subtitle", "en", "We are actively looking to buy the cards below. If you have them, reach out to us! Can't find what you are looking for? Send us a card request!"},
+		{"pages.bounties.page.subtitle", "es", "Estamos buscando comprar las siguientes cartas. ¡Si las tienes, contáctanos! ¿No encuentras lo que buscas? ¡Envíanos una solicitud!"},
+		{"pages.bounties.status.showing", "en", "SHOWING {count} ENTRIES"},
+		{"pages.bounties.status.showing", "es", "MOSTRANDO {count} ENTRADAS"},
+		{"pages.bounties.buttons.request", "en", "REQUEST A CARD"},
+		{"pages.bounties.buttons.request", "es", "SOLICITAR CARTA"},
+		{"pages.bounties.success.request", "en", "Your request was submitted successfully! We will contact you if we locate the card."},
+		{"pages.bounties.success.request", "es", "¡Tu solicitud fue enviada con éxito! Te contactaremos si localizamos la carta."},
+		{"pages.bounties.empty.title", "en", "NO ACTIVE BOUNTIES"},
+		{"pages.bounties.empty.title", "es", "SIN BOUNTIES ACTIVOS"},
+		{"pages.bounties.empty.desc", "en", "We are not currently explicitly searching for any specific cards. But you can still send us a request!"},
+		{"pages.bounties.empty.desc", "es", "No estamos buscando ninguna carta específica en este momento. ¡Pero aún puedes enviarnos una solicitud!"},
+		{"pages.bounties.buttons.submit_request", "en", "SUBMIT REQUEST"},
+		{"pages.bounties.buttons.submit_request", "es", "ENVIAR SOLICITUD"},
+
+		{"pages.bounties.buttons.submit_request", "en", "SUBMIT REQUEST"},
+		{"pages.bounties.buttons.submit_request", "es", "ENVIAR SOLICITUD"},
+
+		// Inventory (Grid & Filters)
+		{"pages.inventory.grid.filters.title", "en", "FILTERS"},
+		{"pages.inventory.grid.filters.title", "es", "FILTROS"},
+		{"pages.inventory.grid.filters.strategy.title", "en", "Search Strategy"},
+		{"pages.inventory.grid.filters.strategy.title", "es", "Estrategia de búsqueda"},
+		{"pages.inventory.grid.filters.strategy.broad", "en", "BROAD (OR)"},
+		{"pages.inventory.grid.filters.strategy.broad", "es", "AMPLIA (OR)"},
+		{"pages.inventory.grid.filters.strategy.narrow", "en", "NARROW (AND)"},
+		{"pages.inventory.grid.filters.strategy.narrow", "es", "ESTRICTA (AND)"},
+		{"pages.inventory.grid.filters.strategy.broad_desc", "en", "Broadens results: match ANY selected filter."},
+		{"pages.inventory.grid.filters.strategy.broad_desc", "es", "Amplía los resultados: coincide con CUALQUIER filtro."},
+		{"pages.inventory.grid.filters.strategy.narrow_desc", "en", "Narrows results: match ALL selected filters."},
+		{"pages.inventory.grid.filters.strategy.narrow_desc", "es", "Reduce los resultados: coincide con TODOS los filtros."},
+		{"pages.inventory.grid.filters.keywords", "en", "Keywords"},
+		{"pages.inventory.grid.filters.keywords", "es", "Palabras clave"},
+		{"pages.inventory.grid.filters.search_placeholder", "en", "Search cards..."},
+		{"pages.inventory.grid.filters.search_placeholder", "es", "Buscar cartas..."},
+		{"pages.inventory.grid.filters.availability", "en", "Availability"},
+		{"pages.inventory.grid.filters.availability", "es", "Disponibilidad"},
+		{"pages.inventory.grid.filters.in_stock", "en", "In Stock Only"},
+		{"pages.inventory.grid.filters.in_stock", "es", "Solo en stock"},
+		{"pages.inventory.grid.filters.clear", "en", "Clear All Filters ×"},
+		{"pages.inventory.grid.filters.clear", "es", "Limpiar todos los filtros ×"},
+		{"pages.inventory.grid.sort.label", "en", "Sort"},
+		{"pages.inventory.grid.sort.label", "es", "Ordenar"},
+		{"pages.inventory.grid.sort.newest", "en", "Newest"},
+		{"pages.inventory.grid.sort.newest", "es", "Más reciente"},
+		{"pages.inventory.grid.sort.name", "en", "Name"},
+		{"pages.inventory.grid.sort.name", "es", "Nombre"},
+		{"pages.inventory.grid.sort.price", "en", "Price"},
+		{"pages.inventory.grid.sort.price", "es", "Precio"},
+		{"pages.inventory.grid.sort.cmc", "en", "Mana Cost"},
+		{"pages.inventory.grid.sort.cmc", "es", "Coste de maná"},
+		{"pages.inventory.grid.sort.rarity", "en", "Rarity"},
+		{"pages.inventory.grid.sort.rarity", "es", "Rareza"},
+		{"pages.inventory.grid.status.no_results", "en", "NO RESULTS"},
+		{"pages.inventory.grid.status.no_results", "es", "SIN RESULTADOS"},
+		{"pages.inventory.grid.status.no_results_desc", "en", "Try clearing your filters or check back later."},
+		{"pages.inventory.grid.status.no_results_desc", "es", "Intenta limpiar los filtros o vuelve más tarde."},
+		{"pages.inventory.grid.pagination.prev", "en", "← Prev"},
+		{"pages.inventory.grid.pagination.prev", "es", "← Ant."},
+		{"pages.inventory.grid.pagination.next", "en", "Next →"},
+		{"pages.inventory.grid.pagination.next", "es", "Sig. →"},
+		{"pages.inventory.grid.status.result", "en", "result"},
+		{"pages.inventory.grid.status.result", "es", "resultado"},
+		{"pages.inventory.grid.status.results", "en", "results"},
+		{"pages.inventory.grid.status.results", "es", "resultados"},
+
+		// Singles & Sealed Pages
+		{"pages.singles.title", "en", "{tcg} SINGLES"},
+		{"pages.singles.title", "es", "SINGLES DE {tcg}"},
+		{"pages.singles.subtitle", "en", "Browse individual {tcg} cards by condition, treatment, and foil finish."},
+		{"pages.singles.subtitle", "es", "Explora cartas individuales de {tcg} por estado, tratamiento y acabado foil."},
+		{"pages.sealed.title", "en", "{tcg} SEALED"},
+		{"pages.sealed.title", "es", "PRODUCTO SELLADO DE {tcg}"},
+		{"pages.sealed.subtitle", "en", "Booster boxes, bundles, and sealed product for {tcg}."},
+		{"pages.sealed.subtitle", "es", "Cajas de sobres, bundles y producto sellado de {tcg}."},
+
+		{"pages.sealed.subtitle", "en", "Booster boxes, bundles, and sealed product for {tcg}."},
+		{"pages.sealed.subtitle", "es", "Cajas de sobres, bundles y producto sellado de {tcg}."},
+
+		// Contact Page
+		{"pages.contact.page.title", "en", "Contact Us"},
+		{"pages.contact.page.title", "es", "Contáctanos"},
+		{"pages.contact.section.visit", "en", "VISIT THE BOX"},
+		{"pages.contact.section.visit", "es", "VISÍTANOS"},
+		{"pages.contact.info.address", "en", "ADDRESS"},
+		{"pages.contact.info.address", "es", "DIRECCIÓN"},
+		{"pages.contact.info.hours", "en", "HOURS"},
+		{"pages.contact.info.hours", "es", "HORARIOS"},
+		{"pages.contact.info.quote", "en", "\"Just look for the stack of shoeboxes near the back entrance.\""},
+		{"pages.contact.info.quote", "es", "\"Busca la pila de cajas de zapatos cerca de la entrada trasera.\""},
+		{"pages.contact.section.digital", "en", "DIGITAL COMMS"},
+		{"pages.contact.section.digital", "es", "MEDIOS DIGITALES"},
+		{"pages.contact.info.whatsapp", "en", "WHATSAPP / SALES"},
+		{"pages.contact.info.whatsapp", "es", "WHATSAPP / VENTAS"},
+		{"pages.contact.buttons.sell_bulk", "en", "SELL US YOUR BULK →"},
+		{"pages.contact.buttons.sell_bulk", "es", "VÉNDENOS TU BULK →"},
+		{"pages.contact.map.placeholder", "en", "MAP INTEGRATION"},
+		{"pages.contact.map.placeholder", "es", "INTEGRACIÓN DE MAPA"},
+
+		{"pages.contact.map.placeholder", "en", "MAP INTEGRATION"},
+		{"pages.contact.map.placeholder", "es", "INTEGRACIÓN DE MAPA"},
+
+		// Home Page
+		{"pages.home.status.empty", "en", "STORE IS EMPTY"},
+		{"pages.home.status.empty", "es", "LA TIENDA ESTÁ VACÍA"},
+		{"pages.home.status.empty_desc", "en", "No collections have been populated yet."},
+		{"pages.home.status.empty_desc", "es", "No se han publicado colecciones todavía."},
+		{"pages.home.buttons.view_all", "en", "VIEW ALL →"},
+		{"pages.home.buttons.view_all", "es", "VER TODO →"},
+		{"pages.home.status.no_items", "en", "No items assigned to this collection yet."},
+		{"pages.home.status.no_items", "es", "No hay artículos asignados a esta colección todavía."},
+		{"pages.home.tags.urgently_needed", "en", "Urgently Needed"},
+		{"pages.home.tags.urgently_needed", "es", "Urgente"},
+
+		// Nav
+		{"pages.nav.main.singles", "en", "Singles"},
+		{"pages.nav.main.singles", "es", "Singles"},
+		{"pages.nav.main.sealed", "en", "Sealed"},
+		{"pages.nav.main.sealed", "es", "Sellado"},
+		{"pages.nav.main.accessories", "en", "Accessories"},
+		{"pages.nav.main.accessories", "es", "Accesorios"},
+		{"pages.nav.main.store_exclusives", "en", "Store Exclusives"},
+		{"pages.nav.main.store_exclusives", "es", "Exclusivos"},
+		{"pages.nav.main.notices", "en", "Notices"},
+		{"pages.nav.main.notices", "es", "Noticias"},
+		{"pages.nav.main.contact", "en", "Contact"},
+		{"pages.nav.main.contact", "es", "Contacto"},
+		{"pages.nav.main.wanted", "en", "Wanted Cards"},
+		{"pages.nav.main.wanted", "es", "Buscamos"},
+		{"pages.nav.main.bulk", "en", "Sell Your Bulk"},
+		{"pages.nav.main.bulk", "es", "Vende tu Bulk"},
+		{"pages.nav.main.tcg_store", "en", "TCG STORE"},
+		{"pages.nav.main.tcg_store", "es", "TIENDA TCG"},
+		{"pages.nav.mobile.inventory_title", "en", "Singles Inventory"},
+		{"pages.nav.mobile.inventory_title", "es", "Inventario de Singles"},
+		{"pages.nav.mobile.sealed_title", "en", "Sealed Product"},
+		{"pages.nav.mobile.sealed_title", "es", "Producto Sellado"},
+		{"pages.nav.tooltips.foil_enable", "en", "Enable foil effects"},
+		{"pages.nav.tooltips.foil_enable", "es", "Activar efectos foil"},
+		{"pages.nav.tooltips.foil_disable", "en", "Disable foil effects"},
+		{"pages.nav.tooltips.foil_disable", "es", "Desactivar efectos foil"},
+		{"pages.nav.tooltips.change_lang", "en", "Change language"},
+		{"pages.nav.tooltips.change_lang", "es", "Cambiar idioma"},
+		{"pages.nav.user.login", "en", "Login"},
+		{"pages.nav.user.login", "es", "Ingresar"},
+		{"pages.nav.user.profile", "en", "My Profile"},
+		{"pages.nav.user.profile", "es", "Mi Perfil"},
+		{"pages.nav.user.logout", "en", "Logout"},
+		{"pages.nav.user.logout", "es", "Cerrar Sesión"},
+
+		// Cart Drawer
+		{"pages.cart.drawer.title", "en", "YOUR CART"},
+		{"pages.cart.drawer.title", "es", "TU CARRITO"},
+		{"pages.cart.drawer.empty_msg", "en", "Your cart is empty. Go find some cards."},
+		{"pages.cart.drawer.empty_msg", "es", "Tu carrito está vacío. ¡Ve por unas cartas!"},
+		{"pages.cart.drawer.clear", "en", "CLEAR"},
+		{"pages.cart.drawer.clear", "es", "LIMPIAR"},
+		{"pages.cart.drawer.confirm_clear", "en", "Are you sure you want to clear your cart?"},
+		{"pages.cart.drawer.confirm_clear", "es", "¿Estás seguro de que deseas vaciar tu carrito?"},
+		{"pages.cart.drawer.remove_tooltip", "en", "Remove"},
+		{"pages.cart.drawer.remove_tooltip", "es", "Eliminar"},
+		{"pages.cart.drawer.delete_perm_tooltip", "es", "Borrar permanentemente"},
+		{"pages.cart.drawer.total", "en", "TOTAL"},
+		{"pages.cart.drawer.total", "es", "TOTAL"},
+		{"pages.cart.drawer.checkout_btn", "en", "PROCEED TO CHECKOUT →"},
+		{"pages.cart.drawer.checkout_btn", "es", "PROCEDER AL PAGO →"},
+		{"pages.cart.drawer.checkout_notice", "en", "Review your order and complete shipping details."},
+		{"pages.cart.drawer.checkout_notice", "es", "Revisa tu orden y completa los datos de envío."},
+		{"pages.cart.drawer.removed_items", "en", "Removed Items"},
+		{"pages.cart.drawer.removed_items", "es", "Artículos Eliminados"},
+		{"pages.cart.drawer.restore", "en", "Restore"},
+		{"pages.cart.drawer.restore", "es", "Restaurar"},
+
+		// Home
+		{"pages.home.hero.subtitle", "en", "YOUR LOCAL TCG SHOP"},
+		{"pages.home.hero.subtitle", "es", "TU TIENDA TCG LOCAL"},
+		{"pages.home.hero.description", "en", "The shoebox where we keep all the good stuff. Singles, sealed product, and accessories."},
+		{"pages.home.hero.description", "es", "La caja de zapatos donde guardamos lo bueno. Singles, sellado y accesorios."},
+		{"pages.home.hero.browse_singles", "en", "BROWSE SINGLES"},
+		{"pages.home.hero.browse_singles", "es", "VER SINGLES"},
+		{"pages.home.hero.sell_bulk", "en", "SELL YOUR BULK →"},
+		{"pages.home.hero.sell_bulk", "es", "VENDE TU BULK →"},
+		{"pages.home.sections.view_all", "en", "VIEW ALL →"},
+		{"pages.home.sections.view_all", "es", "VER TODO →"},
+		{"pages.home.sections.empty", "en", "STORE IS EMPTY"},
+		{"pages.home.sections.empty", "es", "TIENDA VACÍA"},
+		{"pages.home.sections.got_bulk", "en", "GOT BULK?"},
+		{"pages.home.sections.got_bulk", "es", "¿TIENES BULK?"},
+		{"pages.home.sections.bulk_cta_text", "en", "We buy bulk commons and uncommons, bulk rares, and junk rare lots. Box it up and bring it in, get cash. No appointment needed."},
+		{"pages.home.sections.bulk_cta_text", "es", "Compramos tus comunes, infrecuentes y raras. Empácalas y tráelas por efectivo. Sin cita previa."},
+		{"pages.home.sections.see_bulk_prices", "en", "SEE BULK PRICES"},
+		{"pages.home.sections.see_bulk_prices", "es", "VER PRECIOS DE BULK"},
+
+		{"pages.layout.footer.slogan", "en", "We buy bulk. We sell singles. We love cardboard."},
+		{"pages.layout.footer.slogan", "es", "Compramos bulk. Vendemos singles. Amamos el cartón."},
+		{"pages.home.bounties.urgently_needed", "en", "Urgently Needed"},
+		{"pages.home.bounties.urgently_needed", "es", "Urgente"},
+
+		// Bulk Page
+		{"pages.bulk.page.title", "en", "BRING YOUR BULK"},
+		{"pages.bulk.page.title", "es", "TRAE TU BULK"},
+		{"pages.bulk.page.subtitle", "en", "Got a shoebox of old cards gathering dust? We'll take them off your hands and put cash in your pocket. No appointment needed — just walk in."},
+		{"pages.bulk.page.subtitle", "es", "¿Tienes una caja de cartas viejas llenándose de polvo? Nosotros las recibimos y te damos efectivo. Sin cita — solo ven."},
+		{"pages.bulk.intro.we_buy", "en", "WE BUY"},
+		{"pages.bulk.intro.we_buy", "es", "COMPRAMOS"},
+		{"pages.bulk.tiers.common.label", "en", "BULK COMMONS & UNCOMMONS"},
+		{"pages.bulk.tiers.common.label", "es", "BULK COMUNES E INFRECUENTES"},
+		{"pages.bulk.tiers.common.price", "en", "$20.000 COP per 1,000"},
+		{"pages.bulk.tiers.common.price", "es", "$20.000 COP por 1.000"},
+		{"pages.bulk.tiers.common.desc", "en", "Any condition, any set. Sorted or unsorted. We take it all."},
+		{"pages.bulk.tiers.common.desc", "es", "Cualquier estado, cualquier set. Clasificadas o no. Lo recibimos todo."},
+		{"pages.bulk.tiers.rare.label", "en", "BULK RARES & MYTHICS"},
+		{"pages.bulk.tiers.rare.label", "es", "BULK RARAS Y MÍTICAS"},
+		{"pages.bulk.tiers.rare.price", "en", "$1.000 COP per card"},
+		{"pages.bulk.tiers.rare.price", "es", "$1.000 COP por carta"},
+		{"pages.bulk.tiers.rare.desc", "en", "NM/LP only. Bulk rares from Standard and below."},
+		{"pages.bulk.tiers.rare.desc", "es", "Solo NM/LP. Raras bulk de Standard y anteriores."},
+		{"pages.bulk.tiers.junk.label", "en", "JUNK RARE LOTS"},
+		{"pages.bulk.tiers.junk.label", "es", "LOTES DE RARAS JUNK"},
+		{"pages.bulk.tiers.junk.price", "en", "$12.000 COP per 100"},
+		{"pages.bulk.tiers.junk.price", "es", "$12.000 COP por 100"},
+		{"pages.bulk.tiers.junk.desc", "en", "MP-DMG rares and mythics, or commons/uncommons in poor condition."},
+		{"pages.bulk.tiers.junk.desc", "es", "Raras y míticas MP-DMG, o comunes/infrecuentes en mal estado."},
+		{"pages.bulk.tiers.foil.label", "en", "FOIL COMMONS & UNCOMMONS"},
+		{"pages.bulk.tiers.foil.label", "es", "BULK COMUNES E INFRECUENTES FOIL"},
+		{"pages.bulk.tiers.foil.price", "en", "$40.000 COP per 500"},
+		{"pages.bulk.tiers.foil.price", "es", "$40.000 COP por 500"},
+		{"pages.bulk.tiers.foil.desc", "en", "Any condition. Foil bulk sorted separately."},
+		{"pages.bulk.tiers.foil.desc", "es", "Cualquier estado. El bulk foil se clasifica por separado."},
+		{"pages.bulk.accepts.0", "en", "Magic: The Gathering (all sets, all formats)"},
+		{"pages.bulk.accepts.0", "es", "Magic: The Gathering (todos los sets, todos los formatos)"},
+		{"pages.bulk.accepts.1", "en", "Pokémon TCG (English only)"},
+		{"pages.bulk.accepts.1", "es", "Pokémon TCG (Solo inglés)"},
+		{"pages.bulk.accepts.2", "en", "Disney Lorcana"},
+		{"pages.bulk.accepts.2", "es", "Disney Lorcana"},
+		{"pages.bulk.accepts.3", "en", "One Piece TCG"},
+		{"pages.bulk.accepts.3", "es", "One Piece TCG"},
+		{"pages.bulk.accepts.4", "en", "Basic lands (we pay $4.000 COP per 200)"},
+		{"pages.bulk.accepts.4", "es", "Tierras básicas (pagamos $4.000 COP por 200)"},
+		{"pages.bulk.accepts.5", "en", "Tokens and emblems ($0 value but we take them)"},
+		{"pages.bulk.accepts.5", "es", "Tokens y emblemas (valor $0 pero los recibimos)"},
+		{"pages.bulk.sections.prices", "en", "CURRENT BULK PRICES"},
+		{"pages.bulk.sections.prices", "es", "PRECIOS ACTUALES"},
+		{"pages.bulk.sections.accept", "en", "WE GLADLY ACCEPT"},
+		{"pages.bulk.sections.accept", "es", "ACEPTAMOS"},
+		{"pages.bulk.sections.how_it_works", "en", "HOW IT WORKS"},
+		{"pages.bulk.sections.how_it_works", "es", "¿CÓMO FUNCIONA?"},
+		{"pages.bulk.cta.questions", "en", "HAVE QUESTIONS?"},
+		{"pages.bulk.cta.questions", "es", "¿TIENES DUDAS?"},
+		{"pages.bulk.cta.email_btn", "en", "EMAIL US ABOUT YOUR BULK"},
+		{"pages.bulk.cta.email_btn", "es", "ESCRÍBENOS POR TU BULK"},
+		{"pages.bulk.sections.price_disclaimer", "en", "⚠ Prices updated regularly. Large lots (1,000+ cards) may receive bonus offers. Prices are in-store cash — store credit offers up to 25% more."},
+		{"pages.bulk.sections.price_disclaimer", "es", "⚠ Precios actualizados regularmente. Lotes grandes (más de 1,000 cartas) pueden recibir bonificaciones. Los precios son en efectivo — las ofertas de crédito de la tienda son hasta un 25% más."},
+		{"pages.bulk.how.1.title", "en", "BRING YOUR CARDS"},
+		{"pages.bulk.how.1.title", "es", "TRAE TUS CARTAS"},
+		{"pages.bulk.how.1.desc", "en", "Walk in with your bulk. Sorted or unsorted, boxed or bagged — doesn't matter."},
+		{"pages.bulk.how.1.desc", "es", "Ven con tu bulk. Ordenado o sin ordenar, en cajas o bolsas — no importa."},
+		{"pages.bulk.how.2.title", "en", "WE COUNT & GRADE"},
+		{"pages.bulk.how.2.title", "es", "CONTAMOS Y CLASIFICAMOS"},
+		{"pages.bulk.how.2.desc", "en", "We do a quick count of your cards. For large lots we may ask for a day to sort."},
+		{"pages.bulk.how.2.desc", "es", "Hacemos un conteo rápido de tus cartas. Para lotes grandes, podemos pedir un día para clasificar."},
+		{"pages.bulk.how.3.title", "en", "GET AN OFFER"},
+		{"pages.bulk.how.3.title", "es", "RECIBE UNA OFERTA"},
+		{"pages.bulk.how.3.desc", "en", "We give you a cash offer on the spot. No pressure to accept."},
+		{"pages.bulk.how.3.desc", "es", "Te damos una oferta en efectivo al instante. Sin presión para aceptar."},
+		{"pages.bulk.how.4.title", "en", "TAKE THE CASH"},
+		{"pages.bulk.how.4.title", "es", "LLÉVATE EL EFECTIVO"},
+		{"pages.bulk.how.4.desc", "en", "Accept and walk out with cash (or store credit for more). Simple."},
+		{"pages.bulk.how.4.desc", "es", "Acepta y retírate con efectivo (o más crédito de la tienda). Simple."},
+
+		// Notices Section
+		{"pages.sealed.landing.category", "en", "CATEGORY // SEALED"},
+		{"pages.sealed.landing.category", "es", "CATEGORÍA // SELLADO"},
+		{"pages.sealed.landing.title.main", "en", "BOXES &"},
+		{"pages.sealed.landing.title.main", "es", "CAJAS Y"},
+		{"pages.sealed.landing.title.accent", "en", "PACKS"},
+		{"pages.sealed.landing.title.accent", "es", "SOBRES"},
+		{"pages.sealed.landing.desc", "en", "From booster boxes to collector packs, explore every set in our vault. Choose your game to see the current inventory."},
+		{"pages.sealed.landing.desc", "es", "Desde booster boxes hasta sobres de coleccionista, explora cada set en nuestra bóveda. Elige tu juego para ver el inventario actual."},
+		{"pages.sealed.landing.view_all", "en", "VIEW ALL SEALED →"},
+		{"pages.sealed.landing.view_all", "es", "VER TODO SELLADO →"},
+		{"pages.sealed.landing.no_featured", "en", "NO FEATURED SEALED FOUND"},
+		{"pages.sealed.landing.no_featured", "es", "NO SE ENCONTRARON PRODUCTOS SELLADOS DESTACADOS"},
+		{"pages.sealed.landing.featured.main", "en", "FEATURED"},
+		{"pages.sealed.landing.featured.main", "es", "SELLADO"},
+		{"pages.sealed.landing.featured.accent", "en", "SEALED"},
+		{"pages.sealed.landing.featured.accent", "es", "DESTACADO"},
+
+		{"pages.accessories.title", "en", "ACCESSORIES"},
+		{"pages.accessories.title", "es", "ACCESORIOS"},
+		{"pages.accessories.subtitle", "en", "Sleeves, binders, deck boxes, playmats and more — for all TCGs."},
+		{"pages.accessories.subtitle", "es", "Protectores, carpetas, deck boxes, playmats y más — para todos los TCGs."},
+
+		{"components.client_request_modal.title", "en", "Request a card"},
+		{"components.client_request_modal.title", "es", "Solicitar una carta"},
+		{"components.client_request_modal.desc", "en", "Can't find what you need? Tell us the details and we'll start the hunt!"},
+		{"components.client_request_modal.desc", "es", "¿No encuentras lo que buscas? ¡Danos los detalles y empezaremos la búsqueda!"},
+		{"components.client_request_modal.form.name_label", "en", "Your Name *"},
+		{"components.client_request_modal.form.name_label", "es", "Tu Nombre *"},
+		{"components.client_request_modal.form.name_placeholder", "en", "John Doe"},
+		{"components.client_request_modal.form.name_placeholder", "es", "John Doe"},
+		{"components.client_request_modal.form.contact_label", "en", "Contact Info *"},
+		{"components.client_request_modal.form.contact_label", "es", "Información de Contacto *"},
+		{"components.client_request_modal.form.contact_placeholder", "en", "Phone or Instagram"},
+		{"components.client_request_modal.form.contact_placeholder", "es", "Teléfono o Instagram"},
+		{"components.client_request_modal.form.card_label", "en", "Card Name *"},
+		{"components.client_request_modal.form.card_label", "es", "Nombre de la Carta *"},
+		{"components.client_request_modal.form.card_placeholder", "en", "e.g. Sheoldred, the Apocalypse"},
+		{"components.client_request_modal.form.card_placeholder", "es", "ej. Sheoldred, the Apocalypse"},
+		{"components.client_request_modal.form.set_label", "en", "Specific Set (Optional)"},
+		{"components.client_request_modal.form.set_label", "es", "Set Específico (Opcional)"},
+		{"components.client_request_modal.form.set_placeholder", "en", "e.g. Dominaria United"},
+		{"components.client_request_modal.form.set_placeholder", "es", "ej. Dominaria United"},
+		{"components.client_request_modal.form.details_label", "en", "Additional Details"},
+		{"components.client_request_modal.form.details_label", "es", "Detalles Adicionales"},
+		{"components.client_request_modal.form.details_placeholder", "en", "Condition, foil, language, etc..."},
+		{"components.client_request_modal.form.details_placeholder", "es", "Estado, foil, idioma, etc..."},
+		{"components.client_request_modal.form.submit_btn", "en", "SUBMIT MISSION"},
+		{"components.client_request_modal.form.submit_btn", "es", "ENVIAR MISIÓN"},
+
+		// Notices Section
+		{"pages.notices.list.header_main", "en", "NOTICES &"},
+		{"pages.notices.list.header_main", "es", "AVISOS Y"},
+		{"pages.notices.list.header_accent", "en", "UPDATES"},
+		{"pages.notices.list.header_accent", "es", "NOVEDADES"},
+		{"pages.notices.list.subtitle", "en", "Latest news, spoilers, and reviews from the shop."},
+		{"pages.notices.list.subtitle", "es", "Últimas noticias, spoilers y reseñas de la tienda."},
+		{"pages.notices.list.total_count", "en", "{count} POSTS TOTAL"},
+		{"pages.notices.list.total_count", "es", "{count} PUBLICACIONES EN TOTAL"},
+		{"pages.notices.list.empty_title", "en", "NO NOTICES POSTED YET"},
+		{"pages.notices.list.empty_title", "es", "AÚN NO HAY AVISOS PUBLICADOS"},
+		{"pages.notices.list.empty_subtitle", "en", "Check back soon for news and updates."},
+		{"pages.notices.list.empty_subtitle", "es", "Vuelve pronto para ver noticias y actualizaciones."},
+		{"pages.notices.list.open_btn", "en", "OPEN NOTICE →"},
+		{"pages.notices.list.open_btn", "es", "ABRIR AVISO →"},
+
+		{"pages.notices.detail.back_btn", "en", "← BACK TO ALL NOTICES"},
+		{"pages.notices.detail.back_btn", "es", "← VOLVER A TODOS LOS AVISOS"},
+		{"pages.notices.detail.published_on", "en", "Published on {date}"},
+		{"pages.notices.detail.published_on", "es", "Publicado el {date}"},
+		{"pages.notices.detail.all_notices_btn", "en", "← ALL NOTICES"},
+		{"pages.notices.detail.all_notices_btn", "es", "← TODOS LOS AVISOS"},
+		{"pages.notices.detail.share_label", "en", "SHARE:"},
+		{"pages.notices.detail.share_label", "es", "COMPARTIR:"},
+		{"pages.notices.detail.sidebar.title", "en", "EL BULK SHOP"},
+		{"pages.notices.detail.sidebar.title", "es", "TIENDA EL BULK"},
+		{"pages.notices.detail.sidebar.desc", "en", "The shoebox where we keep all the good stuff. Selling singles, sealed product, and accessories. Visit us in person or shop online!"},
+		{"pages.notices.detail.sidebar.desc", "es", "La caja de zapatos donde guardamos lo bueno. Vendemos singles, producto sellado y accesorios. ¡Visítanos en persona o compra online!"},
+		{"pages.notices.detail.sidebar.shop_btn", "en", "SHOP SINGLES"},
+		{"pages.notices.detail.sidebar.shop_btn", "es", "COMPRAR SINGLES"},
+		{"pages.notices.detail.sidebar.newsletter_title", "en", "Newsletter"},
+		{"pages.notices.detail.sidebar.newsletter_title", "es", "Boletín Informativo"},
+		{"pages.notices.detail.sidebar.newsletter_desc", "en", "Stay updated with our latest news and spoilers."},
+		{"pages.notices.detail.sidebar.newsletter_desc", "es", "Mantente al día con nuestras últimas noticias y spoilers."},
+
+		{"pages.notices.section.title", "en", "NOTICES / NEWS"},
+		{"pages.notices.section.title", "es", "AVISOS / NOTICIAS"},
+		{"pages.notices.actions.view_all", "en", "VIEW ALL →"},
+		{"pages.notices.actions.view_all", "es", "VER TODO →"},
+		{"pages.notices.actions.read_more", "en", "READ MORE"},
+		{"pages.notices.actions.read_more", "es", "LEER MÁS"},
+		{"pages.notices.actions.show_more", "en", "SHOW MORE PREVIOUS POSTS"},
+		{"pages.notices.actions.show_more", "es", "MOSTRAR MÁS PUBLICACIONES"},
+
+		// Search Bar
+		{"components.search.placeholder", "en", "Search for cards, sets, or products..."},
+		{"components.search.placeholder", "es", "Buscar cartas, sets o productos..."},
+		{"components.search.status.manual_price", "en", "MANUAL PRICE"},
+		{"components.search.status.manual_price", "es", "PRECIO MANUAL"},
+		{"components.search.status.no_set", "en", "No Set"},
+		{"components.search.status.no_set", "es", "Sin Set"},
+		{"components.search.status.in_stock", "en", "{count} IN STOCK"},
+		{"components.search.status.in_stock", "es", "{count} EN STOCK"},
+		{"components.search.status.out_of_stock", "en", "OUT OF STOCK"},
+		{"components.search.status.out_of_stock", "es", "AGOTADO"},
+		{"components.search.actions.add", "en", "+ ADD"},
+		{"components.search.actions.add", "es", "+ AGREGAR"},
+		{"components.search.actions.sold_out", "en", "SOLD OUT"},
+		{"components.search.actions.sold_out", "es", "AGOTADO"},
+		{"components.search.status.no_results", "en", "No products found for \"{query}\""},
+		{"components.search.status.no_results", "es", "No se encontraron productos para \"{query}\""},
+		{"components.search.status.top_results", "en", "Showing top results"},
+		{"components.search.status.top_results", "es", "Mostrando resultados principales"},
+
+		// Checkout
+		{"pages.checkout.page.title", "en", "FINALIZE PURCHASE"},
+		{"pages.checkout.page.title", "es", "FINALIZAR COMPRA"},
+		{"pages.checkout.form.contact_info", "en", "CONTACT INFORMATION"},
+		{"pages.checkout.form.contact_info", "es", "INFORMACIÓN DE CONTACTO"},
+		{"pages.checkout.form.first_name", "en", "FIRST NAME *"},
+		{"pages.checkout.form.first_name", "es", "NOMBRE *"},
+		{"pages.checkout.form.last_name", "en", "LAST NAME *"},
+		{"pages.checkout.form.last_name", "es", "APELLIDO *"},
+		{"pages.checkout.form.phone", "en", "PHONE / WHATSAPP *"},
+		{"pages.checkout.form.phone", "es", "TELÉFONO / WHATSAPP *"},
+		{"pages.checkout.form.email", "en", "EMAIL *"},
+		{"pages.checkout.form.email", "es", "EMAIL *"},
+		{"pages.checkout.form.id_number", "en", "ID NUMBER *"},
+		{"pages.checkout.form.id_number", "es", "CÉDULA / ID *"},
+		{"pages.checkout.form.address", "en", "ADDRESS *"},
+		{"pages.checkout.form.address", "es", "DIRECCIÓN *"},
+		{"pages.checkout.form.payment_method", "en", "PAYMENT METHOD"},
+		{"pages.checkout.form.payment_method", "es", "MÉTODO DE PAGO"},
+		{"pages.checkout.form.notes", "en", "NOTES (OPTIONAL)"},
+		{"pages.checkout.form.notes", "es", "NOTAS (OPCIONAL)"},
+		{"pages.checkout.summary.title", "en", "ORDER SUMMARY"},
+		{"pages.checkout.summary.title", "es", "RESUMEN DEL PEDIDO"},
+		{"pages.checkout.summary.confirm_btn", "en", "CONFIRM ORDER →"},
+		{"pages.checkout.summary.confirm_btn", "es", "CONFIRMAR PEDIDO →"},
+		{"pages.checkout.summary.processing", "en", "PROCESSING..."},
+		{"pages.checkout.summary.processing", "es", "PROCESANDO..."},
+		{"pages.checkout.summary.footer_note", "en", "After confirmation, an advisor will contact you to coordinate delivery."},
+		{"pages.checkout.summary.footer_note", "es", "Al confirmar, un asesor se pondrá en contacto contigo para coordinar la entrega."},
+
+		// Admin Notices
+		{"pages.admin.notices.title", "en", "NOTICES (BLOG/NEWS)"},
+		{"pages.admin.notices.title", "es", "AVISOS (BLOG/NOTICIAS)"},
+		{"pages.admin.notices.subtitle", "en", "Manage your shop updates and news posts."},
+		{"pages.admin.notices.subtitle", "es", "Administra las actualizaciones y noticias de la tienda."},
+		{"pages.admin.notices.create_btn", "en", "CREATE NEW NOTICE"},
+		{"pages.admin.notices.create_btn", "es", "CREAR NUEVO AVISO"},
+		{"pages.admin.notices.confirm_delete", "en", "Are you sure you want to delete this notice?"},
+		{"pages.admin.notices.confirm_delete", "es", "¿Estás seguro de que deseas eliminar este aviso?"},
+		{"pages.admin.notices.error_delete", "en", "Failed to delete notice"},
+		{"pages.admin.notices.error_delete", "es", "Error al eliminar el aviso"},
+		{"pages.admin.notices.status.published", "en", "PUBLISHED"},
+		{"pages.admin.notices.status.published", "es", "PUBLICADO"},
+		{"pages.admin.notices.status.draft", "en", "DRAFT"},
+		{"pages.admin.notices.status.draft", "es", "BORRADOR"},
+		{"pages.admin.notices.actions.view", "en", "VIEW"},
+		{"pages.admin.notices.actions.view", "es", "VER"},
+		{"pages.admin.notices.actions.edit", "en", "EDIT"},
+		{"pages.admin.notices.actions.edit", "es", "EDITAR"},
+		{"pages.admin.notices.actions.delete", "en", "DELETE"},
+		{"pages.admin.notices.actions.delete", "es", "ELIMINAR"},
+		{"pages.admin.notices.table.date", "en", "Date"},
+		{"pages.admin.notices.table.date", "es", "Fecha"},
+		{"pages.admin.notices.table.title", "en", "Title"},
+		{"pages.admin.notices.table.title", "es", "Título"},
+		{"pages.admin.notices.table.slug", "en", "Slug"},
+		{"pages.admin.notices.table.slug", "es", "Slug"},
+		{"pages.admin.notices.table.status", "en", "Status"},
+		{"pages.admin.notices.table.status", "es", "Estado"},
+		{"pages.admin.notices.table.actions", "en", "Actions"},
+		{"pages.admin.notices.table.actions", "es", "Acciones"},
+		{"pages.admin.notices.table.empty", "en", "No notices found. Create your first one!"},
+		{"pages.admin.notices.table.empty", "es", "No se encontraron noticias. ¡Crea la primera!"},
+
+		{"pages.admin.notices.editor.loading", "en", "Unpacking Notice..."},
+		{"pages.admin.notices.editor.loading", "es", "Desempaquetando Aviso..."},
+		{"pages.admin.notices.editor.title_edit", "en", "EDIT NOTICE"},
+		{"pages.admin.notices.editor.title_edit", "es", "EDITAR AVISO"},
+		{"pages.admin.notices.editor.title_new", "en", "NEW NOTICE"},
+		{"pages.admin.notices.editor.title_new", "es", "NUEVO AVISO"},
+		{"pages.admin.notices.editor.subtitle", "en", "Compose your shop update using raw HTML."},
+		{"pages.admin.notices.editor.subtitle", "es", "Redacta la actualización de tu tienda usando HTML puro."},
+		{"pages.admin.notices.editor.error_save", "en", "Failed to save notice"},
+		{"pages.admin.notices.editor.error_save", "es", "Error al guardar el aviso"},
+		{"pages.admin.notices.editor.form.title_label", "en", "Post Title"},
+		{"pages.admin.notices.editor.form.title_label", "es", "Título de la Publicación"},
+		{"pages.admin.notices.editor.form.title_placeholder", "en", "E.G. NEW SINGLES JUST ARRIVED!"},
+		{"pages.admin.notices.editor.form.title_placeholder", "es", "EJ. ¡LLEGARON NUEVAS SINGLES!"},
+		{"pages.admin.notices.editor.form.content_label", "en", "HTML Content"},
+		{"pages.admin.notices.editor.form.content_label", "es", "Contenido HTML"},
+		{"pages.admin.notices.editor.form.content_placeholder", "en", "<h2>Subheading</h2><p>Write your content here...</p>"},
+		{"pages.admin.notices.editor.form.content_placeholder", "es", "<h2>Subtítulo</h2><p>Escribe tu contenido aquí...</p>"},
+		{"pages.admin.notices.editor.sidebar.settings_title", "en", "Publish Settings"},
+		{"pages.admin.notices.editor.sidebar.settings_title", "es", "Ajustes de Publicación"},
+		{"pages.admin.notices.editor.sidebar.slug_label", "en", "URL Slug"},
+		{"pages.admin.notices.editor.sidebar.slug_label", "es", "Slug de URL"},
+		{"pages.admin.notices.editor.sidebar.sync_btn", "en", "SYNC WITH TITLE"},
+		{"pages.admin.notices.editor.sidebar.sync_btn", "es", "SINCRONIZAR CON TÍTULO"},
+		{"pages.admin.notices.editor.sidebar.slug_placeholder", "en", "post-url-slug"},
+		{"pages.admin.notices.editor.sidebar.slug_placeholder", "es", "slug-de-la-publicacion"},
+		{"pages.admin.notices.editor.sidebar.image_label", "en", "Featured Image URL"},
+		{"pages.admin.notices.editor.sidebar.image_label", "es", "URL de Imagen Destacada"},
+		{"pages.admin.notices.editor.sidebar.image_placeholder", "en", "https://..."},
+		{"pages.admin.notices.editor.sidebar.image_placeholder", "es", "https://..."},
+		{"pages.admin.notices.editor.sidebar.published_label", "en", "Published / Public"},
+		{"pages.admin.notices.editor.sidebar.published_label", "es", "Publicado / Público"},
+		{"pages.admin.notices.editor.actions.update", "en", "UPDATE POST"},
+		{"pages.admin.notices.editor.actions.update", "es", "ACTUALIZAR POST"},
+		{"pages.admin.notices.editor.actions.publish", "en", "PUBLISH POST"},
+		{"pages.admin.notices.editor.actions.publish", "es", "PUBLICAR POST"},
+		{"pages.admin.notices.editor.sidebar.help_title", "en", "HTML Help"},
+		{"pages.admin.notices.editor.sidebar.help_title", "es", "Ayuda HTML"},
+		{"pages.admin.notices.editor.sidebar.help_desc", "en", "You can use standard HTML tags like {tags}."},
+		{"pages.admin.notices.editor.sidebar.help_desc", "es", "Puedes usar etiquetas HTML estándar como {tags}."},
+		{"pages.admin.notices.editor.sidebar.card_preview_label", "en", "To embed a card preview, use:"},
+		{"pages.admin.notices.editor.sidebar.card_preview_label", "es", "Para incrustar una vista previa de carta, usa:"},
+
+		{"pages.admin.clients.details.not_found", "en", "CLIENT NOT FOUND."},
+		{"pages.admin.clients.details.not_found", "es", "CLIENTE NO ENCONTRADO."},
+		{"pages.admin.clients.details.subscriber_badge", "en", "NEWSLETTER SUBSCRIBER"},
+		{"pages.admin.clients.details.subscriber_badge", "es", "SUSCRIPTOR AL NEWSLETTER"},
+		{"pages.admin.clients.details.contact_profile", "en", "Contact Profile"},
+		{"pages.admin.clients.details.contact_profile", "es", "Perfil de contacto"},
+		{"pages.admin.clients.details.email_label", "en", "Email address"},
+		{"pages.admin.clients.details.email_label", "es", "Correo electrónico"},
+		{"pages.admin.clients.details.phone_label", "en", "Phone number"},
+		{"pages.admin.clients.details.phone_label", "es", "Número de teléfono"},
+		{"pages.admin.clients.details.account_details", "en", "Account Details"},
+		{"pages.admin.clients.details.account_details", "es", "Detalles de cuenta"},
+		{"pages.admin.clients.details.id_label", "en", "Identity Document"},
+		{"pages.admin.clients.details.id_label", "es", "Documento de identidad"},
+		{"pages.admin.clients.details.address_label", "en", "Delivery Address"},
+		{"pages.admin.clients.details.address_label", "es", "Dirección de entrega"},
+		{"pages.admin.clients.details.general_interaction", "en", "General Interaction / No specific order"},
+		{"pages.admin.clients.details.general_interaction", "es", "Interacción general / Sin pedido específico"},
+		{"pages.admin.clients.details.add_note_btn", "en", "ADD NOTE"},
+		{"pages.admin.clients.details.add_note_btn", "es", "AGREGAR NOTA"},
+		{"pages.admin.clients.details.empty_notes", "en", "No entries recorded in the journal."},
+		{"pages.admin.clients.details.empty_notes", "es", "No hay entradas registradas en el diario."},
+		{"pages.admin.clients.details.order_history", "en", "ORDER HISTORY"},
+		{"pages.admin.clients.details.order_history", "es", "HISTORIAL DE PEDIDOS"},
+		{"pages.admin.clients.details.no_orders", "es", "NO SE ENCONTRARON PEDIDOS."},
+		{"pages.admin.clients.details.journal_title", "en", "JOURNAL OF INTERACTIONS"},
+		{"pages.admin.clients.details.journal_title", "es", "DIARIO DE INTERACCIONES"},
+		{"pages.admin.clients.details.note_placeholder", "en", "ADD A NEW NOTE OR COMMENT..."},
+		{"pages.admin.clients.details.note_placeholder", "es", "AGREGAR UNA NUEVA NOTA O COMENTARIO..."},
+		{"pages.admin.clients.details.order_option", "en", "About Order {number}"},
+		{"pages.admin.clients.details.order_option", "es", "Sobre el pedido {number}"},
+		{"pages.admin.clients.details.reference_label", "en", "REFERENCE"},
+		{"pages.admin.clients.details.reference_label", "es", "REFERENCIA"},
+		{"pages.admin.clients.details.summary_title", "en", "VALUED CLIENT SUMMARY"},
+		{"pages.admin.clients.details.summary_title", "es", "RESUMEN DEL CLIENTE"},
+		{"pages.admin.clients.details.lifetime_label", "en", "Lifetime"},
+		{"pages.admin.clients.details.lifetime_label", "es", "Total Histórico"},
+		{"pages.admin.clients.details.purchased_label", "en", "Purchased"},
+		{"pages.admin.clients.details.purchased_label", "es", "Comprado"},
+		{"pages.admin.clients.details.back_link", "en", "← BACK TO CLIENTS"},
+		{"pages.admin.clients.details.back_link", "es", "← VOLVER A CLIENTES"},
+		{"pages.admin.clients.details.active_group", "en", "Active"},
+		{"pages.admin.clients.details.active_group", "es", "Activo"},
+		{"pages.admin.clients.details.past_group", "en", "Past"},
+		{"pages.admin.clients.details.past_group", "es", "Pasado"},
+		{"pages.admin.clients.details.no_active_requests", "en", "NO ACTIVE REQUESTS."},
+		{"pages.admin.clients.details.no_active_requests", "es", "SIN SOLICITUDES ACTIVAS."},
+		{"pages.admin.clients.details.no_pending_offers", "en", "NO PENDING OFFERS."},
+		{"pages.admin.clients.details.no_pending_offers", "es", "SIN OFERTAS PENDIENTES."},
+		{"pages.admin.clients.details.requests_title", "en", "CLIENT REQUESTS"},
+		{"pages.admin.clients.details.requests_title", "es", "SOLICITUDES DE CLIENTES"},
+		{"pages.admin.clients.details.offers_title", "en", "BOUNTY OFFERS"},
+		{"pages.admin.clients.details.offers_title", "es", "OFERTAS DE BOUNTIES"},
+
+		{"pages.admin.bounties.focus_mode", "en", "Focus Mode: Hide Solved History"},
+		{"pages.admin.bounties.focus_mode", "es", "Modo Enfoque: Ocultar resueltos"},
+		{"pages.admin.bounties.offering_card", "en", "Offering Card:"},
+		{"pages.admin.bounties.offering_card", "es", "Ofreciendo carta:"},
+		{"pages.admin.bounties.resolve_btn", "en", "RESOLVE OFFER"},
+		{"pages.admin.bounties.resolve_btn", "es", "RESOLVER OFERTA"},
+		{"pages.admin.bounties.revert_btn", "en", "REVERT TO PENDING"},
+		{"pages.admin.bounties.revert_btn", "es", "REVERTIR A PENDIENTE"},
+
+		// Admin Sidebar
+		{"components.admin.sidebar.nav.inventory", "en", "INVENTORY"},
+		{"components.admin.sidebar.nav.inventory", "es", "INVENTARIO"},
+		{"components.admin.sidebar.nav.tcg_registry", "en", "TCG REGISTRY"},
+		{"components.admin.sidebar.nav.tcg_registry", "es", "REGISTRO TCG"},
+		{"components.admin.sidebar.nav.orders", "en", "ORDERS"},
+		{"components.admin.sidebar.nav.orders", "es", "PEDIDOS"},
+		{"components.admin.sidebar.nav.bounties", "en", "WANTED / BOUNTIES"},
+		{"components.admin.sidebar.nav.bounties", "es", "BUSCADOS / BOUNTIES"},
+		{"components.admin.sidebar.nav.clients", "en", "CLIENTS"},
+		{"components.admin.sidebar.nav.clients", "es", "CLIENTES"},
+		{"components.admin.sidebar.nav.subscribers", "en", "SUBSCRIBERS"},
+		{"components.admin.sidebar.nav.subscribers", "es", "SUSCRIPTORES"},
+		{"components.admin.sidebar.nav.notices", "en", "NOTICES"},
+		{"components.admin.sidebar.nav.notices", "es", "AVISOS"},
+		{"components.admin.sidebar.nav.themes", "en", "THEMES & SKINS"},
+		{"components.admin.sidebar.nav.themes", "es", "TEMAS Y APARIENCIA"},
+		{"components.admin.sidebar.nav.translations", "en", "TRANSLATIONS"},
+		{"components.admin.sidebar.nav.translations", "es", "TRADUCCIONES"},
+		{"components.admin.sidebar.nav.settings", "en", "GLOBAL SETTINGS"},
+		{"components.admin.sidebar.nav.settings", "es", "AJUSTES GLOBALES"},
+		{"components.admin.sidebar.section.ops", "en", "Core Operations"},
+		{"components.admin.sidebar.section.ops", "es", "Operaciones Core"},
+		{"components.admin.sidebar.section.design", "en", "Design & Language"},
+		{"components.admin.sidebar.section.design", "es", "Diseño e Idioma"},
+		{"components.admin.sidebar.section.system", "en", "System Actions"},
+		{"components.admin.sidebar.section.system", "es", "Acciones del Sistema"},
+		{"components.admin.sidebar.health.title", "en", "System Health"},
+		{"components.admin.sidebar.health.title", "es", "Salud del Sistema"},
+		{"components.admin.sidebar.health.refresh", "en", "Refresh Stats"},
+		{"components.admin.sidebar.health.refresh", "es", "Refrescar Estadísticas"},
+		{"components.admin.sidebar.health.sync", "en", "Synchronizing core..."},
+		{"components.admin.sidebar.health.sync", "es", "Sincronizando núcleo..."},
+		{"components.admin.sidebar.health.db_size", "en", "DB Size"},
+		{"components.admin.sidebar.health.db_size", "es", "Tamaño DB"},
+		{"components.admin.sidebar.health.latency", "en", "Latency"},
+		{"components.admin.sidebar.health.latency", "es", "Latencia"},
+		{"components.admin.sidebar.health.clients", "en", "Active Clients"},
+		{"components.admin.sidebar.health.clients", "es", "Clientes Activos"},
+		{"components.admin.sidebar.health.cache", "en", "Cache"},
+		{"components.admin.sidebar.health.cache", "es", "Caché"},
+		{"components.admin.sidebar.auth.logout", "en", "LOG OUT SESSION"},
+		{"components.admin.sidebar.auth.logout", "es", "CERRAR SESIÓN"},
+		{"components.admin.sidebar.status.secure", "en", "Secure Link Active"},
+		{"components.admin.sidebar.status.secure", "es", "Enlace Seguro Activo"},
+		{"pages.admin.bounties.offers.waiting_clients", "en", "WAITING CLIENTS"},
+		{"pages.admin.bounties.offers.waiting_clients", "es", "CLIENTES ESPERANDO"},
+		{"pages.admin.bounties.offers.select_clients", "en", "Select Clients to Fulfill (Max {qty})"},
+		{"pages.admin.bounties.offers.select_clients", "es", "Seleccionar clientes para cumplir (Máx {qty})"},
+		{"pages.admin.bounties.offers.over_limit", "en", "⚠️ OVER QUANTITY LIMIT"},
+		{"pages.admin.bounties.offers.over_limit", "es", "⚠️ LÍMITE DE CANTIDAD EXCEDIDO"},
+		{"pages.admin.bounties.requests.complete_status", "en", "COMPLETE"},
+		{"pages.admin.bounties.requests.complete_status", "es", "COMPLETO"},
+		{"pages.admin.bounties.title", "en", "WANTED / BOUNTIES"},
+		{"pages.admin.bounties.title", "es", "BUSCADOS / BOUNTIES"},
+		{"pages.admin.bounties.subtitle", "en", "Cards We Want to Buy // Client Requests"},
+		{"pages.admin.bounties.subtitle", "es", "Cartas que queremos comprar // Solicitudes de clientes"},
+		{"pages.admin.bounties.add_btn", "en", "ADD NEW BOUNTY"},
+		{"pages.admin.bounties.add_btn", "es", "AGREGAR NUEVO BOUNTY"},
+		{"pages.admin.bounties.tabs.bounties", "en", "WANTED LIST"},
+		{"pages.admin.bounties.tabs.bounties", "es", "LISTA DE BUSCADOS"},
+		{"pages.admin.bounties.tabs.offers", "en", "OFFERS VERIFICATION"},
+		{"pages.admin.bounties.tabs.offers", "es", "VERIFICACIÓN DE OFERTAS"},
+		{"pages.admin.bounties.tabs.requests", "en", "CLIENT REQUESTS"},
+		{"pages.admin.bounties.tabs.requests", "es", "SOLICITUDES DE CLIENTES"},
+		{"pages.admin.bounties.tabs.pending_suffix", "en", "PENDING"},
+		{"pages.admin.bounties.tabs.pending_suffix", "es", "PENDIENTE"},
+		{"pages.admin.bounties.loading", "en", "Synchronizing Logistics..."},
+		{"pages.admin.bounties.loading", "es", "Sincronizando logística..."},
+		{"pages.admin.bounties.table.card", "en", "Card"},
+		{"pages.admin.bounties.table.card", "es", "Carta"},
+		{"pages.admin.bounties.table.set_info", "en", "Set / Info"},
+		{"pages.admin.bounties.table.set_info", "es", "Set / Info"},
+		{"pages.admin.bounties.table.condition", "en", "Cond."},
+		{"pages.admin.bounties.table.condition", "es", "Est."},
+		{"pages.admin.bounties.table.target_price", "en", "Target Price"},
+		{"pages.admin.bounties.table.target_price", "es", "Precio Objetivo"},
+		{"pages.admin.bounties.table.qty", "en", "Qty"},
+		{"pages.admin.bounties.table.qty", "es", "Cant."},
+		{"pages.admin.bounties.table.status", "en", "Status"},
+		{"pages.admin.bounties.table.status", "es", "Estado"},
+		{"pages.admin.bounties.table.actions", "en", "Actions"},
+		{"pages.admin.bounties.table.actions", "es", "Acciones"},
+		{"pages.admin.bounties.offers.seller", "en", "Seller:"},
+		{"pages.admin.bounties.offers.seller", "es", "Vendedor:"},
+		{"pages.admin.bounties.offers.condition", "en", "Condition:"},
+		{"pages.admin.bounties.offers.condition", "es", "Estado:"},
+		{"pages.admin.bounties.offers.quantity", "en", "Quantity:"},
+		{"pages.admin.bounties.offers.quantity", "es", "Cantidad:"},
+		{"pages.admin.bounties.offers.waiting_clients", "en", "WAITING CLIENTS"},
+		{"pages.admin.bounties.offers.waiting_clients", "es", "CLIENTES ESPERANDO"},
+		{"pages.admin.bounties.offers.submitted_on", "en", "Submitted on:"},
+		{"pages.admin.bounties.offers.submitted_on", "es", "Enviado el:"},
+		{"pages.admin.bounties.offers.select_clients", "en", "Select Clients to Fulfill (Max {qty})"},
+		{"pages.admin.bounties.offers.select_clients", "es", "Selecciona clientes para completar (Máx {qty})"},
+		{"pages.admin.bounties.offers.over_limit", "en", "⚠️ OVER QUANTITY LIMIT"},
+		{"pages.admin.bounties.offers.over_limit", "es", "⚠️ EXCESO DE CANTIDAD"},
+		{"pages.admin.bounties.requests.complete_status", "en", "COMPLETE"},
+		{"pages.admin.bounties.requests.complete_status", "es", "COMPLETO"},
+		{"pages.admin.bounties.requests.client_label", "en", "Client:"},
+		{"pages.admin.bounties.requests.client_label", "es", "Cliente:"},
+		{"pages.admin.bounties.requests.requested_date", "en", "Requested:"},
+		{"pages.admin.bounties.requests.requested_date", "es", "Solicitado:"},
+		{"pages.admin.bounties.requests.no_details", "en", "No additional details provided."},
+		{"pages.admin.bounties.requests.no_details", "es", "No se proporcionaron detalles adicionales."},
+		{"pages.admin.bounties.requests.accept_btn", "en", "ACCEPT & ADD BOUNTY"},
+		{"pages.admin.bounties.requests.accept_btn", "es", "ACEPTAR Y AGREGAR BOUNTY"},
+		{"pages.admin.bounties.requests.solve_btn", "en", "MARK AS SOLVED"},
+		{"pages.admin.bounties.requests.solve_btn", "es", "MARCAR COMO RESUELTO"},
+		{"pages.admin.bounties.requests.reject_btn", "en", "REJECT"},
+		{"pages.admin.bounties.requests.reject_btn", "es", "RECHAZAR"},
+		{"pages.admin.bounties.requests.mission_complete", "en", "MISSION COMPLETE\nCARD DELIVERED"},
+		{"pages.admin.bounties.requests.mission_complete", "es", "MISIÓN COMPLETADA\nCARTA ENTREGADA"},
+
+		// Bounty Modal (Slugs: components.admin.bounty_modal)
+		{"components.admin.bounty_modal.title_edit", "en", "EDIT WANTED CARD"},
+		{"components.admin.bounty_modal.title_edit", "es", "EDITAR CARTA BUSCADA"},
+		{"components.admin.bounty_modal.title_add", "en", "ADD WANTED CARD"},
+		{"components.admin.bounty_modal.title_add", "es", "AGREGAR CARTA BUSCADA"},
+		{"components.admin.bounty_modal.tcg_label", "en", "TCG SYSTEM"},
+		{"components.admin.bounty_modal.tcg_label", "es", "SISTEMA TCG"},
+		{"components.admin.bounty_modal.condition_label", "en", "CONDITION"},
+		{"components.admin.bounty_modal.condition_label", "es", "ESTADO"},
+		{"components.admin.bounty_modal.card_name", "en", "CARD NAME"},
+		{"components.admin.bounty_modal.card_name", "es", "NOMBRE DE LA CARTA"},
+		{"components.admin.bounty_modal.set_name", "en", "SET NAME / INFO"},
+		{"components.admin.bounty_modal.set_name", "es", "NOMBRE DEL SET / INFO"},
+		{"components.admin.bounty_modal.image_url", "en", "IMAGE URL"},
+		{"components.admin.bounty_modal.image_url", "es", "URL DE LA IMAGEN"},
+		{"components.admin.bounty_modal.pricing_title", "en", "PRICING"},
+		{"components.admin.bounty_modal.pricing_title", "es", "PRECIOS"},
+		{"components.admin.bounty_modal.price_source", "en", "PRICE SOURCE *"},
+		{"components.admin.bounty_modal.price_source", "es", "FUENTE DE PRECIO *"},
+		{"components.admin.bounty_modal.source_manual", "en", "Manual Override (COP)"},
+		{"components.admin.bounty_modal.source_manual", "es", "Anulación Manual (COP)"},
+		{"components.admin.bounty_modal.source_tcgplayer", "en", "External: TCGPlayer (USD)"},
+		{"components.admin.bounty_modal.source_tcgplayer", "es", "Externo: TCGPlayer (USD)"},
+		{"components.admin.bounty_modal.source_cardmarket", "en", "External: Cardmarket (EUR)"},
+		{"components.admin.bounty_modal.source_cardmarket", "es", "Externo: Cardmarket (EUR)"},
+		{"components.admin.bounty_modal.ref_price_label", "en", "REFERENCE PRICE ({source}) *"},
+		{"components.admin.bounty_modal.ref_price_label", "es", "PRECIO DE REFERENCIA ({source}) *"},
+		{"components.admin.bounty_modal.price_cop_label", "en", "PRICE (COP) *"},
+		{"components.admin.bounty_modal.price_cop_label", "es", "PRECIO (COP) *"},
+
+		// Product Edit Modal (Slugs: components.admin.product_modal)
+		{"components.admin.product_modal.title_edit", "en", "EDIT PRODUCT"},
+		{"components.admin.product_modal.title_edit", "es", "EDITAR PRODUCTO"},
+		{"components.admin.product_modal.title_new", "en", "NEW PRODUCT"},
+		{"components.admin.product_modal.title_new", "es", "NUEVO PRODUCTO"},
+		{"components.admin.product_modal.product_id", "en", "PRODUCT ID: {id}"},
+		{"components.admin.product_modal.product_id", "es", "ID PRODUCTO: {id}"},
+		{"components.admin.product_modal.tcg_system_label", "en", "TCG SYSTEM"},
+		{"components.admin.product_modal.tcg_system_label", "es", "SISTEMA TCG"},
+		{"components.admin.product_modal.category_label", "en", "CATEGORY"},
+		{"components.admin.product_modal.category_label", "es", "CATEGORÍA"},
+		{"components.admin.product_modal.condition_label", "en", "CONDITION"},
+		{"components.admin.product_modal.condition_label", "es", "ESTADO"},
+		{"components.admin.product_modal.product_name_label", "en", "PRODUCT NAME"},
+		{"components.admin.product_modal.product_name_label", "es", "NOMBRE DEL PRODUCTO"},
+		{"components.admin.product_modal.tab_deck", "en", "DECK BUILDER"},
+		{"components.admin.product_modal.tab_deck", "es", "CONSTRUCTOR DE MAZO"},
+		{"components.admin.product_modal.tab_variant", "en", "VARIANT & IDENTITY"},
+		{"components.admin.product_modal.tab_variant", "es", "VARIANTE E IDENTIDAD"},
+		{"components.admin.product_modal.tab_pricing", "en", "PRICING & STOCK"},
+		{"components.admin.product_modal.tab_pricing", "es", "PRECIO Y STOCK"},
+		{"components.admin.product_modal.image_preview_label", "en", "IMAGE PREVIEW"},
+		{"components.admin.product_modal.image_preview_label", "es", "VISTA PREVIA"},
+		{"components.admin.product_modal.saving", "en", "SAVING..."},
+		{"components.admin.product_modal.saving", "es", "GUARDANDO..."},
+		{"components.admin.product_modal.save_btn", "en", "SAVE PRODUCT"},
+		{"components.admin.product_modal.save_btn", "es", "GUARDAR PRODUCTO"},
+		{"components.admin.product_modal.save_and_new_btn", "en", "SAVE & ADD NEW"},
+		{"components.admin.product_modal.save_and_new_btn", "es", "GUARDAR Y NUEVO"},
+		{"components.admin.product_modal.cancel_btn", "en", "CANCEL"},
+		{"components.admin.product_modal.cancel_btn", "es", "CANCELAR"},
+		{"components.admin.product_modal.error_required", "en", "Name, TCG, and Category are required."},
+		{"components.admin.product_modal.error_required", "es", "Nombre, TCG y Categoría son requeridos."},
+		{"components.admin.product_modal.error_save", "en", "Failed to save product."},
+		{"components.admin.product_modal.error_save", "es", "Error al guardar el producto."},
+		{"components.admin.product_modal.error_no_prints", "en", "No printings found for that search."},
+		{"components.admin.product_modal.error_no_prints", "es", "No se encontraron impresiones para esa búsqueda."},
+		{"components.admin.product_modal.error_no_match", "en", "Could not identify a matching print."},
+		{"components.admin.product_modal.error_no_match", "es", "No se pudo identificar una impresión coincidente."},
+		{"components.admin.product_modal.error_fetch", "en", "Scryfall fetch failed"},
+		{"components.admin.product_modal.error_fetch", "es", "La descarga de Scryfall falló"},
+
+		// Variant Tab (Slugs: components.admin.product_modal.variant)
+		{"components.admin.product_modal.variant.set_info_title", "en", "SET INFORMATION"},
+		{"components.admin.product_modal.variant.set_info_title", "es", "INFORMACIÓN DEL SET"},
+		{"components.admin.product_modal.variant.set_name_label", "en", "SET NAME"},
+		{"components.admin.product_modal.variant.set_name_label", "es", "NOMBRE DEL SET"},
+		{"components.admin.product_modal.variant.set_code_label", "en", "CODE"},
+		{"components.admin.product_modal.variant.set_code_label", "es", "CÓDIGO"},
+		{"components.admin.product_modal.variant.collector_number_label", "en", "COLLECTOR #"},
+		{"components.admin.product_modal.variant.collector_number_label", "es", "NÚMERO #"},
+		{"components.admin.product_modal.variant.language_label", "en", "CARD LANGUAGE"},
+		{"components.admin.product_modal.variant.language_label", "es", "IDIOMA DE LA CARTA"},
+		{"components.admin.product_modal.variant.treatment_title", "en", "TREATMENT & FINISH"},
+		{"components.admin.product_modal.variant.treatment_title", "es", "TRATAMIENTO Y ACABADO"},
+		{"components.admin.product_modal.variant.foil_label", "en", "SHINE (FOIL)"},
+		{"components.admin.product_modal.variant.foil_label", "es", "BRILLO (FOIL)"},
+		{"components.admin.product_modal.variant.card_treatment_label", "en", "CARD TREATMENT"},
+		{"components.admin.product_modal.variant.card_treatment_label", "es", "TRATAMIENTO DE CARTA"},
+		{"components.admin.product_modal.variant.promo_type_label", "en", "PROMO TYPE"},
+		{"components.admin.product_modal.variant.promo_type_label", "es", "TIPO DE PROMO"},
+		{"components.admin.product_modal.variant.art_variation_label", "en", "ART VARIATION"},
+		{"components.admin.product_modal.variant.art_variation_label", "es", "VARIACIÓN DE ARTE"},
+
+		{"components.admin.product_modal.variant.optimized_hint", "en", "VARIANT OPTIONS ARE CURRENTLY OPTIMIZED FOR MTG SINGLES."},
+		{"components.admin.product_modal.variant.optimized_hint", "es", "LAS OPCIONES DE VARIANTE ESTÁN OPTIMIZADAS PARA MTG SINGLES."},
+		{"components.admin.product_modal.variant.general_hint", "en", "General product details are managed in the main header and Pricing tab."},
+		{"components.admin.product_modal.variant.general_hint", "es", "Los detalles generales del producto se gestionan en el encabezado y la pestaña de Precios."},
+		{"components.admin.product_modal.variant.metadata_title", "en", "MTG Metadata"},
+		{"components.admin.product_modal.variant.metadata_title", "es", "Metadatos MTG"},
+		{"components.admin.product_modal.variant.rarity_label", "en", "Rarity"},
+		{"components.admin.product_modal.variant.rarity_label", "es", "Rareza"},
+		{"components.admin.product_modal.variant.colors_label", "en", "Colors"},
+		{"components.admin.product_modal.variant.colors_label", "es", "Colores"},
+		{"components.admin.product_modal.variant.cmc_label", "en", "CMC"},
+		{"components.admin.product_modal.variant.cmc_label", "es", "CMC"},
+		{"components.admin.product_modal.variant.legendary_label", "en", "LEGENDARY"},
+		{"components.admin.product_modal.variant.legendary_label", "es", "LEGENDARIA"},
+		{"components.admin.product_modal.variant.historic_label", "en", "HISTORIC"},
+		{"components.admin.product_modal.variant.historic_label", "es", "HISTÓRICA"},
+		{"components.admin.product_modal.variant.land_label", "en", "LAND"},
+		{"components.admin.product_modal.variant.land_label", "es", "TIERRA"},
+		{"components.admin.product_modal.variant.basic_label", "en", "BASIC"},
+		{"components.admin.product_modal.variant.basic_label", "es", "BÁSICA"},
+		{"components.admin.product_modal.variant.full_art_label", "en", "FULL ART"},
+		{"components.admin.product_modal.variant.full_art_label", "es", "ARTE COMPLETO"},
+		{"components.admin.product_modal.variant.textless_label", "en", "TEXTLESS"},
+		{"components.admin.product_modal.variant.textless_label", "es", "SIN TEXTO"},
+		{"components.admin.product_modal.variant.type_line_label", "en", "Type Line"},
+		{"components.admin.product_modal.variant.type_line_label", "es", "Línea de Tipo"},
+		{"components.admin.product_modal.variant.artist_label", "en", "Artist"},
+		{"components.admin.product_modal.variant.artist_label", "es", "Artista"},
+		{"components.admin.product_modal.variant.oracle_text_label", "en", "Oracle Text"},
+		{"components.admin.product_modal.variant.oracle_text_label", "es", "Texto Oracle"},
+
+		// Pricing Tab (Slugs: components.admin.product_modal.pricing)
+		{"components.admin.product_modal.pricing.stock_title", "en", "STOCK MANAGEMENT"},
+		{"components.admin.product_modal.pricing.stock_title", "es", "GESTIÓN DE STOCK"},
+		{"components.admin.product_modal.pricing.total_stock_label", "en", "TOTAL STOCK"},
+		{"components.admin.product_modal.pricing.total_stock_label", "es", "STOCK TOTAL"},
+		{"components.admin.product_modal.pricing.add_location_btn", "en", "ASSIGN NEW LOCATION"},
+		{"components.admin.product_modal.pricing.add_location_btn", "es", "ASIGNAR NUEVA UBICACIÓN"},
+		{"components.admin.product_modal.pricing.description_label", "en", "DESCRIPTION / NOTES (INTERNAL)"},
+		{"components.admin.product_modal.pricing.description_label", "es", "DESCRIPCIÓN / NOTAS (INTERNO)"},
+		{"components.admin.product_modal.pricing.description_placeholder", "en", "Optional card notes..."},
+		{"components.admin.product_modal.pricing.description_placeholder", "es", "Notas opcionales de la carta..."},
+		{"components.admin.product_modal.pricing.collections_label", "en", "COLLECTIONS / TAGS"},
+		{"components.admin.product_modal.pricing.collections_label", "es", "COLECCIONES / ETIQUETAS"},
+
+		{"components.admin.product_modal.pricing.title", "en", "PRICING"},
+		{"components.admin.product_modal.pricing.title", "es", "PRECIOS"},
+		{"components.admin.product_modal.pricing.source_label", "en", "PRICE SOURCE *"},
+		{"components.admin.product_modal.pricing.source_label", "es", "FUENTE DE PRECIO *"},
+		{"components.admin.product_modal.pricing.source_manual", "en", "Manual Override (COP)"},
+		{"components.admin.product_modal.pricing.source_manual", "es", "Anulación Manual (COP)"},
+		{"components.admin.product_modal.pricing.source_tcgplayer", "en", "External: TCGPlayer (USD)"},
+		{"components.admin.product_modal.pricing.source_tcgplayer", "es", "Externo: TCGPlayer (USD)"},
+		{"components.admin.product_modal.pricing.source_cardmarket", "en", "External: Cardmarket (EUR)"},
+		{"components.admin.product_modal.pricing.source_cardmarket", "es", "Externo: Cardmarket (EUR)"},
+		{"components.admin.product_modal.pricing.price_cop_label", "en", "PRICE (COP) *"},
+		{"components.admin.product_modal.pricing.price_cop_label", "es", "PRECIO (COP) *"},
+		{"components.admin.product_modal.pricing.ref_price_label", "en", "REFERENCE PRICE ({currency}) *"},
+		{"components.admin.product_modal.pricing.ref_price_label", "es", "PRECIO DE REFERENCIA ({currency}) *"},
+		{"components.admin.product_modal.pricing.basic_title", "en", "Basic Details"},
+		{"components.admin.product_modal.pricing.basic_title", "es", "Detalles Básicos"},
+		{"components.admin.product_modal.pricing.image_url_label", "en", "Image URL"},
+		{"components.admin.product_modal.pricing.image_url_label", "es", "URL de la Imagen"},
+		{"components.admin.product_modal.pricing.no_collections", "en", "No custom collections defined."},
+		{"components.admin.product_modal.pricing.no_collections", "es", "No hay colecciones personalizadas."},
+
+		// Scryfall Populate (Slugs: components.admin.product_modal.scryfall)
+		{"components.admin.product_modal.scryfall.search_hint", "en", "Enter Name or SET + CN and click Populate to fetch from Scryfall"},
+		{"components.admin.product_modal.scryfall.search_hint", "es", "Ingrese Nombre o SET + CN y haga clic en Cargar para obtener de Scryfall"},
+		{"components.admin.product_modal.scryfall.populate_btn", "en", "POPULATE DATA"},
+		{"components.admin.product_modal.scryfall.populate_btn", "es", "CARGAR DATOS"},
+		{"components.admin.product_modal.scryfall.looking_up", "en", "LOOKING UP..."},
+		{"components.admin.product_modal.scryfall.looking_up", "es", "BUSCANDO..."},
+		{"components.admin.product_modal.scryfall.no_image", "en", "NO IMAGE"},
+		{"components.admin.product_modal.scryfall.no_image", "es", "SIN IMAGEN"},
+
+		// Deck Builder Tab (Slugs: components.admin.product_modal.deck)
+		{"components.admin.product_modal.deck.select_printing_label", "en", "Select Specific Printing to Add"},
+		{"components.admin.product_modal.deck.select_printing_label", "es", "Seleccionar Impresión Específica para Agregar"},
+		{"components.admin.product_modal.deck.add_btn", "en", "+ ADD"},
+		{"components.admin.product_modal.deck.add_btn", "es", "+ AGREGAR"},
+		{"components.admin.product_modal.deck.custom_name_label", "en", "Card Name (Custom)"},
+		{"components.admin.product_modal.deck.custom_name_label", "es", "Nombre de Carta (Personalizado)"},
+		{"components.admin.product_modal.deck.custom_name_placeholder", "en", "Type a custom card name..."},
+		{"components.admin.product_modal.deck.custom_name_placeholder", "es", "Escriba un nombre de carta personalizado..."},
+		{"components.admin.product_modal.deck.add_custom_btn", "en", "Add Custom Card"},
+		{"components.admin.product_modal.deck.add_custom_btn", "es", "Agregar Carta Personalizada"},
+		{"components.admin.product_modal.deck.list_title", "en", "Current Deck List"},
+		{"components.admin.product_modal.deck.list_title", "es", "Lista de Mazo Actual"},
+		{"components.admin.product_modal.deck.card_count", "en", "{count} CARDS"},
+		{"components.admin.product_modal.deck.card_count", "es", "{count} CARTAS"},
+		{"components.admin.product_modal.deck.empty_msg", "en", "Deck is currently empty."},
+		{"components.admin.product_modal.deck.empty_msg", "es", "El mazo está actualmente vacío."},
+		{"components.admin.product_modal.deck.edit_tooltip", "en", "Edit/Repopulate"},
+		{"components.admin.product_modal.deck.edit_tooltip", "es", "Editar/Recargar"},
+		{"components.admin.product_modal.deck.remove_tooltip", "en", "Remove"},
+		{"components.admin.product_modal.deck.remove_tooltip", "es", "Eliminar"},
+		{"components.admin.bounty_modal.quantity_label", "en", "QUANTITY NEEDED"},
+		{"components.admin.bounty_modal.quantity_label", "es", "CANTIDAD NECESARIA"},
+		{"components.admin.bounty_modal.hide_price_label", "en", "Hide target price from public view"},
+		{"components.admin.bounty_modal.hide_price_label", "es", "Ocultar precio objetivo del público"},
+		{"components.admin.bounty_modal.hide_price_desc", "en", "If checked, users will see \"Contact for Price\" instead of your target COP value."},
+		{"components.admin.bounty_modal.hide_price_desc", "es", "Si se marca, los usuarios verán \"Contactar para precio\" en lugar de su valor COP objetivo."},
+		{"components.admin.bounty_modal.no_image", "en", "NO IMAGE"},
+		{"components.admin.bounty_modal.no_image", "es", "SIN IMAGEN"},
+		{"components.admin.bounty_modal.name_placeholder", "en", "Entity Name"},
+		{"components.admin.bounty_modal.name_placeholder", "es", "Nombre de la entidad"},
+		{"components.admin.bounty_modal.set_placeholder", "en", "Optional Set Name"},
+		{"components.admin.bounty_modal.set_placeholder", "es", "Nombre opcional del set"},
+		{"components.admin.bounty_modal.image_placeholder", "en", "https://..."},
+		{"components.admin.bounty_modal.image_placeholder", "es", "https://..."},
+		{"components.admin.bounty_modal.saving", "en", "SAVING..."},
+		{"components.admin.bounty_modal.saving", "es", "GUARDANDO..."},
+		{"components.admin.bounty_modal.save_btn", "en", "💾 SAVE BOUNTY"},
+		{"components.admin.bounty_modal.save_btn", "es", "💾 GUARDAR BOUNTY"},
+		{"components.admin.bounty_modal.saving", "en", "SAVING..."},
+		{"components.admin.bounty_modal.saving", "es", "GUARDANDO..."},
+		{"components.admin.bounty_modal.save_btn", "en", "💾 SAVE BOUNTY"},
+		{"components.admin.bounty_modal.save_btn", "es", "💾 GUARDAR BOUNTY"},
+		{"components.admin.bounty_modal.error_required", "en", "Name and TCG are required."},
+		{"components.admin.bounty_modal.error_required", "es", "El nombre y el TCG son obligatorios."},
+		{"components.admin.bounty_modal.error_save", "en", "Failed to save bounty."},
+		{"components.admin.bounty_modal.error_save", "es", "Error al guardar el bounty."},
+
+		// Resolve Offer Modal (Slugs: components.admin.resolve_modal)
+		{"components.admin.resolve_modal.title", "en", "Resolve Offer"},
+		{"components.admin.resolve_modal.title", "es", "Resolver Oferta"},
+		{"components.admin.resolve_modal.offer_details", "en", "Offer details:"},
+		{"components.admin.resolve_modal.offer_details", "es", "Detalles de la oferta:"},
+		{"components.admin.resolve_modal.no_notes", "en", "No notes provided"},
+		{"components.admin.resolve_modal.no_notes", "es", "No se proporcionaron notas"},
+		{"components.admin.resolve_modal.action_title", "en", "ACTION UPON ACCEPTANCE"},
+		{"components.admin.resolve_modal.action_title", "es", "ACCIÓN AL ACEPTAR"},
+		{"components.admin.resolve_modal.action_inventory", "en", "Add to Inventory"},
+		{"components.admin.resolve_modal.action_inventory", "es", "Agregar al Inventario"},
+		{"components.admin.resolve_modal.action_inventory_desc", "en", "Accept the card and add it directly to open stock for sale."},
+		{"components.admin.resolve_modal.action_inventory_desc", "es", "Acepte la carta y agréguela directamente al stock abierto para la venta."},
+		{"components.admin.resolve_modal.action_fulfill_selected", "en", "Fulfill {count} Selected Requests"},
+		{"components.admin.resolve_modal.action_fulfill_selected", "es", "Cumplir {count} Solicitudes Seleccionadas"},
+		{"components.admin.resolve_modal.action_fulfill_matching", "en", "Fulfill Matching Requests"},
+		{"components.admin.resolve_modal.action_fulfill_matching", "es", "Cumplir Solicitudes Coincidentes"},
+		{"components.admin.resolve_modal.action_fulfill_selected_desc", "en", "Accept the card and notify the {count} clients you selected."},
+		{"components.admin.resolve_modal.action_fulfill_selected_desc", "es", "Acepte la carta y notifique a los {count} clientes que seleccionó."},
+		{"components.admin.resolve_modal.action_fulfill_matching_desc", "en", "Accept the card and notify ALL clients waiting for it."},
+		{"components.admin.resolve_modal.action_fulfill_matching_desc", "es", "Acepte la carta y notifique a TODOS los clientes que la esperan."},
+		{"components.admin.resolve_modal.matching_selected", "en", "{count} of {total} matching requests selected."},
+		{"components.admin.resolve_modal.matching_selected", "es", "{count} de {total} solicitudes coincidentes seleccionadas."},
+		{"components.admin.resolve_modal.matching_found", "en", "{total} matching requests found."},
+		{"components.admin.resolve_modal.matching_found", "es", "{total} solicitudes coincidentes encontradas."},
+		{"components.admin.resolve_modal.reject_btn", "en", "REJECT OFFER"},
+		{"components.admin.resolve_modal.reject_btn", "es", "RECHAZAR OFERTA"},
+		{"components.admin.resolve_modal.accept_btn", "en", "ACCEPT OFFER"},
+		{"components.admin.resolve_modal.accept_btn", "es", "ACEPTAR OFERTA"},
+
+		// Admin Inventory Page (Slugs: pages.admin.inventory)
+		{"pages.admin.inventory.title", "en", "INVENTORY MANAGEMENT"},
+		{"pages.admin.inventory.title", "es", "GESTIÓN DE INVENTARIO"},
+		{"pages.admin.inventory.subtitle", "en", "Store Dashboard // Operations Active"},
+		{"pages.admin.inventory.subtitle", "es", "Panel de Control // Operaciones Activas"},
+		{"pages.admin.inventory.sync_sets_btn", "en", "SYNC SETS"},
+		{"pages.admin.inventory.sync_sets_btn", "es", "SINCRONIZAR SETS"},
+		{"pages.admin.inventory.syncing", "en", "SYNCING..."},
+		{"pages.admin.inventory.syncing", "es", "SINCRONIZANDO..."},
+		{"pages.admin.inventory.last_sync", "en", "LAST SYNC: {date}"},
+		{"pages.admin.inventory.last_sync", "es", "ÚLTIMA SINCRONIZACIÓN: {date}"},
+		{"pages.admin.inventory.import_csv_btn", "en", "IMPORT CSV"},
+		{"pages.admin.inventory.import_csv_btn", "es", "IMPORTAR CSV"},
+		{"pages.admin.inventory.add_product_btn", "en", "ADD NEW PRODUCT"},
+		{"pages.admin.inventory.add_product_btn", "es", "AGREGAR PRODUCTO"},
+		{"pages.admin.inventory.search_label", "en", "Product Search"},
+		{"pages.admin.inventory.search_label", "es", "Búsqueda de Productos"},
+		{"pages.admin.inventory.search_placeholder", "en", "Search by name, set, code..."},
+		{"pages.admin.inventory.search_placeholder", "es", "Buscar por nombre, set, código..."},
+		{"pages.admin.inventory.tcg_filter_label", "en", "TCG Filter"},
+		{"pages.admin.inventory.tcg_filter_label", "es", "Filtro TCG"},
+		{"pages.admin.inventory.category_label", "en", "Category"},
+		{"pages.admin.inventory.category_label", "es", "Categoría"},
+		{"pages.admin.inventory.storage_label", "en", "Physical Location"},
+		{"pages.admin.inventory.storage_label", "es", "Ubicación Física"},
+		{"pages.admin.inventory.manage_locations_tooltip", "en", "Manage Locations"},
+		{"components.admin.inventory.manage_locations_tooltip", "es", "Gestionar Ubicaciones"},
+		{"pages.admin.inventory.manage_collections_tooltip", "en", "Manage Collections"},
+		{"pages.admin.inventory.manage_collections_tooltip", "es", "Gestionar Colecciones"},
+		{"pages.admin.inventory.count_label", "en", "INVENTORY COUNT"},
+		{"pages.admin.inventory.count_label", "es", "CONTEO DE INVENTARIO"},
+		{"pages.admin.inventory.response_time_label", "en", "RESPONSE TIME"},
+		{"pages.admin.inventory.response_time_label", "es", "TIEMPO DE RESPUESTA"},
+		{"pages.admin.inventory.confirm_delete", "en", "Are you sure you want to delete {name}?"},
+		{"pages.admin.inventory.confirm_delete", "es", "¿Estás seguro de que quieres eliminar {name}?"},
+		{"pages.admin.inventory.error_delete", "en", "Failed to delete product."},
+		{"pages.admin.inventory.error_delete", "es", "Error al eliminar el producto."},
+		{"pages.admin.inventory.sync_success", "en", "Successfully synced {count} sets!"},
+		{"pages.admin.inventory.sync_success", "es", "¡Se sincronizaron correctamente {count} sets!"},
+		{"pages.admin.inventory.sync_error", "en", "Failed to sync sets."},
+		{"pages.admin.inventory.sync_error", "es", "Error al sincronizar los sets."},
+		{"pages.admin.inventory.confirm_delete_storage_items", "en", "Location \"{name}\" contains {count} items. Deleting it will clear these assignments. Continue?"},
+		{"pages.admin.inventory.confirm_delete_storage_items", "es", "La ubicación \"{name}\" contiene {count} artículos. Al eliminarla se borrarán estas asignaciones. ¿Continuar?"},
+		{"pages.admin.inventory.confirm_delete_storage", "en", "Delete storage location \"{name}\"?"},
+		{"pages.admin.inventory.confirm_delete_storage", "es", "¿Eliminar ubicación de almacenamiento \"{name}\"?"},
+		{"pages.admin.inventory.confirm_delete_category", "en", "Delete collection \"{name}\"?"},
+		{"pages.admin.inventory.confirm_delete_category", "es", "¿Eliminar colección \"{name}\"?"},
+
+		// Common Dates (Slugs: pages.common.dates)
+		{"pages.common.dates.just_now", "en", "Just now"},
+		{"pages.common.dates.just_now", "es", "Justo ahora"},
+		{"pages.common.dates.mins_ago", "en", "{mins}m ago"},
+		{"pages.common.dates.mins_ago", "es", "hace {mins}m"},
+		{"pages.common.dates.hours_ago", "en", "{hours}h ago"},
+		{"pages.common.dates.hours_ago", "es", "hace {hours}h"},
+
+		// Product Table (Slugs: pages.admin.inventory.table)
+		{"pages.admin.inventory.unassigned", "en", "unassigned"},
+		{"pages.admin.inventory.unassigned", "es", "sin asignar"},
+		{"pages.admin.inventory.delete_product_tooltip", "en", "Delete Product"},
+		{"pages.admin.inventory.delete_product_tooltip", "es", "Eliminar Producto"},
+		{"pages.admin.inventory.scanning_catalog", "en", "Scanning Catalog..."},
+		{"pages.admin.inventory.scanning_catalog", "es", "Escaneando Catálogo..."},
+		{"pages.admin.inventory.table.product", "en", "PRODUCT"},
+		{"pages.admin.inventory.table.product", "es", "PRODUCTO"},
+		{"pages.admin.inventory.table.type", "en", "TYPE"},
+		{"pages.admin.inventory.table.type", "es", "TIPO"},
+		{"pages.admin.inventory.table.rarity", "en", "RARITY"},
+		{"pages.admin.inventory.table.rarity", "es", "RAREZA"},
+		{"pages.admin.inventory.table.price", "en", "PRICE"},
+		{"pages.admin.inventory.table.price", "es", "PRECIO"},
+		{"pages.admin.inventory.table.stock", "en", "STOCK"},
+		{"pages.admin.inventory.table.stock", "es", "STOCK"},
+		{"pages.admin.inventory.table.updated", "en", "UPDATED"},
+		{"pages.admin.inventory.table.updated", "es", "ACTUALIZADO"},
+		{"pages.admin.inventory.table.cmd", "en", "CMD"},
+		{"pages.admin.inventory.table.cmd", "es", "CMD"},
+		{"pages.admin.inventory.no_products", "en", "NO PRODUCTS FOUND"},
+		{"pages.admin.inventory.no_products", "es", "NO SE ENCONTRARON PRODUCTOS"},
+		{"pages.admin.inventory.no_products_hint", "en", "Try adjusting your scanner filters"},
+		{"pages.admin.inventory.no_products_hint", "es", "Intente ajustar sus filtros de escaneo"},
+
+		// Profile (Slugs: profile)
+		{"pages.profile.title", "en", "MY PROFILE"},
+		{"pages.profile.title", "es", "MI PERFIL"},
+		{"pages.profile.linked_accounts", "en", "LINKED ACCOUNTS"},
+		{"pages.profile.linked_accounts", "es", "CUENTAS VINCULADAS"},
+		{"pages.profile.order_history", "en", "ORDER HISTORY"},
+		{"pages.profile.order_history", "es", "HISTORIAL DE PEDIDOS"},
+		{"pages.profile.personal_info", "en", "PERSONAL INFORMATION"},
+		{"pages.profile.personal_info", "es", "INFORMACIÓN PERSONAL"},
+		{"pages.profile.no_orders", "en", "You haven't placed any orders yet."},
+		{"pages.profile.no_orders", "es", "Aún no has realizado pedidos."},
+	}
+
+	for _, t := range data {
+		_, err := db.Exec(`
+			INSERT INTO translation (key, locale, value)
+			VALUES ($1, $2, $3)
+			ON CONFLICT (key, locale) DO UPDATE SET value = EXCLUDED.value
+		`, t.Key, t.Locale, t.Value)
+		if err != nil {
+			logger.Error("Failed to seed translation [key: %s, locale: %s]: %v", t.Key, t.Locale, err)
+		}
+	}
+	logger.Info("✅ %d translation records seeded", len(data))
 }

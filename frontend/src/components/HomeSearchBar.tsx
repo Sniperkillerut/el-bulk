@@ -6,6 +6,7 @@ import { Product, TCG_SHORT, FOIL_LABELS, TREATMENT_LABELS } from '@/lib/types';
 import { useCart } from '@/lib/CartContext';
 import CardImage from './CardImage';
 import { openProductModal } from './ProductModalManager';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function HomeSearchBar() {
   const [query, setQuery] = useState('');
@@ -14,6 +15,7 @@ export default function HomeSearchBar() {
   const [showResults, setShowResults] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { addItem } = useCart();
+  const { t } = useLanguage();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -53,7 +55,7 @@ export default function HomeSearchBar() {
       <div className="relative">
         <input
           type="text"
-          placeholder="Search for cards, sets, or products..."
+          placeholder={t('components.search.placeholder', 'Search for cards, sets, or products...')}
           className="w-full bg-white border-2 border-kraft-shadow p-4 pr-12 rounded-sm font-mono-stack text-sm focus:outline-none focus:border-gold transition-colors"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -108,13 +110,15 @@ export default function HomeSearchBar() {
                           </span>
                         )}
                         {product.price_cop_override ? (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-kraft-mid/10 text-kraft-dark border border-kraft-dark/20 font-bold">MANUAL PRICE</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-kraft-mid/10 text-kraft-dark border border-kraft-dark/20 font-bold">{t('components.search.status.manual_price', 'MANUAL PRICE')}</span>
                         ) : null}
                       </div>
 
                       <p className="text-xs text-text-muted truncate">
-                        {product.set_name || 'No Set'} • <span className={product.stock > 0 ? 'text-text-primary' : 'text-hp-color font-bold'}>
-                          {product.stock > 0 ? `${product.stock} IN STOCK` : 'OUT OF STOCK'}
+                        {product.set_name || t('components.search.status.no_set', 'No Set')} • <span className={product.stock > 0 ? 'text-text-primary' : 'text-hp-color font-bold'}>
+                          {product.stock > 0 
+                            ? t('components.search.status.in_stock', '{count} IN STOCK', { count: product.stock }) 
+                            : t('components.search.status.out_of_stock', 'OUT OF STOCK')}
                         </span>
                       </p>
                     </div>
@@ -129,7 +133,7 @@ export default function HomeSearchBar() {
                         className="btn-primary py-1 px-4 text-xs whitespace-nowrap shadow-sm hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
                         style={{ background: product.stock > 0 ? 'var(--ink-deep)' : 'var(--hp-color)', borderColor: 'transparent' }}
                       >
-                        {product.stock > 0 ? '+ ADD' : 'SOLD OUT'}
+                        {product.stock > 0 ? t('components.search.actions.add', '+ ADD') : t('components.search.actions.sold_out', 'SOLD OUT')}
                       </button>
                     </div>
                   </div>
@@ -137,14 +141,15 @@ export default function HomeSearchBar() {
               </div>
             ) : (
               <div className="p-8 text-center text-text-muted font-mono-stack text-sm">
-                No products found for "{query}"
+                {t('components.search.status.no_results', 'No products found for "{query}"').replace('{query}', query)}
               </div>
             )}
             {results && results.length > 0 && (
                <div className="p-2 bg-kraft-light/20 text-center border-t border-kraft-light">
-                  <p className="text-[10px] font-mono-stack text-text-muted italic">Showing top results</p>
+                  <p className="text-[10px] font-mono-stack text-text-muted italic">{t('components.search.status.top_results', 'Showing top results')}</p>
                </div>
             )}
+
           </div>
         </div>
       )}

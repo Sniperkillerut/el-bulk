@@ -1,7 +1,6 @@
-'use client';
-
 import { Product, TCG_SHORT } from '@/lib/types';
 import CardImage from '@/components/CardImage';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface ProductTableRowProps {
   product: Product;
@@ -9,25 +8,26 @@ interface ProductTableRowProps {
   onDelete: (id: string, name: string) => void;
 }
 
-const formatUpdated = (dateStr: string) => {
-  const d = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const diffHrs = diffMs / (1000 * 60 * 60);
-
-  if (diffHrs < 24) {
-    if (diffMs < 60000) return 'Just now';
-    const mins = Math.floor(diffMs / 60000);
-    if (mins < 60) return `${mins}m ago`;
-    return `${Math.floor(diffHrs)}h ago`;
-  }
-  
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + 
-         d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-};
-
 export function ProductTableRow({ product: p, onEdit, onDelete }: ProductTableRowProps) {
+  const { t, locale } = useLanguage();
   const tcgName = p.tcg.length <= 4 ? p.tcg.toUpperCase() : (TCG_SHORT[p.tcg] || p.tcg.substring(0, 3).toUpperCase());
+
+  const formatUpdated = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffHrs = diffMs / (1000 * 60 * 60);
+
+    if (diffHrs < 24) {
+      if (diffMs < 60000) return t('pages.common.dates.just_now', 'Just now');
+      const mins = Math.floor(diffMs / 60000);
+      if (mins < 60) return t('pages.common.dates.mins_ago', '{mins}m ago', { mins });
+      return t('pages.common.dates.hours_ago', '{hours}h ago', { hours: Math.floor(diffHrs) });
+    }
+    
+    return d.toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US', { month: 'short', day: 'numeric' }) + ' ' + 
+           d.toLocaleTimeString(locale === 'es' ? 'es-ES' : 'en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+  };
 
   return (
     <tr key={p.id} onClick={() => onEdit(p)}
@@ -74,7 +74,7 @@ export function ProductTableRow({ product: p, onEdit, onDelete }: ProductTableRo
               </span>
             </div>
             <div className="text-[10px] font-mono-stack text-text-muted flex items-center gap-2">
-              <span className="truncate max-w-[150px] opacity-70">{p.set_name || 'N/A'}</span>
+              <span className="truncate max-w-[150px] opacity-70">{p.set_name || t('pages.common.labels.na', 'N/A')}</span>
               {p.set_code && (
                 <span className="opacity-70 px-1 bg-ink-surface/50 rounded-sm font-bold">
                   [{p.set_code.toUpperCase()}] {p.collector_number && `#${p.collector_number}`}
@@ -111,10 +111,10 @@ export function ProductTableRow({ product: p, onEdit, onDelete }: ProductTableRo
       <td className="text-right">
         <div className="flex flex-col items-end">
           <span className="font-mono-stack font-bold text-ink-deep group-hover:text-gold transition-colors">
-            {p.price ? `$${p.price.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : 'N/A'}
+            {p.price ? `$${p.price.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : t('pages.common.labels.na', 'N/A')}
           </span>
           <span className="text-[9px] font-mono-stack text-text-muted opacity-50 uppercase tracking-tighter">
-            {p.price_source === 'manual' ? 'MANUAL' : (p.price_source === 'tcgplayer' ? 'TCGP' : 'MCK')}
+            {p.price_source === 'manual' ? t('components.admin.bounty_modal.source_manual', 'MANUAL') : (p.price_source === 'tcgplayer' ? 'TCGP' : 'MCK')}
           </span>
         </div>
       </td>
@@ -128,7 +128,7 @@ export function ProductTableRow({ product: p, onEdit, onDelete }: ProductTableRo
               <span key={s.stored_in_id || `loc-${idx}`} className="badge shrink-0 shadow-sm" style={{ background: 'var(--kraft-light)', color: 'var(--kraft-dark)', fontSize: '8px', padding: '1px 3px', border: 'none' }}>
                 {s.name}: {s.quantity}
               </span>
-            )) : <span className="text-[8px] text-text-muted opacity-30 italic">unassigned</span>}
+            )) : <span className="text-[8px] text-text-muted opacity-30 italic">{t('pages.admin.inventory.unassigned', 'unassigned')}</span>}
           </div>
         </div>
       </td>
@@ -144,7 +144,7 @@ export function ProductTableRow({ product: p, onEdit, onDelete }: ProductTableRo
           <button
             onClick={() => onDelete(p.id, p.name)}
             className="w-8 h-8 flex items-center justify-center text-hp-color hover:bg-hp-color/10 rounded-full transition-all opacity-20 hover:opacity-100 hover:scale-110"
-            title="Delete Product"
+            title={t('pages.admin.inventory.delete_product_tooltip', 'Delete Product')}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <polyline points="3 6 5 6 21 6"></polyline>
@@ -176,6 +176,7 @@ export default function ProductTable({
   onDelete,
   loading
 }: ProductTableProps) {
+  const { t } = useLanguage();
   const renderSortIcon = (key: string) => {
     if (sortKey !== key) return <span className="opacity-20 ml-1">⇅</span>;
     return <span className="ml-1 text-gold">{sortDir === 'asc' ? '↑' : '↓'}</span>;
@@ -187,7 +188,7 @@ export default function ProductTable({
         <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] flex items-center justify-center">
           <div className="flex flex-col items-center">
             <div className="w-12 h-12 border-4 border-kraft-dark border-t-gold rounded-full animate-spin mb-2" />
-            <span className="font-mono-stack text-xs font-bold text-kraft-dark uppercase tracking-widest">Scanning Catalog...</span>
+            <span className="font-mono-stack text-xs font-bold text-kraft-dark uppercase tracking-widest">{t('pages.admin.inventory.scanning_catalog', 'Scanning Catalog...')}</span>
           </div>
         </div>
       )}
@@ -196,24 +197,24 @@ export default function ProductTable({
           <thead>
             <tr>
               <th onClick={() => onSort('name')} className="cursor-pointer hover:bg-ink-surface transition-colors">
-                <div className="flex items-center">PRODUCT {renderSortIcon('name')}</div>
+                <div className="flex items-center">{t('pages.admin.inventory.table.product', 'PRODUCT')} {renderSortIcon('name')}</div>
               </th>
               <th onClick={() => onSort('category')} title="Category / Treatment" className="cursor-pointer hover:bg-ink-surface transition-colors">
-                <div className="flex items-center">TYPE {renderSortIcon('category')}</div>
+                <div className="flex items-center">{t('pages.admin.inventory.table.type', 'TYPE')} {renderSortIcon('category')}</div>
               </th>
               <th onClick={() => onSort('rarity')} className="w-24 text-center cursor-pointer hover:bg-ink-surface transition-colors">
-                <div className="flex items-center justify-center">RARITY {renderSortIcon('rarity')}</div>
+                <div className="flex items-center justify-center">{t('pages.admin.inventory.table.rarity', 'RARITY')} {renderSortIcon('rarity')}</div>
               </th>
               <th onClick={() => onSort('price')} className="w-32 text-right cursor-pointer hover:bg-ink-surface transition-colors">
-                <div className="flex items-center justify-end">PRICE {renderSortIcon('price')}</div>
+                <div className="flex items-center justify-end">{t('pages.admin.inventory.table.price', 'PRICE')} {renderSortIcon('price')}</div>
               </th>
               <th onClick={() => onSort('stock')} className="w-24 text-center cursor-pointer hover:bg-ink-surface transition-colors">
-                <div className="flex items-center justify-center">STOCK {renderSortIcon('stock')}</div>
+                <div className="flex items-center justify-center">{t('pages.admin.inventory.table.stock', 'STOCK')} {renderSortIcon('stock')}</div>
               </th>
               <th onClick={() => onSort('updated_at')} className="w-32 text-center cursor-pointer hover:bg-ink-surface transition-colors">
-                <div className="flex items-center justify-center">UPDATED {renderSortIcon('updated_at')}</div>
+                <div className="flex items-center justify-center">{t('pages.admin.inventory.table.updated', 'UPDATED')} {renderSortIcon('updated_at')}</div>
               </th>
-              <th className="w-16 text-center">CMD</th>
+              <th className="w-16 text-center">{t('pages.admin.inventory.table.cmd', 'CMD')}</th>
             </tr>
           </thead>
           <tbody>
@@ -222,11 +223,11 @@ export default function ProductTable({
             ))}
             {!loading && products.length === 0 && (
               <tr>
-                <td colSpan={6} className="text-center py-20 bg-ink-surface/30">
+                <td colSpan={7} className="text-center py-20 bg-ink-surface/30">
                   <div className="flex flex-col items-center opacity-30">
                     <span className="text-6xl mb-4">📭</span>
-                    <p className="font-display text-2xl tracking-tight">NO PRODUCTS FOUND</p>
-                    <p className="text-xs font-mono-stack">Try adjusting your scanner filters</p>
+                    <p className="font-display text-2xl tracking-tight">{t('pages.admin.inventory.no_products', 'NO PRODUCTS FOUND')}</p>
+                    <p className="text-xs font-mono-stack">{t('pages.admin.inventory.no_products_hint', 'Try adjusting your scanner filters')}</p>
                   </div>
                 </td>
               </tr>

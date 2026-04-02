@@ -8,11 +8,13 @@ import { userFetchOrders } from '@/lib/api';
 import { UserOrder, ORDER_STATUS_LABELS } from '@/lib/types';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import OrderDetailsModal from '@/components/OrderDetailsModal';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function ProfilePage() {
   const { user, loading: userLoading, updateProfile, loginWithGoogle, loginWithFacebook } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t, locale } = useLanguage();
   const [orders, setOrders] = useState<UserOrder[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -45,11 +47,11 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (errorParam === 'already_linked') {
-      setMessage({ type: 'error', text: 'This account is already linked to another profile.' });
+      setMessage({ type: 'error', text: t('pages.profile.errors.already_linked', 'This account is already linked to another profile.') });
     } else if (errorParam === 'link_failed') {
-      setMessage({ type: 'error', text: 'Failed to link account. Please try again.' });
+      setMessage({ type: 'error', text: t('pages.profile.errors.link_failed', 'Failed to link account. Please try again.') });
     }
-  }, [errorParam]);
+  }, [errorParam, t]);
 
   const fetchOrders = async () => {
     try {
@@ -68,9 +70,9 @@ export default function ProfilePage() {
     setMessage(null);
     try {
       await updateProfile(formData);
-      setMessage({ type: 'success', text: 'Profile updated successfully!' });
+      setMessage({ type: 'success', text: t('pages.profile.messages.success', 'Profile updated successfully!') });
     } catch {
-      setMessage({ type: 'error', text: 'Failed to update profile.' });
+      setMessage({ type: 'error', text: t('pages.profile.messages.error', 'Failed to update profile.') });
     } finally {
       setSaving(false);
     }
@@ -92,8 +94,8 @@ export default function ProfilePage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-display text-text-main">Your Account</h1>
-            <p className="text-text-muted mt-1">Manage your profile and view your order history.</p>
+            <h1 className="text-3xl font-display text-text-main">{t('pages.profile.title', 'Your Account')}</h1>
+            <p className="text-text-muted mt-1">{t('pages.profile.subtitle', 'Manage your profile and view your order history.')}</p>
           </div>
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
@@ -123,12 +125,12 @@ export default function ProfilePage() {
           <div className="lg:col-span-1 space-y-6">
             <div className="glass-card p-6 border border-border-main rounded-xl bg-bg-surface/50 backdrop-blur-md">
               <h2 className="text-xl font-medium text-text-main mb-6 flex items-center gap-2">
-                <span className="text-accent-primary">👤</span> Profile Settings
+                <span className="text-accent-primary">👤</span> {t('pages.profile.section.settings', 'Profile Settings')}
               </h2>
 
               <form onSubmit={handleUpdateProfile} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-mono text-text-muted uppercase mb-1">Full Name</label>
+                  <label className="block text-xs font-mono text-text-muted uppercase mb-1">{t('pages.profile.form.full_name', 'Full Name')}</label>
                   <input 
                     type="text" 
                     disabled 
@@ -137,7 +139,7 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-mono text-text-muted uppercase mb-1">Email Address</label>
+                  <label className="block text-xs font-mono text-text-muted uppercase mb-1">{t('pages.profile.form.email', 'Email Address')}</label>
                   <input 
                     type="text" 
                     disabled 
@@ -146,32 +148,32 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-mono text-text-muted uppercase mb-1">Phone Number</label>
+                  <label className="block text-xs font-mono text-text-muted uppercase mb-1">{t('pages.profile.form.phone', 'Phone Number')}</label>
                   <input 
                     type="tel" 
                     value={formData.phone}
                     onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    placeholder="e.g. +57 300..."
+                    placeholder={t('pages.profile.placeholders.phone', 'e.g. +57 300...')}
                     className="w-full bg-bg-card border border-border-main rounded p-2 text-text-main focus:border-accent-primary outline-none transition-colors"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-mono text-text-muted uppercase mb-1">ID Number / Cedula</label>
+                  <label className="block text-xs font-mono text-text-muted uppercase mb-1">{t('pages.profile.form.id', 'ID Number / Cedula')}</label>
                   <input 
                     type="text" 
                     value={formData.id_number}
                     onChange={(e) => setFormData({...formData, id_number: e.target.value})}
-                    placeholder="Required for shipping in Colombia"
+                    placeholder={t('pages.profile.placeholders.id', 'Required for shipping in Colombia')}
                     className="w-full bg-bg-card border border-border-main rounded p-2 text-text-main focus:border-accent-primary outline-none transition-colors"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-mono text-text-muted uppercase mb-1">Shipping Address</label>
+                  <label className="block text-xs font-mono text-text-muted uppercase mb-1">{t('pages.profile.form.shipping', 'Shipping Address')}</label>
                   <textarea 
                     rows={3}
                     value={formData.address}
                     onChange={(e) => setFormData({...formData, address: e.target.value})}
-                    placeholder="Full address, city, and instructions"
+                    placeholder={t('pages.profile.placeholders.address', 'Full address, city, and instructions')}
                     className="w-full bg-bg-card border border-border-main rounded p-2 text-text-main focus:border-accent-primary outline-none transition-colors resize-none"
                   />
                 </div>
@@ -181,7 +183,7 @@ export default function ProfilePage() {
                   disabled={saving}
                   className="w-full py-3 bg-accent-primary hover:bg-accent-primary-hover text-text-on-accent font-bold rounded shadow-lg shadow-accent-primary/20 transition-all disabled:opacity-50"
                 >
-                  {saving ? 'Saving...' : 'Save Profile'}
+                  {saving ? t('pages.profile.actions.saving', 'Saving...') : t('pages.profile.actions.save', 'Save Profile')}
                 </button>
               </form>
             </div>
@@ -189,7 +191,7 @@ export default function ProfilePage() {
             {/* Linked Accounts */}
             <div className="glass-card p-6 border border-border-main rounded-xl bg-bg-surface/50 backdrop-blur-md">
               <h2 className="text-xl font-medium text-text-main mb-6 flex items-center gap-2">
-                <span className="text-accent-primary">🔗</span> Linked Accounts
+                <span className="text-accent-primary">🔗</span> {t('pages.profile.section.linked', 'Linked Accounts')}
               </h2>
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 rounded bg-bg-page/40 border border-border-main/30">
@@ -199,14 +201,14 @@ export default function ProfilePage() {
                   </div>
                   {isGoogleLinked ? (
                     <span className="text-xs text-green-400 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span> Connected
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span> {t('pages.profile.status.connected', 'Connected')}
                     </span>
                   ) : (
                     <button
                       onClick={loginWithGoogle}
                       className="text-xs px-2 py-1 bg-accent-primary/20 text-accent-primary border border-accent-primary/30 rounded hover:bg-accent-primary/30 transition-colors"
                     >
-                      Link
+                      {t('pages.profile.actions.link', 'Link')}
                     </button>
                   )}
                 </div>
@@ -218,14 +220,14 @@ export default function ProfilePage() {
                   </div>
                   {isFacebookLinked ? (
                     <span className="text-xs text-green-400 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span> Connected
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span> {t('pages.profile.status.connected', 'Connected')}
                     </span>
                   ) : (
                     <button
                       onClick={loginWithFacebook}
                       className="text-xs px-2 py-1 bg-accent-primary/20 text-accent-primary border border-accent-primary/30 rounded hover:bg-accent-primary/30 transition-colors"
                     >
-                      Link
+                      {t('pages.profile.actions.link', 'Link')}
                     </button>
                   )}
                 </div>
@@ -238,7 +240,7 @@ export default function ProfilePage() {
             <div className="glass-card h-full border border-border-main rounded-xl bg-bg-surface/50 backdrop-blur-md overflow-hidden flex flex-col">
               <div className="p-6 border-b border-border-main">
                 <h2 className="text-xl font-medium text-text-main flex items-center gap-2">
-                  <span className="text-accent-primary">📦</span> Order History
+                  <span className="text-accent-primary">📦</span> {t('pages.profile.section.orders', 'Order History')}
                 </h2>
               </div>
 
@@ -248,23 +250,23 @@ export default function ProfilePage() {
                 ) : orders.length === 0 ? (
                   <div className="p-12 text-center">
                     <div className="text-4xl mb-4 opacity-20">📭</div>
-                    <p className="text-text-muted">You haven&apos;t placed any orders yet.</p>
+                    <p className="text-text-muted">{t('pages.profile.orders.empty', "You haven't placed any orders yet.")}</p>
                     <button
                       onClick={() => router.push('/')}
                       className="mt-6 text-accent-primary hover:underline font-medium"
                     >
-                      Browse our inventory →
+                      {t('pages.profile.orders.browse', 'Browse our inventory →')}
                     </button>
                   </div>
                 ) : (
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-bg-page/50 text-xs font-mono text-text-muted uppercase">
-                        <th className="px-6 py-4 font-medium tracking-wider">Order No.</th>
-                        <th className="px-6 py-4 font-medium tracking-wider">Date</th>
-                        <th className="px-6 py-4 font-medium tracking-wider">Status</th>
-                        <th className="px-6 py-4 font-medium tracking-wider">Items</th>
-                        <th className="px-6 py-4 font-medium tracking-wider text-right">Total</th>
+                        <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.order_no', 'Order No.')}</th>
+                        <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.date', 'Date')}</th>
+                        <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.status', 'Status')}</th>
+                        <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.items', 'Items')}</th>
+                        <th className="px-6 py-4 font-medium tracking-wider text-right">{t('pages.profile.table.total', 'Total')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border-main/50">
@@ -283,7 +285,7 @@ export default function ProfilePage() {
                             </span>
                           </td>
                           <td className="px-6 py-4 text-sm text-text-secondary">
-                            {new Date(order.created_at).toLocaleDateString()}
+                            {new Date(order.created_at).toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US')}
                           </td>
                           <td className="px-6 py-4">
                             <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded-sm border ${order.status === 'completed' ? 'text-green-400 border-green-400/30 bg-green-400/10' :
@@ -295,7 +297,7 @@ export default function ProfilePage() {
                             </span>
                           </td>
                           <td className="px-6 py-4 text-sm text-text-muted">
-                            {order.item_count} items
+                            {order.item_count} {order.item_count === 1 ? t('pages.profile.table.item', 'item') : t('pages.profile.table.items', 'items')}
                           </td>
                           <td className="px-6 py-4 text-right">
                             <span className="font-display text-text-main">
