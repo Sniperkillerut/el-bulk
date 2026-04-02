@@ -6,17 +6,32 @@
   --color-bg-header: var(--bg-header);
   --color-bg-surface: var(--bg-surface);
   --color-bg-card: var(--bg-card);
+  
   --color-border-main: var(--border-main);
+  --color-border-focus: var(--border-focus);
+  
   --color-accent-primary: var(--accent-primary);
   --color-accent-primary-hover: var(--accent-primary-hover);
+  
   --color-text-main: var(--text-main);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
+  --color-text-on-accent: var(--text-on-accent);
+  --color-text-on-header: var(--text-on-header);
+  
   --color-status-nm: var(--status-nm);
   --color-status-lp: var(--status-lp);
   --color-status-mp: var(--status-mp);
   --color-status-hp: var(--status-hp);
   --color-status-dmg: var(--status-dmg);
+  
+  --color-btn-primary-bg: var(--btn-primary-bg);
+  --color-btn-primary-text: var(--btn-primary-text);
+  --color-btn-secondary-bg: var(--btn-secondary-bg);
+  --color-btn-secondary-text: var(--btn-secondary-text);
+  
+  --color-checkbox-border: var(--checkbox-border);
+  --color-checkbox-checked: var(--checkbox-checked);
   
   /* Brand Aliases */
   --color-hp-color: var(--status-hp);
@@ -104,6 +119,18 @@
   --status-mp: #ef6c00;
   --status-hp: #c62828;
   --status-dmg: #455a64;
+
+  --btn-primary-bg: #1a1f2e;
+  --btn-primary-text: #ffffff;
+  --btn-secondary-bg: transparent;
+  --btn-secondary-text: #3b3127;
+
+  --checkbox-border: #8b795c;
+  --checkbox-checked: #d4af37;
+
+  --radius-base: 8px;
+  --padding-card: 12px;
+  --gap-grid: 16px;
 
   /* Legacy brand colors for transition (to be removed) */
   --kraft-light: var(--bg-page);
@@ -459,9 +486,10 @@ p {
 }
 
 .badge-dmg {
-  background: #eceff1;
+  background: var(--bg-page);
   color: var(--status-dmg);
-  border-color: #b0bec5;
+  border-color: var(--status-dmg);
+  opacity: 0.8;
 }
 
 /* Foil badge */
@@ -473,14 +501,14 @@ p {
 
 /* Buttons */
 .btn-primary {
-  background: var(--bg-header);
-  color: #fff;
+  background: var(--btn-primary-bg, var(--accent-primary));
+  color: var(--btn-primary-text, var(--text-on-accent));
   font-family: 'Bebas Neue', sans-serif;
   letter-spacing: 0.1em;
   font-size: 1.1rem;
   padding: 0.6rem 1.8rem;
-  border-radius: var(--radius-sm);
-  border: none;
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: opacity var(--duration-fast), transform calc(var(--duration-fast) / 2), background var(--duration-fast);
   text-decoration: none;
@@ -489,20 +517,20 @@ p {
 }
 
 .btn-primary:hover {
-  background: var(--text-main);
+  filter: brightness(1.1);
   transform: translateY(-1px);
   box-shadow: 2px 2px 0 var(--accent-primary-hover);
 }
 
 .btn-secondary {
-  background: transparent;
-  color: var(--text-main);
+  background: var(--btn-secondary-bg, transparent);
+  color: var(--btn-secondary-text, var(--text-main));
   font-family: 'Bebas Neue', sans-serif;
   letter-spacing: 0.1em;
   font-size: 1.1rem;
   padding: 0.6rem 1.8rem;
-  border-radius: var(--radius-sm);
-  border: var(--space-line) solid var(--text-main);
+  border-radius: var(--radius-sm, 6px);
+  border: var(--space-line, 2px) solid var(--btn-secondary-text, var(--border-main));
   cursor: pointer;
   transition: all var(--duration-fast);
   text-decoration: none;
@@ -511,8 +539,8 @@ p {
 }
 
 .btn-secondary:hover {
-  background: var(--text-main);
-  color: #fff;
+  background: var(--btn-secondary-text, var(--text-main));
+  color: var(--btn-primary-text, var(--bg-surface));
 }
 
 /* Box tape / warning stripe */
@@ -531,10 +559,10 @@ input[type="tel"],
 input[type="number"],
 select,
 textarea {
-  background: var(--bg-card);
-  border: var(--space-fine) solid var(--bg-page-dark);
-  color: var(--text-main);
-  border-radius: var(--radius-sm);
+  background: var(--bg-card, #ffffff);
+  border: var(--space-fine, 1px) solid var(--border-main, #d4c5ab);
+  color: var(--text-main, #1a1a1a);
+  border-radius: var(--radius-sm, 6px);
   padding: 0.65rem 1rem;
   font-family: 'Inter', sans-serif;
   font-size: 0.9rem;
@@ -547,8 +575,8 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: var(--text-main);
-  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.05), 0 0 0 var(--space-line) rgba(92, 78, 61, 0.1);
+  border-color: var(--accent-primary, #d4af37);
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.05), 0 0 0 var(--space-line, 2px) var(--border-focus, rgba(212, 175, 55, 0.2));
 }
 
 /* Stamp/label decorative element */
@@ -600,6 +628,40 @@ textarea:focus {
   100% { background-position: 200% 0; }
 }
 
+/* Custom Checkbox Styling */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1.2rem;
+  height: 1.2rem;
+  border: 2px solid var(--checkbox-border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  cursor: pointer;
+  position: relative;
+  transition: all var(--duration-fast);
+}
+
+input[type="checkbox"]:checked {
+  background: var(--checkbox-checked);
+  border-color: var(--checkbox-checked);
+}
+
+input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--btn-primary-text);
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+input[type="checkbox"]:focus {
+  box-shadow: 0 0 0 2px var(--border-focus);
+}
+
 .skeleton {
   background: linear-gradient(90deg, var(--bg-page-dark) 25%, var(--bg-page) 50%, var(--bg-page-dark) 75%);
   background-size: 200% 100%;
@@ -628,12 +690,12 @@ textarea:focus {
 /* Utility */
 .divider {
   border: none;
-  border-top: 1px dashed var(--bg-page-dark);
+  border-top: 1px dashed var(--border-main);
   margin: 1.5rem 0;
 }
 
 .text-gold { color: var(--accent-primary-hover); }
-.text-kraft { color: var(--bg-page-dark); }
+.text-kraft { color: var(--text-muted); }
 .text-muted { color: var(--text-muted); }
 .text-secondary-color { color: var(--text-secondary); }
 .bg-surface { background: var(--bg-surface); }

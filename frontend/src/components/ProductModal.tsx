@@ -97,9 +97,9 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
         <div className="card bg-surface overflow-hidden">
           <div className="grid md:grid-cols-2 gap-0">
             {/* Image Section */}
-            <div className="p-8 bg-kraft-light flex items-center justify-center">
-              <div className="cardbox overflow-hidden shadow-md w-full max-w-sm aspect-[3/4] bg-ink-surface p-2">
-                <div className="w-full h-full border border-ink-border relative shadow-[inset_0_0_10px_rgba(0,0,0,0.05)]">
+            <div className="p-8 bg-bg-page flex items-center justify-center">
+              <div className="cardbox overflow-hidden shadow-md w-full max-w-sm aspect-[3/4] bg-bg-surface p-2">
+                <div className="w-full h-full border border-border-main relative shadow-[inset_0_0_10px_rgba(0,0,0,0.05)]">
                   <CardImage 
                     imageUrl={product.image_url} 
                     name={product.name} 
@@ -112,7 +112,7 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
             </div>
 
             {/* Details Section */}
-            <div className="p-8 flex flex-col h-full bg-surface border-l-4 border-kraft-dark">
+            <div className="p-8 flex flex-col h-full bg-bg-surface border-l-4 border-border-main">
               <div>
                 <nav className="text-[10px] mb-2 font-mono-stack uppercase text-text-muted">
                   {t(`tcg.${product.tcg}`, product.tcg.toUpperCase())} / {t(`pages.inventory.category.${product.category}`, product.category.toUpperCase())}
@@ -123,7 +123,7 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
                     {product.set_code ? `[${product.set_code}] ` : ''}{product.set_name}
                   </p>
                 )}
-                <h1 className="font-display text-3xl md:text-4xl text-ink-deep leading-none">
+                <h1 className="font-display text-3xl md:text-4xl text-text-main leading-none">
                   {product.name}
                 </h1>
                 {product.type_line && (
@@ -139,7 +139,7 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
               </div>
 
               <div className="flex flex-wrap gap-2 mt-4">
-                <span className="badge bg-ink-surface text-text-muted border border-kraft-dark">
+                <span className="badge bg-bg-surface text-text-muted border border-border-main">
                   {t(`pages.inventory.grid.sort.language.${product.language}`, product.language?.toUpperCase() || 'EN')}
                 </span>
                 {product.condition && (
@@ -148,7 +148,7 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
                   </span>
                 )}
                 {product.promo_type && product.promo_type !== 'none' && (
-                  <span className="badge bg-hp-color text-white border-none">
+                  <span className="badge bg-status-hp text-white border-none">
                     {resolveLabel(product.promo_type, {})}
                   </span>
                 )}
@@ -161,49 +161,49 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
                   </span>
                 )}
                 {product.textless && (
-                  <span className="badge bg-hp-color/10 text-hp-color border border-hp-color">
+                  <span className="badge bg-status-hp/10 text-status-hp border border-status-hp">
                     {t('pages.product.details.textless', 'TEXTLESS')}
                   </span>
                 )}
                 {product.full_art && product.card_treatment !== 'full_art' && (
-                  <span className="badge bg-nm-color/10 text-nm-color border border-nm-color">
+                  <span className="badge bg-status-nm/10 text-status-nm border border-status-nm">
                     {t('pages.product.details.full_art', 'FULL ART')}
                   </span>
                 )}
               </div>
 
               {product.tcg === 'mtg' && product.category === 'singles' && (
-                <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 py-3 border-t border-b border-dashed border-kraft-dark">
+                <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 py-3 border-t border-b border-dashed border-border-main">
                   <div className="text-center">
                     <p className="text-[10px] font-bold text-text-muted uppercase">{t('pages.common.labels.identity', 'Identity')}</p>
                     <p className="text-sm font-mono-stack">{product.color_identity || 'C'}</p>
                   </div>
-                  <div className="text-center border-l md:border-l border-dashed border-kraft-dark px-2">
+                  <div className="text-center border-l md:border-l border-dashed border-border-main px-2">
                     <p className="text-[10px] font-bold text-text-muted uppercase">{t('pages.common.labels.rarity', 'Rarity')}</p>
                     <p className="text-sm font-mono-stack capitalize">
                       {t(`pages.inventory.grid.sort.rarity.${product.rarity?.toLowerCase() || 'common'}`, product.rarity || 'Common')}
                     </p>
                   </div>
-                  <div className="text-center border-l border-dashed border-kraft-dark px-2">
+                  <div className="text-center border-l border-dashed border-border-main px-2">
                     <p className="text-[10px] font-bold text-text-muted uppercase">{t('pages.common.labels.art_var', 'Art Var.')}</p>
                     <p className="text-sm font-mono-stack truncate">
                       {product.art_variation ? t(`pages.product.art_variation.${product.art_variation.toLowerCase().replace(' ', '_')}`, product.art_variation) : t('pages.common.status.normal', 'Normal')}
                     </p>
                   </div>
-                  <div className="text-center border-l border-dashed border-kraft-dark px-2">
+                  <div className="text-center border-l border-dashed border-border-main px-2">
                     <p className="text-[10px] font-bold text-text-muted uppercase">{t('pages.common.labels.cmc', 'CMC')}</p>
                     <p className="text-sm font-mono-stack">{product.cmc ?? 0}</p>
                   </div>
                 </div>
               )}
 
-              <hr className="divider w-full my-6 border-kraft-dark" />
+              <hr className="divider w-full my-6 border-border-main" />
 
               {/* Price */}
               <div className="flex items-baseline gap-3 mb-6 flex-wrap">
-                <span className="price text-5xl tracking-tighter text-ink-deep leading-none font-display">${product.price.toLocaleString('en-US', { maximumFractionDigits: 0 })} COP</span>
+                <span className="price text-5xl tracking-tighter text-text-main leading-none font-display">${product.price.toLocaleString('en-US', { maximumFractionDigits: 0 })} COP</span>
                 <div className="flex flex-col gap-1">
-                  <span className={`text-xs font-mono-stack font-bold px-2 py-1 rounded-sm w-fit text-white ${product.stock === 0 ? 'bg-hp-color' : 'bg-nm-color'}`}>
+                  <span className={`text-xs font-mono-stack font-bold px-2 py-1 rounded-sm w-fit text-white ${product.stock === 0 ? 'bg-status-hp' : 'bg-status-nm'}`}>
                     {product.stock === 0 
                       ? t('pages.common.status.out_of_stock', 'OUT OF STOCK') 
                       : t('pages.product.status.in_stock', '{count} IN STOCK').replace('{count}', product.stock.toString())}
@@ -223,12 +223,12 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
                 {(product.oracle_text || product.description) ? (
                   <div className="flex flex-col gap-4">
                     {product.oracle_text && (
-                      <div className="text-sm leading-relaxed whitespace-pre-wrap font-mono-stack p-4 rounded-sm bg-kraft-paper/40 text-ink-deep border border-dashed border-kraft-dark">
+                      <div className="text-sm leading-relaxed whitespace-pre-wrap font-mono-stack p-4 rounded-sm bg-bg-page/40 text-text-main border border-dashed border-border-main">
                         {product.oracle_text}
                       </div>
                     )}
                     {!product.oracle_text && product.description && (
-                       <div className="text-sm leading-relaxed whitespace-pre-wrap font-mono-stack p-4 rounded-sm bg-kraft-paper/40 text-text-secondary border border-dashed border-kraft-dark">
+                       <div className="text-sm leading-relaxed whitespace-pre-wrap font-mono-stack p-4 rounded-sm bg-bg-page/40 text-text-secondary border border-dashed border-border-main">
                          {product.description}
                        </div>
                     )}

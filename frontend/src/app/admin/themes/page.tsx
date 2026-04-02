@@ -32,17 +32,27 @@ const CARDBOARD_DEFAULT: ThemeInput = {
   bg_page: '#e6dac3',
   bg_header: '#1a1f2e',
   bg_surface: '#fdfbf7',
+  bg_card: '#ffffff',
   text_main: '#3b3127',
   text_secondary: '#5c4e3d',
   text_muted: '#8b795c',
   text_on_accent: '#2c251d',
+  text_on_header: '#ffffff',
   accent_primary: '#d4af37',
   accent_primary_hover: '#b8961e',
   border_main: '#d4c5ab',
+  border_focus: '#3b3127',
   status_nm: '#2e7d32',
   status_lp: '#558b2f',
   status_mp: '#ef6c00',
   status_hp: '#c62828',
+  status_dmg: '#455a64',
+  btn_primary_bg: '#1a1f2e',
+  btn_primary_text: '#ffffff',
+  btn_secondary_bg: 'transparent',
+  btn_secondary_text: '#3b3127',
+  checkbox_border: '#8b795c',
+  checkbox_checked: '#d4af37',
   radius_base: '8px',
   padding_card: '12px',
   gap_grid: '16px',
@@ -61,6 +71,7 @@ export default function AdminThemesPage() {
     identity: true,
     surface: true,
     signature: true,
+    interactive: true,
     type: false,
     logic: false,
     geometry: false
@@ -96,17 +107,27 @@ export default function AdminThemesPage() {
       bg_page: theme.bg_page,
       bg_header: theme.bg_header,
       bg_surface: theme.bg_surface,
+      bg_card: theme.bg_card,
       text_main: theme.text_main,
       text_secondary: theme.text_secondary,
       text_muted: theme.text_muted,
       text_on_accent: theme.text_on_accent,
+      text_on_header: theme.text_on_header,
       accent_primary: theme.accent_primary,
       accent_primary_hover: theme.accent_primary_hover,
       border_main: theme.border_main,
+      border_focus: theme.border_focus,
       status_nm: theme.status_nm,
       status_lp: theme.status_lp,
       status_mp: theme.status_mp,
       status_hp: theme.status_hp,
+      status_dmg: theme.status_dmg,
+      btn_primary_bg: theme.btn_primary_bg,
+      btn_primary_text: theme.btn_primary_text,
+      btn_secondary_bg: theme.btn_secondary_bg,
+      btn_secondary_text: theme.btn_secondary_text,
+      checkbox_border: theme.checkbox_border,
+      checkbox_checked: theme.checkbox_checked,
       radius_base: theme.radius_base,
       padding_card: theme.padding_card,
       gap_grid: theme.gap_grid,
@@ -358,6 +379,7 @@ export default function AdminThemesPage() {
                     <ColorInput label="Global Page Background" value={form.bg_page} onChange={val => setForm({...form, bg_page: val})} />
                     <ColorInput label="Navigation Header" value={form.bg_header} onChange={val => setForm({...form, bg_header: val})} />
                     <ColorInput label="Card & Panel Surface" value={form.bg_surface} onChange={val => setForm({...form, bg_surface: val})} />
+                    <ColorInput label="Inner Card Background" value={form.bg_card} onChange={val => setForm({...form, bg_card: val})} />
                     <ColorInput label="Borders & Dividers" value={form.border_main} onChange={val => setForm({...form, border_main: val})} />
                   </div>
                 </Collapsible>
@@ -372,6 +394,32 @@ export default function AdminThemesPage() {
                     <ColorInput label="Primary Accent Color" value={form.accent_primary} onChange={val => setForm({...form, accent_primary: val})} />
                     <ColorInput label="Hover / Secondary Accent" value={form.accent_primary_hover} onChange={val => setForm({...form, accent_primary_hover: val})} />
                     <ColorInput label="Text on Accent Backgrounds" value={form.text_on_accent} onChange={val => setForm({...form, text_on_accent: val})} />
+                    <ColorInput label="Text on Header" value={form.text_on_header} onChange={val => setForm({...form, text_on_header: val})} />
+                    <ColorInput label="Focus State Color" value={form.border_focus} onChange={val => setForm({...form, border_focus: val})} />
+                  </div>
+                </Collapsible>
+
+                <Collapsible 
+                  title="Buttons & Inputs" 
+                  isOpen={expanded.interactive} 
+                  onToggle={() => setExpanded(p => ({...p, interactive: !p.interactive}))}
+                >
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                       <p className="text-[9px] font-bold text-text-muted uppercase tracking-widest pl-1">Primary Button</p>
+                       <ColorInput label="Button Background" value={form.btn_primary_bg} onChange={val => setForm({...form, btn_primary_bg: val})} />
+                       <ColorInput label="Button Text" value={form.btn_primary_text} onChange={val => setForm({...form, btn_primary_text: val})} />
+                    </div>
+                    <div className="space-y-2">
+                       <p className="text-[9px] font-bold text-text-muted uppercase tracking-widest pl-1">Secondary Button</p>
+                       <ColorInput label="Button Background" value={form.btn_secondary_bg} onChange={val => setForm({...form, btn_secondary_bg: val})} />
+                       <ColorInput label="Button Text" value={form.btn_secondary_text} onChange={val => setForm({...form, btn_secondary_text: val})} />
+                    </div>
+                    <div className="space-y-2">
+                       <p className="text-[9px] font-bold text-text-muted uppercase tracking-widest pl-1">Checkboxes</p>
+                       <ColorInput label="Checkbox Border" value={form.checkbox_border} onChange={val => setForm({...form, checkbox_border: val})} />
+                       <ColorInput label="Checkbox Checked BG" value={form.checkbox_checked} onChange={val => setForm({...form, checkbox_checked: val})} />
+                    </div>
                   </div>
                 </Collapsible>
 
@@ -399,6 +447,7 @@ export default function AdminThemesPage() {
                     <ColorInput label="Lightly Played (LP) Status" value={form.status_lp} onChange={val => setForm({...form, status_lp: val})} />
                     <ColorInput label="Moderately Played (MP) Status" value={form.status_mp} onChange={val => setForm({...form, status_mp: val})} />
                     <ColorInput label="Heavily Played (HP) Status" value={form.status_hp} onChange={val => setForm({...form, status_hp: val})} />
+                    <ColorInput label="Damaged (DMG) Status" value={form.status_dmg} onChange={val => setForm({...form, status_dmg: val})} />
                   </div>
                 </Collapsible>
 

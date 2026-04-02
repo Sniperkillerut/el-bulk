@@ -58,9 +58,9 @@ export default function HomeSearchBar({ placeholder }: HomeSearchBarProps) {
     <div className="relative w-full" ref={containerRef}>
       <div className="relative">
         <input
-          type="text"
+          type="text" 
           placeholder={placeholder || t('components.search.placeholder', 'Search for cards, sets, or products...')}
-          className="w-full bg-white border-2 border-kraft-shadow p-4 pr-12 rounded-sm font-mono-stack text-sm focus:outline-none focus:border-gold transition-colors shadow-inner"
+          className="w-full bg-bg-surface border-2 border-border-main p-4 pr-12 rounded-sm font-mono-stack text-sm focus:outline-none focus:border-accent-primary transition-colors shadow-inner"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => query.trim() && setShowResults(true)}
@@ -96,10 +96,10 @@ export default function HomeSearchBar({ placeholder }: HomeSearchBarProps) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded" style={{ background: 'var(--ink-surface)', color: 'var(--kraft-mid)', border: '1px solid var(--ink-border)' }}>
+                        <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded" style={{ background: 'var(--bg-surface)', color: 'var(--text-muted)', border: '1px solid var(--border-main)' }}>
                           {TCG_SHORT[product.tcg] || product.tcg}
                         </span>
-                        <p className="text-base font-bold truncate" style={{ color: 'var(--ink-deep)' }}>{product.name}</p>
+                        <p className="text-base font-bold truncate" style={{ color: 'var(--text-main)' }}>{product.name}</p>
                       </div>
                       
                       <div className="flex flex-wrap gap-1 mb-1">
@@ -135,7 +135,7 @@ export default function HomeSearchBar({ placeholder }: HomeSearchBarProps) {
                         }}
                         disabled={product.stock <= 0}
                         className="btn-primary py-1 px-4 text-xs whitespace-nowrap shadow-sm hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
-                        style={{ background: product.stock > 0 ? 'var(--ink-deep)' : 'var(--hp-color)', borderColor: 'transparent' }}
+                        style={{ background: product.stock > 0 ? 'var(--btn-primary-bg)' : 'var(--status-hp)', borderColor: 'transparent' }}
                       >
                         {product.stock > 0 ? t('components.search.actions.add', '+ ADD') : t('components.search.actions.sold_out', 'SOLD OUT')}
                       </button>

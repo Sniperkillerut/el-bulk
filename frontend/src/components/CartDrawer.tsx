@@ -25,14 +25,14 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
         className="fixed right-0 top-0 h-full z-50 flex flex-col"
         style={{
           width: 'min(400px, 100vw)',
-          background: 'var(--ink-surface)',
-          borderLeft: '1px solid var(--ink-border)',
+          background: 'var(--bg-surface)',
+          borderLeft: '1px solid var(--border-main)',
           transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid var(--ink-border)' }}>
+        <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid var(--border-main)' }}>
           <div>
             <h2 className="font-display text-2xl text-gold">{t('pages.cart.drawer.title', 'YOUR CART')}</h2>
             <div className="flex items-center gap-3">
@@ -85,7 +85,7 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                  <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-main)' }}>
                     {item.product.name}
                   </p>
                   {item.product.set_name && (
@@ -101,7 +101,7 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
                     <div className="flex items-center gap-2 mt-2">
                       <button
                         onClick={() => updateQty(item.product.id, item.quantity - 1)}
-                        style={{ width: 24, height: 24, background: 'var(--ink-border)', border: 'none', borderRadius: 3, color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        style={{ width: 24, height: 24, background: 'var(--border-main)', border: 'none', borderRadius: 3, color: 'var(--text-main)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       >−</button>
                       <span className="text-sm w-6 text-center" style={{ fontFamily: 'Space Mono, monospace' }}>{item.quantity}</span>
                       <button
@@ -109,8 +109,8 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
                         disabled={item.quantity >= item.product.stock}
                         style={{ 
                           width: 24, height: 24, 
-                          background: 'var(--ink-border)', border: 'none', borderRadius: 3, 
-                          color: 'var(--text-primary)', 
+                          background: 'var(--border-main)', border: 'none', borderRadius: 3, 
+                          color: 'var(--text-main)', 
                           cursor: item.quantity >= item.product.stock ? 'not-allowed' : 'pointer', 
                           opacity: item.quantity >= item.product.stock ? 0.5 : 1,
                           display: 'flex', alignItems: 'center', justifyContent: 'center' 
@@ -141,7 +141,7 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
 
           {/* Removed Items Cache */}
           {removedItems.length > 0 && (
-            <div className="mt-6 pt-6" style={{ borderTop: '1px dashed var(--ink-border)' }}>
+            <div className="mt-6 pt-6" style={{ borderTop: '1px dashed var(--border-main)' }}>
               <h3 className="text-[10px] font-mono-stack mb-3 tracking-widest text-muted uppercase">
                 {t('pages.cart.drawer.removed_items', 'Removed Items')}
               </h3>
@@ -164,7 +164,7 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
                     <div className="flex items-center gap-1">
                       <button 
                         onClick={() => restoreItem(item.product.id)}
-                        className="text-[9px] font-mono-stack px-2 py-1 bg-ink-border rounded hover:bg-gold hover:text-black transition-colors uppercase"
+                        className="text-[9px] font-mono-stack px-2 py-1 bg-border-main rounded hover:bg-gold hover:text-black transition-colors uppercase"
                       >
                         {t('pages.cart.drawer.restore', 'Restore')}
                       </button>
@@ -187,14 +187,14 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
 
         {/* Footer */}
         {items.length > 0 && (
-          <div className="p-5" style={{ borderTop: '1px solid var(--ink-border)' }}>
+          <div className="p-5" style={{ borderTop: '1px solid var(--border-main)' }}>
             <div className="flex justify-between items-center mb-4">
               <span style={{ fontFamily: 'Bebas Neue, sans-serif', letterSpacing: '0.05em', fontSize: '1.1rem' }}>
                 {t('pages.cart.drawer.total', 'TOTAL')}
               </span>
                <span className="price text-xl">${totalPrice.toLocaleString('en-US', { maximumFractionDigits: 0 })} COP</span>
             </div>
-            <div style={{ background: 'var(--ink-card)', border: '1px dashed var(--ink-border)', borderRadius: 6, padding: '0.75rem 1rem', marginBottom: '0.75rem' }}>
+            <div style={{ background: 'var(--bg-card)', border: '1px dashed var(--border-main)', borderRadius: 6, padding: '0.75rem 1rem', marginBottom: '0.75rem' }}>
               <p className="text-xs text-center" style={{ color: 'var(--text-muted)' }}>
                 📦 {t('pages.cart.drawer.checkout_notice', 'Review your order and complete shipping details.')}
               </p>

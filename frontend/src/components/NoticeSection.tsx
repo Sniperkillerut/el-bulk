@@ -30,18 +30,18 @@ export default function NoticeSection() {
 
   return (
     <section className="space-y-6">
-      <div className="flex items-baseline justify-between gap-4 border-b-2 border-kraft-dark pb-2">
-        <h2 className="font-display text-4xl uppercase" style={{ color: 'var(--ink-deep)' }}>
+      <div className="flex items-baseline justify-between gap-4 border-b-2 border-border-main pb-2">
+        <h2 className="font-display text-4xl uppercase" style={{ color: 'var(--text-main)' }}>
           {t('pages.notices.section.title', 'NOTICES / NEWS')}
         </h2>
-        <Link href="/notices" className="text-sm font-bold font-mono-stack hover:text-gold transition-colors" style={{ color: 'var(--text-secondary)' }}>
+        <Link href="/notices" className="text-sm font-bold font-mono-stack hover:text-accent-primary transition-colors" style={{ color: 'var(--text-secondary)' }}>
           {t('pages.notices.actions.view_all', 'VIEW ALL →')}
         </Link>
       </div>
 
       <div className="flex flex-col gap-6">
         {notices.map((notice) => (
-          <article key={notice.id} className="notice-card flex flex-col md:flex-row bg-surface rounded-sm overflow-hidden shadow-sm hover:shadow-md transition-shadow" style={{ border: '2px solid var(--kraft-shadow)' }}>
+          <article key={notice.id} className="notice-card flex flex-col md:flex-row bg-bg-surface rounded-sm overflow-hidden shadow-sm hover:shadow-md transition-shadow" style={{ border: '2px solid var(--border-main)' }}>
             {notice.featured_image_url && (
               <div className="md:w-1/3 h-48 md:h-auto relative overflow-hidden bg-kraft-light">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -58,7 +58,7 @@ export default function NoticeSection() {
                   {new Date(notice.created_at).toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
               </div>
-              <h3 className="font-display text-2xl mb-3 uppercase leading-tight" style={{ color: 'var(--ink-deep)' }}>
+              <h3 className="font-display text-2xl mb-3 uppercase leading-tight" style={{ color: 'var(--text-main)' }}>
                 {notice.title}
               </h3>
               <div 

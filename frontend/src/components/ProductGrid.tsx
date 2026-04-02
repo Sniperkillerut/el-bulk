@@ -159,7 +159,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
         <p className="text-[10px] sm:text-xs font-mono-stack mb-1" style={{ color: 'var(--text-muted)' }}>
           {t(`tcg.${tcg}`, TCG_LABELS[tcg] || tcg.toUpperCase())} / {t(`pages.inventory.category.${category}`, category.toUpperCase())}
         </p>
-        <h1 className="font-display text-fluid-h1" style={{ color: 'var(--text-primary)' }}>
+        <h1 className="font-display text-fluid-h1" style={{ color: 'var(--text-main)' }}>
           {titleKey ? t(titleKey, title || '').replace('{tcg}', tcgName) : title}
         </h1>
         {(subtitleKey || subtitle) && (
@@ -176,7 +176,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
         <div className="md:hidden">
           <button
             onClick={() => setIsMobileFiltersOpen(true)}
-            className="w-full btn-secondary py-3 !flex items-center justify-center border border-kraft-dark group"
+            className="w-full btn-secondary py-3 !flex items-center justify-center border border-border-main group"
           >
             <div className="flex items-center justify-center gap-3">
               <svg
@@ -207,13 +207,13 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
 
         {/* Sidebar / Mobile Drawer */}
         <aside className={`
-          fixed md:sticky md:top-24 top-0 left-0 h-full md:h-[calc(100vh-8rem)] w-[85vw] sm:w-80 md:w-64 z-50 md:z-auto bg-ink-surface md:bg-transparent shadow-2xl md:shadow-none transform transition-transform duration-300 ease-in-out shrink-0 overflow-y-auto custom-scrollbar p-3 md:p-0 md:pr-8
+          fixed md:sticky md:top-24 top-0 left-0 h-full md:h-[calc(100vh-8rem)] w-[85vw] sm:w-80 md:w-64 z-50 md:z-auto bg-bg-surface md:bg-transparent shadow-2xl md:shadow-none transform transition-transform duration-300 ease-in-out shrink-0 overflow-y-auto custom-scrollbar p-3 md:p-0 md:pr-8
           ${isMobileFiltersOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}>
           {/* Mobile Drawer Header */}
-          <div className="flex justify-between items-center mb-6 md:hidden border-b border-kraft-dark pb-4">
-            <h2 className="font-display text-2xl text-ink-deep">{t('pages.inventory.grid.filters.title', 'Filters')}</h2>
-            <button onClick={() => setIsMobileFiltersOpen(false)} className="text-2xl text-text-muted hover:text-ink-deep flex items-center justify-center w-8 h-8 rounded-sm border border-kraft-dark bg-kraft-light">
+          <div className="flex justify-between items-center mb-6 md:hidden border-b border-border-main pb-4">
+            <h2 className="font-display text-2xl text-text-main">{t('pages.inventory.grid.filters.title', 'Filters')}</h2>
+            <button onClick={() => setIsMobileFiltersOpen(false)} className="text-2xl text-text-muted hover:text-text-main flex items-center justify-center w-8 h-8 rounded-sm border border-border-main bg-bg-page">
               &times;
             </button>
           </div>
@@ -222,7 +222,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
             {/* Logic Toggle */}
             <div className="flex flex-col gap-2">
               <p className="text-[10px] font-bold text-text-muted uppercase font-mono-stack">{t('pages.inventory.grid.filters.strategy.title', 'Search Strategy')}</p>
-              <div className="flex p-1 bg-kraft-mid/30 rounded-md border border-kraft-dark/20">
+              <div className="flex p-1 bg-bg-page/30 rounded-md border border-border-main/20">
                 <button
                   onClick={() => { setLogic('or'); setPage(1); }}
                   className={`flex-1 py-1.5 px-2 text-[10px] font-bold rounded transition-all font-mono-stack ${logic === 'or'
@@ -264,17 +264,17 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
             {category === 'singles' && (
               <div className="flex flex-col gap-1">
                 {/* Stock - Always at top */}
-                <div className="border-b border-ink-border/20 py-2 px-2">
-                  <p className="font-display text-xl sm:text-2xl text-ink-deep mb-3 uppercase tracking-tight">{t('pages.inventory.grid.filters.availability', 'Availability')}</p>
+                <div className="border-b border-border-main/20 py-2 px-2">
+                  <p className="font-display text-xl sm:text-2xl text-text-main mb-3 uppercase tracking-tight">{t('pages.inventory.grid.filters.availability', 'Availability')}</p>
                   <label className="flex items-center justify-between cursor-pointer group">
                     <div className="flex items-center gap-2.5">
                       <input
                         type="checkbox"
                         checked={filters.inStock}
                         onChange={() => toggleFilter('inStock', !filters.inStock)}
-                        className="w-4 h-4 border-2 border-kraft-dark rounded-sm checked:bg-gold appearance-none relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-[10px] checked:after:text-white transition-all"
+                        className="w-4 h-4 border-2 border-border-main rounded-sm checked:bg-accent-primary appearance-none relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-[10px] checked:after:text-white transition-all"
                       />
-                      <span className="text-xs font-bold text-text-primary group-hover:text-gold transition-colors">
+                      <span className="text-xs font-bold text-text-main group-hover:text-accent-primary transition-colors">
                         {t('pages.inventory.grid.filters.in_stock', 'In Stock Only')}
                       </span>
                     </div>
@@ -419,8 +419,8 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
               <select
                 value={sortBy}
                 onChange={e => { setSortBy(e.target.value); setPage(1); }}
-                className="text-xs font-mono-stack px-2 py-1.5 rounded-sm border-2 border-kraft-dark cursor-pointer"
-                style={{ background: 'var(--kraft-light)', color: 'var(--ink-deep)' }}
+                className="text-xs font-mono-stack px-2 py-1.5 rounded-sm border-2 border-border-main cursor-pointer"
+                style={{ background: 'var(--bg-page)', color: 'var(--text-main)' }}
                 id={`sort-${tcg}-${category}`}
               >
                 <option value="created_at">{t('pages.inventory.grid.sort.newest', 'Newest')}</option>
@@ -431,8 +431,8 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
               </select>
               <button
                 onClick={() => { setSortDir(d => d === 'asc' ? 'desc' : 'asc'); setPage(1); }}
-                className="flex items-center justify-center w-8 h-8 rounded-sm border-2 border-kraft-dark text-sm font-mono-stack transition-colors hover:bg-kraft-mid"
-                style={{ background: 'var(--kraft-light)', color: 'var(--ink-deep)' }}
+                className="flex items-center justify-center w-8 h-8 rounded-sm border-2 border-border-main text-sm font-mono-stack transition-colors hover:bg-bg-page/50"
+                style={{ background: 'var(--bg-page)', color: 'var(--text-main)' }}
                 title={sortDir === 'asc' ? t('pages.common.status.ascending', 'Ascending') : t('pages.common.status.descending', 'Descending')}
                 id={`sort-dir-${tcg}-${category}`}
               >
@@ -520,13 +520,13 @@ function FilterSection({
   if (visibleItems.length === 0) return null;
 
   return (
-    <div className="border-b border-ink-border/20 py-2 px-2">
+    <div className="border-b border-border-main/20 py-2 px-2">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex justify-between items-center group mb-1"
       >
-        <span className="font-display text-xl sm:text-2xl text-ink-deep group-hover:text-gold transition-colors uppercase tracking-tight">{t(`grid.filters.${title.toLowerCase()}`, title)}</span>
-        <span className={`text-sm transition-transform duration-300 ${isOpen ? 'rotate-180 text-gold' : 'text-text-muted'}`}>
+        <span className="font-display text-xl sm:text-2xl text-text-main group-hover:text-accent-primary transition-colors uppercase tracking-tight">{t(`grid.filters.${title.toLowerCase()}`, title)}</span>
+        <span className={`text-sm transition-transform duration-300 ${isOpen ? 'rotate-180 text-accent-primary' : 'text-text-muted'}`}>
           {isOpen ? '▲' : '▼'}
         </span>
       </button>
@@ -540,9 +540,9 @@ function FilterSection({
                   type="checkbox"
                   checked={selected.includes(item.id)}
                   onChange={() => onToggle(item.id)}
-                  className="w-4 h-4 border-2 border-kraft-dark rounded-sm checked:bg-gold appearance-none relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-[10px] checked:after:text-white transition-all shrink-0"
+                  className="w-4 h-4 border-2 border-border-main rounded-sm checked:bg-accent-primary appearance-none relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-[10px] checked:after:text-white transition-all shrink-0"
                 />
-                <span className="text-[11px] font-bold text-text-secondary group-hover:text-ink-deep transition-colors truncate flex items-center gap-2">
+                <span className="text-[11px] font-bold text-text-secondary group-hover:text-text-main transition-colors truncate flex items-center gap-2">
                   {item.color && (
                     <span
                       className="w-2.5 h-2.5 rounded-full border border-black/10 shadow-sm shrink-0"

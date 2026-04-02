@@ -72,7 +72,7 @@ export default function CardImage({
         aspectRatio: height ? undefined : '63/88',
         width: '100%',
         overflow: 'hidden',
-        background: showImage ? 'transparent' : 'var(--ink-card)',
+        background: showImage ? 'transparent' : 'var(--bg-card)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -107,7 +107,7 @@ export default function CardImage({
             width: '100%',
             height: '100%',
             padding: '1rem',
-            background: 'linear-gradient(135deg, var(--ink-card) 0%, var(--ink-surface) 100%)',
+            background: 'linear-gradient(135deg, var(--bg-card) 0%, var(--bg-surface) 100%)',
           }}
         >
           <span style={{ fontSize: '2rem', opacity: 0.6 }}>

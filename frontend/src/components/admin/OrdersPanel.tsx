@@ -226,9 +226,9 @@ export default function OrdersPanel({ token, initialOrderId }: Props) {
     <div className="flex flex-col h-full w-full">
       <div className="flex flex-col lg:flex-row flex-1 min-h-0">
         {/* Left: Orders List */}
-        <div className="w-full lg:w-[420px] flex-shrink-0 flex flex-col overflow-hidden border-r border-kraft-dark/20 bg-kraft-paper/5">
+        <div className="w-full lg:w-[420px] flex-shrink-0 flex flex-col overflow-hidden border-r border-border-main/20 bg-bg-page/5">
           {/* Filters */}
-          <div className="p-3 flex flex-col gap-2" style={{ borderBottom: '1px solid var(--ink-border)' }}>
+          <div className="p-3 flex flex-col gap-2" style={{ borderBottom: '1px solid var(--border-main)' }}>
             <input
               type="search"
               placeholder="Buscar por # orden, nombre, teléfono..."
@@ -244,9 +244,9 @@ export default function OrdersPanel({ token, initialOrderId }: Props) {
                   className="badge cursor-pointer transition-colors"
                   style={{
                     padding: '3px 8px',
-                    background: statusFilter === s ? 'var(--ink-deep)' : 'transparent',
-                    color: statusFilter === s ? '#fff' : 'var(--text-secondary)',
-                    border: `1px solid ${statusFilter === s ? 'var(--ink-deep)' : 'var(--ink-border)'}`,
+                    background: statusFilter === s ? 'var(--text-main)' : 'transparent',
+                    color: statusFilter === s ? 'var(--btn-primary-text)' : 'var(--text-secondary)',
+                    border: `1px solid ${statusFilter === s ? 'var(--text-main)' : 'var(--border-main)'}`,
                   }}
                 >
                   {s ? (ORDER_STATUS_LABELS[s] || s) : 'Todas'}
@@ -300,10 +300,10 @@ export default function OrdersPanel({ token, initialOrderId }: Props) {
                   onClick={() => { setItemEdits({}); setLoadingDetail(true); selectOrder(o.id); }}
                   className="p-3 cursor-pointer transition-colors"
                   style={{
-                    borderBottom: '1px solid var(--ink-border)',
-                    background: detail?.order.id === o.id ? 'var(--kraft-light)' : 'transparent',
+                    borderBottom: '1px solid var(--border-main)',
+                    background: detail?.order.id === o.id ? 'var(--bg-page)' : 'transparent',
                   }}
-                  onMouseEnter={e => { if (detail?.order.id !== o.id) e.currentTarget.style.background = 'var(--ink-surface)'; }}
+                  onMouseEnter={e => { if (detail?.order.id !== o.id) e.currentTarget.style.background = 'var(--bg-surface)'; }}
                   onMouseLeave={e => { if (detail?.order.id !== o.id) e.currentTarget.style.background = 'transparent'; }}
                 >
                   <div className="flex justify-between items-start">
@@ -332,7 +332,7 @@ export default function OrdersPanel({ token, initialOrderId }: Props) {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex justify-center gap-2 p-2" style={{ borderTop: '1px solid var(--ink-border)' }}>
+            <div className="flex justify-center gap-2 p-2" style={{ borderTop: '1px solid var(--border-main)' }}>
               <button onClick={() => { setPage(p => Math.max(1, p - 1)); setLoading(true); }} disabled={page === 1} className="btn-secondary" style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem', opacity: page === 1 ? 0.4 : 1 }}>←</button>
               <span className="text-xs font-mono-stack flex items-center" style={{ color: 'var(--text-muted)' }}>{page}/{totalPages}</span>
               <button onClick={() => { setPage(p => Math.min(totalPages, p + 1)); setLoading(true); }} disabled={page === totalPages} className="btn-secondary" style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem', opacity: page === totalPages ? 0.4 : 1 }}>→</button>
@@ -439,8 +439,8 @@ export default function OrdersPanel({ token, initialOrderId }: Props) {
                   if (item.card_treatment && item.card_treatment !== 'normal') badges.push(TREATMENT_LABELS[item.card_treatment] || item.card_treatment);
 
                   return (
-                    <div key={item.id} className="flex gap-3 p-3 border border-ink-border rounded transition-opacity"
-                      style={{ opacity: isZero ? 0.4 : 1, background: isZero ? 'var(--ink-surface)' : 'var(--ink-card)', overflow: 'visible' }}>
+                    <div key={item.id} className="flex gap-3 p-3 border border-border-main rounded transition-opacity"
+                      style={{ opacity: isZero ? 0.4 : 1, background: isZero ? 'var(--bg-surface)' : 'var(--bg-card)', overflow: 'visible' }}>
                       {/* Thumbnail */}
                       <div style={{ width: 44, flexShrink: 0 }}>
                         <CardImage imageUrl={item.image_url} name={item.product_name} tcg="mtg" foilTreatment={item.foil_treatment || 'non_foil'} height={60} enableHover={true} enableModal={true} />
@@ -460,7 +460,7 @@ export default function OrdersPanel({ token, initialOrderId }: Props) {
                           <div className="flex flex-wrap gap-1 mt-1">
                             {item.stored_in.map((s: StorageLocation) => (
                               <span key={s.stored_in_id} className="text-[9px] px-1.5 py-0.5 rounded"
-                                style={{ background: 'var(--kraft-light)', border: '1px solid var(--kraft-dark)', color: 'var(--text-secondary)' }}>
+                                style={{ background: 'var(--bg-page)', border: '1px solid var(--border-main)', color: 'var(--text-secondary)' }}>
                                 📦 {s.name}: {s.quantity}
                               </span>
                             ))}
@@ -472,7 +472,7 @@ export default function OrdersPanel({ token, initialOrderId }: Props) {
                       <div className="flex flex-col items-center gap-1">
                         <span className="text-[9px] font-mono-stack" style={{ color: 'var(--text-muted)' }}>STOCK</span>
                         <span className="text-sm font-mono-stack font-bold"
-                          style={{ color: item.stock === 0 ? 'var(--hp-color)' : item.stock < 3 ? 'var(--mp-color)' : 'var(--text-primary)' }}>
+                          style={{ color: item.stock === 0 ? 'var(--status-hp)' : item.stock < 3 ? 'var(--status-mp)' : 'var(--text-main)' }}>
                           {item.stock}
                         </span>
                       </div>
@@ -485,7 +485,7 @@ export default function OrdersPanel({ token, initialOrderId }: Props) {
                             onClick={() => setItemEdits(prev => ({ ...prev, [item.id]: Math.max(0, (prev[item.id] ?? item.quantity) - 1) }))}
                             disabled={detail.order.status === 'completed'}
                             className="w-5 h-5 flex items-center justify-center text-xs"
-                            style={{ background: 'var(--ink-border)', border: 'none', borderRadius: 2, cursor: detail.order.status === 'completed' ? 'not-allowed' : 'pointer' }}>−</button>
+                            style={{ background: 'var(--border-main)', border: 'none', borderRadius: 2, cursor: detail.order.status === 'completed' ? 'not-allowed' : 'pointer' }}>−</button>
                           <input
                             type="number"
                             value={qty}
@@ -509,9 +509,9 @@ export default function OrdersPanel({ token, initialOrderId }: Props) {
                             onClick={() => setItemEdits(prev => ({ ...prev, [item.id]: Math.min(item.stock, (prev[item.id] ?? item.quantity) + 1) }))}
                             disabled={detail.order.status === 'completed' || qty >= item.stock}
                             className="w-5 h-5 flex items-center justify-center text-xs"
-                            style={{ background: 'var(--ink-border)', border: 'none', borderRadius: 2, cursor: (detail.order.status === 'completed' || qty >= item.stock) ? 'not-allowed' : 'pointer' }}>+</button>
+                            style={{ background: 'var(--border-main)', border: 'none', borderRadius: 2, cursor: (detail.order.status === 'completed' || qty >= item.stock) ? 'not-allowed' : 'pointer' }}>+</button>
                         </div>
-                        {isZero && <span className="text-[8px] font-mono-stack" style={{ color: 'var(--hp-color)' }}>REMOVIDO</span>}
+                        {isZero && <span className="text-[8px] font-mono-stack" style={{ color: 'var(--status-hp)' }}>REMOVIDO</span>}
                       </div>
 
                       {/* Price */}
@@ -563,21 +563,21 @@ export default function OrdersPanel({ token, initialOrderId }: Props) {
                 const isComplete = totalAssigned === item.quantity;
 
                 return (
-                  <div key={item.id} className="cardbox p-4" style={{ borderColor: isComplete ? 'var(--nm-color)' : 'var(--ink-border)' }}>
+                  <div key={item.id} className="cardbox p-4" style={{ borderColor: isComplete ? 'var(--status-nm)' : 'var(--border-main)' }}>
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <p className="font-semibold text-sm">{item.product_name}</p>
                         {item.product_set && <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{item.product_set}</p>}
                       </div>
                       <div className="text-right">
-                        <span className="text-xs font-mono-stack" style={{ color: isComplete ? 'var(--nm-color)' : 'var(--mp-color)' }}>
+                        <span className="text-xs font-mono-stack" style={{ color: isComplete ? 'var(--status-nm)' : 'var(--status-mp)' }}>
                           {totalAssigned} / {item.quantity}
                         </span>
                       </div>
                     </div>
 
                     {item.stored_in.length === 0 ? (
-                      <p className="text-xs italic" style={{ color: 'var(--hp-color)' }}>⚠ Sin ubicaciones de almacenamiento</p>
+                      <p className="text-xs italic" style={{ color: 'var(--status-hp)' }}>⚠ Sin ubicaciones de almacenamiento</p>
                     ) : (
                       <div className="space-y-2">
                         {item.stored_in.map((loc: StorageLocation) => {
@@ -621,15 +621,15 @@ export default function OrdersPanel({ token, initialOrderId }: Props) {
             </div>
 
             {completeError && (
-              <p className="text-sm font-mono-stack mt-3" style={{ color: 'var(--hp-color)' }}>{completeError}</p>
+              <p className="text-sm font-mono-stack mt-3" style={{ color: 'var(--status-hp)' }}>{completeError}</p>
             )}
 
-            <div className="mt-6 p-4 border-2 border-dashed border-hp-color/30 rounded-lg bg-hp-color/5">
-              <p className="text-sm font-semibold text-hp-color mb-3 uppercase tracking-wider text-center">
+            <div className="mt-6 p-4 border-2 border-dashed border-status-hp/30 rounded-lg bg-status-hp/5">
+              <p className="text-sm font-semibold text-status-hp mb-3 uppercase tracking-wider text-center">
                 ⚠ ¿Estás seguro? Esto bloqueará la orden y no se podrá editar después.
               </p>
               <div className="flex gap-3">
-                <button onClick={handleComplete} disabled={completing} className="btn-primary flex-1 py-3 bg-hp-color hover:bg-hp-color/90">
+                <button onClick={handleComplete} disabled={completing} className="btn-primary flex-1 py-3 bg-status-hp hover:bg-status-hp/90">
                   {completing ? 'PROCESANDO...' : '✓ CONFIRMAR Y COMPLETAR ORDEN'}
                 </button>
                 <button onClick={() => setShowCompleteModal(false)} className="btn-secondary px-6 py-3">CANCELAR</button>

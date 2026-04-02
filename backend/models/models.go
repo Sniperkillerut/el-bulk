@@ -511,6 +511,21 @@ type Theme struct {
 	StatusLP           string    `db:"status_lp"            json:"status_lp"`
 	StatusMP           string    `db:"status_mp"            json:"status_mp"`
 	StatusHP           string    `db:"status_hp"            json:"status_hp"`
+	StatusDMG          string    `db:"status_dmg"           json:"status_dmg"`
+	
+	// Specialized Colors
+	BgCard             string    `db:"bg_card"              json:"bg_card"`
+	TextOnHeader       string    `db:"text_on_header"       json:"text_on_header"`
+	BorderFocus        string    `db:"border_focus"         json:"border_focus"`
+	
+	// Interactive Elements
+	BtnPrimaryBg       string    `db:"btn_primary_bg"       json:"btn_primary_bg"`
+	BtnPrimaryText     string    `db:"btn_primary_text"     json:"btn_primary_text"`
+	BtnSecondaryBg     string    `db:"btn_secondary_bg"     json:"btn_secondary_bg"`
+	BtnSecondaryText   string    `db:"btn_secondary_text"   json:"btn_secondary_text"`
+	
+	CheckboxBorder     string    `db:"checkbox_border"      json:"checkbox_border"`
+	CheckboxChecked    string    `db:"checkbox_checked"     json:"checkbox_checked"`
 	
 	// Layout & Geometry
 	RadiusBase         string    `db:"radius_base"          json:"radius_base"`
@@ -542,6 +557,21 @@ type ThemeInput struct {
 	StatusLP           string `json:"status_lp"`
 	StatusMP           string `json:"status_mp"`
 	StatusHP           string `json:"status_hp"`
+	StatusDMG          string `json:"status_dmg"`
+	
+	// Specialized Colors
+	BgCard             string `json:"bg_card"`
+	TextOnHeader       string `json:"text_on_header"`
+	BorderFocus        string `json:"border_focus"`
+	
+	// Interactive Elements
+	BtnPrimaryBg       string `json:"btn_primary_bg"`
+	BtnPrimaryText     string `json:"btn_primary_text"`
+	BtnSecondaryBg     string `json:"btn_secondary_bg"`
+	BtnSecondaryText   string `json:"btn_secondary_text"`
+	
+	CheckboxBorder     string `json:"checkbox_border"`
+	CheckboxChecked    string `json:"checkbox_checked"`
 	
 	// Layout & Geometry
 	RadiusBase         string `json:"radius_base"`

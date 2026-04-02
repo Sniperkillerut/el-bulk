@@ -566,20 +566,33 @@ export interface Theme {
   bg_page: string;
   bg_header: string;
   bg_surface: string;
+  bg_card: string;
   
   text_main: string;
   text_secondary: string;
   text_muted: string;
   text_on_accent: string;
+  text_on_header: string;
   
   accent_primary: string;
   accent_primary_hover: string;
   border_main: string;
+  border_focus: string;
   
   status_nm: string;
   status_lp: string;
   status_mp: string;
   status_hp: string;
+  status_dmg: string;
+  
+  // Interactive Elements
+  btn_primary_bg: string;
+  btn_primary_text: string;
+  btn_secondary_bg: string;
+  btn_secondary_text: string;
+  
+  checkbox_border: string;
+  checkbox_checked: string;
   
   // Layout & Geometry
   radius_base: string;
