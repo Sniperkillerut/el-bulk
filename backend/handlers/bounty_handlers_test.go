@@ -160,3 +160,94 @@ func TestBountyHandler_CreateRequest(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, rr.Code)
 	})
 }
+
+func TestBountyHandler_ListOffers(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	h := &BountyHandler{DB: sqlxDB}
+
+	rows := sqlmock.NewRows([]string{"id", "bounty_id", "customer_id", "customer_contact"}).
+		AddRow("o1", "b1", "c1", "12345")
+	mock.ExpectQuery("SELECT .* FROM bounty_offer").WillReturnRows(rows)
+
+	req, _ := http.NewRequest("GET", "/api/admin/bounties/offers", nil)
+	rr := httptest.NewRecorder()
+	h.ListOffers(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+}
+
+func TestBountyHandler_UpdateOfferStatus(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	h := &BountyHandler{DB: sqlxDB}
+
+	t.Run("Success", func(t *testing.T) {
+		input := models.UpdateBountyOfferStatusInput{Status: "accepted"}
+		body, _ := json.Marshal(input)
+
+		mock.ExpectExec("UPDATE bounty_offer").WithArgs("accepted", "o1").WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectQuery("SELECT .* FROM bounty_offer").WithArgs("o1").WillReturnRows(sqlmock.NewRows([]string{"id", "status", "customer_contact"}).AddRow("o1", "accepted", "12345"))
+
+		r := chi.NewRouter()
+		r.Put("/api/admin/bounties/offers/{id}/status", h.UpdateOfferStatus)
+		req, _ := http.NewRequest("PUT", "/api/admin/bounties/offers/o1/status", bytes.NewBuffer(body))
+		rr := httptest.NewRecorder()
+		r.ServeHTTP(rr, req)
+
+		assert.Equal(t, http.StatusOK, rr.Code)
+	})
+}
+
+func TestBountyHandler_ListRequests(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	h := &BountyHandler{DB: sqlxDB}
+
+	rows := sqlmock.NewRows([]string{"id", "customer_name", "customer_contact", "card_name"}).
+		AddRow("r1", "John Doe", "12345", "Black Lotus")
+	mock.ExpectQuery("SELECT id, customer_id, customer_name, customer_contact, card_name, set_name, details, status, created_at FROM client_request").WillReturnRows(rows)
+
+	req, _ := http.NewRequest("GET", "/api/admin/wanted/requests", nil)
+	rr := httptest.NewRecorder()
+	h.ListRequests(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+}
+
+func TestBountyHandler_UpdateRequestStatus(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	h := &BountyHandler{DB: sqlxDB}
+
+	t.Run("Success", func(t *testing.T) {
+		input := models.UpdateClientRequestStatusInput{Status: "solved"}
+		body, _ := json.Marshal(input)
+
+		mock.ExpectQuery("UPDATE client_request").WithArgs("solved", "r1").WillReturnRows(sqlmock.NewRows([]string{"id", "status"}).AddRow("r1", "solved"))
+
+		r := chi.NewRouter()
+		r.Put("/api/admin/wanted/requests/{id}/status", h.UpdateRequestStatus)
+		req, _ := http.NewRequest("PUT", "/api/admin/wanted/requests/r1/status", bytes.NewBuffer(body))
+		rr := httptest.NewRecorder()
+		r.ServeHTTP(rr, req)
+
+		assert.Equal(t, http.StatusOK, rr.Code)
+	})
+}
+
+func TestBountyHandler_Delete(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	h := &BountyHandler{DB: sqlxDB}
+
+	mock.ExpectExec("DELETE FROM bounty").WithArgs("b1").WillReturnResult(sqlmock.NewResult(1, 1))
+
+	r := chi.NewRouter()
+	r.Delete("/api/admin/bounties/{id}", h.Delete)
+	req, _ := http.NewRequest("DELETE", "/api/admin/bounties/b1", nil)
+	rr := httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusNoContent, rr.Code)
+}
