@@ -2,9 +2,9 @@ import { Product, ProductListResponse, NewsletterSubscriber, CustomerStats, Cust
 import { remoteLogger } from './remoteLogger';
 
 const isServer = typeof window === 'undefined';
-const API_BASE = isServer 
+const API_BASE = isServer
   ? (process.env.INTERNAL_API_URL || 'http://backend:8080')
-  : (process.env.NEXT_PUBLIC_API_URL || ''); 
+  : (process.env.NEXT_PUBLIC_API_URL || '');
 
 async function logAndThrow(res: Response, defaultMsg: string): Promise<never> {
   let errorMessage = defaultMsg;
@@ -33,7 +33,7 @@ interface FetchOptions extends RequestInit {
 
 export async function apiFetch<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
   const { params, headers: customHeaders, ...rest } = options;
-  
+
   const url = new URL(`${API_BASE}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`);
   if (params) {
     Object.entries(params).forEach(([key, val]) => {
@@ -205,10 +205,10 @@ export async function adminDeleteProduct(id: string): Promise<void> {
   return apiFetch<void>(`/api/admin/products/${id}`, { method: 'DELETE' });
 }
 
-export async function adminBulkCreateProducts(products: import('./types').BulkProductInput[]): Promise<{ message: string; count: number }> {
+export async function adminBulkCreateProducts(req: import('./types').BulkCreateRequest): Promise<{ message: string; count: number }> {
   return apiFetch<{ message: string; count: number }>('/api/admin/products/bulk', {
     method: 'POST',
-    body: JSON.stringify(products),
+    body: JSON.stringify(req),
   });
 }
 
@@ -357,8 +357,8 @@ export async function adminFetchCategories(): Promise<import('./types').CustomCa
 }
 
 export async function adminCreateCategory(
-  name: string, 
-  slug?: string, 
+  name: string,
+  slug?: string,
   is_active: boolean = true,
   show_badge: boolean = true,
   searchable: boolean = true,
@@ -376,9 +376,9 @@ export async function adminCreateCategory(
 }
 
 export async function adminUpdateCategory(
-  id: string, 
-  name: string, 
-  slug?: string, 
+  id: string,
+  name: string,
+  slug?: string,
   is_active?: boolean,
   show_badge?: boolean,
   searchable?: boolean,
@@ -651,7 +651,7 @@ export async function adminDownloadAccountingCSV(filters: { start_date?: string;
   const downloadUrl = window.URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = downloadUrl;
-  
+
   let filename = `accounting_export_${new Date().toISOString().split('T')[0]}.csv`;
   if (filters.start_date && filters.end_date) {
     filename = `accounting_${filters.start_date.split('T')[0]}_to_${filters.end_date.split('T')[0]}.csv`;
@@ -687,8 +687,8 @@ export async function adminUpdateTranslation(data: { key: string; locale: string
 }
 
 export async function adminDeleteTranslation(key: string, locale: string): Promise<void> {
-  return apiFetch<void>(`/api/admin/translations/${key}`, { 
+  return apiFetch<void>(`/api/admin/translations/${key}`, {
     params: { locale },
-    method: 'DELETE' 
+    method: 'DELETE'
   });
 }

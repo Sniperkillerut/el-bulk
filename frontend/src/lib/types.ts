@@ -171,7 +171,7 @@ export const resolveLabel = (key: string, map: Record<string, string>) => {
   label = label.replace(/universesbeyond/gi, 'Universes Beyond');
   // Avoid double spaces when _foil or camelCase already added a space/separator
   label = label.replace(/([a-z])foil$/i, '$1 Foil');
-  label = label.replace(/_/g, ' '); 
+  label = label.replace(/_/g, ' ');
   // Consolidate multiple spaces
   label = label.replace(/\s+/g, ' ');
 
@@ -345,6 +345,11 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
 export interface BulkProductInput extends Partial<Omit<Product, 'categories' | 'stored_in'>> {
   category_ids?: string[];
   storage_items?: StorageLocation[];
+}
+
+export interface BulkCreateRequest {
+  products: BulkProductInput[];
+  category_ids?: string[];
 }
 
 export interface ScryfallCard {
@@ -563,43 +568,43 @@ export interface Theme {
   id: string;
   name: string;
   is_system: boolean;
-  
+
   bg_page: string;
   bg_header: string;
   bg_surface: string;
   bg_card: string;
-  
+
   text_main: string;
   text_secondary: string;
   text_muted: string;
   text_on_accent: string;
   text_on_header: string;
-  
+
   accent_primary: string;
   accent_primary_hover: string;
   border_main: string;
   border_focus: string;
-  
+
   status_nm: string;
   status_lp: string;
   status_mp: string;
   status_hp: string;
   status_dmg: string;
-  
+
   // Interactive Elements
   btn_primary_bg: string;
   btn_primary_text: string;
   btn_secondary_bg: string;
   btn_secondary_text: string;
-  
+
   checkbox_border: string;
   checkbox_checked: string;
-  
+
   // Layout & Geometry
   radius_base: string;
   padding_card: string;
   gap_grid: string;
-  
+
   created_at: string;
   updated_at: string;
 }

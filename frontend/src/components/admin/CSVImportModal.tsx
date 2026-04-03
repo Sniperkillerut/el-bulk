@@ -2,22 +2,22 @@
 
 import { useState } from 'react';
 import Papa from 'papaparse';
-import { 
-  BulkProductInput, 
-  StoredIn, 
-  CustomCategory, 
-  FoilTreatment, 
-  CardTreatment, 
-  Condition, 
+import {
+  BulkProductInput,
+  StoredIn,
+  CustomCategory,
+  FoilTreatment,
+  CardTreatment,
+  Condition,
   FOIL_LABELS,
   TREATMENT_LABELS,
   TCG_LABELS,
   KNOWN_TCGS
 } from '@/lib/types';
-import { 
-  lookupMTGCard, 
-  adminBulkCreateProducts, 
-  adminBatchLookupMTG 
+import {
+  lookupMTGCard,
+  adminBulkCreateProducts,
+  adminBatchLookupMTG
 } from '@/lib/api';
 import { identifyFoilFromString } from '@/lib/mtg-logic';
 import CardImage from '@/components/CardImage';
@@ -53,7 +53,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
 
   // Global settings for the import
   const [defaultStorage, setDefaultStorage] = useState(storageLocations[0]?.id || '');
-  const [defaultCategories] = useState<string[]>([]);
+  const [bulkCategoryIds, setBulkCategoryIds] = useState<string[]>([]);
   const [importDestination, setImportDestination] = useState<'singles' | 'deck'>('singles');
   const [deckName, setDeckName] = useState('');
   const [tcgType, setTcgType] = useState('mtg');
@@ -108,7 +108,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
         condition: (row[mapping['condition']] || 'NM').toUpperCase() as Condition,
         foil_treatment: identifyFoilFromString(row[mapping['foil_treatment']]),
         stock: parseInt(row[mapping['stock']]) || 1,
-        category_ids: [...defaultCategories],
+        category_ids: [], // We merge bulk ones at the API/Backend level
         storage_items: defaultStorage ? [{ stored_in_id: defaultStorage, name: '', quantity: parseInt(row[mapping['stock']]) || 1 }] : []
       };
       return p;
@@ -142,7 +142,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
 
         try {
           const results = await adminBatchLookupMTG(identifiers);
-          
+
           results.forEach((res) => {
             // Find the best match in the chunk
             const matchingIndexInChunk = chunk.findIndex((item, idx) => {
@@ -150,8 +150,8 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
               if (newData[dataIndex].image_url) return false;
 
               if (item.set_code && item.collector_number && res.set_code && res.collector_number) {
-                 return item.set_code.toLowerCase() === res.set_code.toLowerCase() && 
-                        item.collector_number.toLowerCase() === res.collector_number.toLowerCase();
+                return item.set_code.toLowerCase() === res.set_code.toLowerCase() &&
+                  item.collector_number.toLowerCase() === res.collector_number.toLowerCase();
               }
               if (item.name && res.name) {
                 const n1 = item.name.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -190,7 +190,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                 full_art: res.full_art,
                 textless: res.textless,
               };
-              
+
               if (item.foil_treatment === 'non_foil' && res.price_tcgplayer) {
                 newData[dataIndex].price_reference = res.price_tcgplayer;
                 newData[dataIndex].price_source = 'tcgplayer';
@@ -200,7 +200,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
               }
             }
           });
-          
+
           setPreviewData([...newData]); // Update after batch
           setProcessedCount(prev => Math.min(prev + chunk.length, totalToEnrich));
         } catch (e) {
@@ -281,13 +281,16 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
             art_variation: item.art_variation,
             type_line: item.type_line,
           })),
-          category_ids: [...defaultCategories],
+          category_ids: [],
           storage_items: defaultStorage ? [{ stored_in_id: defaultStorage, name: '', quantity: 1 }] : []
         };
         dataToImport = [deckProduct];
       }
 
-      const res = await adminBulkCreateProducts(dataToImport);
+      const res = await adminBulkCreateProducts({
+        products: dataToImport,
+        category_ids: bulkCategoryIds
+      });
       setImportResults(res);
       setStep('summary');
     } catch (e: unknown) {
@@ -331,7 +334,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
             </h2>
             <p className="text-[#8b7355] text-sm font-medium">Bulk add products to the cardboard warehouse</p>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="w-10 h-10 border-2 border-[#3c2a21] bg-[#1a1614] text-[#8b7355] flex items-center justify-center hover:bg-[#b04b4b] hover:text-white transition-all transform hover:rotate-90 active:scale-90"
           >
@@ -349,9 +352,9 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
 
           {step === 'upload' && (
             <div className="flex flex-col items-center justify-center py-20 border-4 border-dashed border-[#3c2a21] bg-[#1a1614]/50 hover:bg-[#2a1e17]/50 transition-colors cursor-pointer relative group">
-              <input 
-                type="file" 
-                accept=".csv" 
+              <input
+                type="file"
+                accept=".csv"
                 onChange={handleFileUpload}
                 className="absolute inset-0 opacity-0 cursor-pointer"
               />
@@ -372,21 +375,19 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                       <div className="flex gap-4 mb-4">
                         <button
                           onClick={() => setImportDestination('singles')}
-                          className={`flex-1 py-3 px-4 border-2 font-black uppercase text-xs tracking-widest transition-all ${
-                            importDestination === 'singles'
+                          className={`flex-1 py-3 px-4 border-2 font-black uppercase text-xs tracking-widest transition-all ${importDestination === 'singles'
                               ? 'bg-[#d4c3b3] border-[#d4c3b3] text-[#1a1614]'
                               : 'bg-[#1a1614] border-[#3c2a21] text-[#8b7355] hover:border-[#d4c3b3]'
-                          }`}
+                            }`}
                         >
                           Singles
                         </button>
                         <button
                           onClick={() => setImportDestination('deck')}
-                          className={`flex-1 py-3 px-4 border-2 font-black uppercase text-xs tracking-widest transition-all ${
-                            importDestination === 'deck'
+                          className={`flex-1 py-3 px-4 border-2 font-black uppercase text-xs tracking-widest transition-all ${importDestination === 'deck'
                               ? 'bg-[#d4c3b3] border-[#d4c3b3] text-[#1a1614]'
                               : 'bg-[#1a1614] border-[#3c2a21] text-[#8b7355] hover:border-[#d4c3b3]'
-                          }`}
+                            }`}
                         >
                           Deck
                         </button>
@@ -408,7 +409,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
 
                     <div>
                       <label className="block text-xs font-bold text-[#8b7355] uppercase mb-1">TCG Type</label>
-                      <select 
+                      <select
                         value={tcgType}
                         onChange={(e) => setTcgType(e.target.value)}
                         className="w-full bg-[#1a1614] border-2 border-[#3c2a21] p-3 text-[#d4c3b3] focus:border-[#d4c3b3] outline-none transition-all"
@@ -421,7 +422,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
 
                     <div>
                       <label className="block text-xs font-bold text-[#8b7355] uppercase mb-1">Default Storage</label>
-                      <select 
+                      <select
                         value={defaultStorage}
                         onChange={(e) => setDefaultStorage(e.target.value)}
                         className="w-full bg-[#1a1614] border-2 border-[#3c2a21] p-3 text-[#d4c3b3] focus:border-[#d4c3b3] outline-none transition-all"
@@ -429,6 +430,30 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                         <option value="" disabled>Select Storage Location</option>
                         {storageLocations.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                       </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-[#8b7355] uppercase mb-1">Add to Collections (Bulk)</label>
+                      <div className="flex flex-wrap gap-2 p-3 bg-[#1a1614] border-2 border-[#3c2a21] min-h-[100px]">
+                        {categories.map(cat => (
+                          <button
+                            key={cat.id}
+                            onClick={() => {
+                              setBulkCategoryIds(prev =>
+                                prev.includes(cat.id) ? prev.filter(id => id !== cat.id) : [...prev, cat.id]
+                              );
+                            }}
+                            className={`px-3 py-1.5 text-[10px] font-black uppercase border-2 transition-all ${
+                              bulkCategoryIds.includes(cat.id)
+                                ? 'bg-[#d4c3b3] border-[#d4c3b3] text-[#1a1614]'
+                                : 'border-[#3c2a21] text-[#8b7355] hover:border-[#d4c3b3]'
+                            }`}
+                          >
+                            {cat.name}
+                          </button>
+                        ))}
+                        {categories.length === 0 && <span className="text-[#3c2a21] italic text-xs">No collections defined</span>}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -440,7 +465,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                         <label className="w-32 text-xs font-bold text-[#8b7355] uppercase whitespace-nowrap">
                           {f.label} {f.required && <span className="text-[#b04b4b]">*</span>}
                         </label>
-                        <select 
+                        <select
                           value={mapping[f.key] || ''}
                           onChange={(e) => setMapping(prev => ({ ...prev, [f.key]: e.target.value }))}
                           className="flex-1 bg-[#1a1614] border-2 border-[#3c2a21] p-2 text-[#d4c3b3] text-sm focus:border-[#d4c3b3] outline-none"
@@ -453,15 +478,15 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex justify-end gap-4 mt-8">
-                <button 
+                <button
                   onClick={() => setStep('upload')}
                   className="px-8 py-4 border-2 border-[#3c2a21] text-[#8b7355] font-black uppercase hover:bg-[#3c2a21] hover:text-[#d4c3b3] transition-all active:scale-95"
                 >
                   Back
                 </button>
-                <button 
+                <button
                   onClick={handleStartPreview}
                   className="px-8 py-4 bg-[#3c2a21] text-[#d4c3b3] border-4 border-[#d4c3b3]/20 font-black uppercase tracking-widest hover:bg-[#d4c3b3] hover:text-[#3c2a21] transition-all hover:shadow-[0_0_20px_rgba(212,195,179,0.3)] active:scale-95"
                 >
@@ -476,15 +501,15 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
               <div className="mb-6 flex flex-col gap-4 bg-[#2a1e17] p-4 border-2 border-[#3c2a21] relative overflow-hidden">
                 <div className="flex justify-between items-center relative z-10">
                   <div className="flex gap-4">
-                    <button 
+                    <button
                       onClick={handleEnrich}
                       disabled={loading}
                       className="px-6 py-2 bg-[#8b7355] text-white font-black uppercase text-xs tracking-tighter hover:bg-[#d4c3b3] hover:text-[#3c2a21] transition-all disabled:opacity-50 flex items-center gap-2 relative overflow-hidden group/btn"
                     >
                       <span className="relative z-10">{loading ? '⌛ ENRICHING...' : '✨ ENRICH WITH SCRYFALL'}</span>
                       {loading && (
-                        <div 
-                          className="absolute inset-0 bg-white/20 transition-all duration-300" 
+                        <div
+                          className="absolute inset-0 bg-white/20 transition-all duration-300"
                           style={{ width: `${(processedCount / previewData.length) * 100}%` }}
                         />
                       )}
@@ -497,7 +522,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
 
                 {loading && (
                   <div className="w-full bg-[#1a1614] h-1.5 border border-[#3c2a21] relative overflow-hidden">
-                    <div 
+                    <div
                       className="absolute inset-y-0 left-0 bg-[#d4c3b3] transition-all duration-300 shadow-[0_0_10px_rgba(212,195,179,0.5)]"
                       style={{ width: `${(processedCount / previewData.length) * 100}%` }}
                     />
@@ -529,9 +554,9 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                         <td className="p-2 border-r border-[#3c2a21]">
                           <div className="w-16 aspect-[2.5/3.5] bg-[#3c2a21] relative overflow-hidden ring-2 ring-[#3c2a21] group-hover:ring-[#d4c3b3] transition-all">
                             {item.image_url ? (
-                              <CardImage 
-                                imageUrl={item.image_url} 
-                                name={item.name!} 
+                              <CardImage
+                                imageUrl={item.image_url}
+                                name={item.name!}
                                 foilTreatment={item.foil_treatment}
                                 height="100%"
                                 enableHover={true}
@@ -543,21 +568,21 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                           </div>
                         </td>
                         <td className="p-3 border-r border-[#3c2a21]">
-                          <input 
-                            value={item.name || ''} 
+                          <input
+                            value={item.name || ''}
                             onChange={(e) => updatePreviewItem(idx, { name: e.target.value })}
                             placeholder="Card Name"
                             className="bg-transparent text-[#d4c3b3] font-bold w-full text-[11px] focus:outline-none focus:bg-[#3c2a21] px-1"
                           />
                           <div className="flex gap-2 mt-1">
-                            <input 
-                              value={item.set_code || ''} 
+                            <input
+                              value={item.set_code || ''}
                               onChange={(e) => updatePreviewItem(idx, { set_code: e.target.value })}
                               placeholder="SET"
                               className="bg-[#1a1614] text-[#8b7355] text-[10px] font-black uppercase w-12 text-center border border-[#3c2a21] focus:outline-none focus:border-[#d4c3b3]"
                             />
-                            <input 
-                              value={item.collector_number || ''} 
+                            <input
+                              value={item.collector_number || ''}
                               onChange={(e) => updatePreviewItem(idx, { collector_number: e.target.value })}
                               placeholder="#"
                               className="bg-[#1a1614] text-[#8b7355] text-[10px] font-black uppercase w-16 text-center border border-[#3c2a21] focus:outline-none focus:border-[#d4c3b3]"
@@ -602,11 +627,10 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                               <button
                                 key={cat.id}
                                 onClick={() => toggleCategory(idx, cat.id)}
-                                className={`px-1.5 py-0.5 text-[9px] font-black uppercase border-2 transition-all ${
-                                  (item.category_ids || []).includes(cat.id)
+                                className={`px-1.5 py-0.5 text-[9px] font-black uppercase border-2 transition-all ${(item.category_ids || []).includes(cat.id)
                                     ? 'bg-[#d4c3b3] border-[#d4c3b3] text-[#1a1614]'
                                     : 'border-[#3c2a21] text-[#8b7355] hover:border-[#d4c3b3]'
-                                }`}
+                                  }`}
                               >
                                 {cat.name}
                               </button>
@@ -617,19 +641,19 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                           <div className="text-[10px] text-[#8b7355] font-black uppercase mb-1">
                             {item.price_source === 'tcgplayer' ? '$ USD' : '€ EUR'}
                           </div>
-                          <input 
+                          <input
                             type="number"
-                            value={item.price_reference || ''} 
+                            value={item.price_reference || ''}
                             onChange={(e) => updatePreviewItem(idx, { price_reference: parseFloat(e.target.value) || 0 })}
                             className="bg-[#1a1614] text-[#d4c3b3] font-mono font-bold w-full border border-[#3c2a21] p-1 text-sm focus:border-[#d4c3b3] outline-none"
                             step="0.01"
                           />
                         </td>
                         <td className="p-3">
-                          <input 
+                          <input
                             type="number"
                             min="1"
-                            value={item.stock || 0} 
+                            value={item.stock || 0}
                             onChange={(e) => {
                               const v = parseInt(e.target.value) || 0;
                               updateStorage(idx, item.storage_items?.[0]?.stored_in_id || '', v);
@@ -644,14 +668,14 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
               </div>
 
               <div className="mt-6 flex justify-between items-center bg-[#2a1e17] p-6 border-4 border-[#3c2a21]">
-                <button 
+                <button
                   onClick={() => setStep('mapping')}
                   className="px-8 py-3 border-2 border-[#3c2a21] text-[#8b7355] font-black uppercase hover:bg-[#3c2a21] hover:text-[#d4c3b3] transition-all"
                 >
                   Back to Mapping
                 </button>
                 <div className="flex gap-4">
-                   <button 
+                  <button
                     onClick={handleImport}
                     disabled={loading || previewData.length === 0}
                     className="px-12 py-4 bg-[#8b7355] text-white border-4 border-white/20 font-black uppercase tracking-[0.2em] hover:bg-[#d4c3b3] hover:text-[#3c2a21] transition-all disabled:opacity-50 hover:shadow-[0_0_30px_rgba(212,195,179,0.4)] active:scale-95"
@@ -668,15 +692,15 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
               <div className="relative mb-12">
                 {/* Custom Box Animation */}
                 <div className="w-32 h-32 border-4 border-[#3c2a21] bg-[#2a1e17] shadow-2xl relative animate-bounce">
-                   <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-32 bg-[#3c2a21]/20"></div>
-                   <div className="absolute top-1/2 left-0 -translate-y-1/2 w-32 h-1 bg-[#3c2a21]/20"></div>
-                   <div className="absolute inset-2 border-2 border-[#3c2a21]/30 border-dashed"></div>
-                   <div className="absolute -top-4 -right-4 text-4xl">📦</div>
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-32 bg-[#3c2a21]/20"></div>
+                  <div className="absolute top-1/2 left-0 -translate-y-1/2 w-32 h-1 bg-[#3c2a21]/20"></div>
+                  <div className="absolute inset-2 border-2 border-[#3c2a21]/30 border-dashed"></div>
+                  <div className="absolute -top-4 -right-4 text-4xl">📦</div>
                 </div>
                 {/* Warehouse Floor Shadow */}
                 <div className="w-24 h-4 bg-black/40 blur-md rounded-full mt-4 mx-auto animate-pulse"></div>
               </div>
-              
+
               <h3 className="text-4xl font-black text-[#d4c3b3] uppercase tracking-tighter mb-4 italic drop-shadow-lg">
                 STORING SHIPMENT...
               </h3>
@@ -685,12 +709,12 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                   &quot;Unpacking boxes and organizing the vault&quot;
                 </p>
                 <div className="flex justify-center gap-1">
-                  {[1,2,3].map(i => (
-                    <div key={i} className="w-2 h-2 bg-[#d4c3b3] animate-bounce" style={{ animationDelay: `${i*0.2}s` }}></div>
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="w-2 h-2 bg-[#d4c3b3] animate-bounce" style={{ animationDelay: `${i * 0.2}s` }}></div>
                   ))}
                 </div>
               </div>
-              
+
               <div className="mt-12 p-4 border-2 border-[#3c2a21] bg-[#2a1e17] text-[10px] font-black text-[#8b7355] uppercase tracking-[0.3em]">
                 System processing batch of {previewData.length} records
               </div>
@@ -704,7 +728,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
               <p className="text-xl text-[#8b7355] mb-12 font-medium">
                 Successfully processed <span className="text-[#d4c3b3] font-black">{importResults.count}</span> products into the system.
               </p>
-              <button 
+              <button
                 onClick={() => { onImported(); onClose(); }}
                 className="px-16 py-6 bg-[#d4c3b3] text-[#3c2a21] border-8 border-[#3c2a21]/20 font-black uppercase tracking-[0.3em] hover:bg-white transition-all shadow-2xl active:scale-95"
               >

@@ -548,18 +548,47 @@ func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, map[string]string{"message": "Product deleted"})
 }
 
+type BulkCreateRequest struct {
+	Products    []models.ProductInput `json:"products"`
+	CategoryIDs []string              `json:"category_ids,omitempty"`
+}
+
 func (h *ProductHandler) BulkCreate(w http.ResponseWriter, r *http.Request) {
-	var inputs []models.ProductInput
-	if err := json.NewDecoder(r.Body).Decode(&inputs); err != nil {
-		render.Error(w, "Invalid request body: "+err.Error(), http.StatusBadRequest)
-		return
+	var req BulkCreateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		// Fallback for old simple list format if needed, but we'll assume new format
+		// for internal consistency.
+		_ = json.NewDecoder(r.Body).Decode(&req.Products)
 	}
-	if len(inputs) == 0 {
+
+	if len(req.Products) == 0 {
 		render.Success(w, map[string]interface{}{"message": "No products to import", "count": 0})
 		return
 	}
 
-	jsonData, err := json.Marshal(inputs)
+	// Merge batch-wide category IDs into each product
+	if len(req.CategoryIDs) > 0 {
+		for i := range req.Products {
+			// Ensure CategoryIDs slice is initialized
+			if req.Products[i].CategoryIDs == nil {
+				req.Products[i].CategoryIDs = []string{}
+			}
+
+			// Add missing batch category IDs to individual product
+			existing := make(map[string]bool)
+			for _, id := range req.Products[i].CategoryIDs {
+				existing[id] = true
+			}
+
+			for _, batchID := range req.CategoryIDs {
+				if !existing[batchID] {
+					req.Products[i].CategoryIDs = append(req.Products[i].CategoryIDs, batchID)
+				}
+			}
+		}
+	}
+
+	jsonData, err := json.Marshal(req.Products)
 	if err != nil {
 		render.Error(w, "Failed to encode products for database", http.StatusInternalServerError)
 		return
