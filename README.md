@@ -1,195 +1,198 @@
-# El Bulk — TCG Web Store
+# 📦 El Bulk — TCG Web Store
 
-Local TCG store web app. Buy singles, sealed, accessories. We also buy bulk.
-
-**Stack**: Go (chi + sqlx) → PostgreSQL ← Next.js 14 (App Router, TypeScript)
-
----
-
-## Quick Start (Docker — recommended)
-
-```bash
-# 1. Copy env template
-cp backend/.env.example backend/.env
-
-# 2. Start all services (postgres + backend + frontend)
-docker compose up --build -d
-
-# 3. Run seed data (first time only)
-cd backend
-go run ./seed/main.go
-```
-
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8080
-- Admin panel: http://localhost:3000/admin/login
-
----
-
-## 🛡️ Data Security & PII Encryption
-The system uses **Application-Level Encryption (AES-256-GCM)** to secure sensitive customer data (ID numbers, phones, and addresses) at rest.
-
-1. **Setup Key**: Ensure `ENCRYPTION_KEY` is set to a 32-character secret in your `.env` or `docker-compose.dev.yml`.
-2. **Migrate Data**: If you have existing plain-text data, run the PII migration script:
-   ```bash
-   cd backend
-   go run scripts/migrate_pii/main.go
-   ```
-
----
-
-Default admin credentials: `admin` / `elbulk2024!`
-
----
-
-## Local Dev (no Docker)
-
-**Requirements**: Go 1.23+, Node 20+, PostgreSQL 16
-
-```bash
-# 1. Create DB and run schema
-psql -U postgres -c "CREATE DATABASE elbulk; CREATE USER elbulk WITH PASSWORD 'elbulkpass'; GRANT ALL ON DATABASE elbulk TO elbulk;"
-psql -U elbulk -d elbulk -f backend/db/schema.sql
-
-# 2. Backend
-cd backend
-cp .env.example .env        # edit DATABASE_URL for local postgres
-go run main.go              # → :8080
-
-# 3. Seed (in a separate terminal)
-cd backend
-go run ./seed/main.go
-
-# 4. Frontend
-cd frontend
-npm install
-cp .env.local.example .env.local   # NEXT_PUBLIC_API_URL=http://localhost:8080
-npm run dev                 # → :3000
-```
-
----
-
-## URL Structure
-
-| URL | Description |
-|-----|-------------|
-| `/` | Homepage |
-| `/{tcg}/singles` | Singles grid (mtg, pokemon, lorcana, onepiece, yugioh) |
-| `/{tcg}/sealed` | Sealed product |
-| `/accessories` | Accessories (cross-TCG) |
-| `/bulk` | Bring Your Bulk info page |
-| `/product/:id` | Product detail |
-| `/admin/login` | Admin login |
-| `/admin/dashboard` | Product management |
-
-## API
-
-| Method | Endpoint | Auth |
-|--------|----------|------|
-| GET | `/api/products?tcg=mtg&category=singles&search=&foil=&treatment=&condition=` | — |
-| GET | `/api/products/:id` | — |
-| GET | `/api/tcgs` | — |
-| POST | `/api/admin/login` | — |
-| POST | `/api/admin/products` | Bearer JWT |
-| PUT | `/api/admin/products/:id` | Bearer JWT |
-| DELETE | `/api/admin/products/:id` | Bearer JWT |
-
----
-
-## Adding a New TCG
-
-1. Seed products with `tcg: "newgame"`
-2. Add the TCG to `KNOWN_TCGS` in `frontend/src/lib/types.ts`
-3. Add labels to `TCG_LABELS` and `TCG_SHORT` in the same file
-
----
-
-## Deployment (Self-Hosting on Orange Pi / Raspberry Pi)
-
-The **Orange Pi Zero 2W (4GB RAM)** is the recommended self-hosting target. 
-
-### 1. Production Docker Setup
-On your Pi, use the production-optimized compose file (not provided in dev, but follows this pattern):
-
-```yaml
-services:
-  db: { image: postgres:16-alpine, ... }
-  backend:
-    build: { context: ./backend, target: prod }
-    environment: { PORT: "8080", ... }
-  frontend:
-    build: { context: ./frontend, target: prod }
-    ports: ["80:3000"]
-```
-
-### 2. Cloudflare Tunnel (Zero Trust)
-To expose your store to the internet without opening ports:
-
-1.  **Install `cloudflared`** on the Orange Pi.
-2.  **Authenticate**: `cloudflared tunnel login`.
-3.  **Create Tunnel**: `cloudflared tunnel create el-bulk-tunnel`.
-4.  **Configure**: Create `config.yml`:
-    ```yaml
-    tunnel: <TUNNEL_ID>
-    credentials-file: /home/pi/.cloudflared/<TUNNEL_ID>.json
-    ingress:
-      - hostname: store.yourdomain.com
-        service: http://localhost:80
-      - service: http_status:404
-    ```
-5.  **Route DNS**: `cloudflared tunnel route dns el-bulk-tunnel store.yourdomain.com`.
-6.  **Run**: `cloudflared tunnel run el-bulk-tunnel`.
-
-### 3. Automated Backups (Crontab)
-To automate the daily database dump, add this to your Pi’s crontab (`crontab -e`):
-
-```bash
-# Backup every day at 3:00 AM
-00 03 * * * docker exec el_bulk_db pg_dump -U elbulk elbulk > /home/pi/backups/elbulk_$(date +\%Y\%m\%d).sql
-
-# (Optional) Delete backups older than 30 days
-00 04 * * * find /home/pi/backups/ -name "*.sql" -type f -mtime +30 -delete
-```
-
-### 4. Performance Tips for Pi
-- **Swap**: Ensure at least 2GB of swap space is enabled (`sudo fallocate -l 2G /swapfile`).
-- **Storage**: Boot from a USB SSD if possible to avoid MicroSD card wear from PostgreSQL writes.
-
-## System Development
-
-- **Backend**: Go with Chi and SQLX.
-- **Frontend**: Next.js with Tailwind and Vanilla CSS.
-- **Database**: PostgreSQL.
-
-### Admin: Notices & News (HTML Content)
-
-Administrators can post "Notices" (Blog/News) using raw HTML. Here is a recommended structure for rich posts:
-
-```html
-<!-- Heading -->
-<h2>Latest Spoilers from MH3</h2>
-
-<!-- Image -->
-<img src="https://example.com/banner.jpg" alt="Banner" />
-
-<!-- Paragraph with Card Preview -->
-<p>
-  We just pulled a 
-  <a data-card-id="YOUR-PRODUCT-UUID-HERE">Black Lotus</a> 
-  from a blind box!
-</p>
-
-<!-- Video Embed -->
-<iframe width="100%" height="315" src="https://www.youtube.com/embed/VIDEO_ID" frameborder="0" allowfullscreen></iframe>
-
-<!-- List -->
-<ul>
-  <li>In-store events this Friday.</li>
-  <li>New sleeves in stock.</li>
-</ul>
-```
+**El Bulk** is a professional-grade TCG (Trading Card Game) marketplace and inventory management system designed for local stores. It handles singles, sealed products, and accessories, while providing a powerful admin suite for order management and bulk buying operations.
 
 > [!TIP]
-> The `data-card-id` attribute on an `<a>` tag will automatically trigger a mouseover image reveal for that product.
+> Built for performance and privacy, El Bulk features application-level PII encryption and is optimized for low-power ARM64 hardware like the Orange Pi Zero 2W.
 
-## Seeding
+---
+
+## ✨ Features
+
+### 🛒 Storefront
+- **High-Performance Grid**: Instant filtering for singles and sealed products across all supported TCGs (MTG, Lorcana, etc.).
+- **Smart Search**: Context-aware search with support for advanced card attributes (rarity, treatment, condition).
+- **Persistent Cart**: Local storage-based cart that handles complex TCG item metadata.
+- **Modern UI**: Full dark mode support, glassmorphism aesthetics, and responsive design.
+
+### 🛡️ Security & Privacy
+- **AES-256-GCM Encryption**: Sensitive customer data (phones, addresses, ID numbers) is encrypted before hitting the database.
+- **mTLS Suport**: Mutual TLS for secure service-to-service communication.
+- **Anti-CSRF & Rate-Limiting**: Production-ready security middleware active by default.
+- **Provider-Agnostic OAuth**: Seamless login via Google or Facebook.
+
+### 🛠️ Admin Dashboard
+- **Live Inventory Control**: Batch update stocks, prices, and locations.
+- **Dynamic Theming**: Change the storefront appearance in real-time.
+- **Internationalization**: Manage bilingual (ES/EN) translations and track completion percentages.
+- **Bounty System**: Track and manage "Wanted" lists and customer offers.
+- **Notices CMS**: Rich HTML blog/news system with card-reveal link integration.
+
+---
+
+## 🛠️ Technical Architecture
+
+| Layer | Technology |
+| :--- | :--- |
+| **Backend** | Go (Chi, SQLX, Air) |
+| **Frontend** | Next.js 15 (App Router, Tailwind CSS) |
+| **Database** | PostgreSQL 16 (Alpine) |
+| **Reverse Proxy** | Caddy (Auto-HTTPS) |
+| **Testing** | Vitest (Frontend), Go Test / Sqlmock (Backend) |
+
+---
+
+## ☁️ Cloud Deployment & Cost Analysis
+
+El Bulk is architecture-agnostic. While specialized for ARM64 SBCs, it runs perfectly on major cloud providers.
+
+### 💰 Cost Comparison Table (Est. Monthly)
+
+| Provider | Service Type | Compute (vCPU/RAM) | Database | Est. Cost | Best For |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Oracle Cloud** | VM (ARM) | 4 OCPU / 24GB | Self-hosted (Free) | **$0.00** | Budget / Performance |
+| **GCP** | Cloud Run | Serverless (Autoscale) | Cloud SQL (Postgres) | **~$10.00** | High traffic / Scale |
+| **AWS** | App Runner | Serverless (Autoscale) | RDS (db.t4g.micro) | **~$15.00** | AWS Ecosystem |
+| **DigitalOcean** | Droplet | 1 vCPU / 1GB | Managed DB | **~$21.00** | Simple Billing |
+| **Hetzner** | Cloud VPS | 2 vCPU / 2GB | Docker Postgres | **~$4.50** | European Performance |
+
+---
+
+### 🏛️ Oracle Cloud (Recommended Free Tier)
+Oracle's **Always Free ARM tier** is the strongest choice for hosting El Bulk for free at production speeds.
+1. **Compute**: Use `VM.Standard.A1.Flex` with 4 OCPUs and 24GB RAM.
+2. **Setup**: Use the same instructions as the Orange Pi, but without the CPU scaling tweaks.
+3. **Storage**: 200GB block storage included for free.
+4. **Egress**: 10TB per month covers almost any TCG store.
+
+### 🌩️ Google Cloud Platform (GCP)
+Best for users prioritizing high availability and serverless simplicity.
+1. **Frontend/Backend**: Deploy to **Cloud Run** using the provided `frontend/Dockerfile` and `backend/Dockerfile`.
+2. **Database**: Use **Cloud SQL** (PostgreSQL) with a `db-f1-micro` instance.
+3. **Secret Manager**: Store `ENCRYPTION_KEY` and `JWT_SECRET` in GCP Secrets.
+
+### 📦 AWS (Classic Infrastructure)
+1. **ECS/App Runner**: Use **App Runner** for the simplest managed container experience.
+2. **RDS**: Use a `db.t4g.micro` PostgreSQL instance (covered by the **12-month free tier**).
+3. **S3**: Use for automated database backups via AWS CLI.
+
+---
+
+## 🚀 Local Development
+
+### Prerequisites
+- Docker & Docker Compose
+- *Optional*: Go 1.23+, Node 20+, PostgreSQL 16 (for native dev)
+
+### Docker Setup (Recommended)
+```bash
+# 1. Clone and enter
+git clone https://github.com/Sniperkillerut/el-bulk.git && cd el-bulk
+
+# 2. Environment Setup
+cp backend/.env.example backend/.env
+# Edit backend/.env and set your ENCRYPTION_KEY (32 chars)
+
+# 3. Boot Services
+docker compose -f docker-compose.dev.yml up --build
+
+# 4. Seed Database (First time only)
+docker exec -it el_bulk_backend go run ./seed/main.go
+```
+- **Storefront**: http://localhost:3000
+- **Admin Login**: `admin` / `elbulk2024!`
+
+---
+
+## 🛡️ Security Deep Dive
+
+### PII Encryption
+El Bulk encrypts sensitive fields at the application level. To rotate keys or migrate plain-text data:
+```bash
+cd backend
+go run scripts/migrate_pii/main.go
+```
+
+### Database mTLS
+For production, the database requires certificate-based authentication. Certificates are located in `/certs` and managed by the backend during the connection handshake.
+
+---
+
+## 🍊 Orange Pi Zero 2W (4GB) Production Guide
+
+This guide assumes you are using **Debian 12 (Bookworm)** or **Armbian 23.x**.
+
+### 1. Hardware Preparation
+- **Power**: Use a high-quality 5V 3A USB-C power supply.
+- **Cooling**: A heat sink on the H618 chip is **mandatory** for production loads.
+- **Storage**: For database longevity, use a USB 3.0 SSD. If using a TF card, ensure it is Class 10/A2.
+
+### 2. OS Optimization
+Prepare the system for high I/O and RAM efficiency:
+```bash
+# Update and install dependencies
+sudo apt update && sudo apt upgrade -y
+sudo apt install docker.io docker-compose zram-config ufw -y
+
+# Enable ZRAM (Crucial for 4GB RAM)
+sudo systemctl enable zram-config
+sudo systemctl start zram-config
+
+# Tune Swappiness
+echo 'vm.swappiness=10' | sudo tee -a /etc/sysctl.conf
+sudo sysctl -p
+```
+
+### 3. Production Deployment
+Use the optimized production compose file which includes the **Caddy** reverse proxy.
+
+```bash
+cd el-bulk
+# Configure Prod Env
+cp .env.example .env.prod
+# Add SITE_DOMAIN, ACME_EMAIL, and security secrets
+
+# Deploy
+docker compose -f docker-compose.prod.yml up -d
+```
+
+### 4. Reverse Proxy & SSL
+The included `Caddyfile` automatically provisions SSL certificates via Let's Encrypt.
+- Ensure ports **80** and **443** are forwarded at your router.
+- Set `SITE_DOMAIN=store.yourdomain.com` in your production env.
+
+### 5. Automated Backups
+Schedule daily database dumps to prevent data loss:
+```bash
+# Edit crontab: crontab -e
+00 03 * * * docker exec el_bulk_db_prod pg_dump -U elbulk elbulk > /home/pi/backups/elbulk_$(date +\%Y\%m\%d).sql
+```
+
+---
+
+## 🧪 Testing
+
+### Backend
+```bash
+cd backend
+go test ./... -v -cover
+```
+
+### Frontend
+```bash
+cd frontend
+npm run test:coverage
+```
+
+---
+
+## 🗺️ System Roadmap
+- [ ] Stripe/MercadoPago Integration
+- [ ] WhatsApp Order Integration
+- [ ] Advanced TCGPlayer/Scryfall Stock Sync
+- [ ] Multi-store multi-inventory support
+
+---
+
+## ⚖️ License
+MIT License. Created by Sniperkillerut.
