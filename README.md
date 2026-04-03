@@ -96,11 +96,46 @@ cp backend/.env.example backend/.env
 # 3. Boot Services
 docker compose -f docker-compose.dev.yml up --build
 
-# 4. Seed Database (First time only)
-docker exec -it el_bulk_backend go run ./seed/main.go
+# 4. Data Initialization (New Section)
+# For more detailed instructions, see the "Initialization & Setup Scripts" section below.
 ```
 - **Storefront**: http://localhost:3000
 - **Admin Login**: `admin` / `elbulk2024!`
+
+---
+
+## 🛠️ Initialization & Setup Scripts
+
+Before starting the application for the first time, or when setting up a new environment, you need to run several scripts to prepare the infrastructure and data.
+
+### 1. Database Certificate Generation
+El Bulk uses **mTLS (Mutual TLS)** for secure database connections. You must generate the certificates before starting the services if they are not already present in the `/certs` directory.
+
+```bash
+# Run from the project root
+bash ./scripts/generate-db-certs.sh
+```
+This script will:
+- Generate a Root CA.
+- Create Server Key and Certificate for the database.
+- Create Client Key and Certificate for the backend service.
+- Set appropriate permissions (0600) for the private keys.
+
+### 2. Database Seeding
+To populate the database with initial products, categories, and translation keys, run the seeding script:
+
+```bash
+# Option A: Run via Docker (Recommended if services are running)
+docker exec -it el_bulk_backend go run ./seed/main.go
+
+# Option B: Run natively (Requires local Go installation)
+cd backend
+go run ./seed/main.go
+```
+The seeding script will:
+- Initialize the product taxonomy (Singles, Sealed, Accessories).
+- Add initial stock for all supported TCGs.
+- Populate the translation table with bilingual keys (ES/EN).
 
 ---
 
