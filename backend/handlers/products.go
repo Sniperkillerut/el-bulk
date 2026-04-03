@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 
+	"github.com/el-bulk/backend/middleware"
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/httputil"
 	"github.com/el-bulk/backend/utils/logger"
@@ -287,7 +288,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 		filterLogic = "or"
 	}
 
-	isAdmin := strings.Contains(r.URL.Path, "/admin/")
+	isAdmin, _ := r.Context().Value(middleware.IsAdminKey).(bool)
 	maxPageSize := 100
 	if isAdmin {
 		maxPageSize = 5000
@@ -369,7 +370,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 
 func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	isAdmin := strings.Contains(r.URL.Path, "/admin/")
+	isAdmin, _ := r.Context().Value(middleware.IsAdminKey).(bool)
 
 	if !isAdmin {
 		var active bool

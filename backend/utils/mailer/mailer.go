@@ -5,6 +5,7 @@ import (
 	"net/smtp"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/logger"
@@ -99,7 +100,7 @@ func BroadcastNotice(db *sqlx.DB, notice models.Notice) {
 	</html>
 	`
 
-	year := 2026 // Could be dynamic
+	year := time.Now().Year()
 	body := fmt.Sprintf(template, notice.Title, noticeURL, year, siteURL)
 
 	successCount := 0

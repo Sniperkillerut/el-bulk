@@ -106,9 +106,11 @@ func TestAdminHandler_Login(t *testing.T) {
 			assert.Equal(t, tt.expectedStatus, rr.Code)
 			
 			if tt.expectedStatus == http.StatusOK {
-				var res models.LoginResponse
+				var res map[string]string
 				json.NewDecoder(rr.Body).Decode(&res)
-				assert.NotEmpty(t, res.Token)
+				assert.Equal(t, "Logged in successfully", res["message"])
+				// Token is set as HttpOnly cookie, not returned in the body
+				assert.NotEmpty(t, rr.Header().Get("Set-Cookie"))
 			}
 		})
 	}

@@ -26,9 +26,13 @@ FROM alpine:3.20
 
 RUN apk add --no-cache ca-certificates tzdata
 
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
 WORKDIR /app
 COPY --from=builder /el-bulk-api .
 COPY db/schema.sql ./db/
+
+USER appuser
 
 EXPOSE 8080
 

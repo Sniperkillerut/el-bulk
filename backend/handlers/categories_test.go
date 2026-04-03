@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"time"
 	
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/el-bulk/backend/middleware"
 	"github.com/el-bulk/backend/models"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
@@ -33,6 +35,9 @@ func TestCategoriesHandler_List(t *testing.T) {
 		mock.ExpectQuery("(?i)SELECT .* FROM custom_category c.*LEFT JOIN product_category pc").WillReturnRows(rows)
 
 		req, _ := http.NewRequest("GET", "/api/admin/categories", nil)
+		// Inject isAdmin=true into request context
+		ctx := context.WithValue(req.Context(), middleware.IsAdminKey, true)
+		req = req.WithContext(ctx)
 		rr := httptest.NewRecorder()
 		h.List(rr, req)
 
@@ -68,8 +73,9 @@ func TestCategoriesHandler_Create(t *testing.T) {
 		body, _ := json.Marshal(input)
 
 		mock.ExpectQuery("INSERT INTO custom_category").
-			WithArgs("New Category", "new-category", true, true, true).
-			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "slug"}).AddRow("c2", "New Category", "new-category"))
+			WithArgs("New Category", "new-category", true, true, true, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "slug", "is_active", "show_badge", "searchable", "bg_color", "text_color", "icon", "created_at"}).
+				AddRow("c2", "New Category", "new-category", true, true, true, nil, nil, nil, time.Now()))
 
 		req, _ := http.NewRequest("POST", "/api/admin/categories", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()

@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -38,7 +39,18 @@ func RateLimit(limit int, window time.Duration) func(http.Handler) http.Handler 
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ip := r.RemoteAddr
+			// Get real client IP — behind Caddy proxy, RemoteAddr is always the proxy IP.
+			// Read X-Real-IP first (set by Caddy), fallback to X-Forwarded-For, then RemoteAddr.
+			ip := r.Header.Get("X-Real-IP")
+			if ip == "" {
+				if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
+					ip = strings.Split(fwd, ",")[0]
+					ip = strings.TrimSpace(ip)
+				}
+			}
+			if ip == "" {
+				ip = r.RemoteAddr
+			}
 
 			mu.Lock()
 			c, exists := clients[ip]

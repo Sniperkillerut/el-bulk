@@ -65,7 +65,8 @@ func (h *UserAuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	redirectURL := r.URL.Query().Get("redirect_url")
-	if redirectURL == "" {
+	if redirectURL == "" || !strings.HasPrefix(redirectURL, "/") ||
+		strings.Contains(redirectURL, "..") || strings.Contains(redirectURL, "//") {
 		redirectURL = "/"
 	}
 

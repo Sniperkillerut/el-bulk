@@ -12,6 +12,7 @@ import (
 type contextKey string
 
 const AdminContextKey contextKey = "admin_id"
+const IsAdminKey contextKey = "is_admin"
 
 func AdminAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -69,6 +70,7 @@ func AdminAuth(next http.Handler) http.Handler {
 		}
 
 		ctx := context.WithValue(r.Context(), AdminContextKey, adminID)
+		ctx = context.WithValue(ctx, IsAdminKey, true)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

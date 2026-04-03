@@ -30,8 +30,11 @@ func OptionalUserAuth(next http.Handler) http.Handler {
 		secret := os.Getenv("JWT_SECRET")
 
 		token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
-			return []byte(secret), nil
-		})
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrSignatureInvalid
+		}
+		return []byte(secret), nil
+	})
 
 		if err != nil || !token.Valid {
 			// Invalid token - just ignore and treat as guest, but log it
@@ -72,8 +75,11 @@ func RequireUserAuth(next http.Handler) http.Handler {
 		secret := os.Getenv("JWT_SECRET")
 
 		token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
-			return []byte(secret), nil
-		})
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrSignatureInvalid
+		}
+		return []byte(secret), nil
+	})
 
 		if err != nil || !token.Valid {
 			logger.Error("Invalid user token in middleware: %v", err)

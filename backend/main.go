@@ -50,6 +50,7 @@ func main() {
 	// Global middleware
 	r.Use(chiMiddleware.Logger)
 	r.Use(chiMiddleware.Recoverer)
+	r.Use(chiMiddleware.RequestSize(1 << 20)) // 1MB global body limit
 	r.Use(middleware.CORS)
 	r.Use(middleware.SecurityHeaders)
 
@@ -115,7 +116,7 @@ func main() {
 				// Products CRUD
 				r.Get("/products", productHandler.List)
 				r.Post("/products", productHandler.Create)
-				r.Post("/products/bulk", productHandler.BulkCreate)
+				r.With(chiMiddleware.RequestSize(10 << 20)).Post("/products/bulk", productHandler.BulkCreate)
 				r.Put("/products/{id}", productHandler.Update)
 				r.Delete("/products/{id}", productHandler.Delete)
 
@@ -210,7 +211,15 @@ func main() {
 	}
 
 	logger.Info("🚀 El Bulk API running on :%s", port)
-	if err := http.ListenAndServe(":"+port, r); err != nil {
+	srv := &http.Server{
+		Addr:              ":" + port,
+		Handler:           r,
+		ReadTimeout:       15 * time.Second,
+		ReadHeaderTimeout: 5 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       120 * time.Second,
+	}
+	if err := srv.ListenAndServe(); err != nil {
 		logger.Error("Server failed: %v", err)
 		os.Exit(1)
 	}

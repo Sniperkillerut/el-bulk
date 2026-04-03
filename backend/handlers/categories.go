@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 
+	"github.com/el-bulk/backend/middleware"
 	"github.com/el-bulk/backend/models"
 )
 
@@ -27,7 +28,7 @@ func NewCategoriesHandler(db *sqlx.DB) *CategoriesHandler {
 // (Also used by frontend public clients via /api/categories if needed)
 func (h *CategoriesHandler) List(w http.ResponseWriter, r *http.Request) {
 	var categories []models.CustomCategory
-	isAdmin := strings.Contains(r.URL.Path, "/admin/")
+	isAdmin, _ := r.Context().Value(middleware.IsAdminKey).(bool)
 	
 	query := `
 		SELECT c.id, c.name, c.slug, c.is_active, c.show_badge, c.searchable, c.bg_color, c.text_color, c.icon, c.created_at, COUNT(pc.product_id) as item_count

@@ -70,10 +70,10 @@ func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(24 * time.Hour),
 		HttpOnly: true,
 		Secure:   isSecure,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteStrictMode,
 	})
 
-	render.Success(w, models.LoginResponse{Token: signed})
+	render.Success(w, map[string]string{"message": "Logged in successfully"})
 }
 
 // POST /api/admin/logout
