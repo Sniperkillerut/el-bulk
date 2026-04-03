@@ -37,6 +37,7 @@ export interface FormState {
   frame: string;
   full_art: boolean;
   textless: boolean;
+  scryfall_id: string;
   category_ids: string[];
   storage_items: { stored_in_id: string; quantity: number }[];
   deck_cards: DeckCard[];

@@ -18,16 +18,17 @@ func NewLookupHandler() *LookupHandler {
 // GET /api/admin/lookup/mtg?name=<name>&set=<setCode>&foil=<foilTreatment>
 func (h *LookupHandler) MTG(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
+	sid := r.URL.Query().Get("sid")
 	setCode := r.URL.Query().Get("set")
 	foil := r.URL.Query().Get("foil") // e.g. "non_foil", "foil", "etched_foil"
 	cn := r.URL.Query().Get("cn")
 
-	if name == "" {
-		render.Error(w, "query param 'name' is required", http.StatusBadRequest)
+	if name == "" && sid == "" {
+		render.Error(w, "query param 'name' or 'sid' is required", http.StatusBadRequest)
 		return
 	}
 
-	result, err := external.LookupMTGCard(name, setCode, cn, foil)
+	result, err := external.LookupMTGCard(sid, name, setCode, cn, foil)
 	if err != nil {
 		if err.Error() == "card not found" {
 			render.Error(w, "card not found", http.StatusNotFound)

@@ -147,13 +147,13 @@ func (h *ProductHandler) saveDeckCards(productID string, cards []models.DeckCard
 		return
 	}
 
-	query := "INSERT INTO deck_card (product_id, name, set_code, collector_number, quantity, type_line, image_url, foil_treatment, card_treatment, rarity, art_variation) VALUES "
-	values := make([]interface{}, 0, len(cards)*11)
+	query := "INSERT INTO deck_card (product_id, name, set_code, collector_number, quantity, type_line, image_url, foil_treatment, card_treatment, rarity, art_variation, scryfall_id) VALUES "
+	values := make([]interface{}, 0, len(cards)*12)
 	placeholders := make([]string, 0, len(cards))
 
 	for i, c := range cards {
-		placeholders = append(placeholders, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)", i*11+1, i*11+2, i*11+3, i*11+4, i*11+5, i*11+6, i*11+7, i*11+8, i*11+9, i*11+10, i*11+11))
-		values = append(values, productID, c.Name, c.SetCode, c.CollectorNumber, c.Quantity, c.TypeLine, c.ImageURL, c.FoilTreatment, c.CardTreatment, c.Rarity, c.ArtVariation)
+		placeholders = append(placeholders, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)", i*12+1, i*12+2, i*12+3, i*12+4, i*12+5, i*12+6, i*12+7, i*12+8, i*12+9, i*12+10, i*12+11, i*12+12))
+		values = append(values, productID, c.Name, c.SetCode, c.CollectorNumber, c.Quantity, c.TypeLine, c.ImageURL, c.FoilTreatment, c.CardTreatment, c.Rarity, c.ArtVariation, c.ScryfallID)
 	}
 
 	query += strings.Join(placeholders, ", ")
@@ -450,15 +450,15 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		                      price_reference, price_source, price_cop_override,
 		                      stock, image_url, description, collector_number, promo_type,
 		                      language, color_identity, rarity, cmc, is_legendary, is_historic, is_land, is_basic_land, art_variation,
-		                      oracle_text, artist, type_line, border_color, frame, full_art, textless)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32)
+		                      oracle_text, artist, type_line, border_color, frame, full_art, textless, scryfall_id)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33)
 		RETURNING *
 	`, input.Name, input.TCG, input.Category, input.SetName, input.SetCode, input.Condition,
 		input.FoilTreatment, input.CardTreatment,
 		input.PriceReference, input.PriceSource, input.PriceCOPOverride,
 		input.Stock, input.ImageURL, input.Description, input.CollectorNumber, input.PromoType,
 		input.Language, input.ColorIdentity, input.Rarity, input.CMC, input.IsLegendary, input.IsHistoric, input.IsLand, input.IsBasicLand, input.ArtVariation,
-		input.OracleText, input.Artist, input.TypeLine, input.BorderColor, input.Frame, input.FullArt, input.Textless,
+		input.OracleText, input.Artist, input.TypeLine, input.BorderColor, input.Frame, input.FullArt, input.Textless, input.ScryfallID,
 	).StructScan(&product)
 
 	if err != nil {
@@ -501,15 +501,15 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 		    price_reference=$9, price_source=$10, price_cop_override=$11,
 		    stock=$12, image_url=$13, description=$14, collector_number=$15, promo_type=$16,
 		    language=$17, color_identity=$18, rarity=$19, cmc=$20, is_legendary=$21, is_historic=$22, is_land=$23, is_basic_land=$24, art_variation=$25,
-		    oracle_text=$26, artist=$27, type_line=$28, border_color=$29, frame=$30, full_art=$31, textless=$32
-		WHERE id=$33
+		    oracle_text=$26, artist=$27, type_line=$28, border_color=$29, frame=$30, full_art=$31, textless=$32, scryfall_id=$33
+		WHERE id=$34
 		RETURNING *
 	`, input.Name, input.TCG, input.Category, input.SetName, input.SetCode, input.Condition,
 		input.FoilTreatment, input.CardTreatment,
 		input.PriceReference, input.PriceSource, input.PriceCOPOverride,
 		input.Stock, input.ImageURL, input.Description, input.CollectorNumber, input.PromoType,
 		input.Language, input.ColorIdentity, input.Rarity, input.CMC, input.IsLegendary, input.IsHistoric, input.IsLand, input.IsBasicLand, input.ArtVariation,
-		input.OracleText, input.Artist, input.TypeLine, input.BorderColor, input.Frame, input.FullArt, input.Textless,
+		input.OracleText, input.Artist, input.TypeLine, input.BorderColor, input.Frame, input.FullArt, input.Textless, input.ScryfallID,
 		id,
 	).StructScan(&product)
 

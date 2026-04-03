@@ -16,7 +16,7 @@ BEGIN
             image_url, description, language, color_identity, rarity, cmc,
             is_legendary, is_historic, is_land, is_basic_land, art_variation,
             oracle_text, artist, type_line, border_color, frame, full_art, textless,
-            updated_at
+            scryfall_id, updated_at
         )
         VALUES (
             COALESCE((item->>'id')::uuid, gen_random_uuid()),
@@ -51,6 +51,7 @@ BEGIN
             item->>'frame',
             COALESCE((item->>'full_art')::boolean, false),
             COALESCE((item->>'textless')::boolean, false),
+            (item->>'scryfall_id')::uuid,
             now()
         )
         ON CONFLICT (id) DO UPDATE SET
@@ -85,6 +86,7 @@ BEGIN
             frame = EXCLUDED.frame,
             full_art = EXCLUDED.full_art,
             textless = EXCLUDED.textless,
+            scryfall_id = EXCLUDED.scryfall_id,
             updated_at = now()
         RETURNING id INTO p_id;
 
@@ -114,7 +116,7 @@ BEGIN
                 product_id, name, set_code, set_name, collector_number, rarity, quantity, 
                 language, type_line, color_identity, cmc, is_legendary, is_historic, is_land, is_basic_land,
                 art_variation, oracle_text, artist, border_color, frame, full_art, textless, promo_type,
-                image_url, foil_treatment, card_treatment
+                image_url, foil_treatment, card_treatment, scryfall_id
             )
             SELECT 
                 p_id,
@@ -142,7 +144,8 @@ BEGIN
                 dc->>'promo_type',
                 dc->>'image_url',
                 COALESCE(dc->>'foil_treatment', 'non_foil'),
-                COALESCE(dc->>'card_treatment', 'normal')
+                COALESCE(dc->>'card_treatment', 'normal'),
+                (dc->>'scryfall_id')::uuid
             FROM jsonb_array_elements(item->'deck_cards') AS dc;
         END IF;
 

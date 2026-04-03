@@ -26,7 +26,7 @@ export const EMPTY_FORM: FormState = {
   foil_treatment: 'non_foil', card_treatment: 'normal',
   price: 0, price_source: 'tcgplayer', price_reference: '', price_cop_override: '',
   stock: 0, description: '', category_ids: [], image_url: '',
-  collector_number: '', promo_type: '',
+  collector_number: '', promo_type: '', scryfall_id: '',
   language: 'en', color_identity: '', rarity: 'common', cmc: '',
   is_legendary: false, is_historic: false, is_land: false, is_basic_land: false,
   art_variation: '', oracle_text: '', artist: '', type_line: '',
@@ -48,25 +48,68 @@ export default function ProductEditModal({
   const [formError, setFormError] = useState('');
 
   // Mapping: Product -> ScryfallCard (for instant local pre-population)
-  const productToScryfallCard = (p: Product): ScryfallCard => ({
-    id: p.id,
-    name: p.name,
-    set: p.set_code || '',
-    set_name: p.set_name || '',
-    collector_number: p.collector_number || '',
-    image_uris: p.image_url ? { normal: p.image_url, small: p.image_url } : undefined,
-    type_line: p.type_line || '',
-    oracle_text: p.oracle_text || '',
-    cmc: p.cmc,
-    rarity: p.rarity,
-    color_identity: p.color_identity ? p.color_identity.split(',') : [],
-    full_art: p.full_art,
-    textless: p.textless,
-    artist: p.artist,
-    border_color: p.border_color,
-    frame: p.frame,
-    promo_types: p.promo_type ? p.promo_type.split(',') : []
-  });
+  const productToScryfallCard = (p: Product): ScryfallCard => {
+    const promoTypes = p.promo_type ? p.promo_type.split(',').map(s => s.trim().toLowerCase()) : [];
+    
+    // Reverse map foil_treatment to scryfall finishes
+    const finishes = [
+      p.foil_treatment === 'non_foil' ? 'nonfoil' : 
+      p.foil_treatment === 'foil' ? 'foil' : 
+      p.foil_treatment === 'etched_foil' ? 'etched' : 
+      'foil' // default fallback for other foils
+    ];
+    
+    // Ensure the specific foil treatment is in promo_types if it's indexed there by resolve...
+    const specialFoils = ['ripple_foil', 'galaxy_foil', 'surge_foil', 'textured_foil', 'glossy', 'confetti_foil', 'oil_slick', 'step_and_compleat', 'double_rainbow', 'platinum_foil'];
+    if (specialFoils.includes(p.foil_treatment)) {
+      const ptKey = p.foil_treatment.replace('_', '');
+      if (!promoTypes.includes(ptKey)) promoTypes.push(ptKey);
+    }
+
+    // Reverse map card_treatment to scryfall frame/border/effects
+    const frameEffects: string[] = [];
+    let borderColor = p.border_color || 'black';
+    let frame = p.frame || '';
+
+    if (p.card_treatment === 'showcase') frameEffects.push('showcase');
+    if (p.card_treatment === 'extended_art') frameEffects.push('extendedart');
+    if (p.card_treatment === 'borderless') borderColor = 'borderless';
+    if (p.card_treatment === 'retro_frame') frameEffects.push('retro');
+    if (p.card_treatment === 'legacy_border') frame = '1997';
+    if (p.card_treatment === 'etched') frameEffects.push('etched');
+    if (p.card_treatment === 'serialized') frameEffects.push('serialized');
+    
+    // Only set card.promo to true if the treatment itself is 'promo' 
+    // or it's a known promo type that resolveCardTreatment handles
+    if (p.card_treatment === 'promo' && !promoTypes.includes('promo')) {
+      promoTypes.push('promo');
+    }
+    if (p.card_treatment === 'judge_promo' && !promoTypes.includes('judgegift')) {
+      promoTypes.push('judgegift');
+    }
+
+    return {
+      id: p.scryfall_id || p.id,
+      name: p.name,
+      set: p.set_code || '',
+      set_name: p.set_name || '',
+      collector_number: p.collector_number || '',
+      image_uris: p.image_url ? { normal: p.image_url, small: p.image_url } : undefined,
+      type_line: p.type_line || '',
+      oracle_text: p.oracle_text || '',
+      cmc: p.cmc,
+      rarity: p.rarity,
+      color_identity: p.color_identity ? p.color_identity.split(',') : [],
+      full_art: p.full_art || p.card_treatment === 'full_art',
+      textless: p.textless || p.card_treatment === 'textless',
+      artist: p.artist,
+      border_color: borderColor,
+      frame: frame,
+      promo_types: promoTypes,
+      finishes: finishes,
+      promo: p.card_treatment === 'promo'
+    };
+  };
 
   // Initialize form from editProduct or defaults
   useEffect(() => {
@@ -107,6 +150,7 @@ export default function ProductEditModal({
         frame: editProduct.frame || '',
         full_art: editProduct.full_art,
         textless: editProduct.textless,
+        scryfall_id: editProduct.scryfall_id || '',
         storage_items: editProduct.stored_in?.map(s => ({ stored_in_id: s.stored_in_id, quantity: s.quantity })) || [],
         deck_cards: editProduct.deck_cards || [],
       });
@@ -133,13 +177,13 @@ export default function ProductEditModal({
     setFormError('');
   }, [editProduct, storageFilter, storageLocations]);
 
-  // AUTO-SYNC: Trigger Scryfall fetch in background if metadata is missing or we only have the fake print
+  // AUTO-SYNC: Trigger Scryfall fetch in background if essential metadata is missing
   useEffect(() => {
     if (editProduct && editProduct.tcg === 'mtg' && editProduct.category === 'singles' && scryfallPrints.length <= 1) {
-      const hasFullMetadata = editProduct.oracle_text && editProduct.image_url && editProduct.type_line;
+      const isMissingEssentialMetadata = !editProduct.image_url || !editProduct.oracle_text || !editProduct.type_line || !editProduct.cmc;
       
-      // If metadata is missing OR we only have our faked local print (need full alternatives list), do fetch
-      if (!hasFullMetadata || (scryfallPrints.length === 1 && scryfallPrints[0].id === editProduct.id)) {
+      // If we only have our local "faked" print or are missing major fields, attempt population
+      if (isMissingEssentialMetadata || (scryfallPrints.length === 1 && scryfallPrints[0].id === editProduct.id)) {
         handlePopulate();
       }
     }
@@ -201,6 +245,7 @@ export default function ProductEditModal({
         frame: form.frame || undefined,
         full_art: form.full_art, 
         textless: form.textless,
+        scryfall_id: form.scryfall_id || undefined,
         deck_cards: form.deck_cards,
       };
       
@@ -282,20 +327,61 @@ export default function ProductEditModal({
     const name = forceSearchName || form.name.trim();
     const set = form.set_code.trim().toLowerCase();
     const cn = form.collector_number.trim();
-    if (!name && (!set || !cn)) return;
+    const sid = form.scryfall_id?.trim();
+    if (!name && !sid && (!set || !cn)) return;
 
     setLookingUp(true); 
 
     try {
-      let searchQ = "";
-      if (set && cn) searchQ = `set:${set} cn:"${cn}"`;
-      else if (name) searchQ = `!"${name}"`;
-      else if (set) searchQ = `set:${set}`;
+      let bestPrint: ScryfallCard | null = null;
 
+      // STAGE 1: Explicit Scryfall ID (UUID)
+      if (sid) {
+        try {
+          const sidRes = await fetch(`https://api.scryfall.com/cards/${sid}`);
+          if (sidRes.ok) {
+            bestPrint = await sidRes.json();
+          }
+        } catch (e) {
+          console.warn(`Scryfall ID lookup failed for ${sid}, falling back...`, e);
+        }
+      }
+
+      // STAGE 2: Set Code + Collector Number
+      if (!bestPrint && set && cn) {
+        try {
+          const scnRes = await fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(`set:${set} cn:"${cn}"`)}&unique=prints`);
+          if (scnRes.ok) {
+            const body = await scnRes.json();
+            if (body.data && body.data.length > 0) {
+              bestPrint = body.data[0];
+            }
+          }
+        } catch (e) {
+          console.warn(`Set/CN lookup failed for ${set}/${cn}, falling back...`, e);
+        }
+      }
+
+      // STAGE 3: Fuzzy Name Search (Failsafe)
+      if (!bestPrint && name) {
+        try {
+          const nameRes = await fetch(`https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(name)}`);
+          if (nameRes.ok) {
+            bestPrint = await nameRes.json();
+          }
+        } catch (e) {
+          console.warn(`Name lookup failed for ${name}`, e);
+        }
+      }
+
+      if (!bestPrint) {
+        throw new Error(t('components.admin.product_modal.error_no_match', 'Could not identify a matching print on Scryfall.'));
+      }
+
+      // ORACLE RESOLUTION: Once we have a specific print, fetch its full list of prints (Oracle version)
       const fetchAllPrints = async (q: string) => {
         let results: ScryfallCard[] = [];
         let nextUrl: string | null = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(q)}+game:paper&unique=prints&order=released`;
-        
         while (nextUrl) {
           const r: Response = await fetch(nextUrl);
           if (!r.ok) break;
@@ -305,30 +391,23 @@ export default function ProductEditModal({
             results = results.concat(paperOnly);
           }
           nextUrl = b.has_more ? (b.next_page as string) : null;
-          if (nextUrl) await new Promise(res => setTimeout(res, 100));
+          if (nextUrl) await new Promise(res => setTimeout(res, 100)); // Rate limit
         }
         return results;
       };
 
-      let prints: ScryfallCard[] = await fetchAllPrints(searchQ);
-      if (prints.length === 0) throw new Error(t('components.admin.product_modal.error_no_prints', 'No printings found for that search.'));
-
-      if (prints.length > 0) {
-        const oracleId = (prints[0] as unknown as { oracle_id?: string }).oracle_id;
-        if (oracleId) {
-          const oraclePrints = await fetchAllPrints(`oracle_id:${oracleId}`);
-          if (oraclePrints.length > prints.length) prints = oraclePrints;
-        }
+      const oracleId = (bestPrint as unknown as { oracle_id?: string }).oracle_id;
+      let oraclePrints: ScryfallCard[] = [];
+      if (oracleId) {
+        oraclePrints = await fetchAllPrints(`oracle_id:${oracleId}`);
+      } else {
+        // Fallback: search for its exact name to get prints
+        oraclePrints = await fetchAllPrints(`!"${bestPrint.name}"`);
       }
 
-      setScryfallPrints(prints);
+      setScryfallPrints(oraclePrints);
       
-      let bestPrint = prints.find((p: ScryfallCard) => p?.set?.toLowerCase() === set && p?.collector_number === cn);
-      if (!bestPrint && set) bestPrint = prints.find((p: ScryfallCard) => p?.set?.toLowerCase() === set);
-      if (!bestPrint) bestPrint = prints[0];
-
-      if (!bestPrint) throw new Error(t('components.admin.product_modal.error_no_match', 'Could not identify a matching print.'));
-
+      // Update form with metadata from the best matching print
       const initialTreatment = getTreatmentType(bestPrint);
       const initialFoil = resolveFoilTreatment(bestPrint);
 
@@ -337,19 +416,21 @@ export default function ProductEditModal({
         name: bestPrint?.name || f.name,
         set_code: bestPrint?.set || f.set_code, 
         set_name: bestPrint?.set_name || f.set_name,
+        scryfall_id: bestPrint?.id || f.scryfall_id,
+        // Override with Scryfall-determined best-guess (User wants "real" Scryfall data)
         card_treatment: initialTreatment, 
         collector_number: bestPrint?.collector_number || f.collector_number,
         promo_type: bestPrint?.promo_types?.join(',') || 'none',
         foil_treatment: initialFoil as FoilTreatment,
         image_url: getScryfallImage(bestPrint) || f.image_url,
-        description: '', 
         price_reference: applyPrintPrices(bestPrint, initialFoil as FoilTreatment, f.price_source),
         ...extractMTGMetadata(bestPrint)
       }));
-    } catch (e: unknown) {
-      setFormError(e instanceof Error ? e.message : t('components.admin.product_modal.error_fetch', 'Scryfall fetch failed'));
-    } finally { 
-      setLookingUp(false); 
+
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLookingUp(false);
     }
   };
 
@@ -358,6 +439,7 @@ export default function ProductEditModal({
     setForm(f => ({
       ...f, set_code: newSet, set_name: bestPrint?.set_name || f.set_name,
       foil_treatment: resolveFoilTreatment(bestPrint) as FoilTreatment,
+      scryfall_id: bestPrint?.id || f.scryfall_id,
       image_url: getScryfallImage(bestPrint) || f.image_url,
       price_reference: applyPrintPrices(bestPrint, f.foil_treatment, f.price_source),
       ...extractMTGMetadata(bestPrint)
@@ -369,6 +451,7 @@ export default function ProductEditModal({
     setForm(f => ({
       ...f, card_treatment: newTreatment,
       foil_treatment: resolveFoilTreatment(bestPrint) as FoilTreatment,
+      scryfall_id: bestPrint?.id || f.scryfall_id,
       image_url: getScryfallImage(bestPrint) || f.image_url,
       price_reference: applyPrintPrices(bestPrint, f.foil_treatment, f.price_source),
       ...extractMTGMetadata(bestPrint)
@@ -380,6 +463,7 @@ export default function ProductEditModal({
     setForm(f => ({
       ...f, collector_number: newArt,
       foil_treatment: resolveFoilTreatment(bestPrint) as FoilTreatment,
+      scryfall_id: bestPrint?.id || f.scryfall_id,
       image_url: getScryfallImage(bestPrint) || f.image_url,
       price_reference: applyPrintPrices(bestPrint, f.foil_treatment, f.price_source),
       ...extractMTGMetadata(bestPrint)
@@ -391,6 +475,7 @@ export default function ProductEditModal({
     setForm(f => ({
       ...f, promo_type: newPromo,
       foil_treatment: resolveFoilTreatment(bestPrint) as FoilTreatment,
+      scryfall_id: bestPrint?.id || f.scryfall_id,
       image_url: getScryfallImage(bestPrint) || f.image_url,
       price_reference: applyPrintPrices(bestPrint, f.foil_treatment, f.price_source),
       ...extractMTGMetadata(bestPrint)
@@ -401,6 +486,7 @@ export default function ProductEditModal({
     const bestPrint = findMatchingPrint(scryfallPrints, form.set_code, form.card_treatment, form.collector_number, form.promo_type, newFoil);
     setForm(f => ({
       ...f, foil_treatment: newFoil,
+      scryfall_id: bestPrint?.id || f.scryfall_id,
       image_url: getScryfallImage(bestPrint) || f.image_url,
       price_reference: applyPrintPrices(bestPrint, newFoil, f.price_source),
       ...extractMTGMetadata(bestPrint)
@@ -420,6 +506,7 @@ export default function ProductEditModal({
       collector_number: p.collector_number || f.collector_number,
       promo_type: p.promo_types?.join(',') || 'none',
       foil_treatment: foil as FoilTreatment,
+      scryfall_id: p.id,
       image_url: getScryfallImage(p) || f.image_url,
       price_reference: applyPrintPrices(p, foil as FoilTreatment, f.price_source),
       ...extractMTGMetadata(p)

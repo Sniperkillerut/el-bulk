@@ -21,10 +21,11 @@ func main() {
 		ID            string `db:"id"`
 		Name          string `db:"name"`
 		SetCode       string `db:"set_code"`
+		ScryfallID    string `db:"scryfall_id"`
 		FoilTreatment string `db:"foil_treatment"`
 	}
 
-	err := database.Select(&products, "SELECT id, name, COALESCE(set_code, '') as set_code, foil_treatment FROM product WHERE tcg = 'mtg'")
+	err := database.Select(&products, "SELECT id, name, COALESCE(set_code, '') as set_code, COALESCE(scryfall_id::text, '') as scryfall_id, foil_treatment FROM product WHERE tcg = 'mtg'")
 	if err != nil {
 		logger.Error("Failed to fetch products: %v", err)
 		os.Exit(1)
@@ -39,7 +40,7 @@ func main() {
 		fmt.Printf("[%d/%d] Processing %s...\n", i+1, len(products), p.Name)
 
 		// Lookup full metadata
-		meta, err := external.LookupMTGCard(p.Name, p.SetCode, "", p.FoilTreatment)
+		meta, err := external.LookupMTGCard(p.ScryfallID, p.Name, p.SetCode, "", p.FoilTreatment)
 		if err != nil {
 			logger.Warn("  ❌ Lookup failed for %s: %v", p.Name, err)
 			errors++
@@ -70,8 +71,9 @@ func main() {
 				full_art = $19,
 				textless = $20,
 				promo_type = $21,
+				scryfall_id = $22,
 				updated_at = NOW()
-			WHERE id = $22
+			WHERE id = $23
 		`, 
 		meta.ImageURL, 
 		meta.SetName,
@@ -94,6 +96,7 @@ func main() {
 		meta.FullArt,
 		meta.Textless,
 		meta.PromoType,
+		meta.ScryfallID,
 		p.ID)
 
 		if err != nil {

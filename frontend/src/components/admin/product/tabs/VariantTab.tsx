@@ -74,6 +74,7 @@ export default function VariantTab({
           collectorNumber={form.collector_number}
           promoType={form.promo_type}
           foilTreatment={form.foil_treatment}
+          scryfallId={form.scryfall_id}
           prints={prints}
           onTreatmentChange={onTreatmentChange}
           onArtChange={onArtChange}

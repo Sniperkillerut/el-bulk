@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS product (
   frame             TEXT,
   full_art          BOOLEAN NOT NULL DEFAULT false,
   textless          BOOLEAN NOT NULL DEFAULT false,
+  scryfall_id       UUID,
 
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()

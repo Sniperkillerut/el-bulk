@@ -28,6 +28,7 @@ const (
 	TreatmentExtendedArt  CardTreatment = "extended_art"
 	TreatmentBorderless   CardTreatment = "borderless"
 	TreatmentShowcase     CardTreatment = "showcase"
+	TreatmentEtched       CardTreatment = "etched"
 	TreatmentLegacyBorder CardTreatment = "legacy_border"
 	TreatmentTextless     CardTreatment = "textless"
 	TreatmentJudgePromo   CardTreatment = "judge_promo"
@@ -68,6 +69,7 @@ type MTGMetadata struct {
 	FullArt         bool     `db:"full_art"          json:"full_art"`
 	Textless        bool     `db:"textless"          json:"textless"`
 	PromoType       *string  `db:"promo_type"         json:"promo_type,omitempty"`
+	ScryfallID      *string  `db:"scryfall_id"        json:"scryfall_id,omitempty"`
 }
 
 // Product is the full DB row returned to API clients.

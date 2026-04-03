@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS deck_card (
   frame             TEXT,
   full_art          BOOLEAN NOT NULL DEFAULT false,
   textless          BOOLEAN NOT NULL DEFAULT false,
+  scryfall_id       UUID,
   promo_type        TEXT,
   image_url         TEXT,
   foil_treatment    TEXT NOT NULL DEFAULT 'non_foil',

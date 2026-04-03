@@ -1,5 +1,6 @@
 -- View: view_product_enriched
 -- Encapsulates the complex product retrieval logic including storage and categories
+DROP VIEW IF EXISTS view_product_enriched CASCADE;
 CREATE OR REPLACE VIEW view_product_enriched AS
 SELECT p.*,
        (SELECT COALESCE(jsonb_agg(jsonb_build_object(
@@ -29,6 +30,7 @@ SELECT p.*,
            'foil_treatment', dc.foil_treatment,
            'card_treatment', dc.card_treatment,
            'rarity', dc.rarity,
-           'art_variation', dc.art_variation
+           'art_variation', dc.art_variation,
+           'scryfall_id', dc.scryfall_id
        )), '[]') FROM deck_card dc WHERE dc.product_id = p.id) as deck_cards_json
 FROM product p;

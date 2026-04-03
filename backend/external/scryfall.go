@@ -20,6 +20,7 @@ var scryfallClient = &http.Client{Timeout: 30 * time.Second}
 
 // scryfallCard is the minimal subset of the Scryfall card object we need.
 type scryfallCard struct {
+	ID              string `json:"id"`
 	Name            string `json:"name"`
 	CollectorNumber string `json:"collector_number"`
 	SetName         string `json:"set_name"`
@@ -64,9 +65,12 @@ type scryfallCard struct {
 	FullArt       bool     `json:"full_art"`
 	Textless      bool     `json:"textless"`
 	PromoTypes    []string `json:"promo_types"`
+	Finishes      []string `json:"finishes"`
+	FrameEffects  []string `json:"frame_effects"`
 }
 
 type CardIdentifier struct {
+	ScryfallID      string `json:"id,omitempty"`
 	Name            string `json:"name,omitempty"`
 	Set             string `json:"set,omitempty"`
 	CollectorNumber string `json:"collector_number,omitempty"`
@@ -127,13 +131,22 @@ func (c *scryfallCard) scryfallPrices(foilTreatment string) (tcgUSD, cmEUR *floa
 }
 
 // LookupMTGCard queries Scryfall for an MTG card with multiple fallbacks:
+// 0. By Scryfall ID (direct)
 // 1. By set code and collector number (exact match)
 // 2. By name and set code (exact)
 // 3. By name and set code (fuzzy)
 // 4. By name only (fuzzy)
-func LookupMTGCard(name, setCode, collectorNumber, foilTreatment string) (*CardLookupResult, error) {
-	if name == "" && (setCode == "" || collectorNumber == "") {
-		return nil, errors.New("card name or set/collector number is required")
+func LookupMTGCard(scryfallID, name, setCode, collectorNumber, foilTreatment string) (*CardLookupResult, error) {
+	if scryfallID == "" && name == "" && (setCode == "" || collectorNumber == "") {
+		return nil, errors.New("scryfall id, card name or set/collector number is required")
+	}
+
+	// Step 0: Direct Scryfall ID Lookup
+	if scryfallID != "" {
+		res, err := scryfallGet(fmt.Sprintf("%s/cards/%s", ScryfallBase, url.PathEscape(scryfallID)), foilTreatment)
+		if err == nil {
+			return res, nil
+		}
 	}
 
 	// Step 1: Exact Set + Collector Number
@@ -307,6 +320,8 @@ func mapScryfallToResult(card *scryfallCard, foilTreatment string) *CardLookupRe
 			SetName:         &card.SetName,
 			SetCode:         &card.Set,
 			CollectorNumber: &card.CollectorNumber,
+			FoilTreatment:   resolveFoilTreatment(card, foilTreatment),
+			CardTreatment:   resolveCardTreatment(card),
 			Language:        card.Lang,
 			ColorIdentity:   colorStr,
 			Rarity:          &card.Rarity,
@@ -324,8 +339,75 @@ func mapScryfallToResult(card *scryfallCard, foilTreatment string) *CardLookupRe
 			FullArt:         card.FullArt,
 			Textless:        card.Textless,
 			PromoType:       promoType,
+			ScryfallID:      &card.ID,
 		},
 	}
+}
+
+func resolveCardTreatment(card *scryfallCard) models.CardTreatment {
+	for _, effect := range card.FrameEffects {
+		switch effect {
+		case "showcase":
+			return models.TreatmentShowcase
+		case "extendedart":
+			return models.TreatmentExtendedArt
+		case "etched":
+			return models.TreatmentEtched
+		}
+	}
+	if card.BorderColor == "borderless" {
+		return models.TreatmentBorderless
+	}
+	if card.FullArt {
+		return models.TreatmentFullArt
+	}
+	if card.Textless {
+		return models.TreatmentTextless
+	}
+	return models.TreatmentNormal
+}
+
+func resolveFoilTreatment(card *scryfallCard, requestedFoil string) models.FoilTreatment {
+	hasFoil := false
+	hasNonFoil := false
+	hasEtched := false
+	hasGlossy := false
+
+	for _, f := range card.Finishes {
+		switch f {
+		case "foil":
+			hasFoil = true
+		case "nonfoil":
+			hasNonFoil = true
+		case "etched":
+			hasEtched = true
+		case "glossy":
+			hasGlossy = true
+		}
+	}
+
+	if hasEtched {
+		return models.FoilEtchedFoil
+	}
+	if hasGlossy {
+		return models.FoilGalaxyFoil
+	}
+
+	if requestedFoil != "" {
+		rf := models.FoilTreatment(requestedFoil)
+		if (rf == models.FoilFoil && hasFoil) || (rf == models.FoilNonFoil && hasNonFoil) {
+			return rf
+		}
+	}
+
+	if hasNonFoil {
+		return models.FoilNonFoil
+	}
+	if hasFoil {
+		return models.FoilFoil
+	}
+
+	return models.FoilNonFoil
 }
 
 // ─── Scryfall bulk data structures ──────────────────────────────────────────

@@ -18,6 +18,7 @@ export interface DeckCard {
   card_treatment?: CardTreatment;
   rarity?: string;
   art_variation?: string;
+  scryfall_id?: string;
 }
 
 export interface Product {
@@ -61,6 +62,7 @@ export interface Product {
   frame?: string;
   full_art: boolean;
   textless: boolean;
+  scryfall_id?: string;
 
   created_at: string;
   updated_at: string;
@@ -345,6 +347,7 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
 export interface BulkProductInput extends Partial<Omit<Product, 'categories' | 'stored_in'>> {
   category_ids?: string[];
   storage_items?: StorageLocation[];
+  scryfall_id?: string;
 }
 
 export interface BulkCreateRequest {

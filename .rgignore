@@ -1,0 +1,11 @@
+# AI Search Exclusions - Prevent Tool Hangs
+node_modules/
+.next/
+dist/
+out/
+build/
+.git/
+backend/bin/
+backend/tmp/
+frontend/coverage/
+*.tsbuildinfo

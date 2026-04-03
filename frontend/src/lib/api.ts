@@ -242,6 +242,12 @@ export interface CardLookupResult {
   frame?: string;
   full_art: boolean;
   textless: boolean;
+
+  // Added fields for multi-stage enrichment
+  foil_treatment: import('./types').FoilTreatment;
+  card_treatment: import('./types').CardTreatment;
+  promo_type?: string;
+  scryfall_id?: string;
 }
 
 export async function lookupMTGCard(
@@ -249,14 +255,15 @@ export async function lookupMTGCard(
   set?: string,
   cn?: string,
   foil?: string,
+  sid?: string,
 ): Promise<CardLookupResult> {
   return apiFetch<CardLookupResult>('/api/admin/lookup/mtg', {
-    params: { name, set, cn, foil },
+    params: { name, set, cn, foil, sid },
   });
 }
 
 export async function adminBatchLookupMTG(
-  identifiers: { name?: string; set?: string; cn?: string }[]
+  identifiers: { name?: string; set?: string; cn?: string; scryfall_id?: string }[]
 ): Promise<CardLookupResult[]> {
   return apiFetch<CardLookupResult[]>('/api/admin/lookup/mtg/batch', {
     method: 'POST',

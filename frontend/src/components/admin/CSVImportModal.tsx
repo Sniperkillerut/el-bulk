@@ -32,9 +32,10 @@ interface Props {
 type Step = 'upload' | 'mapping' | 'preview' | 'importing' | 'summary';
 
 const FIELDS = [
-  { key: 'name', label: 'Card Name', required: true },
+  { key: 'name', label: 'Card Name', required: false },
   { key: 'set_code', label: 'Set Code', required: false },
   { key: 'collector_number', label: 'Collector #', required: false },
+  { key: 'scryfall_id', label: 'Scryfall ID', required: false },
   { key: 'condition', label: 'Condition', required: false },
   { key: 'foil_treatment', label: 'Foil', required: false },
   { key: 'stock', label: 'Quantity', required: false },
@@ -74,6 +75,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
           results.meta.fields.forEach(h => {
             const lower = h.toLowerCase().replace(/[^a-z0-9]/g, '');
             if (lower.includes('name') || lower === 'card') initialMapping['name'] = h;
+            if (lower.includes('scryfall') || lower === 'sid' || lower === 'uuid') initialMapping['scryfall_id'] = h;
             if (lower.includes('set') || lower === 'code') initialMapping['set_code'] = h;
             if (lower.includes('number') || lower === 'cn' || lower === 'collector') initialMapping['collector_number'] = h;
             if (lower.includes('condition')) initialMapping['condition'] = h;
@@ -89,8 +91,8 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
   };
 
   const handleStartPreview = () => {
-    if (!mapping['name']) {
-      setError('Card Name mapping is required.');
+    if (!mapping['name'] && !mapping['scryfall_id']) {
+      setError('Either Card Name or Scryfall ID mapping is required.');
       return;
     }
     if (importDestination === 'deck' && !deckName.trim()) {
@@ -103,6 +105,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
         tcg: tcgType,
         category: importDestination === 'singles' ? 'singles' : 'store_exclusives',
         name: row[mapping['name']] || '',
+        scryfall_id: row[mapping['scryfall_id']] || '',
         set_code: row[mapping['set_code']] || '',
         collector_number: row[mapping['collector_number']] || '',
         condition: (row[mapping['condition']] || 'NM').toUpperCase() as Condition,
@@ -137,7 +140,8 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
         const identifiers = chunk.map(item => ({
           name: item.name,
           set: item.set_code,
-          cn: item.collector_number
+          cn: item.collector_number,
+          scryfall_id: item.scryfall_id
         }));
 
         try {
@@ -189,6 +193,10 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                 frame: res.frame,
                 full_art: res.full_art,
                 textless: res.textless,
+                foil_treatment: res.foil_treatment || item.foil_treatment,
+                card_treatment: res.card_treatment || item.card_treatment,
+                promo_type: res.promo_type || item.promo_type,
+                scryfall_id: res.scryfall_id || item.scryfall_id,
               };
 
               if (item.foil_treatment === 'non_foil' && res.price_tcgplayer) {
@@ -211,9 +219,9 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
       // Final pass: Single lookup for anything still missing data (fuzzy fallback)
       for (let i = 0; i < newData.length; i++) {
         const item = newData[i];
-        if (!item.image_url && item.name) {
+        if (!item.image_url && (item.name || item.scryfall_id)) {
           try {
-            const res = await lookupMTGCard(item.name, item.set_code, item.collector_number, item.foil_treatment);
+            const res = await lookupMTGCard(item.name!, item.set_code, item.collector_number, item.foil_treatment, item.scryfall_id);
             newData[i] = {
               ...item,
               name: res.name || item.name,
@@ -239,6 +247,10 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
               frame: res.frame,
               full_art: res.full_art,
               textless: res.textless,
+              foil_treatment: res.foil_treatment || item.foil_treatment,
+              card_treatment: res.card_treatment || item.card_treatment,
+              promo_type: res.promo_type || item.promo_type,
+              scryfall_id: res.scryfall_id || item.scryfall_id,
             };
           } catch (e) {
             console.warn(`Fuzzy fallback failed for ${item.name}`, e);
@@ -463,7 +475,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                     {FIELDS.map(f => (
                       <div key={f.key} className="flex items-center gap-4">
                         <label className="w-32 text-xs font-bold text-[#8b7355] uppercase whitespace-nowrap">
-                          {f.label} {f.required && <span className="text-[#b04b4b]">*</span>}
+                          {f.label} {(f.key === 'name' || f.key === 'scryfall_id') && <span className="text-[#b04b4b]">*</span>}
                         </label>
                         <select
                           value={mapping[f.key] || ''}

@@ -13,6 +13,7 @@ export interface MTGVariantSelectorProps {
   collectorNumber: string;
   promoType?: string;
   foilTreatment: FoilTreatment;
+  scryfallId?: string;
   prints: ScryfallCard[];
   onTreatmentChange: (t: CardTreatment) => void;
   onArtChange: (a: string) => void;
@@ -21,7 +22,7 @@ export interface MTGVariantSelectorProps {
 }
 
 export default function MTGVariantSelector({
-  tcg, setCode, setName, cardTreatment, collectorNumber, promoType, foilTreatment, prints,
+  tcg, setCode, setName, cardTreatment, collectorNumber, promoType, foilTreatment, scryfallId, prints,
   onTreatmentChange, onArtChange, onPromoChange, onFoilChange
 }: MTGVariantSelectorProps) {
   // Filter waterfalls
@@ -171,6 +172,12 @@ export default function MTGVariantSelector({
                 {foilTreatment.replace(/_/g, ' ').toUpperCase()}
               </span>
             </div>
+            {scryfallId && (
+              <div className="flex flex-col gap-0.5 pt-1">
+                <span className="text-text-muted text-[10px] uppercase font-mono-stack">Scryfall ID:</span>
+                <span className="font-mono-stack text-[9px] opacity-60 break-all">{scryfallId}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
