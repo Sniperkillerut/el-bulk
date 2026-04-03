@@ -176,7 +176,8 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		logger.Error("Place order SP failed: %v", err)
-		render.Error(w, "Failed to place order: "+err.Error(), http.StatusInternalServerError)
+		render.Error(w, "Failed to place order. Please try again.", http.StatusInternalServerError)
+
 		return
 	}
 

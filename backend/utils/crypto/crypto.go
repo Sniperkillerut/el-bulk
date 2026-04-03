@@ -13,6 +13,34 @@ import (
 	"github.com/el-bulk/backend/utils/logger"
 )
 
+var cachedKey []byte
+
+func init() {
+	k := os.Getenv("ENCRYPTION_KEY")
+	if k == "" {
+		return // Let it fail later or during explicit validation if needed
+	}
+	key := []byte(k)
+	if len(key) != 32 {
+		logger.Error("ENCRYPTION_KEY must be exactly 32 bytes for AES-256 (got %d)", len(key))
+		return
+	}
+	cachedKey = key
+}
+
+func getEncryptionKey() ([]byte, error) {
+	if len(cachedKey) == 32 {
+		return cachedKey, nil
+	}
+	// Fallback/re-check if not initialized
+	key := []byte(os.Getenv("ENCRYPTION_KEY"))
+	if len(key) != 32 {
+		return nil, errors.New("ENCRYPTION_KEY must be exactly 32 bytes for AES-256")
+	}
+	cachedKey = key
+	return cachedKey, nil
+}
+
 // Encrypt takes a plaintext string and returns a base64-encoded encrypted string.
 // It uses AES-GCM for strong, authenticated encryption.
 func Encrypt(plaintext string) (string, error) {
@@ -20,9 +48,9 @@ func Encrypt(plaintext string) (string, error) {
 		return "", nil
 	}
 
-	key := []byte(os.Getenv("ENCRYPTION_KEY"))
-	if len(key) != 32 {
-		return "", errors.New("ENCRYPTION_KEY must be exactly 32 bytes for AES-256")
+	key, err := getEncryptionKey()
+	if err != nil {
+		return "", err
 	}
 
 	block, err := aes.NewCipher(key)
@@ -57,9 +85,9 @@ func Decrypt(encodedCiphertext string) (string, error) {
 		return "", fmt.Errorf("failed to decode base64: %w", err)
 	}
 
-	key := []byte(os.Getenv("ENCRYPTION_KEY"))
-	if len(key) != 32 {
-		return "", errors.New("ENCRYPTION_KEY must be exactly 32 bytes for AES-256")
+	key, err := getEncryptionKey()
+	if err != nil {
+		return "", err
 	}
 
 	block, err := aes.NewCipher(key)

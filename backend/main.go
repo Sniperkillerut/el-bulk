@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -210,7 +213,6 @@ func main() {
 		port = "8080"
 	}
 
-	logger.Info("🚀 El Bulk API running on :%s", port)
 	srv := &http.Server{
 		Addr:              ":" + port,
 		Handler:           r,
@@ -219,8 +221,34 @@ func main() {
 		WriteTimeout:      30 * time.Second,
 		IdleTimeout:       120 * time.Second,
 	}
-	if err := srv.ListenAndServe(); err != nil {
-		logger.Error("Server failed: %v", err)
-		os.Exit(1)
+
+	// Create context that listens for the interrupt signals from the OS.
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	go func() {
+		logger.Info("🚀 El Bulk API running on :%s", port)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Error("Server failed: %v", err)
+			os.Exit(1)
+		}
+	}()
+
+	// Listen for the interrupt signal.
+	<-ctx.Done()
+
+	// Restore default behavior on the interrupt signals and notify user of shutdown.
+	stop()
+	logger.Info("Shutting down gracefully, press Ctrl+C again to force")
+
+	// The context is used to inform the server it has 10 seconds to finish
+	// the request it is currently handling.
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		logger.Error("Server forced to shutdown: %v", err)
 	}
+
+	logger.Info("Server exiting")
 }

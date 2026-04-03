@@ -5,6 +5,9 @@
 **/config.json
 **/secret.json
 *.pem
+cert/
+certs/
+
 
 # --- OS & Tooling ---
 .DS_Store

@@ -12,6 +12,9 @@ services:
     depends_on:
       - frontend
       - backend
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:-localhost}
+      ACME_EMAIL: ${ACME_EMAIL:-admin@example.com}
 
   db:
     image: postgres:16-alpine
@@ -24,7 +27,7 @@ services:
     volumes:
       - pgdata_prod:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-elbulk}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-elbulk}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -39,7 +42,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgres://${DB_USER:-elbulk}:${DB_PASSWORD:-elbulkpass}@db:5432/${DB_NAME:-elbulk}?sslmode=disable
+      DATABASE_URL: postgres://${DB_USER:-elbulk}:${DB_PASSWORD:-elbulkpass}@db:5432/${DB_NAME:-elbulk}?sslmode=verify-full
       JWT_SECRET: ${JWT_SECRET}
       PORT: "8080"
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}

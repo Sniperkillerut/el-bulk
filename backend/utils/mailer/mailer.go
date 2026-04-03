@@ -1,12 +1,14 @@
 package mailer
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/smtp"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/jordan-wright/email"
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
@@ -24,22 +26,29 @@ func SendEmail(to string, subject string, bodyHTML string) error {
 		return nil
 	}
 
-	auth := smtp.PlainAuth("", user, pass, host)
-
-	// Sanitize headers to prevent injection
-	safeTo := strings.ReplaceAll(strings.ReplaceAll(to, "\n", ""), "\r", "")
-	safeFrom := strings.ReplaceAll(strings.ReplaceAll(from, "\n", ""), "\r", "")
-	safeSubject := strings.ReplaceAll(strings.ReplaceAll(subject, "\n", ""), "\r", "")
-
-	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
-	msg := []byte("To: " + safeTo + "\n" +
-		"From: " + safeFrom + "\n" +
-		"Subject: " + safeSubject + "\n" +
-		mime + "\n" +
-		bodyHTML)
+	e := email.NewEmail()
+	e.From = from
+	e.To = []string{to}
+	e.Subject = subject
+	e.HTML = []byte(bodyHTML)
 
 	addr := fmt.Sprintf("%s:%s", host, port)
-	err := smtp.SendMail(addr, auth, user, []string{to}, msg)
+	auth := smtp.PlainAuth("", user, pass, host)
+
+	var err error
+	if port == "465" {
+		// Implicit TLS for port 465
+		tlsConfig := &tls.Config{
+			InsecureSkipVerify: false,
+			ServerName:         host,
+		}
+		err = e.SendWithTLS(addr, auth, tlsConfig)
+	} else {
+		// Standard submission (e.g. 587) with STARTTLS if supported by library or Send
+		// The jordan-wright/email library's Send method uses net/smtp.SendMail which handles STARTTLS.
+		err = e.Send(addr, auth)
+	}
+
 	if err != nil {
 		logger.Error("Failed to send email to %s: %v", to, err)
 		return err

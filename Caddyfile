@@ -1,8 +1,8 @@
 {
-    email your-email@example.com
+    email {$ACME_EMAIL}
 }
 
-yourdomain.com {
+{$SITE_DOMAIN} {
     # Reverse proxy to the frontend (Next.js)
     reverse_proxy frontend:3000
 
@@ -16,6 +16,8 @@ yourdomain.com {
 
     # Optional: Gzip compression
     encode gzip
+
+    header_up X-Real-IP {remote_host}
 
     # Log requests
     log {

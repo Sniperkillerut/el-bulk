@@ -38,8 +38,14 @@ type TranslationLocaleStats struct {
 }
 
 func (h *HealthHandler) Ping(w http.ResponseWriter, r *http.Request) {
-	err := h.DB.Ping()
 	w.Header().Set("Content-Type", "application/json")
+	if h.DB == nil {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		json.NewEncoder(w).Encode(map[string]string{"status": "degraded", "message": "database connection unavailable"})
+		return
+	}
+
+	err := h.DB.Ping()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"status": "error", "message": err.Error()})
@@ -49,6 +55,11 @@ func (h *HealthHandler) Ping(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HealthHandler) GetStats(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if h.DB == nil {
+		json.NewEncoder(w).Encode(map[string]string{"status": "degraded", "message": "database connection unavailable"})
+		return
+	}
 	var stats DBStats
 
 	// 1. Get database size

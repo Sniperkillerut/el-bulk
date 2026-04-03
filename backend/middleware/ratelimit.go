@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -72,6 +73,7 @@ func RateLimit(limit int, window time.Duration) func(http.Handler) http.Handler 
 			if c.count >= limit {
 				mu.Unlock()
 				logger.Warn("Rate limit exceeded for IP: %s", ip)
+				w.Header().Set("Retry-After", strconv.Itoa(int(window.Seconds())))
 				http.Error(w, `{"error":"Rate limit exceeded. Please try again later."}`, http.StatusTooManyRequests)
 				return
 			}

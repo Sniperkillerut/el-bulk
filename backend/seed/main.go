@@ -116,20 +116,27 @@ func seedTCGs(db *sqlx.DB) map[string]string {
 }
 
 func seedCategories(db *sqlx.DB) map[string]string {
-	cats := []struct{ Name, Slug string }{
-		{"Featured", "featured"},
-		{"Hot Items", "hot-items"},
-		{"New Arrivals", "new-arrivals"},
-		{"Sale", "sale"},
+	cats := []struct {
+		Name, Slug, BgColor, TextColor, Icon string
+	}{
+		{"Featured", "featured", "#ffd700", "#000000", "Star"},
+		{"Hot Items", "hot-items", "#ff4500", "#ffffff", "Flame"},
+		{"New Arrivals", "new-arrivals", "#1e90ff", "#ffffff", "Zap"},
+		{"Sale", "sale", "#32cd32", "#000000", "Tag"},
 	}
 	mapping := make(map[string]string)
 	for _, cat := range cats {
 		var id string
-		db.QueryRow(`INSERT INTO custom_category (name, slug) VALUES ($1, $2) RETURNING id`, cat.Name, cat.Slug).Scan(&id)
+		db.QueryRow(`
+			INSERT INTO custom_category (name, slug, bg_color, text_color, icon) 
+			VALUES ($1, $2, $3, $4, $5) 
+			RETURNING id
+		`, cat.Name, cat.Slug, cat.BgColor, cat.TextColor, cat.Icon).Scan(&id)
 		mapping[cat.Slug] = id
 	}
 	return mapping
 }
+
 
 func seedStorage(db *sqlx.DB) []string {
 	locations := []string{"Showcase A", "Storage Box 1", "Binder Vault"}
