@@ -1,4 +1,4 @@
-import { Product, TCG_SHORT } from '@/lib/types';
+import { Product, TCG_SHORT, FOIL_LABELS, TREATMENT_LABELS, resolveLabel } from '@/lib/types';
 import CardImage from '@/components/CardImage';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -90,9 +90,23 @@ export function ProductTableRow({ product: p, onEdit, onDelete }: ProductTableRo
           <span className="badge badge-secondary truncate max-w-[100px] border-ink-border/50 text-text-muted" style={{ fontSize: '9px' }}>
             {p.category.toUpperCase()}
           </span>
+        </div>
+      </td>
+      <td>
+        <div className="flex flex-wrap gap-1 max-w-[160px]">
           {p.card_treatment && p.card_treatment !== 'normal' && (
-            <span className="text-[9px] font-mono-stack opacity-80 px-1 bg-gold/5 text-gold border border-gold/10 rounded-sm">
-              {p.card_treatment.replace(/_/g, ' ').toUpperCase()}
+            <span className="text-[9px] font-mono-stack px-1.5 py-0.5 bg-gold/5 text-gold border border-gold/20 rounded-sm font-bold uppercase tracking-tighter">
+              {resolveLabel(p.card_treatment, TREATMENT_LABELS)}
+            </span>
+          )}
+          {p.promo_type && p.promo_type !== 'none' && p.promo_type !== '' && (
+            <span className="text-[9px] font-mono-stack px-1.5 py-0.5 bg-ink-deep/5 text-ink-deep border border-ink-deep/20 rounded-sm font-bold uppercase tracking-tighter">
+              {p.promo_type.split(',').map(s => resolveLabel(s.trim(), {})).join(' / ')}
+            </span>
+          )}
+          {p.foil_treatment && p.foil_treatment !== 'non_foil' && (
+            <span className="text-[9px] font-mono-stack px-1.5 py-0.5 bg-hp-color/5 text-hp-color border border-hp-color/20 rounded-sm font-bold uppercase tracking-tighter">
+              {FOIL_LABELS[p.foil_treatment] || resolveLabel(p.foil_treatment, {})}
             </span>
           )}
         </div>
@@ -200,8 +214,11 @@ export default function ProductTable({
               <th onClick={() => onSort('name')} className="cursor-pointer hover:bg-ink-surface transition-colors">
                 <div className="flex items-center">{t('pages.admin.inventory.table.product', 'PRODUCT')} {renderSortIcon('name')}</div>
               </th>
-              <th onClick={() => onSort('category')} title="Category / Treatment" className="cursor-pointer hover:bg-ink-surface transition-colors">
+              <th onClick={() => onSort('category')} className="cursor-pointer hover:bg-ink-surface transition-colors">
                 <div className="flex items-center">{t('pages.admin.inventory.table.type', 'TYPE')} {renderSortIcon('category')}</div>
+              </th>
+              <th className="min-w-[130px]">
+                <div className="flex items-center">{t('pages.admin.inventory.table.variant', 'VARIANT')}</div>
               </th>
               <th onClick={() => onSort('rarity')} className="w-24 text-center cursor-pointer hover:bg-ink-surface transition-colors">
                 <div className="flex items-center justify-center">{t('pages.admin.inventory.table.rarity', 'RARITY')} {renderSortIcon('rarity')}</div>
@@ -224,7 +241,7 @@ export default function ProductTable({
             ))}
             {!loading && products.length === 0 && (
               <tr>
-                <td colSpan={7} className="text-center py-20 bg-ink-surface/30">
+                <td colSpan={8} className="text-center py-20 bg-ink-surface/30">
                   <div className="flex flex-col items-center opacity-30">
                     <span className="text-6xl mb-4">📭</span>
                     <p className="font-display text-2xl tracking-tight">{t('pages.admin.inventory.no_products', 'NO PRODUCTS FOUND')}</p>

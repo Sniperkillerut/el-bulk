@@ -386,18 +386,53 @@ func resolveFoilTreatment(card *scryfallCard, requestedFoil string) models.FoilT
 		}
 	}
 
+	// 1. Check for specialized finishes in promo_types if the card supports foil
+	if hasFoil {
+		for _, pt := range card.PromoTypes {
+			switch pt {
+			case "ripplefoil":
+				return models.FoilRippleFoil
+			case "surgefoil":
+				return models.FoilSurgeFoil
+			case "confettifoil":
+				return models.FoilConfettiFoil
+			case "textured":
+				return models.FoilTexturedFoil
+			case "stepandcompleat":
+				return models.FoilStepAndCompleat
+			case "oilSlick":
+				return models.FoilOilSlick
+			case "neonink":
+				return models.FoilNeonInk
+			case "galaxyfoil":
+				return models.FoilGalaxyFoil
+			}
+		}
+	}
+
+	// Double-check requested foil from caller (e.g. from CSV parser)
+	if requestedFoil != "" {
+		rf := models.FoilTreatment(requestedFoil)
+		// If they explicitly asked for a specialized foil that matches our system,
+		// and the card has the base finish (usually "foil"), return it.
+		if hasFoil && (rf == models.FoilRippleFoil || rf == models.FoilSurgeFoil ||
+			rf == models.FoilConfettiFoil || rf == models.FoilGalaxyFoil ||
+			rf == models.FoilTexturedFoil || rf == models.FoilStepAndCompleat ||
+			rf == models.FoilOilSlick || rf == models.FoilNeonInk) {
+			return rf
+		}
+
+		if (rf == models.FoilFoil && hasFoil) || (rf == models.FoilNonFoil && hasNonFoil) {
+			return rf
+		}
+	}
+
+	// Standard fallbacks
 	if hasEtched {
 		return models.FoilEtchedFoil
 	}
 	if hasGlossy {
 		return models.FoilGalaxyFoil
-	}
-
-	if requestedFoil != "" {
-		rf := models.FoilTreatment(requestedFoil)
-		if (rf == models.FoilFoil && hasFoil) || (rf == models.FoilNonFoil && hasNonFoil) {
-			return rf
-		}
 	}
 
 	if hasNonFoil {

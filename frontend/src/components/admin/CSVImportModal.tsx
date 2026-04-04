@@ -14,6 +14,21 @@ import {
   TCG_LABELS,
   KNOWN_TCGS
 } from '@/lib/types';
+
+const PROMO_LABELS: Record<string, string> = {
+  '': 'Regular / No Promo',
+  'judgepromo': 'Judge Promo',
+  'prerelease': 'Prerelease Promo',
+  'release': 'Release Promo',
+  'bundle': 'Bundle Promo',
+  'buyabox': 'Buy-A-Box',
+  'giftbundle': 'Gift Bundle',
+  'storechampionship': 'Store Champ',
+  'gameday': 'Game Day',
+  'starterdeck': 'Starter Deck',
+  'planeswalkerdeck': 'PW Deck',
+  'bringafriend': 'Bring-a-Friend',
+};
 import {
   lookupMTGCard,
   adminBulkCreateProducts,
@@ -27,6 +42,10 @@ interface Props {
   categories: CustomCategory[];
   onClose: () => void;
   onImported: () => void;
+}
+
+interface PreviewItem extends BulkProductInput {
+  is_loading?: boolean;
 }
 
 type Step = 'upload' | 'mapping' | 'preview' | 'importing' | 'summary';
@@ -46,7 +65,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
   const [csvData, setCsvData] = useState<Record<string, string>[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   const [mapping, setMapping] = useState<Record<string, string>>({});
-  const [previewData, setPreviewData] = useState<BulkProductInput[]>([]);
+  const [previewData, setPreviewData] = useState<PreviewItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [processedCount, setProcessedCount] = useState(0);
   const [error, setError] = useState('');
@@ -100,8 +119,8 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
       return;
     }
 
-    const data: BulkProductInput[] = csvData.map(row => {
-      const p: BulkProductInput = {
+    const data: PreviewItem[] = csvData.map(row => {
+      const p: PreviewItem = {
         tcg: tcgType,
         category: importDestination === 'singles' ? 'singles' : 'store_exclusives',
         name: row[mapping['name']] || '',
@@ -111,7 +130,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
         condition: (row[mapping['condition']] || 'NM').toUpperCase() as Condition,
         foil_treatment: identifyFoilFromString(row[mapping['foil_treatment']]),
         stock: parseInt(row[mapping['stock']]) || 1,
-        category_ids: [], // We merge bulk ones at the API/Backend level
+        category_ids: [...bulkCategoryIds], // Pre-populate with current global selection
         storage_items: defaultStorage ? [{ stored_in_id: defaultStorage, name: '', quantity: parseInt(row[mapping['stock']]) || 1 }] : []
       };
       return p;
@@ -266,6 +285,64 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
     }
   };
 
+  const handleEnrichSingle = async (index: number) => {
+    const item = previewData[index];
+    if (!item.name && !item.scryfall_id) return;
+
+    // Use a temporary flag for loading UI
+    setPreviewData(prev => {
+      const next = [...prev];
+      next[index].is_loading = true;
+      return next;
+    });
+
+    try {
+      const res = await lookupMTGCard(item.name!, item.set_code, item.collector_number, item.foil_treatment, item.scryfall_id);
+      setPreviewData(prev => {
+        const next = [...prev];
+        next[index] = {
+          ...next[index],
+          name: res.name || next[index].name,
+          set_code: res.set_code || next[index].set_code,
+          set_name: res.set_name,
+          collector_number: res.collector_number || next[index].collector_number,
+          image_url: res.image_url,
+          price_reference: (item.foil_treatment === 'non_foil' ? res.price_tcgplayer : res.price_cardmarket) || item.price_reference,
+          price_source: item.foil_treatment === 'non_foil' ? 'tcgplayer' : 'cardmarket',
+          rarity: res.rarity,
+          cmc: res.cmc,
+          color_identity: res.color_identity,
+          language: res.language || 'en',
+          is_legendary: res.is_legendary,
+          is_historic: res.is_historic,
+          is_land: res.is_land,
+          is_basic_land: res.is_basic_land,
+          art_variation: res.art_variation,
+          oracle_text: res.oracle_text,
+          artist: res.artist,
+          type_line: res.type_line,
+          border_color: res.border_color,
+          frame: res.frame,
+          full_art: res.full_art,
+          textless: res.textless,
+          foil_treatment: res.foil_treatment || item.foil_treatment,
+          card_treatment: res.card_treatment || item.card_treatment,
+          promo_type: res.promo_type || item.promo_type,
+          scryfall_id: res.scryfall_id || item.scryfall_id,
+        };
+        next[index].is_loading = false;
+        return next;
+      });
+    } catch (e) {
+      console.error("Single enrichment failed", e);
+      setPreviewData(prev => {
+        const next = [...prev];
+        next[index].is_loading = false;
+        return next;
+      });
+    }
+  };
+
   const handleImport = async () => {
     setLoading(true);
     setStep('importing');
@@ -301,7 +378,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
 
       const res = await adminBulkCreateProducts({
         products: dataToImport,
-        category_ids: bulkCategoryIds
+        category_ids: [] // Already pre-populated in individual objects to allow overrides
       });
       setImportResults(res);
       setStep('summary');
@@ -313,7 +390,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
     }
   };
 
-  const updatePreviewItem = (index: number, updates: Partial<BulkProductInput>) => {
+  const updatePreviewItem = (index: number, updates: Partial<PreviewItem>) => {
     setPreviewData(prev => {
       const next = [...prev];
       next[index] = { ...next[index], ...updates };
@@ -336,117 +413,121 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-[#1a1614] border-4 border-[#3c2a21] rounded-none shadow-[0_0_50px_rgba(0,0,0,0.5)] w-full max-w-[95vw] flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[1000] flex items-center justify-center p-4">
+      <div className="bg-bg-page border-4 border-border-main rounded-lg shadow-[0_0_50px_rgba(0,0,0,0.6)] w-full max-w-[95vw] flex flex-col max-h-[95vh] relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-accent-primary" />
         {/* Header */}
-        <div className="p-6 border-b-4 border-[#3c2a21] bg-[#2a1e17] flex justify-between items-center">
+        <div className="p-6 border-b-4 border-border-main bg-bg-header flex justify-between items-center relative">
           <div>
-            <h2 className="text-3xl font-black text-[#d4c3b3] tracking-tighter uppercase italic drop-shadow-md">
+            <h2 className="text-3xl font-black text-text-on-header tracking-tighter uppercase italic drop-shadow-md">
               CSV IMPORT TOOL
             </h2>
-            <p className="text-[#8b7355] text-sm font-medium">Bulk add products to the cardboard warehouse</p>
+            <p className="text-text-on-header/60 text-sm font-medium">Bulk add products to the inventory manifest</p>
           </div>
           <button
             onClick={onClose}
-            className="w-10 h-10 border-2 border-[#3c2a21] bg-[#1a1614] text-[#8b7355] flex items-center justify-center hover:bg-[#b04b4b] hover:text-white transition-all transform hover:rotate-90 active:scale-90"
+            className="w-10 h-10 border-2 border-border-main/30 bg-bg-card/10 text-text-on-header flex items-center justify-center hover:bg-hp-color hover:text-white transition-all transform hover:rotate-90 active:scale-90"
           >
             ✕
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-bg-surface/30">
           {error && (
-            <div className="mb-6 p-4 bg-[#b04b4b]/20 border-2 border-[#b04b4b] text-[#ffbaba] font-bold animate-pulse">
-              ⚠️ {error}
+            <div className="mb-6 p-4 bg-hp-color/10 border-2 border-hp-color text-hp-color font-bold animate-fade-up flex items-center gap-3">
+              <span className="text-xl">⚠️</span> {error}
             </div>
           )}
 
           {step === 'upload' && (
-            <div className="flex flex-col items-center justify-center py-20 border-4 border-dashed border-[#3c2a21] bg-[#1a1614]/50 hover:bg-[#2a1e17]/50 transition-colors cursor-pointer relative group">
+            <div className="flex flex-col items-center justify-center py-24 border-4 border-dashed border-border-main bg-bg-card hover:bg-bg-surface transition-all cursor-pointer relative group rounded-xl shadow-inner">
               <input
                 type="file"
                 accept=".csv"
                 onChange={handleFileUpload}
-                className="absolute inset-0 opacity-0 cursor-pointer"
+                className="absolute inset-0 opacity-0 cursor-pointer z-10"
               />
-              <div className="text-6xl mb-4 group-hover:scale-110 transition-transform">📄</div>
-              <h3 className="text-2xl font-bold text-[#d4c3b3] mb-2 uppercase">Drop CSV File Here</h3>
-              <p className="text-[#8b7355]">or click to browse your computer</p>
+              <div className="text-7xl mb-6 group-hover:scale-110 group-hover:rotate-6 transition-transform drop-shadow-xl">📄</div>
+              <h3 className="text-3xl font-black text-text-main mb-2 uppercase tracking-tight italic">Drop CSV File Here</h3>
+              <p className="text-text-muted font-bold uppercase tracking-widest text-[10px]">or click to browse your local archives</p>
+              <div className="mt-8 px-6 py-2 bg-accent-primary text-text-on-accent font-black uppercase text-xs tracking-widest shadow-lg">Select Master Manifest</div>
             </div>
           )}
 
           {step === 'mapping' && (
-            <div>
-              <div className="mb-8 p-6 bg-[#2a1e17] border-2 border-[#3c2a21] grid grid-cols-2 gap-8">
+            <div className="animate-fade-up">
+              <div className="mb-8 p-8 bg-bg-card border-2 border-border-main shadow-xl grid grid-cols-2 gap-10 rounded-lg overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-accent-primary/5 -rotate-45 translate-x-16 -translate-y-16" />
                 <div>
-                  <h4 className="text-[#d4c3b3] font-bold mb-4 uppercase text-sm tracking-widest">General Settings</h4>
-                  <div className="space-y-4">
+                  <h4 className="text-accent-primary font-black mb-6 uppercase text-sm tracking-[0.2em] italic">System Configuration</h4>
+                  <div className="space-y-6">
                     <div>
-                      <label className="block text-xs font-bold text-[#8b7355] uppercase mb-1">Destination</label>
-                      <div className="flex gap-4 mb-4">
+                      <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-3">Inventory Destination</label>
+                      <div className="flex gap-3">
                         <button
                           onClick={() => setImportDestination('singles')}
-                          className={`flex-1 py-3 px-4 border-2 font-black uppercase text-xs tracking-widest transition-all ${importDestination === 'singles'
-                              ? 'bg-[#d4c3b3] border-[#d4c3b3] text-[#1a1614]'
-                              : 'bg-[#1a1614] border-[#3c2a21] text-[#8b7355] hover:border-[#d4c3b3]'
+                          className={`flex-1 py-4 px-4 border-2 font-black uppercase text-[10px] tracking-widest transition-all shadow-sm ${importDestination === 'singles'
+                            ? 'bg-accent-primary border-accent-primary text-text-on-accent'
+                            : 'bg-bg-page border-border-main text-text-secondary hover:border-accent-primary'
                             }`}
                         >
-                          Singles
+                          Individual Singles
                         </button>
                         <button
                           onClick={() => setImportDestination('deck')}
-                          className={`flex-1 py-3 px-4 border-2 font-black uppercase text-xs tracking-widest transition-all ${importDestination === 'deck'
-                              ? 'bg-[#d4c3b3] border-[#d4c3b3] text-[#1a1614]'
-                              : 'bg-[#1a1614] border-[#3c2a21] text-[#8b7355] hover:border-[#d4c3b3]'
+                          className={`flex-1 py-4 px-4 border-2 font-black uppercase text-[10px] tracking-widest transition-all shadow-sm ${importDestination === 'deck'
+                            ? 'bg-accent-primary border-accent-primary text-text-on-accent'
+                            : 'bg-bg-page border-border-main text-text-secondary hover:border-accent-primary'
                             }`}
                         >
-                          Deck
+                          Curated Deck
                         </button>
                       </div>
                     </div>
 
                     {importDestination === 'deck' && (
-                      <div>
-                        <label className="block text-xs font-bold text-[#8b7355] uppercase mb-1">Deck Name</label>
+                      <div className="animate-fade-up">
+                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">Manifest Identifier (Deck Name)</label>
                         <input
                           type="text"
                           value={deckName}
                           onChange={(e) => setDeckName(e.target.value)}
-                          placeholder="e.g. Mono Red Aggro"
-                          className="w-full bg-[#1a1614] border-2 border-[#3c2a21] p-3 text-[#d4c3b3] focus:border-[#d4c3b3] outline-none transition-all placeholder:text-[#3c2a21]"
+                          placeholder="e.g. MONO BLACK CONTROL"
+                          className="w-full bg-bg-page border-2 border-border-main p-4 text-text-main font-bold focus:border-accent-primary outline-none transition-all placeholder:text-text-muted/30 italic"
                         />
                       </div>
                     )}
 
-                    <div>
-                      <label className="block text-xs font-bold text-[#8b7355] uppercase mb-1">TCG Type</label>
-                      <select
-                        value={tcgType}
-                        onChange={(e) => setTcgType(e.target.value)}
-                        className="w-full bg-[#1a1614] border-2 border-[#3c2a21] p-3 text-[#d4c3b3] focus:border-[#d4c3b3] outline-none transition-all"
-                      >
-                        {KNOWN_TCGS.map(id => (
-                          <option key={id} value={id}>{TCG_LABELS[id] || id}</option>
-                        ))}
-                      </select>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">TCG Framework</label>
+                        <select
+                          value={tcgType}
+                          onChange={(e) => setTcgType(e.target.value)}
+                          className="w-full bg-bg-page border-2 border-border-main p-3 text-text-main font-bold text-xs focus:border-accent-primary outline-none transition-all"
+                        >
+                          {KNOWN_TCGS.map(id => (
+                            <option key={id} value={id}>{TCG_LABELS[id] || id}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">Vault Allocation</label>
+                        <select
+                          value={defaultStorage}
+                          onChange={(e) => setDefaultStorage(e.target.value)}
+                          className="w-full bg-bg-page border-2 border-border-main p-3 text-text-main font-bold text-xs focus:border-accent-primary outline-none transition-all"
+                        >
+                          <option value="" disabled>Select Storage Location</option>
+                          {storageLocations.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                        </select>
+                      </div>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-[#8b7355] uppercase mb-1">Default Storage</label>
-                      <select
-                        value={defaultStorage}
-                        onChange={(e) => setDefaultStorage(e.target.value)}
-                        className="w-full bg-[#1a1614] border-2 border-[#3c2a21] p-3 text-[#d4c3b3] focus:border-[#d4c3b3] outline-none transition-all"
-                      >
-                        <option value="" disabled>Select Storage Location</option>
-                        {storageLocations.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-[#8b7355] uppercase mb-1">Add to Collections (Bulk)</label>
-                      <div className="flex flex-wrap gap-2 p-3 bg-[#1a1614] border-2 border-[#3c2a21] min-h-[100px]">
+                      <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">Metadata Tagging (Bulk)</label>
+                      <div className="flex flex-wrap gap-2 p-4 bg-bg-page/50 border-2 border-border-main/50 rounded shadow-inner">
                         {categories.map(cat => (
                           <button
                             key={cat.id}
@@ -455,54 +536,57 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                                 prev.includes(cat.id) ? prev.filter(id => id !== cat.id) : [...prev, cat.id]
                               );
                             }}
-                            className={`px-3 py-1.5 text-[10px] font-black uppercase border-2 transition-all ${
-                              bulkCategoryIds.includes(cat.id)
-                                ? 'bg-[#d4c3b3] border-[#d4c3b3] text-[#1a1614]'
-                                : 'border-[#3c2a21] text-[#8b7355] hover:border-[#d4c3b3]'
-                            }`}
+                            className={`px-3 py-1.5 text-[10px] font-black uppercase border-2 transition-all shadow-sm ${bulkCategoryIds.includes(cat.id)
+                                ? 'bg-accent-primary border-accent-primary text-text-on-accent'
+                                : 'bg-bg-card border-border-main text-text-secondary hover:border-accent-primary'
+                              }`}
                           >
                             {cat.name}
                           </button>
                         ))}
-                        {categories.length === 0 && <span className="text-[#3c2a21] italic text-xs">No collections defined</span>}
+                        {categories.length === 0 && <span className="text-text-muted italic text-xs">No collections defined</span>}
                       </div>
                     </div>
                   </div>
                 </div>
-                <div className="border-l-2 border-[#3c2a21] pl-8">
-                  <h4 className="text-[#d4c3b3] font-bold mb-4 uppercase text-sm tracking-widest">Column Mapping</h4>
-                  <div className="space-y-3">
+                <div className="border-l-4 border-border-main pl-10 relative">
+                   <div className="absolute top-1/2 left-0 w-4 h-4 bg-border-main rotate-45 -translate-x-[10px] -translate-y-1/2" />
+                  <h4 className="text-accent-primary font-black mb-6 uppercase text-sm tracking-[0.2em] italic">Column Topology Mapping</h4>
+                  <div className="space-y-4">
                     {FIELDS.map(f => (
-                      <div key={f.key} className="flex items-center gap-4">
-                        <label className="w-32 text-xs font-bold text-[#8b7355] uppercase whitespace-nowrap">
-                          {f.label} {(f.key === 'name' || f.key === 'scryfall_id') && <span className="text-[#b04b4b]">*</span>}
+                      <div key={f.key} className="flex items-center gap-6 group/field">
+                        <label className="w-36 text-[10px] font-black text-text-muted uppercase tracking-widest whitespace-nowrap group-hover/field:text-accent-primary transition-colors">
+                          {f.label} {(f.key === 'name' || f.key === 'scryfall_id') && <span className="text-hp-color">*</span>}
                         </label>
-                        <select
-                          value={mapping[f.key] || ''}
-                          onChange={(e) => setMapping(prev => ({ ...prev, [f.key]: e.target.value }))}
-                          className="flex-1 bg-[#1a1614] border-2 border-[#3c2a21] p-2 text-[#d4c3b3] text-sm focus:border-[#d4c3b3] outline-none"
-                        >
-                          <option value="">-- [Skip Field] --</option>
-                          {headers.map(h => <option key={h} value={h}>{h}</option>)}
-                        </select>
+                        <div className="flex-1 relative">
+                          <select
+                            value={mapping[f.key] || ''}
+                            onChange={(e) => setMapping(prev => ({ ...prev, [f.key]: e.target.value }))}
+                            className="w-full bg-bg-page border-2 border-border-main p-3 text-text-main font-bold text-xs focus:border-accent-primary outline-none transition-all shadow-sm appearance-none pr-10"
+                          >
+                            <option value="">-- [Skip Selection] --</option>
+                            {headers.map(h => <option key={h} value={h}>{h}</option>)}
+                          </select>
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted/30">▼</div>
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-4 mt-8">
+              <div className="flex justify-end gap-6 mt-10">
                 <button
                   onClick={() => setStep('upload')}
-                  className="px-8 py-4 border-2 border-[#3c2a21] text-[#8b7355] font-black uppercase hover:bg-[#3c2a21] hover:text-[#d4c3b3] transition-all active:scale-95"
+                  className="btn-secondary px-10 italic"
                 >
-                  Back
+                  Return
                 </button>
                 <button
                   onClick={handleStartPreview}
-                  className="px-8 py-4 bg-[#3c2a21] text-[#d4c3b3] border-4 border-[#d4c3b3]/20 font-black uppercase tracking-widest hover:bg-[#d4c3b3] hover:text-[#3c2a21] transition-all hover:shadow-[0_0_20px_rgba(212,195,179,0.3)] active:scale-95"
+                  className="btn-primary px-12 italic"
                 >
-                  Generate Preview
+                  Generate Manifest
                 </button>
               </div>
             </div>
@@ -510,61 +594,55 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
 
           {step === 'preview' && (
             <div className="flex flex-col h-full overflow-hidden">
-              <div className="mb-6 flex flex-col gap-4 bg-[#2a1e17] p-4 border-2 border-[#3c2a21] relative overflow-hidden">
+              <div className="mb-6 flex flex-col gap-4 bg-bg-card p-6 border-2 border-border-main relative overflow-hidden shadow-lg rounded-lg">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-accent-primary/5 -rotate-45 translate-x-16 -translate-y-16" />
                 <div className="flex justify-between items-center relative z-10">
                   <div className="flex gap-4">
                     <button
                       onClick={handleEnrich}
                       disabled={loading}
-                      className="px-6 py-2 bg-[#8b7355] text-white font-black uppercase text-xs tracking-tighter hover:bg-[#d4c3b3] hover:text-[#3c2a21] transition-all disabled:opacity-50 flex items-center gap-2 relative overflow-hidden group/btn"
+                      className="btn-secondary italic flex items-center gap-2 group/btn"
                     >
-                      <span className="relative z-10">{loading ? '⌛ ENRICHING...' : '✨ ENRICH WITH SCRYFALL'}</span>
-                      {loading && (
-                        <div
-                          className="absolute inset-0 bg-white/20 transition-all duration-300"
-                          style={{ width: `${(processedCount / previewData.length) * 100}%` }}
-                        />
-                      )}
+                      <span className="group-hover/btn:rotate-12 transition-transform">✨</span>
+                      {loading ? 'SYNTHESIZING...' : 'ENRICH WITH SCRYFALL'}
                     </button>
+                    {loading && (
+                      <div className="flex items-center gap-4 px-6 border-l-2 border-border-main/30 ml-2">
+                        <div className="w-48 h-2 bg-bg-page rounded-full overflow-hidden border border-border-main/50 relative">
+                           <div 
+                             className="absolute inset-y-0 left-0 bg-accent-primary transition-all duration-300 shadow-[0_0_10px_rgba(212,175,55,0.4)]"
+                             style={{ width: `${(processedCount / previewData.length) * 100}%` }}
+                           />
+                        </div>
+                        <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">{Math.round((processedCount / previewData.length) * 100)}% Complete</span>
+                      </div>
+                    )}
                   </div>
-                  <div className="text-[#8b7355] font-bold text-sm italic">
-                    {previewData.length} cards detected in shipment
+                  <div className="flex gap-3">
+                     <span className="text-[10px] font-black text-text-muted uppercase tracking-widest self-center border-r-2 border-border-main/30 pr-4 mr-1">Found {previewData.length} Signatures</span>
                   </div>
                 </div>
-
-                {loading && (
-                  <div className="w-full bg-[#1a1614] h-1.5 border border-[#3c2a21] relative overflow-hidden">
-                    <div
-                      className="absolute inset-y-0 left-0 bg-[#d4c3b3] transition-all duration-300 shadow-[0_0_10px_rgba(212,195,179,0.5)]"
-                      style={{ width: `${(processedCount / previewData.length) * 100}%` }}
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <span className="text-[8px] font-black text-[#8b7355] uppercase tracking-widest">
-                        Scanning Manifest: {Math.round((processedCount / previewData.length) * 100)}%
-                      </span>
-                    </div>
-                  </div>
-                )}
               </div>
 
-              <div className="flex-1 overflow-auto border-2 border-[#3c2a21] bg-[#1a1614] custom-scrollbar">
+              <div className="flex-1 overflow-auto border-4 border-border-main bg-bg-card custom-scrollbar shadow-inner rounded-xl relative">
                 <table className="w-full text-left border-collapse min-w-[1200px]">
-                  <thead className="sticky top-0 z-10 bg-[#3c2a21] text-[#d4c3b3] text-[10px] font-black uppercase tracking-widest">
+                  <thead className="sticky top-0 z-20 bg-bg-header text-text-on-header text-[10px] font-black uppercase tracking-widest">
                     <tr>
-                      <th className="p-3 border-r border-[#1a1614] w-20">Art</th>
-                      <th className="p-3 border-r border-[#1a1614]">Card Details</th>
-                      <th className="p-3 border-r border-[#1a1614] w-32">Treatment</th>
-                      <th className="p-3 border-r border-[#1a1614] w-32">Storage</th>
-                      <th className="p-3 border-r border-[#1a1614] w-48">Collections</th>
-                      <th className="p-3 border-r border-[#1a1614] w-24">Price</th>
-                      <th className="p-3 w-20">Stock</th>
+                      <th className="p-4 border-r border-border-main/20 w-20">Art</th>
+                      <th className="p-4 border-r border-border-main/20 w-[280px]">Product Info</th>
+                      <th className="p-4 border-r border-border-main/20 w-16 text-center">Cond</th>
+                      <th className="p-4 border-r border-border-main/20 w-36">Treatment</th>
+                      <th className="p-4 border-r border-border-main/20 w-32">Vault</th>
+                      <th className="p-4 border-r border-border-main/20 w-48">Collections</th>
+                      <th className="p-4 border-r border-border-main/20 w-24">Reference</th>
+                      <th className="p-4 w-24 text-center">Qty</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#3c2a21]">
+                  <tbody className="divide-y divide-border-main/10">
                     {previewData.map((item, idx) => (
-                      <tr key={idx} className="hover:bg-[#2a1e17] transition-colors group">
-                        <td className="p-2 border-r border-[#3c2a21]">
-                          <div className="w-16 aspect-[2.5/3.5] bg-[#3c2a21] relative overflow-hidden ring-2 ring-[#3c2a21] group-hover:ring-[#d4c3b3] transition-all">
+                      <tr key={idx} className="hover:bg-accent-primary/5 transition-colors group/row italic-rows">
+                        <td className="p-4 border-r border-border-main/10 relative">
+                          <div className="w-14 h-20 mx-auto overflow-hidden bg-bg-page border border-border-main shadow-sm transition-transform group-hover/row:scale-110">
                             {item.image_url ? (
                               <CardImage
                                 imageUrl={item.image_url}
@@ -575,73 +653,105 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                                 enableModal={true}
                               />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center text-[10px] text-[#8b7355] font-black uppercase text-center p-1">No Image</div>
+                              <div className="w-full h-full flex items-center justify-center text-[10px] text-text-muted font-black uppercase text-center p-2 italic">Scanning...</div>
                             )}
                           </div>
                         </td>
-                        <td className="p-3 border-r border-[#3c2a21]">
-                          <input
-                            value={item.name || ''}
-                            onChange={(e) => updatePreviewItem(idx, { name: e.target.value })}
-                            placeholder="Card Name"
-                            className="bg-transparent text-[#d4c3b3] font-bold w-full text-[11px] focus:outline-none focus:bg-[#3c2a21] px-1"
-                          />
-                          <div className="flex gap-2 mt-1">
+                        <td className="p-4 border-r border-border-main/10 w-[280px]">
+                          <div className="flex items-center gap-2 mb-3">
                             <input
-                              value={item.set_code || ''}
-                              onChange={(e) => updatePreviewItem(idx, { set_code: e.target.value })}
-                              placeholder="SET"
-                              className="bg-[#1a1614] text-[#8b7355] text-[10px] font-black uppercase w-12 text-center border border-[#3c2a21] focus:outline-none focus:border-[#d4c3b3]"
+                              value={item.name || ''}
+                              onChange={(e) => updatePreviewItem(idx, { name: e.target.value })}
+                              placeholder="Signature Key"
+                              className="bg-transparent text-text-main font-black flex-1 text-xs focus:outline-none focus:bg-bg-page/50 px-2 border-b-2 border-border-main/30"
                             />
-                            <input
-                              value={item.collector_number || ''}
-                              onChange={(e) => updatePreviewItem(idx, { collector_number: e.target.value })}
-                              placeholder="#"
-                              className="bg-[#1a1614] text-[#8b7355] text-[10px] font-black uppercase w-16 text-center border border-[#3c2a21] focus:outline-none focus:border-[#d4c3b3]"
-                            />
-                            <select
-                              value={item.condition || 'NM'}
-                              onChange={(e) => updatePreviewItem(idx, { condition: e.target.value as Condition })}
-                              className="bg-[#1a1614] text-[#8b7355] text-[10px] font-black uppercase border border-[#3c2a21] outline-none"
+                            <button
+                              onClick={() => handleEnrichSingle(idx)}
+                              disabled={item.is_loading}
+                              className={`w-9 h-9 flex-shrink-0 flex items-center justify-center border-2 border-border-main bg-bg-surface text-text-main hover:bg-accent-primary hover:text-text-on-accent hover:border-accent-primary transition-all relative group/enrich active:scale-95 shadow-sm ${item.is_loading ? 'opacity-50 animate-pulse' : ''}`}
+                              title="Single Enrich"
                             >
-                              {['NM', 'LP', 'MP', 'HP', 'DMG'].map(c => <option key={c} value={c}>{c}</option>)}
-                            </select>
+                              {item.is_loading ? (
+                                <div className="w-5 h-5 border-2 border-current border-t-transparent animate-spin rounded-full" />
+                                ) : (
+                                  <span className="text-lg group-hover/enrich:scale-125 transition-transform">✨</span>
+                                )}
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-2 px-1">
+                            <input
+                              value={item.scryfall_id || ''}
+                              onChange={(e) => updatePreviewItem(idx, { scryfall_id: e.target.value })}
+                              placeholder="System UUID"
+                              className="flex-1 bg-bg-page text-text-muted text-[10px] font-mono-stack text-center border-2 border-border-main/50 focus:outline-none focus:border-accent-primary py-1.5 rounded"
+                              title="Scryfall ID"
+                            />
+                            <div className="flex gap-1">
+                              <input
+                                value={item.set_code || ''}
+                                onChange={(e) => updatePreviewItem(idx, { set_code: e.target.value })}
+                                placeholder="SET"
+                                className="bg-bg-page text-text-muted text-[10px] font-black uppercase w-10 text-center border-2 border-border-main/50 focus:outline-none focus:border-accent-primary py-1.5 rounded"
+                              />
+                              <input
+                                value={item.collector_number || ''}
+                                onChange={(e) => updatePreviewItem(idx, { collector_number: e.target.value })}
+                                placeholder="#"
+                                className="bg-bg-page text-text-muted text-[10px] font-black uppercase w-12 text-center border-2 border-border-main/50 focus:outline-none focus:border-accent-primary py-1.5 rounded"
+                              />
+                            </div>
                           </div>
                         </td>
-                        <td className="p-3 border-r border-[#3c2a21]">
+                        <td className="p-4 border-r border-border-main/10 w-16 text-center">
                           <select
-                            value={item.foil_treatment}
+                            value={item.condition || 'NM'}
+                            onChange={(e) => updatePreviewItem(idx, { condition: e.target.value as Condition })}
+                            className="bg-bg-card text-accent-primary text-[11px] font-black uppercase border-2 border-border-main shadow-sm outline-none w-full text-center py-2 hover:border-accent-primary transition-colors cursor-pointer rounded"
+                          >
+                            {['NM', 'LP', 'MP', 'HP', 'DMG'].map(c => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                        </td>
+                        <td className="p-4 border-r border-border-main/10 w-36">
+                          <select
+                            value={item.foil_treatment || 'non_foil'}
                             onChange={(e) => updatePreviewItem(idx, { foil_treatment: e.target.value as FoilTreatment })}
-                            className="w-full bg-[#1a1614] text-[#d4c3b3] text-[10px] font-bold uppercase border border-[#3c2a21] p-1 outline-none mb-1"
+                            className="bg-bg-card text-text-main text-[10px] font-bold w-full border border-border-main/50 outline-none mb-1 py-1 px-2 focus:border-accent-primary rounded"
                           >
                             {Object.entries(FOIL_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                           </select>
                           <select
-                            value={item.card_treatment}
+                            value={item.card_treatment || 'normal'}
                             onChange={(e) => updatePreviewItem(idx, { card_treatment: e.target.value as CardTreatment })}
-                            className="w-full bg-[#1a1614] text-[#d4c3b3] text-[10px] font-bold uppercase border border-[#3c2a21] p-1 outline-none"
+                            className="bg-bg-card text-text-main text-[10px] font-bold w-full border border-border-main/50 outline-none mb-1 py-1 px-2 focus:border-accent-primary rounded"
                           >
                             {Object.entries(TREATMENT_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                           </select>
+                          <select
+                            value={item.promo_type || ''}
+                            onChange={(e) => updatePreviewItem(idx, { promo_type: e.target.value })}
+                            className="bg-bg-card text-text-main text-[10px] font-bold w-full border border-border-main/50 outline-none py-1 px-2 focus:border-accent-primary rounded"
+                          >
+                            {Object.entries(PROMO_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                          </select>
                         </td>
-                        <td className="p-3 border-r border-[#3c2a21]">
+                        <td className="p-4 border-r border-border-main/10">
                           <select
                             value={item.storage_items?.[0]?.stored_in_id || ''}
                             onChange={(e) => updateStorage(idx, e.target.value, item.stock || 0)}
-                            className="w-full bg-[#1a1614] text-[#d4c3b3] text-[10px] font-bold uppercase border border-[#3c2a21] p-1 outline-none"
+                            className="w-full bg-bg-card text-text-main text-[10px] font-black uppercase border-2 border-border-main/50 p-2 outline-none focus:border-accent-primary rounded"
                           >
                             {storageLocations.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                           </select>
                         </td>
-                        <td className="p-3 border-r border-[#3c2a21]">
-                          <div className="flex flex-wrap gap-1">
+                        <td className="p-4 border-r border-border-main/10">
+                          <div className="flex flex-wrap gap-1.5">
                             {categories.map(cat => (
                               <button
                                 key={cat.id}
                                 onClick={() => toggleCategory(idx, cat.id)}
-                                className={`px-1.5 py-0.5 text-[9px] font-black uppercase border-2 transition-all ${(item.category_ids || []).includes(cat.id)
-                                    ? 'bg-[#d4c3b3] border-[#d4c3b3] text-[#1a1614]'
-                                    : 'border-[#3c2a21] text-[#8b7355] hover:border-[#d4c3b3]'
+                                className={`px-2 py-1 text-[9px] font-black uppercase border-2 transition-all shadow-sm ${(item.category_ids || []).includes(cat.id)
+                                  ? 'bg-accent-primary border-accent-primary text-text-on-accent'
+                                  : 'bg-bg-page border-border-main text-text-muted hover:border-accent-primary'
                                   }`}
                               >
                                 {cat.name}
@@ -649,19 +759,19 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                             ))}
                           </div>
                         </td>
-                        <td className="p-3 border-r border-[#3c2a21]">
-                          <div className="text-[10px] text-[#8b7355] font-black uppercase mb-1">
-                            {item.price_source === 'tcgplayer' ? '$ USD' : '€ EUR'}
+                        <td className="p-4 border-r border-border-main/10">
+                          <div className="text-[10px] text-text-muted font-black uppercase mb-1 tracking-widest text-center">
+                            {item.price_source === 'tcgplayer' ? 'REF (USD)' : 'REF (EUR)'}
                           </div>
                           <input
                             type="number"
                             value={item.price_reference || ''}
                             onChange={(e) => updatePreviewItem(idx, { price_reference: parseFloat(e.target.value) || 0 })}
-                            className="bg-[#1a1614] text-[#d4c3b3] font-mono font-bold w-full border border-[#3c2a21] p-1 text-sm focus:border-[#d4c3b3] outline-none"
+                            className="bg-bg-page text-text-main font-mono font-bold w-full border-2 border-border-main/50 p-2 text-xs focus:border-accent-primary outline-none text-center rounded placeholder:italic"
                             step="0.01"
                           />
                         </td>
-                        <td className="p-3">
+                        <td className="p-4">
                           <input
                             type="number"
                             min="1"
@@ -670,7 +780,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                               const v = parseInt(e.target.value) || 0;
                               updateStorage(idx, item.storage_items?.[0]?.stored_in_id || '', v);
                             }}
-                            className="bg-[#1a1614] text-[#d4c3b3] font-mono font-black w-full border border-[#3c2a21] p-1 text-sm text-center focus:border-[#d4c3b3] outline-none"
+                            className="bg-bg-page text-accent-primary font-mono font-black w-full border-4 border-border-main/50 p-2 text-sm text-center focus:border-accent-primary outline-none shadow-inner rounded"
                           />
                         </td>
                       </tr>
@@ -679,20 +789,21 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                 </table>
               </div>
 
-              <div className="mt-6 flex justify-between items-center bg-[#2a1e17] p-6 border-4 border-[#3c2a21]">
+              <div className="mt-8 flex justify-between items-center bg-bg-header p-8 border-4 border-border-main shadow-2xl relative overflow-hidden rounded-xl group">
+                 <div className="absolute inset-0 bg-accent-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                 <button
                   onClick={() => setStep('mapping')}
-                  className="px-8 py-3 border-2 border-[#3c2a21] text-[#8b7355] font-black uppercase hover:bg-[#3c2a21] hover:text-[#d4c3b3] transition-all"
+                  className="btn-secondary px-10 italic relative z-10"
                 >
-                  Back to Mapping
+                  Return to Topology
                 </button>
-                <div className="flex gap-4">
+                <div className="flex gap-4 relative z-10">
                   <button
                     onClick={handleImport}
                     disabled={loading || previewData.length === 0}
-                    className="px-12 py-4 bg-[#8b7355] text-white border-4 border-white/20 font-black uppercase tracking-[0.2em] hover:bg-[#d4c3b3] hover:text-[#3c2a21] transition-all disabled:opacity-50 hover:shadow-[0_0_30px_rgba(212,195,179,0.4)] active:scale-95"
+                    className="btn-primary px-16 py-4 italic shadow-2xl scale-110 active:scale-105"
                   >
-                    {loading ? 'IMPORTING...' : 'FINALIZE IMPORT'}
+                    {loading ? 'COMMITING...' : '⚡ FINALIZE SHIPMENT'}
                   </button>
                 </div>
               </div>
@@ -700,51 +811,59 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
           )}
 
           {step === 'importing' && (
-            <div className="flex flex-col items-center justify-center py-32 text-center">
-              <div className="relative mb-12">
-                {/* Custom Box Animation */}
-                <div className="w-32 h-32 border-4 border-[#3c2a21] bg-[#2a1e17] shadow-2xl relative animate-bounce">
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-32 bg-[#3c2a21]/20"></div>
-                  <div className="absolute top-1/2 left-0 -translate-y-1/2 w-32 h-1 bg-[#3c2a21]/20"></div>
-                  <div className="absolute inset-2 border-2 border-[#3c2a21]/30 border-dashed"></div>
-                  <div className="absolute -top-4 -right-4 text-4xl">📦</div>
+            <div className="flex flex-col items-center justify-center py-40 text-center animate-fade-up">
+              <div className="relative mb-16">
+                {/* Enhanced Box Animation */}
+                <div className="w-40 h-40 border-8 border-border-main bg-bg-card shadow-[0_0_80px_rgba(0,0,0,0.3)] relative animate-bounce overflow-hidden">
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-40 bg-border-main/20"></div>
+                  <div className="absolute top-1/2 left-0 -translate-y-1/2 w-40 h-2 bg-border-main/20"></div>
+                  <div className="absolute inset-4 border-4 border-accent-primary/20 border-dashed"></div>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-7xl drop-shadow-2xl opacity-80 rotate-12">📦</div>
                 </div>
-                {/* Warehouse Floor Shadow */}
-                <div className="w-24 h-4 bg-black/40 blur-md rounded-full mt-4 mx-auto animate-pulse"></div>
+                {/* Vault Floor Effect */}
+                <div className="w-32 h-6 bg-black/40 blur-xl rounded-full mt-6 mx-auto animate-pulse"></div>
               </div>
 
-              <h3 className="text-4xl font-black text-[#d4c3b3] uppercase tracking-tighter mb-4 italic drop-shadow-lg">
-                STORING SHIPMENT...
+              <h3 className="text-5xl font-black text-text-main uppercase tracking-tighter mb-6 italic drop-shadow-lg">
+                STOCKING THE VAULT...
               </h3>
-              <div className="max-w-md space-y-2">
-                <p className="text-[#8b7355] font-bold text-lg italic animate-pulse">
-                  &quot;Unpacking boxes and organizing the vault&quot;
+              <div className="max-w-md space-y-4">
+                <p className="text-text-muted font-bold text-xl italic animate-pulse">
+                  &quot;Unpacking shipment and organizing archives&quot;
                 </p>
-                <div className="flex justify-center gap-1">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="w-2 h-2 bg-[#d4c3b3] animate-bounce" style={{ animationDelay: `${i * 0.2}s` }}></div>
+                <div className="flex justify-center gap-2">
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <div key={i} className="w-3 h-3 bg-accent-primary animate-bounce shadow-[0_0_10px_var(--accent-primary)]" style={{ animationDelay: `${i * 0.15}s`, borderRadius: '2px' }}></div>
                   ))}
                 </div>
               </div>
 
-              <div className="mt-12 p-4 border-2 border-[#3c2a21] bg-[#2a1e17] text-[10px] font-black text-[#8b7355] uppercase tracking-[0.3em]">
-                System processing batch of {previewData.length} records
+              <div className="mt-16 p-6 border-4 border-border-main bg-bg-header text-[12px] font-black text-text-on-header uppercase tracking-[0.3em] shadow-xl">
+                System Processing Manifest of {previewData.length} Records
               </div>
             </div>
           )}
 
           {step === 'summary' && importResults && (
-            <div className="text-center py-20">
-              <div className="text-8xl mb-6">📦</div>
-              <h3 className="text-4xl font-black text-[#d4c3b3] uppercase mb-4 tracking-tighter italic">Import Complete!</h3>
-              <p className="text-xl text-[#8b7355] mb-12 font-medium">
-                Successfully processed <span className="text-[#d4c3b3] font-black">{importResults.count}</span> products into the system.
-              </p>
+            <div className="text-center py-32 animate-fade-up">
+              <div className="text-9xl mb-10 drop-shadow-[0_0_50px_rgba(212,175,55,0.4)] animate-bounce relative">
+                 <span className="relative z-10">📦</span>
+                 <div className="absolute inset-0 bg-accent-primary/20 blur-3xl rounded-full -z-10" />
+              </div>
+              <h3 className="text-6xl font-black text-text-main uppercase mb-6 tracking-tighter italic drop-shadow-md">Manifest Success!</h3>
+              <div className="max-w-xl mx-auto bg-bg-card p-10 border-4 border-border-main shadow-2xl relative mb-16 rounded-xl overflow-hidden">
+                 <div className="absolute top-0 left-0 w-full h-2 bg-accent-primary" />
+                 <p className="text-2xl text-text-muted mb-4 font-bold italic">
+                   Successfully archived <span className="text-accent-primary font-black text-4xl mx-2">{importResults.count}</span> SKU units.
+                 </p>
+                 <div className="h-px bg-border-main/30 w-1/2 mx-auto my-6" />
+                 <p className="text-sm text-text-muted font-black uppercase tracking-widest opacity-70 italic">{importResults.message}</p>
+              </div>
               <button
                 onClick={() => { onImported(); onClose(); }}
-                className="px-16 py-6 bg-[#d4c3b3] text-[#3c2a21] border-8 border-[#3c2a21]/20 font-black uppercase tracking-[0.3em] hover:bg-white transition-all shadow-2xl active:scale-95"
+                className="btn-primary px-20 py-8 text-xl italic shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:scale-110 active:scale-105 transition-all"
               >
-                Return to Dashboard
+                Return to Command Deck
               </button>
             </div>
           )}
