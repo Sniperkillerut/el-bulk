@@ -137,6 +137,7 @@ export default function AdminDashboard() {
               <button
                 onClick={handleSyncSets}
                 disabled={isSyncing}
+                title={t('pages.admin.inventory.sync_sets_tooltip', 'Sync set metadata for date ordering on client filters')}
                 className="btn-secondary px-4 py-1.5 text-[10px] flex items-center gap-2 mb-1"
               >
                 <span>{isSyncing ? '⌛' : '🔄'}</span> {isSyncing ? t('pages.admin.inventory.syncing', 'SYNCING...') : t('pages.admin.inventory.sync_sets_btn', 'SYNC SETS')}
