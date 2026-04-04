@@ -457,7 +457,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
 
           {step === 'mapping' && (
             <div className="animate-fade-up">
-              <div className="mb-8 p-8 bg-bg-card border-2 border-border-main shadow-xl grid grid-cols-2 gap-10 rounded-lg overflow-hidden relative">
+              <div className="mb-8 p-4 md:p-8 bg-bg-card border-2 border-border-main shadow-xl grid grid-cols-1 lg:grid-cols-2 gap-10 rounded-lg overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-accent-primary/5 -rotate-45 translate-x-16 -translate-y-16" />
                 <div>
                   <h4 className="text-accent-primary font-black mb-6 uppercase text-sm tracking-[0.2em] italic">System Configuration</h4>

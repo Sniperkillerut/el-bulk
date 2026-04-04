@@ -159,49 +159,52 @@ export default function AdminDashboard() {
       />
 
       {/* Filters and Search Bar */}
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-2 mb-2 flex-shrink-0">
-        <div className="xl:col-span-3 card p-3 bg-white/40 backdrop-blur shadow-sm border-kraft-dark/20 flex flex-wrap gap-2 items-end">
-          <div className="flex-1 min-w-[240px]">
-            <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">{t('pages.admin.inventory.search_label', 'Product Search')}</label>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4 flex-shrink-0">
+        <div className="sm:col-span-2 lg:col-span-3 card p-4 bg-white/40 backdrop-blur shadow-sm border-kraft-dark/20 flex flex-wrap gap-4 items-end">
+          <div className="flex-1 min-w-[200px]">
+            <label className="text-[10px] font-mono-stack mb-1.5 block uppercase font-bold text-text-muted">{t('pages.admin.inventory.search_label', 'Product Search')}</label>
             <div className="relative">
-              <input type="text" placeholder={t('pages.admin.inventory.search_placeholder', 'Search by name, set, code...')} value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30" />
+              <input type="text" placeholder={t('pages.admin.inventory.search_placeholder', 'Search by name, set, code...')} value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30 w-full" />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30">🔍</span>
             </div>
           </div>
-          <div style={{ width: '130px' }}>
-            <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">{t('pages.admin.inventory.tcg_filter_label', 'TCG Filter')}</label>
-            <select value={tcgFilter} onChange={e => { setTcgFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30">
-              <option value="">{t('pages.common.labels.all_tcgs', 'ALL TCGS')}</option>
-              {tcgs.map(t_item => <option key={t_item.id} value={t_item.id}>{t_item.name}</option>)}
-            </select>
-          </div>
-          <div style={{ width: '150px' }}>
-            <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">{t('pages.admin.inventory.category_label', 'Category')}</label>
-            <select value={categoryFilter} onChange={e => { setCategoryFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30">
-              <option value="">{t('pages.common.labels.all_categories', 'ALL CATEGORIES')}</option>
-              <option value="singles">{t('pages.common.categories.singles', 'SINGLES')}</option>
-              <option value="sealed">{t('pages.common.categories.sealed', 'SEALED')}</option>
-              <option value="accessories">{t('pages.common.categories.accessories', 'ACCESSORIES')}</option>
-              <option value="store_exclusives">{t('pages.common.categories.store_exclusives', 'STORE EXCLUSIVES')}</option>
-            </select>
-          </div>
-          <div style={{ width: '160px' }}>
-            <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">{t('pages.admin.inventory.storage_label', 'Physical Location')}</label>
-            <select value={storageFilter} onChange={e => { setStorageFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30">
-              <option value="">{t('pages.common.labels.all_locations', 'ALL LOCATIONS')}</option>
-              {storageLocations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-            </select>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={() => setShowStorageModal(true)} title={t('pages.admin.inventory.manage_locations_tooltip', 'Manage Locations')} className="w-10 h-10 border border-kraft-dark/30 rounded bg-white hover:bg-kraft-light transition-colors flex items-center justify-center">📦</button>
-            <button onClick={() => setShowCategoryModal(true)} title={t('pages.admin.inventory.manage_collections_tooltip', 'Manage Collections')} className="w-10 h-10 border border-kraft-dark/30 rounded bg-white hover:bg-kraft-light transition-colors flex items-center justify-center">🔖</button>
+          
+          <div className="flex flex-wrap gap-4 w-full sm:w-auto">
+            <div className="flex-1 min-w-[120px]">
+              <label className="text-[10px] font-mono-stack mb-1.5 block uppercase font-bold text-text-muted">{t('pages.admin.inventory.tcg_filter_label', 'TCG Filter')}</label>
+              <select value={tcgFilter} onChange={e => { setTcgFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30 w-full">
+                <option value="">{t('pages.common.labels.all_tcgs', 'ALL TCGS')}</option>
+                {tcgs.map(t_item => <option key={t_item.id} value={t_item.id}>{t_item.name}</option>)}
+              </select>
+            </div>
+            <div className="flex-1 min-w-[120px]">
+              <label className="text-[10px] font-mono-stack mb-1.5 block uppercase font-bold text-text-muted">{t('pages.admin.inventory.category_label', 'Category')}</label>
+              <select value={categoryFilter} onChange={e => { setCategoryFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30 w-full">
+                <option value="">{t('pages.common.labels.all_categories', 'ALL CATEGORIES')}</option>
+                <option value="singles">{t('pages.common.categories.singles', 'SINGLES')}</option>
+                <option value="sealed">{t('pages.common.categories.sealed', 'SEALED')}</option>
+                <option value="accessories">{t('pages.common.categories.accessories', 'ACCESSORIES')}</option>
+                <option value="store_exclusives">{t('pages.common.categories.store_exclusives', 'STORE EXCLUSIVES')}</option>
+              </select>
+            </div>
+            <div className="flex-1 min-w-[120px]">
+              <label className="text-[10px] font-mono-stack mb-1.5 block uppercase font-bold text-text-muted">{t('pages.admin.inventory.storage_label', 'Physical Location')}</label>
+              <select value={storageFilter} onChange={e => { setStorageFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30 w-full">
+                <option value="">{t('pages.common.labels.all_locations', 'ALL LOCATIONS')}</option>
+                {storageLocations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+              </select>
+            </div>
+            <div className="flex gap-2 items-end">
+              <button onClick={() => setShowStorageModal(true)} title={t('pages.admin.inventory.manage_locations_tooltip', 'Manage Locations')} className="w-10 h-10 border border-kraft-dark/30 rounded bg-white hover:bg-kraft-light transition-colors flex items-center justify-center shrink-0">📦</button>
+              <button onClick={() => setShowCategoryModal(true)} title={t('pages.admin.inventory.manage_collections_tooltip', 'Manage Collections')} className="w-10 h-10 border border-kraft-dark/30 rounded bg-white hover:bg-kraft-light transition-colors flex items-center justify-center shrink-0">🔖</button>
+            </div>
           </div>
         </div>
 
-        <div className="card p-3 text-ink-deep flex flex-col justify-center border-none shadow-xl shadow-gold/20 relative overflow-hidden group">
+        <div className="card p-4 text-ink-deep flex flex-col justify-center border-none shadow-xl shadow-gold/20 relative overflow-hidden group">
           <div className="text-[10px] font-mono-stack uppercase font-bold opacity-60 mb-1">{t('pages.admin.inventory.count_label', 'INVENTORY COUNT')}</div>
-          <div className="text-4xl font-display leading-none">{total.toLocaleString()}</div>
-          <div className="border-t border-ink-deep/10 flex justify-between items-center">
+          <div className="text-3xl sm:text-4xl font-display leading-none">{total.toLocaleString()}</div>
+          <div className="mt-2 border-t border-ink-deep/10 pt-2 flex justify-between items-center">
             <span className="text-[10px] font-mono-stack opacity-60">{t('pages.admin.inventory.response_time_label', 'RESPONSE TIME')}</span>
             <span className="font-mono-stack text-[10px] font-bold">~{queryTime}ms</span>
           </div>
@@ -225,18 +228,18 @@ export default function AdminDashboard() {
       </div>
 
       {/* Pagination Footer - Fixed at Bottom */}
-      <footer className="flex justify-between items-center mt-2 px-0 flex-shrink-0">
-        <div className="text-xs font-mono-stack text-text-muted font-bold">
+      <footer className="flex flex-col sm:flex-row justify-between items-center mt-4 mb-2 gap-4 px-0 flex-shrink-0">
+        <div className="text-[10px] sm:text-xs font-mono-stack text-text-muted font-bold order-2 sm:order-1">
           {t('pages.common.pagination.showing', 'SHOWING {start} - {end} OF {total} ENTRIES', {
             start: ((page - 1) * pageSize) + 1,
             end: Math.min(page * pageSize, total),
             total: total
           })}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 order-1 sm:order-2 w-full sm:w-auto justify-center">
           <button disabled={page === 1} onClick={() => setPage(page - 1)} className="btn-secondary py-1 px-4 text-xs font-bold disabled:opacity-30">{t('pages.common.pagination.prev', '← PREV')}</button>
-          <div className="flex items-center px-4 font-mono-stack text-xs font-bold bg-white rounded border border-kraft-dark/20">
-            {t('pages.common.pagination.page_info', 'PAGE {current} / {total}', { current: page, total: Math.max(1, Math.ceil(total / pageSize)) })}
+          <div className="flex items-center px-4 font-mono-stack text-xs font-bold bg-white rounded border border-kraft-dark/20 h-8">
+            {page} / {Math.max(1, Math.ceil(total / pageSize))}
           </div>
           <button disabled={page >= Math.ceil(total / pageSize)} onClick={() => setPage(page + 1)} className="btn-secondary py-1 px-4 text-xs font-bold disabled:opacity-30">{t('pages.common.pagination.next', 'NEXT →')}</button>
         </div>

@@ -48,13 +48,13 @@ export default function CategoryManagerModal({
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center px-4"
       style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)' }}>
-      <div className="card max-w-2xl w-full p-8" style={{ background: 'var(--ink-surface)', border: '4px solid var(--kraft-dark)' }}>
+      <div className="card max-w-2xl w-full p-4 md:p-8" style={{ background: 'var(--ink-surface)', border: '4px solid var(--kraft-dark)' }}>
         <div className="flex items-center justify-between mb-8">
-          <h2 className="font-display text-4xl m-0 uppercase tracking-tighter">COLLECTIONS & CATS</h2>
+          <h2 className="font-display text-2xl md:text-4xl m-0 uppercase tracking-tighter">COLLECTIONS & CATS</h2>
           <button onClick={onClose} className="text-text-muted hover:text-text-primary text-xl">✕</button>
         </div>
         
-        <div className="flex gap-2 mb-6">
+        <div className="flex flex-col sm:flex-row gap-2 mb-6">
           <input 
             type="text" 
             placeholder="New Collection Name (e.g. Commander Staples)" 
@@ -72,7 +72,7 @@ export default function CategoryManagerModal({
               <div key={cat.id} className={`p-4 border transition-all ${isEditing ? 'border-accent-primary bg-accent-primary/5 shadow-lg shadow-gold/10' : 'border-kraft-dark/20 bg-white/40'}`}>
                 {isEditing ? (
                   <div className="space-y-4">
-                    <div className="flex gap-2 items-center">
+                    <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
                       <input 
                         type="text" 
                         value={editForm.name} 
@@ -85,7 +85,7 @@ export default function CategoryManagerModal({
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-4 pt-2 border-t border-kraft-dark/10">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-kraft-dark/10">
                       <div className="space-y-1">
                         <label className="text-[10px] font-mono-stack uppercase font-bold text-text-muted opacity-60">Background & Text</label>
                         <div className="flex items-center gap-3">
@@ -126,7 +126,7 @@ export default function CategoryManagerModal({
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-4">
                       <div className="flex flex-col">
                         <div className="flex items-center gap-2">
@@ -150,7 +150,7 @@ export default function CategoryManagerModal({
                         </span>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 w-full sm:w-auto">
                       <button 
                         onClick={() => startEditing(cat)} 
                         className="btn-secondary px-4 py-1.5 text-xs font-bold"

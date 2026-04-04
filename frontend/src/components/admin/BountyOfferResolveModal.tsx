@@ -99,7 +99,7 @@ export default function BountyOfferResolveModal({ offer, bounty, requests, selec
         </label>
       </div>
 
-      <div className="flex gap-3 justify-end pt-4 border-t border-ink-border/20">
+      <div className="flex flex-col-reverse sm:flex-row gap-3 justify-end pt-4 border-t border-ink-border/20">
         <Button variant="secondary" onClick={handleDecline} loading={processing} className="text-red-500 border-red-200 hover:bg-red-50">
           {t('components.admin.resolve_modal.reject_btn', 'REJECT OFFER')}
         </Button>

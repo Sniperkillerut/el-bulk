@@ -85,14 +85,14 @@ export function ProductTableRow({ product: p, onEdit, onDelete }: ProductTableRo
           </div>
         </div>
       </td>
-      <td>
+      <td className="hidden md:table-cell">
         <div className="flex flex-col gap-1 items-start">
           <span className="badge badge-secondary truncate max-w-[100px] border-ink-border/50 text-text-muted" style={{ fontSize: '9px' }}>
             {p.category.toUpperCase()}
           </span>
         </div>
       </td>
-      <td>
+      <td className="hidden lg:table-cell">
         <div className="flex flex-wrap gap-1 max-w-[160px]">
           {p.card_treatment && p.card_treatment !== 'normal' && (
             <span className="text-[9px] font-mono-stack px-1.5 py-0.5 bg-gold/5 text-gold border border-gold/20 rounded-sm font-bold uppercase tracking-tighter">
@@ -111,7 +111,7 @@ export function ProductTableRow({ product: p, onEdit, onDelete }: ProductTableRo
           )}
         </div>
       </td>
-      <td className="text-center">
+      <td className="hidden xl:table-cell text-center">
         {p.rarity ? (
           <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
             p.rarity === 'mythic' ? 'bg-hp-color/10 text-hp-color border border-hp-color/20' :
@@ -123,7 +123,7 @@ export function ProductTableRow({ product: p, onEdit, onDelete }: ProductTableRo
           </span>
         ) : <span className="text-[10px] text-text-muted opacity-30">—</span>}
       </td>
-      <td className="text-right">
+      <td className="text-right whitespace-nowrap">
         <div className="flex flex-col items-end">
           <span className="font-mono-stack font-bold text-ink-deep group-hover:text-gold transition-colors">
             {p.price ? `$${p.price.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : t('pages.common.labels.na', 'N/A')}
@@ -138,23 +138,23 @@ export function ProductTableRow({ product: p, onEdit, onDelete }: ProductTableRo
           <span className={`text-sm font-bold font-mono-stack ${p.stock <= 0 ? 'text-hp-color' : 'text-ink-deep'}`}>
             {p.stock}
           </span>
-          <div className="flex flex-wrap gap-1 justify-center">
-            {p.stored_in && p.stored_in.length > 0 ? p.stored_in.map((s, idx) => (
+          <div className="hidden sm:flex flex-wrap gap-1 justify-center">
+            {p.stored_in && p.stored_in.length > 0 ? p.stored_in.slice(0, 2).map((s, idx) => (
               <span key={s.stored_in_id || `loc-${idx}`} className="badge shrink-0 shadow-sm" style={{ background: 'var(--kraft-light)', color: 'var(--kraft-dark)', fontSize: '8px', padding: '1px 3px', border: 'none' }}>
                 {s.name}: {s.quantity}
               </span>
-            )) : <span className="text-[8px] text-text-muted opacity-30 italic">{t('pages.admin.inventory.unassigned', 'unassigned')}</span>}
+            )) : null}
           </div>
         </div>
       </td>
-      <td className="text-center">
+      <td className="hidden sm:table-cell text-center">
         <div className="flex flex-col items-center">
            <span className="text-[10px] font-mono-stack font-bold text-text-muted opacity-80 whitespace-nowrap">
              {formatUpdated(p.updated_at || p.created_at)}
            </span>
         </div>
       </td>
-      <td onClick={(e) => e.stopPropagation()}>
+      <td onClick={(e) => e.stopPropagation()} className="hidden md:table-cell">
         <div className="flex justify-center">
           <button
             onClick={() => onDelete(p.id, p.name)}
@@ -214,25 +214,25 @@ export default function ProductTable({
               <th onClick={() => onSort('name')} className="cursor-pointer hover:bg-ink-surface transition-colors">
                 <div className="flex items-center">{t('pages.admin.inventory.table.product', 'PRODUCT')} {renderSortIcon('name')}</div>
               </th>
-              <th onClick={() => onSort('category')} className="cursor-pointer hover:bg-ink-surface transition-colors">
+              <th onClick={() => onSort('category')} className="hidden md:table-cell cursor-pointer hover:bg-ink-surface transition-colors">
                 <div className="flex items-center">{t('pages.admin.inventory.table.type', 'TYPE')} {renderSortIcon('category')}</div>
               </th>
-              <th className="min-w-[130px]">
+              <th className="hidden lg:table-cell min-w-[130px]">
                 <div className="flex items-center">{t('pages.admin.inventory.table.variant', 'VARIANT')}</div>
               </th>
-              <th onClick={() => onSort('rarity')} className="w-24 text-center cursor-pointer hover:bg-ink-surface transition-colors">
+              <th onClick={() => onSort('rarity')} className="hidden xl:table-cell w-24 text-center cursor-pointer hover:bg-ink-surface transition-colors">
                 <div className="flex items-center justify-center">{t('pages.admin.inventory.table.rarity', 'RARITY')} {renderSortIcon('rarity')}</div>
               </th>
-              <th onClick={() => onSort('price')} className="w-32 text-right cursor-pointer hover:bg-ink-surface transition-colors">
+              <th onClick={() => onSort('price')} className="w-24 sm:w-32 text-right cursor-pointer hover:bg-ink-surface transition-colors">
                 <div className="flex items-center justify-end">{t('pages.admin.inventory.table.price', 'PRICE')} {renderSortIcon('price')}</div>
               </th>
-              <th onClick={() => onSort('stock')} className="w-24 text-center cursor-pointer hover:bg-ink-surface transition-colors">
+              <th onClick={() => onSort('stock')} className="w-20 sm:w-24 text-center cursor-pointer hover:bg-ink-surface transition-colors">
                 <div className="flex items-center justify-center">{t('pages.admin.inventory.table.stock', 'STOCK')} {renderSortIcon('stock')}</div>
               </th>
-              <th onClick={() => onSort('updated_at')} className="w-32 text-center cursor-pointer hover:bg-ink-surface transition-colors">
+              <th onClick={() => onSort('updated_at')} className="hidden sm:table-cell w-24 sm:w-32 text-center cursor-pointer hover:bg-ink-surface transition-colors">
                 <div className="flex items-center justify-center">{t('pages.admin.inventory.table.updated', 'UPDATED')} {renderSortIcon('updated_at')}</div>
               </th>
-              <th className="w-16 text-center">{t('pages.admin.inventory.table.cmd', 'CMD')}</th>
+              <th className="hidden md:table-cell w-16 text-center">{t('pages.admin.inventory.table.cmd', 'CMD')}</th>
             </tr>
           </thead>
           <tbody>

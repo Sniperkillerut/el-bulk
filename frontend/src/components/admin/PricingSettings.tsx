@@ -77,7 +77,7 @@ export default function PricingSettings({ }: PricingSettingsProps) {
           <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'Space Mono, monospace', marginBottom: '0.4rem' }}>
             USD → COP RATE <span style={{ opacity: 0.5 }}>(TCGPlayer)</span>
           </label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             <input
               type="number"
               value={settings.usd_to_cop_rate}
@@ -100,7 +100,7 @@ export default function PricingSettings({ }: PricingSettingsProps) {
           <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'Space Mono, monospace', marginBottom: '0.4rem' }}>
             EUR → COP RATE <span style={{ opacity: 0.5 }}>(Cardmarket)</span>
           </label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             <input
               type="number"
               value={settings.eur_to_cop_rate}

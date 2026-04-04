@@ -6,19 +6,31 @@ interface UIContextType {
   foilEffectsEnabled: boolean;
   setFoilEffectsEnabled: (enabled: boolean) => void;
   toggleFoilEffects: () => void;
+  adminSidebarOpen: boolean;
+  setAdminSidebarOpen: (open: boolean) => void;
+  toggleAdminSidebar: () => void;
+  adminSidebarSlim: boolean;
+  setAdminSidebarSlim: (slim: boolean) => void;
+  toggleAdminSidebarSlim: () => void;
 }
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
 
 export function UIProvider({ children }: { children: React.ReactNode }) {
   const [foilEffectsEnabled, setFoilEffectsEnabled] = React.useState<boolean>(true);
+  const [adminSidebarOpen, setAdminSidebarOpen] = React.useState<boolean>(false);
+  const [adminSidebarSlim, setAdminSidebarSlim] = React.useState<boolean>(false);
   const [initialized, setInitialized] = React.useState(false);
 
   // Load from localStorage on mount
   React.useEffect(() => {
-    const saved = localStorage.getItem('foilEffectsEnabled');
-    if (saved !== null) {
-      setFoilEffectsEnabled(saved === 'true');
+    const savedFoil = localStorage.getItem('foilEffectsEnabled');
+    if (savedFoil !== null) {
+      setFoilEffectsEnabled(savedFoil === 'true');
+    }
+    const savedSlim = localStorage.getItem('adminSidebarSlim');
+    if (savedSlim !== null) {
+      setAdminSidebarSlim(savedSlim === 'true');
     }
     setInitialized(true);
   }, []);
@@ -30,15 +42,35 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('foilEffectsEnabled', enabled.toString());
   };
 
+  const handleSetAdminSidebarSlim = (slim: boolean) => {
+    if (!initialized) return;
+    setAdminSidebarSlim(slim);
+    localStorage.setItem('adminSidebarSlim', slim.toString());
+  };
+
   const toggleFoilEffects = () => {
     handleSetFoilEffectsEnabled(!foilEffectsEnabled);
+  };
+
+  const toggleAdminSidebar = () => {
+    setAdminSidebarOpen(!adminSidebarOpen);
+  };
+
+  const toggleAdminSidebarSlim = () => {
+    handleSetAdminSidebarSlim(!adminSidebarSlim);
   };
 
   return (
     <UIContext.Provider value={{
       foilEffectsEnabled,
       setFoilEffectsEnabled: handleSetFoilEffectsEnabled,
-      toggleFoilEffects
+      toggleFoilEffects,
+      adminSidebarOpen,
+      setAdminSidebarOpen,
+      toggleAdminSidebar,
+      adminSidebarSlim,
+      setAdminSidebarSlim: handleSetAdminSidebarSlim,
+      toggleAdminSidebarSlim
     }}>
       {children}
     </UIContext.Provider>

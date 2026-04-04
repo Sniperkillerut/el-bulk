@@ -92,7 +92,7 @@ export default function TCGManager({ }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-end mb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 mb-4">
         <div>
           <h3 className="text-2xl font-display text-ink-deep uppercase tracking-tighter m-0 leading-none">Registered Systems</h3>
           <p className="text-text-muted text-[10px] font-mono-stack uppercase font-bold mt-1 opacity-70">Enable or disable game systems from the warehouse</p>
@@ -153,7 +153,7 @@ export default function TCGManager({ }: Props) {
         {tcgs.map(tcg => (
           <div
             key={tcg.id}
-            className={`flex items-center justify-between p-4 bg-white border border-kraft-dark/20 shadow-sm rounded-xl transition-all hover:shadow-md hover:border-gold/30 ${
+            className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-white border border-kraft-dark/20 shadow-sm rounded-xl transition-all hover:shadow-md hover:border-gold/30 gap-3 ${
               !tcg.is_active ? 'opacity-60 grayscale-[0.8] bg-kraft-light/20' : ''
             }`}
           >
@@ -192,7 +192,7 @@ export default function TCGManager({ }: Props) {
               )}
             </div>
 
-            <div className="flex items-center gap-4 pl-4 border-l border-kraft-dark/10">
+            <div className="flex items-center gap-2 sm:gap-4 sm:pl-4 sm:border-l border-kraft-dark/10 flex-wrap">
               {editingId !== tcg.id ? (
                 confirmDeleteId === tcg.id ? (
                   <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-200">

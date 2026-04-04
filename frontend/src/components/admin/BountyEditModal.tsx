@@ -276,7 +276,7 @@ export default function BountyEditModal({
 
         <div className="flex items-center justify-between p-4 md:p-6 pb-2 border-b border-ink-border/20">
           <div className="flex flex-col">
-            <h2 className="font-display text-4xl m-0 tracking-tighter text-ink-deep">
+            <h2 className="font-display text-2xl md:text-4xl m-0 tracking-tighter text-ink-deep">
               {editBounty ? t('components.admin.bounty_modal.title_edit', 'EDIT WANTED CARD') : t('components.admin.bounty_modal.title_add', 'ADD WANTED CARD')}
             </h2>
           </div>

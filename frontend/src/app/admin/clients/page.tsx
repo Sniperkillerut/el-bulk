@@ -42,7 +42,7 @@ export default function AdminClientsPage() {
         title="CRM: Client Registry" 
         subtitle="Managing Relationships & Interactions"
         actions={
-          <div className="w-64">
+          <div className="w-full max-w-64">
             <input 
               type="text" 
               placeholder="SEARCH CLIENTS..." 
@@ -59,13 +59,13 @@ export default function AdminClientsPage() {
           <thead className="sticky top-0 z-10 bg-kraft-light backdrop-blur-md shadow-sm border-b border-ink-border">
             <tr className="border-b border-ink-border">
               <th className="p-4 font-display text-xs uppercase tracking-wider">Customer</th>
-              <th className="p-4 font-display text-xs uppercase tracking-wider">Contact</th>
+              <th className="p-4 font-display text-xs uppercase tracking-wider hidden md:table-cell">Contact</th>
               <th className="p-4 font-display text-xs uppercase tracking-wider text-center">Orders</th>
-              <th className="p-4 font-display text-xs uppercase tracking-wider text-center text-gold-dark/80">Requests</th>
-              <th className="p-4 font-display text-xs uppercase tracking-wider text-center text-emerald-700/80">Offers</th>
+              <th className="p-4 font-display text-xs uppercase tracking-wider text-center text-gold-dark/80 hidden lg:table-cell">Requests</th>
+              <th className="p-4 font-display text-xs uppercase tracking-wider text-center text-emerald-700/80 hidden lg:table-cell">Offers</th>
               <th className="p-4 font-display text-xs uppercase tracking-wider text-right">Spend (COP)</th>
-              <th className="p-4 font-display text-xs uppercase tracking-wider text-center">Newsletter</th>
-              <th className="p-4 font-display text-xs uppercase tracking-wider">Recent Journal Entry</th>
+              <th className="p-4 font-display text-xs uppercase tracking-wider text-center hidden md:table-cell">Newsletter</th>
+              <th className="p-4 font-display text-xs uppercase tracking-wider hidden lg:table-cell">Recent Journal Entry</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-ink-border/30">
@@ -86,14 +86,14 @@ export default function AdminClientsPage() {
                     </div>
                   </div>
                 </td>
-                <td className="p-4 text-xs font-mono-stack">
+                <td className="p-4 text-xs font-mono-stack hidden md:table-cell">
                   <div>{client.email || 'N/A'}</div>
                   <div className="opacity-60">{client.phone || ''}</div>
                 </td>
                 <td className="p-4 text-center font-mono-stack text-xs font-bold">
                   {client.order_count}
                 </td>
-                <td className="p-4 text-center">
+                <td className="p-4 text-center hidden lg:table-cell">
                   {client.request_count > 0 ? (
                     <span className="font-mono-stack text-[11px] font-bold">
                       {client.active_request_count} <span className="opacity-60 font-normal ml-0.5">({client.request_count})</span>
@@ -102,7 +102,7 @@ export default function AdminClientsPage() {
                     <span className="text-[10px] opacity-20 font-mono-stack">0</span>
                   )}
                 </td>
-                <td className="p-4 text-center">
+                <td className="p-4 text-center hidden lg:table-cell">
                   {client.offer_count > 0 ? (
                     <span className="font-mono-stack text-[11px] font-bold">
                       {client.active_offer_count} <span className="opacity-60 font-normal ml-0.5">({client.offer_count})</span>
@@ -114,14 +114,14 @@ export default function AdminClientsPage() {
                 <td className="p-4 text-right font-mono-stack text-xs text-emerald-700 font-bold">
                    ${client.total_spend.toLocaleString()}
                 </td>
-                <td className="p-4 text-center">
+                <td className="p-4 text-center hidden md:table-cell">
                   {client.is_subscriber ? (
                     <span className="badge badge-foil text-[9px]">SUBSCRIBED</span>
                   ) : (
                     <span className="text-[9px] opacity-30 font-mono-stack">NO</span>
                   )}
                 </td>
-                <td className="p-4 text-xs font-mono-stack max-w-xs transition-opacity group-hover:opacity-100 opacity-70">
+                <td className="p-4 text-xs font-mono-stack max-w-xs transition-opacity group-hover:opacity-100 opacity-70 hidden lg:table-cell">
                    {client.latest_note ? (
                      <div className="truncate italic">&quot;{client.latest_note}&quot;</div>
                    ) : (
@@ -135,7 +135,7 @@ export default function AdminClientsPage() {
       </div>
 
       {totalPages > 1 && (
-        <div className="flex justify-between items-center mt-2 px-0 flex-shrink-0">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mt-2 px-0 flex-shrink-0">
           <div className="text-[10px] font-mono-stack text-text-muted uppercase tracking-widest font-bold">
             SHOWING {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredClients.length)} OF {filteredClients.length}
           </div>

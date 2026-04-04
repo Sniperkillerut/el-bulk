@@ -169,7 +169,7 @@ export default function AdminTranslationsPage() {
 
       {/* Progress Summary */}
       {!loading && translations.length > 0 && (
-        <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {progressStats.map(stat => (
             <div key={stat.locale} className="bg-white p-4 rounded-sm border border-ink-border/20 shadow-sm">
               <div className="flex justify-between items-center mb-2">
@@ -223,7 +223,7 @@ export default function AdminTranslationsPage() {
       </div>
 
       {/* Slug Tabs */}
-      <div className="flex flex-wrap gap-1 mb-4 border-b border-ink-border/10 pb-2">
+      <div className="flex gap-1 mb-4 border-b border-ink-border/10 pb-2 overflow-x-auto no-scrollbar">
         {availableSlugs.map(slug => (
           <button
             key={slug}

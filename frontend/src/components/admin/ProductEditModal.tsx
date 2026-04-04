@@ -535,7 +535,7 @@ export default function ProductEditModal({
       <div className="card p-0 w-full max-w-6xl max-h-[94vh] flex flex-col border-white/20 shadow-2xl animate-in fade-in zoom-in duration-300" 
         style={{ position: 'relative', background: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(20px)', overflow: 'hidden' }}>
 
-        <div className="flex items-center justify-between p-4 pb-2 border-b border-ink-border/5">
+        <div className="flex items-center justify-between p-3 md:p-6 pb-2 border-b border-ink-border/5">
           <div className="flex flex-col">
             <h2 className="font-display text-2xl m-0 tracking-tighter text-ink-deep">{editProduct ? t('components.admin.product_modal.title_edit', 'EDIT PRODUCT') : t('components.admin.product_modal.title_new', 'NEW PRODUCT')}</h2>
             <p className="font-mono-stack text-[10px] text-text-muted opacity-50">{t('components.admin.product_modal.product_id', 'PRODUCT ID: {id}', { id: form.id || 'NEW' })}</p>
@@ -547,8 +547,9 @@ export default function ProductEditModal({
             </svg>
           </button>
         </div>
-
-        <div className="px-4 md:px-6 pt-2 flex gap-4 flex-wrap">
+        
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <div className="px-4 md:px-6 pt-2 grid grid-cols-2 md:grid-cols-3 lg:flex gap-3 md:gap-4">
           <div style={{ minWidth: '160px' }}>
             <label className="text-[10px] font-mono-stack mb-1 block uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{t('components.admin.product_modal.tcg_system_label', 'TCG SYSTEM')}</label>
             <select 
@@ -633,7 +634,7 @@ export default function ProductEditModal({
           />
         )}
 
-        <div className="px-4 md:px-6 mt-6 flex gap-3 border-b border-ink-border/20">
+        <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm px-4 md:px-6 mt-2 md:mt-6 flex gap-3 border-b border-ink-border/20 overflow-x-auto no-scrollbar whitespace-nowrap">
           {TABS.filter(t => t.show).map(tab => {
             const isActive = activeTab === tab.id;
             return (
@@ -659,7 +660,6 @@ export default function ProductEditModal({
           })}
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
           <div className="flex gap-4 flex-col md:flex-row p-4 md:p-6 pb-4">
           <div className="flex-1 min-w-0 animate-in fade-in slide-in-from-bottom-2 duration-500">
             {activeTab === 'variant' && (

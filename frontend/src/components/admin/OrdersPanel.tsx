@@ -50,6 +50,9 @@ export default function OrdersPanel({ initialOrderId }: Props) {
   const [completing, setCompleting] = useState(false);
   const [completeError, setCompleteError] = useState('');
 
+  // Mobile master-detail toggle
+  const [mobileShowDetail, setMobileShowDetail] = useState(false);
+
   const loadOrders = useCallback(async () => {
     // No longer setting loading synchronously at start to avoid cascaded renders
     try {
@@ -225,7 +228,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
     <div className="flex flex-col h-full w-full">
       <div className="flex flex-col lg:flex-row flex-1 min-h-0">
         {/* Left: Orders List */}
-        <div className="w-full lg:w-[420px] flex-shrink-0 flex flex-col overflow-hidden border-r border-border-main/20 bg-bg-page/5">
+        <div className={`w-full lg:w-[420px] flex-shrink-0 flex flex-col overflow-hidden border-r border-border-main/20 bg-bg-page/5 ${mobileShowDetail ? 'hidden lg:flex' : 'flex'}`}>
           {/* Filters */}
           <div className="p-3 flex flex-col gap-2" style={{ borderBottom: '1px solid var(--border-main)' }}>
             <input
@@ -296,7 +299,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
               orders.map(o => (
                 <div
                   key={o.id}
-                  onClick={() => { setItemEdits({}); setLoadingDetail(true); selectOrder(o.id); }}
+                  onClick={() => { setItemEdits({}); setLoadingDetail(true); selectOrder(o.id); setMobileShowDetail(true); }}
                   className="p-3 cursor-pointer transition-colors"
                   style={{
                     borderBottom: '1px solid var(--border-main)',
@@ -340,7 +343,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
         </div>
 
         {/* Right: Order Detail */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-white">
+        <div className={`flex-1 overflow-y-auto p-4 md:p-8 bg-white ${!mobileShowDetail ? 'hidden lg:block' : 'block'}`}>
           {!detail && !loadingDetail && (
             <div className="flex items-center justify-center h-full" style={{ color: 'var(--text-muted)' }}>
               <div className="text-center">
@@ -356,6 +359,14 @@ export default function OrdersPanel({ initialOrderId }: Props) {
 
           {detail && !loadingDetail && (
             <>
+              {/* Mobile back button */}
+              <button 
+                onClick={() => { setMobileShowDetail(false); setDetail(null); }}
+                className="lg:hidden flex items-center gap-2 text-xs font-mono-stack text-gold-dark mb-4 hover:text-hp-color transition-colors"
+              >
+                ← BACK TO ORDERS
+              </button>
+
               {/* Order header */}
               <div className="flex flex-col sm:flex-row justify-between gap-3 mb-4">
                 <div>

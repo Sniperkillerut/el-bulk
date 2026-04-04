@@ -45,9 +45,9 @@ export default function AdminSubscribersPage() {
           <thead className="sticky top-0 z-10 bg-kraft-light backdrop-blur-md shadow-sm border-b border-ink-border">
             <tr className="border-b border-ink-border">
               <th className="p-2 font-display text-xs uppercase tracking-wider">Email Address</th>
-              <th className="p-2 font-display text-xs uppercase tracking-wider">Linked User</th>
+              <th className="p-2 font-display text-xs uppercase tracking-wider hidden md:table-cell">Linked User</th>
               <th className="p-2 font-display text-xs uppercase tracking-wider">Subscription Date</th>
-              <th className="p-2 font-display text-xs uppercase tracking-wider text-right">Actions</th>
+              <th className="p-2 font-display text-xs uppercase tracking-wider text-right hidden md:table-cell">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-ink-border/30">
@@ -56,7 +56,7 @@ export default function AdminSubscribersPage() {
                 <td className="p-2 text-sm font-mono-stack font-bold">
                   {sub.email}
                 </td>
-                <td className="p-2">
+                <td className="p-2 hidden md:table-cell">
                   {sub.customer_id ? (
                     <Link 
                       href={`/admin/clients/${sub.customer_id}`}
@@ -74,7 +74,7 @@ export default function AdminSubscribersPage() {
                 <td className="p-2 text-[10px] font-mono-stack text-text-muted">
                   {new Date(sub.created_at).toLocaleDateString()}
                 </td>
-                <td className="p-2 text-right">
+                <td className="p-2 text-right hidden md:table-cell">
                   <button className="text-[10px] font-mono-stack text-hp-color hover:underline bg-transparent border-none cursor-pointer p-0 opacity-40 hover:opacity-100">
                     REMOVE
                   </button>

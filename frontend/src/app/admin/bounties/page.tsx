@@ -184,7 +184,7 @@ export default function AdminBountiesPage() {
         }
       />
 
-      <div className="flex flex-wrap gap-2 mb-2 border-b border-ink-deep/20 flex-shrink-0">
+      <div className="flex gap-2 mb-2 border-b border-ink-deep/20 flex-shrink-0 overflow-x-auto no-scrollbar">
         {[
           { id: 'bounties', label: t('pages.admin.bounties.tabs.bounties', 'WANTED LIST'), count: bounties.filter(b => b.is_active).length },
           { id: 'offers', label: t('pages.admin.bounties.tabs.offers', 'OFFERS VERIFICATION'), count: offers.filter(o => o.status === 'pending').length, suffix: t('pages.admin.bounties.tabs.pending_suffix', 'PENDING') },
@@ -195,7 +195,7 @@ export default function AdminBountiesPage() {
             <button 
               key={tab.id}
               className={`
-                font-mono-stack text-sm px-10 py-6 transition-all uppercase tracking-widest
+                font-mono-stack text-sm px-4 py-3 md:px-10 md:py-6 transition-all uppercase tracking-widest whitespace-nowrap
                 rounded-t-md border-x relative -mb-px group border-t-[8px]
                 ${isActive 
                   ? 'text-ink-deep bg-white border-gold border-x-kraft-dark/30 border-b-white z-20 shadow-[0_0_25px_rgba(186,155,74,0.4),0_0_10px_rgba(186,155,74,0.2)] font-black' 
@@ -242,11 +242,11 @@ export default function AdminBountiesPage() {
                 <thead className="sticky top-0 z-10 bg-kraft-light backdrop-blur-md shadow-sm border-b border-kraft-dark/20">
                   <tr className="bg-kraft-light/50 border-b border-kraft-dark/20">
                     <th className="p-2 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted font-bold">{t('pages.admin.bounties.table.card', 'Card')}</th>
-                    <th className="p-2 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted font-bold">{t('pages.admin.bounties.table.set_info', 'Set / Info')}</th>
-                    <th className="p-2 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted text-center font-bold">{t('pages.admin.bounties.table.condition', 'Cond.')}</th>
+                    <th className="p-2 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted font-bold hidden md:table-cell">{t('pages.admin.bounties.table.set_info', 'Set / Info')}</th>
+                    <th className="p-2 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted text-center font-bold hidden md:table-cell">{t('pages.admin.bounties.table.condition', 'Cond.')}</th>
                     <th className="p-2 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted font-bold">{t('pages.admin.bounties.table.target_price', 'Target Price')}</th>
                     <th className="p-2 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted text-center font-bold">{t('pages.admin.bounties.table.qty', 'Qty')}</th>
-                    <th className="p-2 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted text-center font-bold">{t('pages.admin.bounties.table.status', 'Status')}</th>
+                    <th className="p-2 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted text-center font-bold hidden md:table-cell">{t('pages.admin.bounties.table.status', 'Status')}</th>
                     <th className="p-2 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted text-right font-bold">{t('pages.admin.bounties.table.actions', 'Actions')}</th>
                   </tr>
                 </thead>
@@ -266,11 +266,11 @@ export default function AdminBountiesPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="p-2">
+                        <td className="p-2 hidden md:table-cell">
                           <div className="text-xs text-ink-deep font-bold">{b.set_name || t('pages.common.labels.any_edition', 'Any Edition')}</div>
                           <div className="text-[10px] text-text-muted font-mono-stack uppercase opacity-70">{b.card_treatment?.replace(/_/g, ' ') || t('pages.common.labels.normal', 'Normal')}</div>
                         </td>
-                        <td className="p-2 text-center">
+                        <td className="p-2 text-center hidden md:table-cell">
                           <span className="badge bg-kraft-paper text-[10px] font-mono-stack border-kraft-dark/20">{b.condition || t('pages.common.labels.any_condition', 'ANY')}</span>
                         </td>
                         <td className="p-2">
@@ -282,7 +282,7 @@ export default function AdminBountiesPage() {
                         <td className="p-2 text-center font-mono-stack text-sm font-bold opacity-80">
                           {b.quantity_needed}
                         </td>
-                        <td className="p-2 text-center">
+                        <td className="p-2 text-center hidden md:table-cell">
                           {b.is_active ? (
                             <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-tighter">{t('pages.common.status.active_bounty', 'Active Bounty')}</span>
                           ) : (
@@ -479,7 +479,7 @@ export default function AdminBountiesPage() {
               {requests
                 .filter(req => onlyShowPendingRequests ? req.status !== 'solved' : true)
                 .map(req => (
-                <div id={req.id} key={req.id} className={`p-5 flex gap-6 items-center rounded-xl border border-kraft-dark/10 scroll-mt-24 shadow-sm border-l-4 ${
+                <div id={req.id} key={req.id} className={`p-5 flex flex-col md:flex-row gap-4 md:gap-6 items-start md:items-center rounded-xl border border-kraft-dark/10 scroll-mt-24 shadow-sm border-l-4 ${
                   req.status === 'pending' ? 'bg-white border-gold shadow-gold/5' : 
                   req.status === 'accepted' ? 'bg-emerald-50/20 border-emerald-500' : 
                   req.status === 'solved' ? 'bg-indigo-50/20 border-indigo-600 opacity-80 backdrop-grayscale' :
@@ -514,7 +514,7 @@ export default function AdminBountiesPage() {
                     <p className="text-[10px] text-text-muted mt-3 uppercase tracking-widest font-mono-stack font-bold opacity-40">{t('pages.admin.bounties.requests.requested_date', 'Requested:')} {new Date(req.created_at).toLocaleString()}</p>
                   </div>
                   
-                  <div className="flex flex-col gap-2 shrink-0">
+                  <div className="flex flex-col sm:flex-row md:flex-col gap-2 shrink-0 w-full md:w-auto">
                     {req.status === 'pending' && (
                       <button onClick={() => handleAcceptRequest(req)} className="btn-primary py-2 px-6 text-xs bg-emerald-600 hover:bg-emerald-500 shadow-md transition-all uppercase tracking-widest font-bold">{t('pages.admin.bounties.requests.accept_btn', 'ACCEPT & ADD BOUNTY')}</button>
                     )}

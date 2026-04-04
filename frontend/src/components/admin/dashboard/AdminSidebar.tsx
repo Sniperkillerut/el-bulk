@@ -8,11 +8,13 @@ import { adminFetchStats } from '@/lib/api';
 import { AdminStats } from '@/lib/types';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useLanguage } from '@/context/LanguageContext';
+import { useUI } from '@/context/UIContext';
 
 export default function AdminSidebar() {
   const pathname = usePathname();
   const { token, logout } = useAdmin();
   const { t } = useLanguage();
+  const { adminSidebarOpen, adminSidebarSlim, toggleAdminSidebarSlim, setAdminSidebarOpen } = useUI();
 
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
@@ -81,13 +83,17 @@ export default function AdminSidebar() {
         className={`flex items-center gap-3 px-4 py-2 rounded-r-lg border-l-4 transition-all no-underline group relative ${isActive
           ? 'bg-accent-primary text-text-on-accent font-bold shadow-md shadow-accent-primary/20 border-white/20'
           : 'text-text-secondary hover:bg-white/5 hover:text-accent-primary border-transparent'
-          }`}
+          } ${adminSidebarSlim ? 'justify-center lg:px-0 lg:border-l-0 lg:border-r-4' : ''}`}
+        title={adminSidebarSlim ? item.label : ""}
+        onClick={() => {
+          if (window.innerWidth < 1024) setAdminSidebarOpen(false);
+        }}
       >
         <span className={`text-lg ${isActive ? '' : 'opacity-50 group-hover:opacity-100'}`}>{item.icon}</span>
-        <span className="font-display text-sm tracking-tight">{item.label}</span>
+        {!adminSidebarSlim && <span className="font-display text-sm tracking-tight whitespace-nowrap overflow-hidden transition-all">{item.label}</span>}
         {badgeLabel && (
           <span
-            className="ml-auto bg-hp-color text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[1.2rem] text-center shadow-sm"
+            className={`${adminSidebarSlim ? 'absolute -top-1 -right-1' : 'ml-auto'} bg-hp-color text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[1.2rem] text-center shadow-sm`}
             style={{ backgroundColor: 'var(--status-hp)' }}
           >
             {badgeLabel}
@@ -98,97 +104,124 @@ export default function AdminSidebar() {
   };
 
   return (
-    <aside className="w-64 bg-ink-navy border-r border-ink-border flex flex-col h-screen sticky top-0 shrink-0">
+    <aside className={`fixed lg:sticky top-0 inset-y-0 left-0 z-50 bg-ink-navy border-r border-ink-border flex flex-col h-screen shrink-0 transition-all duration-300 ease-in-out
+      ${adminSidebarSlim ? 'lg:w-20' : 'lg:w-64'}
+      ${adminSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+    `}>
       {/* Sidebar Header */}
-      <div className="p-6 border-b border-ink-border">
+      <div className={`p-6 border-b border-ink-border ${adminSidebarSlim ? 'flex justify-center p-4' : ''}`}>
         <Link href="/admin/dashboard" className="flex items-center gap-2 no-underline">
           <div className="bg-gold rounded-sm px-2 py-1">
-            <span className="font-display text-xl text-ink-deep leading-none">EL BULK</span>
+            <span className="font-display text-xl text-ink-deep leading-none uppercase">
+              {adminSidebarSlim ? 'EB' : 'EL BULK'}
+            </span>
           </div>
-          <span className="font-mono-stack text-[10px] text-text-muted">ADMIN_CORE</span>
+          {!adminSidebarSlim && <span className="font-mono-stack text-[10px] text-text-muted">ADMIN_CORE</span>}
         </Link>
       </div>
 
-      {/* Navigation */}
       <nav
-        className="flex-1 p-4 pt-4 space-y-1 overflow-y-auto custom-scrollbar"
+        className={`flex-1 p-4 pt-4 space-y-1 overflow-y-auto custom-scrollbar ${adminSidebarSlim ? 'lg:p-2 lg:pt-4' : ''}`}
         style={{ scrollbarWidth: 'thin', scrollbarColor: 'var(--ink-border) transparent' }}
       >
-        <p className="font-mono-stack text-[9px] text-text-muted font-bold px-2 mb-2 tracking-widest uppercase opacity-40">{t('components.admin.sidebar.section.ops', 'Core Operations')}</p>
+        {!adminSidebarSlim && <p className="font-mono-stack text-[9px] text-text-muted font-bold px-2 mb-2 tracking-widest uppercase opacity-40">{t('components.admin.sidebar.section.ops', 'Core Operations')}</p>}
         {coreNavItems.map(renderNavItem)}
 
-        <p className="font-mono-stack text-[9px] text-text-muted font-bold px-2 mt-6 mb-2 tracking-widest uppercase opacity-40">{t('components.admin.sidebar.section.design', 'Design & Language')}</p>
+        {!adminSidebarSlim && <p className="font-mono-stack text-[9px] text-text-muted font-bold px-2 mt-6 mb-2 tracking-widest uppercase opacity-40">{t('components.admin.sidebar.section.design', 'Design & Language')}</p>}
         {customizationNavItems.map(renderNavItem)}
 
-        <p className="font-mono-stack text-[9px] text-text-muted font-bold px-2 mt-4 mb-2 tracking-widest uppercase opacity-40">{t('components.admin.sidebar.section.system', 'System Actions')}</p>
+        {!adminSidebarSlim && <p className="font-mono-stack text-[9px] text-text-muted font-bold px-2 mt-4 mb-2 tracking-widest uppercase opacity-40">{t('components.admin.sidebar.section.system', 'System Actions')}</p>}
         <Link
           href="/admin/settings"
+          title={adminSidebarSlim ? t('components.admin.sidebar.nav.settings', 'GLOBAL SETTINGS') : ""}
           className={`w-full flex items-center gap-3 px-4 py-2 rounded-r-lg border-l-4 transition-all group no-underline ${pathname === '/admin/settings'
             ? 'bg-accent-primary text-text-on-accent font-bold shadow-md shadow-accent-primary/20 border-white/20'
             : 'text-text-secondary hover:bg-white/5 hover:text-accent-primary border-transparent'
-            }`}
+            } ${adminSidebarSlim ? 'justify-center lg:px-0 lg:border-l-0 lg:border-r-4' : ''}`}
+          onClick={() => {
+            if (window.innerWidth < 1024) setAdminSidebarOpen(false);
+          }}
         >
           <span className={`text-lg ${pathname === '/admin/settings' ? '' : 'opacity-50 group-hover:opacity-100'}`}>⚙️</span>
-          <span className="font-display text-sm tracking-tight text-left">{t('components.admin.sidebar.nav.settings', 'GLOBAL SETTINGS')}</span>
+          {!adminSidebarSlim && <span className="font-display text-sm tracking-tight text-left">{t('components.admin.sidebar.nav.settings', 'GLOBAL SETTINGS')}</span>}
         </Link>
       </nav>
 
       {/* Sidebar Footer */}
-      <div className="p-4 border-t border-ink-border bg-ink-surface/20">
-        <div className="px-4 mb-4">
-          <div className="flex items-center justify-between mb-3 border-b border-ink-border/30 pb-2">
-            <span className="font-mono-stack text-[9px] text-text-muted uppercase tracking-widest font-bold">{t('components.admin.sidebar.health.title', 'System Health')}</span>
-            <button
-              onClick={fetchStats}
-              disabled={loadingStats}
-              className={`text-[10px] hover:text-gold transition-colors ${loadingStats ? 'animate-spin opacity-50' : 'opacity-40 hover:opacity-100'}`}
-              title={t('components.admin.sidebar.health.refresh', 'Refresh Stats')}
-            >
-              🔄
-            </button>
-          </div>
+      <div className={`p-4 border-t border-ink-border bg-ink-surface/20 ${adminSidebarSlim ? 'p-2' : ''}`}>
+        {!adminSidebarSlim ? (
+          <div className="px-4 mb-4">
+            <div className="flex items-center justify-between mb-3 border-b border-ink-border/30 pb-2">
+              <span className="font-mono-stack text-[9px] text-text-muted uppercase tracking-widest font-bold">{t('components.admin.sidebar.health.title', 'System Health')}</span>
+              <button
+                onClick={fetchStats}
+                disabled={loadingStats}
+                className={`text-[10px] hover:text-gold transition-colors ${loadingStats ? 'animate-spin opacity-50' : 'opacity-40 hover:opacity-100'}`}
+                title={t('components.admin.sidebar.health.refresh', 'Refresh Stats')}
+              >
+                🔄
+              </button>
+            </div>
 
-          {stats ? (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-x-2 gap-y-3">
-                <div>
-                  <p className="text-[8px] font-mono-stack text-text-muted uppercase opacity-60">{t('components.admin.sidebar.health.db_size', 'DB Size')}</p>
-                  <p className="text-[10px] font-mono-stack text-lp-color font-bold">{stats.database_size}</p>
-                </div>
-                <div>
-                  <p className="text-[8px] font-mono-stack text-text-muted uppercase opacity-60">{t('components.admin.sidebar.health.latency', 'Latency')}</p>
-                  <p className="text-[10px] font-mono-stack text-gold font-bold">{stats.query_speed_ms}ms</p>
-                </div>
-                <div>
-                  <p className="text-[8px] font-mono-stack text-text-muted uppercase opacity-60">{t('components.admin.sidebar.health.clients', 'Active Clients')}</p>
-                  <p className="text-[10px] font-mono-stack text-emerald-400 font-bold">{stats.active_connections}</p>
-                </div>
-                <div>
-                  <p className="text-[8px] font-mono-stack text-text-muted uppercase opacity-60">{t('components.admin.sidebar.health.cache', 'Cache')}</p>
-                  <p className="text-[10px] font-mono-stack text-lp-color font-bold">{stats.cache_hit_ratio}%</p>
+            {stats ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-x-2 gap-y-3">
+                  <div>
+                    <p className="text-[8px] font-mono-stack text-text-muted uppercase opacity-60">{t('components.admin.sidebar.health.db_size', 'DB Size')}</p>
+                    <p className="text-[10px] font-mono-stack text-lp-color font-bold">{stats.database_size}</p>
+                  </div>
+                  <div>
+                    <p className="text-[8px] font-mono-stack text-text-muted uppercase opacity-60">{t('components.admin.sidebar.health.latency', 'Latency')}</p>
+                    <p className="text-[10px] font-mono-stack text-gold font-bold">{stats.query_speed_ms}ms</p>
+                  </div>
+                  <div>
+                    <p className="text-[8px] font-mono-stack text-text-muted uppercase opacity-60">{t('components.admin.sidebar.health.clients', 'Active Clients')}</p>
+                    <p className="text-[10px] font-mono-stack text-emerald-400 font-bold">{stats.active_connections}</p>
+                  </div>
+                  <div>
+                    <p className="text-[8px] font-mono-stack text-text-muted uppercase opacity-60">{t('components.admin.sidebar.health.cache', 'Cache')}</p>
+                    <p className="text-[10px] font-mono-stack text-lp-color font-bold">{stats.cache_hit_ratio}%</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="py-2 text-[9px] text-text-muted italic animate-pulse">{t('components.admin.sidebar.health.sync', 'Synchronizing core...')}</div>
-          )}
-        </div>
-
-        <button
-          onClick={logout}
-          className="w-full flex items-center gap-3 px-4 py-2 text-hp-color hover:bg-hp-color/10 rounded-lg transition-all font-display text-sm tracking-tight border border-hp-color/20"
-        >
-          <span>🚪</span>
-          {t('components.admin.sidebar.auth.logout', 'LOG OUT SESSION')}
-        </button>
-
-        <div className="mt-4 px-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-lp-color animate-pulse"></div>
-            <span className="font-mono-stack text-[8px] text-text-muted uppercase font-bold tracking-tighter">{t('components.admin.sidebar.status.secure', 'Secure Link Active')}</span>
+            ) : (
+              <div className="py-2 text-[9px] text-text-muted italic animate-pulse">{t('components.admin.sidebar.health.sync', 'Synchronizing core...')}</div>
+            )}
           </div>
-          <span className="text-[8px] font-mono-stack text-text-muted opacity-30">V1.4.2</span>
+        ) : (
+          <div className="flex justify-center mb-4">
+             <button onClick={fetchStats} disabled={loadingStats} className={`${loadingStats ? 'animate-spin' : ''} text-lg`}>📡</button>
+          </div>
+        )}
+
+        <div className={`flex flex-col gap-2 ${adminSidebarSlim ? 'items-center' : ''}`}>
+          <button
+            onClick={logout}
+            title={adminSidebarSlim ? t('components.admin.sidebar.auth.logout', 'LOG OUT SESSION') : ""}
+            className={`flex items-center gap-3 px-4 py-2 text-hp-color hover:bg-hp-color/10 rounded-lg transition-all font-display text-sm tracking-tight border border-hp-color/20 ${adminSidebarSlim ? 'w-10 h-10 justify-center p-0' : 'w-full'}`}
+          >
+            <span>🚪</span>
+            {!adminSidebarSlim && t('components.admin.sidebar.auth.logout', 'LOG OUT SESSION')}
+          </button>
+
+          <button
+            onClick={toggleAdminSidebarSlim}
+            className={`hidden lg:flex items-center gap-3 px-4 py-2 text-text-muted hover:text-gold hover:bg-ink-surface/40 rounded-lg transition-all font-display text-[10px] tracking-widest uppercase border border-ink-border/20 ${adminSidebarSlim ? 'w-10 h-10 justify-center p-0' : 'w-full'}`}
+          >
+            <span>{adminSidebarSlim ? '→' : '←'}</span>
+            {!adminSidebarSlim && t('components.admin.sidebar.nav.collapse', 'Collapse View')}
+          </button>
         </div>
+
+        {!adminSidebarSlim && (
+          <div className="mt-4 px-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-lp-color animate-pulse"></div>
+              <span className="font-mono-stack text-[8px] text-text-muted uppercase font-bold tracking-tighter">{t('components.admin.sidebar.status.secure', 'Secure Link Active')}</span>
+            </div>
+            <span className="text-[8px] font-mono-stack text-text-muted opacity-30">V1.4.2</span>
+          </div>
+        )}
       </div>
     </aside>
   );

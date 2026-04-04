@@ -163,13 +163,13 @@ export default function AdminSettingsPage() {
       )}
 
       {/* Persistent Save Footer */}
-      <footer className="sticky bottom-2 mt-4 p-3 bg-ink-navy/95 backdrop-blur shadow-2xl rounded-xl border-x-4 border-t-2 border-gold flex items-center justify-between gap-4 z-10">
+      <footer className="sticky bottom-2 mt-4 p-3 bg-ink-navy/95 backdrop-blur shadow-2xl rounded-xl border-x-4 border-t-2 border-gold flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 z-10">
         <div className="hidden md:block">
           <h4 className="text-gold font-display text-xl m-0 leading-none">SAVE GLOBAL SETTINGS</h4>
           <p className="text-[10px] text-gold/40 font-mono-stack uppercase mt-1">These changes will update your shop&apos;s currency rates and identity across all pages.</p>
         </div>
         
-        <div className="flex-1 flex gap-4">
+        <div className="flex flex-col sm:flex-row flex-1 gap-3 sm:gap-4">
           <button 
             onClick={handleSave} 
             className="flex-1 btn-primary py-4 text-lg shadow-gold/20 relative" 

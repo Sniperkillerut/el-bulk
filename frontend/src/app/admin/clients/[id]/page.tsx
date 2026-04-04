@@ -66,7 +66,7 @@ export default function AdminClientDetailPage() {
   if (!detail) return <div className="p-8 text-center">{t('pages.admin.clients.details.not_found', 'CLIENT NOT FOUND.')}</div>;
 
   return (
-    <div className="p-8 max-w-6xl">
+    <div className="p-4 md:p-8 max-w-6xl">
       <Link href="/admin/clients" className="text-[10px] font-mono-stack text-gold-dark mb-4 block no-underline hover:text-hp-color transition-colors">
         {t('pages.admin.clients.details.back_link', '← BACK TO CLIENTS')}
       </Link>
@@ -75,12 +75,12 @@ export default function AdminClientDetailPage() {
         {/* Left Column: Info & Notes */}
         <div className="flex-1 space-y-8">
           <div className="cardbox p-8">
-            <div className="flex items-center gap-6 mb-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-8">
               <div className="w-20 h-20 rounded-lg bg-kraft-dark flex items-center justify-center text-white text-4xl font-display">
                 {detail.first_name[0]}{detail.last_name[0]}
               </div>
               <div>
-                <h1 className="text-4xl font-display mb-1 uppercase leading-none">{detail.first_name} {detail.last_name}</h1>
+                <h1 className="text-2xl sm:text-4xl font-display mb-1 uppercase leading-none">{detail.first_name} {detail.last_name}</h1>
                 <div className="flex items-center gap-3">
                   <span className="text-[10px] font-mono-stack text-text-muted bg-kraft-light px-2 py-0.5 border border-kraft-shadow">ID: {detail.id}</span>
                   {detail.is_subscriber && (
@@ -320,7 +320,7 @@ export default function AdminClientDetailPage() {
 
             <div className="p-6 bg-kraft-dark/10 border-2 border-dotted border-kraft-dark rounded-lg flex flex-col gap-4 text-center">
                  <h5 className="font-display text-sm tracking-widest text-kraft-dark">{t('pages.admin.clients.details.summary_title', 'VALUED CLIENT SUMMARY')}</h5>
-                 <div className="flex justify-around items-center border-y border-kraft-dark/20 py-4">
+                 <div className="flex flex-col sm:flex-row justify-around items-center border-y border-kraft-dark/20 py-4 gap-4">
                     <div>
                       <p className="text-[10px] font-mono-stack text-text-muted tracking-tighter uppercase mb-1">{t('pages.admin.clients.details.lifetime_label', 'Lifetime')}</p>
                       <p className="text-xl font-bold font-mono-stack leading-none">${(detail.orders || []).reduce((sum, o) => sum + o.total_cop, 0).toLocaleString()}</p>

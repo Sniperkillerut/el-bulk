@@ -50,8 +50,8 @@ export default function AdminNoticesPage() {
             <tr className="text-[10px] font-mono-stack font-bold uppercase tracking-wider">
               <th className="p-4 border-b border-kraft-shadow">{t('pages.admin.notices.table.date', 'Date')}</th>
               <th className="p-4 border-b border-kraft-shadow">{t('pages.admin.notices.table.title', 'Title')}</th>
-              <th className="p-4 border-b border-kraft-shadow">{t('pages.admin.notices.table.slug', 'Slug')}</th>
-              <th className="p-4 border-b border-kraft-shadow">{t('pages.admin.notices.table.status', 'Status')}</th>
+              <th className="p-4 border-b border-kraft-shadow hidden md:table-cell">{t('pages.admin.notices.table.slug', 'Slug')}</th>
+              <th className="p-4 border-b border-kraft-shadow hidden md:table-cell">{t('pages.admin.notices.table.status', 'Status')}</th>
               <th className="p-4 border-b border-kraft-shadow text-right">{t('pages.admin.notices.table.actions', 'Actions')}</th>
             </tr>
           </thead>
@@ -73,8 +73,8 @@ export default function AdminNoticesPage() {
                     {new Date(notice.created_at).toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </td>
                   <td className="p-4 font-bold">{notice.title}</td>
-                  <td className="p-4 text-xs opacity-60">/{notice.slug}</td>
-                  <td className="p-4">
+                  <td className="p-4 text-xs opacity-60 hidden md:table-cell">/{notice.slug}</td>
+                  <td className="p-4 hidden md:table-cell">
                     <span className={`px-2 py-0.5 rounded-sm text-[10px] font-bold ${notice.is_published ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>
                       {notice.is_published ? t('pages.admin.notices.status.published', 'PUBLISHED') : t('pages.admin.notices.status.draft', 'DRAFT')}
                     </span>

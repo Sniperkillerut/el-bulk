@@ -212,7 +212,7 @@ export default function AdminThemesPage() {
     <div className="flex-1 overflow-y-auto p-4 lg:p-8 bg-bg-page text-text-main custom-scrollbar">
       <div className="max-w-[1600px] mx-auto space-y-8">
         
-        <header className="flex items-center justify-between border-b border-border-main pb-6">
+        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border-main pb-6">
           <div>
             <h1 className="text-3xl font-display font-bold text-accent-primary">THEME ENGINE</h1>
             <p className="text-text-secondary text-sm font-mono mt-1 opacity-60 uppercase tracking-wider">Configure visual identity and storefront skins</p>
@@ -243,13 +243,13 @@ export default function AdminThemesPage() {
             <h2 className="text-[10px] font-mono font-bold text-text-muted uppercase tracking-[0.2em] flex items-center gap-2 mb-2">
               <Icons.Grid /> Skins
             </h2>
-            <div className="grid gap-2">
+            <div className="flex lg:grid gap-2 overflow-x-auto lg:overflow-visible no-scrollbar pb-2 lg:pb-0">
               {themes.map(t => (
                 <div 
                   key={t.id}
                   onClick={() => handleEdit(t)}
                   className={`
-                    p-3 rounded border cursor-pointer transition-all relative group flex flex-col gap-2
+                    p-3 rounded border cursor-pointer transition-all relative group flex flex-col gap-2 min-w-[140px] lg:min-w-0
                     ${editingTheme?.id === t.id ? 'border-accent-primary bg-accent-primary/5 shadow-sm' : 'border-border-main hover:border-text-muted bg-bg-surface'}
                   `}
                 >
@@ -293,7 +293,7 @@ export default function AdminThemesPage() {
           </div>
 
           {/* 2. Center Stage: Large Sticky Preview */}
-          <div className="lg:col-span-7 lg:sticky lg:top-8 space-y-4">
+          <div className="lg:col-span-7 lg:sticky lg:top-8 space-y-4 hidden lg:block">
             <div className="flex items-center justify-between border-b border-border-main/20 pb-4">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5 p-1 bg-bg-header/20 rounded-md border border-border-main/30">

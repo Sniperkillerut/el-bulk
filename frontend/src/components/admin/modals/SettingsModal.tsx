@@ -21,12 +21,12 @@ export default function SettingsModal({
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center px-4"
       style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)' }}>
-      <div className="card max-w-4xl w-full p-8" style={{ background: 'var(--ink-surface)', border: '4px solid var(--kraft-dark)', position: 'relative' }}>
+      <div className="card max-w-4xl w-full p-4 md:p-8" style={{ background: 'var(--ink-surface)', border: '4px solid var(--kraft-dark)', position: 'relative' }}>
         {/* Decorative Corner */}
         <div className="absolute top-0 right-0 w-16 h-16 pointer-events-none opacity-20" style={{ borderTop: '8px solid var(--gold)', borderRight: '8px solid var(--gold)' }} />
         
         <div className="flex items-center justify-between mb-8">
-          <h2 className="font-display text-4xl m-0">GLOBAL SETTINGS</h2>
+          <h2 className="font-display text-2xl md:text-4xl m-0">GLOBAL SETTINGS</h2>
           <div className="px-3 py-1 bg-nm-color text-white text-xs font-mono-stack rounded shadow-sm">SYSTEM_CONFIG_V2</div>
         </div>
 
@@ -90,7 +90,7 @@ export default function SettingsModal({
           </div>
         </div>
 
-        <div className="flex gap-4 mt-12 bg-kraft-light/20 p-4 -m-8 mt-8 border-t border-kraft-dark">
+        <div className="flex flex-col sm:flex-row gap-4 mt-12 bg-kraft-light/20 p-4 -mx-4 md:-mx-8 -mb-4 md:-mb-8 mt-8 border-t border-kraft-dark">
           <button onClick={() => onSave(editingSettings)} className="btn-primary flex-1 shadow-md" disabled={saving}>
             {saving ? 'SYNCING...' : 'SAVE ENTIRE DB CONFIG →'}
           </button>
