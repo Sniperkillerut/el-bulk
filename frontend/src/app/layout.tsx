@@ -4,6 +4,7 @@ import './globals.css';
 import StorefrontLayoutWrapper from '@/components/StorefrontLayoutWrapper';
 import { CartProvider } from '@/lib/CartContext';
 import RemoteLogManager from '@/components/RemoteLogManager';
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 import { UserProvider } from '@/context/UserContext';
 import { UIProvider } from '@/context/UIContext';
@@ -69,6 +70,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body suppressHydrationWarning>
         <RemoteLogManager />
+        {process.env.NEXT_PUBLIC_GA_ID && <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />}
         <ThemeProvider defaultTheme={defaultTheme}>
           <LanguageProvider>
             <UserProvider>

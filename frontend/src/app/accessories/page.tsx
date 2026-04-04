@@ -1,3 +1,5 @@
+'use client';
+
 import ProductGrid from '@/components/ProductGrid';
 import { useLanguage } from '@/context/LanguageContext';
 
