@@ -44,6 +44,12 @@ CREATE TABLE IF NOT EXISTS theme (
   padding_card        TEXT NOT NULL DEFAULT '12px',
   gap_grid            TEXT NOT NULL DEFAULT '24px',
   
+  -- Advanced Branding Extensions
+  bg_image_url        TEXT,
+  font_heading        TEXT,
+  font_body           TEXT,
+  accent_secondary    TEXT,
+  
   created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );

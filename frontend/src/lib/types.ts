@@ -608,6 +608,12 @@ export interface Theme {
   padding_card: string;
   gap_grid: string;
 
+  // Advanced Branding Extensions
+  bg_image_url?: string;
+  font_heading?: string;
+  font_body?: string;
+  accent_secondary?: string;
+
   created_at: string;
   updated_at: string;
 }

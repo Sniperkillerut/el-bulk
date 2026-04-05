@@ -534,6 +534,12 @@ type Theme struct {
 	PaddingCard        string    `db:"padding_card"         json:"padding_card"`
 	GapGrid            string    `db:"gap_grid"             json:"gap_grid"`
 	
+	// Advanced Branding
+	BgImageURL         *string   `db:"bg_image_url"         json:"bg_image_url"`
+	FontHeading        *string   `db:"font_heading"         json:"font_heading"`
+	FontBody           *string   `db:"font_body"            json:"font_body"`
+	AccentSecondary    *string   `db:"accent_secondary"     json:"accent_secondary"`
+	
 	CreatedAt          time.Time `db:"created_at"           json:"created_at"`
 	UpdatedAt          time.Time `db:"updated_at"           json:"updated_at"`
 }
@@ -579,4 +585,10 @@ type ThemeInput struct {
 	RadiusBase         string `json:"radius_base"`
 	PaddingCard        string `json:"padding_card"`
 	GapGrid            string `json:"gap_grid"`
+	
+	// Advanced Branding
+	BgImageURL         *string `json:"bg_image_url,omitempty"`
+	FontHeading        *string `json:"font_heading,omitempty"`
+	FontBody           *string `json:"font_body,omitempty"`
+	AccentSecondary    *string `json:"accent_secondary,omitempty"`
 }

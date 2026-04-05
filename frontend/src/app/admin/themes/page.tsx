@@ -56,6 +56,10 @@ const CARDBOARD_DEFAULT: ThemeInput = {
   radius_base: '8px',
   padding_card: '12px',
   gap_grid: '16px',
+  bg_image_url: '',
+  font_heading: '',
+  font_body: '',
+  accent_secondary: '',
 };
 
 export default function AdminThemesPage() {
@@ -74,7 +78,8 @@ export default function AdminThemesPage() {
     interactive: true,
     type: false,
     logic: false,
-    geometry: false
+    geometry: false,
+    advanced: true
   });
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
 
@@ -131,6 +136,10 @@ export default function AdminThemesPage() {
       radius_base: theme.radius_base,
       padding_card: theme.padding_card,
       gap_grid: theme.gap_grid,
+      bg_image_url: theme.bg_image_url || '',
+      font_heading: theme.font_heading || '',
+      font_body: theme.font_body || '',
+      accent_secondary: theme.accent_secondary || '',
     });
     setIsNew(false);
     setMessage(null);
@@ -464,6 +473,21 @@ export default function AdminThemesPage() {
                     <LayoutPropertyInput label="Grid Spacing (Gap)" value={form.gap_grid} onChange={val => setForm({...form, gap_grid: val})} helperText="(px/rem)" />
                   </div>
                 </Collapsible>
+
+                {/* 7. Advanced Extensions */}
+                <Collapsible 
+                  title="Advanced Branding & Overrides" 
+                  icon={<Icons.Palette />} 
+                  isOpen={expanded.advanced} 
+                  onToggle={() => setExpanded(p => ({...p, advanced: !p.advanced}))}
+                >
+                  <div className="space-y-2">
+                    <StringPropertyInput label="Background Overlay Image URL" value={form.bg_image_url || ''} onChange={val => setForm({...form, bg_image_url: val})} helperText="(Can be SVG data URI or absolute URL)" />
+                    <ColorInput label="Secondary Edge/Accent Color" value={form.accent_secondary || ''} onChange={val => setForm({...form, accent_secondary: val})} />
+                    <StringPropertyInput label="Header Typography Family" value={form.font_heading || ''} onChange={val => setForm({...form, font_heading: val})} helperText="(e.g., 'Bebas Neue' or 'Cinzel')" />
+                    <StringPropertyInput label="Body Typography Family" value={form.font_body || ''} onChange={val => setForm({...form, font_body: val})} helperText="(e.g., 'Inter' or 'Space Mono')" />
+                  </div>
+                </Collapsible>
               </div>
 
               <div className="p-4 border-t border-border-main bg-bg-header/20 flex flex-col gap-3 shrink-0">
@@ -736,6 +760,24 @@ function LayoutPropertyInput({ label, value, onChange, helperText }: { label: st
         value={value} 
         onChange={e => onChange(e.target.value)}
         className="bg-bg-page border border-border-main/30 rounded px-2 py-1 text-[11px] outline-none focus:border-accent-primary transition-colors text-text-main font-mono"
+      />
+    </div>
+  );
+}
+
+function StringPropertyInput({ label, value, onChange, helperText }: { label: string, value: string, onChange: (val: string) => void, helperText?: string }) {
+  return (
+    <div className="flex flex-col p-2.5 rounded bg-bg-header/30 hover:bg-bg-header/50 transition-colors border border-border-main/50 space-y-1">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-bold text-text-secondary uppercase">{label}</span>
+        {helperText && <span className="text-[8px] font-mono text-text-muted italic">{helperText}</span>}
+      </div>
+      <input 
+        type="text" 
+        value={value} 
+        onChange={e => onChange(e.target.value)}
+        className="bg-bg-page border border-border-main/30 rounded px-2 py-1 text-[11px] outline-none focus:border-accent-primary transition-colors text-text-main font-mono"
+        placeholder="Default"
       />
     </div>
   );

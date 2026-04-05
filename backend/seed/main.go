@@ -924,6 +924,9 @@ func seedCRM(db *sqlx.DB, adminID string) {
 
 func seedThemes(db *sqlx.DB) {
 	logger.Info("🎨 Seeding Theme Palette Pack...")
+	
+	ptr := func(s string) *string { return &s }
+	
 	themes := []models.Theme{
 		{
 			ID: "00000000-0000-0000-0000-000000000001", Name: "Cardboard", IsSystem: true,
@@ -995,6 +998,71 @@ func seedThemes(db *sqlx.DB) {
 			CheckboxBorder: "#f472b6", CheckboxChecked: "#be185d",
 			RadiusBase: "16px", PaddingCard: "14px", GapGrid: "20px",
 		},
+		{
+			ID: "00000000-0000-0000-0000-000000000010", Name: "Strixhaven: Lorehold", IsSystem: true,
+			BgPage: "#f4f1ea", BgHeader: "#a83232", BgSurface: "#ffffff", BgCard: "#ffffff",
+			TextMain: "#3e2723", TextSecondary: "#5d4037", TextMuted: "#8d6e63", TextOnAccent: "#ffffff", TextOnHeader: "#ffffff",
+			AccentPrimary: "#d4af37", AccentPrimaryHover: "#b8961e", BorderMain: "#d7ccc8", BorderFocus: "#a83232",
+			StatusNM: "#2e7d32", StatusLP: "#e65100", StatusMP: "#ef6c00", StatusHP: "#c62828", StatusDMG: "#4e342e",
+			BtnPrimaryBg: "#a83232", BtnPrimaryText: "#ffffff", BtnSecondaryBg: "transparent", BtnSecondaryText: "#a83232",
+			CheckboxBorder: "#d7ccc8", CheckboxChecked: "#a83232",
+			RadiusBase: "2px", PaddingCard: "16px", GapGrid: "20px",
+			BgImageURL: ptr("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='2' cy='2' r='2' fill='%23a83232' fill-opacity='0.05'/%3E%3C/svg%3E"),
+			FontHeading: ptr("Cinzel, serif"), FontBody: ptr("Inter, sans-serif"),
+			AccentSecondary: ptr("#e65100"),
+		},
+		{
+			ID: "00000000-0000-0000-0000-000000000011", Name: "Strixhaven: Prismari", IsSystem: true,
+			BgPage: "#0f172a", BgHeader: "#ef4444", BgSurface: "#1e293b", BgCard: "#1e293b",
+			TextMain: "#f8fafc", TextSecondary: "#cbd5e1", TextMuted: "#94a3b8", TextOnAccent: "#ffffff", TextOnHeader: "#ffffff",
+			AccentPrimary: "#3b82f6", AccentPrimaryHover: "#2563eb", BorderMain: "#334155", BorderFocus: "#ef4444",
+			StatusNM: "#10b981", StatusLP: "#f59e0b", StatusMP: "#f97316", StatusHP: "#ef4444", StatusDMG: "#475569",
+			BtnPrimaryBg: "linear-gradient(135deg, #3b82f6, #ef4444)", BtnPrimaryText: "#ffffff", BtnSecondaryBg: "transparent", BtnSecondaryText: "#f8fafc",
+			CheckboxBorder: "#475569", CheckboxChecked: "#3b82f6",
+			RadiusBase: "12px", PaddingCard: "14px", GapGrid: "24px",
+			BgImageURL: ptr("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%23ef4444' fill-opacity='0.1' d='M44.7,-76.4C58.9,-69.2,71.8,-59.1,81.3,-46.3C90.8,-33.5,96.8,-18,95.5,-3C94.2,12,85.6,26.5,75.4,38.8C65.2,51.1,53.4,61.2,40.1,68.6C26.8,76,12,80.7,-2.8,84.9C-17.6,89.1,-35.1,92.8,-49,86.2C-62.9,79.6,-73.2,62.7,-80.6,45.3C-88,27.9,-92.5,10,-91.4,-7.5C-90.3,-25,-83.6,-42,-72.6,-54.6C-61.6,-67.2,-46.3,-75.4,-31.6,-80.5C-16.9,-85.6, -1.2,-87.6,13.4,-84.9C28,-82.2,41.9,-74.8,44.7,-76.4Z' transform='translate(100 100)' /%3E%3C/svg%3E"),
+			FontHeading: ptr("Bebas Neue, sans-serif"), FontBody: ptr("Space Mono, monospace"),
+			AccentSecondary: ptr("#ef4444"),
+		},
+		{
+			ID: "00000000-0000-0000-0000-000000000012", Name: "Strixhaven: Quandrix", IsSystem: true,
+			BgPage: "#f0fdfa", BgHeader: "#064e3b", BgSurface: "#ffffff", BgCard: "#ffffff",
+			TextMain: "#064e3b", TextSecondary: "#0f766e", TextMuted: "#14b8a6", TextOnAccent: "#ffffff", TextOnHeader: "#ffffff",
+			AccentPrimary: "#0ea5e9", AccentPrimaryHover: "#0284c7", BorderMain: "#ccfbf1", BorderFocus: "#0ea5e9",
+			StatusNM: "#10b981", StatusLP: "#0ea5e9", StatusMP: "#f59e0b", StatusHP: "#ef4444", StatusDMG: "#0f766e",
+			BtnPrimaryBg: "#0ea5e9", BtnPrimaryText: "#ffffff", BtnSecondaryBg: "#ccfbf1", BtnSecondaryText: "#064e3b",
+			CheckboxBorder: "#99f6e4", CheckboxChecked: "#0ea5e9",
+			RadiusBase: "0px", PaddingCard: "16px", GapGrid: "16px",
+			BgImageURL: ptr("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h22v20h18v2H22v18H0v-2h20v-2H0v-2h20v-2H0v-2h20v-2H0v-2h20z' fill='%230f766e' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E"),
+			FontHeading: ptr("Space Mono, monospace"), FontBody: ptr("Inter, sans-serif"),
+			AccentSecondary: ptr("#10b981"),
+		},
+		{
+			ID: "00000000-0000-0000-0000-000000000013", Name: "Strixhaven: Silverquill", IsSystem: true,
+			BgPage: "#fafafa", BgHeader: "#09090b", BgSurface: "#ffffff", BgCard: "#ffffff",
+			TextMain: "#09090b", TextSecondary: "#52525b", TextMuted: "#a1a1aa", TextOnAccent: "#ffffff", TextOnHeader: "#ffffff",
+			AccentPrimary: "#18181b", AccentPrimaryHover: "#27272a", BorderMain: "#e4e4e7", BorderFocus: "#18181b",
+			StatusNM: "#10b981", StatusLP: "#fbbf24", StatusMP: "#f97316", StatusHP: "#ef4444", StatusDMG: "#71717a",
+			BtnPrimaryBg: "#09090b", BtnPrimaryText: "#ffffff", BtnSecondaryBg: "#ffffff", BtnSecondaryText: "#09090b",
+			CheckboxBorder: "#d4d4d8", CheckboxChecked: "#09090b",
+			RadiusBase: "8px", PaddingCard: "24px", GapGrid: "32px",
+			BgImageURL: ptr("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23a1a1aa' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"),
+			FontHeading: ptr("Playfair Display, serif"), FontBody: ptr("Inter, sans-serif"),
+			AccentSecondary: ptr("#52525b"),
+		},
+		{
+			ID: "00000000-0000-0000-0000-000000000014", Name: "Strixhaven: Witherbloom", IsSystem: true,
+			BgPage: "#1c1917", BgHeader: "#0d0401", BgSurface: "#292524", BgCard: "#292524",
+			TextMain: "#d9f99d", TextSecondary: "#a3e635", TextMuted: "#65a30d", TextOnAccent: "#0d0401", TextOnHeader: "#d9f99d",
+			AccentPrimary: "#84cc16", AccentPrimaryHover: "#65a30d", BorderMain: "#44403c", BorderFocus: "#84cc16",
+			StatusNM: "#84cc16", StatusLP: "#fef08a", StatusMP: "#f97316", StatusHP: "#ef4444", StatusDMG: "#57534e",
+			BtnPrimaryBg: "#84cc16", BtnPrimaryText: "#0d0401", BtnSecondaryBg: "#292524", BtnSecondaryText: "#84cc16",
+			CheckboxBorder: "#57534e", CheckboxChecked: "#84cc16",
+			RadiusBase: "24px", PaddingCard: "12px", GapGrid: "16px",
+			BgImageURL: ptr("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h20v20H0V0zm10 17L3 9.5 9.5 3 17 9.5 10 17z' fill='%2365a30d' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E"),
+			FontHeading: ptr("Cinzel, serif"), FontBody: ptr("Inter, sans-serif"),
+			AccentSecondary: ptr("#22c55e"),
+		},
 	}
 
 	for _, t := range themes {
@@ -1006,7 +1074,8 @@ func seedThemes(db *sqlx.DB) {
 				status_nm, status_lp, status_mp, status_hp, status_dmg,
 				btn_primary_bg, btn_primary_text, btn_secondary_bg, btn_secondary_text,
 				checkbox_border, checkbox_checked,
-				radius_base, padding_card, gap_grid
+				radius_base, padding_card, gap_grid,
+				bg_image_url, font_heading, font_body, accent_secondary
 			) VALUES (
 				:id, :name, :is_system, :bg_page, :bg_header, :bg_surface, :bg_card,
 				:text_main, :text_secondary, :text_muted, :text_on_accent, :text_on_header,
@@ -1014,7 +1083,8 @@ func seedThemes(db *sqlx.DB) {
 				:status_nm, :status_lp, :status_mp, :status_hp, :status_dmg,
 				:btn_primary_bg, :btn_primary_text, :btn_secondary_bg, :btn_secondary_text,
 				:checkbox_border, :checkbox_checked,
-				:radius_base, :padding_card, :gap_grid
+				:radius_base, :padding_card, :gap_grid,
+				:bg_image_url, :font_heading, :font_body, :accent_secondary
 			) ON CONFLICT (id) DO UPDATE SET
 				name = EXCLUDED.name,
 				is_system = EXCLUDED.is_system,
@@ -1044,7 +1114,11 @@ func seedThemes(db *sqlx.DB) {
 				checkbox_checked = EXCLUDED.checkbox_checked,
 				radius_base = EXCLUDED.radius_base,
 				padding_card = EXCLUDED.padding_card,
-				gap_grid = EXCLUDED.gap_grid
+				gap_grid = EXCLUDED.gap_grid,
+				bg_image_url = EXCLUDED.bg_image_url,
+				font_heading = EXCLUDED.font_heading,
+				font_body = EXCLUDED.font_body,
+				accent_secondary = EXCLUDED.accent_secondary
 		`, t)
 		if err != nil {
 			logger.Error("Failed to seed theme '%s': %v", t.Name, err)

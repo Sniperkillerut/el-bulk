@@ -45,6 +45,12 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
           --padding-card: ${t.padding_card || '12px'};
           --gap-grid: ${t.gap_grid || '16px'};
 
+          /* Advanced Branding Extensions */
+          ${t.bg_image_url ? `--theme-bg-image: url('${t.bg_image_url}');` : ''}
+          ${t.font_heading ? `--theme-font-heading: '${t.font_heading}', sans-serif;` : ''}
+          ${t.font_body ? `--theme-font-body: '${t.font_body}', sans-serif;` : ''}
+          --accent-secondary: ${t.accent_secondary || 'transparent'};
+
           /* Legacy Aliases for Backward Compatibility */
           --ink-surface: ${t.bg_surface || '#fdfbf7'};
           --ink-card: ${t.bg_card || '#ffffff'};

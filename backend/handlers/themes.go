@@ -42,9 +42,11 @@ func (h *ThemeHandler) Create(w http.ResponseWriter, r *http.Request) {
 		INSERT INTO theme (
 			name, bg_page, bg_header, bg_surface, bg_card, text_main, text_secondary, text_muted, text_on_accent, text_on_header,
 			accent_primary, accent_primary_hover, border_main, border_focus, status_nm, status_lp, status_mp, status_hp, status_dmg,
-			btn_primary_bg, btn_primary_text, btn_secondary_bg, btn_secondary_text, checkbox_border, checkbox_checked
+			btn_primary_bg, btn_primary_text, btn_secondary_bg, btn_secondary_text, checkbox_border, checkbox_checked,
+			bg_image_url, font_heading, font_body, accent_secondary
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25,
+			$26, $27, $28, $29
 		) RETURNING *
 	`
 	var theme models.Theme
@@ -55,6 +57,7 @@ func (h *ThemeHandler) Create(w http.ResponseWriter, r *http.Request) {
 		input.StatusNM, input.StatusLP, input.StatusMP, input.StatusHP, input.StatusDMG,
 		input.BtnPrimaryBg, input.BtnPrimaryText, input.BtnSecondaryBg, input.BtnSecondaryText,
 		input.CheckboxBorder, input.CheckboxChecked,
+		input.BgImageURL, input.FontHeading, input.FontBody, input.AccentSecondary,
 	)
 	if err != nil {
 		render.Error(w, "failed to create theme: "+err.Error(), http.StatusInternalServerError)
@@ -82,8 +85,9 @@ func (h *ThemeHandler) Update(w http.ResponseWriter, r *http.Request) {
 			status_nm = $15, status_lp = $16, status_mp = $17, status_hp = $18, status_dmg = $19,
 			btn_primary_bg = $20, btn_primary_text = $21, btn_secondary_bg = $22, btn_secondary_text = $23,
 			checkbox_border = $24, checkbox_checked = $25,
+			bg_image_url = $26, font_heading = $27, font_body = $28, accent_secondary = $29,
 			updated_at = now()
-		WHERE id = $26
+		WHERE id = $30
 		RETURNING *
 	`
 	var theme models.Theme
@@ -94,6 +98,7 @@ func (h *ThemeHandler) Update(w http.ResponseWriter, r *http.Request) {
 		input.StatusNM, input.StatusLP, input.StatusMP, input.StatusHP, input.StatusDMG,
 		input.BtnPrimaryBg, input.BtnPrimaryText, input.BtnSecondaryBg, input.BtnSecondaryText,
 		input.CheckboxBorder, input.CheckboxChecked,
+		input.BgImageURL, input.FontHeading, input.FontBody, input.AccentSecondary,
 		id,
 	)
 	if err != nil {
