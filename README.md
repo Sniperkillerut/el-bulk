@@ -20,6 +20,45 @@
 - **mTLS Suport**: Mutual TLS for secure service-to-service communication.
 - **Anti-CSRF & Rate-Limiting**: Production-ready security middleware active by default.
 - **Provider-Agnostic OAuth**: Seamless login via Google or Facebook.
+- **Granular Cookie Consent**: Privacy-first tracking that requires explicit opt-in for analytics and marketing cookies.
+
+---
+
+## 🍪 Cookie & Privacy Consent
+
+El Bulk uses a granular consent management system to balance user privacy with store analytics. All non-essential tracking is **disabled by default**.
+
+| Category | Description | Usage | State |
+| :--- | :--- | :--- | :--- |
+| **Essential** | Core site functionality. | Handles authentication sessions, active theme selection, and persistent cart metadata. | **Always Active** |
+| **Analytics** | Traffic and behavior analysis. | Uses **GA4 (Google Analytics)** to help store owners understand which card sets and products are most popular. | **Opt-in** |
+| **Marketing** | Personalized advertising. | Placeholder for future integrations like Facebook Pixel or social features. | **Opt-in** |
+
+Users can customize these preferences at any time via the storefront banner. Consent status is persisted in the browser's `localStorage`.
+
+---
+
+## 📈 Analytics & Marketing Setup
+
+To enable tracking, add the following IDs to your `frontend/.env.local` or production environment variables.
+
+### 1. Google Analytics 4 (GA4)
+- **Variable**: `NEXT_PUBLIC_GA_ID` (Format: `G-XXXXXXXXXX`)
+- **How to get**: Go to [Google Analytics Console](https://analytics.google.com/) > Admin > Data Streams > Web > Copy **Measurement ID**.
+
+### 2. Meta Pixel (Facebook)
+- **Variable**: `NEXT_PUBLIC_META_PIXEL_ID` (Format: `1234567890`)
+- **How to get**: Go to [Meta Events Manager](https://business.facebook.com/events_manager2/) > Data Sources > Settings > Copy **Pixel ID**.
+
+### 3. Google Ads (Consent Mode v2)
+- **Variable**: `NEXT_PUBLIC_GOOGLE_ADS_ID` (Format: `AW-XXXXXXXXXX`)
+- **How to get**: Go to [Google Ads](https://ads.google.com/) > Tools & Settings > Conversions > Tag setup > Copy **Conversion ID**.
+
+### 4. Hotjar
+- **Variable**: `NEXT_PUBLIC_HOTJAR_ID` (Format: `1234567`)
+- **How to get**: Go to [Hotjar Dashboard](https://insights.hotjar.com/) > Sites & Organizations > Copy **Site ID**.
+
+---
 
 ### 🛠️ Admin Dashboard
 - **Live Inventory Control**: Batch update stocks, prices, and locations.

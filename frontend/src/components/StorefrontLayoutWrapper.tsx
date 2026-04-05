@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import Navbar from './Navbar';
 import ProductModalManager from './ProductModalManager';
 import BountyModalManager from './BountyModalManager';
+import CookieBanner from './CookieBanner';
 import { useLanguage } from '@/context/LanguageContext';
 
 export default function StorefrontLayoutWrapper({ children }: { children: React.ReactNode }) {
@@ -20,6 +21,7 @@ export default function StorefrontLayoutWrapper({ children }: { children: React.
       <Navbar />
       <ProductModalManager />
       <BountyModalManager />
+      <CookieBanner />
       <main id="main-content" data-theme-area="main" className="min-h-[calc(100vh-64px)]">
         {children}
       </main>
