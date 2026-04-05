@@ -937,6 +937,7 @@ func seedThemes(db *sqlx.DB) {
 			BtnPrimaryBg: "#1a1f2e", BtnPrimaryText: "#ffffff", BtnSecondaryBg: "transparent", BtnSecondaryText: "#3b3127",
 			CheckboxBorder: "#8b795c", CheckboxChecked: "#d4af37",
 			RadiusBase: "8px", PaddingCard: "12px", GapGrid: "16px",
+			BgImageURL: ptr(""), FontHeading: ptr("Inter, sans-serif"), FontBody: ptr("Inter, sans-serif"), AccentSecondary: ptr(""),
 		},
 		{
 			ID: "00000000-0000-0000-0000-000000000002", Name: "Obsidiana", IsSystem: true,
@@ -947,6 +948,7 @@ func seedThemes(db *sqlx.DB) {
 			BtnPrimaryBg: "#3b82f6", BtnPrimaryText: "#ffffff", BtnSecondaryBg: "transparent", BtnSecondaryText: "#f8fafc",
 			CheckboxBorder: "#475569", CheckboxChecked: "#3b82f6",
 			RadiusBase: "2px", PaddingCard: "14px", GapGrid: "20px",
+			BgImageURL: ptr(""), FontHeading: ptr("Inter, sans-serif"), FontBody: ptr("Inter, sans-serif"), AccentSecondary: ptr(""),
 		},
 		{
 			ID: "00000000-0000-0000-0000-000000000003", Name: "Yule", IsSystem: true,
@@ -957,6 +959,7 @@ func seedThemes(db *sqlx.DB) {
 			BtnPrimaryBg: "#991b1b", BtnPrimaryText: "#ffffff", BtnSecondaryBg: "transparent", BtnSecondaryText: "#f0fdf4",
 			CheckboxBorder: "#166534", CheckboxChecked: "#fbbf24",
 			RadiusBase: "12px", PaddingCard: "12px", GapGrid: "16px",
+			BgImageURL: ptr(""), FontHeading: ptr("Inter, sans-serif"), FontBody: ptr("Inter, sans-serif"), AccentSecondary: ptr(""),
 		},
 		{
 			ID: "00000000-0000-0000-0000-000000000004", Name: "Spring Egg", IsSystem: true,
@@ -967,6 +970,7 @@ func seedThemes(db *sqlx.DB) {
 			BtnPrimaryBg: "#8b5cf6", BtnPrimaryText: "#ffffff", BtnSecondaryBg: "transparent", BtnSecondaryText: "#4c1d95",
 			CheckboxBorder: "#a78bfa", CheckboxChecked: "#8b5cf6",
 			RadiusBase: "24px", PaddingCard: "16px", GapGrid: "24px",
+			BgImageURL: ptr(""), FontHeading: ptr("Inter, sans-serif"), FontBody: ptr("Inter, sans-serif"), AccentSecondary: ptr(""),
 		},
 		{
 			ID: "00000000-0000-0000-0000-000000000005", Name: "Neon Flux", IsSystem: true,
@@ -977,6 +981,7 @@ func seedThemes(db *sqlx.DB) {
 			BtnPrimaryBg: "#22c55e", BtnPrimaryText: "#000000", BtnSecondaryBg: "transparent", BtnSecondaryText: "#f8fafc",
 			CheckboxBorder: "#334155", CheckboxChecked: "#22c55e",
 			RadiusBase: "0px", PaddingCard: "10px", GapGrid: "12px",
+			BgImageURL: ptr(""), FontHeading: ptr("Space Mono, monospace"), FontBody: ptr("Space Mono, monospace"), AccentSecondary: ptr(""),
 		},
 		{
 			ID: "00000000-0000-0000-0000-000000000006", Name: "Arena", IsSystem: true,
@@ -987,6 +992,7 @@ func seedThemes(db *sqlx.DB) {
 			BtnPrimaryBg: "#ea580c", BtnPrimaryText: "#ffffff", BtnSecondaryBg: "transparent", BtnSecondaryText: "#ffffff",
 			CheckboxBorder: "#525252", CheckboxChecked: "#ea580c",
 			RadiusBase: "4px", PaddingCard: "14px", GapGrid: "16px",
+			BgImageURL: ptr(""), FontHeading: ptr("Inter, sans-serif"), FontBody: ptr("Inter, sans-serif"), AccentSecondary: ptr(""),
 		},
 		{
 			ID: "00000000-0000-0000-0000-000000000007", Name: "Celebrate", IsSystem: true,
@@ -997,6 +1003,7 @@ func seedThemes(db *sqlx.DB) {
 			BtnPrimaryBg: "#be185d", BtnPrimaryText: "#ffffff", BtnSecondaryBg: "transparent", BtnSecondaryText: "#831843",
 			CheckboxBorder: "#f472b6", CheckboxChecked: "#be185d",
 			RadiusBase: "16px", PaddingCard: "14px", GapGrid: "20px",
+			BgImageURL: ptr(""), FontHeading: ptr("Inter, sans-serif"), FontBody: ptr("Inter, sans-serif"), AccentSecondary: ptr(""),
 		},
 		{
 			ID: "00000000-0000-0000-0000-000000000010", Name: "Strixhaven: Lorehold", IsSystem: true,
