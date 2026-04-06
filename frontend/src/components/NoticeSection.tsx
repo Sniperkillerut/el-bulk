@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Notice } from '@/lib/types';
 import { fetchNotices } from '@/lib/api';
 import { useLanguage } from '@/context/LanguageContext';
+import { stripHtml } from '@/lib/htmlUtils';
 
 export default function NoticeSection() {
   const [notices, setNotices] = useState<Notice[]>([]);
@@ -63,8 +64,9 @@ export default function NoticeSection() {
               </h3>
               <div 
                 className="text-sm text-text-secondary line-clamp-3 mb-4 font-mono-stack leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: notice.content_html.replace(/<[^>]*>?/gm, ' ').slice(0, 300) }}
-              />
+              >
+                {stripHtml(notice.content_html).slice(0, 300)}
+              </div>
               <div className="mt-auto flex items-center">
                 <Link href={`/notices/${notice.slug}`} className="text-xs font-bold font-mono-stack text-gold-dark hover:text-hp-color transition-colors flex items-center gap-2">
                   {t('pages.notices.actions.read_more', 'READ MORE')} <span className="text-lg">»</span>

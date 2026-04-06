@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Notice } from '@/lib/types';
 import { fetchNotices } from '@/lib/api';
 import { useLanguage } from '@/context/LanguageContext';
+import { stripHtml } from '@/lib/htmlUtils';
 
 export default function NoticesPage() {
   const { t, locale } = useLanguage();
@@ -74,8 +75,9 @@ export default function NoticesPage() {
                 </h2>
                 <div 
                   className="text-sm text-text-secondary line-clamp-3 mb-6 font-mono-stack leading-relaxed max-w-2xl"
-                  dangerouslySetInnerHTML={{ __html: notice.content_html.replace(/<[^>]*>?/gm, ' ').slice(0, 400) }}
-                />
+                >
+                  {stripHtml(notice.content_html).slice(0, 400)}
+                </div>
                 <div className="mt-auto">
                   <Link href={`/notices/${notice.slug}`} className="btn-secondary py-2 px-6">
                     {t('pages.notices.list.open_btn', 'OPEN NOTICE →')}
