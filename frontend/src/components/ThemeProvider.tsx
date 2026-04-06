@@ -46,9 +46,9 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
           --gap-grid: ${t.gap_grid || '16px'};
 
           /* Advanced Branding Extensions */
-          ${t.bg_image_url ? `--theme-bg-image: url('${t.bg_image_url}');` : ''}
-          ${t.font_heading ? `--theme-font-heading: '${t.font_heading}', sans-serif;` : ''}
-          ${t.font_body ? `--theme-font-body: '${t.font_body}', sans-serif;` : ''}
+          ${t.bg_image_url ? `--theme-bg-image: ${t.bg_image_url.trim().startsWith('url(') ? t.bg_image_url : `url("${t.bg_image_url}")`};` : ''}
+          ${t.font_heading ? `--theme-font-heading: ${t.font_heading.includes(',') ? t.font_heading : `'${t.font_heading}', sans-serif`};` : ''}
+          ${t.font_body ? `--theme-font-body: ${t.font_body.includes(',') ? t.font_body : `'${t.font_body}', sans-serif`};` : ''}
           --accent-secondary: ${t.accent_secondary || 'transparent'};
 
           /* Legacy Aliases for Backward Compatibility */
