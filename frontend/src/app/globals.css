@@ -164,7 +164,6 @@
 
 html {
   scroll-behavior: smooth;
-  overflow-x: hidden;
 }
 
 body {
@@ -172,7 +171,6 @@ body {
   background-color: var(--bg-page);
   color: var(--text-main);
   min-height: 100vh;
-  overflow-x: hidden;
   width: 100%;
   /* Subtle kraft paper noise texture or custom theme background */
   background-image:

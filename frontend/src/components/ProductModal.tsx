@@ -83,7 +83,7 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
           <button onClick={onClose} className="btn-secondary px-8">{t('pages.common.buttons.close', 'Close')}</button>
         </div>
       ) : (
-        <div className="card bg-surface overflow-hidden shadow-2xl">
+        <div className="card bg-surface shadow-2xl">
           <ProductDetails 
             product={product} 
             idPrefix="modal" 

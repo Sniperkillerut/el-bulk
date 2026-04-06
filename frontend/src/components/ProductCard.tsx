@@ -10,7 +10,6 @@ import { openProductModal } from './ProductModalManager';
 import { useLanguage } from '@/context/LanguageContext';
 import { CategoryIcon } from './CategoryIcon';
 import { HotBadge, NewBadge } from './Badges';
-import LegalityBadge from './LegalityBadge';
 
 
 interface ProductCardProps {
@@ -47,11 +46,6 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="absolute top-2 right-2 z-10 flex flex-col gap-1">
           {product.is_hot && <HotBadge />}
           {product.is_new && <NewBadge />}
-          {product.legalities?.commander === 'legal' && (
-             <div className="mt-1">
-               <LegalityBadge format="commander" status="legal" showFormatName={false} />
-             </div>
-          )}
         </div>
 
         {/* Floating Categories */}
@@ -103,17 +97,20 @@ export default function ProductCard({ product }: ProductCardProps) {
             </div>
           )}
           
-          <div className="flex items-center justify-between">
-            <span className="price text-base">${product.price.toLocaleString('en-US', { maximumFractionDigits: 0 })} COP</span>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-text-muted font-mono">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <span className="price text-base flex flex-col sm:block">
+              <span className="leading-tight">${product.price.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+              <span className="text-[10px] sm:text-xs text-text-muted sm:ml-1 align-baseline uppercase font-mono-stack">COP</span>
+            </span>
+            <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+              <span className="text-xs text-text-muted font-mono sm:hidden">
                 {outOfStock ? '—' : `×${product.stock}`}
               </span>
               <button
                 id={`add-to-cart-${product.id}`}
                 onClick={() => !outOfStock && addItem(product)}
                 disabled={outOfStock}
-                className="btn-primary text-[0.8rem] px-[0.8rem] py-[0.3rem]"
+                className="btn-primary text-[0.8rem] px-4 py-2 sm:px-[0.8rem] sm:py-[0.3rem] flex-1 sm:flex-initial"
                 style={{ opacity: outOfStock ? 0.4 : 1, cursor: outOfStock ? 'not-allowed' : 'pointer' }}
               >
                 {outOfStock ? t('pages.common.status.sold_out', 'SOLD OUT') : t('pages.common.buttons.add', 'ADD')}

@@ -154,12 +154,12 @@ export default function ProductDetails({ product, idPrefix, showViewFullPage, on
               </div>
             </div>
 
-            {product.legalities && Object.values(product.legalities).some(status => status === 'banned' || status === 'restricted') && (
+            {product.legalities && Object.values(product.legalities).some(status => status !== 'not_legal') && (
               <div className="mt-2 py-3 border-t border-b border-dashed border-border-main">
-                <p className="text-[10px] font-bold text-status-hp uppercase mb-2 tracking-widest">{t('pages.product.details.legalities_alerts', 'FORMAT LEGALITY ALERTS')}</p>
+                <p className="text-[10px] font-bold text-text-muted uppercase mb-2 tracking-widest">{t('pages.product.details.legalities', 'FORMAT LEGALITY')}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {Object.entries(product.legalities).map(([fmt, status]) => (
-                    (status === 'banned' || status === 'restricted') && (
+                    status !== 'not_legal' && (
                       <LegalityBadge key={fmt} format={fmt} status={status as string} />
                     )
                   ))}
@@ -223,7 +223,7 @@ export default function ProductDetails({ product, idPrefix, showViewFullPage, on
             id={`${idPrefix}-add-to-cart-${product.id}`}
             onClick={handleAddCart}
             disabled={outOfStock}
-            className={`btn-primary w-full text-lg py-4 shadow-sm transition-all ${outOfStock ? 'opacity-40 cursor-not-allowed' : 'opacity-100 cursor-pointer'}`}
+            className={`btn-primary w-full text-base py-3.5 md:text-lg md:py-4 shadow-sm transition-all ${outOfStock ? 'opacity-40 cursor-not-allowed' : 'opacity-100 cursor-pointer'}`}
           >
             {added 
               ? `✓ ${t('pages.common.buttons.added_to_cart', 'ADDED TO CART')}` 

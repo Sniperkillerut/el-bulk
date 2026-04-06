@@ -171,9 +171,9 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
       </div>
 
       {/* Main Layout: Sidebar + Grid */}
-      <div className="flex flex-col md:flex-row gap-12 relative">
+      <div className="flex flex-col sm:flex-row gap-12 relative items-start">
         {/* Mobile Filters Toggle */}
-        <div className="md:hidden">
+        <div className="sm:hidden">
           <button
             onClick={() => setIsMobileFiltersOpen(true)}
             className="w-full btn-secondary py-3 !flex items-center justify-center border border-border-main group"
@@ -200,25 +200,25 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
         {/* Mobile Overlay */}
         {isMobileFiltersOpen && (
           <div
-            className="fixed inset-0 z-40 bg-black/60 md:hidden backdrop-blur-sm"
+            className="fixed inset-0 z-40 bg-black/60 sm:hidden backdrop-blur-sm"
             onClick={() => setIsMobileFiltersOpen(false)}
           />
         )}
 
         {/* Sidebar / Mobile Drawer */}
         <aside className={`
-          fixed md:sticky md:top-24 top-0 left-0 h-full md:h-[calc(100vh-8rem)] w-[85vw] sm:w-80 md:w-64 z-50 md:z-auto bg-bg-surface md:bg-transparent shadow-2xl md:shadow-none transform transition-transform duration-300 ease-in-out shrink-0 overflow-y-auto custom-scrollbar p-3 md:p-0 md:pr-8
-          ${isMobileFiltersOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          fixed sm:sticky sm:top-20 top-0 left-0 h-full sm:h-[calc(100vh-100px)] w-[85vw] sm:w-48 md:w-64 z-50 sm:z-auto bg-bg-surface sm:bg-transparent shadow-2xl sm:shadow-none transform transition-transform duration-300 ease-in-out shrink-0 overflow-y-auto custom-scrollbar p-3 sm:p-0 sm:pr-8
+          ${isMobileFiltersOpen ? 'translate-x-0' : '-translate-x-full sm:translate-x-0'}
         `}>
           {/* Mobile Drawer Header */}
-          <div className="flex justify-between items-center mb-6 md:hidden border-b border-border-main pb-4">
+          <div className="flex justify-between items-center mb-6 sm:hidden border-b border-border-main pb-4">
             <h2 className="font-display text-2xl text-text-main">{t('pages.inventory.grid.filters.title', 'Filters')}</h2>
             <button onClick={() => setIsMobileFiltersOpen(false)} className="text-2xl text-text-muted hover:text-text-main flex items-center justify-center w-8 h-8 rounded-sm border border-border-main bg-bg-page">
               &times;
             </button>
           </div>
 
-          <div className="flex flex-col gap-3 md:pr-2 pb-8">
+          <div className="flex flex-col gap-3 sm:pr-2 pb-8">
             {/* Logic Toggle */}
             <div className="flex flex-col gap-2">
               <p className="text-[10px] font-bold text-text-muted uppercase font-mono-stack">{t('pages.inventory.grid.filters.strategy.title', 'Search Strategy')}</p>

@@ -54,7 +54,7 @@ export default function Modal({
     >
       <div 
         ref={modalRef}
-        className={`rounded-lg w-full ${maxWidth} relative overflow-hidden animate-in zoom-in duration-300 ${containerClassName || 'bg-bg-surface border border-border-main shadow-2xl'}`}
+        className={`rounded-lg w-full ${maxWidth} relative max-h-[calc(100vh-2rem)] overflow-y-auto custom-scrollbar animate-in zoom-in duration-300 ${containerClassName || 'bg-bg-surface border border-border-main shadow-2xl'}`}
         data-theme-area="modal-container"
         onClick={e => e.stopPropagation()}
       >
