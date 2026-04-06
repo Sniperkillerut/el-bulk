@@ -34,7 +34,8 @@ interface FetchOptions extends RequestInit {
 export async function apiFetch<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
   const { params, headers: customHeaders, ...rest } = options;
 
-  const url = new URL(`${API_BASE}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`);
+  const base = API_BASE || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
+  const url = new URL(`${base}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`);
   if (params) {
     Object.entries(params).forEach(([key, val]) => {
       if (val !== undefined && val !== '' && val !== null) {
@@ -641,7 +642,8 @@ export async function adminAddCustomerNote(customerId: string, content: string, 
 }
 
 export async function adminFetchAccountingExportURL(filters: { start_date?: string; end_date?: string }): Promise<string> {
-  const url = new URL(`${API_BASE}/api/admin/accounting/export`);
+  const base = API_BASE || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
+  const url = new URL(`${base}/api/admin/accounting/export`);
   if (filters.start_date) url.searchParams.set('start_date', filters.start_date);
   if (filters.end_date) url.searchParams.set('end_date', filters.end_date);
   return url.toString();
