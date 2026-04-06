@@ -125,9 +125,7 @@ export default function AdminBountiesPage() {
           ? requests.filter(r => selectedIds.includes(r.id))
           : requests.filter(r => r.card_name.toLowerCase().includes(resolvingOffer.bounty.name.toLowerCase()) && (r.status === 'pending' || r.status === 'accepted'));
 
-        for (const req of toFulfill) {
-          await adminUpdateClientRequestStatus(req.id, 'solved');
-        }
+        await Promise.all(toFulfill.map(req => adminUpdateClientRequestStatus(req.id, 'solved')));
 
         const countsFulfilled = toFulfill.length;
         const newQty = Math.max(0, resolvingOffer.bounty.quantity_needed - countsFulfilled);
