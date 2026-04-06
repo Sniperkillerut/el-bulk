@@ -1,7 +1,8 @@
 package handlers
 
 import (
-"github.com/el-bulk/backend/utils/render"
+	"fmt"
+	"github.com/el-bulk/backend/utils/render"
 	"net/http"
 	"strings"
 	"time"
@@ -68,6 +69,12 @@ func RunPriceRefresh(db *sqlx.DB) (updated int, errs int) {
 		}
 	}
 
+	type priceUpdate struct {
+		ID    string
+		Price float64
+	}
+	updates := []priceUpdate{}
+
 	for _, p := range mtgRows {
 		setCode := ""
 		if p.SetCode != nil {
@@ -103,12 +110,39 @@ func RunPriceRefresh(db *sqlx.DB) (updated int, errs int) {
 			continue
 		}
 
-		if _, err := db.Exec("UPDATE product SET price_reference=$1 WHERE id=$2", *refPrice, p.ID); err != nil {
-			logger.Error("[price-refresh] DB update failed for %s: %v", p.ID, err)
-			errs++
-			continue
+		updates = append(updates, priceUpdate{ID: p.ID, Price: *refPrice})
+	}
+
+	// Execute updates in chunks to avoid PostgreSQL parameter limit (65,535)
+	chunkSize := 1000
+	for i := 0; i < len(updates); i += chunkSize {
+		end := i + chunkSize
+		if end > len(updates) {
+			end = len(updates)
 		}
-		updated++
+		chunk := updates[i:end]
+
+		query := "UPDATE product AS p SET price_reference = v.price_reference FROM (VALUES "
+		placeholders := make([]string, len(chunk))
+		args := make([]interface{}, len(chunk)*2)
+
+		for j, u := range chunk {
+			placeholders[j] = fmt.Sprintf("($%d::uuid, $%d::double precision)", j*2+1, j*2+2)
+			args[j*2] = u.ID
+			args[j*2+1] = u.Price
+		}
+
+		query += strings.Join(placeholders, ", ")
+		query += ") AS v(id, price_reference) WHERE p.id = v.id"
+
+		res, err := db.Exec(query, args...)
+		if err != nil {
+			logger.Error("[price-refresh] Bulk DB update failed for chunk %d-%d: %v", i, end, err)
+			errs += len(chunk)
+		} else {
+			count, _ := res.RowsAffected()
+			updated += int(count)
+		}
 	}
 
 	logger.Info("[price-refresh] complete: %d updated, %d errors", updated, errs)
@@ -139,4 +173,3 @@ func StartMidnightScheduler(db *sqlx.DB) {
 		}
 	}()
 }
-

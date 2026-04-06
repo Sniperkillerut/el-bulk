@@ -74,18 +74,15 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		// Mock initial query for products needing refresh
 		rows := sqlmock.NewRows([]string{"id", "tcg", "name", "set_code", "foil_treatment", "price_source"}).
-			AddRow("1", "mtg", "Black Lotus", "lea", "non_foil", "tcgplayer").
-			AddRow("2", "mtg", "Mox Pearl", "lea", "non_foil", "tcgplayer")
+			AddRow("550e8400-e29b-41d4-a716-446655440000", "mtg", "Black Lotus", "lea", "non_foil", "tcgplayer").
+			AddRow("550e8400-e29b-41d4-a716-446655440001", "mtg", "Mox Pearl", "lea", "non_foil", "tcgplayer")
 		mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM product").
 			WillReturnRows(rows)
 
-		// Mock updates
-		mock.ExpectExec("UPDATE product SET price_reference=\\$1 WHERE id=\\$2").
-			WithArgs(50000.0, "1").
-			WillReturnResult(sqlmock.NewResult(0, 1))
-		mock.ExpectExec("UPDATE product SET price_reference=\\$1 WHERE id=\\$2").
-			WithArgs(10000.0, "2").
-			WillReturnResult(sqlmock.NewResult(0, 1))
+		// Mock bulk update (chunked)
+		mock.ExpectExec("UPDATE product AS p SET price_reference = v.price_reference").
+			WithArgs("550e8400-e29b-41d4-a716-446655440000", 50000.0, "550e8400-e29b-41d4-a716-446655440001", 10000.0).
+			WillReturnResult(sqlmock.NewResult(0, 2))
 
 		updated, errs := RunPriceRefresh(sqlxDB)
 
@@ -119,7 +116,7 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 		// Mock query success but HTTP fail
 		mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM product").
 			WillReturnRows(sqlmock.NewRows([]string{"id", "tcg", "name", "set_code", "foil_treatment", "price_source"}).AddRow("1", "mtg", "N1", "S1", "non_foil", "tcgplayer"))
-		
+
 		oldBase := external.ScryfallBase
 		external.ScryfallBase = "http://invalid-url-123.com"
 		defer func() { external.ScryfallBase = oldBase }()
