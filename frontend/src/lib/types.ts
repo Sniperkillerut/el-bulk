@@ -38,12 +38,17 @@ export interface Product {
   price_source: PriceSource;   // which source/currency price_reference is in
   price_cop_override?: number; // admin's explicit COP override
   stock: number;
+  cost_basis_cop?: number;
   stored_in?: StorageLocation[];
   categories?: CustomCategory[];
   image_url?: string;
   description?: string;
   collector_number?: string;
   promo_type?: string;
+
+  // Virtual fields
+  is_hot?: boolean;
+  is_new?: boolean;
 
   // MTG Metadata
   language: string;
@@ -63,6 +68,7 @@ export interface Product {
   full_art: boolean;
   textless: boolean;
   scryfall_id?: string;
+  legalities?: Record<string, string>;
 
   created_at: string;
   updated_at: string;
@@ -78,8 +84,12 @@ export interface Settings {
   contact_email: string;
   contact_instagram: string;
   contact_hours: string;
+  flat_shipping_fee_cop: number;
   last_set_sync?: string;
   default_theme_id?: string;
+  hot_sales_threshold: number;
+  hot_days_threshold: number;
+  new_days_threshold: number;
 }
 
 export interface FacetItem {
@@ -205,8 +215,17 @@ export interface TCG {
   id: string;   // slug: mtg, pokemon, etc.
   name: string;
   is_active: boolean;
-  item_count?: number;
   created_at?: string;
+}
+
+export interface TCGSet {
+  tcg: string;
+  code: string;
+  name: string;
+  released_at: string;
+  set_type: string;
+  is_hot?: boolean;
+  is_new?: boolean;
 }
 
 export interface StoredIn {
@@ -238,6 +257,8 @@ export interface CustomCategory {
   icon?: string;
   item_count?: number;
   created_at?: string;
+  is_hot?: boolean;
+  is_new?: boolean;
 }
 
 export interface CustomCategoryInput {
@@ -268,9 +289,15 @@ export interface Order {
   id: string;
   order_number: string;
   customer_id: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'shipped' | 'ready_for_pickup';
   payment_method: string;
+  subtotal_cop: number;
+  shipping_cop: number;
+  tax_cop: number;
   total_cop: number;
+  tracking_number?: string;
+  tracking_url?: string;
+  is_local_pickup: boolean;
   notes?: string;
   created_at: string;
   completed_at?: string;
@@ -304,6 +331,7 @@ export interface OrderDetail {
   order: Order;
   customer: Customer;
   items: OrderItemDetail[];
+  whatsapp_url?: string;
 }
 
 export interface OrderWithCustomer extends Order {
@@ -326,8 +354,34 @@ export interface CreateOrderRequest {
   id_number: string;
   address: string;
   payment_method: string;
+  is_local_pickup: boolean;
   notes: string;
   items: { product_id: string; quantity: number }[];
+}
+
+export interface BulkSearchRequest {
+  list: string;
+}
+
+export interface DeckMatch {
+  raw_line: string;
+  quantity: number;
+  matches: Product[];
+  is_matched: boolean;
+  requested_set?: string;
+  requested_cn?: string;
+}
+
+export interface BulkSearchResponse {
+  matches: DeckMatch[];
+}
+
+export interface InventoryValuation {
+  total_items: number;
+  total_stock: number;
+  total_value_cop: number;
+  total_cost_basis_cop: number;
+  potential_profit: number;
 }
 
 export const PAYMENT_METHODS: Record<string, string> = {

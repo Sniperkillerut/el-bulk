@@ -125,11 +125,11 @@ export default function OrdersPanel({ initialOrderId }: Props) {
     setSaving(false);
   };
 
-  const handleStatusChange = async (status: string) => {
+  const handleStatusChange = async (status: string, trackingInfo?: { tracking_number?: string, tracking_url?: string }) => {
     if (!detail) return;
     setSaving(true);
     try {
-      const updated = await adminUpdateOrder(detail.order.id, { status });
+      const updated = await adminUpdateOrder(detail.order.id, { status, ...trackingInfo });
       setDetail(updated);
       setDetailsCache(prev => ({ ...prev, [updated.order.id]: updated }));
       // Update list in-place
@@ -137,6 +137,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : 'Failed to update status');
     }
+    setSaving(true);
     setSaving(false);
   };
 
@@ -389,6 +390,8 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                       .map(([k, v]) => (
                         <option key={k} value={k}>{v}</option>
                       ))}
+                    <option value="ready_for_pickup">Listo para recoger</option>
+                    <option value="shipped">Enviado</option>
                   </select>
                   {detail.order.status !== 'completed' && detail.order.status !== 'cancelled' && (
                     <button onClick={openCompleteModal} className="btn-primary" style={{ fontSize: '0.85rem', padding: '0.35rem 1rem' }}>
@@ -397,6 +400,39 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                   )}
                 </div>
               </div>
+
+              {/* Tracking Info (if shipped or local pickup) */}
+              {(detail.order.status === 'shipped' || detail.order.is_local_pickup || detail.order.tracking_number) && (
+                <div className="cardbox p-4 mb-4 bg-gold/5 border-gold/20">
+                  <h4 className="text-xs font-mono-stack mb-3 text-gold-dark font-bold uppercase tracking-widest">
+                    {detail.order.is_local_pickup ? 'ENTREGA EN TIENDA' : 'INFORMACIÓN DE ENVÍO'}
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[10px] font-mono-stack text-text-muted block uppercase mb-1">Guía / Tracking Number</label>
+                      <div className="flex gap-2">
+                        <input 
+                          type="text" 
+                          defaultValue={detail.order.tracking_number || ''}
+                          onBlur={e => handleStatusChange(detail.order.status, { tracking_number: e.target.value })}
+                          className="flex-1 text-sm p-1.5 bg-white border-kraft-dark/20"
+                          placeholder="Ej: ABC12345"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-mono-stack text-text-muted block uppercase mb-1">Link de Seguimiento</label>
+                      <input 
+                        type="url" 
+                        defaultValue={detail.order.tracking_url || ''}
+                        onBlur={e => handleStatusChange(detail.order.status, { tracking_url: e.target.value })}
+                        className="w-full text-sm p-1.5 bg-white border-kraft-dark/20"
+                        placeholder="https://servientrega.com/..."
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Customer + Payment info */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
@@ -424,11 +460,39 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                   )}
                   {detail.customer.address && <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>📍 {detail.customer.address}</p>}
                   {detail.customer.id_number && <p className="text-xs font-mono-stack mt-1" style={{ color: 'var(--text-muted)' }}>CC: {detail.customer.id_number}</p>}
+                  
+                  {/* WhatsApp Notification Button */}
+                  {detail.whatsapp_url && (
+                    <div className="mt-4">
+                      <a 
+                        href={detail.whatsapp_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="btn-primary w-full py-2 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+                        style={{ fontSize: '0.8rem' }}
+                      >
+                        <span className="text-xl">💬</span>
+                        NOTIFICAR POR WHATSAPP
+                      </a>
+                    </div>
+                  )}
                 </div>
                 <div className="cardbox p-3">
                   <h4 className="text-xs font-mono-stack mb-2" style={{ color: 'var(--text-muted)' }}>PAGO</h4>
                   <p className="font-semibold">{PAYMENT_METHODS[detail.order.payment_method] || detail.order.payment_method}</p>
-                  <p className="price text-xl mt-1">${detail.order.total_cop.toLocaleString('en-US', { maximumFractionDigits: 0 })} COP</p>
+                  <div className="flex justify-between items-center mt-2">
+                    <span className="text-xs font-mono-stack text-text-muted uppercase">Subtotal</span>
+                    <span className="text-sm font-semibold">${detail.order.total_cop.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+                  </div>
+                  {detail.order.shipping_cop > 0 && (
+                    <div className="flex justify-between items-center mt-1">
+                      <span className="text-xs font-mono-stack text-text-muted uppercase">Envío</span>
+                      <span className="text-sm font-semibold">${detail.order.shipping_cop.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+                    </div>
+                  )}
+                  <p className="price text-xl mt-2 border-t border-border-main pt-2">
+                    ${(detail.order.total_cop + detail.order.shipping_cop).toLocaleString('en-US', { maximumFractionDigits: 0 })} COP
+                  </p>
                   {detail.order.notes && (
                     <p className="text-xs mt-2" style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>📝 {detail.order.notes}</p>
                   )}

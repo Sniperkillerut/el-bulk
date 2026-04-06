@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/lib/CartContext';
 import { useUser } from '@/context/UserContext';
-import { createOrder } from '@/lib/api';
-import { PAYMENT_METHODS, FOIL_LABELS, TREATMENT_LABELS } from '@/lib/types';
+import { createOrder, fetchPublicSettings } from '@/lib/api';
+import { PAYMENT_METHODS, FOIL_LABELS, TREATMENT_LABELS, Settings } from '@/lib/types';
 import CardImage from '@/components/CardImage';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -25,8 +25,15 @@ export default function CheckoutPage() {
     id_number: '',
     address: '',
     payment_method: 'cash',
+    is_local_pickup: false,
     notes: '',
   });
+
+  const [settings, setSettings] = useState<Settings | null>(null);
+
+  useEffect(() => {
+    fetchPublicSettings().then(setSettings).catch(console.error);
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -119,6 +126,38 @@ export default function CheckoutPage() {
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>{t('pages.checkout.form.address', 'ADDRESS')} *</label>
                 <input type="text" value={form.address} onChange={e => set('address', e.target.value)} placeholder={t('pages.checkout.placeholders.address', 'Cra 1 # 2-3')} required />
               </div>
+            </div>
+
+            <div className="divider" />
+
+            <h3 className="font-display text-xl mb-3">{t('pages.checkout.section.delivery', 'DELIVERY METHOD')}</h3>
+            <div className="flex gap-4 mb-6">
+              <button
+                type="button"
+                onClick={() => setForm(f => ({ ...f, is_local_pickup: false }))}
+                className={`flex-1 p-4 rounded-lg border-2 transition-all text-left ${!form.is_local_pickup ? 'border-accent-primary bg-accent-primary/5' : 'border-ink-border bg-ink-surface'}`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">🚚</span>
+                  <div>
+                    <p className="font-bold text-sm">{t('pages.checkout.delivery.shipping', 'SHIPPING')}</p>
+                    <p className="text-[10px] text-text-muted">{t('pages.checkout.delivery.shipping_desc', 'Reliable delivery to your address')}</p>
+                  </div>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm(f => ({ ...f, is_local_pickup: true }))}
+                className={`flex-1 p-4 rounded-lg border-2 transition-all text-left ${form.is_local_pickup ? 'border-accent-primary bg-accent-primary/5' : 'border-ink-border bg-ink-surface'}`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">⚓</span>
+                  <div>
+                    <p className="font-bold text-sm">{t('pages.checkout.delivery.pickup', 'LOCAL PICKUP')}</p>
+                    <p className="text-[10px] text-text-muted">{t('pages.checkout.delivery.pickup_desc', 'Pick up at our store in Bogotá')}</p>
+                  </div>
+                </div>
+              </button>
             </div>
 
             <div className="divider" />
@@ -243,11 +282,24 @@ export default function CheckoutPage() {
               })}
             </div>
 
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-text-muted">{t('pages.checkout.summary.subtotal', 'SUBTOTAL')}</span>
+                <span>${totalPrice.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-text-muted">{t('pages.checkout.summary.shipping', 'SHIPPING')}</span>
+                <span>{form.is_local_pickup ? t('pages.checkout.summary.free', 'FREE') : `$${(settings?.flat_shipping_fee_cop || 0).toLocaleString()}`}</span>
+              </div>
+            </div>
+
             <div className="divider" />
 
             <div className="flex justify-between items-center mb-4">
               <span className="font-display text-xl">{t('pages.checkout.total', 'TOTAL')}</span>
-              <span className="price text-2xl">${totalPrice.toLocaleString('en-US', { maximumFractionDigits: 0 })} COP</span>
+              <span className="price text-2xl">
+                ${(totalPrice + (form.is_local_pickup ? 0 : (settings?.flat_shipping_fee_cop || 0))).toLocaleString('en-US', { maximumFractionDigits: 0 })} COP
+              </span>
             </div>
 
             {error && <p className="text-sm font-mono-stack mb-3" style={{ color: 'var(--hp-color)' }}>{error}</p>}

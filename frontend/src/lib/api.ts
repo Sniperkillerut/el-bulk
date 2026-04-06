@@ -88,6 +88,13 @@ export async function fetchProducts(filters: ProductFilters = {}): Promise<Produ
   return apiFetch<ProductListResponse>('/api/products', { params: filters, cache: 'no-store' });
 }
 
+export async function bulkSearchDeck(list: string): Promise<import('./types').BulkSearchResponse> {
+  return apiFetch<import('./types').BulkSearchResponse>('/api/products/search-deck', {
+    method: 'POST',
+    body: JSON.stringify({ list }),
+  });
+}
+
 export async function fetchProduct(id: string): Promise<Product> {
   return apiFetch<Product>(`/api/products/${id}`, { cache: 'default' });
 }
@@ -200,6 +207,10 @@ export async function adminUpdateProduct(id: string, data: Partial<Product>): Pr
     method: 'PUT',
     body: JSON.stringify(data),
   });
+}
+
+export async function adminFetchLowStock(threshold: number = 5): Promise<Product[]> {
+  return apiFetch<Product[]>('/api/admin/products/low-stock', { params: { threshold }, cache: 'no-store' });
 }
 
 export async function adminDeleteProduct(id: string): Promise<void> {
@@ -495,7 +506,12 @@ export async function adminFetchOrderDetail(id: string): Promise<import('./types
   return apiFetch<import('./types').OrderDetail>(`/api/admin/orders/${id}`, { cache: 'no-store' });
 }
 
-export async function adminUpdateOrder(id: string, data: { status?: string; items?: { id: string; quantity: number }[] }): Promise<import('./types').OrderDetail> {
+export async function adminUpdateOrder(id: string, data: { 
+  status?: string; 
+  tracking_number?: string; 
+  tracking_url?: string;
+  items?: { id: string; quantity: number }[] 
+}): Promise<import('./types').OrderDetail> {
   return apiFetch<import('./types').OrderDetail>(`/api/admin/orders/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
@@ -632,6 +648,10 @@ export async function adminFetchClients(): Promise<CustomerStats[]> {
 
 export async function adminFetchClientDetail(id: string): Promise<CustomerDetail> {
   return apiFetch<CustomerDetail>(`/api/admin/clients/${id}`, {});
+}
+
+export async function adminFetchInventoryValuation(): Promise<import('./types').InventoryValuation> {
+  return apiFetch<import('./types').InventoryValuation>('/api/admin/accounting/valuation', { cache: 'no-store' });
 }
 
 export async function adminAddCustomerNote(customerId: string, content: string, orderId?: string): Promise<void> {

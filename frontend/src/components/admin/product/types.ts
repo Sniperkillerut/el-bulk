@@ -16,6 +16,7 @@ export interface FormState {
   price_reference: number | '';
   price_source: PriceSource;
   price_cop_override: number | '';
+  cost_basis_cop: number | '';
   stock: number;
   image_url: string;
   description: string;

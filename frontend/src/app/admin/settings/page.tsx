@@ -162,6 +162,70 @@ export default function AdminSettingsPage() {
         </div>
       )}
 
+      {/* Discovery & Logistics Section */}
+      {editingSettings && (
+        <section className="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
+          <div className="flex items-center gap-4 border-b border-kraft-dark pb-3">
+            <span className="text-3xl">🚀</span>
+            <h2 className="font-display text-3xl m-0 text-ink-deep">DISCOVERY & LOGISTICS ALGORITHMS</h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Hot Threshold */}
+            <div className="card p-3 bg-white shadow-sm border-l-4 border-hp-color">
+              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">Hot Items Threshold</label>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="number" 
+                  className="w-20 py-2 px-3 font-bold text-lg bg-ink-surface/10 rounded-sm focus:bg-white transition-all outline-none border border-transparent focus:border-hp-color"
+                  value={editingSettings.hot_sales_threshold} 
+                  onChange={e => setEditingSettings({ ...editingSettings, hot_sales_threshold: parseInt(e.target.value) || 0 })} 
+                />
+                <span className="text-[10px] font-mono-stack uppercase opacity-60">Sales in last</span>
+                <input 
+                  type="number" 
+                  className="w-16 py-2 px-3 font-bold text-lg bg-ink-surface/10 rounded-sm focus:bg-white transition-all outline-none border border-transparent focus:border-hp-color"
+                  value={editingSettings.hot_days_threshold} 
+                  onChange={e => setEditingSettings({ ...editingSettings, hot_days_threshold: parseInt(e.target.value) || 0 })} 
+                />
+                <span className="text-[10px] font-mono-stack uppercase opacity-60">Days</span>
+              </div>
+              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">Products satisfying this threshold will display the 🔥 HOT badge.</p>
+            </div>
+
+            {/* New Threshold */}
+            <div className="card p-3 bg-white shadow-sm border-l-4 border-lp-color">
+              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">New Items Threshold</label>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="number" 
+                  className="w-20 py-2 px-3 font-bold text-lg bg-ink-surface/10 rounded-sm focus:bg-white transition-all outline-none border border-transparent focus:border-lp-color"
+                  value={editingSettings.new_days_threshold} 
+                  onChange={e => setEditingSettings({ ...editingSettings, new_days_threshold: parseInt(e.target.value) || 0 })} 
+                />
+                <span className="text-[10px] font-mono-stack uppercase opacity-60">Days Since Creation</span>
+              </div>
+              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">Products created within this window will display the 🆕 NEW badge.</p>
+            </div>
+
+            {/* Shipping Fee */}
+            <div className="card p-3 bg-white shadow-sm border-l-4 border-ink-deep">
+              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">Flat Shipping Fee (COP)</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted font-bold">$</span>
+                <input 
+                  type="number" 
+                  className="pl-8 py-2 font-bold text-lg w-full bg-ink-surface/10 rounded-sm focus:bg-white transition-all outline-none border border-transparent focus:border-ink-deep"
+                  value={editingSettings.flat_shipping_fee_cop} 
+                  onChange={e => setEditingSettings({ ...editingSettings, flat_shipping_fee_cop: parseFloat(e.target.value) || 0 })} 
+                />
+              </div>
+              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">Standard fee applied to all shipping orders (ignored for local pickup).</p>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Persistent Save Footer */}
       <footer className="sticky bottom-2 mt-4 p-3 bg-ink-navy/95 backdrop-blur shadow-2xl rounded-xl border-x-4 border-t-2 border-gold flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 z-10">
         <div className="hidden md:block">

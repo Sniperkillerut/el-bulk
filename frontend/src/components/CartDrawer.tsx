@@ -75,6 +75,9 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
                 <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
               </svg>
               <p className="text-center text-sm">{t('pages.cart.drawer.empty_msg', 'Your cart is empty. Go find some cards.')}</p>
+              <Link href="/deck-importer" onClick={onClose} className="text-[10px] font-mono-stack px-3 py-1.5 border border-hp-color text-hp-color hover:bg-hp-color hover:text-white transition-all uppercase mt-2">
+                 {t('pages.cart.drawer.try_importer', 'USE DECK IMPORTER →')}
+              </Link>
             </div>
           ) : (
             items.map(item => (
@@ -199,6 +202,9 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
               <p className="text-xs text-center" style={{ color: 'var(--text-muted)' }}>
                 📦 {t('pages.cart.drawer.checkout_notice', 'Review your order and complete shipping details.')}
               </p>
+              <Link href="/deck-importer" onClick={onClose} className="block text-center mt-2 text-[9px] font-mono-stack text-gold-dark hover:text-gold transition-colors uppercase underline underline-offset-2">
+                {t('pages.cart.drawer.importer_nudge', 'Missing some cards? Try the deck importer')}
+              </Link>
             </div>
             <Link href="/checkout" onClick={onClose} className="btn-primary text-center w-full block">
               {t('pages.cart.drawer.checkout_btn', 'PROCEED TO CHECKOUT →')}

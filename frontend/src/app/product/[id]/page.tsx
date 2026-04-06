@@ -6,9 +6,13 @@ import { fetchProduct } from '@/lib/api';
 import { Product, FOIL_LABELS, TREATMENT_LABELS, resolveLabel } from '@/lib/types';
 import { useCart } from '@/lib/CartContext';
 import Link from 'next/link';
-import DeckContents from '@/components/DeckContents';
-
 import CardImage from '@/components/CardImage';
+import DeckContents from '@/components/DeckContents';
+import { HotBadge, NewBadge } from '@/components/Badges';
+import SetIcon from '@/components/SetIcon';
+import LegalityBadge from '@/components/LegalityBadge';
+import ManaText from '@/components/ManaText';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -51,6 +55,20 @@ export default function ProductDetailPage() {
     setTimeout(() => setAdded(false), 1500);
   };
 
+  const renderManaIcons = (identity?: string) => {
+    if (!identity || identity === 'C') return <i className="ms ms-c ms-cost ms-shadow text-[1.1rem]" />;
+    const colors = identity.split(',').map(c => c.trim().toLowerCase());
+    return (
+      <div className="flex gap-1 items-center justify-center">
+        {colors.map(c => (
+          <i key={c} className={`ms ms-${c} ms-cost ms-shadow text-[1.1rem]`} />
+        ))}
+      </div>
+    );
+  };
+
+  const { t } = useLanguage();
+
   if (loading) return (
     <div className="max-w-4xl mx-auto px-4 py-12">
       <div className="grid md:grid-cols-2 gap-8">
@@ -66,9 +84,9 @@ export default function ProductDetailPage() {
 
   if (error || !product) return (
     <div className="max-w-4xl mx-auto px-4 py-16 text-center stamp-border mt-12 bg-surface p-12">
-      <div role="heading" aria-level={1} className="font-display text-3xl mb-4 text-hp-color uppercase">{resolveLabel('ITEM NOT FOUND', {})}</div>
-      <p style={{ color: 'var(--text-muted)' }} className="mb-6 font-mono-stack">This item may have been sold or removed.</p>
-      <Link href="/" className="btn-secondary">← Back to Shoebox</Link>
+      <div role="heading" aria-level={1} className="font-display text-3xl mb-4 text-hp-color uppercase">{t('pages.product.details.not_found', 'ITEM NOT FOUND')}</div>
+      <p style={{ color: 'var(--text-muted)' }} className="mb-6 font-mono-stack">{t('pages.product.details.not_found_desc', 'This item may have been sold or removed.')}</p>
+      <Link href="/" className="btn-secondary">← {t('pages.common.buttons.back_to_home', 'Back to Shoebox')}</Link>
     </div>
   );
 
@@ -110,12 +128,17 @@ export default function ProductDetailPage() {
           <div className="cardbox p-8 flex flex-col h-full bg-surface" style={{ borderLeft: '4px solid var(--kraft-dark)' }}>
             <div>
               {product.set_name && (
-                <p className="text-xs mb-1 font-mono-stack" style={{ color: 'var(--text-muted)' }}>
-                  {product.set_code ? `[${product.set_code}] ` : ''}{product.set_name}
-                </p>
+                <div className="flex items-center gap-2 mb-1">
+                  {product.set_code && <SetIcon setCode={product.set_code} rarity={product.rarity} size="sm" />}
+                  <p className="text-xs font-mono-stack text-text-muted">
+                    {product.set_name}
+                  </p>
+                </div>
               )}
-              <h1 className="font-display text-3xl md:text-4xl" style={{ color: 'var(--ink-deep)' }}>
+              <h1 className="font-display text-3xl md:text-4xl text-text-main flex items-center gap-2">
                 {product.name}
+                {product.is_hot && <HotBadge />}
+                {product.is_new && <NewBadge />}
               </h1>
               {product.type_line && (
                 <p className="text-xs mt-2 font-mono-stack" style={{ color: 'var(--text-secondary)', fontWeight: 'bold' }}>
@@ -161,24 +184,43 @@ export default function ProductDetailPage() {
             </div>
             
             {product.tcg === 'mtg' && product.category === 'singles' && (
-              <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 py-3 border-t border-b border-dashed border-kraft-dark">
-                <div className="text-center">
-                  <p className="text-[10px] font-bold text-text-muted uppercase">Identity</p>
-                  <p className="text-sm font-mono-stack">{product.color_identity || 'C'}</p>
+              <>
+                <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 py-3 border-t border-dashed border-border-main">
+                  <div className="text-center">
+                    <p className="text-[10px] font-bold text-text-muted uppercase mb-1">{t('pages.common.labels.identity', 'Identity')}</p>
+                    {renderManaIcons(product.color_identity)}
+                  </div>
+                  <div className="text-center border-l md:border-l border-dashed border-border-main px-2">
+                    <p className="text-[10px] font-bold text-text-muted uppercase">{t('pages.common.labels.rarity', 'Rarity')}</p>
+                    <p className="text-sm font-mono-stack capitalize">
+                      {t(`pages.inventory.grid.sort.rarity.${product.rarity?.toLowerCase() || 'common'}`, product.rarity || 'Common')}
+                    </p>
+                  </div>
+                  <div className="text-center border-l border-dashed border-border-main px-2">
+                    <p className="text-[10px] font-bold text-text-muted uppercase">{t('pages.common.labels.art_var', 'Art Var.')}</p>
+                    <p className="text-sm font-mono-stack truncate">
+                      {product.art_variation ? t(`pages.product.art_variation.${product.art_variation.toLowerCase().replace(' ', '_')}`, product.art_variation) : t('pages.common.status.normal', 'Normal')}
+                    </p>
+                  </div>
+                  <div className="text-center border-l border-dashed border-border-main px-2">
+                    <p className="text-[10px] font-bold text-text-muted uppercase">{t('pages.common.labels.cmc', 'CMC')}</p>
+                    <p className="text-sm font-mono-stack">{product.cmc ?? 0}</p>
+                  </div>
                 </div>
-                <div className="text-center border-l md:border-l border-dashed border-kraft-dark px-2">
-                  <p className="text-[10px] font-bold text-text-muted uppercase">Rarity</p>
-                  <p className="text-sm font-mono-stack capitalize">{product.rarity || 'Common'}</p>
-                </div>
-                <div className="text-center border-l border-dashed border-kraft-dark px-2">
-                  <p className="text-[10px] font-bold text-text-muted uppercase">Art Var.</p>
-                  <p className="text-sm font-mono-stack truncate">{product.art_variation || 'Normal'}</p>
-                </div>
-                <div className="text-center border-l border-dashed border-kraft-dark px-2">
-                  <p className="text-[10px] font-bold text-text-muted uppercase">CMC</p>
-                  <p className="text-sm font-mono-stack">{product.cmc ?? 0}</p>
-                </div>
-              </div>
+
+                {product.legalities && Object.values(product.legalities).some(status => status === 'banned' || status === 'restricted') && (
+                  <div className="mt-2 py-3 border-t border-b border-dashed border-border-main">
+                    <p className="text-[10px] font-bold text-status-hp uppercase mb-2 tracking-widest">{t('pages.product.details.legalities_alerts', 'FORMAT LEGALITY ALERTS')}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {Object.entries(product.legalities).map(([fmt, status]) => (
+                        (status === 'banned' || status === 'restricted') && (
+                          <LegalityBadge key={fmt} format={fmt} status={status as string} />
+                        )
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             <hr className="divider w-full" />
@@ -197,12 +239,12 @@ export default function ProductDetailPage() {
                 <div className="flex flex-col gap-4">
                   {product.oracle_text && (
                     <div className="text-sm leading-relaxed whitespace-pre-wrap font-mono-stack p-4 rounded-sm" style={{ background: 'rgba(230, 218, 195, 0.4)', color: 'var(--ink-deep)', border: '1px dashed var(--kraft-dark)' }}>
-                      {product.oracle_text}
+                      <ManaText text={product.oracle_text} />
                     </div>
                   )}
                   {!product.oracle_text && product.description && (
                      <div className="text-sm leading-relaxed whitespace-pre-wrap font-mono-stack p-4 rounded-sm" style={{ background: 'rgba(230, 218, 195, 0.4)', color: 'var(--text-secondary)', border: '1px dashed var(--kraft-dark)' }}>
-                       {product.description}
+                       <ManaText text={product.description} />
                      </div>
                   )}
                 </div>

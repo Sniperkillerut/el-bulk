@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import {
   adminFetchTCGs, adminFetchStorage, adminCreateStorage, adminUpdateStorage, adminDeleteStorage,
   adminFetchCategories, adminCreateCategory, adminUpdateCategory, adminDeleteCategory,
@@ -134,6 +135,17 @@ export default function AdminDashboard() {
         actions={
           <>
             <div className="flex flex-col items-end mr-4">
+              <div className="flex gap-2 mb-2">
+                <Link href="/admin/accounting/valuation" className="btn-secondary px-3 py-1.5 text-[10px] flex items-center gap-2">
+                  <span>📊</span> VALUATION
+                </Link>
+                <Link href="/admin/inventory/low-stock" className="btn-secondary px-3 py-1.5 text-[10px] flex items-center gap-2 border-hp-color/30 text-hp-color">
+                  <span>⚠️</span> LOW STOCK
+                </Link>
+                <Link href="/admin/settings" className="btn-secondary px-3 py-1.5 text-[10px] flex items-center gap-2 border-ink-border/30 text-ink-navy">
+                  <span>⚙️</span> SETTINGS
+                </Link>
+              </div>
               <button
                 onClick={handleSyncSets}
                 disabled={isSyncing}

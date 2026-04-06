@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	"github.com/el-bulk/backend/utils/render"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
+
+	"github.com/el-bulk/backend/utils/render"
 
 	"sync"
 	"time"
@@ -43,13 +44,17 @@ func loadSettings(db *sqlx.DB) (models.Settings, error) {
 	cacheMutex.RUnlock()
 
 	s := models.Settings{
-		USDToCOPRate: 4200,
-		EURToCOPRate: 4600,
-		ContactAddress: "Cra. 15 # 76-54, Local 201, Centro Comercial Unilago, Bogotá",
-		ContactPhone: "+57 300 000 0000",
-		ContactEmail: "contact@el-bulk.co",
-		ContactInstagram: "el-bulk",
-		ContactHours: "Mon - Sat: 11:00 AM - 7:00 PM",
+		USDToCOPRate:       4200,
+		EURToCOPRate:       4600,
+		ContactAddress:     "Cra. 15 # 76-54, Local 201, Centro Comercial Unilago, Bogotá",
+		ContactPhone:       "+57 300 000 0000",
+		ContactEmail:       "contact@el-bulk.co",
+		ContactInstagram:   "el-bulk",
+		ContactHours:       "Mon - Sat: 11:00 AM - 7:00 PM",
+		FlatShippingFeeCOP: 20000,
+		HotSalesThreshold:  3,
+		HotDaysThreshold:   7,
+		NewDaysThreshold:   10,
 	}
 
 	if db == nil {
@@ -91,6 +96,22 @@ func loadSettings(db *sqlx.DB) (models.Settings, error) {
 			s.LastSetSync = val
 		case "default_theme_id":
 			s.DefaultThemeID = val
+		case "flat_shipping_fee_cop":
+			if f, err := strconv.ParseFloat(val, 64); err == nil {
+				s.FlatShippingFeeCOP = f
+			}
+		case "hot_sales_threshold":
+			if i, err := strconv.Atoi(val); err == nil {
+				s.HotSalesThreshold = i
+			}
+		case "hot_days_threshold":
+			if i, err := strconv.Atoi(val); err == nil {
+				s.HotDaysThreshold = i
+			}
+		case "new_threshold_days":
+			if i, err := strconv.Atoi(val); err == nil {
+				s.NewDaysThreshold = i
+			}
 		}
 	}
 
@@ -118,13 +139,17 @@ func (h *SettingsHandler) Get(w http.ResponseWriter, r *http.Request) {
 // Omit a field to leave it unchanged.
 func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		USDToCOPRate     *float64 `json:"usd_to_cop_rate"`
-		EURToCOPRate     *float64 `json:"eur_to_cop_rate"`
-		ContactAddress   *string  `json:"contact_address"`
-		ContactPhone     *string  `json:"contact_phone"`
-		ContactEmail     *string  `json:"contact_email"`
-		ContactInstagram *string  `json:"contact_instagram"`
-		ContactHours     *string  `json:"contact_hours"`
+		USDToCOPRate       *float64 `json:"usd_to_cop_rate"`
+		EURToCOPRate       *float64 `json:"eur_to_cop_rate"`
+		ContactAddress     *string  `json:"contact_address"`
+		ContactPhone       *string  `json:"contact_phone"`
+		ContactEmail       *string  `json:"contact_email"`
+		ContactInstagram   *string  `json:"contact_instagram"`
+		ContactHours       *string  `json:"contact_hours"`
+		FlatShippingFeeCOP *float64 `json:"flat_shipping_fee_cop"`
+		HotSalesThreshold  *int     `json:"hot_sales_threshold"`
+		HotDaysThreshold   *int     `json:"hot_days_threshold"`
+		NewDaysThreshold   *int     `json:"new_days_threshold"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		render.Error(w, "invalid request body", http.StatusBadRequest)
@@ -175,6 +200,30 @@ func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if input.ContactHours != nil {
 		if err := upsert("contact_hours", *input.ContactHours); err != nil {
 			render.Error(w, "failed to update contact_hours", http.StatusInternalServerError)
+			return
+		}
+	}
+	if input.FlatShippingFeeCOP != nil {
+		if err := upsert("flat_shipping_fee_cop", strconv.FormatFloat(*input.FlatShippingFeeCOP, 'f', 2, 64)); err != nil {
+			render.Error(w, "failed to update flat_shipping_fee_cop", http.StatusInternalServerError)
+			return
+		}
+	}
+	if input.HotSalesThreshold != nil {
+		if err := upsert("hot_sales_threshold", strconv.Itoa(*input.HotSalesThreshold)); err != nil {
+			render.Error(w, "failed to update hot_sales_threshold", http.StatusInternalServerError)
+			return
+		}
+	}
+	if input.HotDaysThreshold != nil {
+		if err := upsert("hot_days_threshold", strconv.Itoa(*input.HotDaysThreshold)); err != nil {
+			render.Error(w, "failed to update hot_days_threshold", http.StatusInternalServerError)
+			return
+		}
+	}
+	if input.NewDaysThreshold != nil {
+		if err := upsert("new_threshold_days", strconv.Itoa(*input.NewDaysThreshold)); err != nil {
+			render.Error(w, "failed to update new_threshold_days", http.StatusInternalServerError)
 			return
 		}
 	}

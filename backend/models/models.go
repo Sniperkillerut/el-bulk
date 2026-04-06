@@ -1,8 +1,33 @@
 package models
 
 import (
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
 	"time"
 )
+
+// JSONB is a map that can be scanned from and to a Postgres JSONB column.
+type JSONB map[string]interface{}
+
+func (j JSONB) Value() (driver.Value, error) {
+	if j == nil {
+		return nil, nil
+	}
+	return json.Marshal(j)
+}
+
+func (j *JSONB) Scan(value interface{}) error {
+	if value == nil {
+		*j = nil
+		return nil
+	}
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+	return json.Unmarshal(b, &j)
+}
 
 type FoilTreatment string
 type CardTreatment string
@@ -70,6 +95,7 @@ type MTGMetadata struct {
 	Textless        bool     `db:"textless"          json:"textless"`
 	PromoType       *string  `db:"promo_type"         json:"promo_type,omitempty"`
 	ScryfallID      *string  `db:"scryfall_id"        json:"scryfall_id,omitempty"`
+	Legalities      JSONB    `db:"legalities"         json:"legalities,omitempty"`
 }
 
 // Product is the full DB row returned to API clients.
@@ -93,6 +119,7 @@ type Product struct {
 	Price            float64  `db:"-"                  json:"price"`
 
 	Stock           int               `db:"stock"              json:"stock"`
+	CostBasisCOP    float64           `db:"cost_basis_cop"     json:"cost_basis_cop"`
 	StoredIn        []StorageLocation `db:"-"                  json:"stored_in,omitempty"`
 	Categories      []CustomCategory  `db:"-"                  json:"categories,omitempty"`
 	ImageURL        *string           `db:"image_url"          json:"image_url,omitempty"`
@@ -100,6 +127,10 @@ type Product struct {
 	
 	CreatedAt       time.Time         `db:"created_at"         json:"created_at"`
 	UpdatedAt       time.Time         `db:"updated_at"         json:"updated_at"`
+	
+	// Virtual fields
+	IsHot           bool              `json:"is_hot"`
+	IsNew           bool              `json:"is_new"`
 
 	// CartCount is the number of unique customers who have this product in a pending order.
 	CartCount       int               `db:"-"                  json:"cart_count"`
@@ -150,12 +181,38 @@ type ProductInput struct {
 	PriceCOPOverride *float64 `json:"price_cop_override,omitempty"`
 
 	Stock           int      `json:"stock"`
+	CostBasis       float64  `json:"cost_basis"`
 	CategoryIDs     []string          `json:"category_ids,omitempty"`
 	StorageItems    []StorageLocation `json:"storage_items,omitempty"`
 	ImageURL        *string           `json:"image_url,omitempty"`
 	Description     *string           `json:"description,omitempty"`
 
 	DeckCards    []DeckCard `json:"deck_cards,omitempty"`
+}
+
+type BulkSearchRequest struct {
+	List string `json:"list"`
+}
+
+type DeckMatch struct {
+	RawLine      string    `json:"raw_line"`
+	Quantity     int       `json:"quantity"`
+	Matches      []Product `json:"matches"`
+	IsMatched    bool      `json:"is_matched"`
+	RequestedSet string    `json:"requested_set,omitempty"`
+	RequestedCN  string    `json:"requested_cn,omitempty"`
+}
+
+type BulkSearchResponse struct {
+	Matches []DeckMatch `json:"matches"`
+}
+
+type InventoryValuation struct {
+	TotalItems        int     `json:"total_items"`
+	TotalStock        int     `json:"total_stock"`
+	TotalValueCOP     float64 `json:"total_value_cop"`
+	TotalCostBasisCOP float64 `json:"total_cost_basis_cop"`
+	PotentialProfit   float64 `json:"potential_profit"`
 }
 
 // Settings holds admin-configurable global settings and contact info.
@@ -169,8 +226,14 @@ type Settings struct {
 	ContactEmail     string   `json:"contact_email"`
 	ContactInstagram string   `json:"contact_instagram"`
 	ContactHours     string   `json:"contact_hours"`
+	FlatShippingFeeCOP float64 `json:"flat_shipping_fee_cop"`
 	LastSetSync      string   `json:"last_set_sync"`
 	DefaultThemeID   string   `json:"default_theme_id"`
+	
+	// Discovery Algorithms
+	HotSalesThreshold int `json:"hot_sales_threshold"`
+	HotDaysThreshold  int `json:"hot_days_threshold"`
+	NewDaysThreshold  int `json:"new_days_threshold"`
 }
 
 type TCG struct {
@@ -187,6 +250,10 @@ type TCGSet struct {
 	Name       string `db:"name"        json:"name"`
 	ReleasedAt string `db:"released_at" json:"released_at"`
 	SetType    string `db:"set_type"    json:"set_type"`
+
+	// Virtual fields
+	IsHot      bool   `json:"is_hot"`
+	IsNew      bool   `json:"is_new"`
 }
 
 type TCGInput struct {
@@ -290,12 +357,18 @@ type Order struct {
 	ID            string     `db:"id"             json:"id"`
 	OrderNumber   string     `db:"order_number"   json:"order_number"`
 	CustomerID    string     `db:"customer_id"    json:"customer_id"`
-	Status        string     `db:"status"         json:"status"`
-	PaymentMethod string     `db:"payment_method" json:"payment_method"`
-	TotalCOP      float64    `db:"total_cop"      json:"total_cop"`
-	Notes         *string    `db:"notes"          json:"notes,omitempty"`
-	CreatedAt     time.Time  `db:"created_at"     json:"created_at"`
-	CompletedAt   *time.Time `db:"completed_at"   json:"completed_at,omitempty"`
+	Status          string     `db:"status"         json:"status"`
+	PaymentMethod   string     `db:"payment_method" json:"payment_method"`
+	SubtotalCOP     float64    `db:"subtotal_cop"   json:"subtotal_cop"`
+	ShippingCOP     float64    `db:"shipping_cop"   json:"shipping_cop"`
+	TaxCOP          float64    `db:"tax_cop"        json:"tax_cop"`
+	TotalCOP        float64    `db:"total_cop"      json:"total_cop"`
+	TrackingNumber  *string    `db:"tracking_number" json:"tracking_number,omitempty"`
+	TrackingURL     *string    `db:"tracking_url"    json:"tracking_url,omitempty"`
+	IsLocalPickup   bool       `db:"is_local_pickup" json:"is_local_pickup"`
+	Notes           *string    `db:"notes"          json:"notes,omitempty"`
+	CreatedAt       time.Time  `db:"created_at"     json:"created_at"`
+	CompletedAt     *time.Time `db:"completed_at"   json:"completed_at,omitempty"`
 }
 
 type OrderItem struct {
@@ -314,9 +387,10 @@ type OrderItem struct {
 
 // OrderDetail is the enriched response for admin order viewing
 type OrderDetail struct {
-	Order    Order             `json:"order"`
-	Customer Customer          `json:"customer"`
-	Items    []OrderItemDetail `json:"items"`
+	Order       Order             `json:"order"`
+	Customer    Customer          `json:"customer"`
+	Items       []OrderItemDetail `json:"items"`
+	WhatsAppURL string            `json:"whatsapp_url"`
 }
 
 type OrderItemDetail struct {
@@ -334,6 +408,7 @@ type CreateOrderInput struct {
 	IDNumber      string             `json:"id_number"`
 	Address       string             `json:"address"`
 	PaymentMethod string             `json:"payment_method"`
+	IsLocalPickup bool               `json:"is_local_pickup"`
 	Notes         string             `json:"notes"`
 	Items         []CreateOrderItem  `json:"items"`
 }
@@ -367,6 +442,8 @@ type OrderWithCustomer struct {
 	CustomerEmail string `db:"customer_email" json:"customer_email"`
 	ItemCount     int    `db:"item_count"    json:"item_count"`
 }
+
+func (c *CustomCategory) TableName() string { return "custom_category" }
 
 // ── Notices (Blog/News) ─────────────────────────────
 

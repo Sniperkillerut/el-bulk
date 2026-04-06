@@ -48,13 +48,21 @@ BEGIN
     END IF;
 
     -- Create Order
-    INSERT INTO "order" (order_number, customer_id, status, payment_method, total_cop, notes)
+    INSERT INTO "order" (
+        order_number, customer_id, status, payment_method, 
+        subtotal_cop, shipping_cop, tax_cop, total_cop, 
+        is_local_pickup, notes
+    )
     VALUES (
         order_meta->>'order_number',
         v_customer_id,
         'pending',
         order_meta->>'payment_method',
+        (order_meta->>'subtotal_cop')::numeric,
+        (order_meta->>'shipping_cop')::numeric,
+        (order_meta->>'tax_cop')::numeric,
         (order_meta->>'total_cop')::numeric,
+        (order_meta->>'is_local_pickup')::boolean,
         order_meta->>'notes'
     )
     RETURNING id, "order".order_number INTO v_order_id, v_order_num;

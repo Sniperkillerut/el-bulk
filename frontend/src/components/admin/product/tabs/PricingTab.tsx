@@ -76,6 +76,16 @@ export default function PricingTab({
               />
             </div>
           )}
+          <div>
+            <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>{t('components.admin.product_modal.pricing.cost_basis_label', 'COST BASIS (COP)')}</label>
+            <input 
+              type="number" 
+              step="1" 
+              value={form.cost_basis_cop ?? ''} 
+              onChange={e => onUpdate({ cost_basis_cop: e.target.value === '' ? '' : Number(e.target.value) })} 
+              placeholder="0"
+            />
+          </div>
         </div>
       </div>
 

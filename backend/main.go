@@ -63,6 +63,7 @@ func main() {
 	// Public API
 	r.Route("/api", func(r chi.Router) {
 		r.Get("/products", productHandler.List)
+		r.Post("/products/search-deck", productHandler.BulkSearch)
 		r.Get("/products/{id}", productHandler.GetByID)
 		r.Get("/tcgs", productHandler.ListTCGs)
 		r.Get("/categories", categoriesHandler.List)
@@ -122,6 +123,7 @@ func main() {
 				r.With(chiMiddleware.RequestSize(10 << 20)).Post("/products/bulk", productHandler.BulkCreate)
 				r.Put("/products/{id}", productHandler.Update)
 				r.Delete("/products/{id}", productHandler.Delete)
+				r.Get("/products/low-stock", productHandler.GetLowStock)
 
 				// Product Storage
 				r.Get("/products/{id}/storage", productHandler.GetStorage)
@@ -197,8 +199,9 @@ func main() {
 
 				r.Get("/subscribers", newsletterHandler.AdminGetSubscribers)
 
-				// Accounting Export
+				// Accounting
 				r.Get("/accounting/export", accountingHandler.ExportCSV)
+				r.Get("/accounting/valuation", accountingHandler.GetInventoryValuation)
 			})
 		})
 

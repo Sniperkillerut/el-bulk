@@ -14,3 +14,34 @@ export function FoilBadge({ foil }: { foil: string }) {
   const label = FOIL_LABELS[foil as keyof typeof FOIL_LABELS] || foil;
   return <span className="badge badge-foil">✦ {t(`pages.product.finish.${foil}`, label)}</span>;
 }
+
+export function HotBadge() {
+  const { t } = useLanguage();
+  return (
+    <span className="badge" style={{ 
+      background: 'linear-gradient(45deg, #ff4d4d, #f0932b)', 
+      color: '#fff', 
+      fontWeight: 'bold',
+      boxShadow: '0 0 10px rgba(255, 77, 77, 0.4)',
+      border: 'none'
+    }}>
+      🔥 {t('pages.product.badges.hot', 'HOT')}
+    </span>
+  );
+}
+
+export function NewBadge() {
+  const { t } = useLanguage();
+  return (
+    <span className="badge" style={{ 
+      background: 'linear-gradient(45deg, #2ecc71, #27ae60)', 
+      color: '#fff', 
+      fontWeight: 'bold',
+      boxShadow: '0 0 10px rgba(46, 204, 113, 0.4)',
+      border: 'none'
+    }}>
+      🆕 {t('pages.product.badges.new', 'NEW')}
+    </span>
+  );
+}
+

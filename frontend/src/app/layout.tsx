@@ -87,6 +87,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           }}
         />
         {/* ... heads remain same ... */}
+        {/* Set Icons & Mana Symbols loaded via globals.css */}
         <style>{`
           .centered-container {
             max-width: 1280px !important;

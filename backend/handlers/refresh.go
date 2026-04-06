@@ -2,14 +2,16 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/el-bulk/backend/utils/render"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/el-bulk/backend/utils/render"
+
 	"github.com/el-bulk/backend/external"
+	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/logger"
+	"github.com/jmoiron/sqlx"
 )
 
 // RefreshHandler handles on-demand and scheduled price refreshes.
@@ -59,7 +61,7 @@ func RunPriceRefresh(db *sqlx.DB) (updated int, errs int) {
 		}
 	}
 
-	var priceMap map[external.PriceKey]external.CardPrices
+	var priceMap map[external.PriceKey]external.CardMetadata
 	if len(mtgRows) > 0 {
 		var err error
 		priceMap, err = external.BuildPriceMap()
@@ -69,11 +71,16 @@ func RunPriceRefresh(db *sqlx.DB) (updated int, errs int) {
 		}
 	}
 
-	type priceUpdate struct {
-		ID    string
-		Price float64
+	type metadataUpdate struct {
+		ID         string
+		Price      *float64
+		Legalities models.JSONB
+		OracleText string
+		ScryfallID string
+		TypeLine   string
+		ImageURL   string
 	}
-	updates := []priceUpdate{}
+	updates := []metadataUpdate{}
 
 	for _, p := range mtgRows {
 		setCode := ""
@@ -104,13 +111,15 @@ func RunPriceRefresh(db *sqlx.DB) (updated int, errs int) {
 			refPrice = prices.CardmarketEUR
 		}
 
-		if refPrice == nil {
-			logger.Warn("[price-refresh] source price nil for %q (source: %s)", p.Name, p.PriceSource)
-			errs++
-			continue
-		}
-
-		updates = append(updates, priceUpdate{ID: p.ID, Price: *refPrice})
+		updates = append(updates, metadataUpdate{
+			ID:         p.ID,
+			Price:      refPrice,
+			Legalities: prices.Legalities,
+			OracleText: prices.OracleText,
+			ScryfallID: prices.ScryfallID,
+			TypeLine:   prices.TypeLine,
+			ImageURL:   prices.ImageURL,
+		})
 	}
 
 	// Execute updates in chunks to avoid PostgreSQL parameter limit (65,535)
@@ -122,18 +131,40 @@ func RunPriceRefresh(db *sqlx.DB) (updated int, errs int) {
 		}
 		chunk := updates[i:end]
 
-		query := "UPDATE product AS p SET price_reference = v.price_reference FROM (VALUES "
+		query := `
+			UPDATE product AS p SET 
+				price_reference = COALESCE(v.price_reference, p.price_reference),
+				legalities = COALESCE(v.legalities, p.legalities),
+				oracle_text = COALESCE(v.oracle_text, p.oracle_text),
+				scryfall_id = COALESCE(v.scryfall_id, p.scryfall_id),
+				type_line = COALESCE(v.type_line, p.type_line),
+				image_url = COALESCE(v.image_url, p.image_url),
+				updated_at = now()
+			FROM (VALUES 
+		`
 		placeholders := make([]string, len(chunk))
-		args := make([]interface{}, len(chunk)*2)
+		args := make([]interface{}, len(chunk)*7)
 
 		for j, u := range chunk {
-			placeholders[j] = fmt.Sprintf("($%d::uuid, $%d::double precision)", j*2+1, j*2+2)
-			args[j*2] = u.ID
-			args[j*2+1] = u.Price
+			base := j * 7
+			placeholders[j] = fmt.Sprintf("($%d::uuid, $%d::numeric, $%d::jsonb, $%d::text, $%d::uuid, $%d::text, $%d::text)",
+				base+1, base+2, base+3, base+4, base+5, base+6, base+7)
+
+			args[base] = u.ID
+			args[base+1] = u.Price
+			args[base+2] = u.Legalities
+			args[base+3] = u.OracleText
+			if u.ScryfallID != "" {
+				args[base+4] = u.ScryfallID
+			} else {
+				args[base+4] = nil
+			}
+			args[base+5] = u.TypeLine
+			args[base+6] = u.ImageURL
 		}
 
 		query += strings.Join(placeholders, ", ")
-		query += ") AS v(id, price_reference) WHERE p.id = v.id"
+		query += ") AS v(id, price_reference, legalities, oracle_text, scryfall_id, type_line, image_url) WHERE p.id = v.id"
 
 		res, err := db.Exec(query, args...)
 		if err != nil {

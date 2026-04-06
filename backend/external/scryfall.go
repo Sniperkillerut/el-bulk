@@ -67,6 +67,7 @@ type scryfallCard struct {
 	PromoTypes    []string `json:"promo_types"`
 	Finishes      []string `json:"finishes"`
 	FrameEffects  []string `json:"frame_effects"`
+	Legalities    map[string]string `json:"legalities"`
 }
 
 type CardIdentifier struct {
@@ -340,8 +341,20 @@ func mapScryfallToResult(card *scryfallCard, foilTreatment string) *CardLookupRe
 			Textless:        card.Textless,
 			PromoType:       promoType,
 			ScryfallID:      &card.ID,
+			Legalities:      castLegalities(card.Legalities),
 		},
 	}
+}
+
+func castLegalities(m map[string]string) models.JSONB {
+	if m == nil {
+		return nil
+	}
+	res := make(models.JSONB)
+	for k, v := range m {
+		res[k] = v
+	}
+	return res
 }
 
 func resolveCardTreatment(card *scryfallCard) models.CardTreatment {
@@ -458,8 +471,15 @@ type ScryfallBulkMeta struct {
 
 // ScryfallBulkCard is the price-relevant subset of each card in the bulk file.
 type ScryfallBulkCard struct {
-	Name   string `json:"name"`
-	Set    string `json:"set"`    // set code, e.g. "m11"
+	ID         string            `json:"id"`
+	Name       string            `json:"name"`
+	Set        string            `json:"set"` // set code, e.g. "m11"
+	TypeLine   string            `json:"type_line"`
+	OracleText string            `json:"oracle_text"`
+	Legalities map[string]string `json:"legalities"`
+	ImageURIs  struct {
+		Normal string `json:"normal"`
+	} `json:"image_uris"`
 	Prices struct {
 		USD       *string `json:"usd"`
 		USDFoil   *string `json:"usd_foil"`
@@ -476,16 +496,21 @@ type PriceKey struct {
 	Foil    string // foil_treatment value
 }
 
-// CardPrices holds extracted USD/EUR prices for one PriceKey.
-type CardPrices struct {
-	TCGPlayerUSD *float64
+// CardMetadata holds extracted USD/EUR prices and MTG card data for one PriceKey.
+type CardMetadata struct {
+	TCGPlayerUSD  *float64
 	CardmarketEUR *float64
+	Legalities     models.JSONB
+	OracleText     string
+	ScryfallID     string
+	TypeLine       string
+	ImageURL       string
 }
 
 // BuildPriceMap downloads Scryfall's "default_cards" bulk file and
 // builds a lookup map keyed by (name, setCode, foilTreatment).
 // The download is streamed so memory usage stays bounded.
-func BuildPriceMap() (map[PriceKey]CardPrices, error) {
+func BuildPriceMap() (map[PriceKey]CardMetadata, error) {
 	client := &http.Client{Timeout: 5 * time.Minute} // bulk file can be 600MB
 
 	// Step 1: discover today's bulk-data download URL
@@ -526,7 +551,7 @@ func BuildPriceMap() (map[PriceKey]CardPrices, error) {
 	defer dlResp.Body.Close()
 
 	// Step 3: stream-decode the JSON array without loading 600MB into memory at once
-	priceMap := make(map[PriceKey]CardPrices, 300_000)
+	priceMap := make(map[PriceKey]CardMetadata, 300_000)
 	decoder := json.NewDecoder(dlResp.Body)
 
 	// Read opening '['
@@ -543,6 +568,13 @@ func BuildPriceMap() (map[PriceKey]CardPrices, error) {
 
 		name := strings.ToLower(card.Name)
 		set := strings.ToLower(card.Set)
+		meta := CardMetadata{
+			Legalities:  castLegalities(card.Legalities),
+			OracleText:  card.OracleText,
+			ScryfallID:  card.ID,
+			TypeLine:    card.TypeLine,
+			ImageURL:    card.ImageURIs.Normal,
+		}
 
 		// Register entries for each foil variant this print has prices for
 		variants := []struct {
@@ -565,11 +597,17 @@ func BuildPriceMap() (map[PriceKey]CardPrices, error) {
 			if tcg == nil && cm == nil {
 				continue
 			}
+
+			// Copy metadata and add specific prices
+			entry := meta
+			entry.TCGPlayerUSD = tcg
+			entry.CardmarketEUR = cm
+
 			// Index by specific set
-			priceMap[PriceKey{Name: name, SetCode: set, Foil: v.foil}] = CardPrices{TCGPlayerUSD: tcg, CardmarketEUR: cm}
+			priceMap[PriceKey{Name: name, SetCode: set, Foil: v.foil}] = entry
 			// Also index by name+foil only (no set), so products missing set_code still match;
 			// later entries overwrite earlier ones which is fine (any printing is better than none)
-			priceMap[PriceKey{Name: name, SetCode: "", Foil: v.foil}] = CardPrices{TCGPlayerUSD: tcg, CardmarketEUR: cm}
+			priceMap[PriceKey{Name: name, SetCode: "", Foil: v.foil}] = entry
 		}
 	}
 

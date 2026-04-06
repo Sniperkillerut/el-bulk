@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS product (
   full_art          BOOLEAN NOT NULL DEFAULT false,
   textless          BOOLEAN NOT NULL DEFAULT false,
   scryfall_id       UUID,
+  legalities        JSONB, -- { "commander": "legal", "modern": "banned", ... }
 
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()

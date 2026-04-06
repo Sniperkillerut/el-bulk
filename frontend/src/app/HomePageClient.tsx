@@ -45,6 +45,9 @@ export default function HomePageClient({ categories, tcgs, collections, bounties
               {cat.name.toUpperCase()}
             </Link>
           ))}
+          <Link href="/deck-importer" className="text-[10px] sm:text-xs font-mono-stack px-2 py-0.5 bg-hp-color/10 border border-hp-color/30 text-hp-color hover:bg-hp-color hover:text-white transition-all rounded-sm uppercase tracking-tighter">
+            {t('nav.deck_importer_cta', 'Try our deck importer')} ✨
+          </Link>
         </div>
       </section>
 

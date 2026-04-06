@@ -16,7 +16,7 @@ BEGIN
             image_url, description, language, color_identity, rarity, cmc,
             is_legendary, is_historic, is_land, is_basic_land, art_variation,
             oracle_text, artist, type_line, border_color, frame, full_art, textless,
-            scryfall_id, updated_at
+            scryfall_id, legalities, updated_at
         )
         VALUES (
             COALESCE((item->>'id')::uuid, gen_random_uuid()),
@@ -52,6 +52,7 @@ BEGIN
             COALESCE((item->>'full_art')::boolean, false),
             COALESCE((item->>'textless')::boolean, false),
             (item->>'scryfall_id')::uuid,
+            item->'legalities',
             now()
         )
         ON CONFLICT (id) DO UPDATE SET
@@ -87,6 +88,7 @@ BEGIN
             full_art = EXCLUDED.full_art,
             textless = EXCLUDED.textless,
             scryfall_id = EXCLUDED.scryfall_id,
+            legalities = EXCLUDED.legalities,
             updated_at = now()
         RETURNING id INTO p_id;
 
@@ -116,7 +118,7 @@ BEGIN
                 product_id, name, set_code, set_name, collector_number, rarity, quantity, 
                 language, type_line, color_identity, cmc, is_legendary, is_historic, is_land, is_basic_land,
                 art_variation, oracle_text, artist, border_color, frame, full_art, textless, promo_type,
-                image_url, foil_treatment, card_treatment, scryfall_id
+                image_url, legalities, foil_treatment, card_treatment, scryfall_id
             )
             SELECT 
                 p_id,
@@ -143,6 +145,7 @@ BEGIN
                 COALESCE((dc->>'textless')::boolean, false),
                 dc->>'promo_type',
                 dc->>'image_url',
+                dc->'legalities',
                 COALESCE(dc->>'foil_treatment', 'non_foil'),
                 COALESCE(dc->>'card_treatment', 'normal'),
                 (dc->>'scryfall_id')::uuid

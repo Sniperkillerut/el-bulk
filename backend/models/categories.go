@@ -15,6 +15,8 @@ type CustomCategory struct {
 	Icon       *string   `db:"icon"        json:"icon"`
 	CreatedAt  time.Time `db:"created_at"  json:"created_at"`
 	ItemCount  int       `db:"item_count"  json:"item_count"` // Computed field
+	IsHot      bool      `json:"is_hot"`
+	IsNew      bool      `json:"is_new"`
 }
 
 // CustomCategoryInput is used for creating/updating custom categories.

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
@@ -23,6 +24,50 @@ type CategoriesHandler struct {
 func NewCategoriesHandler(db *sqlx.DB) *CategoriesHandler {
 	return &CategoriesHandler{DB: db}
 }
+
+func (h *CategoriesHandler) populateHotNew(categories []models.CustomCategory) {
+	if len(categories) == 0 {
+		return
+	}
+	tenDaysAgo := time.Now().AddDate(0, 0, -10)
+	
+	var ids []string
+	for i := range categories {
+		if categories[i].CreatedAt.After(tenDaysAgo) {
+			categories[i].IsNew = true
+		}
+		ids = append(ids, categories[i].ID)
+	}
+
+	query, args, err := sqlx.In(`
+		SELECT pc.category_id
+		FROM order_item oi
+		JOIN "order" o ON oi.order_id = o.id
+		JOIN product_category pc ON oi.product_id = pc.product_id
+		WHERE o.created_at > (now() - interval '7 days')
+		  AND pc.category_id IN (?)
+		GROUP BY pc.category_id
+		HAVING SUM(oi.quantity) >= 5
+	`, ids)
+
+	if err != nil {
+		return
+	}
+
+	var hotIDs []string
+	if err := h.DB.Select(&hotIDs, h.DB.Rebind(query), args...); err == nil {
+		hotMap := make(map[string]bool)
+		for _, id := range hotIDs {
+			hotMap[id] = true
+		}
+		for i := range categories {
+			if hotMap[categories[i].ID] {
+				categories[i].IsHot = true
+			}
+		}
+	}
+}
+
 
 // GET /api/admin/categories
 // (Also used by frontend public clients via /api/categories if needed)
@@ -54,6 +99,7 @@ func (h *CategoriesHandler) List(w http.ResponseWriter, r *http.Request) {
 	if categories == nil {
 		categories = []models.CustomCategory{}
 	}
+	h.populateHotNew(categories)
 	render.Success(w, categories)
 }
 

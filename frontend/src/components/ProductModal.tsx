@@ -9,6 +9,10 @@ import Modal from './ui/Modal';
 import CardImage from './CardImage';
 import DeckContents from './DeckContents';
 import { useLanguage } from '@/context/LanguageContext';
+import { HotBadge, NewBadge } from './Badges';
+import SetIcon from './SetIcon';
+import LegalityBadge from './LegalityBadge';
+import ManaText from './ManaText';
 
 interface ProductModalProps {
   productId: string;
@@ -62,6 +66,18 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
     addItem(product);
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
+  };
+
+  const renderManaIcons = (identity?: string) => {
+    if (!identity || identity === 'C') return <i className="ms ms-c ms-cost ms-shadow text-[1.1rem]" />;
+    const colors = identity.split(',').map(c => c.trim().toLowerCase());
+    return (
+      <div className="flex gap-1 items-center justify-center">
+        {colors.map(c => (
+          <i key={c} className={`ms ms-${c} ms-cost ms-shadow text-[1.1rem]`} />
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -119,12 +135,17 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
                 </nav>
                 
                 {product.set_name && (
-                  <p className="text-xs mb-1 font-mono-stack text-text-muted">
-                    {product.set_code ? `[${product.set_code}] ` : ''}{product.set_name}
-                  </p>
+                  <div className="flex items-center gap-2 mb-1">
+                    {product.set_code && <SetIcon setCode={product.set_code} rarity={product.rarity} size="sm" />}
+                    <p className="text-xs font-mono-stack text-text-muted">
+                      {product.set_name}
+                    </p>
+                  </div>
                 )}
-                <h1 className="font-display text-3xl md:text-4xl text-text-main leading-none">
+                <h1 className="font-display text-3xl md:text-4xl text-text-main leading-none flex items-center gap-2">
                   {product.name}
+                  {product.is_hot && <HotBadge />}
+                  {product.is_new && <NewBadge />}
                 </h1>
                 {product.type_line && (
                   <p className="text-xs mt-2 font-mono-stack text-text-secondary font-bold">
@@ -173,28 +194,43 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
               </div>
 
               {product.tcg === 'mtg' && product.category === 'singles' && (
-                <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 py-3 border-t border-b border-dashed border-border-main">
-                  <div className="text-center">
-                    <p className="text-[10px] font-bold text-text-muted uppercase">{t('pages.common.labels.identity', 'Identity')}</p>
-                    <p className="text-sm font-mono-stack">{product.color_identity || 'C'}</p>
+                <>
+                  <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 py-3 border-t border-dashed border-border-main">
+                    <div className="text-center">
+                      <p className="text-[10px] font-bold text-text-muted uppercase mb-1">{t('pages.common.labels.identity', 'Identity')}</p>
+                      {renderManaIcons(product.color_identity)}
+                    </div>
+                    <div className="text-center border-l md:border-l border-dashed border-border-main px-2">
+                      <p className="text-[10px] font-bold text-text-muted uppercase">{t('pages.common.labels.rarity', 'Rarity')}</p>
+                      <p className="text-sm font-mono-stack capitalize">
+                        {t(`pages.inventory.grid.sort.rarity.${product.rarity?.toLowerCase() || 'common'}`, product.rarity || 'Common')}
+                      </p>
+                    </div>
+                    <div className="text-center border-l border-dashed border-border-main px-2">
+                      <p className="text-[10px] font-bold text-text-muted uppercase">{t('pages.common.labels.art_var', 'Art Var.')}</p>
+                      <p className="text-sm font-mono-stack truncate">
+                        {product.art_variation ? t(`pages.product.art_variation.${product.art_variation.toLowerCase().replace(' ', '_')}`, product.art_variation) : t('pages.common.status.normal', 'Normal')}
+                      </p>
+                    </div>
+                    <div className="text-center border-l border-dashed border-border-main px-2">
+                      <p className="text-[10px] font-bold text-text-muted uppercase">{t('pages.common.labels.cmc', 'CMC')}</p>
+                      <p className="text-sm font-mono-stack">{product.cmc ?? 0}</p>
+                    </div>
                   </div>
-                  <div className="text-center border-l md:border-l border-dashed border-border-main px-2">
-                    <p className="text-[10px] font-bold text-text-muted uppercase">{t('pages.common.labels.rarity', 'Rarity')}</p>
-                    <p className="text-sm font-mono-stack capitalize">
-                      {t(`pages.inventory.grid.sort.rarity.${product.rarity?.toLowerCase() || 'common'}`, product.rarity || 'Common')}
-                    </p>
-                  </div>
-                  <div className="text-center border-l border-dashed border-border-main px-2">
-                    <p className="text-[10px] font-bold text-text-muted uppercase">{t('pages.common.labels.art_var', 'Art Var.')}</p>
-                    <p className="text-sm font-mono-stack truncate">
-                      {product.art_variation ? t(`pages.product.art_variation.${product.art_variation.toLowerCase().replace(' ', '_')}`, product.art_variation) : t('pages.common.status.normal', 'Normal')}
-                    </p>
-                  </div>
-                  <div className="text-center border-l border-dashed border-border-main px-2">
-                    <p className="text-[10px] font-bold text-text-muted uppercase">{t('pages.common.labels.cmc', 'CMC')}</p>
-                    <p className="text-sm font-mono-stack">{product.cmc ?? 0}</p>
-                  </div>
-                </div>
+
+                  {product.legalities && Object.values(product.legalities).some(status => status === 'banned' || status === 'restricted') && (
+                    <div className="mt-2 py-3 border-t border-b border-dashed border-border-main">
+                      <p className="text-[10px] font-bold text-status-hp uppercase mb-2 tracking-widest">{t('pages.product.details.legalities_alerts', 'FORMAT LEGALITY ALERTS')}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {Object.entries(product.legalities).map(([fmt, status]) => (
+                          (status === 'banned' || status === 'restricted') && (
+                            <LegalityBadge key={fmt} format={fmt} status={status as string} />
+                          )
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
               <hr className="divider w-full my-6 border-border-main" />
@@ -224,12 +260,12 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
                   <div className="flex flex-col gap-4">
                     {product.oracle_text && (
                       <div className="text-sm leading-relaxed whitespace-pre-wrap font-mono-stack p-4 rounded-sm bg-bg-page/40 text-text-main border border-dashed border-border-main">
-                        {product.oracle_text}
+                        <ManaText text={product.oracle_text} />
                       </div>
                     )}
                     {!product.oracle_text && product.description && (
                        <div className="text-sm leading-relaxed whitespace-pre-wrap font-mono-stack p-4 rounded-sm bg-bg-page/40 text-text-secondary border border-dashed border-border-main">
-                         {product.description}
+                         <ManaText text={product.description} />
                        </div>
                     )}
                   </div>

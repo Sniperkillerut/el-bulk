@@ -348,12 +348,12 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                     title="Color"
                     initialOpen={false}
                     items={[
-                      { id: 'W', label: t('pages.inventory.grid.sort.color.white', 'White'), color: '#f8f6d3' },
-                      { id: 'U', label: t('pages.inventory.grid.sort.color.blue', 'Blue'), color: '#0e68ab' },
-                      { id: 'B', label: t('pages.inventory.grid.sort.color.black', 'Black'), color: '#150b00' },
-                      { id: 'R', label: t('pages.inventory.grid.sort.color.red', 'Red'), color: '#d3202a' },
-                      { id: 'G', label: t('pages.inventory.grid.sort.color.green', 'Green'), color: '#00733e' },
-                      { id: 'C', label: t('pages.inventory.grid.sort.color.colorless', 'Colorless'), color: '#90adbb' }
+                      { id: 'W', label: t('pages.inventory.grid.sort.color.white', 'White'), color: '#f8f6d3', iconClass: 'ms ms-w ms-cost ms-shadow text-[1rem]' },
+                      { id: 'U', label: t('pages.inventory.grid.sort.color.blue', 'Blue'), color: '#0e68ab', iconClass: 'ms ms-u ms-cost ms-shadow text-[1rem]' },
+                      { id: 'B', label: t('pages.inventory.grid.sort.color.black', 'Black'), color: '#150b00', iconClass: 'ms ms-b ms-cost ms-shadow text-[1rem]' },
+                      { id: 'R', label: t('pages.inventory.grid.sort.color.red', 'Red'), color: '#d3202a', iconClass: 'ms ms-r ms-cost ms-shadow text-[1rem]' },
+                      { id: 'G', label: t('pages.inventory.grid.sort.color.green', 'Green'), color: '#00733e', iconClass: 'ms ms-g ms-cost ms-shadow text-[1rem]' },
+                      { id: 'C', label: t('pages.inventory.grid.sort.color.colorless', 'Colorless'), color: '#90adbb', iconClass: 'ms ms-c ms-cost ms-shadow text-[1rem]' }
                     ]}
                     selected={filters.color}
                     onToggle={(val) => toggleFilter('color', val)}
@@ -499,7 +499,7 @@ function FilterSection({
   initialOpen = true
 }: {
   title: string,
-  items: { id: string, label: string, color?: string }[],
+  items: { id: string, label: string, color?: string, iconClass?: string }[],
   selected: string[],
   onToggle: (id: string) => void,
   counts?: Record<string, number>,
@@ -543,7 +543,9 @@ function FilterSection({
                   className="w-4 h-4 border-2 border-border-main rounded-sm checked:bg-accent-primary appearance-none relative checked:after:content-['✓'] checked:after:absolute checked:after:inset-0 checked:after:flex checked:after:items-center checked:after:justify-center checked:after:text-[10px] checked:after:text-white transition-all shrink-0"
                 />
                 <span className="text-[11px] font-bold text-text-secondary group-hover:text-text-main transition-colors truncate flex items-center gap-2">
-                  {item.color && (
+                  {item.iconClass ? (
+                    <i className={`${item.iconClass} shrink-0`} />
+                  ) : item.color && (
                     <span
                       className="w-2.5 h-2.5 rounded-full border border-black/10 shadow-sm shrink-0"
                       style={{ backgroundColor: item.color }}

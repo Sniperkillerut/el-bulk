@@ -9,6 +9,9 @@ import CardBadgeList from './cards/CardBadgeList';
 import { openProductModal } from './ProductModalManager';
 import { useLanguage } from '@/context/LanguageContext';
 import { CategoryIcon } from './CategoryIcon';
+import { HotBadge, NewBadge } from './Badges';
+import LegalityBadge from './LegalityBadge';
+
 
 interface ProductCardProps {
   product: Product;
@@ -40,6 +43,17 @@ export default function ProductCard({ product }: ProductCardProps) {
       <a href={href} onClick={handleOpenModal} className="thumb-hover-wrap no-underline relative block">
         <CardImage imageUrl={product.image_url} name={product.name} tcg={product.tcg} foilTreatment={product.foil_treatment} />
         
+        {/* Product Badges (Hot/New) */}
+        <div className="absolute top-2 right-2 z-10 flex flex-col gap-1">
+          {product.is_hot && <HotBadge />}
+          {product.is_new && <NewBadge />}
+          {product.legalities?.commander === 'legal' && (
+             <div className="mt-1">
+               <LegalityBadge format="commander" status="legal" showFormatName={false} />
+             </div>
+          )}
+        </div>
+
         {/* Floating Categories */}
         {product.categories && product.categories.length > 0 && (
           <div className="absolute top-2 left-2 z-10 flex flex-col gap-1 pointer-events-none">
@@ -75,7 +89,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         />
 
         <a href={href} onClick={handleOpenModal} className="no-underline">
-          <CardInfo name={product.name} setName={product.set_name} setCode={product.set_code} />
+          <CardInfo name={product.name} setName={product.set_name} setCode={product.set_code} rarity={product.rarity} />
         </a>
 
         {/* Footer */}

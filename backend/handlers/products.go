@@ -1,13 +1,14 @@
 package handlers
 
 import (
-	"github.com/el-bulk/backend/utils/render"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/el-bulk/backend/utils/render"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
@@ -121,6 +122,66 @@ func (h *ProductHandler) populateCartCounts(products []models.Product) {
 
 	for i := range products {
 		products[i].CartCount = countMap[products[i].ID]
+	}
+}
+
+func (h *ProductHandler) populateHotNew(products []models.Product) {
+	if len(products) == 0 {
+		return
+	}
+	settings, _ := loadSettings(h.DB)
+	newDays := settings.NewDaysThreshold
+	if newDays <= 0 {
+		newDays = 10
+	}
+	newThreshold := time.Now().AddDate(0, 0, -newDays)
+
+	// 1. Calculate IsNew locally
+	for i := range products {
+		if products[i].CreatedAt.After(newThreshold) {
+			products[i].IsNew = true
+		}
+	}
+
+	// 2. Calculate IsHot from sales
+	hotSales := settings.HotSalesThreshold
+	if hotSales <= 0 {
+		hotSales = 3
+	}
+	hotDays := settings.HotDaysThreshold
+	if hotDays <= 0 {
+		hotDays = 7
+	}
+	var pids []string
+	for _, p := range products {
+		pids = append(pids, p.ID)
+	}
+
+	query, args, err := sqlx.In(fmt.Sprintf(`
+		SELECT product_id
+		FROM order_item oi
+		JOIN "order" o ON oi.order_id = o.id
+		WHERE o.created_at > (now() - interval '%d days')
+		  AND product_id IN (?)
+		GROUP BY product_id
+		HAVING SUM(quantity) >= %d
+	`, hotDays, hotSales), pids)
+
+	if err != nil {
+		return
+	}
+
+	var hotIDs []string
+	if err := h.DB.Select(&hotIDs, h.DB.Rebind(query), args...); err == nil {
+		hotMap := make(map[string]bool)
+		for _, id := range hotIDs {
+			hotMap[id] = true
+		}
+		for i := range products {
+			if hotMap[products[i].ID] {
+				products[i].IsHot = true
+			}
+		}
 	}
 }
 
@@ -357,6 +418,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	h.populateStorage(products)
 	h.populateCategories(products, isAdmin)
 	h.populateCartCounts(products)
+	h.populateHotNew(products)
 
 	render.Success(w, models.ProductListResponse{
 		Products:    products,
@@ -396,9 +458,10 @@ func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.populatePrices([]models.Product{product})
-	h.populateCartCounts([]models.Product{product})
-	render.Success(w, product)
+	products := []models.Product{product}
+	h.populatePrices(products)
+	h.populateCartCounts(products)
+	render.Success(w, products[0])
 }
 
 func (h *ProductHandler) ListTCGs(w http.ResponseWriter, r *http.Request) {
@@ -448,15 +511,15 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		INSERT INTO product (name, tcg, category, set_name, set_code, condition,
 		                      foil_treatment, card_treatment,
 		                      price_reference, price_source, price_cop_override,
-		                      stock, image_url, description, collector_number, promo_type,
+		                      stock, cost_basis_cop, image_url, description, collector_number, promo_type,
 		                      language, color_identity, rarity, cmc, is_legendary, is_historic, is_land, is_basic_land, art_variation,
 		                      oracle_text, artist, type_line, border_color, frame, full_art, textless, scryfall_id)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34)
 		RETURNING *
 	`, input.Name, input.TCG, input.Category, input.SetName, input.SetCode, input.Condition,
 		input.FoilTreatment, input.CardTreatment,
 		input.PriceReference, input.PriceSource, input.PriceCOPOverride,
-		input.Stock, input.ImageURL, input.Description, input.CollectorNumber, input.PromoType,
+		input.Stock, input.CostBasis, input.ImageURL, input.Description, input.CollectorNumber, input.PromoType,
 		input.Language, input.ColorIdentity, input.Rarity, input.CMC, input.IsLegendary, input.IsHistoric, input.IsLand, input.IsBasicLand, input.ArtVariation,
 		input.OracleText, input.Artist, input.TypeLine, input.BorderColor, input.Frame, input.FullArt, input.Textless, input.ScryfallID,
 	).StructScan(&product)
@@ -499,15 +562,15 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 		SET name=$1, tcg=$2, category=$3, set_name=$4, set_code=$5, condition=$6,
 		    foil_treatment=$7, card_treatment=$8,
 		    price_reference=$9, price_source=$10, price_cop_override=$11,
-		    stock=$12, image_url=$13, description=$14, collector_number=$15, promo_type=$16,
-		    language=$17, color_identity=$18, rarity=$19, cmc=$20, is_legendary=$21, is_historic=$22, is_land=$23, is_basic_land=$24, art_variation=$25,
-		    oracle_text=$26, artist=$27, type_line=$28, border_color=$29, frame=$30, full_art=$31, textless=$32, scryfall_id=$33
-		WHERE id=$34
+		    stock=$12, cost_basis_cop=$13, image_url=$14, description=$15, collector_number=$16, promo_type=$17,
+		    language=$18, color_identity=$19, rarity=$20, cmc=$21, is_legendary=$22, is_historic=$23, is_land=$24, is_basic_land=$25, art_variation=$26,
+		    oracle_text=$27, artist=$28, type_line=$29, border_color=$30, frame=$31, full_art=$32, textless=$33, scryfall_id=$34
+		WHERE id=$35
 		RETURNING *
 	`, input.Name, input.TCG, input.Category, input.SetName, input.SetCode, input.Condition,
 		input.FoilTreatment, input.CardTreatment,
 		input.PriceReference, input.PriceSource, input.PriceCOPOverride,
-		input.Stock, input.ImageURL, input.Description, input.CollectorNumber, input.PromoType,
+		input.Stock, input.CostBasis, input.ImageURL, input.Description, input.CollectorNumber, input.PromoType,
 		input.Language, input.ColorIdentity, input.Rarity, input.CMC, input.IsLegendary, input.IsHistoric, input.IsLand, input.IsBasicLand, input.ArtVariation,
 		input.OracleText, input.Artist, input.TypeLine, input.BorderColor, input.Frame, input.FullArt, input.Textless, input.ScryfallID,
 		id,
@@ -917,4 +980,130 @@ func (h *ProductHandler) buildFilters(tcg, category, search, storageID, foil, tr
 	}
 
 	return builder.BaseQuery, finalConditions, builder.Args
+}
+func (h *ProductHandler) BulkSearch(w http.ResponseWriter, r *http.Request) {
+	var req models.BulkSearchRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		render.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	lines := strings.Split(req.List, "\n")
+	results := make([]models.DeckMatch, 0)
+
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			continue
+		}
+
+		// Parse quantity and name
+		// Example: "4 Birds of Paradise (M10)"
+		parts := strings.SplitN(trimmed, " ", 2)
+		qty := 1
+		name := trimmed
+		if len(parts) > 1 {
+			// Handle formats like "4", "4x", "4 x"
+			qStr := strings.ToLower(strings.TrimSpace(parts[0]))
+			qStr = strings.TrimSuffix(qStr, "x")
+			if q, err := strconv.Atoi(qStr); err == nil {
+				qty = q
+				name = parts[1]
+			}
+		}
+
+		// Clean name, set hint, and CN hint
+		cleanName := name
+		setHint := ""
+		cnHint := ""
+
+		// Match "(SET)" in "4 Birds of Paradise (M10) 123"
+		if idx := strings.Index(name, "("); idx != -1 {
+			cleanName = strings.TrimSpace(name[:idx])
+			endIdx := strings.Index(name, ")")
+			if endIdx > idx {
+				setHint = strings.TrimSpace(name[idx+1 : endIdx])
+				// Anything after ")" might be CN
+				after := strings.TrimSpace(name[endIdx+1:])
+				if after != "" {
+					cnHint = after
+				}
+			}
+		} else {
+			// If no set hint, see if there's a trailing number that could be CN
+			// e.g. "4 Birds of Paradise 123"
+			lastSpace := strings.LastIndex(name, " ")
+			if lastSpace != -1 {
+				potentialCN := strings.TrimSpace(name[lastSpace+1:])
+				// Simple check: is it purely numeric or mostly numeric?
+				if _, err := strconv.Atoi(potentialCN); err == nil {
+					cnHint = potentialCN
+					cleanName = strings.TrimSpace(name[:lastSpace])
+				}
+			}
+		}
+
+		// Find matches in DB (Multi-stage)
+		var matches []models.Product
+
+		// Stage 1: Exact Version (Name + Set + CN)
+		if setHint != "" && cnHint != "" {
+			sql := `SELECT * FROM product WHERE (LOWER(name) = LOWER($1) OR name ILIKE $1) 
+			        AND (LOWER(set_code) = LOWER($2) OR LOWER(set_name) = LOWER($2))
+					AND collector_number = $3 AND stock > 0 ORDER BY stock DESC LIMIT 5`
+			_ = h.DB.Select(&matches, sql, cleanName, setHint, cnHint)
+		}
+
+		// Stage 2: Set Match (Name + Set)
+		if len(matches) == 0 && setHint != "" {
+			sql := `SELECT * FROM product WHERE (LOWER(name) = LOWER($1) OR name ILIKE $1) 
+			        AND (LOWER(set_code) = LOWER($2) OR LOWER(set_name) = LOWER($2))
+					AND stock > 0 ORDER BY stock DESC LIMIT 5`
+			_ = h.DB.Select(&matches, sql, cleanName, setHint)
+		}
+
+		// Stage 3: Name Only
+		if len(matches) == 0 {
+			sql := `SELECT * FROM product WHERE (LOWER(name) = LOWER($1) OR name ILIKE $1) 
+					AND stock > 0 ORDER BY stock DESC LIMIT 5`
+			_ = h.DB.Select(&matches, sql, cleanName)
+		}
+
+		h.populatePrices(matches)
+		h.populateStorage(matches)
+		h.populateCategories(matches, false)
+
+		results = append(results, models.DeckMatch{
+			RawLine:      trimmed,
+			Quantity:     qty,
+			Matches:      matches,
+			IsMatched:    len(matches) > 0,
+			RequestedSet: setHint,
+			RequestedCN:  cnHint,
+		})
+	}
+
+	render.Success(w, models.BulkSearchResponse{Matches: results})
+}
+
+func (h *ProductHandler) GetLowStock(w http.ResponseWriter, r *http.Request) {
+	thresholdStr := r.URL.Query().Get("threshold")
+	threshold := 5
+	if t, err := strconv.Atoi(thresholdStr); err == nil {
+		threshold = t
+	}
+
+	var products []models.Product
+	err := h.DB.Select(&products, "SELECT * FROM product WHERE stock <= $1 AND stock > 0 ORDER BY stock ASC LIMIT 100", threshold)
+	if err != nil {
+		logger.Error("GetLowStock DB error: %v", err)
+		render.Error(w, "Database failure", http.StatusInternalServerError)
+		return
+	}
+
+	h.populatePrices(products)
+	h.populateStorage(products)
+	h.populateHotNew(products)
+
+	render.Success(w, products)
 }

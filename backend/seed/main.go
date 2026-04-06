@@ -137,7 +137,6 @@ func seedCategories(db *sqlx.DB) map[string]string {
 	return mapping
 }
 
-
 func seedStorage(db *sqlx.DB) []string {
 	locations := []string{"Showcase A", "Storage Box 1", "Binder Vault"}
 	var ids []string
@@ -190,8 +189,15 @@ func seedMinimalData(db *sqlx.DB, cats map[string]string, storageIDs []string) s
 	name := "Black Lotus"
 	var pID string
 	db.QueryRow(`
-		INSERT INTO product (name, tcg, category, set_name, set_code, price_source, price_cop_override, stock, image_url, color_identity)
-		VALUES ($1, 'mtg', 'singles', 'Alpha', 'LEA', 'manual', 25000000, 1, 'https://cards.scryfall.io/normal/front/1/9/19911e6e-7c35-4281-b31c-266382f052cc.jpg?1717190810', 'C') RETURNING id
+		INSERT INTO product (
+			name, tcg, category, set_name, set_code, price_source, price_cop_override, 
+			stock, image_url, color_identity, oracle_text, legalities
+		)
+		VALUES ($1, 'mtg', 'singles', 'Alpha', 'LEA', 'manual', 25000000, 1, 
+			'https://cards.scryfall.io/normal/front/1/9/19911e6e-7c35-4281-b31c-266382f052cc.jpg?1717190810', 'C',
+			'{T}, Sacrifice Black Lotus: Add three mana of any one color.',
+			'{"commander": "banned", "legacy": "banned", "vintage": "restricted"}'::jsonb
+		) RETURNING id
 	`, name).Scan(&pID)
 
 	db.Exec(`INSERT INTO product_storage (product_id, storage_id, quantity) VALUES ($1, $2, 1)`, pID, storageIDs[0])
@@ -298,8 +304,8 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 				foil_treatment, card_treatment, language, price_source, price_cop_override,
 				image_url, stock, rarity, is_legendary, is_historic, is_land, is_basic_land,
 				art_variation, oracle_text, artist, type_line, border_color, frame,
-				full_art, textless, promo_type, cmc, color_identity
-			) VALUES ($1, 'mtg', 'singles', $2, $3, $4, $5, $6, $7, $8, 'manual', $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27)
+				full_art, textless, promo_type, cmc, color_identity, scryfall_id, legalities
+			) VALUES ($1, 'mtg', 'singles', $2, $3, $4, $5, $6, $7, $8, 'manual', $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29)
 			RETURNING id
 		`,
 			res.Name, res.SetName, res.SetCode, res.CollectorNumber, cond, f, t, res.Language,
@@ -307,7 +313,7 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 			res.IsLegendary, res.IsHistoric, res.IsLand, res.IsBasicLand,
 			res.ArtVariation, res.OracleText, res.Artist, res.TypeLine,
 			res.BorderColor, res.Frame, res.FullArt, res.Textless, res.PromoType,
-			res.CMC, res.ColorIdentity)
+			res.CMC, res.ColorIdentity, res.ScryfallID, res.Legalities)
 
 		if err == nil {
 			productIDs = append(productIDs, pID)
@@ -419,14 +425,15 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 					product_id, name, set_name, set_code, collector_number, quantity, 
 					language, color_identity, cmc, is_legendary, is_historic, is_land, is_basic_land,
 					art_variation, oracle_text, artist, type_line, border_color, frame,
-					full_art, textless, promo_type, image_url, foil_treatment, card_treatment, rarity
+					full_art, textless, promo_type, image_url, foil_treatment, card_treatment, rarity,
+					scryfall_id, legalities
 				)
-				VALUES ($1, $2, $3, $4, $5, 1, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, 'non_foil', 'normal', $23)
+				VALUES ($1, $2, $3, $4, $5, 1, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, 'non_foil', 'normal', $23, $24, $25)
 			`,
 				deckID, r.Name, r.SetName, r.SetCode, r.CollectorNumber,
 				r.Language, r.ColorIdentity, r.CMC, r.IsLegendary, r.IsHistoric, r.IsLand, r.IsBasicLand,
 				r.ArtVariation, r.OracleText, r.Artist, r.TypeLine, r.BorderColor, r.Frame,
-				r.FullArt, r.Textless, r.PromoType, r.ImageURL, r.Rarity)
+				r.FullArt, r.Textless, r.PromoType, r.ImageURL, r.Rarity, r.ScryfallID, r.Legalities)
 		}
 	}
 
@@ -924,9 +931,9 @@ func seedCRM(db *sqlx.DB, adminID string) {
 
 func seedThemes(db *sqlx.DB) {
 	logger.Info("🎨 Seeding Theme Palette Pack...")
-	
+
 	ptr := func(s string) *string { return &s }
-	
+
 	themes := []models.Theme{
 		{
 			ID: "00000000-0000-0000-0000-000000000001", Name: "Cardboard", IsSystem: true,
@@ -1014,7 +1021,7 @@ func seedThemes(db *sqlx.DB) {
 			BtnPrimaryBg: "#a83232", BtnPrimaryText: "#ffffff", BtnSecondaryBg: "transparent", BtnSecondaryText: "#a83232",
 			CheckboxBorder: "#d7ccc8", CheckboxChecked: "#a83232",
 			RadiusBase: "2px", PaddingCard: "16px", GapGrid: "20px",
-			BgImageURL: ptr("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='2' cy='2' r='2' fill='%23a83232' fill-opacity='0.05'/%3E%3C/svg%3E"),
+			BgImageURL:  ptr("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='2' cy='2' r='2' fill='%23a83232' fill-opacity='0.05'/%3E%3C/svg%3E"),
 			FontHeading: ptr("Cinzel, serif"), FontBody: ptr("Inter, sans-serif"),
 			AccentSecondary: ptr("#e65100"),
 		},
@@ -1027,7 +1034,7 @@ func seedThemes(db *sqlx.DB) {
 			BtnPrimaryBg: "linear-gradient(135deg, #3b82f6, #ef4444)", BtnPrimaryText: "#ffffff", BtnSecondaryBg: "transparent", BtnSecondaryText: "#f8fafc",
 			CheckboxBorder: "#475569", CheckboxChecked: "#3b82f6",
 			RadiusBase: "12px", PaddingCard: "14px", GapGrid: "24px",
-			BgImageURL: ptr("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%23ef4444' fill-opacity='0.1' d='M44.7,-76.4C58.9,-69.2,71.8,-59.1,81.3,-46.3C90.8,-33.5,96.8,-18,95.5,-3C94.2,12,85.6,26.5,75.4,38.8C65.2,51.1,53.4,61.2,40.1,68.6C26.8,76,12,80.7,-2.8,84.9C-17.6,89.1,-35.1,92.8,-49,86.2C-62.9,79.6,-73.2,62.7,-80.6,45.3C-88,27.9,-92.5,10,-91.4,-7.5C-90.3,-25,-83.6,-42,-72.6,-54.6C-61.6,-67.2,-46.3,-75.4,-31.6,-80.5C-16.9,-85.6, -1.2,-87.6,13.4,-84.9C28,-82.2,41.9,-74.8,44.7,-76.4Z' transform='translate(100 100)' /%3E%3C/svg%3E"),
+			BgImageURL:  ptr("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%23ef4444' fill-opacity='0.1' d='M44.7,-76.4C58.9,-69.2,71.8,-59.1,81.3,-46.3C90.8,-33.5,96.8,-18,95.5,-3C94.2,12,85.6,26.5,75.4,38.8C65.2,51.1,53.4,61.2,40.1,68.6C26.8,76,12,80.7,-2.8,84.9C-17.6,89.1,-35.1,92.8,-49,86.2C-62.9,79.6,-73.2,62.7,-80.6,45.3C-88,27.9,-92.5,10,-91.4,-7.5C-90.3,-25,-83.6,-42,-72.6,-54.6C-61.6,-67.2,-46.3,-75.4,-31.6,-80.5C-16.9,-85.6, -1.2,-87.6,13.4,-84.9C28,-82.2,41.9,-74.8,44.7,-76.4Z' transform='translate(100 100)' /%3E%3C/svg%3E"),
 			FontHeading: ptr("Bebas Neue, sans-serif"), FontBody: ptr("Space Mono, monospace"),
 			AccentSecondary: ptr("#ef4444"),
 		},
@@ -1040,7 +1047,7 @@ func seedThemes(db *sqlx.DB) {
 			BtnPrimaryBg: "#0ea5e9", BtnPrimaryText: "#ffffff", BtnSecondaryBg: "#ccfbf1", BtnSecondaryText: "#064e3b",
 			CheckboxBorder: "#99f6e4", CheckboxChecked: "#0ea5e9",
 			RadiusBase: "0px", PaddingCard: "16px", GapGrid: "16px",
-			BgImageURL: ptr("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h22v20h18v2H22v18H0v-2h20v-2H0v-2h20v-2H0v-2h20v-2H0v-2h20z' fill='%230f766e' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E"),
+			BgImageURL:  ptr("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h22v20h18v2H22v18H0v-2h20v-2H0v-2h20v-2H0v-2h20v-2H0v-2h20z' fill='%230f766e' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E"),
 			FontHeading: ptr("Space Mono, monospace"), FontBody: ptr("Inter, sans-serif"),
 			AccentSecondary: ptr("#10b981"),
 		},
@@ -1053,7 +1060,7 @@ func seedThemes(db *sqlx.DB) {
 			BtnPrimaryBg: "#09090b", BtnPrimaryText: "#ffffff", BtnSecondaryBg: "#ffffff", BtnSecondaryText: "#09090b",
 			CheckboxBorder: "#d4d4d8", CheckboxChecked: "#09090b",
 			RadiusBase: "8px", PaddingCard: "24px", GapGrid: "32px",
-			BgImageURL: ptr("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23a1a1aa' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"),
+			BgImageURL:  ptr("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23a1a1aa' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"),
 			FontHeading: ptr("Playfair Display, serif"), FontBody: ptr("Inter, sans-serif"),
 			AccentSecondary: ptr("#52525b"),
 		},
@@ -1066,7 +1073,7 @@ func seedThemes(db *sqlx.DB) {
 			BtnPrimaryBg: "#84cc16", BtnPrimaryText: "#0d0401", BtnSecondaryBg: "#292524", BtnSecondaryText: "#84cc16",
 			CheckboxBorder: "#57534e", CheckboxChecked: "#84cc16",
 			RadiusBase: "24px", PaddingCard: "12px", GapGrid: "16px",
-			BgImageURL: ptr("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h20v20H0V0zm10 17L3 9.5 9.5 3 17 9.5 10 17z' fill='%2365a30d' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E"),
+			BgImageURL:  ptr("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h20v20H0V0zm10 17L3 9.5 9.5 3 17 9.5 10 17z' fill='%2365a30d' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E"),
 			FontHeading: ptr("Cinzel, serif"), FontBody: ptr("Inter, sans-serif"),
 			AccentSecondary: ptr("#22c55e"),
 		},
@@ -1967,18 +1974,18 @@ func seedTranslations(db *sqlx.DB) {
 		{"pages.checkout.page.title", "es", "FINALIZAR COMPRA"},
 		{"pages.checkout.form.contact_info", "en", "CONTACT INFORMATION"},
 		{"pages.checkout.form.contact_info", "es", "INFORMACIÓN DE CONTACTO"},
-		{"pages.checkout.form.first_name", "en", "FIRST NAME *"},
-		{"pages.checkout.form.first_name", "es", "NOMBRE *"},
-		{"pages.checkout.form.last_name", "en", "LAST NAME *"},
-		{"pages.checkout.form.last_name", "es", "APELLIDO *"},
-		{"pages.checkout.form.phone", "en", "PHONE / WHATSAPP *"},
-		{"pages.checkout.form.phone", "es", "TELÉFONO / WHATSAPP *"},
-		{"pages.checkout.form.email", "en", "EMAIL *"},
-		{"pages.checkout.form.email", "es", "EMAIL *"},
-		{"pages.checkout.form.id_number", "en", "ID NUMBER *"},
-		{"pages.checkout.form.id_number", "es", "CÉDULA / ID *"},
-		{"pages.checkout.form.address", "en", "ADDRESS *"},
-		{"pages.checkout.form.address", "es", "DIRECCIÓN *"},
+		{"pages.checkout.form.first_name", "en", "FIRST NAME"},
+		{"pages.checkout.form.first_name", "es", "NOMBRE"},
+		{"pages.checkout.form.last_name", "en", "LAST NAME"},
+		{"pages.checkout.form.last_name", "es", "APELLIDO"},
+		{"pages.checkout.form.phone", "en", "PHONE / WHATSAPP"},
+		{"pages.checkout.form.phone", "es", "TELÉFONO / WHATSAPP"},
+		{"pages.checkout.form.email", "en", "EMAIL"},
+		{"pages.checkout.form.email", "es", "EMAIL"},
+		{"pages.checkout.form.id_number", "en", "ID NUMBER"},
+		{"pages.checkout.form.id_number", "es", "CÉDULA / ID"},
+		{"pages.checkout.form.address", "en", "ADDRESS"},
+		{"pages.checkout.form.address", "es", "DIRECCIÓN"},
 		{"pages.checkout.form.payment_method", "en", "PAYMENT METHOD"},
 		{"pages.checkout.form.payment_method", "es", "MÉTODO DE PAGO"},
 		{"pages.checkout.form.notes", "en", "NOTES (OPTIONAL)"},

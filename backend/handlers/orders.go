@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -111,7 +112,7 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 4. Prepare data for Stored Procedure
-	totalCOP := 0.0
+	subtotalCOP := 0.0
 	orderItems := make([]map[string]interface{}, 0)
 	for _, item := range input.Items {
 		p, ok := productMap[item.ProductID]
@@ -119,7 +120,7 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		price := p.ComputePrice(s.USDToCOPRate, s.EURToCOPRate)
-		totalCOP += price * float64(item.Quantity)
+		subtotalCOP += price * float64(item.Quantity)
 
 		orderItems = append(orderItems, map[string]interface{}{
 			"product_id":         p.ID,
@@ -138,6 +139,13 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, "No valid items selected (they might be missing from inventory, please clear the cart and try again)", http.StatusBadRequest)
 		return
 	}
+
+	shippingCOP := 0.0
+	if !input.IsLocalPickup {
+		shippingCOP = s.FlatShippingFeeCOP
+	}
+	taxCOP := 0.0 // Could be calculated here if needed
+	totalCOP := subtotalCOP + shippingCOP + taxCOP
 
 	var customerIDStr string
 	if ctxID := r.Context().Value(middleware.UserIDKey); ctxID != nil {
@@ -162,7 +170,11 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 	metaJSON, _ := json.Marshal(map[string]interface{}{
 		"order_number":   generateOrderNumber(),
 		"payment_method": input.PaymentMethod,
+		"subtotal_cop":   subtotalCOP,
+		"shipping_cop":   shippingCOP,
+		"tax_cop":        taxCOP,
 		"total_cop":      totalCOP,
+		"is_local_pickup": input.IsLocalPickup,
 		"notes":          input.Notes,
 	})
 
@@ -300,19 +312,60 @@ func (h *OrderHandler) GetDetail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(w, models.OrderDetail{
-		Order:    order,
-		Customer: customer,
-		Items:    detailItems,
+		Order:       order,
+		Customer:    customer,
+		Items:       detailItems,
+		WhatsAppURL: h.generateWhatsAppURL(order, customer),
 	})
 }
+
+func (h *OrderHandler) generateWhatsAppURL(order models.Order, customer models.Customer) string {
+	phone := ""
+	if customer.Phone != nil {
+		p := *customer.Phone
+		for _, char := range p {
+			if char >= '0' && char <= '9' {
+				phone += string(char)
+			}
+		}
+	}
+	if phone == "" {
+		return ""
+	}
+	// Default to Colombia (57) if no country code provided and length is 10
+	if len(phone) == 10 && !strings.HasPrefix(phone, "57") {
+		phone = "57" + phone
+	}
+
+	msg := ""
+	switch order.Status {
+	case "ready_for_pickup":
+		msg = fmt.Sprintf("¡Hola %s! 👋 Tu pedido %s en El Bulk ya está listo para ser reclamado en nuestra tienda ⚓. ¡Te esperamos!",
+			customer.FirstName, order.OrderNumber)
+	case "shipped":
+		tracking := ""
+		if order.TrackingNumber != nil {
+			tracking = "con guía " + *order.TrackingNumber
+		}
+		msg = fmt.Sprintf("¡Hola %s! 📦 Tu pedido %s en El Bulk ya ha sido enviado %s. ¡Pronto estará contigo!",
+			customer.FirstName, order.OrderNumber, tracking)
+	default:
+		msg = fmt.Sprintf("¡Hola %s! Referente a tu pedido %s en El Bulk...", customer.FirstName, order.OrderNumber)
+	}
+
+	return fmt.Sprintf("https://wa.me/%s?text=%s", phone, url.QueryEscape(msg))
+}
+
 
 // PUT /api/admin/orders/{id} — update order (status, item quantities)
 func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	var input struct {
-		Status *string `json:"status"`
-		Items  []struct {
+		Status         *string `json:"status"`
+		TrackingNumber *string `json:"tracking_number"`
+		TrackingURL    *string `json:"tracking_url"`
+		Items          []struct {
 			ID       string `json:"id"`
 			Quantity int    `json:"quantity"`
 		} `json:"items"`
@@ -329,11 +382,17 @@ func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	defer tx.Rollback()
 
-	// Update status if provided
-	if input.Status != nil {
-		_, err = tx.Exec(`UPDATE "order" SET status = $1 WHERE id = $2`, *input.Status, id)
+	// Update status and tracking if provided
+	if input.Status != nil || input.TrackingNumber != nil || input.TrackingURL != nil {
+		_, err = tx.Exec(`
+			UPDATE "order" 
+			SET status = COALESCE($1, status),
+			    tracking_number = COALESCE($2, tracking_number),
+			    tracking_url = COALESCE($3, tracking_url)
+			WHERE id = $4`, 
+			input.Status, input.TrackingNumber, input.TrackingURL, id)
 		if err != nil {
-			render.Error(w, "Failed to update order status: "+err.Error(), http.StatusInternalServerError)
+			render.Error(w, "Failed to update order info: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 	}
