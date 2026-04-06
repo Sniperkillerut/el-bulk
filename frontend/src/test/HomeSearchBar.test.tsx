@@ -1,6 +1,10 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import HomeSearchBar from '../components/HomeSearchBar'
+import { useLanguage } from "@/context/LanguageContext"
+vi.mock("@/context/LanguageContext", () => ({
+  useLanguage: vi.fn(),
+}))
 import * as api from '@/lib/api'
 
 // Mock the API using the alias
@@ -34,6 +38,13 @@ import { act } from '@testing-library/react'
 describe('HomeSearchBar', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(useLanguage).mockReturnValue({
+      t: (key: string) => key,
+      locale: "en",
+      setLocale: vi.fn(),
+      isLoading: false,
+      availableLocales: ["en", "es"],
+    })
   })
 
   it('renders correctly', async () => {
@@ -43,15 +54,15 @@ describe('HomeSearchBar', () => {
     expect(screen.getByPlaceholderText(/search for cards/i)).toBeInTheDocument()
   })
 
-  it('handles null search results gracefully', async () => {
-    // @ts-ignore
+  it('handles empty search results gracefully', async () => {
     vi.mocked(api.fetchProducts).mockImplementation(async () => {
       return {
-        products: null as any,
+        products: [],
         total: 0,
         page: 1,
         page_size: 10,
-        facets: mockFacets as any
+        facets: mockFacets as any,
+        query_time_ms: 0
       }
     })
 
@@ -87,13 +98,26 @@ describe('HomeSearchBar', () => {
             price: 100000,
             image_url: '',
             category: 'singles',
-            stock: 1
+            stock: 1,
+            condition: 'NM',
+            foil_treatment: 'non_foil',
+            card_treatment: 'normal',
+            language: 'en',
+            is_legendary: false,
+            is_historic: false,
+            is_land: false,
+            is_basic_land: false,
+            full_art: false,
+            textless: false,
+            created_at: '',
+            updated_at: ''
           }
         ] as any,
         total: 1,
         page: 1,
         page_size: 10,
-        facets: mockFacets as any
+        facets: mockFacets as any,
+        query_time_ms: 0
       }
     })
 
