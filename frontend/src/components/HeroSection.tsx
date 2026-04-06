@@ -8,7 +8,7 @@ export default function HeroSection() {
   const { t } = useLanguage();
 
   return (
-    <section className="relative w-full overflow-hidden bg-ink-deep" style={{ minHeight: '300px' }}>
+    <section className="relative w-full overflow-hidden bg-ink-deep box-lid" style={{ minHeight: '300px' }}>
       {/* Background Image - Absolute Positioning & Cover */}
       <div
         className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
@@ -29,8 +29,8 @@ export default function HeroSection() {
         backgroundRepeat: 'repeat'
       }} />
 
-      <div className="centered-container relative z-30 h-full flex flex-col justify-center items-start px-6 py-10 md:py-16">
-        <div className="max-w-3xl animate-fade-up">
+      <div className="centered-container relative z-30 h-full flex flex-col justify-center items-center lg:items-start px-6 py-10 md:py-16">
+        <div className="max-w-3xl animate-fade-up flex flex-col items-center lg:items-start text-center lg:text-left">
           {/* Brand Tag */}
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-ink-deep text-[#FFD700] font-mono-stack text-[11px] font-bold tracking-widest mb-8 rotate-[-1deg] shadow-xl border border-gold">
             {t('pages.home.hero.subtitle', 'YOUR LOCAL TCG SHOP')} • EST. 2024

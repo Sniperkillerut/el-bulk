@@ -93,7 +93,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             margin-left: auto !important;
             margin-right: auto !important;
             width: 100% !important;
-            display: block !important;
           }
           .responsive-stack {
             display: flex !important;
@@ -105,14 +104,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               flex-direction: row !important;
             }
           }
-          /* Fix Hero section alignment */
+          /* Fix Hero section alignment fallback */
           section.box-lid > div.centered-container {
-            display: flex !important;
-            justify-content: center !important;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
           }
           @media (min-width: 1024px) {
              section.box-lid > div.centered-container {
-               justify-content: flex-start !important;
+               align-items: flex-start;
+               text-align: left;
              }
           }
         `}</style>
