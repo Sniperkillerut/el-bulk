@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { fetchProduct } from '@/lib/api';
 import { Product } from '@/lib/types';
+import { basicSanitize } from '@/lib/htmlUtils';
 
 interface NoticeContentProps {
   html: string;
@@ -13,6 +14,7 @@ interface NoticeContentProps {
 const productCache = new Map<string, Product>();
 
 export default function NoticeContent({ html }: NoticeContentProps) {
+  const sanitizedHtml = useMemo(() => basicSanitize(html), [html]);
   const contentRef = useRef<HTMLDivElement>(null);
   const [hoveredCard, setHoveredCard] = useState<{ product: Product; rect: DOMRect } | null>(null);
   const [isMounted, setIsMounted] = useState(false);
@@ -74,7 +76,7 @@ export default function NoticeContent({ html }: NoticeContentProps) {
       <div 
         ref={contentRef}
         className="notice-html-content prose prose-p:font-mono-stack prose-p:text-text-secondary prose-headings:font-display prose-headings:uppercase prose-headings:color-ink-deep max-w-none"
-        dangerouslySetInnerHTML={{ __html: html }}
+        dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
       />
 
       {isMounted && hoveredCard && (
