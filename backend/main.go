@@ -15,6 +15,7 @@ import (
 	"github.com/el-bulk/backend/handlers"
 	"github.com/el-bulk/backend/middleware"
 	"github.com/el-bulk/backend/utils/logger"
+	"github.com/el-bulk/backend/utils/storage"
 	"github.com/joho/godotenv"
 )
 
@@ -44,6 +45,45 @@ func main() {
 	healthHandler := handlers.NewHealthHandler(database)
 	accountingHandler := handlers.NewAccountingHandler(database)
 	translationHandler := handlers.NewTranslationHandler(database)
+	
+	// Initialize Storage Backend
+	var storageDriver storage.StorageDriver
+	storageType := os.Getenv("STORAGE_TYPE")
+	ctx := context.Background()
+
+	switch storageType {
+	case "gcp":
+		bucket := os.Getenv("GCP_BUCKET_NAME")
+		if bucket == "" {
+			logger.Warn("STORAGE_TYPE is gcp but GCP_BUCKET_NAME is not set")
+		} else {
+			driver, err := storage.NewGCPDriver(ctx, bucket)
+			if err != nil {
+				logger.Error("Failed to initialize GCP storage: %v", err)
+			} else {
+				storageDriver = driver
+				logger.Info("✅ Cloud Storage: Google Cloud Storage initialized (Bucket: %s)", bucket)
+			}
+		}
+	case "s3":
+		bucket := os.Getenv("AWS_S3_BUCKET")
+		region := os.Getenv("AWS_REGION")
+		if bucket == "" || region == "" {
+			logger.Warn("STORAGE_TYPE is s3 but AWS_S3_BUCKET or AWS_REGION is not set")
+		} else {
+			driver, err := storage.NewS3Driver(ctx, bucket, region)
+			if err != nil {
+				logger.Error("Failed to initialize S3 storage: %v", err)
+			} else {
+				storageDriver = driver
+				logger.Info("✅ Cloud Storage: AWS S3 initialized (Bucket: %s, Region: %s)", bucket, region)
+			}
+		}
+	default:
+		logger.Warn("⚠️ No Cloud Storage configured (STORAGE_TYPE empty or unknown). Image uploads will be disabled.")
+	}
+	
+	uploadHandler := handlers.NewUploadHandler(storageDriver)
 
 	// Start nightly price refresh at midnight
 	handlers.StartMidnightScheduler(database)
@@ -109,6 +149,9 @@ func main() {
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.AdminAuth)
 				r.Get("/stats", healthHandler.GetStats)
+				
+				// Media Uploads
+				r.Post("/upload", uploadHandler.Upload)
 
 				// Themes CRUD
 				themeHandler := handlers.NewThemeHandler(database)

@@ -4,6 +4,7 @@ import { FormState } from '../types';
 import { CustomCategory, PriceSource, Settings, StorageLocation, StoredIn } from '@/lib/types';
 import StorageManager from '../StorageManager';
 import { useLanguage } from '@/context/LanguageContext';
+import { useState } from 'react';
 
 interface PricingTabProps {
   form: FormState;
@@ -20,19 +21,60 @@ interface PricingTabProps {
 }
 
 export default function PricingTab({
-  form,
-  settings,
-  categories,
-  productStorage,
-  storageLocations,
-  onUpdate,
-  onSourceChange,
-  onUpdateStoreQty,
-  onSetStoreQty,
-  onRemoveStorage,
-  onAddStorage
+	form,
+	settings,
+	categories,
+	productStorage,
+	storageLocations,
+	onUpdate,
+	onSourceChange,
+	onUpdateStoreQty,
+	onSetStoreQty,
+	onRemoveStorage,
+	onAddStorage
 }: PricingTabProps) {
-  const { t } = useLanguage();
+	const { t } = useLanguage();
+	const [isUploading, setIsUploading] = useState(false);
+
+	const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0];
+		if (!file) return;
+
+		// Simple local check
+		if (file.size > 5 * 1024 * 1024) {
+			alert(t('components.admin.product_modal.pricing.upload_size_error', 'File too large (Max 5MB)'));
+			return;
+		}
+
+		const formData = new FormData();
+		formData.append('file', file);
+
+		setIsUploading(true);
+		try {
+			const res = await fetch('/api/admin/upload', {
+				method: 'POST',
+				body: formData,
+			});
+
+			if (!res.ok) {
+				const error = await res.text();
+				throw new Error(error || 'Upload failed');
+			}
+
+			const data = await res.json();
+			onUpdate({ image_url: data.url });
+			// No global toast system found, using alert for now
+			alert(t('components.admin.product_modal.pricing.upload_success', 'Image uploaded and linked!'));
+		} catch (err: unknown) {
+			const message = err instanceof Error ? err.message : 'Unknown error';
+			console.error('Upload error:', err);
+			alert(t('components.admin.product_modal.pricing.upload_error', 'Failed to upload image: {error}', { error: message }));
+		} finally {
+			setIsUploading(false);
+			// Reset input
+			e.target.value = '';
+		}
+	};
 
   return (
     <div className="space-y-6">
@@ -114,12 +156,30 @@ export default function PricingTab({
             </div>
             <div>
               <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">{t('components.admin.product_modal.pricing.image_url_label', 'Image URL')}</label>
-              <input 
-                type="text" 
-                value={form.image_url} 
-                onChange={e => onUpdate({ image_url: e.target.value })} 
-                placeholder="https://..." 
-              />
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={form.image_url} 
+                  onChange={e => onUpdate({ image_url: e.target.value })} 
+                  placeholder="https://..." 
+                  className="flex-1"
+                />
+                <label className={`shrink-0 w-10 h-10 flex items-center justify-center rounded border transition-all cursor-pointer ${isUploading ? 'bg-ink-border animate-pulse' : 'bg-white border-ink-border hover:border-gold hover:text-gold'}`} title={t('components.admin.product_modal.pricing.upload_btn_tooltip', 'Upload to Cloud')}>
+                  {isUploading ? (
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="17 8 12 3 7 8"></polyline>
+                      <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                  )}
+                  <input type="file" className="hidden" accept="image/*" onChange={handleUpload} disabled={isUploading} />
+                </label>
+              </div>
             </div>
           </div>
 

@@ -62,6 +62,79 @@ function FontSelector({ label, value, onChange, helperText }: { label: string, v
   );
 }
 
+function ImageUploadInput({ label, value, onChange, helperText }: { label: string, value: string, onChange: (val: string) => void, helperText?: string }) {
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File too large (Max 5MB)');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    setIsUploading(true);
+    try {
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(error || 'Upload failed');
+      }
+
+      const data = await res.json();
+      onChange(data.url);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      console.error('Upload error:', err);
+      alert(`Failed to upload image: ${message}`);
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  return (
+    <div className="flex flex-col p-2.5 rounded bg-bg-header/30 hover:bg-bg-header/50 transition-colors border border-border-main/50 space-y-1">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-bold text-text-secondary uppercase">{label}</span>
+        {helperText && <span className="text-[8px] font-mono text-text-muted italic">{helperText}</span>}
+      </div>
+      <div className="flex gap-2">
+        <input 
+          type="text" 
+          value={value} 
+          onChange={e => onChange(e.target.value)}
+          placeholder="https://..."
+          className="bg-bg-page border border-border-main/30 rounded px-2 py-1.5 text-[11px] outline-none focus:border-accent-primary transition-colors text-text-main font-medium flex-1"
+        />
+        <label className={`shrink-0 w-8 h-8 flex items-center justify-center rounded border transition-all cursor-pointer ${isUploading ? 'bg-bg-header animate-pulse' : 'bg-bg-page border-border-main/30 hover:border-accent-primary hover:text-accent-primary'}`}>
+          {isUploading ? (
+            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+          )}
+          <input type="file" className="hidden" accept="image/*" onChange={handleUpload} disabled={isUploading} />
+        </label>
+      </div>
+    </div>
+  );
+}
+
 const CARDBOARD_DEFAULT: ThemeInput = {
   name: 'Cardboard',
   bg_page: '#e6dac3',
@@ -523,7 +596,7 @@ export default function AdminThemesPage() {
                   onToggle={() => setExpanded(p => ({...p, advanced: !p.advanced}))}
                 >
                   <div className="space-y-2">
-                    <StringPropertyInput label="Background Overlay Image URL" value={form.bg_image_url || ''} onChange={val => setForm({...form, bg_image_url: val})} helperText="(Can be SVG data URI or absolute URL)" />
+                    <ImageUploadInput label="Background Overlay Image URL" value={form.bg_image_url || ''} onChange={val => setForm({...form, bg_image_url: val})} helperText="(Can be SVG data URI or absolute URL)" />
                     <ColorInput label="Secondary Edge/Accent Color" value={form.accent_secondary || ''} onChange={val => setForm({...form, accent_secondary: val})} />
                     <FontSelector label="Header Typography Family" value={form.font_heading || ''} onChange={val => setForm({...form, font_heading: val})} helperText="(Logos and Headings)" />
                     <FontSelector label="Body Typography Family" value={form.font_body || ''} onChange={val => setForm({...form, font_body: val})} helperText="(UI and Content)" />
@@ -880,24 +953,6 @@ function LayoutPropertyInput({ label, value, onChange, helperText }: { label: st
         value={value} 
         onChange={e => onChange(e.target.value)}
         className="bg-bg-page border border-border-main/30 rounded px-2 py-1 text-[11px] outline-none focus:border-accent-primary transition-colors text-text-main font-mono"
-      />
-    </div>
-  );
-}
-
-function StringPropertyInput({ label, value, onChange, helperText }: { label: string, value: string, onChange: (val: string) => void, helperText?: string }) {
-  return (
-    <div className="flex flex-col p-2.5 rounded bg-bg-header/30 hover:bg-bg-header/50 transition-colors border border-border-main/50 space-y-1">
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] font-bold text-text-secondary uppercase">{label}</span>
-        {helperText && <span className="text-[8px] font-mono text-text-muted italic">{helperText}</span>}
-      </div>
-      <input 
-        type="text" 
-        value={value} 
-        onChange={e => onChange(e.target.value)}
-        className="bg-bg-page border border-border-main/30 rounded px-2 py-1 text-[11px] outline-none focus:border-accent-primary transition-colors text-text-main font-mono"
-        placeholder="Default"
       />
     </div>
   );
