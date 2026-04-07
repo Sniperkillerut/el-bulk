@@ -550,7 +550,7 @@ export default function ProductEditModal({
           </button>
         </div>
         
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
           <div className="px-4 md:px-6 pt-2 grid grid-cols-2 md:grid-cols-3 lg:flex gap-3 md:gap-4">
           <div style={{ minWidth: '160px' }}>
             <label className="text-[10px] font-mono-stack mb-1 block uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{t('components.admin.product_modal.tcg_system_label', 'TCG SYSTEM')}</label>
@@ -602,7 +602,7 @@ export default function ProductEditModal({
           </div>
 
           {!isMTGSingles && (
-            <div className="flex-1 min-w-[240px]">
+            <div className="flex-1 min-w-[120px]">
               <label className="text-[10px] font-mono-stack mb-1 block uppercase opacity-50 tracking-widest" style={{ color: 'var(--text-muted)' }}>{t('components.admin.product_modal.product_name_label', 'PRODUCT NAME')}</label>
               <input 
                 type="text" 
@@ -636,7 +636,7 @@ export default function ProductEditModal({
           />
         )}
 
-        <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm px-4 md:px-6 mt-2 md:mt-6 flex gap-3 border-b border-ink-border/20 overflow-x-auto no-scrollbar whitespace-nowrap">
+        <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm px-4 md:px-6 mt-2 md:mt-6 flex gap-3 border-b border-ink-border/20 overflow-x-auto overflow-y-hidden no-scrollbar whitespace-nowrap">
           {TABS.filter(t => t.show).map(tab => {
             const isActive = activeTab === tab.id;
             return (

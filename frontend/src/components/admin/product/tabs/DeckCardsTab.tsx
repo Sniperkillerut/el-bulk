@@ -339,10 +339,17 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <button type="button" onClick={() => updateCardQty(card.id!, card.quantity - 1)} className="w-6 h-6 rounded bg-ink-border/10 hover:bg-ink-border/20 transition-colors flex items-center justify-center font-mono font-bold" disabled={card.quantity <= 1}>-</button>
-                          <input type="number" value={card.quantity} onChange={e => updateCardQty(card.id!, parseInt(e.target.value) || 1)} className="w-12 text-center text-xs py-1 px-1 bg-white/50 m-0 border-none outline-none focus:ring-0" min={1} />
-                          <button type="button" onClick={() => updateCardQty(card.id!, card.quantity + 1)} className="w-6 h-6 rounded bg-ink-border/10 hover:bg-ink-border/20 transition-colors flex items-center justify-center font-mono font-bold">+</button>
+                        <div className="flex items-center gap-0.5 ml-2 shrink-0">
+                          <button type="button" onClick={() => updateCardQty(card.id!, card.quantity - 1)} className="w-6 h-6 rounded-l-sm bg-ink-border/10 hover:bg-ink-border/20 transition-colors flex items-center justify-center font-mono font-bold text-xs" disabled={card.quantity <= 1}>-</button>
+                          <input 
+                            type="number" 
+                            value={card.quantity} 
+                            onChange={e => updateCardQty(card.id!, parseInt(e.target.value) || 1)} 
+                            className="text-center text-xs font-mono-stack px-1 py-0 bg-white border-y border-ink-border/20 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
+                            style={{ width: '40px', height: '24px' }}
+                            min={1} 
+                          />
+                          <button type="button" onClick={() => updateCardQty(card.id!, card.quantity + 1)} className="w-6 h-6 rounded-r-sm bg-ink-border/10 hover:bg-ink-border/20 transition-colors flex items-center justify-center font-mono font-bold text-xs">+</button>
                         </div>
                         <div className="flex items-center gap-1">
                           <button type="button" onClick={() => editCard(card)} className="w-8 h-8 rounded-full text-gold hover:bg-gold/10 flex items-center justify-center transition-colors" title={t('components.admin.product_modal.deck.edit_tooltip', 'Edit/Repopulate')}>

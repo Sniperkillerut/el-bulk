@@ -103,7 +103,7 @@ export default function ScryfallPopulate({
           />
         </div>
 
-        <div className="flex-1 min-w-[200px] relative">
+        <div className="flex-1 min-w-[120px] relative">
           <div className="flex justify-between items-end mb-1">
             <label className="text-[10px] font-mono-stack uppercase opacity-60">{t('components.admin.product_modal.scryfall.search_hint', 'Card Name (Search Scryfall)')}</label>
             {searching && <span className="text-[9px] font-mono-stack animate-pulse text-gold">{t('components.admin.product_modal.scryfall.looking_up', 'Searching...')}</span>}

@@ -182,7 +182,7 @@ export default function AdminBountiesPage() {
         }
       />
 
-      <div className="flex gap-2 mb-2 border-b border-ink-deep/20 flex-shrink-0 overflow-x-auto no-scrollbar">
+      <div className="flex gap-2 mb-2 border-b border-ink-deep/20 flex-shrink-0 overflow-x-auto overflow-y-hidden no-scrollbar">
         {[
           { id: 'bounties', label: t('pages.admin.bounties.tabs.bounties', 'WANTED LIST'), count: bounties.filter(b => b.is_active).length },
           { id: 'offers', label: t('pages.admin.bounties.tabs.offers', 'OFFERS VERIFICATION'), count: offers.filter(o => o.status === 'pending').length, suffix: t('pages.admin.bounties.tabs.pending_suffix', 'PENDING') },
@@ -193,8 +193,8 @@ export default function AdminBountiesPage() {
             <button 
               key={tab.id}
               className={`
-                font-mono-stack text-sm px-4 py-3 md:px-10 md:py-6 transition-all uppercase tracking-widest whitespace-nowrap
-                rounded-t-md border-x relative -mb-px group border-t-[8px]
+                font-mono-stack text-xs px-3 py-2 md:px-6 md:py-3 transition-all uppercase tracking-widest whitespace-nowrap
+                rounded-t-md border-x relative -mb-px group border-t-4
                 ${isActive 
                   ? 'text-ink-deep bg-white border-gold border-x-kraft-dark/30 border-b-white z-20 shadow-[0_0_25px_rgba(186,155,74,0.4),0_0_10px_rgba(186,155,74,0.2)] font-black' 
                   : 'text-text-muted bg-kraft-dark/40 border-transparent border-x-kraft-dark/20 hover:text-ink-deep hover:bg-kraft-dark/60 font-bold'
@@ -205,13 +205,12 @@ export default function AdminBountiesPage() {
                 setExpandedOfferId(null);
               }}
             >
-              <div className="flex items-center gap-4">
-                <span className={`transition-all duration-300 w-4 flex justify-center ${isActive ? 'text-gold scale-125' : 'text-text-muted group-hover:text-gold'}`}>●</span>
+              <div className="flex items-center gap-2">
+                <span className={`transition-all duration-300 w-3 flex justify-center ${isActive ? 'text-gold scale-125' : 'text-text-muted group-hover:text-gold'}`}>●</span>
                 {tab.label}
-                <span className={`px-3 py-1 rounded-lg text-xs font-black shadow-inner ${isActive ? 'bg-gold/20 text-ink-deep' : 'bg-ink-deep/10 text-text-muted'}`}>
+                <span className={`px-2 py-0.5 rounded-md text-[10px] font-black shadow-inner ${isActive ? 'bg-gold/20 text-ink-deep' : 'bg-ink-deep/10 text-text-muted'}`}>
                   {tab.count} {isActive && tab.suffix ? tab.suffix : ''}
                 </span>
-                <div className="w-4" />
               </div>
             </button>
           );
@@ -252,7 +251,11 @@ export default function AdminBountiesPage() {
                   {bounties
                     .filter(b => onlyShowActive ? b.is_active : true)
                     .map(b => (
-                      <tr key={b.id} className={`group hover:bg-white transition-colors ${!b.is_active ? 'opacity-60 grayscale-[0.5]' : ''}`}>
+                      <tr 
+                        key={b.id} 
+                        onClick={() => { if (b.is_active) { setEditingBounty(b); setShowEditModal(true); } }}
+                        className={`group hover:bg-white transition-colors ${b.is_active ? 'cursor-pointer' : 'opacity-60 grayscale-[0.5]'}`}
+                      >
                         <td className="p-2">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-14 bg-kraft-paper rounded flex shrink-0 items-center justify-center overflow-hidden border border-kraft-dark/10">
@@ -291,15 +294,15 @@ export default function AdminBountiesPage() {
                           <div className="flex gap-2 justify-end">
                             {b.is_active ? (
                               <>
-                                <button onClick={() => { setEditingBounty(b); setShowEditModal(true); }} className="p-2 text-text-muted hover:text-gold hover:bg-gold/5 rounded-full transition-all" title={t('pages.common.actions.edit', 'Edit')}>
+                                <button onClick={(e) => { e.stopPropagation(); setEditingBounty(b); setShowEditModal(true); }} className="p-2 text-text-muted hover:text-gold hover:bg-gold/5 rounded-full transition-all" title={t('pages.common.actions.edit', 'Edit')}>
                                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                 </button>
-                                <button onClick={() => handleDeleteBounty(b.id, b.name)} className="p-2 text-text-muted hover:text-red-500 hover:bg-red-50 rounded-full transition-all" title={t('pages.common.actions.delete', 'Delete')}>
+                                <button onClick={(e) => { e.stopPropagation(); handleDeleteBounty(b.id, b.name); }} className="p-2 text-text-muted hover:text-red-500 hover:bg-red-50 rounded-full transition-all" title={t('pages.common.actions.delete', 'Delete')}>
                                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                                 </button>
                               </>
                             ) : (
-                              <button onClick={() => handleReactivateBounty(b)} className="text-[10px] font-bold text-emerald-700 hover:text-emerald-500 underline uppercase tracking-tighter transition-colors">{t('pages.admin.bounties.actions.reactivate', 'Re-activate')}</button>
+                              <button onClick={(e) => { e.stopPropagation(); handleReactivateBounty(b); }} className="text-[10px] font-bold text-emerald-700 hover:text-emerald-500 underline uppercase tracking-tighter transition-colors">{t('pages.admin.bounties.actions.reactivate', 'Re-activate')}</button>
                             )}
                           </div>
                         </td>
