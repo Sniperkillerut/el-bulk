@@ -134,23 +134,18 @@ export default function AdminDashboard() {
         subtitle={t('pages.admin.inventory.subtitle', 'Store Dashboard // Operations Active')}
         actions={
           <>
-            <div className="flex flex-col items-end mr-4">
-              <div className="flex gap-2 mb-2">
-                <Link href="/admin/accounting/valuation" className="btn-secondary px-3 py-1.5 text-[10px] flex items-center gap-2">
-                  <span>📊</span> VALUATION
-                </Link>
-                <Link href="/admin/inventory/low-stock" className="btn-secondary px-3 py-1.5 text-[10px] flex items-center gap-2 border-hp-color/30 text-hp-color">
-                  <span>⚠️</span> LOW STOCK
-                </Link>
-                <Link href="/admin/settings" className="btn-secondary px-3 py-1.5 text-[10px] flex items-center gap-2 border-ink-border/30 text-ink-navy">
-                  <span>⚙️</span> SETTINGS
-                </Link>
-              </div>
+            <Link href="/admin/accounting/valuation" className="btn-secondary px-3 py-1.5 text-[10px] flex items-center gap-2">
+              <span>📊</span> VALUATION
+            </Link>
+            <Link href="/admin/inventory/low-stock" className="btn-secondary px-3 py-1.5 text-[10px] flex items-center gap-2 border-hp-color/30 text-hp-color">
+              <span>⚠️</span> LOW STOCK
+            </Link>
+            <div className="flex flex-col items-center">
               <button
                 onClick={handleSyncSets}
                 disabled={isSyncing}
                 title={t('pages.admin.inventory.sync_sets_tooltip', 'Sync set metadata for date ordering on client filters')}
-                className="btn-secondary px-4 py-1.5 text-[10px] flex items-center gap-2 mb-1"
+                className="btn-secondary px-4 py-1.5 text-[10px] flex items-center gap-2 mb-0.5"
               >
                 <span>{isSyncing ? '⌛' : '🔄'}</span> {isSyncing ? t('pages.admin.inventory.syncing', 'SYNCING...') : t('pages.admin.inventory.sync_sets_btn', 'SYNC SETS')}
               </button>
