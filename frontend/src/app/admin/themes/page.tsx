@@ -583,258 +583,284 @@ function Collapsible({ title, icon, isOpen, onToggle, children }: { title: strin
 
 function MiniSinglesPreview({ form, mode = 'desktop' }: { form: ThemeInput, mode?: 'desktop' | 'mobile' }) {
   const isMobile = mode === 'mobile';
-  const mockProducts = [
-    { id: '1', name: 'Black Lotus', set_name: 'Limited Edition Alpha', price: 50000000, stock: 1, condition: 'NM', image_url: 'https://cards.scryfall.io/large/front/b/d/bd8fa327-dd41-4737-8f19-2cf5eb1f7cdd.jpg' },
-    { id: '2', name: 'Lightning Bolt', set_name: 'Fourth Edition', price: 15000, stock: 24, condition: 'LP', image_url: 'https://cards.scryfall.io/large/front/f/2/f29ba16f-c8fb-42fe-aabf-87089cb214a7.jpg' },
-    { id: '3', name: 'Ragavan', set_name: 'Modern Horizons 2', price: 320000, stock: 0, condition: 'HP', image_url: 'https://cards.scryfall.io/large/front/a/1/a1111111-1111-1111-1111-111111111111.jpg' }
-  ];
+  
+  // Convert standard hex/string values to CSS variables for preview scoping
+  const scopedVars = {
+    // Base Variables
+    '--bg-page': form.bg_page,
+    '--bg-header': form.bg_header,
+    '--bg-surface': form.bg_surface,
+    '--bg-card': form.bg_card,
+    '--text-main': form.text_main,
+    '--text-secondary': form.text_secondary,
+    '--text-muted': form.text_muted,
+    '--text-on-accent': form.text_on_accent,
+    '--text-on-header': form.text_on_header,
+    '--accent-primary': form.accent_primary,
+    '--accent-primary-hover': form.accent_primary_hover,
+    '--border-main': form.border_main,
+    '--border-focus': form.border_focus,
+    '--status-nm': form.status_nm,
+    '--status-lp': form.status_lp,
+    '--status-mp': form.status_mp,
+    '--status-hp': form.status_hp,
+    '--status-dmg': form.status_dmg,
+    '--accent-header': form.accent_header,
+    '--status-hp-header': form.status_hp_header,
+    '--btn-primary-bg': form.btn_primary_bg,
+    '--btn-primary-text': form.btn_primary_text,
+    '--btn-secondary-bg': form.btn_secondary_bg,
+    '--btn-secondary-text': form.btn_secondary_text,
+    '--checkbox-border': form.checkbox_border,
+    '--checkbox-checked': form.checkbox_checked,
+    '--radius-base': form.radius_base,
+    '--padding-card': form.padding_card,
+    '--gap-grid': form.gap_grid,
+    '--theme-bg-image': form.bg_image_url ? `url(${form.bg_image_url})` : 'none',
+    '--theme-font-heading': form.font_heading || 'Inherit',
+    '--theme-font-body': form.font_body || 'Inherit',
+    '--accent-secondary': form.accent_secondary || form.border_main,
+
+    // Tailwind Resolved Variables (Prevents bleeding from root theme)
+    '--color-bg-page': form.bg_page,
+    '--color-bg-header': form.bg_header,
+    '--color-bg-surface': form.bg_surface,
+    '--color-bg-card': form.bg_card,
+    '--color-text-main': form.text_main,
+    '--color-text-secondary': form.text_secondary,
+    '--color-text-muted': form.text_muted,
+    '--color-text-on-accent': form.text_on_accent,
+    '--color-text-on-header': form.text_on_header,
+    '--color-accent-primary': form.accent_primary,
+    '--color-accent-primary-hover': form.accent_primary_hover,
+    '--color-border-main': form.border_main,
+    '--color-border-focus': form.border_focus,
+    '--color-status-nm': form.status_nm,
+    '--color-status-lp': form.status_lp,
+    '--color-status-mp': form.status_mp,
+    '--color-status-hp': form.status_hp,
+    '--color-status-dmg': form.status_dmg,
+    '--color-accent-header': form.accent_header,
+    '--color-status-hp-header': form.status_hp_header,
+    '--color-btn-primary-bg': form.btn_primary_bg,
+    '--color-btn-primary-text': form.btn_primary_text,
+    '--color-btn-secondary-bg': form.btn_secondary_bg,
+    '--color-btn-secondary-text': form.btn_secondary_text,
+    '--color-checkbox-border': form.checkbox_border,
+    '--color-checkbox-checked': form.checkbox_checked,
+    '--color-accent-secondary': form.accent_secondary || form.border_main,
+  } as React.CSSProperties;
 
   return (
     <div 
-      className={`rounded-lg border shadow-2xl overflow-hidden origin-top flex flex-col transition-all duration-500 ease-in-out border-border-main scrollbar-none font-sans`} 
+      className={`rounded-lg border shadow-2xl overflow-hidden origin-top flex flex-col transition-all duration-500 ease-in-out border-border-main scrollbar-none`} 
       style={{ 
-        backgroundColor: form.bg_page, 
-        borderColor: form.border_main, 
-        borderRadius: form.radius_base,
-        backgroundImage: form.bg_image_url ? `url(${form.bg_image_url})` : 'none',
+        ...scopedVars,
+        backgroundColor: 'var(--bg-page)', 
+        backgroundImage: 'var(--theme-bg-image)',
         backgroundSize: 'cover',
-        fontFamily: form.font_body || 'Inter, sans-serif',
+        backgroundAttachment: 'fixed',
+        fontFamily: 'var(--theme-font-body)',
         width: isMobile ? '375px' : '100%',
         minHeight: isMobile ? '667px' : '700px',
         maxHeight: isMobile ? '667px' : '800px',
       }}
     >
-      {/* Mini Header */}
-      <div className="p-4 border-b border-border-main flex items-center justify-between sticky top-0 z-20" style={{ backgroundColor: form.bg_header, borderColor: form.border_main }}>
+      {/* Header */}
+      <header className="p-4 border-b border-border-main flex items-center justify-between sticky top-0 z-20 bg-bg-header text-text-on-header">
         <div className="flex items-center gap-4">
-          <div className="w-8 h-8 rounded bg-accent-primary flex items-center justify-center font-display text-white" style={{ backgroundColor: form.accent_primary, color: form.text_on_accent, fontFamily: form.font_heading || 'Inherit' }}>EB</div>
+          <div className="w-8 h-8 rounded bg-accent-primary text-text-on-accent flex items-center justify-center font-display" style={{ fontFamily: 'var(--theme-font-heading)' }}>EB</div>
           {!isMobile && (
-            <nav className="flex gap-4 text-[10px] font-bold uppercase tracking-widest" style={{ color: form.text_on_header }}>
+            <nav className="flex gap-4 text-[10px] font-bold uppercase tracking-widest">
               <span className="opacity-60">SINGLES</span>
-              <span style={{ color: form.accent_header }}>EXPLORE</span>
+              <span className="text-accent-header border-b-2 border-accent-header pb-1">EXPLORE</span>
               <span className="opacity-60">DECKS</span>
             </nav>
           )}
         </div>
-        <div className="flex items-center gap-2">
-           <div className="px-2 py-0.5 rounded-full text-[8px] font-bold uppercase" style={{ backgroundColor: form.status_hp_header + '20', color: form.status_hp_header, border: `1px solid ${form.status_hp_header}` }}>Critical</div>
-           <div className="w-6 h-6 rounded-full border-2" style={{ borderColor: form.accent_header || form.accent_primary }} />
+        <div className="flex items-center gap-3">
+           <div className="px-2 py-0.5 rounded-full text-[8px] font-bold uppercase border border-status-hp-header text-status-hp-header bg-status-hp-header/10 backdrop-blur-sm shadow-sm">Critical Alert</div>
+           <div className="hidden sm:flex items-center gap-2">
+             <div className="w-5 h-5 rounded-full border border-border-main bg-bg-surface flex items-center justify-center text-[8px] text-text-main shadow-inner">2</div>
+           </div>
+           <div className="w-7 h-7 rounded-full border-2 border-accent-header shrink-0"></div>
         </div>
-      </div>
+      </header>
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Mini Sidebar - Hidden on mobile preview */}
+        {/* Sidebar */}
         {!isMobile && (
-          <aside className="w-48 p-4 border-r border-border-main hidden md:block overflow-y-auto" style={{ borderColor: form.border_main, borderRightColor: form.accent_secondary || form.border_main }}>
+          <aside className="w-56 p-4 border-r border-accent-secondary overflow-y-auto bg-bg-surface/60 backdrop-blur-sm custom-scrollbar">
             <div className="space-y-6">
               <div>
-                <p className="text-[8px] font-bold uppercase tracking-[0.2em] mb-2" style={{ color: form.text_muted }}>Vault Matrix</p>
-                <div className="h-8 rounded border px-2 flex items-center shadow-inner" style={{ backgroundColor: form.bg_card, borderColor: form.border_main }}>
-                  <span className="text-[10px]" style={{ color: form.text_muted }}>Search cards...</span>
+                <p className="text-[8px] font-bold uppercase tracking-[0.2em] mb-2 text-text-muted">Vault Matrix Search</p>
+                <input type="search" placeholder="Search cards..." className="w-full" />
+              </div>
+              
+              <div>
+                <p className="text-[8px] font-bold uppercase tracking-[0.2em] mb-3 text-text-muted">Filter State</p>
+                <div className="space-y-2.5">
+                  <label className="flex items-center gap-2.5 cursor-pointer group">
+                    <input type="checkbox" className="group-hover:border-accent-primary" />
+                    <span className="text-[10px] text-text-secondary group-hover:text-text-main transition-colors">Normal Inactive</span>
+                  </label>
+                  <label className="flex items-center gap-2.5 cursor-pointer group">
+                    <input type="checkbox" defaultChecked className="group-hover:border-accent-primary" />
+                    <span className="text-[10px] font-bold text-text-main">Active Selected</span>
+                  </label>
                 </div>
               </div>
 
               <div>
-                <p className="text-[8px] font-bold uppercase tracking-[0.2em] mb-3" style={{ color: form.text_muted }}>FILTER STATE</p>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3.5 h-3.5 rounded-sm border transition-all" style={{ borderColor: form.checkbox_border, backgroundColor: form.bg_card }} />
-                    <span className="text-[10px]" style={{ color: form.text_secondary }}>Normal Check</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3.5 h-3.5 rounded-sm border flex items-center justify-center transition-all" style={{ borderColor: form.checkbox_checked, backgroundColor: form.checkbox_checked }}>
-                      <span className="text-[8px] font-bold" style={{ color: form.btn_primary_text }}>✓</span>
-                    </div>
-                    <span className="text-[10px] font-bold" style={{ color: form.text_main }}>Active Check</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <p className="text-[10px] font-display font-bold uppercase" style={{ color: form.text_main }}>Components ▼</p>
-                <div className="space-y-3">
-                  <button className="w-full py-2 rounded text-[9px] font-bold uppercase tracking-widest shadow-sm" style={{ backgroundColor: form.btn_primary_bg, color: form.btn_primary_text }}>
-                    Primary
-                  </button>
-                  <button className="w-full py-2 rounded text-[9px] font-bold uppercase tracking-widest border" style={{ backgroundColor: form.btn_secondary_bg, color: form.btn_secondary_text, borderColor: form.border_main }}>
-                    Secondary
-                  </button>
+                <p className="text-[10px] font-display font-bold uppercase text-text-main mb-3 border-b border-border-main pb-1" style={{ fontFamily: 'var(--theme-font-heading)' }}>Interactive ▼</p>
+                <div className="space-y-3 flex flex-col">
+                  <button className="btn-primary text-[10px] py-1.5 px-3">Primary Action</button>
+                  <button className="btn-secondary text-[10px] py-1.5 px-3">Secondary Action</button>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <p className="text-[8px] font-bold uppercase tracking-[0.2em] mb-3" style={{ color: form.text_muted }}>STATUS LABELS</p>
-                <div className="space-y-2">
-                  {[
-                    { l: 'Near Mint', c: form.status_nm },
-                    { l: 'Lightly Played', c: form.status_lp },
-                    { l: 'Mod. Played', c: form.status_mp },
-                    { l: 'Heavily Played', c: form.status_hp },
-                    { l: 'Damaged Card', c: form.status_dmg }
-                  ].map(s => (
-                    <div key={s.l} className="flex items-center gap-2">
-                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.c }} />
-                       <span className="text-[9px] font-medium" style={{ color: form.text_secondary }}>{s.l}</span>
-                    </div>
-                  ))}
+                <p className="text-[8px] font-bold uppercase tracking-[0.2em] mb-3 text-text-muted">Dynamic Status Flags</p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="border border-status-nm text-status-nm bg-status-nm/10 px-1.5 py-0.5 rounded-sm text-[8px] font-bold uppercase tracking-wider">NM</span>
+                  <span className="border border-status-lp text-status-lp bg-status-lp/10 px-1.5 py-0.5 rounded-sm text-[8px] font-bold uppercase tracking-wider">LP</span>
+                  <span className="border border-status-mp text-status-mp bg-status-mp/10 px-1.5 py-0.5 rounded-sm text-[8px] font-bold uppercase tracking-wider">MP</span>
+                  <span className="border border-status-hp text-status-hp bg-status-hp/10 px-1.5 py-0.5 rounded-sm text-[8px] font-bold uppercase tracking-wider">HP</span>
+                  <span className="border border-status-dmg text-status-dmg bg-status-dmg/10 px-1.5 py-0.5 rounded-sm text-[8px] font-bold uppercase tracking-wider">DMG</span>
                 </div>
               </div>
             </div>
           </aside>
         )}
 
-        {/* Mini Grid Container */}
-        <main className="flex-1 p-6 overflow-y-auto custom-scrollbar bg-[radial-gradient(circle_at_center,var(--border-main)_0.2px,transparent_0.2px)] bg-[size:12px_12px] relative" style={{ backgroundColor: form.bg_page }}>
+        {/* Main Content */}
+        <main className="flex-1 p-6 overflow-y-auto custom-scrollbar relative bg-[radial-gradient(circle_at_center,var(--color-border-main)_0.5px,transparent_0.5px)] bg-[size:16px_16px]">
           
-          {/* Featured Banner Object */}
-          <div className="mb-8 p-6 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4 overflow-hidden relative group" 
-            style={{ 
-              backgroundColor: form.accent_primary, 
-              color: form.text_on_accent, 
-              borderRadius: `calc(${form.radius_base} * 1.5)`,
-              boxShadow: `0 10px 30px -10px ${form.accent_primary}40`
-            }}
-          >
-            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] pointer-events-none" />
+          <div className="mb-6 p-6 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4 bg-accent-primary text-text-on-accent relative overflow-hidden group shadow-[0_10px_30px_-10px_var(--color-accent-primary)] border border-white/10" style={{ borderRadius: 'calc(var(--radius-base) * 1.5)' }}>
+            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] pointer-events-none mix-blend-overlay" />
             <div className="relative z-10 text-center md:text-left flex-1">
               <span className="text-[8px] font-mono font-bold uppercase tracking-[0.3em] opacity-80 mb-1 block">Limited Release</span>
-              <h3 className="text-2xl font-display leading-none mb-2" style={{ fontFamily: form.font_heading || 'Inherit' }}>STRIXHAVEN ARCHIVES</h3>
-              <p className="text-[10px] opacity-90 max-w-sm">Discover the forbidden knowledge of the Multiverse with our exclusive archive singles.</p>
+              <h3 className="text-2xl sm:text-3xl font-display leading-none mb-2" style={{ fontFamily: 'var(--theme-font-heading)' }}>STRIXHAVEN ARCHIVES</h3>
+              <p className="text-[10px] sm:text-xs opacity-90 max-w-md">Discover the forbidden knowledge of the Multiverse with our exclusive archive singles.</p>
             </div>
-            <button className="relative z-10 px-6 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded border border-white/30 text-[10px] font-bold uppercase tracking-widest transition-all">
+            <button className="relative z-10 px-6 py-2.5 bg-text-on-accent text-accent-primary hover:scale-105 active:scale-95 border border-white/30 text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg" style={{ borderRadius: 'var(--radius-base)' }}>
               View Collection
             </button>
           </div>
 
-          <div className="mb-6">
-             <nav className="flex items-center gap-2 mb-2">
-               <span className="text-[8px] font-mono uppercase tracking-widest" style={{ color: form.text_muted }}>MTG</span>
-               <span className="w-1 h-1 rounded-full" style={{ backgroundColor: form.text_muted }} />
-               <span className="text-[8px] font-mono uppercase tracking-widest" style={{ color: form.text_muted }}>SINGLES</span>
-             </nav>
-             <h2 className={`${isMobile ? 'text-xl' : 'text-3xl'} font-display leading-tight`} style={{ color: form.text_main, fontFamily: form.font_heading || 'Inherit' }}>PREVIEW ENGINE</h2>
-             <p className="text-[10px] mt-1 italic opacity-70" style={{ color: form.text_secondary }}>The curator&apos;s choice for high-fidelity inventory management.</p>
-             <div className="h-0.5 mt-3 opacity-20" style={{ backgroundColor: form.text_main }} />
+          <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 border-b border-border-main pb-4">
+             <div>
+               <h2 className={`${isMobile ? 'text-xl' : 'text-3xl'} font-display leading-tight text-text-main group-hover:text-accent-primary transition-colors`} style={{ fontFamily: 'var(--theme-font-heading)' }}>PREVIEW ENGINE</h2>
+               <p className="text-[10px] mt-1 italic text-text-secondary">The curator&apos;s choice for high-fidelity inventory management.</p>
+             </div>
+             <div className="flex gap-2">
+                 <select className="text-xs py-1.5 w-auto pr-8">
+                    <option>Sort by Date</option>
+                    <option>Sort by Price</option>
+                 </select>
+             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
             <div className="md:col-span-8">
-              <div className="flex items-center justify-between mb-4 pb-2 border-b border-border-main/10" style={{ borderColor: form.border_main }}>
-                <span className="text-[10px] font-mono font-bold" style={{ color: form.text_main }}>COLLECTION (3)</span>
-                <div className="flex items-center gap-2">
-                   <span className="text-[8px] font-bold uppercase" style={{ color: form.text_muted }}>View</span>
-                   <div className="flex gap-1">
-                     <div className="w-3 h-3 rounded" style={{ backgroundColor: form.accent_primary }} />
-                     <div className="w-3 h-3 rounded border" style={{ borderColor: form.border_main }} />
-                   </div>
-                </div>
-              </div>
-
-              <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`} style={{ gap: form.gap_grid }}>
-                {mockProducts.map((p, idx) => (
-                  <div key={p.id} className="border flex flex-col overflow-hidden transition-all hover:scale-[1.02] shadow-sm relative" style={{ backgroundColor: form.bg_card, borderColor: form.border_main, borderRadius: form.radius_base }}>
-                    <div className={`${isMobile ? 'aspect-[16/6]' : 'aspect-square'} bg-bg-page/20 relative overflow-hidden`} style={{ backgroundColor: form.bg_page + '33' }}>
-                      <div className="absolute inset-0 flex items-center justify-center p-4">
-                        <div className="w-full h-full rounded bg-bg-header/10 border border-white/5" style={{ backgroundColor: form.bg_header + '15' }} />
-                      </div>
-                      <div className="absolute top-2 left-2 flex flex-col gap-1">
-                        <span className="text-[7px] font-bold px-1 py-0.5 rounded border backdrop-blur-sm" style={{ 
-                          backgroundColor: (p.condition === 'NM' ? form.status_nm : p.condition === 'LP' ? form.status_lp : form.status_hp) + '15',
-                          borderColor: p.condition === 'NM' ? form.status_nm : p.condition === 'LP' ? form.status_lp : form.status_hp,
-                          color: p.condition === 'NM' ? form.status_nm : p.condition === 'LP' ? form.status_lp : form.status_hp
-                        }}>
-                          {p.condition}
-                        </span>
-                        {idx === 1 && (
-                          <span className="text-[7px] font-bold px-1 py-0.5 bg-hp-color text-white rounded">SALE</span>
-                        )}
-                        {idx === 0 && (
-                          <span className="text-[7px] font-bold px-1 py-0.5 bg-accent-primary text-text-on-accent rounded flex items-center gap-1">
-                            ✨ FOIL
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-col flex-1" style={{ padding: form.padding_card }}>
-                      <div>
-                        <h5 className="text-[11px] font-bold truncate leading-tight mb-1" style={{ color: form.text_main }}>{p.name}</h5>
-                        <p className="text-[8px] truncate" style={{ color: form.text_muted }}>{p.set_name}</p>
-                      </div>
-                      <div className="mt-4 pt-3 border-t border-dashed flex items-center justify-between" style={{ borderColor: form.border_main }}>
-                        <div className="flex flex-col">
-                          <span className="text-[9px] font-bold leading-none" style={{ color: form.text_main }}>${p.price.toLocaleString()}</span>
-                          {idx === 1 && <span className="text-[7px] text-hp-color line-through opacity-60">$21,000</span>}
-                        </div>
-                        <button className="text-[9px] font-bold px-3 py-1.5 rounded transition-transform active:scale-95" style={{ backgroundColor: form.btn_primary_bg, color: form.btn_primary_text }}>
-                          {p.stock > 0 ? 'BUY' : 'WAIT'}
-                        </button>
-                      </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 'var(--gap-grid)' }}>
+                {/* Product Card 1 */}
+                <div className="card flex flex-col group p-0 border border-border-main bg-bg-card shadow-sm hover:shadow-xl transition-all duration-300" style={{ borderRadius: 'var(--radius-base)' }}>
+                  <div className="aspect-[4/3] relative flex items-center justify-center p-4 border-b border-border-main/50" style={{ backgroundColor: 'var(--bg-page-dark, rgba(0,0,0,0.05))' }}>
+                     <div className="w-24 h-32 bg-bg-card rounded shadow-md flex items-center justify-center border border-border-main transition-transform group-hover:scale-105 duration-500">
+                        <span className="text-text-muted opacity-30 font-display text-4xl">MTG</span>
+                     </div>
+                     <div className="absolute top-2 left-2 flex flex-col gap-1.5">
+                       <span className="border border-status-nm text-status-nm bg-bg-card/90 backdrop-blur-sm px-1.5 py-0.5 rounded-sm text-[8px] font-bold shadow-sm">NM</span>
+                       <span className="border border-accent-primary text-accent-primary bg-bg-card/90 backdrop-blur-sm px-1.5 py-0.5 rounded-sm text-[8px] font-bold shadow-sm flex items-center gap-1">✨ FOIL</span>
+                     </div>
+                  </div>
+                  <div className="flex flex-col flex-1" style={{ padding: 'var(--padding-card)' }}>
+                    <h5 className="text-[13px] font-bold truncate leading-tight mb-0.5 text-text-main group-hover:text-accent-primary transition-colors" style={{ fontFamily: 'var(--theme-font-body)' }}>Black Lotus</h5>
+                    <p className="text-[10px] truncate text-text-muted font-mono tracking-tight">Limited Edition Alpha</p>
+                    <div className="mt-4 pt-3 border-t border-dashed border-border-main flex items-center justify-between">
+                      <span className="text-[12px] font-bold text-text-main font-mono tracking-tight">$50,000,000</span>
+                      <button className="btn-primary text-[10px] py-1.5 px-4 shadow-[0_2px_10px_-2px_var(--color-accent-primary)] hover:shadow-[0_4px_15px_-2px_var(--color-accent-primary)]">Buy</button>
                     </div>
                   </div>
-                ))}
+                </div>
+
+                {/* Product Card 2 - out of stock / sale */}
+                <div className="card flex flex-col group p-0 border border-border-main bg-bg-card shadow-sm transition-all duration-300 opacity-90" style={{ borderRadius: 'var(--radius-base)' }}>
+                  <div className="aspect-[4/3] bg-bg-page/40 relative flex items-center justify-center p-4 border-b border-border-main/50" style={{ backgroundColor: 'var(--bg-page-dark, rgba(0,0,0,0.05))' }}>
+                     <div className="w-24 h-32 bg-bg-card opacity-50 rounded shadow-sm border flex items-center justify-center border-border-main grayscale transition-all group-hover:grayscale-0">
+                        <span className="text-text-muted opacity-30 font-display text-4xl">MTG</span>
+                     </div>
+                     <div className="absolute top-2 left-2 flex flex-col gap-1.5">
+                       <span className="border border-status-hp text-status-hp bg-bg-card/90 backdrop-blur-sm px-1.5 py-0.5 rounded-sm text-[8px] font-bold shadow-sm">HP</span>
+                       <span className="border border-transparent bg-status-hp text-white px-1.5 py-0.5 rounded-sm text-[8px] font-bold shadow-sm">SALE</span>
+                     </div>
+                     <div className="absolute inset-0 bg-bg-page/20 flex flex-col items-center justify-center backdrop-blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity">
+                         <span className="bg-bg-card text-text-main border border-border-main px-3 py-1 font-bold text-[10px] uppercase shadow-lg rounded">Out of Stock</span>
+                     </div>
+                  </div>
+                  <div className="flex flex-col flex-1" style={{ padding: 'var(--padding-card)' }}>
+                    <h5 className="text-[13px] font-bold truncate leading-tight mb-0.5 text-text-main">Lightning Bolt</h5>
+                    <p className="text-[10px] truncate text-text-muted font-mono tracking-tight">Fourth Edition</p>
+                    <div className="mt-4 pt-3 border-t border-dashed border-border-main flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="text-[12px] font-bold text-text-main font-mono tracking-tight">$15.00</span>
+                        <span className="text-[9px] text-status-hp line-through font-mono opacity-80">$21.00</span>
+                      </div>
+                      <button className="btn-secondary text-[10px] py-1.5 px-3 opacity-60">Waitlist</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Pagination Mock */}
+              <div className="mt-6 pt-4 border-t border-border-main flex items-center justify-center gap-2">
+                 <button className="w-8 h-8 flex items-center justify-center rounded border border-border-main bg-bg-surface text-text-secondary hover:bg-bg-card hover:border-accent-primary transition-colors text-xs font-mono">&lt;</button>
+                 <button className="w-8 h-8 flex items-center justify-center rounded border border-accent-primary bg-accent-primary text-text-on-accent text-xs font-mono shadow-sm">1</button>
+                 <button className="w-8 h-8 flex items-center justify-center rounded border border-border-main bg-bg-surface text-text-secondary hover:bg-bg-card hover:border-accent-primary transition-colors text-xs font-mono">2</button>
+                 <button className="w-8 h-8 flex items-center justify-center rounded border border-border-main bg-bg-surface text-text-secondary hover:bg-bg-card hover:border-accent-primary transition-colors text-xs font-mono">...</button>
+                 <button className="w-8 h-8 flex items-center justify-center rounded border border-border-main bg-bg-surface text-text-secondary hover:bg-bg-card hover:border-accent-primary transition-colors text-xs font-mono">&gt;</button>
               </div>
             </div>
 
             <div className="md:col-span-4 space-y-6">
-               {/* Newsletter/Action Object */}
-               <div className="p-5 border rounded flex flex-col gap-3 shadow-inner bg-bg-surface" style={{ borderColor: form.border_main, backgroundColor: form.bg_surface, borderRadius: form.radius_base }}>
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-accent-primary" style={{ color: form.accent_primary }}>Stay Updated</p>
-                  <p className="text-[10px] leading-relaxed" style={{ color: form.text_secondary }}>Join our guild of collectors for instant stock alerts.</p>
-                  <div className="h-8 rounded border px-2 flex items-center bg-bg-page/20" style={{ borderColor: form.border_main }}>
-                    <span className="text-[9px] opacity-40">email@matrix.com</span>
-                  </div>
-                  <button className="w-full py-2.5 rounded text-[10px] font-bold uppercase tracking-widest" style={{ backgroundColor: form.btn_primary_bg, color: form.btn_primary_text }}>
-                    Subscribe
-                  </button>
+               <div className="p-5 border border-border-main shadow-inner bg-bg-surface flex flex-col gap-3 group" style={{ borderRadius: 'var(--radius-base)' }}>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-accent-primary group-hover:text-accent-primary-hover transition-colors">Newsletter Alert</p>
+                  <p className="text-xs leading-relaxed text-text-secondary">Join our guild of collectors for instant stock alerts and drops.</p>
+                  <input type="email" placeholder="collector@matrix.com" className="text-xs mt-1 shadow-inner focus:shadow-[0_0_0_2px_var(--color-border-focus)]" />
+                  <button className="btn-primary w-full text-[11px] py-2.5 mt-1">Subscribe</button>
                </div>
 
-               {/* Activity/Bounty Object */}
-               <div className="space-y-3">
-                  <p className="text-[8px] font-bold uppercase tracking-[0.2em]" style={{ color: form.text_muted }}>Active Bounties</p>
-                  <div className="space-y-2">
-                    {[1, 2].map(i => (
-                      <div key={i} className="p-3 border rounded flex items-center justify-between group cursor-pointer hover:bg-black/5 transition-colors" style={{ borderColor: form.border_main, borderRadius: form.radius_base }}>
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded bg-bg-header/10" style={{ backgroundColor: form.bg_header + '10' }} />
-                          <div>
-                            <p className="text-[10px] font-bold" style={{ color: form.text_main }}>Bounty #{i}49</p>
-                            <p className="text-[8px]" style={{ color: form.text_muted }}>Seeking: Ragavan...</p>
-                          </div>
-                        </div>
-                        <span className="text-[10px] font-mono text-accent-primary" style={{ color: form.accent_primary }}>➔</span>
-                      </div>
-                    ))}
+               <div className="p-5 border border-border-main bg-bg-card flex flex-col gap-4 border-l-[3px] shadow-md hover:shadow-lg transition-shadow" style={{ borderLeftColor: 'var(--accent-primary)', borderRadius: 'var(--radius-base)' }}>
+                  <div className="flex items-center justify-between pb-3 border-b border-border-main/50">
+                     <span className="text-[11px] font-bold uppercase tracking-widest text-text-main flex items-center gap-2">
+                        Cart Summary
+                        <span className="bg-bg-surface text-text-muted px-1.5 py-0.5 rounded text-[9px]">1 Item</span>
+                     </span>
+                     <span className="text-[14px] font-bold text-accent-primary font-mono">$50,000,015</span>
                   </div>
+                  
+                  <div className="flex justify-between items-center text-[10px]">
+                     <span className="text-text-secondary">Subtotal</span>
+                     <span className="font-mono text-text-main">$50,000,000</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[10px]">
+                     <span className="text-text-secondary">Shipping</span>
+                     <span className="font-mono text-accent-primary uppercase font-bold tracking-widest">Free</span>
+                  </div>
+                  
+                  <div className="flex flex-col gap-1.5 pt-2 border-t border-border-main/50">
+                     <div className="h-1.5 rounded-full bg-border-main overflow-hidden shadow-inner flex">
+                        <div className="h-full bg-accent-primary w-[100%] animate-pulse" />
+                     </div>
+                     <span className="text-[8px] font-mono uppercase text-text-muted flex justify-between">
+                        <span>Free Shipping Unlocked!</span>
+                        <span>100%</span>
+                     </span>
+                  </div>
+                  <button className="btn-primary w-full text-[11px] py-3 mt-1 shadow-[0_4px_14px_-4px_var(--color-accent-primary)] hover:shadow-[0_6px_20px_-4px_var(--color-accent-primary)]">Proceed to Checkout</button>
                </div>
-
-               {/* Horizontal Highlight */}
-               <div className="h-1 rounded-full opacity-30" style={{ backgroundColor: form.accent_secondary || form.accent_primary }} />
             </div>
-          </div>
-
-          <div className="mt-12 p-6 rounded-lg border bg-bg-surface flex flex-col gap-4 relative overflow-hidden" 
-            style={{ 
-              backgroundColor: form.bg_surface, 
-              borderColor: form.border_main,
-              borderRadius: form.radius_base,
-              borderLeft: `4px solid ${form.accent_primary}`
-            }}
-          >
-             <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: form.text_main }}>Cart Summary Preview</span>
-                <span className="text-[14px] font-bold" style={{ color: form.accent_primary }}>$50,335,000</span>
-             </div>
-             <div className="flex flex-col gap-1">
-                <div className="h-1.5 rounded-full bg-border-main/20 overflow-hidden" style={{ backgroundColor: form.border_main + '20' }}>
-                   <div className="h-full bg-accent-primary" style={{ width: '60%', backgroundColor: form.accent_primary }} />
-                </div>
-                <div className="flex justify-between">
-                   <span className="text-[7px] font-mono uppercase opacity-60" style={{ color: form.text_muted }}>PROCESSED LOAD: 60%</span>
-                </div>
-             </div>
-             <button className="w-full py-3 rounded text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-accent-primary/20" style={{ backgroundColor: form.btn_primary_bg, color: form.btn_primary_text }}>
-                Finalize Transaction
-             </button>
           </div>
         </main>
       </div>
