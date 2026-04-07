@@ -23,13 +23,14 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
       {/* Drawer */}
       <div
         suppressHydrationWarning
-        className="fixed right-0 top-0 h-full z-50 flex flex-col"
+        className="fixed right-0 top-0 h-full z-50 flex flex-col overflow-x-hidden"
         style={{
           width: 'min(400px, 100vw)',
           background: 'var(--bg-surface)',
           borderLeft: '1px solid var(--border-main)',
           transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          visibility: isOpen ? 'visible' : 'hidden',
+          transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s',
         }}
       >
         {/* Header */}
@@ -68,7 +69,7 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
         </div>
 
         {/* Items */}
-        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+        <div className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-3">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-4" style={{ color: 'var(--text-muted)' }}>
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.4">
@@ -81,60 +82,64 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
             </div>
           ) : (
             items.map(item => (
-              <div key={item.product.id} className="card p-3 flex gap-3">
+              <div key={item.product.id} className="card p-4 flex flex-shrink-0 gap-4 items-start overflow-visible">
                 {/* Image */}
                 <div style={{ width: 48, flexShrink: 0 }}>
                   <CardImage imageUrl={item.product.image_url} name={item.product.name} tcg={item.product.tcg} foilTreatment={item.product.foil_treatment} height={64} enableHover={true} enableModal={true} />
                 </div>
 
                 {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-main)' }}>
+                <div className="flex-1 min-w-0 pb-1">
+                  <p className="text-sm font-semibold line-clamp-2 leading-tight" style={{ color: 'var(--text-main)' }}>
                     {item.product.name}
                   </p>
                   {item.product.set_name && (
-                    <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{item.product.set_name}</p>
+                    <p className="text-xs line-clamp-1 mt-0.5 opacity-80" style={{ color: 'var(--text-muted)' }}>{item.product.set_name}</p>
                   )}
                   {(item.product.cart_count ?? 0) > 0 && (
-                    <p className="text-[9px] font-mono mt-0.5 opacity-60" style={{ color: 'var(--gold)' }}>
+                    <p className="text-[9px] font-mono mt-1 opacity-70 leading-none" style={{ color: 'var(--gold)' }}>
                       ● {(item.product.cart_count ?? 0) === 1 
                           ? t('pages.product.cart_users_has', '{count} OTHER USER HAS THIS IN THEIR CART').replace('{count}', (item.product.cart_count ?? 0).toString())
                           : t('pages.product.cart_users_have', '{count} OTHER USERS HAVE THIS IN THEIR CART').replace('{count}', (item.product.cart_count ?? 0).toString())}
                     </p>
                   )}
-                    <div className="flex items-center gap-2 mt-2">
-                      <button
-                        onClick={() => updateQty(item.product.id, item.quantity - 1)}
-                        style={{ width: 24, height: 24, background: 'var(--border-main)', border: 'none', borderRadius: 3, color: 'var(--text-main)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                      >−</button>
-                      <span className="text-sm w-6 text-center" style={{ fontFamily: 'Space Mono, monospace' }}>{item.quantity}</span>
-                      <button
-                        onClick={() => updateQty(item.product.id, item.quantity + 1)}
-                        disabled={item.quantity >= item.product.stock}
-                        style={{ 
-                          width: 24, height: 24, 
-                          background: 'var(--border-main)', border: 'none', borderRadius: 3, 
-                          color: 'var(--text-main)', 
-                          cursor: item.quantity >= item.product.stock ? 'not-allowed' : 'pointer', 
-                          opacity: item.quantity >= item.product.stock ? 0.5 : 1,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center' 
-                        }}
-                      >+</button>
-                      <span className="text-[10px] opacity-40 ml-1" style={{ fontFamily: 'Space Mono, monospace' }}>
+                    <div className="flex flex-wrap items-center gap-3 mt-3">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => updateQty(item.product.id, item.quantity - 1)}
+                          style={{ width: 26, height: 26, background: 'var(--border-main)', border: 'none', borderRadius: 4, color: 'var(--text-main)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}
+                        >−</button>
+                        <span className="text-sm min-w-6 text-center font-bold" style={{ fontFamily: 'Space Mono, monospace' }}>{item.quantity}</span>
+                        <button
+                          onClick={() => updateQty(item.product.id, item.quantity + 1)}
+                          disabled={item.quantity >= item.product.stock}
+                          style={{ 
+                            width: 26, height: 26, 
+                            background: 'var(--border-main)', border: 'none', borderRadius: 4, 
+                            color: 'var(--text-main)', 
+                            cursor: item.quantity >= item.product.stock ? 'not-allowed' : 'pointer', 
+                            opacity: item.quantity >= item.product.stock ? 0.3 : 1,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '1.1rem'
+                          }}
+                        >+</button>
+                      </div>
+                      <span className="text-[10px] opacity-60 font-mono whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>
                         {item.product.stock} {t('pages.product.status.available', 'available')}
                       </span>
                     </div>
                 </div>
 
                 {/* Price + remove */}
-                <div className="flex flex-col items-end justify-between">
-                  <span className="price text-sm">${(item.product.price * item.quantity).toLocaleString('en-US', { maximumFractionDigits: 0 })} COP</span>
+                <div className="flex flex-col items-end justify-between flex-shrink-0 min-w-[70px] self-stretch">
+                  <span className="price text-sm font-bold whitespace-nowrap text-accent-primary">${(item.product.price * item.quantity).toLocaleString('en-US', { maximumFractionDigits: 0 })} COP</span>
                   <button
                     onClick={() => removeItem(item.product.id)}
-                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 2 }}
+                    className="p-1.5 hover:bg-hp-color/10 rounded-full transition-colors group"
+                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
                     title={t('pages.cart.drawer.remove_tooltip', 'Remove')}
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="group-hover:text-hp-color">
                       <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
                     </svg>
                   </button>

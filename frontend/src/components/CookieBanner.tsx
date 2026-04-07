@@ -101,7 +101,7 @@ const CookieBanner = () => {
     return (
       <button
         onClick={() => setIsVisible(true)}
-        className="fixed bottom-4 left-4 z-[var(--z-drawer)] p-2 rounded-full bg-bg-header/20 backdrop-blur-md border border-white/10 text-white/40 hover:text-white hover:bg-bg-header/40 transition-all duration-300 group"
+        className="fixed bottom-4 left-4 z-[var(--z-drawer)] p-2 rounded-full bg-bg-header/20 backdrop-blur-md border border-text-on-header/10 text-text-on-header/40 hover:text-text-on-header hover:bg-bg-header/40 transition-all duration-300 group"
         title={t('pages.cookies.manage', 'Manage Cookies')}
       >
         <svg 
@@ -129,15 +129,16 @@ const CookieBanner = () => {
       style={{ animationDuration: 'var(--duration-slow)', animationTimingFunction: 'var(--ease-out)' }}
     >
       <div 
-        className="max-w-4xl mx-auto backdrop-blur-xl bg-bg-header/85 border border-white/10 rounded-2xl p-6 shadow-2xl overflow-hidden transition-all duration-500 ease-in-out"
+        className="max-w-4xl mx-auto backdrop-blur-xl bg-bg-header/85 border border-text-on-header/10 rounded-2xl p-6 shadow-2xl overflow-hidden transition-all duration-500 ease-in-out"
+        data-theme-area="header"
         style={{ maxHeight: showPreferences ? '600px' : '300px' }}
       >
         {!showPreferences ? (
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <span className="w-2 h-2 rounded-full bg-accent-primary animate-pulse" />
-                <h3 className="text-text-on-header font-display tracking-widest text-lg m-0 uppercase">
+                <span className="w-2 h-2 rounded-full bg-accent-header animate-pulse" />
+                <h3 className="text-accent-header font-display tracking-widest text-lg m-0 uppercase">
                   {t('pages.cookies.title', 'COOKIES')}
                 </h3>
               </div>
@@ -149,13 +150,13 @@ const CookieBanner = () => {
             <div className="flex flex-wrap items-center justify-end gap-3 shrink-0">
               <button
                 onClick={() => setShowPreferences(true)}
-                className="btn-secondary text-white border-white/10 hover:bg-white/5 py-2 px-4 text-xs"
+                className="inline-flex items-center justify-center rounded-md transition-all duration-200 font-bold active:scale-95 disabled:opacity-50 disabled:pointer-events-none text-text-on-header border border-text-on-header/20 hover:bg-text-on-header/10 py-2 px-4 text-xs"
               >
                 {t('pages.cookies.customize', 'CUSTOMIZE')}
               </button>
               <button
                 onClick={handleDeclineAll}
-                className="btn-secondary text-white/60 border-white/10 hover:bg-white/5 py-2 px-4 text-xs"
+                className="inline-flex items-center justify-center rounded-md transition-all duration-200 font-bold active:scale-95 disabled:opacity-50 disabled:pointer-events-none text-text-on-header/60 border border-text-on-header/10 hover:bg-text-on-header/5 py-2 px-4 text-xs"
               >
                 {t('pages.cookies.decline_all', 'DECLINE ALL')}
               </button>
@@ -164,19 +165,19 @@ const CookieBanner = () => {
                 className="btn-primary flex items-center justify-center min-w-[140px] relative overflow-hidden group py-2 px-6"
               >
                 <span className="relative z-10 font-bold">{t('pages.cookies.accept_all', 'ACCEPT ALL')}</span>
-                <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 ease-in-out" />
+                <div className="absolute inset-0 bg-text-on-header/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 ease-in-out" />
               </button>
             </div>
           </div>
         ) : (
           <div className="animate-fade-up">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-text-on-header font-display tracking-widest text-xl m-0">
+              <h3 className="text-accent-header font-display tracking-widest text-xl m-0">
                 {t('pages.cookies.preferences', 'COOKIE PREFERENCES')}
               </h3>
               <button 
                 onClick={() => setShowPreferences(false)}
-                className="text-text-on-header/50 hover:text-white transition-colors"
+                className="text-text-on-header/50 hover:text-text-on-header transition-colors"
               >
                 ✕
               </button>
@@ -184,7 +185,7 @@ const CookieBanner = () => {
 
             <div className="space-y-4 mb-8">
               {/* Essential */}
-              <div className="flex items-start justify-between p-4 bg-white/5 rounded-xl border border-white/5">
+              <div className="flex items-start justify-between p-4 bg-text-on-header/5 rounded-xl border border-text-on-header/5">
                 <div className="pr-4">
                   <div className="text-text-on-header font-bold text-sm mb-1 uppercase tracking-wider">{t('pages.cookies.essential_title', 'NECESSARY')}</div>
                   <div className="text-text-on-header/60 text-xs">{t('pages.cookies.essential_desc', 'Essential for the site to function (Auth, Theme, Cart).')}</div>
@@ -193,30 +194,30 @@ const CookieBanner = () => {
               </div>
 
               {/* Analytics */}
-              <div className="flex items-start justify-between p-4 bg-white/5 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+              <div className="flex items-start justify-between p-4 bg-text-on-header/5 rounded-xl border border-text-on-header/5 hover:border-text-on-header/10 transition-colors">
                 <div className="pr-4">
                   <div className="text-text-on-header font-bold text-sm mb-1 uppercase tracking-wider">{t('pages.cookies.analytics_title', 'ANALYTICS')}</div>
                   <div className="text-text-on-header/60 text-xs">{t('pages.cookies.analytics_desc', 'Help us understand how people use the store to improve user experience.')}</div>
                 </div>
                 <div 
                   onClick={() => setPrefs({...prefs, analytics: !prefs.analytics})}
-                  className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors duration-300 ${prefs.analytics ? 'bg-accent-primary' : 'bg-white/20'}`}
+                  className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors duration-300 ${prefs.analytics ? 'bg-accent-header' : 'bg-text-on-header/20'}`}
                 >
-                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 ${prefs.analytics ? 'translate-x-7' : 'translate-x-1'}`} />
+                  <div className={`absolute top-1 w-4 h-4 bg-text-on-header/80 rounded-full transition-transform duration-300 ${prefs.analytics ? 'translate-x-7 -translate-y-0.5 scale-110 !bg-white' : 'translate-x-1'}`} />
                 </div>
               </div>
 
               {/* Marketing */}
-              <div className="flex items-start justify-between p-4 bg-white/5 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+              <div className="flex items-start justify-between p-4 bg-text-on-header/5 rounded-xl border border-text-on-header/5 hover:border-text-on-header/10 transition-colors">
                 <div className="pr-4">
                   <div className="text-text-on-header font-bold text-sm mb-1 uppercase tracking-wider">{t('pages.cookies.marketing_title', 'MARKETING')}</div>
                   <div className="text-text-on-header/60 text-xs">{t('pages.cookies.marketing_desc', 'Used for personalized advertising and social features.')}</div>
                 </div>
                 <div 
                   onClick={() => setPrefs({...prefs, marketing: !prefs.marketing})}
-                  className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors duration-300 ${prefs.marketing ? 'bg-accent-primary' : 'bg-white/20'}`}
+                  className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors duration-300 ${prefs.marketing ? 'bg-accent-header' : 'bg-text-on-header/20'}`}
                 >
-                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 ${prefs.marketing ? 'translate-x-7' : 'translate-x-1'}`} />
+                  <div className={`absolute top-1 w-4 h-4 bg-text-on-header/80 rounded-full transition-transform duration-300 ${prefs.marketing ? 'translate-x-7 -translate-y-0.5 scale-110 !bg-text-on-header' : 'translate-x-1'}`} />
                 </div>
               </div>
             </div>
@@ -224,7 +225,7 @@ const CookieBanner = () => {
             <div className="flex justify-end gap-4">
                <button
                 onClick={() => setShowPreferences(false)}
-                className="btn-secondary text-white/60 border-white/10 hover:bg-white/5"
+                className="inline-flex items-center justify-center rounded-md transition-all duration-200 font-bold active:scale-95 disabled:opacity-50 disabled:pointer-events-none text-text-on-header/60 border border-text-on-header/10 hover:bg-text-on-header/5 py-2 px-6"
               >
                 {t('pages.common.back', 'BACK')}
               </button>

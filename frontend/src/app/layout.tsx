@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
-import { Inter, Bebas_Neue, Space_Mono } from 'next/font/google';
+import { Inter, Bebas_Neue, Space_Mono, Cinzel, Playfair_Display, Outfit, Roboto, Montserrat } from 'next/font/google';
 import './globals.css';
 import StorefrontLayoutWrapper from '@/components/StorefrontLayoutWrapper';
 import { CartProvider } from '@/lib/CartContext';
 import RemoteLogManager from '@/components/RemoteLogManager';
-import { GoogleAnalytics } from '@next/third-parties/google';
+import Script from 'next/script';
 
 import { UserProvider } from '@/context/UserContext';
 import { UIProvider } from '@/context/UIContext';
@@ -13,6 +13,11 @@ import './foil-effects.css';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const bebas = Bebas_Neue({ weight: '400', subsets: ['latin'], variable: '--font-bebas' });
 const spaceMono = Space_Mono({ weight: ['400', '700'], subsets: ['latin'], variable: '--font-mono' });
+const cinzel = Cinzel({ subsets: ['latin'], variable: '--font-cinzel' });
+const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' });
+const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' });
+const roboto = Roboto({ weight: ['400', '700'], subsets: ['latin'], variable: '--font-roboto' });
+const montserrat = Montserrat({ subsets: ['latin'], variable: '--font-montserrat' });
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { fetchPublicSettings } from '@/lib/api';
 
@@ -43,9 +48,28 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     console.error('Failed to fetch default theme settings', err);
   }
   return (
-    <html lang="en" className={`${inter.variable} ${bebas.variable} ${spaceMono.variable}`} suppressHydrationWarning>
-      <head>
-        <script
+    <html lang="en" className={`${inter.variable} ${bebas.variable} ${spaceMono.variable} ${cinzel.variable} ${playfair.variable} ${outfit.variable} ${roboto.variable} ${montserrat.variable}`} suppressHydrationWarning>
+      <body suppressHydrationWarning>
+        <RemoteLogManager />
+        
+        <ThemeProvider defaultTheme={defaultTheme}>
+          <LanguageProvider>
+            <UserProvider>
+              <UIProvider>
+                <CartProvider>
+                  <StorefrontLayoutWrapper>
+                    {children}
+                  </StorefrontLayoutWrapper>
+                </CartProvider>
+              </UIProvider>
+            </UserProvider>
+          </LanguageProvider>
+        </ThemeProvider>
+
+        {/* Scripts at the end of body for stability */}
+        <Script
+          id="consent-mgmt"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               window.dataLayer = window.dataLayer || [];
@@ -86,52 +110,41 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             `,
           }}
         />
-        {/* ... heads remain same ... */}
-        {/* Set Icons & Mana Symbols loaded via globals.css */}
-        <style>{`
-          .centered-container {
-            max-width: 1280px !important;
-            margin-left: auto !important;
-            margin-right: auto !important;
-            width: 100% !important;
-          }
-          .responsive-stack {
-            display: flex !important;
-            flex-direction: column !important;
-            width: 100% !important;
-          }
-          @media (min-width: 640px) {
-            .responsive-stack {
-              flex-direction: row !important;
-            }
-          }
-          /* Fix Hero section alignment fallback */
-          section.box-lid > div.centered-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-          }
-          @media (min-width: 1024px) {
-             section.box-lid > div.centered-container {
-               align-items: flex-start;
-               text-align: left;
-             }
-          }
-        `}</style>
-      </head>
-      <body suppressHydrationWarning>
-        <RemoteLogManager />
-        {process.env.NEXT_PUBLIC_GA_ID && <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />}
+
+        {process.env.NEXT_PUBLIC_GA_ID && (
+          <>
+            <Script
+              id="google-analytics-src"
+              strategy="afterInteractive"
+              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
+            />
+            <Script
+              id="google-analytics-init"
+              strategy="afterInteractive"
+              dangerouslySetInnerHTML={{
+                __html: `
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag(){dataLayer.push(arguments);}
+                  gtag('js', new Date());
+                  gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
+                    page_path: window.location.pathname,
+                  });
+                `,
+              }}
+            />
+          </>
+        )}
+
         {process.env.NEXT_PUBLIC_GOOGLE_ADS_ID && (
-          <script
-            async
+          <Script
+            id="google-ads"
+            strategy="afterInteractive"
             src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GOOGLE_ADS_ID}`}
           />
         )}
+
         {process.env.NEXT_PUBLIC_META_PIXEL_ID && (
-          <noscript>
+          <noscript suppressHydrationWarning>
             <img
               height="1"
               width="1"
@@ -141,19 +154,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             />
           </noscript>
         )}
-        <ThemeProvider defaultTheme={defaultTheme}>
-          <LanguageProvider>
-            <UserProvider>
-              <UIProvider>
-                <CartProvider>
-                  <StorefrontLayoutWrapper>
-                    {children}
-                  </StorefrontLayoutWrapper>
-                </CartProvider>
-              </UIProvider>
-            </UserProvider>
-          </LanguageProvider>
-        </ThemeProvider>
       </body>
     </html>
   );

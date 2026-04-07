@@ -30,6 +30,10 @@ CREATE TABLE IF NOT EXISTS theme (
   text_on_header      TEXT NOT NULL DEFAULT '#ffffff',
   border_focus        TEXT NOT NULL DEFAULT '#3b3127',
   
+  -- Context-Specific Header Colors
+  accent_header       TEXT NOT NULL DEFAULT '#ffffff',
+  status_hp_header    TEXT NOT NULL DEFAULT '#ffffff',
+  
   -- Interactive Elements
   btn_primary_bg      TEXT NOT NULL DEFAULT '#1a1f2e',
   btn_primary_text    TEXT NOT NULL DEFAULT '#ffffff',
@@ -63,7 +67,8 @@ INSERT INTO theme (
   status_nm, status_lp, status_mp, status_hp, status_dmg,
   btn_primary_bg, btn_primary_text, btn_secondary_bg, btn_secondary_text,
   checkbox_border, checkbox_checked,
-  radius_base, padding_card, gap_grid
+  radius_base, padding_card, gap_grid,
+  accent_header, status_hp_header
 )
 VALUES (
   '00000000-0000-0000-0000-000000000001', 'Cardboard', true, 
@@ -73,7 +78,8 @@ VALUES (
   '#2e7d32', '#558b2f', '#ef6c00', '#c62828', '#455a64',
   '#1a1f2e', '#ffffff', 'transparent', '#3b3127',
   '#8b795c', '#d4af37',
-  '8px', '12px', '16px'
+  '8px', '12px', '16px',
+  '#d4af37', '#c62828'
 ) ON CONFLICT DO NOTHING;
 
 -- Obsidiana (Professional Dark)
@@ -83,6 +89,7 @@ INSERT INTO theme (
   text_main, text_secondary, text_muted, text_on_accent, text_on_header,
   accent_primary, accent_primary_hover, border_main, border_focus,
   status_nm, status_lp, status_mp, status_hp, status_dmg,
+  accent_header, status_hp_header,
   btn_primary_bg, btn_primary_text, btn_secondary_bg, btn_secondary_text,
   checkbox_border, checkbox_checked,
   radius_base, padding_card, gap_grid
@@ -93,6 +100,7 @@ VALUES (
   '#f8fafc', '#94a3b8', '#475569', '#ffffff', '#ffffff',
   '#3b82f6', '#2563eb', '#334155', '#3b82f6',
   '#10b981', '#fbbf24', '#f59e0b', '#ef4444', '#64748b',
+  '#60a5fa', '#ef4444',
   '#3b82f6', '#ffffff', 'transparent', '#f8fafc',
   '#475569', '#3b82f6',
   '2px', '14px', '20px'
@@ -105,6 +113,7 @@ INSERT INTO theme (
   text_main, text_secondary, text_muted, text_on_accent, text_on_header,
   accent_primary, accent_primary_hover, border_main, border_focus,
   status_nm, status_lp, status_mp, status_hp, status_dmg,
+  accent_header, status_hp_header,
   btn_primary_bg, btn_primary_text, btn_secondary_bg, btn_secondary_text,
   checkbox_border, checkbox_checked,
   radius_base, padding_card, gap_grid
@@ -115,9 +124,10 @@ VALUES (
   '#f0fdf4', '#bbf7d0', '#166534', '#ffffff', '#ffffff',
   '#fbbf24', '#f59e0b', '#14532d', '#f59e0b',
   '#4ade80', '#fbbf24', '#f97316', '#ef4444', '#991b1b',
+  '#fde68a', '#f87171',
   '#991b1b', '#ffffff', 'transparent', '#f0fdf4',
-  '#166534', '#fbbf24',
-  '12px', '12px', '16px'
+  '#8b795c', '#d4af37',
+  '8px', '12px', '16px'
 ) ON CONFLICT DO NOTHING;
 
 -- Spring Egg (Easter)
@@ -127,6 +137,7 @@ INSERT INTO theme (
   text_main, text_secondary, text_muted, text_on_accent, text_on_header,
   accent_primary, accent_primary_hover, border_main, border_focus,
   status_nm, status_lp, status_mp, status_hp, status_dmg,
+  accent_header, status_hp_header,
   btn_primary_bg, btn_primary_text, btn_secondary_bg, btn_secondary_text,
   checkbox_border, checkbox_checked,
   radius_base, padding_card, gap_grid
@@ -137,6 +148,7 @@ VALUES (
   '#4c1d95', '#7c3aed', '#a78bfa', '#ffffff', '#4c1d95',
   '#8b5cf6', '#a78bfa', '#f3f4f6', '#a78bfa',
   '#10b981', '#fbbf24', '#f59e0b', '#ef4444', '#94a3b8',
+  '#5b21b6', '#dc2626',
   '#8b5cf6', '#ffffff', 'transparent', '#4c1d95',
   '#a78bfa', '#8b5cf6',
   '24px', '16px', '24px'
@@ -149,6 +161,7 @@ INSERT INTO theme (
   text_main, text_secondary, text_muted, text_on_accent, text_on_header,
   accent_primary, accent_primary_hover, border_main, border_focus,
   status_nm, status_lp, status_mp, status_hp, status_dmg,
+  accent_header, status_hp_header,
   btn_primary_bg, btn_primary_text, btn_secondary_bg, btn_secondary_text,
   checkbox_border, checkbox_checked,
   radius_base, padding_card, gap_grid
@@ -159,6 +172,7 @@ VALUES (
   '#f8fafc', '#64748b', '#334155', '#000000', '#ffffff',
   '#22c55e', '#4ade80', '#1e293b', '#4ade80',
   '#22c55e', '#eab308', '#f97316', '#ef4444', '#334155',
+  '#4ade80', '#ef4444',
   '#22c55e', '#000000', 'transparent', '#f8fafc',
   '#334155', '#22c55e',
   '0px', '10px', '12px'
@@ -171,6 +185,7 @@ INSERT INTO theme (
   text_main, text_secondary, text_muted, text_on_accent, text_on_header,
   accent_primary, accent_primary_hover, border_main, border_focus,
   status_nm, status_lp, status_mp, status_hp, status_dmg,
+  accent_header, status_hp_header,
   btn_primary_bg, btn_primary_text, btn_secondary_bg, btn_secondary_text,
   checkbox_border, checkbox_checked,
   radius_base, padding_card, gap_grid
@@ -181,6 +196,7 @@ VALUES (
   '#ffffff', '#a3a3a3', '#525252', '#ffffff', '#ffffff',
   '#ea580c', '#f97316', '#404040', '#f97316',
   '#22c55e', '#eab308', '#f97316', '#dc2626', '#404040',
+  '#f87171', '#fca5a5',
   '#ea580c', '#ffffff', 'transparent', '#ffffff',
   '#525252', '#ea580c',
   '4px', '14px', '16px'
@@ -193,6 +209,7 @@ INSERT INTO theme (
   text_main, text_secondary, text_muted, text_on_accent, text_on_header,
   accent_primary, accent_primary_hover, border_main, border_focus,
   status_nm, status_lp, status_mp, status_hp, status_dmg,
+  accent_header, status_hp_header,
   btn_primary_bg, btn_primary_text, btn_secondary_bg, btn_secondary_text,
   checkbox_border, checkbox_checked,
   radius_base, padding_card, gap_grid
@@ -203,6 +220,7 @@ VALUES (
   '#831843', '#db2777', '#f472b6', '#ffffff', '#ffffff',
   '#db2777', '#f472b6', '#fce7f3', '#f472b6',
   '#10b981', '#fbbf24', '#f59e0b', '#ef4444', '#db2777',
+  '#fdf2f8', '#fce7f3',
   '#be185d', '#ffffff', 'transparent', '#831843',
   '#f472b6', '#be185d',
   '16px', '14px', '20px'

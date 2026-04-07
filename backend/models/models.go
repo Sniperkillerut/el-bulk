@@ -597,6 +597,10 @@ type Theme struct {
 	TextOnHeader       string    `db:"text_on_header"       json:"text_on_header"`
 	BorderFocus        string    `db:"border_focus"         json:"border_focus"`
 	
+	// Context-Specific Header Colors
+	AccentHeader       string    `db:"accent_header"        json:"accent_header"`
+	StatusHPHeader     string    `db:"status_hp_header"     json:"status_hp_header"`
+	
 	// Interactive Elements
 	BtnPrimaryBg       string    `db:"btn_primary_bg"       json:"btn_primary_bg"`
 	BtnPrimaryText     string    `db:"btn_primary_text"     json:"btn_primary_text"`
@@ -648,6 +652,9 @@ type ThemeInput struct {
 	BgCard             string `json:"bg_card"`
 	TextOnHeader       string `json:"text_on_header"`
 	BorderFocus        string `json:"border_focus"`
+	
+	AccentHeader       string `json:"accent_header"`
+	StatusHPHeader     string `json:"status_hp_header"`
 	
 	// Interactive Elements
 	BtnPrimaryBg       string `json:"btn_primary_bg"`

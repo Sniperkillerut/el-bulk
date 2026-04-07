@@ -46,7 +46,7 @@ export default function ProductDetails({ product, idPrefix, showViewFullPage, on
   const conditionClass = product.condition ? `badge-${product.condition.toLowerCase()}` : '';
 
   return (
-    <div className="grid md:grid-cols-2 gap-0 overflow-hidden">
+    <div className="grid md:grid-cols-2 gap-0 min-h-0">
       {/* Image Section */}
       <div className="p-8 bg-bg-page flex items-center justify-center">
         <div className="cardbox overflow-hidden shadow-md w-full max-w-sm aspect-[3/4] bg-bg-surface p-2">
@@ -63,7 +63,7 @@ export default function ProductDetails({ product, idPrefix, showViewFullPage, on
       </div>
 
       {/* Details Section */}
-      <div className="p-8 flex flex-col h-full bg-bg-surface border-l-4 border-border-main">
+      <div className="p-8 flex flex-col h-full bg-bg-surface border-l-4 border-border-main overflow-y-auto custom-scrollbar">
         <div>
           <nav className="text-[10px] mb-2 font-mono-stack uppercase text-text-muted">
             {t(`tcg.${product.tcg}`, product.tcg.toUpperCase())} / {t(`pages.inventory.category.${product.category}`, product.category.toUpperCase())}
@@ -191,7 +191,7 @@ export default function ProductDetails({ product, idPrefix, showViewFullPage, on
         </div>
 
         {/* Description / Rules Text */}
-        <div className="flex-1 min-h-[100px]">
+        <div className="min-h-0 mb-4">
           {(product.oracle_text || product.description) ? (
             <div className="flex flex-col gap-4">
               {product.oracle_text && (
@@ -212,8 +212,8 @@ export default function ProductDetails({ product, idPrefix, showViewFullPage, on
           )}
         </div>
 
-        {/* Deck Cards Grid for Store Exclusives */}
-        {product.category === 'store_exclusives' && product.deck_cards && product.deck_cards.length > 0 && (
+        {/* Deck Cards Grid */}
+        {product.deck_cards && product.deck_cards.length > 0 && (
           <DeckContents cards={product.deck_cards} tcg={product.tcg} className="border-t border-kraft-dark pt-6 mt-6" />
         )}
 

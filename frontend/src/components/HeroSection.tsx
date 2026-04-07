@@ -68,7 +68,7 @@ export default function HeroSection() {
       </div>
 
       {/* Decorative Box Detail */}
-      <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-gradient-to-r from-gold via-gold-dark to-gold z-40 opacity-80" />
+      <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-gradient-to-r from-gold via-gold-dark to-gold z-10 opacity-80" />
     </section>
   );
 }

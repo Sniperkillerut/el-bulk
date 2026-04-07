@@ -59,14 +59,14 @@ export default function ClientRequestModal({ onClose, onSuccess }: ClientRequest
       
       <form onSubmit={(e) => { e.preventDefault(); handleSubmit(onSubmit); }} className="space-y-4">
         {!user && (
-          <div className="bg-gold/10 border border-gold/20 p-3 rounded-md mb-2 flex items-center justify-between gap-4 animate-fade-in">
-            <div className="text-[11px] text-gold/90 leading-tight">
+          <div className="bg-accent-primary/10 border border-accent-primary/20 p-3 rounded-md mb-2 flex items-center justify-between gap-4 animate-fade-in">
+            <div className="text-[11px] text-text-main leading-tight">
               <strong>Login</strong> to automatically fill your info and track your request status.
             </div>
             <button 
               type="button"
               onClick={() => router.push('/login')}
-              className="btn-primary text-[10px] px-3 py-1.5 bg-gold text-ink-base hover:bg-gold-light whitespace-nowrap font-bold"
+              className="btn-primary text-[10px] px-3 py-1.5 whitespace-nowrap font-bold"
             >
               LOGIN
             </button>

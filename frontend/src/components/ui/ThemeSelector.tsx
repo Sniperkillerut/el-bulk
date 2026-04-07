@@ -24,7 +24,7 @@ export default function ThemeSelector() {
   return (
     <Dropdown
       trigger={
-        <button className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-white/5 transition-colors text-xs font-medium uppercase tracking-wider text-text-secondary hover:text-text-main group">
+        <button className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-white/5 transition-colors text-xs font-medium uppercase tracking-wider text-text-on-header/80 hover:text-text-on-header group">
           <svg 
             width="16" 
             height="16" 
@@ -34,7 +34,7 @@ export default function ThemeSelector() {
             strokeWidth="2" 
             strokeLinecap="round" 
             strokeLinejoin="round" 
-            className="text-accent-primary"
+            className="text-accent-header"
           >
             <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/>
             <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/>

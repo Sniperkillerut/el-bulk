@@ -648,6 +648,10 @@ export interface Theme {
   status_hp: string;
   status_dmg: string;
 
+  // Context-Specific Header Colors
+  accent_header: string;
+  status_hp_header: string;
+
   // Interactive Elements
   btn_primary_bg: string;
   btn_primary_text: string;
