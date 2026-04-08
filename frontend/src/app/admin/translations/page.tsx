@@ -13,6 +13,7 @@ export default function AdminTranslationsPage() {
   const [search, setSearch] = useState('');
   const [activeSlug, setActiveSlug] = useState<string>('home');
   const [savingKey, setSavingKey] = useState<string | null>(null);
+  const [extraLocales, setExtraLocales] = useState<string[]>([]);
 
   const loadTranslations = useCallback(async () => {
     if (!token) return;
@@ -44,10 +45,10 @@ export default function AdminTranslationsPage() {
   }, [translations]);
 
   const locales = useMemo(() => {
-    const set = new Set<string>(['en', 'es']);
+    const set = new Set<string>(['en', 'es', ...extraLocales]);
     translations.forEach(t => set.add(t.locale));
     return Array.from(set).sort();
-  }, [translations]);
+  }, [translations, extraLocales]);
 
   const availableSlugs = useMemo(() => {
     const slugs = new Set<string>();
@@ -208,18 +209,40 @@ export default function AdminTranslationsPage() {
             onChange={e => setSearch(e.target.value)}
           />
         </div>
-        <button 
-          onClick={() => {
-            const key = prompt(`Enter new key (will be prefixed with pages.${activeSlug}. if valid):`);
-            if (key) {
-              const fullKey = key.includes('.') ? key : `pages.${activeSlug}.section.${key}`;
-              handleUpdate(fullKey, 'en', 'New String');
-            }
-          }}
-          className="btn-primary py-2 px-6 text-sm font-bold shadow-gold/10 whitespace-nowrap"
-        >
-          + ADD TO {activeSlug.toUpperCase()}
-        </button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <button 
+            onClick={() => {
+              const key = prompt(`Enter new translation key (e.g., pages.common.section.welcome):`);
+              if (key && key.trim()) {
+                handleUpdate(key.trim(), 'en', 'New String');
+              }
+            }}
+            className="btn-secondary py-2 px-4 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap"
+          >
+            + NEW KEY
+          </button>
+          <button 
+            onClick={async () => {
+              const locale = prompt(`Enter 2-letter locale code (e.g., fr, de, it):`);
+              if (locale && locale.trim().length === 2) {
+                const loc = locale.trim().toLowerCase();
+                if (locales.includes(loc)) {
+                  alert('Language already exists');
+                  return;
+                }
+                
+                // Add to extraLocales immediately for UI feedback
+                setExtraLocales(prev => [...prev, loc]);
+                
+                // Persist by creating a dummy record
+                handleUpdate('pages.common.section.welcome', loc, 'Welcome (Automatic)');
+              }
+            }}
+            className="btn-primary py-2 px-6 text-sm font-bold shadow-gold/10 whitespace-nowrap"
+          >
+            + NEW LANGUAGE
+          </button>
+        </div>
       </div>
 
       {/* Slug Tabs */}
@@ -255,13 +278,13 @@ export default function AdminTranslationsPage() {
         ))}
       </div>
 
-      <div className="bg-white border border-ink-border/20 rounded-sm shadow-sm overflow-hidden flex-1 overflow-x-auto overflow-y-auto" style={{ maxHeight: '600px' }}>
-        <table className="w-full text-left border-collapse min-w-[800px]">
+      <div className="bg-white border border-ink-border/20 rounded-sm shadow-sm flex-1 overflow-x-auto">
+        <table className="w-full text-left border-collapse min-w-full table-auto">
           <thead className="sticky top-0 z-10 bg-bg-page shadow-sm">
             <tr className="border-b border-ink-border/20">
-              <th className="p-3 text-[10px] font-mono-stack uppercase text-text-muted w-1/4">Key Identifier</th>
+              <th className="p-3 text-[10px] font-mono-stack uppercase text-text-muted w-64 min-w-[250px]">Key Identifier</th>
               {locales.map(loc => (
-                <th key={loc} className="p-3 text-[10px] font-mono-stack uppercase text-text-muted text-center w-1/4">
+                <th key={loc} className="p-3 text-[10px] font-mono-stack uppercase text-text-muted text-center min-w-[250px]">
                   {loc === 'en' ? '🇺🇸 EN' : loc === 'es' ? '🇪🇸 ES' : loc.toUpperCase()}
                 </th>
               ))}
