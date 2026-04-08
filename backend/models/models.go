@@ -243,6 +243,7 @@ type Settings struct {
 type TCG struct {
 	ID        string    `db:"id"         json:"id"`
 	Name      string    `db:"name"       json:"name"`
+	ImageURL  string    `db:"image_url"  json:"image_url"`
 	IsActive  bool      `db:"is_active"  json:"is_active"`
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
 	ItemCount int       `db:"item_count" json:"item_count"`

@@ -50,27 +50,43 @@ export default function SinglesLandingPage() {
 
       <div className="centered-container px-4 mt-12">
         {/* TCG Selection Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
           {tcgs.map((t_item) => (
             <Link 
               key={t_item.id} 
               href={`/${t_item.id}/singles`}
-              className="group relative block transition-transform hover:-translate-y-1"
+              className="group relative block aspect-[16/10] overflow-hidden rounded-xl border-2 border-border-main transition-all hover:border-accent-primary hover:shadow-2xl hover:shadow-accent-primary/20"
             >
-              <div className="card h-full p-8 flex flex-col items-center justify-center text-center gap-4 border-2 border-kraft-dark transition-shadow hover:shadow-xl relative overflow-hidden">
-                <div className="w-16 h-16 rounded-full flex items-center justify-center font-display text-2xl mb-2" 
-                  style={{ background: 'var(--ink-surface)', border: '2px solid var(--gold)', color: 'var(--gold)' }}>
-                  {t_item.name[0]}
-                </div>
-                <div>
-                  <h3 className="font-display text-2xl group-hover:text-gold-dark transition-colors">{t_item.name}</h3>
-                  <p className="text-xs font-mono-stack mt-1" style={{ color: 'var(--text-muted)' }}>{t('pages.singles.landing.view_all', 'VIEW ALL SINGLES →')}</p>
-                </div>
-                
-                <div className="absolute -bottom-4 -right-4 opacity-5 rotate-12 group-hover:opacity-10 transition-opacity">
-                   <h2 className="text-8xl font-display">{t_item.name.substring(0, 3).toUpperCase()}</h2>
+              {/* Thematic Background Image */}
+              <div 
+                className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+                style={{ backgroundImage: `url(${t_item.image_url || '/hero-banner.png'})` }}
+              />
+              
+              {/* Dark Gradient Overlay for Readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+              {/* Content Overlay */}
+              <div className="absolute inset-0 p-8 flex flex-col justify-end items-start">
+                {/* ID Tag */}
+                <span className="mb-2 px-2 py-0.5 bg-accent-primary/20 backdrop-blur-md border border-accent-primary/30 text-accent-primary font-mono-stack text-[10px] font-bold tracking-widest uppercase rounded-sm">
+                  {t_item.id}
+                </span>
+
+                <h3 className="font-display text-3xl md:text-4xl text-white group-hover:text-accent-primary transition-colors leading-none mb-3">
+                  {t_item.name.toUpperCase()}
+                </h3>
+
+                <div className="flex items-center gap-2 group-hover:translate-x-2 transition-transform duration-300">
+                  <p className="text-xs font-mono-stack font-bold text-white/70 uppercase tracking-widest">
+                    {t('pages.singles.landing.view_all', 'VIEW ALL SINGLES')}
+                  </p>
+                  <span className="text-accent-primary font-bold">→</span>
                 </div>
               </div>
+
+              {/* Glassmorphic border glow effect on hover */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-br from-accent-primary/10 to-transparent pointer-events-none" />
             </Link>
           ))}
         </div>

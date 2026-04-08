@@ -216,6 +216,7 @@ export const KNOWN_TCGS = ['mtg', 'pokemon', 'lorcana', 'onepiece', 'yugioh'];
 export interface TCG {
   id: string;   // slug: mtg, pokemon, etc.
   name: string;
+  image_url?: string;
   is_active: boolean;
   item_count?: number;
   created_at?: string;
