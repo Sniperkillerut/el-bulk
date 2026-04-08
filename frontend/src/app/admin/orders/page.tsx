@@ -19,13 +19,13 @@ export default function AdminOrdersPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col p-3 min-h-0 max-w-7xl mx-auto w-full">
+    <div className="flex-1 flex flex-col p-3 min-h-0 w-full max-w-full">
       <AdminHeader 
         title="ORDER MANAGEMENT" 
         subtitle="Reviewing and Fulfilling Customer Card Orders" 
       />
       
-      <div className="flex-1 min-h-0 bg-white shadow-sm border border-kraft-dark/20 rounded overflow-auto">
+      <div className="flex-1 min-h-0 bg-white shadow-sm border border-kraft-dark/20 rounded-lg overflow-hidden">
         <OrdersPanel initialOrderId={initialOrderId} />
       </div>
     </div>

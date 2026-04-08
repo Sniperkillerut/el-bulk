@@ -50,7 +50,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="w-10"></div> {/* Spacer for symmetry */}
           </div>
 
-          <div className="flex-1 overflow-auto p-4 lg:p-0">
+          <div className="flex-1 flex flex-col min-h-0 bg-kraft-paper">
             {children}
           </div>
         </main>

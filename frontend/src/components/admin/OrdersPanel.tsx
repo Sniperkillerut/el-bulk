@@ -58,7 +58,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
   const loadOrders = useCallback(async () => {
     // No longer setting loading synchronously at start to avoid cascaded renders
     try {
-      const res = await adminFetchOrders({ status: statusFilter, search: debouncedSearch, page, page_size: 20 });
+      const res = await adminFetchOrders({ status: statusFilter, search: debouncedSearch, page, page_size: 50 });
       setOrders(res.orders);
       setTotal(res.total);
     } catch (err) {
@@ -211,7 +211,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
     }));
   };
 
-  const totalPages = Math.ceil(total / 20);
+  const totalPages = Math.ceil(total / 50);
   const hasEdits = detail ? detail.items.some(i => itemEdits[i.id] !== i.quantity) : false;
 
   const handleExport = async () => {
