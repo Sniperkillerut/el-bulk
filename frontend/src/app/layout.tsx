@@ -20,6 +20,7 @@ const roboto = Roboto({ weight: ['400', '700'], subsets: ['latin'], variable: '-
 const montserrat = Montserrat({ subsets: ['latin'], variable: '--font-montserrat' });
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { fetchPublicSettings } from '@/lib/api';
+import { fetchThemes } from '@/lib/api_themes';
 
 declare global {
   interface Window {
@@ -39,20 +40,28 @@ import { LanguageProvider } from '@/context/LanguageContext';
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   let defaultTheme = '00000000-0000-0000-0000-000000000001'; // Default to Cardboard
+  let themes: import('@/lib/types').Theme[] = [];
+
   try {
-    const settings = await fetchPublicSettings();
+    const [settings, fetchedThemes] = await Promise.all([
+      fetchPublicSettings(),
+      fetchThemes()
+    ]);
+    
+    themes = fetchedThemes;
     if (settings.default_theme_id) {
       defaultTheme = settings.default_theme_id;
     }
   } catch (err) {
-    console.error('Failed to fetch default theme settings', err);
+    console.error('Failed to fetch default theme settings or themes', err);
   }
+
   return (
     <html lang="en" className={`${inter.variable} ${bebas.variable} ${spaceMono.variable} ${cinzel.variable} ${playfair.variable} ${outfit.variable} ${roboto.variable} ${montserrat.variable}`} suppressHydrationWarning>
       <body suppressHydrationWarning>
         <RemoteLogManager />
         
-        <ThemeProvider defaultTheme={defaultTheme}>
+        <ThemeProvider allThemes={themes} defaultTheme={defaultTheme}>
           <LanguageProvider>
             <UserProvider>
               <UIProvider>

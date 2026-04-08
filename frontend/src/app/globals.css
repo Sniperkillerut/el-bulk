@@ -141,10 +141,7 @@
 }
 
 /* Default Theme & Fallbacks */
-:root,
-[data-theme='00000000-0000-0000-0000-000000000001'],
-[data-theme='Cardboard'],
-[data-theme='cardboard'] {
+:root {
   --bg-page: #e6dac3;
   --bg-page-dark: #8b795c;
   --bg-header: #1a1f2e;

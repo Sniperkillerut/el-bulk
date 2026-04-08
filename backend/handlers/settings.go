@@ -172,6 +172,7 @@ func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 		NewDaysThreshold   *int     `json:"new_days_threshold"`
 		DefaultLocale      *string  `json:"default_locale"`
 		HideLanguageSelector *bool  `json:"hide_language_selector"`
+		DefaultThemeID     *string  `json:"default_theme_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		render.Error(w, "invalid request body", http.StatusBadRequest)
@@ -262,6 +263,12 @@ func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 		}
 		if err := upsert("hide_language_selector", val); err != nil {
 			render.Error(w, "failed to update hide_language_selector", http.StatusInternalServerError)
+			return
+		}
+	}
+	if input.DefaultThemeID != nil {
+		if err := upsert("default_theme_id", *input.DefaultThemeID); err != nil {
+			render.Error(w, "failed to update default_theme_id", http.StatusInternalServerError)
 			return
 		}
 	}
