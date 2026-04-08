@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { userFetchOrderDetail } from '@/lib/api';
+import { userFetchOrderDetail, userCancelOrder } from '@/lib/api';
 import { OrderDetail, ORDER_STATUS_LABELS, FOIL_LABELS } from '@/lib/types';
 import Modal from './ui/Modal';
 import LoadingSpinner from './LoadingSpinner';
@@ -17,6 +17,7 @@ interface OrderDetailsModalProps {
 export default function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDetailsModalProps) {
   const [detail, setDetail] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { t, locale } = useLanguage();
 
@@ -63,6 +64,24 @@ export default function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDet
       isMounted = false;
     };
   }, [isOpen, orderId, t]);
+
+  const handleCancelOrder = async () => {
+    if (!detail?.order || cancelling) return;
+    
+    const confirmMsg = t('pages.order.modal.cancel_confirm', 'Are you sure you want to cancel this order? This action cannot be undone.');
+    if (!window.confirm(confirmMsg)) return;
+
+    setCancelling(true);
+    try {
+      const updated = await userCancelOrder(detail.order.id);
+      setDetail(updated);
+    } catch (err) {
+      console.error('Failed to cancel order:', err);
+      alert(t('pages.order.modal.cancel_error', 'Failed to cancel order. Please contact support.'));
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   if (!isOpen && !detail) return null;
 
@@ -226,6 +245,46 @@ export default function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDet
                 {t('pages.order.modal.issues', 'Issues? Contact')} <a href="mailto:support@elbulk.com" className="text-accent-primary hover:underline font-bold">support@elbulk.com</a>
               </p>
             </div>
+
+            {/* Actions Section */}
+            {(detail.order.status === 'pending' || (['confirmed', 'shipped', 'ready_for_pickup'].includes(detail.order.status) && detail.whatsapp_url)) && (
+              <div className="pt-6 border-t border-border-main/30 animate-in fade-in duration-700 delay-400 fill-mode-both">
+                {detail.order.status === 'pending' ? (
+                  <div className="flex flex-col gap-3">
+                    <button
+                      onClick={handleCancelOrder}
+                      disabled={cancelling}
+                      className="w-full py-3 bg-red-400/10 hover:bg-red-400/20 text-red-400 rounded-xl border border-red-400/30 transition-all font-bold tracking-wide uppercase text-xs disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99]"
+                    >
+                      {cancelling ? t('pages.common.status.loading', 'Processing...') : `🚫 ${t('pages.order.modal.cancel_order_btn', 'Cancel This Order')}`}
+                    </button>
+                    <p className="text-[9px] text-center text-text-muted italic">
+                      {t('pages.order.modal.cancel_notice', 'Orders can only be cancelled while in the pending state.')}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-accent-primary/5 p-4 rounded-xl border border-accent-primary/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="text-center sm:text-left">
+                      <p className="text-sm font-bold text-text-main">{t('pages.order.modal.support_title', 'Need to cancel or change something?')}</p>
+                      <p className="text-[10px] text-text-muted mt-0.5">{t('pages.order.modal.support_subtitle', 'This order is already being processed. Please contact us via WhatsApp.')}</p>
+                    </div>
+                    {detail.whatsapp_url && (
+                      <a
+                        href={detail.whatsapp_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-lg font-bold text-xs no-underline transition-all shadow-md active:scale-95 whitespace-nowrap"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217s.231.006.332.013c.101.007.237-.038.371.295.134.333.462 1.127.502 1.206.041.08.068.173.015.282-.053.107-.077.174-.153.262-.078.089-.164.197-.234.266-.081.079-.165.166-.071.327.094.162.413.683.889 1.103.614.54 1.134.707 1.3.788.165.08.262.068.319-.004.058-.073.248-.289.314-.387.065-.099.13-.081.219-.051s.563.266.66.314c.097.048.162.073.186.113.023.04.023.232-.121.637z"/>
+                        </svg>
+                        {t('pages.order.modal.whatsapp_btn', 'Contact Support')}
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ) : null}
       </div>

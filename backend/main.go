@@ -129,6 +129,7 @@ func main() {
 		r.With(middleware.OptionalUserAuth).Post("/orders", orderHandler.Create)
 		r.With(middleware.RequireUserAuth).Get("/orders/me", orderHandler.ListMe)
 		r.With(middleware.RequireUserAuth).Get("/orders/me/{id}", orderHandler.GetMeDetail)
+		r.With(middleware.RequireUserAuth).Post("/orders/me/{id}/cancel", orderHandler.CancelMe)
 
 		// Frontend logging
 		logHandler := handlers.NewLogHandler()

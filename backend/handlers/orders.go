@@ -578,3 +578,37 @@ func (h *OrderHandler) GetMeDetail(w http.ResponseWriter, r *http.Request) {
 		Items:    detailItems,
 	})
 }
+
+// POST /api/orders/me/{id}/cancel — cancel a pending order for the current user
+func (h *OrderHandler) CancelMe(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok || userID == "" {
+		render.Error(w, "Not logged in", http.StatusUnauthorized)
+		return
+	}
+
+	id := chi.URLParam(r, "id")
+
+	// Execute update ensuring ownership and correct status
+	res, err := h.DB.Exec(`
+		UPDATE "order" 
+		SET status = 'cancelled' 
+		WHERE id = $1 AND customer_id = $2 AND status = 'pending'
+	`, id, userID)
+
+	if err != nil {
+		logger.Error("User order cancel error for %s (userID: %s): %v", id, userID, err)
+		render.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+
+	rows, _ := res.RowsAffected()
+	if rows == 0 {
+		// Either order not found, not pending, or not owned by the user
+		render.Error(w, "Order cannot be cancelled. It may not exist, belong to you, or is already being processed.", http.StatusBadRequest)
+		return
+	}
+
+	// Return updated detail
+	h.GetMeDetail(w, r)
+}

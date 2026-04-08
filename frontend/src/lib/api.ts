@@ -182,6 +182,12 @@ export async function userFetchOrderDetail(id: string): Promise<import('./types'
   return apiFetch<import('./types').OrderDetail>(`/api/orders/me/${id}`);
 }
 
+export async function userCancelOrder(id: string): Promise<import('./types').OrderDetail> {
+  return apiFetch<import('./types').OrderDetail>(`/api/orders/me/${id}/cancel`, {
+    method: 'POST'
+  });
+}
+
 // Admin API (uses cookies)
 export async function adminLogin(username: string, password: string): Promise<string> {
   const data = await apiFetch<{ token: string }>('/api/admin/login', {
