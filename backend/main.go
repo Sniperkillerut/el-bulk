@@ -119,7 +119,11 @@ func main() {
 
 		r.Get("/bounties", bountyHandler.List)
 		r.With(middleware.OptionalUserAuth).Post("/bounties/offers", bountyHandler.SubmitOffer)
+		r.With(middleware.RequireUserAuth).Get("/bounties/offers/me", bountyHandler.ListMeOffers)
+		r.With(middleware.RequireUserAuth).Delete("/bounties/offers/me/{id}", bountyHandler.CancelMeOffer)
 		r.With(middleware.OptionalUserAuth, middleware.RateLimit(5, 10*time.Minute)).Post("/client-requests", bountyHandler.CreateRequest)
+		r.With(middleware.RequireUserAuth).Get("/client-requests/me", bountyHandler.ListMeRequests)
+		r.With(middleware.RequireUserAuth).Delete("/client-requests/me/{id}", bountyHandler.CancelMeRequest)
 		
 		// Newsletter
 		newsletterHandler := &handlers.NewsletterHandler{DB: database}

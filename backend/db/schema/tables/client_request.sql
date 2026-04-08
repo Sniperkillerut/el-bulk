@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS client_request (
   card_name         TEXT NOT NULL,
   set_name          TEXT,
   details           TEXT,
-  status            TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'solved')),
+  status            TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'solved', 'cancelled')),
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

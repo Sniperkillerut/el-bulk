@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '@/context/UserContext';
-import { userFetchOrders } from '@/lib/api';
-import { UserOrder, ORDER_STATUS_LABELS } from '@/lib/types';
+import { userFetchOrders, userFetchBountyOffers, userCancelBountyOffer, userFetchClientRequests, userCancelClientRequest } from '@/lib/api';
+import { UserOrder, BountyOffer, ClientRequest, ORDER_STATUS_LABELS } from '@/lib/types';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import OrderDetailsModal from '@/components/OrderDetailsModal';
 import { useLanguage } from '@/context/LanguageContext';
@@ -15,8 +15,17 @@ export default function ProfilePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t, locale } = useLanguage();
+  const [activeTab, setActiveTab] = useState<'orders' | 'requests' | 'offers'>('orders');
+  
   const [orders, setOrders] = useState<UserOrder[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
+  
+  const [requests, setRequests] = useState<ClientRequest[]>([]);
+  const [requestsLoading, setRequestsLoading] = useState(true);
+  
+  const [offers, setOffers] = useState<BountyOffer[]>([]);
+  const [offersLoading, setOffersLoading] = useState(true);
+
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
@@ -42,8 +51,34 @@ export default function ProfilePage() {
         address: user.address || ''
       });
       fetchOrders();
+      fetchRequests();
+      fetchOffers();
     }
   }, [user, userLoading, router]);
+
+  const fetchRequests = async () => {
+    try {
+      setRequestsLoading(true);
+      const data = await userFetchClientRequests();
+      setRequests(data);
+    } catch {
+      console.error('Failed to fetch requests');
+    } finally {
+      setRequestsLoading(false);
+    }
+  };
+
+  const fetchOffers = async () => {
+    try {
+      setOffersLoading(true);
+      const data = await userFetchBountyOffers();
+      setOffers(data);
+    } catch {
+      console.error('Failed to fetch offers');
+    } finally {
+      setOffersLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (errorParam === 'already_linked') {
@@ -75,6 +110,28 @@ export default function ProfilePage() {
       setMessage({ type: 'error', text: t('pages.profile.messages.error', 'Failed to update profile.') });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleCancelRequest = async (id: string) => {
+    if (!confirm(t('pages.profile.confirm.cancel_request', 'Are you sure you want to cancel this request?'))) return;
+    try {
+      await userCancelClientRequest(id);
+      setMessage({ type: 'success', text: t('pages.profile.messages.request_cancelled', 'Request cancelled successfully.') });
+      fetchRequests();
+    } catch (err: unknown) {
+      setMessage({ type: 'error', text: (err as Error).message || t('pages.profile.messages.cancel_error', 'Failed to cancel.') });
+    }
+  };
+
+  const handleCancelOffer = async (id: string) => {
+    if (!confirm(t('pages.profile.confirm.cancel_offer', 'Are you sure you want to cancel this offer?'))) return;
+    try {
+      await userCancelBountyOffer(id);
+      setMessage({ type: 'success', text: t('pages.profile.messages.offer_cancelled', 'Offer cancelled successfully.') });
+      fetchOffers();
+    } catch (err: unknown) {
+      setMessage({ type: 'error', text: (err as Error).message || t('pages.profile.messages.cancel_error', 'Failed to cancel.') });
     }
   };
 
@@ -235,79 +292,228 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Main - Order History */}
+          {/* Main Content Areas */}
           <div className="lg:col-span-2">
             <div className="glass-card h-full border border-border-main rounded-xl bg-bg-surface/50 backdrop-blur-md overflow-hidden flex flex-col">
-              <div className="p-6 border-b border-border-main">
-                <h2 className="text-xl font-medium text-text-main flex items-center gap-2">
-                  <span className="text-accent-primary">📦</span> {t('pages.profile.section.orders', 'Order History')}
-                </h2>
+              
+              {/* Tabs Header */}
+              <div className="flex border-b border-border-main">
+                <button 
+                  onClick={() => setActiveTab('orders')}
+                  className={`flex-1 px-4 py-4 text-sm font-medium transition-colors border-b-2 ${activeTab === 'orders' ? 'border-accent-primary text-accent-primary bg-accent-primary/5' : 'border-transparent text-text-muted hover:text-text-main hover:bg-bg-page/30'}`}
+                >
+                  <span className="mr-2">📦</span> {t('pages.profile.tabs.orders', 'Orders')}
+                </button>
+                <button 
+                  onClick={() => setActiveTab('requests')}
+                  className={`flex-1 px-4 py-4 text-sm font-medium transition-colors border-b-2 ${activeTab === 'requests' ? 'border-accent-primary text-accent-primary bg-accent-primary/5' : 'border-transparent text-text-muted hover:text-text-main hover:bg-bg-page/30'}`}
+                >
+                  <span className="mr-2">🔍</span> {t('pages.profile.tabs.requests', 'My Requests')}
+                  {requests.filter(r => r.status === 'pending').length > 0 && (
+                    <span className="ml-2 bg-accent-primary text-text-on-accent text-[10px] px-1.5 py-0.5 rounded-full">
+                      {requests.filter(r => r.status === 'pending').length}
+                    </span>
+                  )}
+                </button>
+                <button 
+                  onClick={() => setActiveTab('offers')}
+                  className={`flex-1 px-4 py-4 text-sm font-medium transition-colors border-b-2 ${activeTab === 'offers' ? 'border-accent-primary text-accent-primary bg-accent-primary/5' : 'border-transparent text-text-muted hover:text-text-main hover:bg-bg-page/30'}`}
+                >
+                  <span className="mr-2">💰</span> {t('pages.profile.tabs.offers', 'My Offers')}
+                  {offers.filter(o => o.status === 'pending').length > 0 && (
+                    <span className="ml-2 bg-accent-primary text-text-on-accent text-[10px] px-1.5 py-0.5 rounded-full">
+                      {offers.filter(o => o.status === 'pending').length}
+                    </span>
+                  )}
+                </button>
               </div>
 
-              <div className="flex-grow overflow-x-auto">
-                {ordersLoading ? (
-                  <div className="p-12 flex justify-center"><LoadingSpinner /></div>
-                ) : orders.length === 0 ? (
-                  <div className="p-12 text-center">
-                    <div className="text-4xl mb-4 opacity-20">📭</div>
-                    <p className="text-text-muted">{t('pages.profile.orders.empty', "You haven't placed any orders yet.")}</p>
-                    <button
-                      onClick={() => router.push('/')}
-                      className="mt-6 text-accent-primary hover:underline font-medium"
-                    >
-                      {t('pages.profile.orders.browse', 'Browse our inventory →')}
-                    </button>
-                  </div>
-                ) : (
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-bg-page/50 text-xs font-mono text-text-muted uppercase">
-                        <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.order_no', 'Order No.')}</th>
-                        <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.date', 'Date')}</th>
-                        <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.status', 'Status')}</th>
-                        <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.items', 'Items')}</th>
-                        <th className="px-6 py-4 font-medium tracking-wider text-right">{t('pages.profile.table.total', 'Total')}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border-main/50">
-                      {orders.map((order) => (
-                        <tr
-                          key={order.id}
-                          onClick={() => {
-                            setSelectedOrderId(order.id);
-                            setIsModalOpen(true);
-                          }}
-                          className="hover:bg-accent-primary/5 transition-colors group cursor-pointer"
-                        >
-                          <td className="px-6 py-4">
-                            <span className="font-mono text-sm text-accent-primary group-hover:font-bold transition-all">
-                              {order.order_number}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-text-secondary">
-                            {new Date(order.created_at).toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US')}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded-sm border ${order.status === 'completed' ? 'text-green-400 border-green-400/30 bg-green-400/10' :
-                                order.status === 'pending' ? 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10' :
-                                  order.status === 'cancelled' ? 'text-red-400 border-red-400/30 bg-red-400/10' :
-                                    'text-blue-400 border-blue-400/30 bg-blue-400/10'
-                              }`}>
-                              {t(`pages.order.status.${order.status}`, ORDER_STATUS_LABELS[order.status] || order.status)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-text-muted">
-                            {order.item_count} {order.item_count === 1 ? t('pages.profile.table.item', 'item') : t('pages.profile.table.items', 'items')}
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <span className="font-display text-text-main">
-                              ${order.total_cop.toLocaleString('es-CO')}
-                            </span>
-                          </td>
+              <div className="flex-grow overflow-x-auto min-h-[400px]">
+                {/* Orders Tab */}
+                {activeTab === 'orders' && (
+                  ordersLoading ? (
+                    <div className="p-12 flex justify-center"><LoadingSpinner /></div>
+                  ) : orders.length === 0 ? (
+                    <div className="p-12 text-center">
+                      <div className="text-4xl mb-4 opacity-20">📭</div>
+                      <p className="text-text-muted">{t('pages.profile.orders.empty', "You haven't placed any orders yet.")}</p>
+                      <button
+                        onClick={() => router.push('/')}
+                        className="mt-6 text-accent-primary hover:underline font-medium"
+                      >
+                        {t('pages.profile.orders.browse', 'Browse our inventory →')}
+                      </button>
+                    </div>
+                  ) : (
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-bg-page/50 text-xs font-mono text-text-muted uppercase">
+                          <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.order_no', 'Order No.')}</th>
+                          <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.date', 'Date')}</th>
+                          <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.status', 'Status')}</th>
+                          <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.items', 'Items')}</th>
+                          <th className="px-6 py-4 font-medium tracking-wider text-right">{t('pages.profile.table.total', 'Total')}</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-border-main/50">
+                        {orders.map((order) => (
+                          <tr
+                            key={order.id}
+                            onClick={() => {
+                              setSelectedOrderId(order.id);
+                              setIsModalOpen(true);
+                            }}
+                            className="hover:bg-accent-primary/5 transition-colors group cursor-pointer"
+                          >
+                            <td className="px-6 py-4">
+                              <span className="font-mono text-sm text-accent-primary group-hover:font-bold transition-all">
+                                {order.order_number}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-text-secondary">
+                              {new Date(order.created_at).toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US')}
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded-sm border ${order.status === 'completed' ? 'text-green-400 border-green-400/30 bg-green-400/10' :
+                                  order.status === 'pending' ? 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10' :
+                                    order.status === 'cancelled' ? 'text-red-400 border-red-400/30 bg-red-400/10' :
+                                      'text-blue-400 border-blue-400/30 bg-blue-400/10'
+                                }`}>
+                                {t(`pages.order.status.${order.status}`, ORDER_STATUS_LABELS[order.status] || order.status)}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-text-muted">
+                              {order.item_count} {order.item_count === 1 ? t('pages.profile.table.item', 'item') : t('pages.profile.table.items', 'items')}
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <span className="font-display text-text-main">
+                                ${order.total_cop.toLocaleString('es-CO')}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )
+                )}
+
+                {/* Requests Tab */}
+                {activeTab === 'requests' && (
+                  requestsLoading ? (
+                    <div className="p-12 flex justify-center"><LoadingSpinner /></div>
+                  ) : requests.length === 0 ? (
+                    <div className="p-12 text-center">
+                      <div className="text-4xl mb-4 opacity-20">🔎</div>
+                      <p className="text-text-muted">{t('pages.profile.requests.empty', "You haven't made any requests yet.")}</p>
+                    </div>
+                  ) : (
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-bg-page/50 text-xs font-mono text-text-muted uppercase">
+                          <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.card', 'Card Name')}</th>
+                          <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.set', 'Set')}</th>
+                          <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.date', 'Date')}</th>
+                          <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.status', 'Status')}</th>
+                          <th className="px-6 py-4 font-medium tracking-wider text-right">{t('pages.profile.table.actions', 'Actions')}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border-main/50">
+                        {requests.map((req) => (
+                          <tr key={req.id} className="hover:bg-accent-primary/5 transition-colors group">
+                            <td className="px-6 py-4">
+                              <span className="font-medium text-text-main">{req.card_name}</span>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-text-muted">
+                              {req.set_name || '-'}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-text-secondary">
+                              {new Date(req.created_at).toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US')}
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded-sm border ${
+                                req.status === 'solved' ? 'text-green-400 border-green-400/30 bg-green-400/10' :
+                                req.status === 'pending' ? 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10' :
+                                req.status === 'rejected' || req.status === 'cancelled' ? 'text-red-400 border-red-400/30 bg-red-400/10' :
+                                'text-blue-400 border-blue-400/30 bg-blue-400/10'
+                              }`}>
+                                {t(`pages.profile.status.${req.status}`, req.status)}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              {req.status === 'pending' && (
+                                <button 
+                                  onClick={() => handleCancelRequest(req.id)}
+                                  className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                                >
+                                  {t('pages.profile.actions.cancel', 'Cancel')}
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )
+                )}
+
+                {/* Offers Tab */}
+                {activeTab === 'offers' && (
+                  offersLoading ? (
+                    <div className="p-12 flex justify-center"><LoadingSpinner /></div>
+                  ) : offers.length === 0 ? (
+                    <div className="p-12 text-center">
+                      <div className="text-4xl mb-4 opacity-20">💰</div>
+                      <p className="text-text-muted">{t('pages.profile.offers.empty', "You haven't made any offers yet.")}</p>
+                    </div>
+                  ) : (
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-bg-page/50 text-xs font-mono text-text-muted uppercase">
+                          <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.bounty', 'Bounty')}</th>
+                          <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.qty', 'Qty')}</th>
+                          <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.date', 'Date')}</th>
+                          <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.status', 'Status')}</th>
+                          <th className="px-6 py-4 font-medium tracking-wider text-right">{t('pages.profile.table.actions', 'Actions')}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border-main/50">
+                        {offers.map((offer) => (
+                          <tr key={offer.id} className="hover:bg-accent-primary/5 transition-colors group">
+                            <td className="px-6 py-4">
+                              <span className="font-medium text-text-main">{offer.bounty_name}</span>
+                              {offer.condition && <span className="ml-2 text-[10px] text-text-muted border border-border-main px-1 rounded">{offer.condition}</span>}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-text-muted">
+                              {offer.quantity}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-text-secondary">
+                              {new Date(offer.created_at).toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US')}
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded-sm border ${
+                                offer.status === 'fulfilled' || offer.status === 'accepted' ? 'text-green-400 border-green-400/30 bg-green-400/10' :
+                                offer.status === 'pending' ? 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10' :
+                                offer.status === 'rejected' || offer.status === 'cancelled' ? 'text-red-400 border-red-400/30 bg-red-400/10' :
+                                'text-blue-400 border-blue-400/30 bg-blue-400/10'
+                              }`}>
+                                {t(`pages.profile.status.${offer.status}`, offer.status)}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              {offer.status === 'pending' && (
+                                <button 
+                                  onClick={() => handleCancelOffer(offer.id)}
+                                  className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                                >
+                                  {t('pages.profile.actions.cancel', 'Cancel')}
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )
                 )}
               </div>
             </div>

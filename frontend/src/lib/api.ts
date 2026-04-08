@@ -592,6 +592,16 @@ export async function adminUpdateBountyOfferStatus(id: string, status: string): 
   });
 }
 
+export async function userFetchBountyOffers(): Promise<import('./types').BountyOffer[]> {
+  return apiFetch<import('./types').BountyOffer[]>('/api/bounties/offers/me');
+}
+
+export async function userCancelBountyOffer(id: string): Promise<void> {
+  return apiFetch<void>(`/api/bounties/offers/me/${id}`, {
+    method: 'DELETE'
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Client Requests
 // ---------------------------------------------------------------------------
@@ -600,6 +610,16 @@ export async function createClientRequest(data: import('./types').ClientRequestI
   return apiFetch<import('./types').ClientRequest>('/api/client-requests', {
     method: 'POST',
     body: JSON.stringify(data),
+  });
+}
+
+export async function userFetchClientRequests(): Promise<import('./types').ClientRequest[]> {
+  return apiFetch<import('./types').ClientRequest[]>('/api/client-requests/me');
+}
+
+export async function userCancelClientRequest(id: string): Promise<void> {
+  return apiFetch<void>(`/api/client-requests/me/${id}`, {
+    method: 'DELETE'
   });
 }
 

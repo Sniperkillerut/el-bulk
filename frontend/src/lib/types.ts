@@ -503,7 +503,7 @@ export interface ClientRequest {
   card_name: string;
   set_name?: string;
   details?: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'solved';
+  status: 'pending' | 'accepted' | 'rejected' | 'solved' | 'cancelled';
   created_at: string;
 }
 
@@ -524,7 +524,7 @@ export interface BountyOffer {
   customer_contact: string;
   condition?: string;
   quantity: number;
-  status: 'pending' | 'accepted' | 'rejected' | 'fulfilled';
+  status: 'pending' | 'accepted' | 'rejected' | 'fulfilled' | 'cancelled';
   notes?: string;
   admin_notes?: string;
   created_at: string;

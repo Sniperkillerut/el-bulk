@@ -368,3 +368,122 @@ func (h *BountyHandler) UpdateRequestStatus(w http.ResponseWriter, r *http.Reque
 
 	render.Success(w, req)
 }
+
+// GET /api/bounties/offers/me — list bounty offers for the current customer
+func (h *BountyHandler) ListMeOffers(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok || userID == "" {
+		render.Error(w, "Not logged in", http.StatusUnauthorized)
+		return
+	}
+
+	var offers []models.BountyOffer
+	query := `
+		SELECT 
+			o.id, o.bounty_id, o.customer_id, o.quantity, o.condition, o.status, o.notes, o.admin_notes, o.created_at, o.updated_at,
+			b.name as bounty_name
+		FROM bounty_offer o
+		JOIN bounty b ON o.bounty_id = b.id
+		WHERE o.customer_id = $1
+		ORDER BY o.created_at DESC
+	`
+	err := h.DB.Select(&offers, query, userID)
+	if err != nil {
+		logger.Error("Failed to list user bounty offers for %s: %v", userID, err)
+		render.Error(w, "Failed to fetch bounty offers", http.StatusInternalServerError)
+		return
+	}
+	if offers == nil {
+		offers = []models.BountyOffer{}
+	}
+
+	render.Success(w, offers)
+}
+
+// DELETE /api/bounties/offers/me/{id} — cancel a pending bounty offer
+func (h *BountyHandler) CancelMeOffer(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok || userID == "" {
+		render.Error(w, "Not logged in", http.StatusUnauthorized)
+		return
+	}
+
+	id := chi.URLParam(r, "id")
+	res, err := h.DB.Exec(`
+		UPDATE bounty_offer 
+		SET status = 'cancelled', updated_at = now() 
+		WHERE id = $1 AND customer_id = $2 AND status = 'pending'
+	`, id, userID)
+
+	if err != nil {
+		logger.Error("Failed to cancel user bounty offer %s for user %s: %v", id, userID, err)
+		render.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+
+	rows, _ := res.RowsAffected()
+	if rows == 0 {
+		render.Error(w, "Offer cannot be cancelled. It may not exist, belong to you, or is already being processed.", http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// GET /api/client-requests/me — list requests for the current customer
+func (h *BountyHandler) ListMeRequests(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok || userID == "" {
+		render.Error(w, "Not logged in", http.StatusUnauthorized)
+		return
+	}
+
+	var requests []models.ClientRequest
+	query := `
+		SELECT id, customer_id, customer_name, customer_contact, card_name, set_name, details, status, created_at
+		FROM client_request
+		WHERE customer_id = $1
+		ORDER BY created_at DESC
+	`
+	err := h.DB.Select(&requests, query, userID)
+	if err != nil {
+		logger.Error("Failed to list user client requests for %s: %v", userID, err)
+		render.Error(w, "Failed to fetch client requests", http.StatusInternalServerError)
+		return
+	}
+	if requests == nil {
+		requests = []models.ClientRequest{}
+	}
+
+	render.Success(w, requests)
+}
+
+// DELETE /api/client-requests/me/{id} — cancel a pending client request
+func (h *BountyHandler) CancelMeRequest(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok || userID == "" {
+		render.Error(w, "Not logged in", http.StatusUnauthorized)
+		return
+	}
+
+	id := chi.URLParam(r, "id")
+	res, err := h.DB.Exec(`
+		UPDATE client_request 
+		SET status = 'cancelled' 
+		WHERE id = $1 AND customer_id = $2 AND status = 'pending'
+	`, id, userID)
+
+	if err != nil {
+		logger.Error("Failed to cancel user client request %s for user %s: %v", id, userID, err)
+		render.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+
+	rows, _ := res.RowsAffected()
+	if rows == 0 {
+		render.Error(w, "Request cannot be cancelled. It may not exist, belong to you, or is already being processed.", http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}

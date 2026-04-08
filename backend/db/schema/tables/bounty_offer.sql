@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS bounty_offer (
   customer_id       UUID REFERENCES customer(id) ON DELETE CASCADE NOT NULL,
   quantity          INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
   condition         TEXT,
-  status            TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'fulfilled')),
+  status            TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'fulfilled', 'cancelled')),
   notes             TEXT,
   admin_notes       TEXT,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
