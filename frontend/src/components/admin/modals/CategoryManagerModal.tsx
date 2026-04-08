@@ -3,6 +3,7 @@
 import { CustomCategory } from '@/lib/types';
 import { useState } from 'react';
 import { CategoryIcon, COLLECTION_ICONS } from '@/components/CategoryIcon';
+import Modal from '@/components/ui/Modal';
 
 interface CategoryManagerModalProps {
   categories: CustomCategory[];
@@ -46,21 +47,20 @@ export default function CategoryManagerModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4"
-      style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)' }}>
-      <div className="card max-w-2xl w-full p-4 md:p-8" style={{ background: 'var(--ink-surface)', border: '4px solid var(--kraft-dark)' }}>
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="font-display text-2xl md:text-4xl m-0 uppercase tracking-tighter">COLLECTIONS & CATS</h2>
-          <button onClick={onClose} className="text-text-muted hover:text-text-primary text-xl">✕</button>
-        </div>
-        
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      title="COLLECTIONS & CATS"
+      maxWidth="max-w-2xl"
+    >
+      <div className="p-4 md:p-8">
         <div className="flex flex-col sm:flex-row gap-2 mb-6">
           <input 
             type="text" 
             placeholder="New Collection Name (e.g. Commander Staples)" 
             value={newName} 
             onChange={e => setNewName(e.target.value)} 
-            className="flex-1 bg-white border-kraft-dark/30" 
+            className="flex-1 bg-white border-border-main" 
           />
           <button onClick={handleCreate} className="btn-primary px-6">ADD</button>
         </div>
@@ -69,7 +69,7 @@ export default function CategoryManagerModal({
           {categories.map(cat => {
             const isEditing = editingId === cat.id;
             return (
-              <div key={cat.id} className={`p-4 border transition-all ${isEditing ? 'border-accent-primary bg-accent-primary/5 shadow-lg shadow-gold/10' : 'border-kraft-dark/20 bg-white/40'}`}>
+              <div key={cat.id} className={`p-4 border transition-all ${isEditing ? 'border-accent-primary bg-accent-primary/5 shadow-lg shadow-gold/10' : 'border-border-main bg-bg-surface/40'}`}>
                 {isEditing ? (
                   <div className="space-y-4">
                     <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
@@ -77,7 +77,7 @@ export default function CategoryManagerModal({
                         type="text" 
                         value={editForm.name} 
                         onChange={e => setEditForm({ ...editForm, name: e.target.value })} 
-                        className="flex-1 py-2 bg-white border-kraft-dark/30 text-base font-bold" 
+                        className="flex-1 py-2 bg-white border-border-main text-base font-bold" 
                       />
                       <div className="flex gap-1">
                         <button onClick={() => handleUpdate(cat.id)} className="btn-primary px-4 py-2 text-xs font-black uppercase tracking-widest">SAVE</button>
@@ -85,15 +85,15 @@ export default function CategoryManagerModal({
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-kraft-dark/10">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-border-main/10">
                       <div className="space-y-1">
                         <label className="text-[10px] font-mono-stack uppercase font-bold text-text-muted opacity-60">Background & Text</label>
                         <div className="flex items-center gap-3">
-                           <div className="flex items-center gap-2 bg-white/60 p-1.5 rounded border border-kraft-dark/20">
+                           <div className="flex items-center gap-2 bg-bg-surface/60 p-1.5 rounded border border-border-main/20">
                              <input type="color" value={editForm.bg_color} onChange={e => setEditForm({...editForm, bg_color: e.target.value})} className="w-8 h-8 rounded border-none cursor-pointer" />
                              <input type="text" value={editForm.bg_color} onChange={e => setEditForm({...editForm, bg_color: e.target.value})} className="w-16 p-0 border-none bg-transparent text-[10px] font-mono uppercase" />
                            </div>
-                           <div className="flex items-center gap-2 bg-white/60 p-1.5 rounded border border-kraft-dark/20">
+                           <div className="flex items-center gap-2 bg-bg-surface/60 p-1.5 rounded border border-border-main/20">
                              <input type="color" value={editForm.text_color} onChange={e => setEditForm({...editForm, text_color: e.target.value})} className="w-8 h-8 rounded border-none cursor-pointer" />
                              <input type="text" value={editForm.text_color} onChange={e => setEditForm({...editForm, text_color: e.target.value})} className="w-16 p-0 border-none bg-transparent text-[10px] font-mono uppercase" />
                            </div>
@@ -107,7 +107,7 @@ export default function CategoryManagerModal({
                               key={i.name}
                               type="button"
                               onClick={() => setEditForm({ ...editForm, icon: i.name })}
-                              className={`w-8 h-8 flex items-center justify-center rounded border transition-colors ${editForm.icon === i.name ? 'bg-accent-primary text-text-on-accent border-accent-primary' : 'bg-white border-kraft-dark/20 text-text-muted hover:border-accent-primary'}`}
+                              className={`w-8 h-8 flex items-center justify-center rounded border transition-colors ${editForm.icon === i.name ? 'bg-accent-primary text-text-on-accent border-accent-primary' : 'bg-bg-surface border-border-main/20 text-text-muted hover:border-accent-primary'}`}
                               title={i.label}
                             >
                               {i.name === 'none' ? <span className="text-[8px] font-mono">Ø</span> : i.svg}
@@ -117,7 +117,7 @@ export default function CategoryManagerModal({
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-center py-4 bg-ink-border/5 rounded-md border border-dashed border-kraft-dark/20">
+                    <div className="flex items-center justify-center py-4 bg-bg-header/5 rounded-md border border-dashed border-border-main/20">
                        <span className="text-[10px] font-mono uppercase text-text-muted mr-3">PREVIEW:</span>
                        <span className="badge shadow-md" style={{ background: editForm.bg_color, color: editForm.text_color, fontSize: '0.65rem', padding: '0.2rem 0.65rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                          <CategoryIcon icon={editForm.icon} />
@@ -130,7 +130,7 @@ export default function CategoryManagerModal({
                     <div className="flex items-center gap-4">
                       <div className="flex flex-col">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-lg">{cat.name}</span>
+                          <span className="font-bold text-lg text-text-main">{cat.name}</span>
                           <span className="badge" style={{ 
                             background: cat.bg_color || 'var(--accent-primary)', 
                             color: cat.text_color || 'var(--text-on-accent)',
@@ -168,6 +168,6 @@ export default function CategoryManagerModal({
           {categories.length === 0 && <p className="text-center text-text-muted py-8 font-mono-stack">VOID DETECTED // NO COLLECTIONS DEFINED</p>}
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

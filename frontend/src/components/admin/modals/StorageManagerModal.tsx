@@ -2,6 +2,7 @@
 
 import { StoredIn } from '@/lib/types';
 import { useState } from 'react';
+import Modal from '@/components/ui/Modal';
 
 interface StorageManagerModalProps {
   storageLocations: StoredIn[];
@@ -35,35 +36,34 @@ export default function StorageManagerModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4"
-      style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)' }}>
-      <div className="card max-w-2xl w-full p-4 md:p-8" style={{ background: 'var(--ink-surface)', border: '4px solid var(--kraft-dark)' }}>
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="font-display text-2xl md:text-4xl m-0">STORAGE LOCATIONS</h2>
-          <button onClick={onClose} className="text-text-muted hover:text-text-primary text-xl">✕</button>
-        </div>
-        
+    <Modal 
+      isOpen={true} 
+      onClose={onClose} 
+      title="STORAGE LOCATIONS"
+      maxWidth="max-w-2xl"
+    >
+      <div className="p-4 md:p-8">
         <div className="flex flex-col sm:flex-row gap-2 mb-6">
           <input 
             type="text" 
             placeholder="New Location Name (e.g. Binder A)" 
             value={newName} 
             onChange={e => setNewName(e.target.value)} 
-            className="flex-1 bg-white" 
+            className="flex-1 bg-white border-border-main" 
           />
           <button onClick={handleCreate} className="btn-primary px-6">ADD</button>
         </div>
 
-        <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+        <div className="space-y-2 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
           {storageLocations.map(loc => (
-            <div key={loc.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 border border-kraft-dark bg-kraft-light/10">
+            <div key={loc.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 border border-border-main bg-bg-surface/50">
               {editingId === loc.id ? (
                 <div className="flex gap-2 flex-1 mr-4">
                   <input 
                     type="text" 
                     value={editingName} 
                     onChange={e => setEditingName(e.target.value)} 
-                    className="flex-1 py-1 bg-white" 
+                    className="flex-1 py-1 bg-white border-border-main" 
                   />
                   <button onClick={() => handleUpdate(loc.id)} className="btn-primary px-3 py-1 text-xs">SAVE</button>
                   <button onClick={() => setEditingId(null)} className="btn-secondary px-3 py-1 text-xs">CANCEL</button>
@@ -71,8 +71,8 @@ export default function StorageManagerModal({
               ) : (
                 <>
                   <div className="flex items-center gap-3">
-                    <span className="font-semibold text-lg">{loc.name}</span>
-                    <span className="text-xs font-mono-stack text-text-muted bg-kraft-light px-2 py-0.5 rounded border border-kraft-dark">
+                    <span className="font-semibold text-lg text-text-main">{loc.name}</span>
+                    <span className="text-xs font-mono-stack text-text-muted bg-bg-page px-2 py-0.5 rounded border border-border-main">
                       {loc.item_count || 0} items
                     </span>
                   </div>
@@ -94,6 +94,6 @@ export default function StorageManagerModal({
           {storageLocations.length === 0 && <p className="text-center text-text-muted py-8">No storage locations configured.</p>}
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
