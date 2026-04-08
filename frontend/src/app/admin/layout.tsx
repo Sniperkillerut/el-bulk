@@ -20,7 +20,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <AdminProvider>
-      <div className="admin-layout flex h-screen bg-kraft-paper overflow-hidden text-ink-deep relative">
+      <div className="admin-layout flex h-screen h-[100dvh] bg-kraft-paper overflow-hidden text-ink-deep relative">
         {/* Mobile Backdrop */}
         {adminSidebarOpen && (
           <div 
@@ -31,7 +31,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         <AdminSidebar />
         
-        <main className="flex-1 flex flex-col overflow-hidden relative">
+        <main className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
           {/* Mobile Header Bar */}
           <div className="lg:hidden flex items-center justify-between p-4 bg-ink-navy border-b border-ink-border shrink-0">
             <button 

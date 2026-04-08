@@ -3,8 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import {
-  adminFetchOrders, adminFetchOrderDetail, adminUpdateOrder, adminCompleteOrder,
-  adminDownloadAccountingCSV
+  adminFetchOrders, adminFetchOrderDetail, adminUpdateOrder, adminCompleteOrder
 } from '@/lib/api';
 import {
   OrderWithCustomer, OrderDetail,
@@ -23,14 +22,12 @@ export default function OrdersPanel({ initialOrderId }: Props) {
   const [orders, setOrders] = useState<OrderWithCustomer[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [statusFilter, setStatusFilter] = useState('');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // Accounting export state
-  const [exportDates, setExportDates] = useState({ start: '', end: '' });
-  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -58,14 +55,14 @@ export default function OrdersPanel({ initialOrderId }: Props) {
   const loadOrders = useCallback(async () => {
     // No longer setting loading synchronously at start to avoid cascaded renders
     try {
-      const res = await adminFetchOrders({ status: statusFilter, search: debouncedSearch, page, page_size: 50 });
+      const res = await adminFetchOrders({ status: statusFilter, search: debouncedSearch, page, page_size: pageSize });
       setOrders(res.orders);
       setTotal(res.total);
     } catch (err) {
       console.error('Failed to load orders:', err);
     }
     setLoading(false);
-  }, [statusFilter, debouncedSearch, page]);
+  }, [statusFilter, debouncedSearch, page, pageSize]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -211,27 +208,15 @@ export default function OrdersPanel({ initialOrderId }: Props) {
     }));
   };
 
-  const totalPages = Math.ceil(total / 50);
+  const totalPages = Math.ceil(total / pageSize);
   const hasEdits = detail ? detail.items.some(i => itemEdits[i.id] !== i.quantity) : false;
 
-  const handleExport = async () => {
-    setExporting(true);
-    try {
-      await adminDownloadAccountingCSV({
-        start_date: exportDates.start ? `${exportDates.start}T00:00:00Z` : undefined,
-        end_date: exportDates.end ? `${exportDates.end}T23:59:59Z` : undefined,
-      });
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Error exporting accounting data');
-    }
-    setExporting(false);
-  };
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex flex-col flex-1 min-h-0 w-full">
       <div className="flex flex-col lg:flex-row flex-1 min-h-0">
         {/* Left: Orders List */}
-        <div className={`w-full lg:w-[420px] flex-shrink-0 flex flex-col overflow-hidden border-r border-border-main/20 bg-bg-page/5 ${mobileShowDetail ? 'hidden lg:flex' : 'flex'}`}>
+        <div className={`flex-1 lg:flex-none w-full lg:w-[420px] lg:flex-shrink-0 flex flex-col min-h-0 overflow-hidden border-r border-border-main/20 bg-bg-page/5 ${mobileShowDetail ? 'hidden lg:flex' : 'flex'}`}>
           {/* Filters */}
           <div className="p-3 flex flex-col gap-2" style={{ borderBottom: '1px solid var(--border-main)' }}>
             <input
@@ -259,41 +244,10 @@ export default function OrdersPanel({ initialOrderId }: Props) {
               ))}
             </div>
 
-            {/* Accounting Export UI */}
-            <div className="mt-2 p-2 rounded bg-gold/5 border border-gold/20">
-              <p className="text-[10px] font-mono-stack text-gold-dark mb-1 font-bold uppercase tracking-wider">Accounting Export (CSV)</p>
-              <div className="flex gap-2 items-end">
-                <div className="flex-1">
-                  <label className="text-[8px] font-mono-stack text-text-muted block uppercase">Start</label>
-                  <input 
-                    type="date" 
-                    value={exportDates.start} 
-                    onChange={e => setExportDates(prev => ({ ...prev, start: e.target.value }))}
-                    className="w-full text-[10px] p-1 bg-white border-kraft-dark/20"
-                  />
-                </div>
-                <div className="flex-1">
-                  <label className="text-[8px] font-mono-stack text-text-muted block uppercase">End</label>
-                  <input 
-                    type="date" 
-                    value={exportDates.end} 
-                    onChange={e => setExportDates(prev => ({ ...prev, end: e.target.value }))}
-                    className="w-full text-[10px] p-1 bg-white border-kraft-dark/20"
-                  />
-                </div>
-                <button 
-                  onClick={handleExport}
-                  disabled={exporting}
-                  className="btn-primary text-[10px] p-1.5 px-3 whitespace-nowrap shadow-sm"
-                >
-                  {exporting ? '...' : 'CSV'}
-                </button>
-              </div>
-            </div>
           </div>
 
           {/* Orders list */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto min-h-0 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
             {loading ? (
               <div className="p-6 text-center" style={{ color: 'var(--text-muted)' }}>Cargando...</div>
             ) : orders.length === 0 ? (
@@ -336,17 +290,55 @@ export default function OrdersPanel({ initialOrderId }: Props) {
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center gap-2 p-2" style={{ borderTop: '1px solid var(--border-main)' }}>
-              <button onClick={() => { setPage(p => Math.max(1, p - 1)); setLoading(true); }} disabled={page === 1} className="btn-secondary" style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem', opacity: page === 1 ? 0.4 : 1 }}>←</button>
-              <span className="text-xs font-mono-stack flex items-center" style={{ color: 'var(--text-muted)' }}>{page}/{totalPages}</span>
-              <button onClick={() => { setPage(p => Math.min(totalPages, p + 1)); setLoading(true); }} disabled={page === totalPages} className="btn-secondary" style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem', opacity: page === totalPages ? 0.4 : 1 }}>→</button>
+          {totalPages > 0 && (
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-2 p-3 bg-bg-page/10" style={{ borderTop: '1px solid var(--border-main)' }}>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono-stack text-text-muted uppercase">Mostrar</span>
+                <select 
+                  value={pageSize}
+                  onChange={e => {
+                    setPageSize(Number(e.target.value));
+                    setPage(1);
+                    setLoading(true);
+                  }}
+                  className="bg-transparent border-0 font-mono-stack text-xs font-bold text-gold-dark outline-none cursor-pointer hover:text-hp-color transition-colors"
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={() => { setPage(p => Math.max(1, p - 1)); setLoading(true); }} 
+                    disabled={page === 1} 
+                    className="btn-secondary" 
+                    style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem', opacity: page === 1 ? 0.4 : 1 }}
+                  >
+                    ←
+                  </button>
+                  <span className="text-xs font-mono-stack font-bold" style={{ color: 'var(--text-muted)' }}>
+                    {page} / {totalPages}
+                  </span>
+                  <button 
+                    onClick={() => { setPage(p => Math.min(totalPages, p + 1)); setLoading(true); }} 
+                    disabled={page === totalPages} 
+                    className="btn-secondary" 
+                    style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem', opacity: page === totalPages ? 0.4 : 1 }}
+                  >
+                    →
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
 
         {/* Right: Order Detail */}
-        <div className={`flex-1 overflow-y-auto p-4 md:p-8 bg-white ${!mobileShowDetail ? 'hidden lg:block' : 'block'}`}>
+        <div className={`flex-1 overflow-y-auto p-4 md:p-8 bg-white ${!mobileShowDetail ? 'hidden lg:flex' : 'flex flex-col'} min-h-0 overscroll-contain`} style={{ WebkitOverflowScrolling: 'touch' }}>
           {!detail && !loadingDetail && (
             <div className="flex items-center justify-center h-full" style={{ color: 'var(--text-muted)' }}>
               <div className="text-center">

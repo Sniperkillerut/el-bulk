@@ -130,14 +130,15 @@ export default function AdminDashboard() {
   return (
     <div className="flex-1 flex flex-col p-3 min-h-0 max-w-7xl mx-auto w-full">
       <AdminHeader
+        customMargin="mb-3"
         title={t('pages.admin.inventory.title', 'INVENTORY MANAGEMENT')}
         subtitle={t('pages.admin.inventory.subtitle', 'Store Dashboard // Operations Active')}
         actions={
           <>
-            <Link href="/admin/accounting/valuation" className="btn-secondary px-3 py-1.5 text-[10px] flex items-center gap-2">
+            <Link href="/admin/accounting/valuation" className="btn-secondary px-2 py-1 text-[10px] flex items-center gap-2">
               <span>📊</span> VALUATION
             </Link>
-            <Link href="/admin/inventory/low-stock" className="btn-secondary px-3 py-1.5 text-[10px] flex items-center gap-2 border-hp-color/30 text-hp-color">
+            <Link href="/admin/inventory/low-stock" className="btn-secondary px-2 py-1 text-[10px] flex items-center gap-2 border-hp-color/30 text-hp-color">
               <span>⚠️</span> LOW STOCK
             </Link>
             <div className="flex flex-col items-center">
@@ -145,7 +146,7 @@ export default function AdminDashboard() {
                 onClick={handleSyncSets}
                 disabled={isSyncing}
                 title={t('pages.admin.inventory.sync_sets_tooltip', 'Sync set metadata for date ordering on client filters')}
-                className="btn-secondary px-4 py-1.5 text-[10px] flex items-center gap-2 mb-0.5"
+                className="btn-secondary px-3 py-1 text-[10px] flex items-center gap-2"
               >
                 <span>{isSyncing ? '⌛' : '🔄'}</span> {isSyncing ? t('pages.admin.inventory.syncing', 'SYNCING...') : t('pages.admin.inventory.sync_sets_btn', 'SYNC SETS')}
               </button>
@@ -155,27 +156,29 @@ export default function AdminDashboard() {
                 </span>
               )}
             </div>
-            <button onClick={() => setShowImportModal(true)} className="btn-secondary px-6 flex items-center gap-2">
+            <button onClick={() => setShowImportModal(true)} className="btn-secondary px-3 py-1 text-[10px] flex items-center gap-2">
               <span>📥</span> {t('pages.admin.inventory.import_csv_btn', 'IMPORT CSV')}
             </button>
-            <button onClick={() => { setEditingProduct(null); setShowEditModal(true); }} className="btn-primary px-8 flex items-center gap-2 shadow-lg shadow-gold/20">
-              <span className="text-xl">+</span> {t('pages.admin.inventory.add_product_btn', 'ADD NEW PRODUCT')}
+            <div className="relative w-full sm:w-64 order-first lg:order-none">
+              <input 
+                type="text" 
+                placeholder={t('pages.admin.inventory.search_placeholder', 'Search inventory...')} 
+                value={search} 
+                onChange={e => { setSearch(e.target.value); setPage(1); }} 
+                className="bg-white/50 border-ink-border/20 w-full py-1.5 pl-3 pr-10 text-xs shadow-sm focus:bg-white transition-all" 
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30 text-xs">🔍</span>
+            </div>
+            <button onClick={() => { setEditingProduct(null); setShowEditModal(true); }} className="btn-primary px-4 py-1.5 text-xs font-bold flex items-center gap-2 shadow-lg shadow-gold/20">
+              <span className="text-sm">+</span> {t('pages.admin.inventory.add_product_btn', 'ADD NEW PRODUCT')}
             </button>
           </>
         }
       />
 
-      {/* Filters and Search Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4 flex-shrink-0">
-        <div className="sm:col-span-2 lg:col-span-3 card p-4 bg-white/40 backdrop-blur shadow-sm border-kraft-dark/20 flex flex-wrap gap-4 items-end">
-          <div className="flex-1 min-w-[200px]">
-            <label className="text-[10px] font-mono-stack mb-1.5 block uppercase font-bold text-text-muted">{t('pages.admin.inventory.search_label', 'Product Search')}</label>
-            <div className="relative">
-              <input type="text" placeholder={t('pages.admin.inventory.search_placeholder', 'Search by name, set, code...')} value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30 w-full" />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30">🔍</span>
-            </div>
-          </div>
-          
+      {/* Filters and Search Bar Area */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4 flex-shrink-0">
+        <div className="lg:col-span-3 card p-4 bg-white/40 backdrop-blur shadow-sm border-ink-border/10 flex flex-wrap gap-4 items-end">
           <div className="flex flex-wrap gap-4 w-full sm:w-auto">
             <div className="flex-1 min-w-[120px]">
               <label className="text-[10px] font-mono-stack mb-1.5 block uppercase font-bold text-text-muted">{t('pages.admin.inventory.tcg_filter_label', 'TCG Filter')}</label>
