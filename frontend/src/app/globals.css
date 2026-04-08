@@ -56,6 +56,12 @@
 
   /* Advanced Branding */
   --color-accent-secondary: var(--accent-secondary);
+
+  /* Admin Themed Aliases */
+  --color-ink-navy: var(--bg-header);
+  --color-ink-border: var(--border-main);
+  --color-ink-surface: var(--bg-surface);
+  --color-ink-deep: var(--text-main);
 }
 
 :root {
@@ -107,6 +113,12 @@
 
   --font-heading: 'Inter', sans-serif;
   --font-body: 'Inter', sans-serif;
+
+  /* Admin Variable Aliases */
+  --ink-navy: var(--bg-header);
+  --ink-border: var(--border-main);
+  --ink-surface: var(--bg-surface);
+  --ink-deep: var(--text-main);
 }
 
 /* Theme Area Scoping - Ensures accents move with their backgrounds */

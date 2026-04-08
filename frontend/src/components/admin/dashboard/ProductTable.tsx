@@ -38,7 +38,7 @@ export function ProductTableRow({ product: p, onEdit, onDelete }: ProductTableRo
         <div className="absolute left-0 top-0 bottom-0 w-1 bg-gold scale-y-0 group-hover:scale-y-100 transition-transform duration-200 origin-center" />
 
         <div className="flex items-center gap-3 py-1">
-          <div className="w-10 h-14 shrink-0 overflow-hidden relative group/img shadow-sm">
+          <div className="w-9 h-12 sm:w-10 sm:h-14 shrink-0 overflow-hidden relative group/img shadow-sm">
             <CardImage
               imageUrl={p.image_url}
               name={p.name}

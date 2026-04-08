@@ -88,15 +88,22 @@ export default function ImageModal({ imageUrl, name, foilTreatment, onClose }: I
           onClick={handleClose}
           style={{
             position: 'absolute',
-            top: '-40px',
-            right: '-40px',
-            background: 'none',
-            border: 'none',
+            top: '-50px',
+            right: '0px',
+            background: 'rgba(255,255,255,0.1)',
+            backdropFilter: 'blur(4px)',
+            borderRadius: '50%',
+            width: '44px',
+            height: '44px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '1px solid rgba(255,255,255,0.2)',
             color: '#fff',
-            fontSize: '2.5rem',
+            fontSize: '2rem',
             cursor: 'pointer',
-            padding: '10px',
-            zIndex: 3
+            zIndex: 3,
+            transition: 'all 0.2s'
           }}
         >
           ×

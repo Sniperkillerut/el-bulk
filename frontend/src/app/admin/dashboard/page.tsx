@@ -77,8 +77,8 @@ export default function AdminDashboard() {
     try {
       await adminDeleteProduct(id);
       refreshProducts();
-    } catch { 
-      alert(t('pages.admin.inventory.error_delete', 'Failed to delete product.')); 
+    } catch {
+      alert(t('pages.admin.inventory.error_delete', 'Failed to delete product.'));
     }
   };
 
@@ -128,99 +128,104 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="flex-1 flex flex-col p-3 min-h-0 max-w-7xl mx-auto w-full">
+    <div className="flex-1 flex flex-col p-1.5 lg:p-3 min-h-0 max-w-7xl mx-auto w-full">
       <AdminHeader
-        customMargin="mb-3"
+        customMargin="mb-1"
         title={t('pages.admin.inventory.title', 'INVENTORY MANAGEMENT')}
-        subtitle={t('pages.admin.inventory.subtitle', 'Store Dashboard // Operations Active')}
+        subtitle={`${total.toLocaleString()} ${t('pages.admin.inventory.items', 'ITEMS')} // ~${queryTime}ms // ${t('pages.admin.inventory.subtitle', 'OPS ACTIVE')}`}
         actions={
-          <>
-            <Link href="/admin/accounting/valuation" className="btn-secondary px-2 py-1 text-[10px] flex items-center gap-2">
-              <span>📊</span> VALUATION
-            </Link>
-            <Link href="/admin/inventory/low-stock" className="btn-secondary px-2 py-1 text-[10px] flex items-center gap-2 border-hp-color/30 text-hp-color">
-              <span>⚠️</span> LOW STOCK
-            </Link>
-            <div className="flex flex-col items-center">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {/* Utility Operations Group */}
+            <div className="flex items-center gap-1 bg-ink-surface/50 border border-ink-border/20 p-0.5 rounded-md">
+              <Link 
+                href="/admin/accounting/valuation" 
+                className="btn-secondary !px-2 !py-1 !text-[10px] flex items-center gap-1 whitespace-nowrap !leading-none min-h-[30px]"
+              >
+                <span>📊</span> <span className="hidden md:inline">VALUATION</span>
+              </Link>
+              <Link 
+                href="/admin/inventory/low-stock" 
+                className="btn-secondary !px-2 !py-1 !text-[10px] flex items-center gap-1 border-hp-color/30 text-hp-color whitespace-nowrap !leading-none min-h-[30px]"
+              >
+                <span>⚠️</span> <span className="hidden md:inline">LOW STOCK</span>
+              </Link>
               <button
                 onClick={handleSyncSets}
                 disabled={isSyncing}
-                title={t('pages.admin.inventory.sync_sets_tooltip', 'Sync set metadata for date ordering on client filters')}
-                className="btn-secondary px-3 py-1 text-[10px] flex items-center gap-2"
+                className="btn-secondary !px-2 !py-1 !text-[10px] flex items-center gap-1 border-l border-ink-border/10 !pl-2 ml-1 whitespace-nowrap !leading-none min-h-[30px]"
               >
-                <span>{isSyncing ? '⌛' : '🔄'}</span> {isSyncing ? t('pages.admin.inventory.syncing', 'SYNCING...') : t('pages.admin.inventory.sync_sets_btn', 'SYNC SETS')}
+                <span>{isSyncing ? '⌛' : '🔄'}</span> 
+                <span className="hidden md:inline">{isSyncing ? 'SYNCING...' : 'SYNC'}</span>
+                {settings?.last_set_sync && (
+                  <span className="opacity-40 ml-1 font-mono-stack text-[9px]">
+                    [{new Date(settings.last_set_sync).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })}]
+                  </span>
+                )}
               </button>
-              {settings?.last_set_sync && (
-                <span className="text-[9px] font-mono-stack text-text-muted opacity-60">
-                  {t('pages.admin.inventory.last_sync', 'LAST SYNC: {date}', { date: new Date(settings.last_set_sync).toLocaleString() })}
-                </span>
-              )}
+              <button 
+                onClick={() => setShowImportModal(true)} 
+                className="btn-secondary !px-2 !py-1 !text-[10px] flex items-center gap-1 border-l border-ink-border/10 whitespace-nowrap ml-1 !leading-none min-h-[30px]"
+              >
+                <span>📥</span> <span className="hidden md:inline">IMPORT CSV</span>
+              </button>
             </div>
-            <button onClick={() => setShowImportModal(true)} className="btn-secondary px-3 py-1 text-[10px] flex items-center gap-2">
-              <span>📥</span> {t('pages.admin.inventory.import_csv_btn', 'IMPORT CSV')}
-            </button>
-            <div className="relative w-full sm:w-64 order-first lg:order-none">
-              <input 
-                type="text" 
-                placeholder={t('pages.admin.inventory.search_placeholder', 'Search inventory...')} 
-                value={search} 
-                onChange={e => { setSearch(e.target.value); setPage(1); }} 
-                className="bg-white/50 border-ink-border/20 w-full py-1.5 pl-3 pr-10 text-xs shadow-sm focus:bg-white transition-all" 
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30 text-xs">🔍</span>
+
+            {/* Search and Main Action */}
+            <div className="flex items-center gap-1.5 flex-1 lg:flex-none">
+              <div className="relative flex-1 sm:flex-none sm:w-56">
+                <input 
+                  type="text" 
+                  placeholder={t('pages.admin.inventory.search_placeholder', 'Search by name, set, code...')} 
+                  value={search} 
+                  onChange={e => { setSearch(e.target.value); setPage(1); }} 
+                  className="bg-white border-ink-border/20 w-full !py-1.5 pl-3 pr-8 text-xs min-h-[38px] h-auto shadow-sm focus:border-gold transition-all !leading-none" 
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30 text-xs">🔍</span>
+              </div>
+              <button 
+                onClick={() => { setEditingProduct(null); setShowEditModal(true); }} 
+                className="btn-primary !px-4 min-h-[38px] h-auto text-xs font-bold flex items-center justify-center gap-2 whitespace-nowrap shadow-md shadow-gold/10 !leading-none"
+              >
+                <span className="text-base leading-none translate-y-[-1px]">+</span> <span className="hidden sm:inline leading-none">PRODUCT</span>
+              </button>
             </div>
-            <button onClick={() => { setEditingProduct(null); setShowEditModal(true); }} className="btn-primary px-4 py-1.5 text-xs font-bold flex items-center gap-2 shadow-lg shadow-gold/20">
-              <span className="text-sm">+</span> {t('pages.admin.inventory.add_product_btn', 'ADD NEW PRODUCT')}
-            </button>
-          </>
+          </div>
         }
       />
 
-      {/* Filters and Search Bar Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4 flex-shrink-0">
-        <div className="lg:col-span-3 card p-4 bg-white/40 backdrop-blur shadow-sm border-ink-border/10 flex flex-wrap gap-4 items-end">
-          <div className="flex flex-wrap gap-4 w-full sm:w-auto">
-            <div className="flex-1 min-w-[120px]">
-              <label className="text-[10px] font-mono-stack mb-1.5 block uppercase font-bold text-text-muted">{t('pages.admin.inventory.tcg_filter_label', 'TCG Filter')}</label>
-              <select value={tcgFilter} onChange={e => { setTcgFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30 w-full">
-                <option value="">{t('pages.common.labels.all_tcgs', 'ALL TCGS')}</option>
-                {tcgs.map(t_item => <option key={t_item.id} value={t_item.id}>{t_item.name}</option>)}
-              </select>
-            </div>
-            <div className="flex-1 min-w-[120px]">
-              <label className="text-[10px] font-mono-stack mb-1.5 block uppercase font-bold text-text-muted">{t('pages.admin.inventory.category_label', 'Category')}</label>
-              <select value={categoryFilter} onChange={e => { setCategoryFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30 w-full">
-                <option value="">{t('pages.common.labels.all_categories', 'ALL CATEGORIES')}</option>
-                <option value="singles">{t('pages.common.categories.singles', 'SINGLES')}</option>
-                <option value="sealed">{t('pages.common.categories.sealed', 'SEALED')}</option>
-                <option value="accessories">{t('pages.common.categories.accessories', 'ACCESSORIES')}</option>
-                <option value="store_exclusives">{t('pages.common.categories.store_exclusives', 'STORE EXCLUSIVES')}</option>
-              </select>
-            </div>
-            <div className="flex-1 min-w-[120px]">
-              <label className="text-[10px] font-mono-stack mb-1.5 block uppercase font-bold text-text-muted">{t('pages.admin.inventory.storage_label', 'Physical Location')}</label>
-              <select value={storageFilter} onChange={e => { setStorageFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30 w-full">
-                <option value="">{t('pages.common.labels.all_locations', 'ALL LOCATIONS')}</option>
-                {storageLocations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-              </select>
-            </div>
-            <div className="flex gap-2 items-end">
-              <button onClick={() => setShowStorageModal(true)} title={t('pages.admin.inventory.manage_locations_tooltip', 'Manage Locations')} className="w-10 h-10 border border-kraft-dark/30 rounded bg-white hover:bg-kraft-light transition-colors flex items-center justify-center shrink-0">📦</button>
-              <button onClick={() => setShowCategoryModal(true)} title={t('pages.admin.inventory.manage_collections_tooltip', 'Manage Collections')} className="w-10 h-10 border border-kraft-dark/30 rounded bg-white hover:bg-kraft-light transition-colors flex items-center justify-center shrink-0">🔖</button>
-            </div>
+      {/* High-Density Filter Bar Area */}
+      <div className="mb-2 flex-shrink-0 card p-1.5 bg-white/40 backdrop-blur shadow-sm border-ink-border/10">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1">
+            <label className="text-[10px] font-mono-stack hidden sm:block uppercase font-bold text-text-muted shrink-0 mr-1">{t('pages.admin.inventory.tcg_filter_label', 'TCG')}</label>
+            <select value={tcgFilter} onChange={e => { setTcgFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30 w-full px-2 text-xs min-h-[38px] h-auto !py-1 !leading-none">
+              <option value="">{t('pages.common.labels.all_tcgs', 'ALL TCGS')}</option>
+              {tcgs.map(t_item => <option key={t_item.id} value={t_item.id}>{t_item.name}</option>)}
+            </select>
           </div>
-        </div>
-
-        <div className="card p-4 text-ink-deep flex flex-col justify-center border-none shadow-xl shadow-gold/20 relative overflow-hidden group">
-          <div className="text-[10px] font-mono-stack uppercase font-bold opacity-60 mb-1">{t('pages.admin.inventory.count_label', 'INVENTORY COUNT')}</div>
-          <div className="text-3xl sm:text-4xl font-display leading-none">{total.toLocaleString()}</div>
-          <div className="mt-2 border-t border-ink-deep/10 pt-2 flex justify-between items-center">
-            <span className="text-[10px] font-mono-stack opacity-60">{t('pages.admin.inventory.response_time_label', 'RESPONSE TIME')}</span>
-            <span className="font-mono-stack text-[10px] font-bold">~{queryTime}ms</span>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1">
+            <label className="text-[10px] font-mono-stack hidden sm:block uppercase font-bold text-text-muted shrink-0 mr-1">{t('pages.admin.inventory.category_label', 'CAT')}</label>
+            <select value={categoryFilter} onChange={e => { setCategoryFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30 w-full px-2 text-xs min-h-[38px] h-auto !py-1 !leading-none">
+              <option value="">{t('pages.common.labels.all_categories', 'ALL CATEGORIES')}</option>
+              <option value="singles">{t('pages.common.categories.singles', 'SINGLES')}</option>
+              <option value="sealed">{t('pages.common.categories.sealed', 'SEALED')}</option>
+              <option value="accessories">{t('pages.common.categories.accessories', 'ACCESSORIES')}</option>
+              <option value="store_exclusives">{t('pages.common.categories.store_exclusives', 'STORE EXCLUSIVES')}</option>
+            </select>
+          </div>
+          <div className="col-span-1 md:col-span-1 flex flex-col sm:flex-row sm:items-center gap-1">
+            <label className="text-[10px] font-mono-stack hidden sm:block uppercase font-bold text-text-muted shrink-0 mr-1">{t('pages.admin.inventory.storage_label', 'LOC')}</label>
+            <select value={storageFilter} onChange={e => { setStorageFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30 w-full px-2 text-xs min-h-[38px] h-auto !py-1 !leading-none">
+              <option value="">{t('pages.common.labels.all_locations', 'ALL LOCATIONS')}</option>
+              {storageLocations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+            </select>
+          </div>
+          <div className="flex gap-2 items-center justify-end">
+            <button onClick={() => setShowStorageModal(true)} title={t('pages.admin.inventory.manage_locations_tooltip', 'Manage Locations')} className="w-10 h-10 border border-kraft-dark/30 rounded bg-white hover:bg-kraft-light transition-colors flex items-center justify-center shrink-0">📦</button>
+            <button onClick={() => setShowCategoryModal(true)} title={t('pages.admin.inventory.manage_collections_tooltip', 'Manage Collections')} className="w-10 h-10 border border-kraft-dark/30 rounded bg-white hover:bg-kraft-light transition-colors flex items-center justify-center shrink-0">🔖</button>
           </div>
         </div>
       </div>
-
 
       {/* Product Table Area - Now Flexible and Scrollable */}
       <div className="flex-1 min-h-0 card border-kraft-dark/20 shadow-sm bg-white overflow-hidden flex flex-col">
@@ -238,20 +243,24 @@ export default function AdminDashboard() {
       </div>
 
       {/* Pagination Footer - Fixed at Bottom */}
-      <footer className="flex flex-col sm:flex-row justify-between items-center mt-4 mb-2 gap-4 px-0 flex-shrink-0">
-        <div className="text-[10px] sm:text-xs font-mono-stack text-text-muted font-bold order-2 sm:order-1">
+      <footer className="flex flex-col sm:flex-row justify-between items-center mt-1.5 mb-1 gap-1 px-0 flex-shrink-0">
+        <div className="text-[9px] sm:text-xs font-mono-stack text-text-muted font-bold order-2 sm:order-1 opacity-80">
           {t('pages.common.pagination.showing', 'SHOWING {start} - {end} OF {total} ENTRIES', {
             start: ((page - 1) * pageSize) + 1,
             end: Math.min(page * pageSize, total),
             total: total
           })}
         </div>
-        <div className="flex gap-2 order-1 sm:order-2 w-full sm:w-auto justify-center">
-          <button disabled={page === 1} onClick={() => setPage(page - 1)} className="btn-secondary py-1 px-4 text-xs font-bold disabled:opacity-30">{t('pages.common.pagination.prev', '← PREV')}</button>
-          <div className="flex items-center px-4 font-mono-stack text-xs font-bold bg-white rounded border border-kraft-dark/20 h-8">
+        <div className="flex gap-1.5 order-1 sm:order-2 w-full sm:w-auto justify-center">
+          <button disabled={page === 1} onClick={() => setPage(page - 1)} className="btn-secondary !py-1 !px-2 sm:!px-4 !text-[10px] sm:!text-xs font-bold disabled:opacity-30 flex items-center gap-1 min-h-[32px]">
+            <span>←</span> <span className="hidden sm:inline">PREV</span>
+          </button>
+          <div className="flex items-center px-3 font-mono-stack text-[10px] sm:text-xs font-bold bg-white rounded border border-kraft-dark/20 h-7 sm:h-8">
             {page} / {Math.max(1, Math.ceil(total / pageSize))}
           </div>
-          <button disabled={page >= Math.ceil(total / pageSize)} onClick={() => setPage(page + 1)} className="btn-secondary py-1 px-4 text-xs font-bold disabled:opacity-30">{t('pages.common.pagination.next', 'NEXT →')}</button>
+          <button disabled={page >= Math.ceil(total / pageSize)} onClick={() => setPage(page + 1)} className="btn-secondary !py-1 !px-2 sm:!px-4 !text-[10px] sm:!text-xs font-bold disabled:opacity-30 flex items-center gap-1 min-h-[32px]">
+            <span className="hidden sm:inline">NEXT</span> <span>→</span>
+          </button>
         </div>
       </footer>
 

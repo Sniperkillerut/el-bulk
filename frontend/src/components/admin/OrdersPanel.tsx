@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
   adminFetchOrders, adminFetchOrderDetail, adminUpdateOrder, adminCompleteOrder
@@ -51,6 +51,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
 
   // Mobile master-detail toggle
   const [mobileShowDetail, setMobileShowDetail] = useState(false);
+  const handledInitialId = useRef<string | null>(null);
 
   const loadOrders = useCallback(async () => {
     // No longer setting loading synchronously at start to avoid cascaded renders
@@ -78,6 +79,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
       const edits: Record<string, number> = {};
       detailsCache[id].items.forEach(i => { edits[i.id] = i.quantity; });
       setItemEdits(edits);
+      setLoadingDetail(false);
       return;
     }
 
@@ -95,10 +97,12 @@ export default function OrdersPanel({ initialOrderId }: Props) {
   }, [detailsCache]);
 
   useEffect(() => {
-    if (initialOrderId) {
+    if (initialOrderId && handledInitialId.current !== initialOrderId) {
+      handledInitialId.current = initialOrderId;
       const timer = setTimeout(() => {
         setItemEdits({});
         selectOrder(initialOrderId);
+        setMobileShowDetail(true);
       }, 0);
       return () => clearTimeout(timer);
     }
@@ -338,7 +342,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
         </div>
 
         {/* Right: Order Detail */}
-        <div className={`flex-1 overflow-y-auto p-4 md:p-8 bg-white ${!mobileShowDetail ? 'hidden lg:flex' : 'flex flex-col'} min-h-0 overscroll-contain`} style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className={`flex-1 overflow-y-auto p-4 md:p-8 bg-white ${mobileShowDetail ? 'flex flex-col' : 'hidden lg:flex lg:flex-col'} min-h-0 overscroll-contain`} style={{ WebkitOverflowScrolling: 'touch' }}>
           {!detail && !loadingDetail && (
             <div className="flex items-center justify-center h-full" style={{ color: 'var(--text-muted)' }}>
               <div className="text-center">

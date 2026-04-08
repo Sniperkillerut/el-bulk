@@ -239,6 +239,7 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
                             tcg="mtg" 
                             foilTreatment={resolveFoilTreatment(print)}
                             enableHover={false} 
+                            enableModal={true}
                           />
                         </div>
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none rounded-md">
@@ -306,6 +307,7 @@ export default function DeckCardsTab({ form, onUpdate }: DeckCardsTabProps) {
                             tcg={form.tcg} 
                             foilTreatment={card.foil_treatment}
                             enableHover={true} 
+                            enableModal={true}
                           />
                         </div>
                         <div className="flex flex-col flex-1 min-w-0">

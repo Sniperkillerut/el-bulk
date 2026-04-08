@@ -49,13 +49,15 @@ export default function CardImage({
     if (showModal) return; // Prevent re-opening if already open (bubbles from portal)
     if (showImage && enableModal) {
       e.stopPropagation();
+      setIsHovered(false); // Clear any lingering hover state
       setShowModal(true);
-      setIsHovered(false);
     }
   };
 
   const handleMouseEnter = () => {
-    if (enableHover && showImage && containerRef.current) {
+    // Only enable hover expansion on mouse-based devices
+    const isTouch = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
+    if (enableHover && showImage && containerRef.current && !isTouch) {
       setRect(containerRef.current.getBoundingClientRect());
       setIsHovered(true);
     }
@@ -92,8 +94,9 @@ export default function CardImage({
             height: '100%',
             objectFit: 'contain',
             objectPosition: 'center',
+            transition: 'transform 0.1s ease',
           }}
-          className="card-image-static"
+          className="card-image-static active:scale-95"
         />
       ) : (
         /* Placeholder — shown when no image or image fails to load */
