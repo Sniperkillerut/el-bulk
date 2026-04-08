@@ -8,6 +8,11 @@ import { adminFetchClients } from '@/lib/api';
 import { CustomerStats } from '@/lib/types';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
+const SortIcon = ({ field, sortField, sortOrder }: { field: keyof CustomerStats | 'name', sortField: string, sortOrder: string }) => {
+  if (sortField !== field) return <span className="ml-1 opacity-20 group-hover:opacity-100 transition-opacity">↕</span>;
+  return <span className="ml-1 text-gold-dark font-bold">{sortOrder === 'asc' ? '↑' : '↓'}</span>;
+};
+
 export default function AdminClientsPage() {
   const { token } = useAdmin();
   const router = useRouter();
@@ -15,7 +20,9 @@ export default function AdminClientsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 50;
+  const [pageSize, setPageSize] = useState(10);
+  const [sortField, setSortField] = useState<keyof CustomerStats | 'name'>('total_spend');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
     if (token) {
@@ -26,26 +33,51 @@ export default function AdminClientsPage() {
     }
   }, [token]);
 
-  const filteredClients = clients.filter(c => 
+  const filteredClients = clients.filter(c =>
     `${c.first_name} ${c.last_name}`.toLowerCase().includes(search.toLowerCase()) ||
     c.email?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalPages = Math.ceil(filteredClients.length / itemsPerPage) || 1;
-  const paginatedClients = filteredClients.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const sortedClients = [...filteredClients].sort((a, b) => {
+    const valA = sortField === 'name' ? `${a.first_name} ${a.last_name}` : a[sortField as keyof CustomerStats];
+    const valB = sortField === 'name' ? `${b.first_name} ${b.last_name}` : b[sortField as keyof CustomerStats];
+
+    if (valA === valB) return 0;
+    if (valA === null || valA === undefined) return 1;
+    if (valB === null || valB === undefined) return -1;
+
+    const modifier = sortOrder === 'asc' ? 1 : -1;
+    if (typeof valA === 'string' && typeof valB === 'string') {
+      return valA.localeCompare(valB) * modifier;
+    }
+    return ((valA as any) < (valB as any) ? -1 : 1) * modifier;
+  });
+
+  const totalPages = Math.ceil(sortedClients.length / pageSize) || 1;
+  const paginatedClients = sortedClients.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const handleSort = (field: keyof CustomerStats | 'name') => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('desc');
+    }
+    setCurrentPage(1);
+  };
 
   if (loading) return <LoadingSpinner />;
 
   return (
     <div className="flex-1 flex flex-col p-3 min-h-0 w-full max-w-full">
-      <AdminHeader 
-        title="CRM: Client Registry" 
+      <AdminHeader
+        title="CRM: Client Registry"
         subtitle="Managing Relationships & Interactions"
         actions={
           <div className="w-full max-w-64">
-            <input 
-              type="text" 
-              placeholder="SEARCH CLIENTS..." 
+            <input
+              type="text"
+              placeholder="SEARCH CLIENTS..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
               className="text-xs font-mono-stack border-border-main"
@@ -54,24 +86,64 @@ export default function AdminClientsPage() {
         }
       />
 
-      <div className="flex-1 min-h-0 overflow-auto cardbox scrollbar-thin rounded-lg border border-border-main bg-white">
-        <table className="w-full text-left border-collapse table-fixed">
+      <div className="flex-1 min-h-0 overflow-auto cardbox scrollbar-thin rounded-lg border border-border-main bg-white overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <table className="w-full text-left border-collapse table-fixed min-w-[500px] lg:min-w-0">
           <thead className="sticky top-0 z-10 bg-bg-header backdrop-blur-md shadow-sm border-b border-border-main">
             <tr className="border-b border-border-main">
-              <th className="p-4 font-display text-xs uppercase tracking-wider w-[25%]">Customer</th>
-              <th className="p-4 font-display text-xs uppercase tracking-wider hidden md:table-cell w-[20%]">Contact</th>
-              <th className="p-4 font-display text-xs uppercase tracking-wider text-center w-[10%]">Orders</th>
-              <th className="p-4 font-display text-xs uppercase tracking-wider text-center text-gold-dark/80 hidden lg:table-cell w-[10%]">Requests</th>
-              <th className="p-4 font-display text-xs uppercase tracking-wider text-center text-emerald-700/80 hidden lg:table-cell w-[10%]">Offers</th>
-              <th className="p-4 font-display text-xs uppercase tracking-wider text-right w-[15%]">Spend (COP)</th>
-              <th className="p-4 font-display text-xs uppercase tracking-wider text-center hidden md:table-cell w-[10%]">Newsletter</th>
-              <th className="p-4 font-display text-xs uppercase tracking-wider hidden lg:table-cell w-[20%]">Recent Journal Entry</th>
+              <th 
+                className="p-4 font-display text-xs uppercase tracking-wider lg:w-[25%] cursor-pointer group hover:bg-gold/5 transition-colors"
+                onClick={() => handleSort('name')}
+              >
+                <div className="flex items-center">Customer <SortIcon field="name" sortField={sortField} sortOrder={sortOrder} /></div>
+              </th>
+              <th 
+                className="p-4 font-display text-xs uppercase tracking-wider hidden md:table-cell w-[20%] cursor-pointer group hover:bg-gold/5 transition-colors"
+                onClick={() => handleSort('email')}
+              >
+                <div className="flex items-center">Contact <SortIcon field="email" sortField={sortField} sortOrder={sortOrder} /></div>
+              </th>
+              <th 
+                className="p-4 font-display text-xs uppercase tracking-wider text-center w-[80px] lg:w-[10%] cursor-pointer group hover:bg-gold/5 transition-colors"
+                onClick={() => handleSort('order_count')}
+              >
+                <div className="flex items-center justify-center">Orders <SortIcon field="order_count" sortField={sortField} sortOrder={sortOrder} /></div>
+              </th>
+              <th 
+                className="p-4 font-display text-xs uppercase tracking-wider text-center text-gold-dark/80 hidden lg:table-cell w-[10%] cursor-pointer group hover:bg-gold/5 transition-colors"
+                onClick={() => handleSort('active_request_count')}
+              >
+                <div className="flex items-center justify-center">Requests <SortIcon field="active_request_count" sortField={sortField} sortOrder={sortOrder} /></div>
+              </th>
+              <th 
+                className="p-4 font-display text-xs uppercase tracking-wider text-center text-emerald-700/80 hidden lg:table-cell w-[10%] cursor-pointer group hover:bg-gold/5 transition-colors"
+                onClick={() => handleSort('active_offer_count')}
+              >
+                <div className="flex items-center justify-center">Offers <SortIcon field="active_offer_count" sortField={sortField} sortOrder={sortOrder} /></div>
+              </th>
+              <th 
+                className="p-4 font-display text-xs uppercase tracking-wider text-right w-[120px] lg:w-[15%] cursor-pointer group hover:bg-gold/5 transition-colors"
+                onClick={() => handleSort('total_spend')}
+              >
+                <div className="flex items-center justify-end">Spend (COP) <SortIcon field="total_spend" sortField={sortField} sortOrder={sortOrder} /></div>
+              </th>
+              <th 
+                className="p-4 font-display text-xs uppercase tracking-wider text-center hidden md:table-cell w-[10%] cursor-pointer group hover:bg-gold/5 transition-colors"
+                onClick={() => handleSort('is_subscriber')}
+              >
+                <div className="flex items-center justify-center">Newsletter <SortIcon field="is_subscriber" sortField={sortField} sortOrder={sortOrder} /></div>
+              </th>
+              <th 
+                className="p-4 font-display text-xs uppercase tracking-wider hidden lg:table-cell w-[20%] cursor-pointer group hover:bg-gold/5 transition-colors"
+                onClick={() => handleSort('latest_note')}
+              >
+                <div className="flex items-center">Recent Journal Entry <SortIcon field="latest_note" sortField={sortField} sortOrder={sortOrder} /></div>
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border-main/30">
             {paginatedClients.map((client) => (
-              <tr 
-                key={client.id} 
+              <tr
+                key={client.id}
                 className="hover:bg-gold/5 transition-colors group cursor-pointer"
                 onClick={() => router.push(`/admin/clients/${client.id}`)}
               >
@@ -82,7 +154,7 @@ export default function AdminClientsPage() {
                     </div>
                     <div className="min-w-0">
                       <div className="font-bold text-sm uppercase group-hover:text-gold-dark transition-colors truncate">{client.first_name} {client.last_name}</div>
-                      <div className="text-[10px] font-mono-stack text-text-muted truncate">ID: {client.id.slice(0,8)}</div>
+                      <div className="text-[10px] font-mono-stack text-text-muted truncate">ID: {client.id.slice(0, 8)}</div>
                     </div>
                   </div>
                 </td>
@@ -112,7 +184,7 @@ export default function AdminClientsPage() {
                   )}
                 </td>
                 <td className="p-4 text-right font-mono-stack text-xs text-emerald-700 font-bold">
-                   ${client.total_spend.toLocaleString()}
+                  ${client.total_spend.toLocaleString()}
                 </td>
                 <td className="p-4 text-center hidden md:table-cell">
                   {client.is_subscriber ? (
@@ -122,11 +194,11 @@ export default function AdminClientsPage() {
                   )}
                 </td>
                 <td className="p-4 text-xs font-mono-stack transition-opacity group-hover:opacity-100 opacity-70 hidden lg:table-cell">
-                   {client.latest_note ? (
-                     <div className="truncate italic">&quot;{client.latest_note}&quot;</div>
-                   ) : (
-                     <span className="opacity-30 italic">No notes recorded...</span>
-                   )}
+                  {client.latest_note ? (
+                    <div className="truncate italic">&quot;{client.latest_note}&quot;</div>
+                  ) : (
+                    <span className="opacity-30 italic">No notes recorded...</span>
+                  )}
                 </td>
               </tr>
             ))}
@@ -134,24 +206,44 @@ export default function AdminClientsPage() {
         </table>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mt-3 px-1 flex-shrink-0">
-          <div className="text-[10px] font-mono-stack text-text-muted uppercase tracking-widest font-bold">
-            SHOWING {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredClients.length)} OF {filteredClients.length}
+      {totalPages > 0 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mt-3 p-3 bg-white shadow-sm border border-kraft-dark/20 rounded-lg flex-shrink-0">
+          <div className="flex items-center gap-4">
+            <div className="text-[10px] font-mono-stack text-text-muted uppercase tracking-widest font-bold">
+              MOSTRANDO {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, sortedClients.length)} DE {sortedClients.length}
+            </div>
+
+            <div className="flex items-center gap-2 border-l border-border-main/20 pl-4">
+              <span className="text-[10px] font-mono-stack text-text-muted uppercase">Mostrar</span>
+              <select
+                value={pageSize}
+                onChange={e => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="bg-transparent border-0 font-mono-stack text-xs font-bold text-gold-dark outline-none cursor-pointer hover:text-hp-color transition-colors"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
           </div>
+
           <div className="flex items-center gap-3">
-            <button 
-              disabled={currentPage === 1} 
+            <button
+              disabled={currentPage === 1}
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               className="btn-secondary py-1.5 px-4 text-[10px] font-bold disabled:opacity-30 disabled:cursor-not-allowed"
             >
               PREV
             </button>
-            <span className="text-[10px] font-mono-stack font-bold px-3 py-1.5 bg-white border border-border-main rounded shadow-sm">
+            <span className="text-[10px] font-mono-stack font-bold px-3 py-1.5 bg-kraft-paper/10 border border-border-main rounded shadow-sm">
               {currentPage} / {totalPages}
             </span>
-            <button 
-              disabled={currentPage === totalPages} 
+            <button
+              disabled={currentPage === totalPages}
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               className="btn-secondary py-1.5 px-4 text-[10px] font-bold disabled:opacity-30 disabled:cursor-not-allowed"
             >
