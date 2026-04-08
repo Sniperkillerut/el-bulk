@@ -369,6 +369,12 @@ func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 			ID       string `json:"id"`
 			Quantity int    `json:"quantity"`
 		} `json:"items"`
+		AddedItems []struct {
+			ProductID    string  `json:"product_id"`
+			Quantity     int     `json:"quantity"`
+			UnitPriceCOP float64 `json:"unit_price_cop"`
+		} `json:"added_items"`
+		DeletedIDs []string `json:"deleted_ids"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -384,6 +390,15 @@ func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	// Update status and tracking if provided
 	if input.Status != nil || input.TrackingNumber != nil || input.TrackingURL != nil {
+		if input.Status != nil && *input.Status == "pending" {
+			var currentStatus string
+			err = tx.Get(&currentStatus, `SELECT status FROM "order" WHERE id = $1`, id)
+			if err == nil && (currentStatus == "confirmed" || currentStatus == "completed") {
+				render.Error(w, "Cannot move a confirmed/completed order back to pending", http.StatusBadRequest)
+				return
+			}
+		}
+
 		_, err = tx.Exec(`
 			UPDATE "order" 
 			SET status = COALESCE($1, status),
@@ -397,7 +412,7 @@ func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Update item quantities (allow 0 but don't delete)
+	// Update existing item quantities (allow 0 but don't delete)
 	// Also manage pending storage adjustments
 	for _, item := range input.Items {
 		if item.Quantity < 0 {
@@ -452,6 +467,85 @@ func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Add new items
+	for _, item := range input.AddedItems {
+		if item.Quantity <= 0 {
+			continue
+		}
+
+		// Fetch product details for denormalized insertion
+		var product struct {
+			Name          string  `db:"name"`
+			SetName       *string `db:"set_name"`
+			FoilTreatment string  `db:"foil_treatment"`
+			CardTreatment string  `db:"card_treatment"`
+			Condition     *string `db:"condition"`
+			Stock         int     `db:"stock"`
+		}
+		err = tx.Get(&product, `SELECT name, set_name, foil_treatment, card_treatment, condition, stock FROM product WHERE id = $1`, item.ProductID)
+		if err != nil {
+			render.Error(w, "Product not found while adding to order", http.StatusBadRequest)
+			return
+		}
+
+		if item.Quantity > product.Stock {
+			render.Error(w, fmt.Sprintf("Added quantity %d exceeds available stock %d", item.Quantity, product.Stock), http.StatusBadRequest)
+			return
+		}
+
+		// 1. Insert into order_item with denormalized product info
+		_, err = tx.Exec(`
+			INSERT INTO order_item (order_id, product_id, product_name, product_set, foil_treatment, card_treatment, condition, quantity, unit_price_cop)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		`, id, item.ProductID, product.Name, product.SetName, product.FoilTreatment, product.CardTreatment, product.Condition, item.Quantity, item.UnitPriceCOP)
+		if err != nil {
+			render.Error(w, "Failed to add new item to order: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// 2. Occupy pending storage
+		_, err = tx.Exec(`
+			INSERT INTO product_storage (product_id, storage_id, quantity)
+			VALUES ($1, (SELECT id FROM storage_location WHERE name = 'pending' LIMIT 1), $2)
+			ON CONFLICT (product_id, storage_id) DO UPDATE SET quantity = product_storage.quantity + EXCLUDED.quantity
+		`, item.ProductID, item.Quantity)
+		if err != nil {
+			render.Error(w, "Failed to update pending storage for added item", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// Delete items
+	for _, itemID := range input.DeletedIDs {
+		var current struct {
+			Quantity  int    `db:"quantity"`
+			ProductID string `db:"product_id"`
+		}
+		err = tx.Get(&current, `SELECT quantity, product_id FROM order_item WHERE id = $1 AND order_id = $2`, itemID, id)
+		if err != nil {
+			continue // skip items not found in this order
+		}
+
+		// 1. Remove from order_item
+		_, err = tx.Exec(`DELETE FROM order_item WHERE id = $1 AND order_id = $2`, itemID, id)
+		if err != nil {
+			render.Error(w, "Failed to delete item from order", http.StatusInternalServerError)
+			return
+		}
+
+		// 2. Release pending stock
+		_, err = tx.Exec(`
+			UPDATE product_storage 
+			SET quantity = GREATEST(0, quantity - $1) 
+			WHERE product_id = $2 
+			  AND storage_id = (SELECT id FROM storage_location WHERE name = 'pending' LIMIT 1)
+		`, current.Quantity, current.ProductID)
+		if err != nil {
+			render.Error(w, "Failed to release pending stock for deleted item", http.StatusInternalServerError)
+			return
+		}
+	}
+
 	// Recalculate total
 	var newTotal float64
 	err = tx.Get(&newTotal, `SELECT COALESCE(SUM(unit_price_cop * quantity), 0) FROM order_item WHERE order_id = $1`, id)
@@ -489,7 +583,7 @@ func (h *OrderHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Execute Stored Procedure
-	if _, err := h.DB.Exec("SELECT fn_confirm_order($1, $2)", id, string(jsonData)); err != nil {
+	if _, err := h.DB.Exec("SELECT fn_confirm_order($1::uuid, $2::jsonb)", id, string(jsonData)); err != nil {
 		logger.Error("Confirm order SP failed: %v", err)
 		status := http.StatusInternalServerError
 		errMsg := "Failed to confirm order: " + err.Error()
@@ -502,6 +596,33 @@ func (h *OrderHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 			errMsg = "Order is already processed"
 		}
 		render.Error(w, errMsg, status)
+		return
+	}
+
+	h.GetDetail(w, r)
+}
+
+// POST /api/admin/orders/{id}/restore — manually restore stock for a cancelled order
+func (h *OrderHandler) RestoreStock(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	var input struct {
+		Increments []models.StockDecrement `json:"increments"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		render.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	jsonData, err := json.Marshal(input.Increments)
+	if err != nil {
+		render.Error(w, "Failed to encode increments", http.StatusInternalServerError)
+		return
+	}
+
+	if _, err := h.DB.Exec("SELECT fn_restore_order_stock($1::uuid, $2::jsonb)", id, string(jsonData)); err != nil {
+		logger.Error("Restore order stock SP failed: %v", err)
+		render.Error(w, "Failed to restore stock: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 

@@ -3,11 +3,13 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
-  adminFetchOrders, adminFetchOrderDetail, adminUpdateOrder, adminConfirmOrder
+  adminFetchOrders, adminFetchOrderDetail, adminUpdateOrder, adminConfirmOrder,
+  adminFetchProducts, adminRestoreOrderStock
 } from '@/lib/api';
 import {
   OrderWithCustomer, OrderDetail,
-  ORDER_STATUS_LABELS, PAYMENT_METHODS, FOIL_LABELS, TREATMENT_LABELS, StorageLocation
+  ORDER_STATUS_LABELS, PAYMENT_METHODS, FOIL_LABELS, TREATMENT_LABELS, StorageLocation,
+  Product
 } from '@/lib/types';
 import CardImage from '@/components/CardImage';
 import { useLanguage } from '@/context/LanguageContext';
@@ -50,6 +52,19 @@ export default function OrdersPanel({ initialOrderId }: Props) {
   const [confirmError, setConfirmError] = useState('');
   const [mobileShowDetail, setMobileShowDetail] = useState(false);
   const handledInitialId = useRef<string | null>(null);
+
+  // Restore modal state (for cancelled orders)
+  const [showRestoreModal, setShowRestoreModal] = useState(false);
+  const [increments, setIncrements] = useState<Record<string, Record<string, number>>>({});
+  const [restoring, setRestoring] = useState(false);
+  const [restoreError, setRestoreError] = useState('');
+
+  // Add items functionality
+  const [productSearch, setProductSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [searchingItems, setSearchingItems] = useState(false);
+  const [stagedItems, setStagedItems] = useState<{ product: Product; quantity: number; unit_price_cop: number }[]>([]);
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
 
   const loadOrders = useCallback(async () => {
     // No longer setting loading synchronously at start to avoid cascaded renders
@@ -99,6 +114,8 @@ export default function OrdersPanel({ initialOrderId }: Props) {
       handledInitialId.current = initialOrderId;
       const timer = setTimeout(() => {
         setItemEdits({});
+        setStagedItems([]);
+        setDeletedIds([]);
         selectOrder(initialOrderId);
         setMobileShowDetail(true);
       }, 0);
@@ -106,13 +123,59 @@ export default function OrdersPanel({ initialOrderId }: Props) {
     }
   }, [initialOrderId, selectOrder]);
 
+  const searchProducts = useCallback(async (q: string) => {
+    if (!q.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    setSearchingItems(true);
+    try {
+      const res = await adminFetchProducts({ search: q, page_size: 5 });
+      setSearchResults(res.products);
+    } catch (e) {
+      console.error(e);
+    }
+    setSearchingItems(false);
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      searchProducts(productSearch);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [productSearch, searchProducts]);
+
+  const addStagedItem = (p: Product) => {
+    setStagedItems(prev => {
+      return [...prev, { product: p, quantity: 1, unit_price_cop: p.price }];
+    });
+    setProductSearch('');
+    setSearchResults([]);
+  };
+
+  const removeStagedItem = (productId: string) => {
+    setStagedItems(prev => prev.filter(i => i.product.id !== productId));
+  };
+
+  const updateStagedItem = (productId: string, data: Partial<{ quantity: number; unit_price_cop: number }>) => {
+    setStagedItems(prev => prev.map(i => i.product.id === productId ? { ...i, ...data } : i));
+  };
+
   const handleSaveChanges = async () => {
     if (!detail) return;
     setSaving(true);
     try {
       const items = Object.entries(itemEdits).map(([id, quantity]) => ({ id, quantity }));
-      const updated = await adminUpdateOrder(detail.order.id, { items });
+      const added_items = stagedItems.map(si => ({
+        product_id: si.product.id,
+        quantity: si.quantity,
+        unit_price_cop: si.unit_price_cop
+      }));
+      const deleted_ids = deletedIds;
+      const updated = await adminUpdateOrder(detail.order.id, { items, added_items, deleted_ids });
       setDetail(updated);
+      setStagedItems([]);
+      setDeletedIds([]);
       setDetailsCache(prev => ({ ...prev, [updated.order.id]: updated }));
       // Update list in-place
       setOrders(prev => prev.map(o => o.id === updated.order.id ? { 
@@ -138,7 +201,6 @@ export default function OrdersPanel({ initialOrderId }: Props) {
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : 'Failed to update status');
     }
-    setSaving(true);
     setSaving(false);
   };
 
@@ -162,6 +224,19 @@ export default function OrdersPanel({ initialOrderId }: Props) {
     setDecrements(initial);
     setConfirmError('');
     setShowConfirmModal(true);
+  };
+
+  const openRestoreModal = () => {
+    if (!detail) return;
+    const initial: Record<string, Record<string, number>> = {};
+    detail.items.forEach(item => {
+      if (item.quantity > 0 && item.product_id) {
+        initial[item.product_id] = {};
+      }
+    });
+    setIncrements(initial);
+    setRestoreError('');
+    setShowRestoreModal(true);
   };
 
   const handleConfirm = async () => {
@@ -195,12 +270,43 @@ export default function OrdersPanel({ initialOrderId }: Props) {
       const updated = await adminConfirmOrder(detail.order.id, decArr);
       setDetail(updated);
       setShowConfirmModal(false);
-      // Update list in-place
       setOrders(prev => prev.map(o => o.id === updated.order.id ? { ...o, status: updated.order.status } : o));
     } catch (e: unknown) {
-      setConfirmError(e instanceof Error ? e.message : 'Error al confirmar');
+      setConfirmError(e instanceof Error ? e.message : 'Error al confirmar orden');
     }
     setConfirming(false);
+  };
+
+  const handleRestoreStock = async () => {
+    if (!detail) return;
+    setRestoring(true);
+    setRestoreError('');
+    
+    const incArr: { product_id: string; stored_in_id: string; quantity: number }[] = [];
+    Object.entries(increments).forEach(([pid, locs]) => {
+      Object.entries(locs).forEach(([sid, qty]) => {
+        if (qty > 0) {
+          incArr.push({ product_id: pid, stored_in_id: sid, quantity: qty });
+        }
+      });
+    });
+
+    if (incArr.length === 0) {
+      setRestoreError('Debe asignar al menos una cantidad a una ubicación');
+      setRestoring(false);
+      return;
+    }
+
+    try {
+      const updated = await adminRestoreOrderStock(detail.order.id, incArr);
+      setDetail(updated);
+      setShowRestoreModal(false);
+      setDetailsCache(prev => ({ ...prev, [updated.order.id]: updated }));
+      alert('Inventario restaurado exitosamente');
+    } catch (e: unknown) {
+      setRestoreError(e instanceof Error ? e.message : 'Error al restaurar inventario');
+    }
+    setRestoring(false);
   };
 
   const setDecrement = (productId: string, storedInId: string, qty: number) => {
@@ -210,8 +316,15 @@ export default function OrdersPanel({ initialOrderId }: Props) {
     }));
   };
 
+  const setIncrement = (productId: string, storedInId: string, qty: number) => {
+    setIncrements(prev => ({
+      ...prev,
+      [productId]: { ...prev[productId], [storedInId]: Math.max(0, qty) }
+    }));
+  };
+
   const totalPages = Math.ceil(total / pageSize);
-  const hasEdits = detail ? detail.items.some(i => itemEdits[i.id] !== i.quantity) : false;
+  const hasEdits = detail ? (detail.items.some(i => itemEdits[i.id] !== i.quantity) || stagedItems.length > 0 || deletedIds.length > 0) : false;
 
 
   return (
@@ -377,21 +490,33 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                   <select
                     value={detail.order.status}
                     onChange={e => handleStatusChange(e.target.value)}
-                    disabled={saving || detail.order.status === 'completed'}
+                    disabled={saving}
                     className="bg-surface border-dark text-gold rounded px-2 py-1 outline-none focus:border-gold transition-colors"
                     style={{ fontSize: '0.85rem', padding: '0.3rem 0.6rem', minWidth: 120 }}
                   >
                     {Object.entries(ORDER_STATUS_LABELS)
-                      .filter(([k]) => k !== 'completed' || detail.order.status === 'completed')
-                      .map(([k, v]) => (
-                        <option key={k} value={k}>{t(`pages.order.status.${k}`, v)}</option>
-                      ))}
+                      .map(([k, v]) => {
+                        const isOriginalPending = k === 'pending';
+                        const isConfirmedOrCompleted = detail.order.status === 'confirmed' || detail.order.status === 'completed';
+                        const disabledStatus = isOriginalPending && isConfirmedOrCompleted;
+                        
+                        return (
+                          <option key={k} value={k} disabled={disabledStatus}>
+                            {t(`pages.order.status.${k}`, v)}
+                          </option>
+                        );
+                      })}
                     <option value="ready_for_pickup">{t('pages.order.status.ready_for_pickup', 'Listo para recoger')}</option>
                     <option value="shipped">{t('pages.order.status.shipped', 'Enviado')}</option>
                   </select>
                   {detail.order.status !== 'completed' && detail.order.status !== 'confirmed' && detail.order.status !== 'cancelled' && (
                     <button onClick={openConfirmModal} className="btn-primary" style={{ fontSize: '0.85rem', padding: '0.35rem 1rem' }}>
                       ✓ CONFIRMAR
+                    </button>
+                  )}
+                  {detail.order.status === 'cancelled' && (
+                    <button onClick={openRestoreModal} className="btn-primary" style={{ fontSize: '0.85rem', padding: '0.35rem 1rem', background: 'var(--status-nm)' }}>
+                      ♻ RESTAURAR INVENTARIO
                     </button>
                   )}
                 </div>
@@ -502,7 +627,8 @@ export default function OrdersPanel({ initialOrderId }: Props) {
               <div className="space-y-2">
                 {detail.items.map(item => {
                   const qty = itemEdits[item.id] ?? item.quantity;
-                  const isZero = qty === 0;
+                  const isDeleted = deletedIds.includes(item.id);
+                  const isZero = qty === 0 || isDeleted;
                   const badges: string[] = [];
                   if (item.condition) badges.push(item.condition);
                   if (item.foil_treatment && item.foil_treatment !== 'non_foil') badges.push(FOIL_LABELS[item.foil_treatment] || item.foil_treatment);
@@ -576,29 +702,133 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                           />
                           <button
                             onClick={() => setItemEdits(prev => ({ ...prev, [item.id]: Math.min(item.stock, (prev[item.id] ?? item.quantity) + 1) }))}
-                            disabled={detail.order.status === 'completed' || qty >= item.stock}
+                            disabled={detail.order.status === 'completed' || qty >= item.stock || isDeleted}
                             className="w-5 h-5 flex items-center justify-center text-xs"
-                            style={{ background: 'var(--border-main)', border: 'none', borderRadius: 2, cursor: (detail.order.status === 'completed' || qty >= item.stock) ? 'not-allowed' : 'pointer' }}>+</button>
+                            style={{ background: 'var(--border-main)', border: 'none', borderRadius: 2, cursor: (detail.order.status === 'completed' || qty >= item.stock || isDeleted) ? 'not-allowed' : 'pointer' }}>+</button>
                         </div>
-                        {isZero && <span className="text-[8px] font-mono-stack" style={{ color: 'var(--status-hp)' }}>REMOVIDO</span>}
+                        {isZero && <span className="text-[8px] font-mono-stack" style={{ color: 'var(--status-hp)' }}>{isDeleted ? 'ELIMINADO' : 'REMOVIDO'}</span>}
                       </div>
-
+ 
                       {/* Price */}
-                      <div className="text-right flex-shrink-0">
-                        <span className="text-[9px] font-mono-stack block" style={{ color: 'var(--text-muted)' }}>
-                          ${item.unit_price_cop.toLocaleString('en-US', { maximumFractionDigits: 0 })} c/u
-                        </span>
-                        <span className="price text-sm">
-                          ${(item.unit_price_cop * qty).toLocaleString('en-US', { maximumFractionDigits: 0 })}
-                        </span>
+                      <div className="text-right flex-shrink-0 flex flex-col justify-between">
+                        <button 
+                          onClick={() => {
+                            if (isDeleted) {
+                              setDeletedIds(prev => prev.filter(id => id !== item.id));
+                            } else {
+                              setDeletedIds(prev => [...prev, item.id]);
+                            }
+                          }}
+                          disabled={detail.order.status === 'completed'}
+                          className={`p-1 rounded transition-colors ${isDeleted ? 'text-status-nm hover:text-status-nm/80' : 'text-hp-color/40 hover:text-hp-color'}`}
+                          title={isDeleted ? 'Restaurar' : 'Eliminar de la orden'}
+                        >
+                          {isDeleted ? (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                          ) : (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                          )}
+                        </button>
+                        <div>
+                          <span className="text-[9px] font-mono-stack block" style={{ color: 'var(--text-muted)' }}>
+                            ${item.unit_price_cop.toLocaleString('en-US', { maximumFractionDigits: 0 })} c/u
+                          </span>
+                          <span className="price text-sm">
+                            ${(item.unit_price_cop * (isDeleted ? 0 : qty)).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   );
                 })}
               </div>
 
+              {/* Add New Product Search */}
+              {detail.order.status !== 'completed' && detail.order.status !== 'confirmed' && detail.order.status !== 'cancelled' && (
+                <div className="mt-6 mb-4 cardbox p-4 bg-ink-surface/30 border-dashed border-gold/30">
+                  <h4 className="text-xs font-mono-stack mb-3 text-gold-dark font-bold uppercase tracking-widest flex items-center gap-2">
+                    <span className="text-lg">🎁</span> AGREGAR PRODUCTO / REGALO
+                  </h4>
+                  <div className="relative">
+                    <input 
+                      type="text"
+                      value={productSearch}
+                      onChange={e => setProductSearch(e.target.value)}
+                      placeholder="Buscar producto por nombre..."
+                      className="w-full text-sm p-3 bg-white border-kraft-dark/40 rounded shadow-inner"
+                    />
+                    {searchingItems && (
+                      <div className="absolute right-3 top-3">
+                         <div className="animate-spin h-4 w-4 border-2 border-gold border-t-transparent rounded-full"></div>
+                      </div>
+                    )}
+                    {searchResults.length > 0 && (
+                      <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-kraft-dark/30 rounded shadow-xl z-50 max-h-60 overflow-y-auto">
+                        {searchResults.map(p => (
+                          <button
+                            key={p.id}
+                            onClick={() => addStagedItem(p)}
+                            className="w-full flex items-center gap-3 p-2 hover:bg-gold/10 transition-colors border-b border-kraft-dark/10"
+                          >
+                            <div className="w-8 h-10 border border-kraft-dark/20 rounded overflow-hidden flex-shrink-0">
+                               <CardImage imageUrl={p.image_url} name={p.name} tcg="mtg" foilTreatment={p.foil_treatment || 'non_foil'} height={40} enableHover={false} />
+                            </div>
+                            <div className="text-left flex-1 min-w-0">
+                              <p className="text-xs font-bold truncate leading-tight">{p.name}</p>
+                              <p className="text-[10px] text-text-muted">{p.set_name} · {p.stock} en stock</p>
+                            </div>
+                            <div className="text-xs font-mono-stack text-gold-dark font-bold">
+                              ${p.price.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Staged Items Table */}
+              {stagedItems.length > 0 && (
+                <div className="mb-6 space-y-2">
+                   <h5 className="text-[10px] font-mono-stack text-text-muted uppercase tracking-widest font-bold">Por agregar:</h5>
+                   {stagedItems.map(si => (
+                     <div key={si.product.id} className="flex gap-3 p-3 border-2 border-status-nm/30 rounded bg-status-nm/5">
+                        <div className="w-8 flex-shrink-0">
+                           <CardImage imageUrl={si.product.image_url} name={si.product.name} tcg="mtg" foilTreatment={si.product.foil_treatment || 'non_foil'} height={40} />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-bold leading-tight">{si.product.name}</p>
+                          <p className="text-[10px] text-text-muted">{si.product.set_name}</p>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <span className="text-[8px] text-text-muted">PESO ($)</span>
+                          <input 
+                             type="number"
+                             value={si.unit_price_cop}
+                             onChange={e => updateStagedItem(si.product.id, { unit_price_cop: Number(e.target.value) || 0 })}
+                             className="w-20 text-xs p-1 text-center font-mono-stack outline-none border border-kraft-dark/20 rounded"
+                          />
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <span className="text-[8px] text-text-muted">CANT</span>
+                          <input 
+                             type="number"
+                             value={si.quantity}
+                             onChange={e => updateStagedItem(si.product.id, { quantity: Math.min(si.product.stock, Number(e.target.value) || 1) })}
+                             className="w-12 text-xs p-1 text-center font-mono-stack outline-none border border-kraft-dark/20 rounded"
+                          />
+                        </div>
+                        <button onClick={() => removeStagedItem(si.product.id)} className="text-hp-color transition-colors self-center p-1">
+                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                     </div>
+                   ))}
+                </div>
+              )}
+
               {/* Save changes button */}
-              {hasEdits && detail.order.status !== 'completed' && (
+              {hasEdits && detail.order.status !== 'completed' && detail.order.status !== 'confirmed' && detail.order.status !== 'cancelled' && (
                 <div className="mt-4 flex gap-3">
                   <button onClick={handleSaveChanges} disabled={saving} className="btn-primary flex-1" style={{ fontSize: '0.9rem' }}>
                     {saving ? 'GUARDANDO...' : 'GUARDAR CAMBIOS'}
@@ -607,6 +837,8 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                     const edits: Record<string, number> = {};
                     detail.items.forEach(i => { edits[i.id] = i.quantity; });
                     setItemEdits(edits);
+                    setStagedItems([]);
+                    setDeletedIds([]);
                   }} className="btn-secondary" style={{ fontSize: '0.9rem' }}>DESCARTAR</button>
                 </div>
               )}
@@ -721,6 +953,94 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                   {confirming ? 'PROCESANDO...' : '✓ CONFIRMAR ORDEN'}
                 </button>
                 <button onClick={() => setShowConfirmModal(false)} className="btn-secondary px-6 py-3">CANCELAR</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Restore Stock Modal */}
+      {showRestoreModal && detail && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center px-4"
+          style={{ background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(3px)' }}>
+          <div className="card max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="font-display text-3xl mb-1">RESTAURAR INVENTARIO</h3>
+            <p className="text-xs font-mono-stack mb-4" style={{ color: 'var(--text-muted)' }}>
+              Selecciona a qué ubicaciones devolver los productos de esta orden cancelada.
+            </p>
+
+            <div className="space-y-4">
+              {detail.items.filter(i => i.quantity > 0 && i.product_id).map(item => {
+                const productIncs = increments[item.product_id!] || {};
+                const totalAssigned = Object.values(productIncs).reduce((s, v) => s + v, 0);
+                const isComplete = totalAssigned === item.quantity;
+
+                return (
+                  <div key={item.id} className="cardbox p-4" style={{ borderColor: isComplete ? 'var(--status-nm)' : 'var(--border-main)' }}>
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <p className="font-semibold text-sm">{item.product_name}</p>
+                        {item.product_set && <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{item.product_set}</p>}
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs font-mono-stack" style={{ color: isComplete ? 'var(--status-nm)' : 'var(--status-mp)' }}>
+                          {totalAssigned} / {item.quantity}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        {item.stored_in.filter((loc: StorageLocation) => loc.name.toLowerCase() !== 'pending').map((loc: StorageLocation) => {
+                          const val = productIncs[loc.stored_in_id] || 0;
+                          return (
+                            <div key={loc.stored_in_id} className="flex items-center justify-between gap-3">
+                              <div className="flex-1">
+                                <span className="text-sm font-semibold">{loc.name}</span>
+                                <span className="text-xs font-mono-stack ml-2" style={{ color: 'var(--text-muted)' }}>
+                                  (actual: {loc.quantity})
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => setIncrement(item.product_id!, loc.stored_in_id, val - 1)}
+                                  className="w-6 h-6 flex items-center justify-center text-xs"
+                                  style={{ background: 'var(--ink-border)', border: 'none', borderRadius: 2, cursor: 'pointer' }}
+                                  disabled={val <= 0}>−</button>
+                                <input
+                                  type="number" min={0}
+                                  value={val || ''}
+                                  onChange={e => setIncrement(item.product_id!, loc.stored_in_id, Math.max(0, parseInt(e.target.value) || 0))}
+                                  className="w-12 text-center text-sm font-mono-stack"
+                                  style={{ height: 24, padding: '0 2px' }}
+                                  placeholder="0"
+                                />
+                                <button
+                                  onClick={() => setIncrement(item.product_id!, loc.stored_in_id, val + 1)}
+                                  className="w-6 h-6 flex items-center justify-center text-xs"
+                                  style={{ background: 'var(--ink-border)', border: 'none', borderRadius: 2, cursor: 'pointer' }}
+                                >+</button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {restoreError && (
+              <p className="text-sm font-mono-stack mt-3" style={{ color: 'var(--status-hp)' }}>{restoreError}</p>
+            )}
+
+            <div className="mt-6 p-4 border-2 border-dashed border-status-nm/30 rounded-lg bg-status-nm/5">
+              <p className="text-sm font-semibold text-status-nm mb-3 uppercase tracking-wider text-center">
+                Confirmar devolución de productos al inventario físico.
+              </p>
+              <div className="flex gap-3">
+                <button onClick={handleRestoreStock} disabled={restoring} className="btn-primary flex-1 py-3" style={{ background: 'var(--status-nm)' }}>
+                  {restoring ? 'RESTAURANDO...' : '✓ RESTAURAR INVENTARIO'}
+                </button>
+                <button onClick={() => setShowRestoreModal(false)} className="btn-secondary px-6 py-3">CANCELAR</button>
               </div>
             </div>
           </div>

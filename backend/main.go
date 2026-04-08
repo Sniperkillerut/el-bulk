@@ -219,6 +219,7 @@ func main() {
 				r.Get("/orders/{id}", orderHandler.GetDetail)
 				r.Put("/orders/{id}", orderHandler.Update)
 				r.Post("/orders/{id}/confirm", orderHandler.Confirm)
+				r.Post("/orders/{id}/restore", orderHandler.RestoreStock)
 
 				// Bounties & Client Requests CRUD
 				r.Post("/bounties", bountyHandler.Create)

@@ -520,7 +520,9 @@ export async function adminUpdateOrder(id: string, data: {
   status?: string; 
   tracking_number?: string; 
   tracking_url?: string;
-  items?: { id: string; quantity: number }[] 
+  items?: { id: string; quantity: number }[];
+  added_items?: { product_id: string; quantity: number; unit_price_cop: number }[];
+  deleted_ids?: string[];
 }): Promise<import('./types').OrderDetail> {
   return apiFetch<import('./types').OrderDetail>(`/api/admin/orders/${id}`, {
     method: 'PUT',
@@ -532,6 +534,13 @@ export async function adminConfirmOrder(id: string, decrements: { product_id: st
   return apiFetch<import('./types').OrderDetail>(`/api/admin/orders/${id}/confirm`, {
     method: 'POST',
     body: JSON.stringify({ decrements }),
+  });
+}
+
+export async function adminRestoreOrderStock(id: string, increments: { product_id: string; stored_in_id: string; quantity: number }[]): Promise<import('./types').OrderDetail> {
+  return apiFetch<import('./types').OrderDetail>(`/api/admin/orders/${id}/restore`, {
+    method: 'POST',
+    body: JSON.stringify({ increments }),
   });
 }
 
