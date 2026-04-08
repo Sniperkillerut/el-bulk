@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
-  adminFetchOrders, adminFetchOrderDetail, adminUpdateOrder, adminCompleteOrder
+  adminFetchOrders, adminFetchOrderDetail, adminUpdateOrder, adminConfirmOrder
 } from '@/lib/api';
 import {
   OrderWithCustomer, OrderDetail,
@@ -43,13 +43,11 @@ export default function OrdersPanel({ initialOrderId }: Props) {
   const [itemEdits, setItemEdits] = useState<Record<string, number>>({});
   const [detailsCache, setDetailsCache] = useState<Record<string, OrderDetail>>({});
 
-  // Complete modal state
-  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  // Confirm modal state
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [decrements, setDecrements] = useState<Record<string, Record<string, number>>>({});
-  const [completing, setCompleting] = useState(false);
-  const [completeError, setCompleteError] = useState('');
-
-  // Mobile master-detail toggle
+  const [confirming, setConfirming] = useState(false);
+  const [confirmError, setConfirmError] = useState('');
   const [mobileShowDetail, setMobileShowDetail] = useState(false);
   const handledInitialId = useRef<string | null>(null);
 
@@ -144,16 +142,16 @@ export default function OrdersPanel({ initialOrderId }: Props) {
     setSaving(false);
   };
 
-  const openCompleteModal = () => {
+  const openConfirmModal = () => {
     if (!detail) return;
     const initial: Record<string, Record<string, number>> = {};
     detail.items.forEach(item => {
       if (item.quantity > 0 && item.product_id) {
         initial[item.product_id] = {};
-        // Pre-fill: auto-assign from first storage location with enough stock
+        // Pre-fill: auto-assign from first physical storage location with enough stock
         let remaining = item.quantity;
         item.stored_in.forEach(loc => {
-          if (remaining > 0) {
+          if (loc.name.toLowerCase() !== 'pending' && remaining > 0) {
             const take = Math.min(remaining, loc.quantity);
             initial[item.product_id!][loc.stored_in_id] = take;
             remaining -= take;
@@ -162,14 +160,14 @@ export default function OrdersPanel({ initialOrderId }: Props) {
       }
     });
     setDecrements(initial);
-    setCompleteError('');
-    setShowCompleteModal(true);
+    setConfirmError('');
+    setShowConfirmModal(true);
   };
 
-  const handleComplete = async () => {
+  const handleConfirm = async () => {
     if (!detail) return;
-    setCompleting(true);
-    setCompleteError('');
+    setConfirming(true);
+    setConfirmError('');
 
     // Validate: total decrements per product must match order quantity
     for (const item of detail.items) {
@@ -177,8 +175,8 @@ export default function OrdersPanel({ initialOrderId }: Props) {
       const productDecs = decrements[item.product_id] || {};
       const totalDec = Object.values(productDecs).reduce((s, v) => s + v, 0);
       if (totalDec !== item.quantity) {
-        setCompleteError(`${item.product_name}: asignaste ${totalDec} de ${item.quantity} necesarios.`);
-        setCompleting(false);
+        setConfirmError(`${item.product_name}: asignaste ${totalDec} de ${item.quantity} necesarios.`);
+        setConfirming(false);
         return;
       }
     }
@@ -194,15 +192,15 @@ export default function OrdersPanel({ initialOrderId }: Props) {
     });
 
     try {
-      const updated = await adminCompleteOrder(detail.order.id, decArr);
+      const updated = await adminConfirmOrder(detail.order.id, decArr);
       setDetail(updated);
-      setShowCompleteModal(false);
+      setShowConfirmModal(false);
       // Update list in-place
       setOrders(prev => prev.map(o => o.id === updated.order.id ? { ...o, status: updated.order.status } : o));
     } catch (e: unknown) {
-      setCompleteError(e instanceof Error ? e.message : 'Error al completar');
+      setConfirmError(e instanceof Error ? e.message : 'Error al confirmar');
     }
-    setCompleting(false);
+    setConfirming(false);
   };
 
   const setDecrement = (productId: string, storedInId: string, qty: number) => {
@@ -391,9 +389,9 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                     <option value="ready_for_pickup">{t('pages.order.status.ready_for_pickup', 'Listo para recoger')}</option>
                     <option value="shipped">{t('pages.order.status.shipped', 'Enviado')}</option>
                   </select>
-                  {detail.order.status !== 'completed' && detail.order.status !== 'cancelled' && (
-                    <button onClick={openCompleteModal} className="btn-primary" style={{ fontSize: '0.85rem', padding: '0.35rem 1rem' }}>
-                      ✓ COMPLETAR
+                  {detail.order.status !== 'completed' && detail.order.status !== 'confirmed' && detail.order.status !== 'cancelled' && (
+                    <button onClick={openConfirmModal} className="btn-primary" style={{ fontSize: '0.85rem', padding: '0.35rem 1rem' }}>
+                      ✓ CONFIRMAR
                     </button>
                   )}
                 </div>
@@ -617,12 +615,12 @@ export default function OrdersPanel({ initialOrderId }: Props) {
         </div>
       </div>
 
-      {/* Complete Order Modal */}
-      {showCompleteModal && detail && (
+      {/* Confirm Order Modal */}
+      {showConfirmModal && detail && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center px-4"
           style={{ background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(3px)' }}>
           <div className="card max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="font-display text-3xl mb-1">COMPLETAR ORDEN</h3>
+            <h3 className="font-display text-3xl mb-1">CONFIRMAR ORDEN</h3>
             <p className="text-xs font-mono-stack mb-4" style={{ color: 'var(--text-muted)' }}>
               Selecciona de qué ubicación descontar el stock para cada producto.
             </p>
@@ -647,11 +645,30 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                       </div>
                     </div>
 
-                    {item.stored_in.length === 0 ? (
-                      <p className="text-xs italic" style={{ color: 'var(--status-hp)' }}>⚠ Sin ubicaciones de almacenamiento</p>
+                    {item.stored_in.filter(l => l.name.toLowerCase() !== 'pending').length === 0 ? (
+                      <p className="text-xs italic" style={{ color: 'var(--status-hp)' }}>⚠ Sin ubicaciones físicas de almacenamiento</p>
                     ) : (
                       <div className="space-y-2">
-                        {item.stored_in.map((loc: StorageLocation) => {
+                        {/* pending row */}
+                        <div className="flex items-center justify-between gap-3 opacity-60 bg-status-hp/10 px-2 py-1.5 rounded border border-status-hp/20">
+                           <div className="flex-1">
+                             <span className="text-sm font-semibold">pending</span>
+                             <span className="text-[10px] uppercase ml-2 px-1 py-0.5 rounded bg-hp-color/20 text-status-hp font-mono-stack">AUTO</span>
+                           </div>
+                           <div className="flex items-center gap-1">
+                             <button disabled className="w-6 h-6 flex items-center justify-center text-xs opacity-50 bg-ink-surface border border-ink-border rounded-l-sm cursor-not-allowed">−</button>
+                             <input
+                               type="number" 
+                               value={Math.max(0, item.quantity - totalAssigned)}
+                               disabled
+                               className="w-12 px-1 py-0 text-center text-xs font-mono-stack border-y border-ink-border bg-white focus:outline-none opacity-50 cursor-not-allowed [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                               style={{ height: 24, padding: '0 2px' }}
+                             />
+                             <button disabled className="w-6 h-6 flex items-center justify-center text-xs opacity-50 bg-ink-surface border border-ink-border rounded-r-sm cursor-not-allowed">+</button>
+                           </div>
+                        </div>
+
+                        {item.stored_in.filter((loc: StorageLocation) => loc.name.toLowerCase() !== 'pending').map((loc: StorageLocation) => {
                           const val = productDecs[loc.stored_in_id] || 0;
                           return (
                             <div key={loc.stored_in_id} className="flex items-center justify-between gap-3">
@@ -691,19 +708,19 @@ export default function OrdersPanel({ initialOrderId }: Props) {
               })}
             </div>
 
-            {completeError && (
-              <p className="text-sm font-mono-stack mt-3" style={{ color: 'var(--status-hp)' }}>{completeError}</p>
+            {confirmError && (
+              <p className="text-sm font-mono-stack mt-3" style={{ color: 'var(--status-hp)' }}>{confirmError}</p>
             )}
 
             <div className="mt-6 p-4 border-2 border-dashed border-status-hp/30 rounded-lg bg-status-hp/5">
               <p className="text-sm font-semibold text-status-hp mb-3 uppercase tracking-wider text-center">
-                ⚠ ¿Estás seguro? Esto bloqueará la orden y no se podrá editar después.
+                ⚠ ¿Estás seguro? Esto bloqueará el stock asignado.
               </p>
               <div className="flex gap-3">
-                <button onClick={handleComplete} disabled={completing} className="btn-primary flex-1 py-3 bg-status-hp hover:bg-status-hp/90">
-                  {completing ? 'PROCESANDO...' : '✓ CONFIRMAR Y COMPLETAR ORDEN'}
+                <button onClick={handleConfirm} disabled={confirming} className="btn-primary flex-1 py-3 bg-status-hp hover:bg-status-hp/90">
+                  {confirming ? 'PROCESANDO...' : '✓ CONFIRMAR ORDEN'}
                 </button>
-                <button onClick={() => setShowCompleteModal(false)} className="btn-secondary px-6 py-3">CANCELAR</button>
+                <button onClick={() => setShowConfirmModal(false)} className="btn-secondary px-6 py-3">CANCELAR</button>
               </div>
             </div>
           </div>

@@ -253,7 +253,7 @@ func TestOrderHandler_Update(t *testing.T) {
 	})
 }
 
-func TestOrderHandler_Complete(t *testing.T) {
+func TestOrderHandler_Confirm(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)
 	defer db.Close()
@@ -262,14 +262,14 @@ func TestOrderHandler_Complete(t *testing.T) {
 	h := &OrderHandler{DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
-		input := models.CompleteOrderInput{
+		input := models.ConfirmOrderInput{
 			Decrements: []models.StockDecrement{
 				{ProductID: "p1", StorageID: "loc1", Quantity: 2},
 			},
 		}
 		body, _ := json.Marshal(input)
 
-		mock.ExpectExec("SELECT fn_complete_order").
+		mock.ExpectExec("SELECT fn_confirm_order").
 			WithArgs("o1", sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
@@ -279,8 +279,8 @@ func TestOrderHandler_Complete(t *testing.T) {
 		mock.ExpectQuery("SELECT \\* FROM view_order_item_enriched").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("oi1"))
 
 		r := chi.NewRouter()
-		r.Post("/api/admin/orders/{id}/complete", h.Complete)
-		req, _ := http.NewRequest("POST", "/api/admin/orders/o1/complete", bytes.NewBuffer(body))
+		r.Post("/api/admin/orders/{id}/confirm", h.Confirm)
+		req, _ := http.NewRequest("POST", "/api/admin/orders/o1/confirm", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 
@@ -288,21 +288,21 @@ func TestOrderHandler_Complete(t *testing.T) {
 	})
 
 	t.Run("Insufficient Stock", func(t *testing.T) {
-		input := models.CompleteOrderInput{
+		input := models.ConfirmOrderInput{
 			Decrements: []models.StockDecrement{
 				{ProductID: "p1", StorageID: "loc1", Quantity: 20}, // More than 10
 			},
 		}
 		body, _ := json.Marshal(input)
 
-		mock.ExpectExec("SELECT fn_complete_order").
+		mock.ExpectExec("SELECT fn_confirm_order").
 			WithArgs("o1", sqlmock.AnyArg()).
 			WillReturnError(fmt.Errorf("Insufficient stock"))
 
 
 		r := chi.NewRouter()
-		r.Post("/api/admin/orders/{id}/complete", h.Complete)
-		req, _ := http.NewRequest("POST", "/api/admin/orders/o1/complete", bytes.NewBuffer(body))
+		r.Post("/api/admin/orders/{id}/confirm", h.Confirm)
+		req, _ := http.NewRequest("POST", "/api/admin/orders/o1/confirm", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 
@@ -310,13 +310,13 @@ func TestOrderHandler_Complete(t *testing.T) {
 	})
 
 	t.Run("Tx Error", func(t *testing.T) {
-		mock.ExpectExec("SELECT fn_complete_order").
+		mock.ExpectExec("SELECT fn_confirm_order").
 			WithArgs("EB-123", sqlmock.AnyArg()).
 			WillReturnError(fmt.Errorf("db error"))
 
 		r := chi.NewRouter()
-		r.Post("/api/admin/orders/{id}/complete", h.Complete)
-		req, _ := http.NewRequest("POST", "/api/admin/orders/EB-123/complete", bytes.NewBuffer([]byte(`{"items":[]}`)))
+		r.Post("/api/admin/orders/{id}/confirm", h.Confirm)
+		req, _ := http.NewRequest("POST", "/api/admin/orders/EB-123/confirm", bytes.NewBuffer([]byte(`{"items":[]}`)))
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)

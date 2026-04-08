@@ -218,7 +218,7 @@ func main() {
 				r.Get("/orders", orderHandler.List)
 				r.Get("/orders/{id}", orderHandler.GetDetail)
 				r.Put("/orders/{id}", orderHandler.Update)
-				r.Post("/orders/{id}/complete", orderHandler.Complete)
+				r.Post("/orders/{id}/confirm", orderHandler.Confirm)
 
 				// Bounties & Client Requests CRUD
 				r.Post("/bounties", bountyHandler.Create)

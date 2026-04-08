@@ -528,8 +528,8 @@ export async function adminUpdateOrder(id: string, data: {
   });
 }
 
-export async function adminCompleteOrder(id: string, decrements: { product_id: string; stored_in_id: string; quantity: number }[]): Promise<import('./types').OrderDetail> {
-  return apiFetch<import('./types').OrderDetail>(`/api/admin/orders/${id}/complete`, {
+export async function adminConfirmOrder(id: string, decrements: { product_id: string; stored_in_id: string; quantity: number }[]): Promise<import('./types').OrderDetail> {
+  return apiFetch<import('./types').OrderDetail>(`/api/admin/orders/${id}/confirm`, {
     method: 'POST',
     body: JSON.stringify({ decrements }),
   });

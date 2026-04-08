@@ -422,7 +422,7 @@ type CreateOrderItem struct {
 	Quantity  int    `json:"quantity"`
 }
 
-type CompleteOrderInput struct {
+type ConfirmOrderInput struct {
 	Decrements []StockDecrement `json:"decrements"`
 }
 

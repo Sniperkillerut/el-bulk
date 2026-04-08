@@ -38,7 +38,7 @@
 \i functions/fn_get_product_detail.sql
 \i functions/fn_bulk_upsert_product.sql
 \i functions/fn_place_order.sql
-\i functions/fn_complete_order.sql
+\i functions/fn_confirm_order.sql
 \i functions/fn_fulfill_bounty_offer.sql
 \i functions/fn_get_product_facets.sql
 \i functions/fn_submit_client_request.sql
@@ -55,3 +55,4 @@
 \i triggers/trg_setting_updated_at.sql
 \i triggers/trg_sync_product_stock.sql
 \i triggers/trg_bounty_fulfillment.sql
+\i triggers/trg_order_cancel.sql

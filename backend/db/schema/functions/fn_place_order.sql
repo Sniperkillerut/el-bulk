@@ -85,6 +85,17 @@ BEGIN
         (oi->'stored_in_snapshot')
     FROM jsonb_array_elements(order_items_data) AS oi;
 
+    -- Add to 'pending' storage location
+    INSERT INTO product_storage (product_id, storage_id, quantity)
+    SELECT 
+        (oi->>'product_id')::uuid,
+        (SELECT id FROM storage_location WHERE name = 'pending'),
+        (oi->>'quantity')::int
+    FROM jsonb_array_elements(order_items_data) AS oi
+    WHERE oi->>'product_id' IS NOT NULL AND (oi->>'quantity')::int > 0
+    ON CONFLICT (product_id, storage_id) 
+    DO UPDATE SET quantity = product_storage.quantity + EXCLUDED.quantity;
+
     order_id := v_order_id;
     order_number := v_order_num;
     RETURN NEXT;

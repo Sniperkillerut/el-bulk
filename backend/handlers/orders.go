@@ -96,7 +96,7 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 		SELECT ps.product_id as product_id_temp, ps.storage_id, s.name, ps.quantity 
 		FROM product_storage ps 
 		JOIN storage_location s ON ps.storage_id = s.id 
-		WHERE ps.product_id IN (?) AND ps.quantity > 0
+		WHERE ps.product_id IN (?) AND ps.quantity > 0 AND s.name != 'pending'
 	`, productIDs)
 	if err == nil {
 		type storageWithPID struct {
@@ -398,23 +398,56 @@ func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update item quantities (allow 0 but don't delete)
+	// Also manage pending storage adjustments
 	for _, item := range input.Items {
 		if item.Quantity < 0 {
 			item.Quantity = 0
 		}
 
-		// Verify stock limit
-		var stock int
-		err = tx.Get(&stock, `SELECT p.stock FROM product p JOIN order_item oi ON p.id = oi.product_id WHERE oi.id = $1`, item.ID)
-		if err == nil && item.Quantity > stock {
-			render.Error(w, fmt.Sprintf("Quantity %d exceeds available stock %d", item.Quantity, stock), http.StatusBadRequest)
+		var current struct {
+			Quantity  int    `db:"quantity"`
+			ProductID string `db:"product_id"`
+			Stock     int    `db:"stock"`
+		}
+		err = tx.Get(&current, `
+			SELECT oi.quantity, oi.product_id, p.stock 
+			FROM order_item oi 
+			JOIN product p ON p.id = oi.product_id 
+			WHERE oi.id = $1 AND oi.order_id = $2
+		`, item.ID, id)
+		if err != nil {
+			continue // gracefully skip invalid items
+		}
+
+		delta := item.Quantity - current.Quantity
+		if delta == 0 {
+			continue
+		}
+
+		// If increasing, verify we have enough logical storefront stock to take from
+		if delta > 0 && delta > current.Stock {
+			render.Error(w, fmt.Sprintf("Cannot increase order by %d; only %d in stock", delta, current.Stock), http.StatusBadRequest)
 			return
 		}
 
+		// 1. Update the order_item details
 		_, err = tx.Exec(`UPDATE order_item SET quantity = $1 WHERE id = $2 AND order_id = $3`,
 			item.Quantity, item.ID, id)
 		if err != nil {
 			render.Error(w, "Failed to update item quantity", http.StatusInternalServerError)
+			return
+		}
+
+		// 2. Adjust the pending storage box to reflect the new assigned reserved quantity
+		_, err = tx.Exec(`
+			UPDATE product_storage 
+			SET quantity = quantity + $1 
+			WHERE product_id = $2 
+			  AND storage_id = (SELECT id FROM storage_location WHERE name = 'pending' LIMIT 1)
+		`, delta, current.ProductID)
+		if err != nil {
+			logger.Error("Failed to update pending storage holding: %v", err)
+			render.Error(w, "Failed to update pending storage holding", http.StatusInternalServerError)
 			return
 		}
 	}
@@ -434,11 +467,11 @@ func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 	h.GetDetail(w, r)
 }
 
-// POST /api/admin/orders/{id}/complete — mark order complete and decrement stock
-func (h *OrderHandler) Complete(w http.ResponseWriter, r *http.Request) {
+// POST /api/admin/orders/{id}/confirm — mark order confirmed and decrement stock
+func (h *OrderHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	var input models.CompleteOrderInput
+	var input models.ConfirmOrderInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
@@ -456,17 +489,17 @@ func (h *OrderHandler) Complete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Execute Stored Procedure
-	if _, err := h.DB.Exec("SELECT fn_complete_order($1, $2)", id, string(jsonData)); err != nil {
-		logger.Error("Complete order SP failed: %v", err)
+	if _, err := h.DB.Exec("SELECT fn_confirm_order($1, $2)", id, string(jsonData)); err != nil {
+		logger.Error("Confirm order SP failed: %v", err)
 		status := http.StatusInternalServerError
-		errMsg := "Failed to complete order: " + err.Error()
+		errMsg := "Failed to confirm order: " + err.Error()
 
 		errStrLower := strings.ToLower(err.Error())
 		if strings.Contains(errStrLower, "stock") {
 			status = http.StatusBadRequest
-		} else if strings.Contains(errStrLower, "already completed") {
+		} else if strings.Contains(errStrLower, "already processed") {
 			status = http.StatusBadRequest
-			errMsg = "Order is already completed"
+			errMsg = "Order is already processed"
 		}
 		render.Error(w, errMsg, status)
 		return
