@@ -408,11 +408,11 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 	seedDeckCards := func(deckID string, identifiers []external.CardIdentifier) {
 		logger.Info("Looking up metadata for %d deck cards (Resilient Mode)...", len(identifiers))
 		inserted := 0
-		
+
 		for _, identifier := range identifiers {
 			// Singular lookup with multiple fallbacks (Exact -> Name/Set -> Fuzzy -> Global)
 			res, err := external.LookupMTGCard(identifier.ScryfallID, identifier.Name, identifier.Set, identifier.CollectorNumber, "non_foil")
-			
+
 			if err != nil {
 				logger.Error("  ❌ Card NOT found: %s (%s #%s): %v", identifier.Name, identifier.Set, identifier.CollectorNumber, err)
 				continue
@@ -433,7 +433,7 @@ func seedFullData(db *sqlx.DB, cats map[string]string, storageIDs []string) []st
 				r.Language, r.ColorIdentity, r.CMC, r.IsLegendary, r.IsHistoric, r.IsLand, r.IsBasicLand,
 				r.ArtVariation, r.OracleText, r.Artist, r.TypeLine, r.BorderColor, r.Frame,
 				r.FullArt, r.Textless, r.PromoType, r.ImageURL, r.Rarity, r.ScryfallID, r.Legalities)
-			
+
 			if err != nil {
 				logger.Error("  ❌ Database error for '%s': %v", r.Name, err)
 			} else {
@@ -1593,10 +1593,6 @@ func seedTranslations(db *sqlx.DB) {
 		{"pages.bounties.empty.desc", "es", "No estamos buscando ninguna carta específica en este momento. ¡Pero aún puedes enviarnos una solicitud!"},
 		{"pages.bounties.buttons.submit_request", "en", "SUBMIT REQUEST"},
 		{"pages.bounties.buttons.submit_request", "es", "ENVIAR SOLICITUD"},
-
-
-
-
 
 		// Singles & Sealed Pages
 		{"pages.singles.title", "en", "{tcg} SINGLES"},

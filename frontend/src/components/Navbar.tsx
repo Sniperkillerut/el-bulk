@@ -160,7 +160,7 @@ export default function Navbar() {
                 align="end"
                 trigger={
                   <button
-                    className="p-2 rounded-lg transition-all flex items-center justify-center bg-bg-surface border border-border-main cursor-pointer"
+                    className="p-2 rounded-lg transition-all flex items-center justify-center bg-bg-surface border border-border-main cursor-pointer text-text-main"
                     title={t('pages.nav.tooltips.change_lang', 'Change language')}
                   >
                     <span className="text-xs font-bold uppercase">{locale}</span>

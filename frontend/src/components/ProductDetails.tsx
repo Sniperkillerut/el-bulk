@@ -7,7 +7,7 @@ import { useCart } from '@/lib/CartContext';
 import { useLanguage } from '@/context/LanguageContext';
 import CardImage from './CardImage';
 import DeckContents from './DeckContents';
-import { HotBadge, NewBadge } from './Badges';
+import { HotBadge, NewBadge, CONDITION_MAP } from './Badges';
 import SetIcon from './SetIcon';
 import LegalityBadge from './LegalityBadge';
 import ManaText from './ManaText';
@@ -100,8 +100,8 @@ export default function ProductDetails({ product, idPrefix, showViewFullPage, on
             {t(`pages.inventory.grid.sort.language.${product.language}`, product.language?.toUpperCase() || 'EN')}
           </span>
           {product.condition && (
-            <span className={`badge ${conditionClass} border`}>
-              {t(`pages.product.condition.${product.condition.toLowerCase()}`, product.condition)}
+            <span className={`badge ${conditionClass} border !px-1.5 !py-0 !text-[10px] !font-black !leading-tight`}>
+              {CONDITION_MAP[product.condition.toLowerCase()] || product.condition}
             </span>
           )}
           {product.promo_type && product.promo_type !== 'none' && (

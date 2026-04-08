@@ -1,11 +1,20 @@
 import { FOIL_LABELS } from '@/lib/types';
 import { useLanguage } from '@/context/LanguageContext';
 
+export const CONDITION_MAP: Record<string, string> = {
+  'nm': 'NM',
+  'lp': 'LP',
+  'mp': 'MP',
+  'hp': 'HP',
+  'dmg': 'DM',
+};
+
 export function ConditionBadge({ condition }: { condition?: string }) {
-  const { t } = useLanguage();
   if (!condition) return null;
-  const cls = `badge badge-${condition.toLowerCase()}`;
-  return <span className={cls}>{t(`pages.product.condition.${condition.toLowerCase()}`, condition)}</span>;
+  const key = condition.toLowerCase();
+  const label = CONDITION_MAP[key] || condition;
+  const cls = `badge badge-${key} !px-1.5 !py-0 !text-[10px] !font-black !leading-tight`;
+  return <span className={cls}>{label}</span>;
 }
 
 export function FoilBadge({ foil }: { foil: string }) {

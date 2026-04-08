@@ -5,8 +5,8 @@ import { userFetchOrderDetail } from '@/lib/api';
 import { OrderDetail, ORDER_STATUS_LABELS, FOIL_LABELS } from '@/lib/types';
 import Modal from './ui/Modal';
 import LoadingSpinner from './LoadingSpinner';
-import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
+import CardImage from './CardImage';
 
 interface OrderDetailsModalProps {
   orderId: string | null;
@@ -157,19 +157,13 @@ export default function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDet
                     className="group flex items-center gap-4 p-3.5 rounded-xl border border-border-main/40 bg-bg-card/30 hover:bg-bg-card/60 hover:border-accent-primary/30 transition-all duration-300"
                   >
                     <div className="flex-shrink-0 w-16 h-22 bg-bg-page/50 rounded-lg overflow-hidden relative border border-border-main group-hover:border-accent-primary/20 transition-all duration-500 shadow-sm group-hover:shadow-accent-primary/5">
-                      {item.image_url ? (
-                        <Image 
-                          src={item.image_url} 
-                          alt={item.product_name} 
-                          fill 
-                          className="object-cover group-hover:scale-105 transition-transform duration-700"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center text-[8px] text-text-muted font-mono leading-tight p-2 text-center uppercase tracking-tighter">
-                          <span className="text-lg mb-1 opacity-20">🎴</span>
-                          {item.product_name}
-                        </div>
-                      )}
+                      <CardImage 
+                        imageUrl={item.image_url} 
+                        name={item.product_name} 
+                        foilTreatment={item.foil_treatment}
+                        enableHover={true}
+                        enableModal={true}
+                      />
                     </div>
 
                     <div className="flex-grow min-w-0">
