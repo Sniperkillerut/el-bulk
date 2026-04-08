@@ -26,7 +26,7 @@ export default function DeckImporterPage() {
       const resp = await bulkSearchDeck(list);
       setResults(resp.matches);
     } catch (err) {
-      setError('Failed to analyze list. Please check the format.');
+      setError(t('pages.deck_importer.errors.analyze_failed', 'Failed to analyze list. Please check the format.'));
       console.error(err);
     } finally {
       setLoading(false);
@@ -47,7 +47,7 @@ export default function DeckImporterPage() {
         count++;
       }
     });
-    alert(`Added products from ${count} cards to your cart.`);
+    alert(t('pages.deck_importer.messages.added_count', 'Added products from {count} cards to your cart.', { count }));
   };
 
   return (
@@ -118,12 +118,12 @@ export default function DeckImporterPage() {
                               match.matches[0].set_name?.toLowerCase() !== match.requested_set.toLowerCase()) ||
                              (match.requested_cn && match.matches[0].collector_number !== match.requested_cn)
                            ) && (
-                             <span className="text-[10px] bg-gold/20 text-gold-dark px-1.5 py-0.5 rounded border border-gold/30">DIFFERENT VERSION</span>
+                             <span className="text-[10px] bg-gold/20 text-gold-dark px-1.5 py-0.5 rounded border border-gold/30">{t('pages.deck_importer.matches.different_version', 'DIFFERENT VERSION')}</span>
                            )}
                            {match.is_matched ? (
-                             <span className="text-[10px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded border border-green-500/30">MATCHED</span>
+                             <span className="text-[10px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded border border-green-500/30">{t('pages.deck_importer.matches.matched', 'MATCHED')}</span>
                            ) : (
-                             <span className="text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded border border-red-500/30">NO STOCK</span>
+                             <span className="text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded border border-red-500/30">{t('pages.deck_importer.matches.no_stock', 'NO STOCK')}</span>
                            )}
                         </div>
                      </div>

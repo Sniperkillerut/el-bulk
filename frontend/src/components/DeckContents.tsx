@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { DeckCard } from '@/lib/types';
 import CardImage from './CardImage';
 import { getDeckAnalytics } from '@/lib/mtg-logic';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface DeckContentsProps {
   cards: DeckCard[];
@@ -11,6 +12,7 @@ interface DeckContentsProps {
 
 export default function DeckContents({ cards, tcg, className = '' }: DeckContentsProps) {
   const { total, summary, groups } = getDeckAnalytics(cards);
+  const { t } = useLanguage();
   
   // Track expanded groups. Default is all expanded.
   const [expandedGroups, setExpandedGroups] = useState<string[]>(
@@ -35,9 +37,9 @@ export default function DeckContents({ cards, tcg, className = '' }: DeckContent
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-4">
         <div>
           <h3 className="font-mono-stack text-xs uppercase text-text-muted opacity-70 flex items-center gap-2 mb-1 font-bold tracking-widest">
-            <span>Deck Contents</span>
+            <span>{t('components.deck_contents.title', 'Deck Contents')}</span>
             <span className="bg-ink-border/10 px-2 py-0.5 rounded-full text-[10px] font-bold text-ink-deep/60">
-              {total} CARDS
+              {total} {t('pages.checkout.summary.items', 'CARDS')}
             </span>
           </h3>
           {summary && (
@@ -47,8 +49,8 @@ export default function DeckContents({ cards, tcg, className = '' }: DeckContent
           )}
         </div>
         <div className="flex gap-4">
-          <button type="button" onClick={expandAll} className="text-[10px] uppercase font-mono-stack font-bold text-gold hover:underline">Expand All</button>
-          <button type="button" onClick={collapseAll} className="text-[10px] uppercase font-mono-stack font-bold text-text-muted hover:underline">Collapse All</button>
+          <button type="button" onClick={expandAll} className="text-[10px] uppercase font-mono-stack font-bold text-gold hover:underline">{t('components.deck_contents.expand_all', 'Expand All')}</button>
+          <button type="button" onClick={collapseAll} className="text-[10px] uppercase font-mono-stack font-bold text-text-muted hover:underline">{t('components.deck_contents.collapse_all', 'Collapse All')}</button>
         </div>
       </div>
 

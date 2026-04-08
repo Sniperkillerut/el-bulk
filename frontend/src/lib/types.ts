@@ -215,6 +215,7 @@ export interface TCG {
   id: string;   // slug: mtg, pokemon, etc.
   name: string;
   is_active: boolean;
+  item_count?: number;
   created_at?: string;
 }
 

@@ -109,7 +109,7 @@ export default function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDet
                     detail.order.status === 'cancelled' ? 'bg-red-400 shadow-red-400/40' : 'bg-blue-400 shadow-blue-400/40'
                   }`} />
                   <span className="font-display text-2xl text-text-main tracking-tight uppercase">
-                    {ORDER_STATUS_LABELS[detail.order.status] || detail.order.status}
+                    {t(`pages.order.status.${detail.order.status}`, ORDER_STATUS_LABELS[detail.order.status] || detail.order.status)}
                   </span>
                 </div>
               </div>
@@ -133,7 +133,7 @@ export default function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDet
                   <p className="text-3xl font-display text-accent-primary leading-none">
                     {detail.order.total_cop.toLocaleString('es-CO')}
                   </p>
-                  <span className="text-[10px] font-mono text-text-muted ml-0.5 tracking-tighter">COP</span>
+                  <span className="text-[10px] font-mono text-text-muted ml-0.5 tracking-tighter">{t('pages.common.currency.cop', 'COP')}</span>
                 </div>
               </div>
             </div>
@@ -225,7 +225,7 @@ export default function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDet
                 <p>{t('pages.order.modal.reference', 'Order Reference:')} <span className="text-text-main font-sans font-bold">#{detail.order.order_number}</span></p>
                 <div className="mt-1 flex items-center justify-center sm:justify-start gap-4">
                   <p>{t('pages.order.modal.method', 'Method:')} <span className="text-text-secondary font-sans font-medium">{detail.order.payment_method}</span></p>
-                  <p>Ref: <span className="text-text-secondary font-sans font-medium">{detail.order.id.split('-')[0].toUpperCase()}</span></p>
+                  <p>{t('pages.order.modal.ref_prefix', 'Ref:')} <span className="text-text-secondary font-sans font-medium">{detail.order.id.split('-')[0].toUpperCase()}</span></p>
                 </div>
               </div>
               <p className="text-[10px] font-mono text-text-muted uppercase tracking-tighter bg-bg-page/30 px-3 py-1.5 rounded-full border border-border-main/50">

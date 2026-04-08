@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { TCG } from '@/lib/types';
 import { adminFetchTCGs, adminCreateTCG, adminUpdateTCG, adminDeleteTCG } from '@/lib/api';
+import { useLanguage } from '@/context/LanguageContext';
 
 type Props = Record<string, never>;
 
@@ -15,6 +16,7 @@ export default function TCGManager({ }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const { t } = useLanguage();
 
   const loadTCGs = async () => {
     setLoading(true);
@@ -85,7 +87,7 @@ export default function TCGManager({ }: Props) {
   if (loading && tcgs.length === 0) {
     return (
       <div className="p-8 text-center text-[#8b7355] animate-pulse font-bold">
-        UNPACKING TCG REGISTRY...
+        {t('pages.admin.tcg_registry.loading', 'UNPACKING TCG REGISTRY...')}
       </div>
     );
   }
@@ -94,8 +96,8 @@ export default function TCGManager({ }: Props) {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 mb-4">
         <div>
-          <h3 className="text-2xl font-display text-ink-deep uppercase tracking-tighter m-0 leading-none">Registered Systems</h3>
-          <p className="text-text-muted text-[10px] font-mono-stack uppercase font-bold mt-1 opacity-70">Enable or disable game systems from the warehouse</p>
+          <h3 className="text-2xl font-display text-ink-deep uppercase tracking-tighter m-0 leading-none">{t('pages.admin.tcg_registry.title', 'Registered Systems')}</h3>
+          <p className="text-text-muted text-[10px] font-mono-stack uppercase font-bold mt-1 opacity-70">{t('pages.admin.tcg_registry.subtitle', 'Enable or disable game systems from the warehouse')}</p>
         </div>
         <button
           onClick={() => setIsAdding(!isAdding)}
@@ -105,7 +107,7 @@ export default function TCGManager({ }: Props) {
               : 'btn-secondary shadow-sm'
           }`}
         >
-          {isAdding ? '✕ CANCEL' : '＋ REGISTER NEW TCG'}
+          {isAdding ? `✕ ${t('pages.admin.tcg_registry.buttons.cancel', 'CANCEL')}` : t('pages.admin.tcg_registry.buttons.register_new', '＋ REGISTER NEW TCG')}
         </button>
       </div>
 
@@ -120,7 +122,7 @@ export default function TCGManager({ }: Props) {
         <form onSubmit={handleCreate} className="p-6 bg-white border border-kraft-dark/20 shadow-xl shadow-kraft-dark/5 rounded-xl mb-8 animate-in slide-in-from-top-4 duration-300">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block text-[10px] font-mono-stack font-bold text-text-muted uppercase mb-2">Internal Slug (URL ID)</label>
+              <label className="block text-[10px] font-mono-stack font-bold text-text-muted uppercase mb-2">{t('pages.admin.tcg_registry.form.slug_label', 'Internal Slug (URL ID)')}</label>
               <input
                 value={newTcg.id}
                 onChange={e => setNewTcg(p => ({ ...p, id: e.target.value }))}
@@ -130,7 +132,7 @@ export default function TCGManager({ }: Props) {
               />
             </div>
             <div>
-              <label className="block text-[10px] font-mono-stack font-bold text-text-muted uppercase mb-2">Display Name</label>
+              <label className="block text-[10px] font-mono-stack font-bold text-text-muted uppercase mb-2">{t('pages.admin.tcg_registry.form.display_name', 'Display Name')}</label>
               <input
                 value={newTcg.name}
                 onChange={e => setNewTcg(p => ({ ...p, name: e.target.value }))}
@@ -144,7 +146,7 @@ export default function TCGManager({ }: Props) {
             type="submit"
             className="w-full py-3 btn-primary shadow-lg shadow-gold/20 font-bold uppercase tracking-widest text-xs"
           >
-            CONFIRM SYSTEM REGISTRATION
+            {t('pages.admin.tcg_registry.buttons.confirm_registration', 'CONFIRM SYSTEM REGISTRATION')}
           </button>
         </form>
       )}
@@ -174,8 +176,8 @@ export default function TCGManager({ }: Props) {
                       if (e.key === 'Escape') setEditingId(null);
                     }}
                   />
-                  <button onClick={() => handleRename(tcg)} className="btn-primary px-3 text-[9px] font-bold uppercase">SAVE</button>
-                  <button onClick={() => setEditingId(null)} className="btn-secondary px-3 text-[9px] font-bold uppercase">CANCEL</button>
+                  <button onClick={() => handleRename(tcg)} className="btn-primary px-3 text-[9px] font-bold uppercase">{t('pages.admin.tcg_registry.buttons.save', 'SAVE')}</button>
+                  <button onClick={() => setEditingId(null)} className="btn-secondary px-3 text-[9px] font-bold uppercase">{t('pages.admin.tcg_registry.buttons.cancel', 'CANCEL')}</button>
                 </div>
               ) : (
                 <div className="min-w-0">
@@ -255,7 +257,7 @@ export default function TCGManager({ }: Props) {
         ))}
         {tcgs.length === 0 && !loading && (
           <div className="py-20 text-center border-2 border-dashed border-kraft-dark/10 rounded-2xl">
-            <p className="font-mono-stack text-xs text-text-muted uppercase font-bold tracking-widest opacity-40">No Systems Registered</p>
+            <p className="font-mono-stack text-xs text-text-muted uppercase font-bold tracking-widest opacity-40">{t('pages.admin.tcg_registry.no_systems', 'No Systems Registered')}</p>
           </div>
         )}
       </div>

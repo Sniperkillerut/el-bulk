@@ -293,7 +293,7 @@ export default function ProfilePage() {
                                   order.status === 'cancelled' ? 'text-red-400 border-red-400/30 bg-red-400/10' :
                                     'text-blue-400 border-blue-400/30 bg-blue-400/10'
                               }`}>
-                              {ORDER_STATUS_LABELS[order.status] || order.status}
+                              {t(`pages.order.status.${order.status}`, ORDER_STATUS_LABELS[order.status] || order.status)}
                             </span>
                           </td>
                           <td className="px-6 py-4 text-sm text-text-muted">

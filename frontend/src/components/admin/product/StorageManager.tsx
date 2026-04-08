@@ -1,6 +1,7 @@
 'use client';
 
 import { StorageLocation, StoredIn } from '@/lib/types';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface StorageManagerProps {
   productStorage: StorageLocation[];
@@ -19,18 +20,19 @@ export default function StorageManager({
   onRemove,
   onAdd
 }: StorageManagerProps) {
+  const { t } = useLanguage();
   const total = productStorage.reduce((acc, l) => acc + l.quantity, 0);
 
   return (
     <div className="pt-4" style={{ borderTop: '1px dashed var(--ink-border)' }}>
       <div className="flex justify-between items-center mb-3">
-        <h3 className="text-xs font-mono-stack uppercase" style={{ color: 'var(--text-muted)', letterSpacing: '0.1em' }}>STORAGE LOCATIONS</h3>
+        <h3 className="text-xs font-mono-stack uppercase" style={{ color: 'var(--text-muted)', letterSpacing: '0.1em' }}>{t('components.admin.product.storage.title', 'STORAGE LOCATIONS')}</h3>
         <span className="text-xs font-bold bg-ink-surface px-2 py-1 text-gold rounded border border-ink-border">
-          TOTAL: {total}
+          {t('pages.cart.drawer.total', 'TOTAL')}: {total}
         </span>
       </div>
       <div className="space-y-2 max-h-60 overflow-y-auto mb-4">
-        {productStorage.length === 0 && <p className="text-xs text-text-muted italic text-center py-2">No storage assignments yet.</p>}
+        {productStorage.length === 0 && <p className="text-xs text-text-muted italic text-center py-2">{t('components.admin.product.storage.empty', 'No storage assignments yet.')}</p>}
         {productStorage.map(loc => (
           <div key={loc.stored_in_id} className="flex items-center justify-between gap-2 text-sm border-b border-ink-border/50 pb-2">
             <span className="truncate flex-1 font-semibold leading-tight min-w-0" title={loc.name}>{loc.name}</span>
@@ -68,7 +70,7 @@ export default function StorageManager({
         ))}
       </div>
       <div>
-        <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">Quick Add Location</label>
+        <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">{t('components.admin.product.storage.quick_add', 'Quick Add Location')}</label>
         <select
           className="w-full text-xs px-2 h-10"
           style={{ padding: '0 8px' }}
@@ -79,7 +81,7 @@ export default function StorageManager({
             e.target.value = "";
           }}
         >
-          <option value="">-- Select Location --</option>
+          <option value="">{t('components.admin.product.storage.select_placeholder', '-- Select Location --')}</option>
           {storageLocations
             .filter(l => !productStorage.find(p => p.stored_in_id === l.id))
             .map(l => <option key={l.id} value={l.id}>{l.name}</option>)

@@ -11,12 +11,14 @@ import {
   ORDER_STATUS_LABELS, PAYMENT_METHODS, FOIL_LABELS, TREATMENT_LABELS, StorageLocation
 } from '@/lib/types';
 import CardImage from '@/components/CardImage';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface Props {
   initialOrderId?: string | null;
 }
 
 export default function OrdersPanel({ initialOrderId }: Props) {
+  const { t } = useLanguage();
   // List state
   const [orders, setOrders] = useState<OrderWithCustomer[]>([]);
   const [total, setTotal] = useState(0);
@@ -252,7 +254,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                     border: `1px solid ${statusFilter === s ? 'var(--text-main)' : 'var(--border-main)'}`,
                   }}
                 >
-                  {s ? (ORDER_STATUS_LABELS[s] || s) : 'Todas'}
+                  {s ? t(`pages.order.status.${s}`, ORDER_STATUS_LABELS[s] || s) : t('pages.common.labels.all', 'Todas')}
                 </button>
               ))}
             </div>
@@ -317,7 +319,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                     <div className="text-right">
                       <span className={`badge ${o.status === 'completed' ? 'badge-nm' : o.status === 'cancelled' ? 'badge-hp' : o.status === 'confirmed' ? 'badge-lp' : ''}`}
                         style={{ fontSize: '0.6rem' }}>
-                        {ORDER_STATUS_LABELS[o.status] || o.status}
+                        {t(`pages.order.status.${o.status}`, ORDER_STATUS_LABELS[o.status] || o.status)}
                       </span>
                     </div>
                   </div>
@@ -388,10 +390,10 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                     {Object.entries(ORDER_STATUS_LABELS)
                       .filter(([k]) => k !== 'completed' || detail.order.status === 'completed')
                       .map(([k, v]) => (
-                        <option key={k} value={k}>{v}</option>
+                        <option key={k} value={k}>{t(`pages.order.status.${k}`, v)}</option>
                       ))}
-                    <option value="ready_for_pickup">Listo para recoger</option>
-                    <option value="shipped">Enviado</option>
+                    <option value="ready_for_pickup">{t('pages.order.status.ready_for_pickup', 'Listo para recoger')}</option>
+                    <option value="shipped">{t('pages.order.status.shipped', 'Enviado')}</option>
                   </select>
                   {detail.order.status !== 'completed' && detail.order.status !== 'cancelled' && (
                     <button onClick={openCompleteModal} className="btn-primary" style={{ fontSize: '0.85rem', padding: '0.35rem 1rem' }}>
@@ -575,7 +577,6 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                                 setItemEdits(prev => ({ ...prev, [item.id]: item.stock }));
                               }
                             }}
-                            disabled={detail.order.status === 'completed'}
                             className="w-10 text-center text-sm font-mono-stack"
                             style={{ height: 20, padding: '0 2px' }}
                           />

@@ -5,9 +5,11 @@ import { useTheme } from 'next-themes';
 import { fetchThemes } from '@/lib/api_themes';
 import { Theme } from '@/lib/types';
 import Dropdown from './Dropdown';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function ThemeSelector() {
   const { theme: activeTheme, setTheme } = useTheme();
+  const { t } = useLanguage();
   const [themes, setThemes] = useState<Theme[]>([]);
   const [mounted, setMounted] = useState(false);
 
@@ -50,7 +52,7 @@ export default function ThemeSelector() {
     >
       <div className="py-1 w-48 max-h-64 overflow-y-auto bg-bg-surface border border-border-main shadow-xl">
         <div className="px-3 py-2 text-[10px] uppercase tracking-widest text-text-muted border-b border-border-main/50 mb-1">
-          Select Theme
+          {t('components.theme_selector.title', 'Select Theme')}
         </div>
         {themes.map((t) => (
           <button

@@ -173,7 +173,7 @@ export default function ProductDetails({ product, idPrefix, showViewFullPage, on
 
         {/* Price */}
         <div className="flex items-baseline gap-3 mb-6 flex-wrap">
-          <span className="price text-5xl tracking-tighter text-text-main leading-none font-display">${product.price.toLocaleString('en-US', { maximumFractionDigits: 0 })} COP</span>
+          <span className="price text-5xl tracking-tighter text-text-main leading-none font-display">${product.price.toLocaleString('en-US', { maximumFractionDigits: 0 })} {t('pages.common.currency.cop', 'COP')}</span>
           <div className="flex flex-col gap-1">
             <span className={`text-xs font-mono-stack font-bold px-2 py-1 rounded-sm w-fit text-white ${outOfStock ? 'bg-status-hp' : 'bg-status-nm'}`}>
               {outOfStock 

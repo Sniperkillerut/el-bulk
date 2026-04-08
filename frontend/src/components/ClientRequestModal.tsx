@@ -61,14 +61,14 @@ export default function ClientRequestModal({ onClose, onSuccess }: ClientRequest
         {!user && (
           <div className="bg-accent-primary/10 border border-accent-primary/20 p-3 rounded-md mb-2 flex items-center justify-between gap-4 animate-fade-in">
             <div className="text-[11px] text-text-main leading-tight">
-              <strong>Login</strong> to automatically fill your info and track your request status.
+              <strong>{t('pages.common.labels.login', 'Login')}</strong> {t('components.client_request_modal.login_prompt', 'to automatically fill your info and track your request status.')}
             </div>
             <button 
               type="button"
               onClick={() => router.push('/login')}
               className="btn-primary text-[10px] px-3 py-1.5 whitespace-nowrap font-bold"
             >
-              LOGIN
+              {t('pages.common.buttons.login', 'LOGIN')}
             </button>
           </div>
         )}

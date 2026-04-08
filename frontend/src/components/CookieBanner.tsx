@@ -190,7 +190,7 @@ const CookieBanner = () => {
                   <div className="text-text-on-header font-bold text-sm mb-1 uppercase tracking-wider">{t('pages.cookies.essential_title', 'NECESSARY')}</div>
                   <div className="text-text-on-header/60 text-xs">{t('pages.cookies.essential_desc', 'Essential for the site to function (Auth, Theme, Cart).')}</div>
                 </div>
-                <div className="text-accent-primary text-[10px] font-mono font-bold uppercase py-2 tracking-tighter opacity-70">Always Required</div>
+                <div className="text-accent-primary text-[10px] font-mono font-bold uppercase py-2 tracking-tighter opacity-70">{t('pages.cookies.always_required', 'Always Required')}</div>
               </div>
 
               {/* Analytics */}

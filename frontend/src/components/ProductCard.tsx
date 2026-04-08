@@ -100,7 +100,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <span className="price text-base flex flex-col sm:block">
               <span className="leading-tight">${product.price.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
-              <span className="text-[10px] sm:text-xs text-text-muted sm:ml-1 align-baseline uppercase font-mono-stack">COP</span>
+              <span className="text-[10px] sm:text-xs text-text-muted sm:ml-1 align-baseline uppercase font-mono-stack">{t('pages.common.currency.cop', 'COP')}</span>
             </span>
             <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
               <span className="text-xs text-text-muted font-mono sm:hidden">
