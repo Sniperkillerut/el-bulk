@@ -13,11 +13,10 @@ export default async function BountiesPage() {
   const bounties = await fetchBounties({ active: true }).catch(() => []);
 
   return (
-    <div className="min-h-screen flex flex-col pt-24 bg-kraft-paper">
-      <main className="flex-1 w-full relative z-10 pb-20">
-        <div className="section-container pt-8 md:pt-16 pb-12">
+    <div className="min-h-screen flex flex-col bg-bg-page transition-colors duration-500">
+      <main className="flex-1 w-full relative z-10 pt-16 md:pt-24 pb-20">
+        <div className="centered-container px-4">
           <PublicBountiesClient initialBounties={bounties} />
-          
         </div>
       </main>
     </div>
