@@ -93,3 +93,26 @@ func (h *TranslationHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+
+// DeleteLocale removes all translations for a full locale
+func (h *TranslationHandler) DeleteLocale(w http.ResponseWriter, r *http.Request) {
+	locale := chi.URLParam(r, "locale")
+
+	if locale == "" {
+		http.Error(w, "Locale is required", http.StatusBadRequest)
+		return
+	}
+
+	if locale == "en" || locale == "es" {
+		http.Error(w, "Cannot delete system protected locales (en/es)", http.StatusBadRequest)
+		return
+	}
+
+	if err := models.DeleteLocale(h.DB, locale); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+}

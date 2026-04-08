@@ -234,6 +234,10 @@ type Settings struct {
 	HotSalesThreshold int `json:"hot_sales_threshold"`
 	HotDaysThreshold  int `json:"hot_days_threshold"`
 	NewDaysThreshold  int `json:"new_days_threshold"`
+
+	// Internationalization
+	DefaultLocale        string `json:"default_locale"`
+	HideLanguageSelector bool   `json:"hide_language_selector"`
 }
 
 type TCG struct {

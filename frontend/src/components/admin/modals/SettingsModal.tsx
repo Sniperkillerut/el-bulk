@@ -88,6 +88,41 @@ export default function SettingsModal({
               </div>
             </div>
           </div>
+
+          {/* Internationalization */}
+          <div className="space-y-6 md:col-span-2">
+            <div className="flex items-center gap-3 border-b border-border-main pb-2 mb-4">
+              <span className="text-2xl">🌍</span>
+              <h4 className="text-lg font-display text-text-main m-0">LOCALIZATION</h4>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="p-4 bg-bg-surface border border-border-main rounded flex items-center justify-between group cursor-pointer" onClick={() => setEditingSettings({ ...editingSettings, hide_language_selector: !editingSettings.hide_language_selector })}>
+                <div>
+                  <label className="text-xs font-mono-stack block uppercase tracking-tighter text-text-muted">Visibility Control</label>
+                  <p className="text-sm font-bold m-0">Hide Selector from Client Footer</p>
+                </div>
+                <div className={`w-10 h-6 rounded-full transition-all relative ${editingSettings.hide_language_selector ? 'bg-gold' : 'bg-bg-header/20'}`}>
+                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${editingSettings.hide_language_selector ? 'left-5' : 'left-1'}`} />
+                </div>
+              </div>
+
+              <div className="p-4 bg-bg-surface border border-border-main rounded">
+                <label className="text-xs font-mono-stack mb-1 block uppercase tracking-tighter text-text-muted">Master Default Language</label>
+                <select 
+                  className="bg-bg-page w-full p-2 text-sm font-bold uppercase tracking-widest outline-none border-none"
+                  value={editingSettings.default_locale || 'en'}
+                  onChange={e => setEditingSettings({ ...editingSettings, default_locale: e.target.value })}
+                >
+                  <option value="en">English (US)</option>
+                  <option value="es">Español (ES)</option>
+                </select>
+              </div>
+            </div>
+            <p className="text-[10px] font-mono-stack text-text-muted">
+              * The default language is loaded for first-time visitors who haven&apos;t set a preference.
+            </p>
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 mt-12 bg-bg-header/5 p-4 -mx-4 md:-mx-8 -mb-4 md:-mb-8 mt-8 border-t border-border-main">

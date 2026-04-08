@@ -2,8 +2,13 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { adminFetchTranslations, adminUpdateTranslation, adminDeleteTranslation } from '@/lib/api';
-import { Translation } from '@/lib/types';
+import { Translation, Settings } from '@/lib/types';
 import { useAdmin } from '@/hooks/useAdmin';
+import { 
+  getAdminSettings, 
+  updateAdminSettings, 
+  adminDeleteLocale 
+} from '@/lib/api';
 import AdminHeader from '@/components/admin/AdminHeader';
 
 export default function AdminTranslationsPage() {
@@ -14,16 +19,22 @@ export default function AdminTranslationsPage() {
   const [activeSlug, setActiveSlug] = useState<string>('home');
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [extraLocales, setExtraLocales] = useState<string[]>([]);
-
-  const loadTranslations = useCallback(async () => {
+  const [settings, setSettings] = useState<Settings | null>(null);
+  const [updatingSettings, setUpdatingSettings] = useState(false);
+  
+  const loadSettingsAndTranslations = useCallback(async () => {
     if (!token) return;
     try {
       setLoading(true);
-      const data = await adminFetchTranslations();
-      setTranslations(data);
+      const [transData, settData] = await Promise.all([
+        adminFetchTranslations(),
+        getAdminSettings()
+      ]);
+      setTranslations(transData);
+      setSettings(settData);
     } catch (err: unknown) {
       const error = err as Error;
-      console.error('Failed to fetch translations:', error);
+      console.error('Failed to fetch data:', error);
       if (error.message?.includes('401')) logout();
     } finally {
       setLoading(false);
@@ -31,8 +42,8 @@ export default function AdminTranslationsPage() {
   }, [token, logout]);
 
   useEffect(() => {
-    if (token) loadTranslations();
-  }, [token, loadTranslations]);
+    if (token) loadSettingsAndTranslations();
+  }, [token, loadSettingsAndTranslations]);
 
   // Group translations by key for the table
   const allGroups = useMemo(() => {
@@ -153,6 +164,58 @@ export default function AdminTranslationsPage() {
     }
   };
 
+  const handleEditLanguageName = async (locale: string, currentName: string) => {
+    const newName = prompt(`Enter new display name for "${locale}" (e.g., 🇺🇸 ENGLISH):`, currentName);
+    if (!newName || newName === currentName) return;
+    
+    try {
+      await handleUpdate('components.language_selector.names', locale, newName);
+    } catch {
+      alert('Failed to update language name');
+    }
+  };
+
+  const handleDeleteLocale = async (locale: string) => {
+    const name = allGroups['components.language_selector.names']?.[locale] || locale.toUpperCase();
+    if (!confirm(`PERMANENTLY DELETE entire language "${name}" (${locale}) and ALL associated translations? This cannot be undone.`)) return;
+    
+    try {
+      await adminDeleteLocale(locale);
+      setTranslations(prev => prev.filter(t => t.locale !== locale));
+      setExtraLocales(prev => prev.filter(l => l !== locale));
+      if (settings?.default_locale === locale) {
+        await updateAdminSettings({ default_locale: 'en' });
+        setSettings(prev => prev ? { ...prev, default_locale: 'en' } : null);
+      }
+    } catch {
+      alert('Failed to delete language');
+    }
+  };
+
+  const handleSetDefault = async (locale: string) => {
+    setUpdatingSettings(true);
+    try {
+      await updateAdminSettings({ default_locale: locale });
+      setSettings(prev => prev ? { ...prev, default_locale: locale } : null);
+    } catch {
+      alert('Failed to update default language');
+    } finally {
+      setUpdatingSettings(false);
+    }
+  };
+
+  const handleToggleHideSelector = async (val: boolean) => {
+    setUpdatingSettings(true);
+    try {
+      await updateAdminSettings({ hide_language_selector: val });
+      setSettings(prev => prev ? { ...prev, hide_language_selector: val } : null);
+    } catch {
+      alert('Failed to update visibility settings');
+    } finally {
+      setUpdatingSettings(false);
+    }
+  };
+
   if (adminLoading || !token) {
     return (
       <div className="min-h-screen bg-ink-deep flex items-center justify-center">
@@ -170,31 +233,77 @@ export default function AdminTranslationsPage() {
 
       {/* Progress Summary */}
       {!loading && translations.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {progressStats.map(stat => (
-            <div key={stat.locale} className="bg-white p-4 rounded-sm border border-ink-border/20 shadow-sm">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-[10px] font-mono-stack text-text-muted uppercase font-bold tracking-widest">
-                  {stat.locale === 'en' ? '🇺🇸 English' : stat.locale === 'es' ? '🇪🇸 Español' : stat.locale.toUpperCase()}
-                </span>
-                <span className="text-sm font-bold text-ink-navy">
-                  {Math.round(stat.percentage)}%
-                </span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {progressStats.map(stat => {
+            const displayName = allGroups['components.language_selector.names']?.[stat.locale] || 
+                               (stat.locale === 'en' ? 'ENGLISH' : stat.locale === 'es' ? 'ESPAÑOL' : stat.locale.toUpperCase());
+            const isProtected = stat.locale === 'en' || stat.locale === 'es';
+            const isDefault = settings?.default_locale === stat.locale;
+
+            return (
+              <div key={stat.locale} className="bg-white p-4 rounded-sm border border-ink-border/20 shadow-sm flex flex-col group/card relative">
+                <div className="flex justify-between items-start mb-1">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-[10px] font-mono-stack text-text-muted uppercase font-bold tracking-tighter opacity-70">
+                      {stat.locale}
+                    </span>
+                    <span 
+                      className="text-sm font-bold text-ink-navy uppercase tracking-widest break-all cursor-pointer hover:text-gold transition-colors"
+                      onClick={() => handleEditLanguageName(stat.locale, displayName)}
+                      title="Click to rename"
+                    >
+                      {displayName.replace(/^[^\s]+\s*/, '') || displayName}
+                    </span>
+                    {isDefault && (
+                      <span className="text-[9px] bg-gold/20 text-ink-deep font-bold px-1.5 rounded-full ml-1">DEFAULT</span>
+                    )}
+                  </div>
+                  <span className="text-sm font-bold text-ink-navy">
+                    {Math.round(stat.percentage)}%
+                  </span>
+                </div>
+
+                <div className="w-full bg-ink-surface/10 h-1.5 rounded-full overflow-hidden mb-2">
+                  <div 
+                    className="h-full transition-all duration-1000 bg-lp-color"
+                    style={{ width: `${stat.percentage}%` }}
+                  />
+                </div>
+
+                <div className="flex justify-between items-end">
+                  <p className="text-[10px] text-text-muted">
+                    {stat.count} / {stat.total} strings translated
+                    {stat.total > stat.count && (
+                      <span className="text-hp-color font-bold ml-1">({stat.total - stat.count} missing)</span>
+                    )}
+                  </p>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                    {!isDefault && (
+                      <button 
+                        onClick={() => handleSetDefault(stat.locale)}
+                        className="p-1 text-[9px] font-bold text-gold hover:text-ink-deep transition-colors uppercase"
+                        title="Set as Default"
+                        disabled={updatingSettings}
+                      >
+                        SET DEFAULT
+                      </button>
+                    )}
+                    {!isProtected && (
+                      <button 
+                        onClick={() => handleDeleteLocale(stat.locale)}
+                        className="p-1 text-[9px] font-bold text-text-muted hover:text-red-500 transition-colors uppercase"
+                        title="Delete Language"
+                      >
+                        DELETE
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div className="w-full bg-ink-surface/10 h-1.5 rounded-full overflow-hidden mb-2">
-                <div 
-                  className={`h-full transition-all duration-1000 ${stat.percentage === 100 ? 'bg-lp-color' : 'bg-gold'}`}
-                  style={{ width: `${stat.percentage}%` }}
-                />
-              </div>
-              <p className="text-[10px] text-text-muted">
-                {stat.count} / {stat.total} strings translated
-                {stat.total > stat.count && (
-                  <span className="text-hp-color font-bold ml-1">({stat.total - stat.count} missing)</span>
-                )}
-              </p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -209,8 +318,24 @@ export default function AdminTranslationsPage() {
             onChange={e => setSearch(e.target.value)}
           />
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <button 
+        <div className="flex gap-4 items-center w-full sm:w-auto">
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted group-hover:text-gold transition-colors">
+              Hide Selector from Clients
+            </span>
+            <div className="relative inline-flex items-center">
+              <input 
+                type="checkbox" 
+                className="sr-only peer"
+                checked={settings?.hide_language_selector || false}
+                onChange={e => handleToggleHideSelector(e.target.checked)}
+                disabled={updatingSettings}
+              />
+              <div className="w-9 h-5 bg-ink-surface/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-gold after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+            </div>
+          </label>
+          <div className="flex gap-2">
+            <button 
             onClick={() => {
               const key = prompt(`Enter new translation key (e.g., pages.common.section.welcome):`);
               if (key && key.trim()) {
@@ -231,17 +356,22 @@ export default function AdminTranslationsPage() {
                   return;
                 }
                 
+                const name = prompt(`Enter display name with optional emoji (e.g., 🇫🇷 Français):`, loc.toUpperCase());
+                if (!name) return;
+
                 // Add to extraLocales immediately for UI feedback
                 setExtraLocales(prev => [...prev, loc]);
                 
-                // Persist by creating a dummy record
-                handleUpdate('pages.common.section.welcome', loc, 'Welcome (Automatic)');
+                // Persist by creating dummy records and the name key
+                await handleUpdate('components.language_selector.names', loc, name);
+                await handleUpdate('pages.common.section.welcome', loc, 'Welcome (Automatic)');
               }
             }}
             className="btn-primary py-2 px-6 text-sm font-bold shadow-gold/10 whitespace-nowrap"
           >
             + NEW LANGUAGE
           </button>
+          </div>
         </div>
       </div>
 
@@ -285,7 +415,8 @@ export default function AdminTranslationsPage() {
               <th className="p-3 text-[10px] font-mono-stack uppercase text-text-muted w-64 min-w-[250px]">Key Identifier</th>
               {locales.map(loc => (
                 <th key={loc} className="p-3 text-[10px] font-mono-stack uppercase text-text-muted text-center min-w-[250px]">
-                  {loc === 'en' ? '🇺🇸 EN' : loc === 'es' ? '🇪🇸 ES' : loc.toUpperCase()}
+                  {allGroups['components.language_selector.names']?.[loc] || 
+                   (loc === 'en' ? '🇺🇸 EN' : loc === 'es' ? '🇪🇸 ES' : loc.toUpperCase())}
                 </th>
               ))}
               <th className="p-3 text-[10px] font-mono-stack uppercase text-text-muted text-right w-16">Actions</th>
@@ -313,6 +444,7 @@ export default function AdminTranslationsPage() {
                   {locales.map(loc => (
                     <td key={loc} className="p-2 align-top">
                       <textarea
+                        key={`${group.key}-${loc}-${group.values[loc] || ''}`}
                         className={`w-full p-2 text-sm bg-transparent border rounded-sm outline-none transition-all resize-none min-h-[60px] ${
                           savingKey === `${group.key}-${loc}` ? 'border-gold bg-gold/5' : 'border-transparent hover:border-ink-border/20 focus:border-gold focus:bg-white'
                         }`}

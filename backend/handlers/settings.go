@@ -55,6 +55,8 @@ func loadSettings(db *sqlx.DB) (models.Settings, error) {
 		HotSalesThreshold:  3,
 		HotDaysThreshold:   7,
 		NewDaysThreshold:   10,
+		DefaultLocale:      "en",
+		HideLanguageSelector: false,
 	}
 
 	if db == nil {
@@ -112,6 +114,10 @@ func loadSettings(db *sqlx.DB) (models.Settings, error) {
 			if i, err := strconv.Atoi(val); err == nil {
 				s.NewDaysThreshold = i
 			}
+		case "default_locale":
+			s.DefaultLocale = val
+		case "hide_language_selector":
+			s.HideLanguageSelector = val == "true"
 		}
 	}
 
@@ -134,6 +140,20 @@ func (h *SettingsHandler) Get(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, s)
 }
 
+// GET /api/settings (Public)
+func (h *SettingsHandler) PublicGet(w http.ResponseWriter, r *http.Request) {
+	s, err := loadSettings(h.DB)
+	if err != nil {
+		// On public API, just return defaults silently or empty
+		render.Success(w, models.Settings{
+			USDToCOPRate: 4000,
+			EURToCOPRate: 4400,
+		})
+		return
+	}
+	render.Success(w, s)
+}
+
 // PUT /api/admin/settings
 // Body: { "usd_to_cop_rate": 4350.0, "eur_to_cop_rate": 4750.0 }
 // Omit a field to leave it unchanged.
@@ -150,6 +170,8 @@ func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 		HotSalesThreshold  *int     `json:"hot_sales_threshold"`
 		HotDaysThreshold   *int     `json:"hot_days_threshold"`
 		NewDaysThreshold   *int     `json:"new_days_threshold"`
+		DefaultLocale      *string  `json:"default_locale"`
+		HideLanguageSelector *bool  `json:"hide_language_selector"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		render.Error(w, "invalid request body", http.StatusBadRequest)
@@ -224,6 +246,22 @@ func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if input.NewDaysThreshold != nil {
 		if err := upsert("new_threshold_days", strconv.Itoa(*input.NewDaysThreshold)); err != nil {
 			render.Error(w, "failed to update new_threshold_days", http.StatusInternalServerError)
+			return
+		}
+	}
+	if input.DefaultLocale != nil {
+		if err := upsert("default_locale", *input.DefaultLocale); err != nil {
+			render.Error(w, "failed to update default_locale", http.StatusInternalServerError)
+			return
+		}
+	}
+	if input.HideLanguageSelector != nil {
+		val := "false"
+		if *input.HideLanguageSelector {
+			val = "true"
+		}
+		if err := upsert("hide_language_selector", val); err != nil {
+			render.Error(w, "failed to update hide_language_selector", http.StatusInternalServerError)
 			return
 		}
 	}

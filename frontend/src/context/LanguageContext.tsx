@@ -1,7 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { fetchTranslations } from '@/lib/api';
+import { fetchTranslations, fetchSettings } from '@/lib/api';
+import { Settings } from '@/lib/types';
 
 type Locale = string;
 
@@ -11,6 +12,7 @@ interface LanguageContextType {
   t: (key: string, fallback?: string, params?: Record<string, string | number>) => string;
   isLoading: boolean;
   availableLocales: Locale[];
+  hideSelector?: boolean;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -20,37 +22,43 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [allTranslations, setAllTranslations] = useState<Record<Locale, Record<string, string>>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [settings, setSettings] = useState<Settings | null>(null);
 
   const availableLocales = Object.keys(allTranslations).length > 0 ? Object.keys(allTranslations) : ['en', 'es'];
 
-  const loadTranslations = useCallback(async () => {
+  const loadInitialData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const data = await fetchTranslations();
-      // data is Record<Locale, Record<Key, Value>>
-      setAllTranslations(data as Record<Locale, Record<string, string>>);
+      const [transData, settData] = await Promise.all([
+        fetchTranslations(),
+        fetchSettings()
+      ]);
+      setAllTranslations(transData as Record<Locale, Record<string, string>>);
+      setSettings(settData);
+
+      // Determine initial locale
+      const savedLocale = localStorage.getItem('el-bulk-locale');
+      if (savedLocale) {
+        setLocaleState(savedLocale);
+      } else if (settData.default_locale) {
+        setLocaleState(settData.default_locale);
+      } else {
+        // Try browser language as final fallback
+        const browserLang = navigator.language.split('-')[0];
+        if (['en', 'es'].includes(browserLang)) {
+          setLocaleState(browserLang);
+        }
+      }
     } catch (error) {
-      console.error('Failed to fetch translations:', error);
+      console.error('Failed to fetch initial i18n data:', error);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    loadTranslations();
-    
-    // Load preferred locale from localStorage
-    const savedLocale = localStorage.getItem('el-bulk-locale');
-    if (savedLocale) {
-      setLocaleState(savedLocale);
-    } else {
-      // Try browser language
-      const browserLang = navigator.language.split('-')[0];
-      if (['en', 'es'].includes(browserLang)) {
-        setLocaleState(browserLang);
-      }
-    }
-  }, [loadTranslations]);
+    loadInitialData();
+  }, [loadInitialData]);
 
   useEffect(() => {
     if (allTranslations[locale]) {
@@ -89,7 +97,14 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [translations, locale, allTranslations]);
 
   return (
-    <LanguageContext.Provider value={{ locale, setLocale, t, isLoading, availableLocales }}>
+    <LanguageContext.Provider value={{ 
+      locale, 
+      setLocale, 
+      t, 
+      isLoading, 
+      availableLocales,
+      hideSelector: settings?.hide_language_selector || false
+    }}>
       {children}
     </LanguageContext.Provider>
   );

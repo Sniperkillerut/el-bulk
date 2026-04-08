@@ -112,6 +112,9 @@ func main() {
 		themeHandler := handlers.NewThemeHandler(database)
 		r.Get("/themes", themeHandler.List)
 		
+		r.Get("/api/settings", settingsHandler.PublicGet)
+		r.Get("/api/translations", translationHandler.List)
+		
 		r.Get("/translations", translationHandler.List)
 
 		r.Get("/bounties", bountyHandler.List)
@@ -200,6 +203,7 @@ func main() {
 				r.Get("/translations", translationHandler.AdminList)
 				r.Put("/translations", translationHandler.Update)
 				r.Delete("/translations/{key}", translationHandler.Delete)
+				r.Delete("/translations/locales/{locale}", translationHandler.DeleteLocale)
 
 				// External card lookup (Scryfall + Pokémon TCG API)
 				r.Get("/lookup/mtg", lookupHandler.MTG)

@@ -17,7 +17,7 @@ export default function Navbar() {
   const { totalItems, openCart, isOpen, closeCart } = useCart();
   const { user, loading: userLoading, logout } = useUser();
   const { foilEffectsEnabled, toggleFoilEffects } = useUI();
-  const { locale, setLocale, t, availableLocales } = useLanguage();
+  const { locale, setLocale, t, availableLocales, hideSelector } = useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [tcgs, setTcgs] = useState<TCG[]>([]);
 
@@ -155,30 +155,32 @@ export default function Navbar() {
               <span className="text-[1.1rem]">✨</span>
             </button>
 
-            <Dropdown
-              align="end"
-              trigger={
-                <button
-                  className="p-2 rounded-lg transition-all flex items-center justify-center bg-bg-surface border border-border-main cursor-pointer"
-                  title={t('pages.nav.tooltips.change_lang', 'Change language')}
-                >
-                  <span className="text-xs font-bold uppercase">{locale}</span>
-                </button>
-              }
-            >
-              <div className="p-1 w-32">
-                {availableLocales.map(loc => (
+            {!hideSelector && (
+              <Dropdown
+                align="end"
+                trigger={
                   <button
-                    key={loc}
-                    onClick={() => setLocale(loc)}
-                    className={`block w-full text-left text-xs px-3 py-2 rounded transition-colors bg-transparent border-none cursor-pointer ${locale === loc ? 'text-accent-primary font-bold bg-accent-primary/10' : 'text-text-main hover:bg-bg-page'
-                      }`}
+                    className="p-2 rounded-lg transition-all flex items-center justify-center bg-bg-surface border border-border-main cursor-pointer"
+                    title={t('pages.nav.tooltips.change_lang', 'Change language')}
                   >
-                    {loc === 'en' ? '🇺🇸 English' : loc === 'es' ? '🇪🇸 Español' : loc.toUpperCase()}
+                    <span className="text-xs font-bold uppercase">{locale}</span>
                   </button>
-                ))}
-              </div>
-            </Dropdown>
+                }
+              >
+                <div className="p-1 w-32">
+                  {availableLocales.map(loc => (
+                    <button
+                      key={loc}
+                      onClick={() => setLocale(loc)}
+                      className={`block w-full text-left text-xs px-3 py-2 rounded transition-colors bg-transparent border-none cursor-pointer ${locale === loc ? 'text-accent-primary font-bold bg-accent-primary/10' : 'text-text-main hover:bg-bg-page'
+                        }`}
+                    >
+                      {loc === 'en' ? '🇺🇸 English' : loc === 'es' ? '🇪🇸 Español' : loc.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </Dropdown>
+            )}
 
             <ThemeSelector />
 

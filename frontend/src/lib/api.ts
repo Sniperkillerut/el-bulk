@@ -95,6 +95,10 @@ export async function bulkSearchDeck(list: string): Promise<import('./types').Bu
   });
 }
 
+export async function fetchSettings(): Promise<import('./types').Settings> {
+  return apiFetch<import('./types').Settings>('/api/settings', { cache: 'no-store' });
+}
+
 export async function fetchProduct(id: string): Promise<Product> {
   return apiFetch<Product>(`/api/products/${id}`, { cache: 'default' });
 }
@@ -718,6 +722,12 @@ export async function adminUpdateTranslation(data: { key: string; locale: string
 export async function adminDeleteTranslation(key: string, locale: string): Promise<void> {
   return apiFetch<void>(`/api/admin/translations/${key}`, {
     params: { locale },
+    method: 'DELETE'
+  });
+}
+
+export async function adminDeleteLocale(locale: string): Promise<void> {
+  return apiFetch<void>(`/api/admin/translations/locales/${locale}`, {
     method: 'DELETE'
   });
 }

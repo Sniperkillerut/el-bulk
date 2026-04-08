@@ -90,6 +90,8 @@ export interface Settings {
   hot_sales_threshold: number;
   hot_days_threshold: number;
   new_days_threshold: number;
+  default_locale?: string;
+  hide_language_selector?: boolean;
 }
 
 export interface FacetItem {

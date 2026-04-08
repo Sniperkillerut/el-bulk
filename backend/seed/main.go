@@ -1884,6 +1884,8 @@ func seedTranslations(db *sqlx.DB) {
 		{"components.client_request_modal.form.contact_label", "en", "Contact Info *"},
 		{"components.client_request_modal.form.contact_label", "es", "Información de Contacto *"},
 		{"components.client_request_modal.form.contact_placeholder", "en", "Phone or Instagram"},
+		{"components.language_selector.names", "en", "🇺🇸 English"},
+		{"components.language_selector.names", "es", "🇪🇸 Español"},
 		{"components.client_request_modal.form.contact_placeholder", "es", "Teléfono o Instagram"},
 		{"components.client_request_modal.form.card_label", "en", "Card Name *"},
 		{"components.client_request_modal.form.card_label", "es", "Nombre de la Carta *"},

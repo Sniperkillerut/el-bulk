@@ -90,3 +90,9 @@ func ListAllTranslationKeys(db *sqlx.DB) ([]Translation, error) {
 	}
 	return translations, nil
 }
+
+func DeleteLocale(db *sqlx.DB, locale string) error {
+	query := `DELETE FROM translation WHERE locale = $1`
+	_, err := db.Exec(query, locale)
+	return err
+}
