@@ -1,25 +1,23 @@
 package handlers
 
 import (
-"github.com/el-bulk/backend/utils/render"
 	"encoding/json"
 	"net/http"
 	"strconv"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/jmoiron/sqlx"
-
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/service"
 	"github.com/el-bulk/backend/utils/logger"
-	"github.com/el-bulk/backend/utils/mailer"
+	"github.com/el-bulk/backend/utils/render"
+	"github.com/go-chi/chi/v5"
 )
 
 type NoticeHandler struct {
-	DB *sqlx.DB
+	Service *service.NoticeService
 }
 
-func NewNoticeHandler(db *sqlx.DB) *NoticeHandler {
-	return &NoticeHandler{DB: db}
+func NewNoticeHandler(s *service.NoticeService) *NoticeHandler {
+	return &NoticeHandler{Service: s}
 }
 
 // GET /api/notices - Public list
@@ -31,23 +29,11 @@ func (h *NoticeHandler) List(w http.ResponseWriter, r *http.Request) {
 		limit, _ = strconv.Atoi(limitStr)
 	}
 
-	var notices []models.Notice
-	var err error
-
-	if limit > 0 {
-		err = h.DB.Select(&notices, "SELECT * FROM notice WHERE is_published = true ORDER BY created_at DESC LIMIT $1", limit)
-	} else {
-		err = h.DB.Select(&notices, "SELECT * FROM notice WHERE is_published = true ORDER BY created_at DESC")
-	}
-
+	notices, err := h.Service.List(true, limit)
 	if err != nil {
 		logger.Error("Failed to list notices: %v", err)
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
-	}
-
-	if notices == nil {
-		notices = []models.Notice{}
 	}
 
 	render.Success(w, notices)
@@ -57,8 +43,7 @@ func (h *NoticeHandler) List(w http.ResponseWriter, r *http.Request) {
 func (h *NoticeHandler) GetBySlug(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
 
-	var notice models.Notice
-	err := h.DB.Get(&notice, "SELECT * FROM notice WHERE slug = $1 AND is_published = true", slug)
+	notice, err := h.Service.GetBySlug(slug)
 	if err != nil {
 		render.Error(w, "Notice not found", http.StatusNotFound)
 		return
@@ -67,24 +52,19 @@ func (h *NoticeHandler) GetBySlug(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, notice)
 }
 
-// GET /api/admin/notices - Admin list
+// GET /api/admin/notices
 func (h *NoticeHandler) AdminList(w http.ResponseWriter, r *http.Request) {
-	var notices []models.Notice
-	err := h.DB.Select(&notices, "SELECT * FROM notice ORDER BY created_at DESC")
+	// Admin wants all notices, no limit
+	notices, err := h.Service.List(false, 0)
 	if err != nil {
-		logger.Error("Failed to list admin notices: %v", err)
+		logger.Error("Error listing notices: %v", err)
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
-
-	if notices == nil {
-		notices = []models.Notice{}
-	}
-
 	render.Success(w, notices)
 }
 
-// POST /api/admin/notices - Create
+// POST /api/admin/notices
 func (h *NoticeHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var input models.NoticeInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -92,35 +72,28 @@ func (h *NoticeHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if input.Title == "" || input.Slug == "" || input.ContentHTML == "" {
-		render.Error(w, "Title, slug, and content are required", http.StatusBadRequest)
+	if input.Title == "" || input.ContentHTML == "" {
+		render.Error(w, "Title and ContentHTML are required", http.StatusBadRequest)
 		return
 	}
 
-	var notice models.Notice
-	query := `
-		INSERT INTO notice (title, slug, content_html, featured_image_url, is_published)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING *
-	`
-	err := h.DB.Get(&notice, query, input.Title, input.Slug, input.ContentHTML, input.FeaturedImageURL, input.IsPublished)
+	res, err := h.Service.Create(input)
 	if err != nil {
-		logger.Error("Failed to create notice: %v", err)
-		render.Error(w, "Failed to create notice (likely duplicate slug)", http.StatusInternalServerError)
+		logger.Error("Error creating notice: %v", err)
+		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
 
-	// Trigger newsletter broadcast if published
-	if notice.IsPublished {
-		go mailer.BroadcastNotice(h.DB, notice)
-	}
-
-	render.Success(w, notice)
+	render.Success(w, res)
 }
 
-// PUT /api/admin/notices/{id} - Update
+// PUT /api/admin/notices/{id}
 func (h *NoticeHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	if id == "" {
+		render.Error(w, "ID is required", http.StatusBadRequest)
+		return
+	}
 
 	var input models.NoticeInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -128,38 +101,27 @@ func (h *NoticeHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var notice models.Notice
-	query := `
-		UPDATE notice 
-		SET title = $1, slug = $2, content_html = $3, featured_image_url = $4, is_published = $5, updated_at = NOW()
-		WHERE id = $6
-		RETURNING *
-	`
-	err := h.DB.Get(&notice, query, input.Title, input.Slug, input.ContentHTML, input.FeaturedImageURL, input.IsPublished, id)
+	res, err := h.Service.Update(id, input)
 	if err != nil {
-		logger.Error("Failed to update notice %s: %v", id, err)
-		render.Error(w, "Failed to update notice", http.StatusInternalServerError)
+		logger.Error("Error updating notice %s: %v", id, err)
+		render.Error(w, "Notice not found or database error", http.StatusInternalServerError)
 		return
 	}
 
-	// Trigger newsletter broadcast if status changed to published
-	// We could check the previous state, but BroadcastNotice handles duplicates or we can just send it
-	// For simplicity, if it's currently published, we can trigger it (optionally checking if it was NOT published before)
-	if notice.IsPublished {
-		go mailer.BroadcastNotice(h.DB, notice)
-	}
-
-	render.Success(w, notice)
+	render.Success(w, res)
 }
 
-// DELETE /api/admin/notices/{id} - Delete
+// DELETE /api/admin/notices/{id}
 func (h *NoticeHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	if id == "" {
+		render.Error(w, "ID is required", http.StatusBadRequest)
+		return
+	}
 
-	_, err := h.DB.Exec("DELETE FROM notice WHERE id = $1", id)
-	if err != nil {
-		logger.Error("Failed to delete notice %s: %v", id, err)
-		render.Error(w, "Failed to delete notice", http.StatusInternalServerError)
+	if err := h.Service.Delete(id); err != nil {
+		logger.Error("Error deleting notice %s: %v", id, err)
+		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
 

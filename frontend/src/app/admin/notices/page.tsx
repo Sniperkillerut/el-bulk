@@ -4,28 +4,26 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Notice } from '@/lib/types';
 import { adminFetchNotices, adminDeleteNotice } from '@/lib/api';
-import { useAdmin } from '@/hooks/useAdmin';
 import AdminHeader from '@/components/admin/AdminHeader';
 
 import { useLanguage } from '@/context/LanguageContext';
 
 export default function AdminNoticesPage() {
-  const { token: adminToken } = useAdmin();
   const { t, locale } = useLanguage();
   const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    adminFetchNotices(adminToken || '')
+    adminFetchNotices()
       .then(setNotices)
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [adminToken]);
+  }, []);
 
   const handleDelete = async (id: string) => {
-    if (!adminToken || !confirm(t('pages.admin.notices.confirm_delete', 'Are you sure you want to delete this notice?'))) return;
+    if (!confirm(t('pages.admin.notices.confirm_delete', 'Are you sure you want to delete this notice?'))) return;
     try {
-      await adminDeleteNotice(adminToken, id);
+      await adminDeleteNotice(id);
       setNotices(notices.filter(n => n.id !== id));
     } catch {
       alert(t('pages.admin.notices.error_delete', 'Failed to delete notice'));

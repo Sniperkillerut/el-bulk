@@ -25,7 +25,6 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/bulk-data" {
 			w.WriteHeader(http.StatusOK)
-			// Construct a valid scryfallBulkMeta JSON
 			fmt.Fprintf(w, `{
 				"data": [
 					{
@@ -39,7 +38,6 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 		}
 		if r.URL.Path == "/download/default_cards.json" {
 			w.WriteHeader(http.StatusOK)
-			// Stream a JSON array of cards
 			fmt.Fprintf(w, `[
 				{
 					"name": "Black Lotus",
@@ -66,22 +64,23 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 	}))
 	defer server.Close()
 
-	// Override ScryfallBase
 	oldBase := external.ScryfallBase
 	external.ScryfallBase = server.URL
 	defer func() { external.ScryfallBase = oldBase }()
 
 	t.Run("Success", func(t *testing.T) {
-		// Mock initial query for products needing refresh
 		rows := sqlmock.NewRows([]string{"id", "tcg", "name", "set_code", "foil_treatment", "price_source"}).
 			AddRow("550e8400-e29b-41d4-a716-446655440000", "mtg", "Black Lotus", "lea", "non_foil", "tcgplayer").
 			AddRow("550e8400-e29b-41d4-a716-446655440001", "mtg", "Mox Pearl", "lea", "non_foil", "tcgplayer")
 		mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM product").
 			WillReturnRows(rows)
 
-		// Mock bulk update (chunked)
-		mock.ExpectExec("UPDATE product AS p SET price_reference = v.price_reference").
-			WithArgs("550e8400-e29b-41d4-a716-446655440000", 50000.0, "550e8400-e29b-41d4-a716-446655440001", 10000.0).
+		// Mock bulk update (chunked) - expectations must match the 7 fields updated per row
+		mock.ExpectExec("UPDATE product AS p SET").
+			WithArgs(
+				"550e8400-e29b-41d4-a716-446655440000", 50000.0, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+				"550e8400-e29b-41d4-a716-446655440001", 10000.0, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+			).
 			WillReturnResult(sqlmock.NewResult(0, 2))
 
 		updated, errs := RunPriceRefresh(sqlxDB)
@@ -110,10 +109,10 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 
 		assert.Equal(t, 0, updated)
 		assert.Equal(t, 1, errs)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
 	t.Run("HTTP Error", func(t *testing.T) {
-		// Mock query success but HTTP fail
 		mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM product").
 			WillReturnRows(sqlmock.NewRows([]string{"id", "tcg", "name", "set_code", "foil_treatment", "price_source"}).AddRow("1", "mtg", "N1", "S1", "non_foil", "tcgplayer"))
 
@@ -124,6 +123,7 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 		updated, errs := RunPriceRefresh(sqlxDB)
 		assert.Equal(t, 0, updated)
 		assert.Equal(t, 1, errs)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
 
@@ -137,8 +137,6 @@ func TestRefreshHandler_Trigger(t *testing.T) {
 
 	h := NewRefreshHandler(sqlxDB)
 
-	// Since RunPriceRefresh calls ScryfallBase, we need to mock it or it will fail
-	// Or we can just mock the empty product list to avoid the network call
 	mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM product").
 		WillReturnRows(sqlmock.NewRows([]string{"id", "tcg", "name", "set_code", "foil_treatment", "price_source"}))
 

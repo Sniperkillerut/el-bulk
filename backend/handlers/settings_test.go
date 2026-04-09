@@ -10,6 +10,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/service"
+	"github.com/el-bulk/backend/store"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )
@@ -20,10 +22,11 @@ func TestSettingsHandler_Get(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &SettingsHandler{DB: sqlxDB}
+	svc := service.NewSettingsService(store.NewSettingsStore(sqlxDB))
+	h := NewSettingsHandler(svc)
 
 	t.Run("Success", func(t *testing.T) {
-		ResetSettingsCache()
+		svc.ResetCache()
 		rows := sqlmock.NewRows([]string{"key", "value"}).
 			AddRow("usd_to_cop_rate", "4500.5").
 			AddRow("contact_email", "test@example.com")
@@ -42,17 +45,14 @@ func TestSettingsHandler_Get(t *testing.T) {
 	})
 
 	t.Run("Defaults on Error", func(t *testing.T) {
-		ResetSettingsCache()
+		svc.ResetCache()
 		mock.ExpectQuery("SELECT key, value FROM setting").WillReturnError(assert.AnError)
 
 		req, _ := http.NewRequest("GET", "/api/admin/settings", nil)
 		rr := httptest.NewRecorder()
 		h.Get(rr, req)
 
-		assert.Equal(t, http.StatusOK, rr.Code) // loadSettings returns defaults on error
-		var res models.Settings
-		json.NewDecoder(rr.Body).Decode(&res)
-		assert.Equal(t, 4200.0, res.USDToCOPRate)
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
 	})
 }
 
@@ -62,10 +62,11 @@ func TestSettingsHandler_Update(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &SettingsHandler{DB: sqlxDB}
+	svc := service.NewSettingsService(store.NewSettingsStore(sqlxDB))
+	h := NewSettingsHandler(svc)
 
 	t.Run("Success", func(t *testing.T) {
-		ResetSettingsCache()
+		svc.ResetCache()
 		rate := 4400.0
 		email := "new@example.com"
 		input := struct {
@@ -92,7 +93,7 @@ func TestSettingsHandler_Update(t *testing.T) {
 	})
 
 	t.Run("Update All Fields", func(t *testing.T) {
-		ResetSettingsCache()
+		svc.ResetCache()
 		usd := 4500.0
 		eur := 4900.0
 		addr := "Addr"

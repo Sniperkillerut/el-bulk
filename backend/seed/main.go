@@ -138,7 +138,7 @@ func seedCategories(db *sqlx.DB) map[string]string {
 }
 
 func seedStorage(db *sqlx.DB) []string {
-	locations := []string{"Showcase A", "Storage Box 1", "Binder Vault"}
+	locations := []string{"Showcase A", "Storage Box 1", "Binder Vault", "pending"}
 	var ids []string
 	for _, loc := range locations {
 		var id string

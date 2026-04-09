@@ -268,5 +268,55 @@ npm run test:coverage
 
 ---
 
+## 🛠️ Backend Refactoring Roadmap (Phased)
+
+To ensure system stability, we are refactoring the backend logic from a monolithic handler-based architecture to a modern **Service/Repository** pattern.
+
+### Phase 1: Foundation & Generic Store 🏗️
+- [x] Implement `BaseStore` with Go generics for standard CRUD (List, Get, Create, Update, Delete).
+- [x] Migrate **Categories** to the new architecture as a Proof of Concept.
+- [x] **Goal**: Reduce boilerplate by 70% in simple CRUD entities.
+
+### Phase 2: Core CRUD Migration ✅
+- [x] Migrate **Themes**, **TCGs**, and **Notices** to use the `BaseStore`.
+- [x] Standardize API response rendering across all migrated entities.
+
+### Phase 3: Product Service & Enrichment ✅
+- [x] Create `ProductStore` (extending BaseStore) and `ProductService`.
+- [x] Centralize "Hot/New" discovery algorithms and pricing logic.
+- [x] Decouple HTTP handlers from complex SQL filtering logic.
+
+### Phase 4: Order Service & Transactions ✅
+- [x] Implement `OrderService` to handle complex transactional state (Payment -> Confirmation -> Stock Adjustment).
+- [x] Move PII encryption/decryption into centralized service middleware or helpers.
+
+### Phase 5: Optimization & Cleanup ✅
+- [x] Performance audit of the new Service layer.
+- [x] Final removal of legacy redundant handler logic.
+- [x] Consolidation of environment variables.
+
+
+---
+
+### Additional dvelopment:
+- [ ] the "restore inventory" modal is allowing to restore more items than the ones that were bought, fix it.
+- [ ] the "restore inventory" modal is not saving what was restored (visually when opening it again), either fix it or block it after correct item restoration.
+- [ ] restore inventory button should only appear if the order was canceled after confirming it. if the order was canceled before confirming it, it should not appear and automatically clear the correct ammount from the pending storage location, also check if the client canceled it and auto-restre stock.
+- [ ] when an order is confirmed its inventory can not be modified anymore, but shipping, pickup and cancel status can be changed.
+- [ ] allow the admin to change payment method on orders and to modify shipping costs.
+- [ ] "ready to pick up", "shipped" and "completed" can only be selected after the order is confirmed.
+- [ ] "Cancelled" should be a status that can be selected at any time, and it should restore the inventory or request the admin to do it with the modal.
+- [ ] when an order is "Completed" it can't be modified anymore.
+- [ ] sometimes "sell us your bulk" modal randomly closes, fix it.
+- [ ] the "ADD WANTED CARD" admin modal is not hidding the hovered card image after selecting a card, fix it.
+- [ ] admin /admin/clients/[id] has an order history scrollbar, add the same functionality to client requests and bounty offer, also marking pending like on the order history one.
+- [ ] on client /profile make the bounty offers, client requests and orders scrollable.
+- [ ] on client orders show shipping as an item in the order items list.
+- [ ] on client orders, when the client cancel an order refresh the orders status to show the newly canceled status.
+- [ ] some combinations of cookies are allowing clients to reach checkout without login in, fix it.
+- [ ] modify accounting so that it takes into consideration "COST BASIS" when making csv reports and show it as outcome or egress, take into consideration product quantity, you can show the creation or modification date as the out data and the order confirmed or completed date as income.
+- [ ] add after the orange pi deployment guide a gcp deployment guide, use the same structure as the orange pi deployment guide, being thorough and detailed.
+
+
 ## ⚖️ License
 MIT License. Created by Sniperkillerut.

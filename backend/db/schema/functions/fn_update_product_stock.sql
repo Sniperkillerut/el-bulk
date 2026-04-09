@@ -12,8 +12,11 @@ BEGIN
   END IF;
 
   UPDATE product 
-  SET stock = GREATEST(0, COALESCE((SELECT sum(quantity) FROM product_storage WHERE product_id = v_pid AND storage_id != v_pending_id), 0) -
-                          COALESCE((SELECT quantity FROM product_storage WHERE product_id = v_pid AND storage_id = v_pending_id), 0))
+  SET stock = COALESCE((
+    SELECT SUM(CASE WHEN storage_id = v_pending_id THEN -quantity ELSE quantity END)
+    FROM product_storage 
+    WHERE product_id = v_pid
+  ), 0)
   WHERE id = v_pid;
 
   IF TG_OP = 'DELETE' THEN

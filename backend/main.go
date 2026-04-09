@@ -14,6 +14,8 @@ import (
 	"github.com/el-bulk/backend/db"
 	"github.com/el-bulk/backend/handlers"
 	"github.com/el-bulk/backend/middleware"
+	"github.com/el-bulk/backend/service"
+	"github.com/el-bulk/backend/store"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/el-bulk/backend/utils/storage"
 	"github.com/joho/godotenv"
@@ -33,19 +35,39 @@ func main() {
 		defer database.Close()
 	}
 
-	productHandler := handlers.NewProductHandler(database)
+	// Initialize Stores
+	categoryStore := store.NewCategoryStore(database)
+	themeStore := store.NewThemeStore(database)
+	tcgStore := store.NewTCGStore(database)
+	noticeStore := store.NewNoticeStore(database)
+	productStore := store.NewProductStore(database)
+	settingsStore := store.NewSettingsStore(database)
+	orderStore := store.NewOrderStore(database)
+	customerStore := store.NewCustomerStore(database)
+
+	// Initialize Services
+	settingsService := service.NewSettingsService(settingsStore)
+	productService := service.NewProductService(productStore, tcgStore, settingsService)
+	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService)
+	categoryService := service.NewCategoryService(categoryStore)
+	tcgService := service.NewTCGService(tcgStore)
+	noticeService := service.NewNoticeService(noticeStore)
+	themeService := service.NewThemeService(themeStore)
+
+	productHandler := handlers.NewProductHandler(productService, database)
 	adminHandler := handlers.NewAdminHandler(database)
-	categoriesHandler := handlers.NewCategoriesHandler(database)
+	categoriesHandler := handlers.NewCategoriesHandler(categoryService)
 	lookupHandler := handlers.NewLookupHandler()
-	settingsHandler := handlers.NewSettingsHandler(database)
+	settingsHandler := handlers.NewSettingsHandler(settingsService)
 	refreshHandler := handlers.NewRefreshHandler(database)
-	orderHandler := handlers.NewOrderHandler(database)
-	tcgHandler := handlers.NewTCGHandler(database)
+	orderHandler := handlers.NewOrderHandler(orderService)
+	tcgHandler := handlers.NewTCGHandler(tcgService)
 	bountyHandler := handlers.NewBountyHandler(database)
 	healthHandler := handlers.NewHealthHandler(database)
-	accountingHandler := handlers.NewAccountingHandler(database)
+	accountingHandler := handlers.NewAccountingHandler(database, settingsService)
 	translationHandler := handlers.NewTranslationHandler(database)
-	
+	themeHandler := handlers.NewThemeHandler(themeService)
+	noticeHandler := handlers.NewNoticeHandler(noticeService)
 	// Initialize Storage Backend
 	var storageDriver storage.StorageDriver
 	storageType := os.Getenv("STORAGE_TYPE")
@@ -109,7 +131,6 @@ func main() {
 		r.Get("/categories", categoriesHandler.List)
 		r.Get("/settings", settingsHandler.Get)
 		
-		themeHandler := handlers.NewThemeHandler(database)
 		r.Get("/themes", themeHandler.List)
 		
 		r.Get("/api/settings", settingsHandler.PublicGet)
@@ -162,7 +183,6 @@ func main() {
 				r.Post("/upload", uploadHandler.Upload)
 
 				// Themes CRUD
-				themeHandler := handlers.NewThemeHandler(database)
 				r.Get("/themes", themeHandler.List)
 				r.Post("/themes", themeHandler.Create)
 				r.Put("/themes/{id}", themeHandler.Update)
@@ -238,7 +258,6 @@ func main() {
 				r.Get("/stats", healthHandler.GetStats)
 
 				// Notices (Blog/News) CRUD
-				noticeHandler := handlers.NewNoticeHandler(database)
 				r.Get("/notices", noticeHandler.AdminList)
 				r.Post("/notices", noticeHandler.Create)
 				r.Put("/notices/{id}", noticeHandler.Update)
@@ -259,7 +278,6 @@ func main() {
 		})
 
 		// Public Notices
-		noticeHandler := handlers.NewNoticeHandler(database)
 		r.Get("/notices", noticeHandler.List)
 		r.Get("/notices/{slug}", noticeHandler.GetBySlug)
 	})

@@ -243,7 +243,7 @@ type Settings struct {
 type TCG struct {
 	ID        string    `db:"id"         json:"id"`
 	Name      string    `db:"name"       json:"name"`
-	ImageURL  string    `db:"image_url"  json:"image_url"`
+	ImageURL  *string   `db:"image_url"  json:"image_url"`
 	IsActive  bool      `db:"is_active"  json:"is_active"`
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
 	ItemCount int       `db:"item_count" json:"item_count"`
@@ -433,6 +433,22 @@ type StockDecrement struct {
 	Quantity   int    `json:"quantity"`
 }
 
+type UpdateOrderInput struct {
+	Status         *string `json:"status"`
+	TrackingNumber *string `json:"tracking_number"`
+	TrackingURL    *string `json:"tracking_url"`
+	Items          []struct {
+		ID       string `json:"id"`
+		Quantity int    `json:"quantity"`
+	} `json:"items"`
+	AddedItems []struct {
+		ProductID    string  `json:"product_id"`
+		Quantity     int     `json:"quantity"`
+		UnitPriceCOP float64 `json:"unit_price_cop"`
+	} `json:"added_items"`
+	DeletedIDs []string `json:"deleted_ids"`
+}
+
 type OrderListResponse struct {
 	Orders   []OrderWithCustomer `json:"orders"`
 	Total    int                 `json:"total"`
@@ -446,6 +462,11 @@ type OrderWithCustomer struct {
 	CustomerPhone string `db:"customer_phone" json:"customer_phone"`
 	CustomerEmail string `db:"customer_email" json:"customer_email"`
 	ItemCount     int    `db:"item_count"    json:"item_count"`
+}
+
+type OrderWithItemCount struct {
+	Order
+	ItemCount int `db:"item_count" json:"item_count"`
 }
 
 func (c *CustomCategory) TableName() string { return "custom_category" }

@@ -11,6 +11,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/service"
+	"github.com/el-bulk/backend/store"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
@@ -22,12 +24,18 @@ func TestProductHandler_BulkCreate_Errors(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &ProductHandler{DB: sqlxDB}
+	settingsStore := store.NewSettingsStore(sqlxDB)
+	settingsService := service.NewSettingsService(settingsStore)
+	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService)
+	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
 	t.Run("SP Error", func(t *testing.T) {
 		inputs := []models.ProductInput{{Name: "P1", TCG: "mtg", Category: "singles"}}
-		body, _ := json.Marshal(inputs)
-		mock.ExpectQuery("SELECT product_id FROM fn_bulk_upsert_product").WillReturnError(fmt.Errorf("db error"))
+		reqBody := struct {
+			Products []models.ProductInput `json:"products"`
+		}{Products: inputs}
+		body, _ := json.Marshal(reqBody)
+		mock.ExpectQuery("SELECT upserted_id FROM fn_bulk_upsert_product").WillReturnError(fmt.Errorf("db error"))
 
 		req, _ := http.NewRequest("POST", "/api/admin/products/bulk", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
@@ -42,7 +50,10 @@ func TestProductHandler_UpdateStorage_Errors(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &ProductHandler{DB: sqlxDB}
+	settingsStore := store.NewSettingsStore(sqlxDB)
+	settingsService := service.NewSettingsService(settingsStore)
+	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService)
+	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
 	t.Run("Tx Begin Error", func(t *testing.T) {
 		updates := []models.ProductStorage{{StorageID: "loc1", Quantity: 5}}
@@ -79,7 +90,10 @@ func TestProductHandler_Delete_Errors(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &ProductHandler{DB: sqlxDB}
+	settingsStore := store.NewSettingsStore(sqlxDB)
+	settingsService := service.NewSettingsService(settingsStore)
+	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService)
+	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
 	t.Run("DB Error", func(t *testing.T) {
 		mock.ExpectExec("DELETE FROM product").WillReturnError(fmt.Errorf("db error"))
@@ -98,7 +112,10 @@ func TestProductHandler_ListTCGs(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &ProductHandler{DB: sqlxDB}
+	settingsStore := store.NewSettingsStore(sqlxDB)
+	settingsService := service.NewSettingsService(settingsStore)
+	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService)
+	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id", "name", "is_active", "created_at"}).
@@ -126,11 +143,17 @@ func TestProductHandler_BulkCreate_Extra(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &ProductHandler{DB: sqlxDB}
+	settingsStore := store.NewSettingsStore(sqlxDB)
+	settingsService := service.NewSettingsService(settingsStore)
+	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService)
+	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
 	t.Run("Skip Invalid", func(t *testing.T) {
 		inputs := []models.ProductInput{{Name: ""}, {Name: "P1", TCG: "mtg", Category: "singles"}}
-		body, _ := json.Marshal(inputs)
+		reqBody := struct {
+			Products []models.ProductInput `json:"products"`
+		}{Products: inputs}
+		body, _ := json.Marshal(reqBody)
 		
 		mock.ExpectQuery("SELECT upserted_id FROM fn_bulk_upsert_product").
 			WithArgs(sqlmock.AnyArg()).
@@ -144,7 +167,10 @@ func TestProductHandler_BulkCreate_Extra(t *testing.T) {
 
 	t.Run("Insert Error", func(t *testing.T) {
 		inputs := []models.ProductInput{{Name: "P1", TCG: "mtg", Category: "singles"}}
-		body, _ := json.Marshal(inputs)
+		reqBody := struct {
+			Products []models.ProductInput `json:"products"`
+		}{Products: inputs}
+		body, _ := json.Marshal(reqBody)
 		
 		mock.ExpectQuery("SELECT upserted_id FROM fn_bulk_upsert_product").WillReturnError(fmt.Errorf("db error"))
 

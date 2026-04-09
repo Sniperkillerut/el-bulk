@@ -70,8 +70,8 @@ export default function OrdersPanel({ initialOrderId }: Props) {
     // No longer setting loading synchronously at start to avoid cascaded renders
     try {
       const res = await adminFetchOrders({ status: statusFilter, search: debouncedSearch, page, page_size: pageSize });
-      setOrders(res.orders);
-      setTotal(res.total);
+      setOrders(res.orders || []);
+      setTotal(res.total || 0);
     } catch (err) {
       console.error('Failed to load orders:', err);
     }

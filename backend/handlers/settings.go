@@ -2,138 +2,29 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
-	"github.com/el-bulk/backend/utils/render"
-
-	"sync"
-	"time"
-
-	"github.com/jmoiron/sqlx"
-
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/service"
+	"github.com/el-bulk/backend/utils/logger"
+	"github.com/el-bulk/backend/utils/render"
 )
-
-var (
-	settingsCache models.Settings
-	cacheTime     time.Time
-	cacheMutex    sync.RWMutex
-)
-
-const cacheDuration = 60 * time.Second
 
 // SettingsHandler manages admin-configurable global setting.
 type SettingsHandler struct {
-	DB *sqlx.DB
+	Service *service.SettingsService
 }
 
-func NewSettingsHandler(db *sqlx.DB) *SettingsHandler {
-	return &SettingsHandler{DB: db}
-}
-
-// loadSettings reads the current exchange rates from the setting table with a 60s cache.
-func loadSettings(db *sqlx.DB) (models.Settings, error) {
-	cacheMutex.RLock()
-	if time.Since(cacheTime) < cacheDuration {
-		s := settingsCache
-		cacheMutex.RUnlock()
-		return s, nil
-	}
-	cacheMutex.RUnlock()
-
-	s := models.Settings{
-		USDToCOPRate:       4200,
-		EURToCOPRate:       4600,
-		ContactAddress:     "Cra. 15 # 76-54, Local 201, Centro Comercial Unilago, Bogotá",
-		ContactPhone:       "+57 300 000 0000",
-		ContactEmail:       "contact@el-bulk.co",
-		ContactInstagram:   "el-bulk",
-		ContactHours:       "Mon - Sat: 11:00 AM - 7:00 PM",
-		FlatShippingFeeCOP: 20000,
-		HotSalesThreshold:  3,
-		HotDaysThreshold:   7,
-		NewDaysThreshold:   10,
-		DefaultLocale:      "en",
-		HideLanguageSelector: false,
-	}
-
-	if db == nil {
-		fmt.Println("⚠️ Database is offline, providing defaults.")
-		return s, nil
-	}
-
-	rows, err := db.Query("SELECT key, value FROM setting")
-	if err != nil {
-		fmt.Printf("⚠️ Setting table error: %v (using defaults)\n", err)
-		return s, nil // Return defaults instead of error to prevent 500
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var key, val string
-		if err := rows.Scan(&key, &val); err != nil {
-			continue
-		}
-		switch key {
-		case "usd_to_cop_rate":
-			if f, err := strconv.ParseFloat(val, 64); err == nil {
-				s.USDToCOPRate = f
-			}
-		case "eur_to_cop_rate":
-			if f, err := strconv.ParseFloat(val, 64); err == nil {
-				s.EURToCOPRate = f
-			}
-		case "contact_address":
-			s.ContactAddress = val
-		case "contact_phone":
-			s.ContactPhone = val
-		case "contact_email":
-			s.ContactEmail = val
-		case "contact_instagram":
-			s.ContactInstagram = val
-		case "contact_hours":
-			s.ContactHours = val
-		case "last_set_sync":
-			s.LastSetSync = val
-		case "default_theme_id":
-			s.DefaultThemeID = val
-		case "flat_shipping_fee_cop":
-			if f, err := strconv.ParseFloat(val, 64); err == nil {
-				s.FlatShippingFeeCOP = f
-			}
-		case "hot_sales_threshold":
-			if i, err := strconv.Atoi(val); err == nil {
-				s.HotSalesThreshold = i
-			}
-		case "hot_days_threshold":
-			if i, err := strconv.Atoi(val); err == nil {
-				s.HotDaysThreshold = i
-			}
-		case "new_threshold_days":
-			if i, err := strconv.Atoi(val); err == nil {
-				s.NewDaysThreshold = i
-			}
-		case "default_locale":
-			s.DefaultLocale = val
-		case "hide_language_selector":
-			s.HideLanguageSelector = val == "true"
-		}
-	}
-
-	cacheMutex.Lock()
-	settingsCache = s
-	cacheTime = time.Now()
-	cacheMutex.Unlock()
-
-	return s, rows.Err()
+func NewSettingsHandler(s *service.SettingsService) *SettingsHandler {
+	return &SettingsHandler{Service: s}
 }
 
 // GET /api/admin/settings
 func (h *SettingsHandler) Get(w http.ResponseWriter, r *http.Request) {
-	s, err := loadSettings(h.DB)
+	s, err := h.Service.GetSettings()
 	if err != nil {
-		fmt.Printf("Settings error: %v\n", err)
+		logger.Error("Settings error: %v", err)
 		render.Error(w, "failed to load settings: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -142,7 +33,7 @@ func (h *SettingsHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 // GET /api/settings (Public)
 func (h *SettingsHandler) PublicGet(w http.ResponseWriter, r *http.Request) {
-	s, err := loadSettings(h.DB)
+	s, err := h.Service.GetSettings()
 	if err != nil {
 		// On public API, just return defaults silently or empty
 		render.Success(w, models.Settings{
@@ -155,104 +46,109 @@ func (h *SettingsHandler) PublicGet(w http.ResponseWriter, r *http.Request) {
 }
 
 // PUT /api/admin/settings
-// Body: { "usd_to_cop_rate": 4350.0, "eur_to_cop_rate": 4750.0 }
-// Omit a field to leave it unchanged.
 func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		USDToCOPRate       *float64 `json:"usd_to_cop_rate"`
-		EURToCOPRate       *float64 `json:"eur_to_cop_rate"`
-		ContactAddress     *string  `json:"contact_address"`
-		ContactPhone       *string  `json:"contact_phone"`
-		ContactEmail       *string  `json:"contact_email"`
-		ContactInstagram   *string  `json:"contact_instagram"`
-		ContactHours       *string  `json:"contact_hours"`
-		FlatShippingFeeCOP *float64 `json:"flat_shipping_fee_cop"`
-		HotSalesThreshold  *int     `json:"hot_sales_threshold"`
-		HotDaysThreshold   *int     `json:"hot_days_threshold"`
-		NewDaysThreshold   *int     `json:"new_days_threshold"`
-		DefaultLocale      *string  `json:"default_locale"`
-		HideLanguageSelector *bool  `json:"hide_language_selector"`
-		DefaultThemeID     *string  `json:"default_theme_id"`
+		USDToCOPRate         *float64 `json:"usd_to_cop_rate"`
+		EURToCOPRate         *float64 `json:"eur_to_cop_rate"`
+		ContactAddress       *string  `json:"contact_address"`
+		ContactPhone         *string  `json:"contact_phone"`
+		ContactEmail         *string  `json:"contact_email"`
+		ContactInstagram     *string  `json:"contact_instagram"`
+		ContactHours         *string  `json:"contact_hours"`
+		FlatShippingFeeCOP   *float64 `json:"flat_shipping_fee_cop"`
+		HotSalesThreshold    *int     `json:"hot_sales_threshold"`
+		HotDaysThreshold     *int     `json:"hot_days_threshold"`
+		NewDaysThreshold     *int     `json:"new_days_threshold"`
+		DefaultLocale        *string  `json:"default_locale"`
+		HideLanguageSelector *bool    `json:"hide_language_selector"`
+		DefaultThemeID       *string  `json:"default_theme_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		render.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	upsert := func(key, val string) error {
-		_, err := h.DB.Exec("INSERT INTO setting(key,value) VALUES($1,$2) ON CONFLICT(key) DO UPDATE SET value=$2", key, val)
-		return err
-	}
-
 	if input.USDToCOPRate != nil {
-		if err := upsert("usd_to_cop_rate", strconv.FormatFloat(*input.USDToCOPRate, 'f', 4, 64)); err != nil {
-			render.Error(w, "failed to update USD rate", http.StatusInternalServerError)
+		if err := h.Service.Upsert("usd_to_cop_rate", strconv.FormatFloat(*input.USDToCOPRate, 'f', 4, 64)); err != nil {
+			logger.Error("Failed to update usd_to_cop_rate: %v", err)
+			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.EURToCOPRate != nil {
-		if err := upsert("eur_to_cop_rate", strconv.FormatFloat(*input.EURToCOPRate, 'f', 4, 64)); err != nil {
-			render.Error(w, "failed to update EUR rate", http.StatusInternalServerError)
+		if err := h.Service.Upsert("eur_to_cop_rate", strconv.FormatFloat(*input.EURToCOPRate, 'f', 4, 64)); err != nil {
+			logger.Error("Failed to update eur_to_cop_rate: %v", err)
+			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.ContactAddress != nil {
-		if err := upsert("contact_address", *input.ContactAddress); err != nil {
-			render.Error(w, "failed to update contact_address", http.StatusInternalServerError)
+		if err := h.Service.Upsert("contact_address", *input.ContactAddress); err != nil {
+			logger.Error("Failed to update contact_address: %v", err)
+			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.ContactPhone != nil {
-		if err := upsert("contact_phone", *input.ContactPhone); err != nil {
-			render.Error(w, "failed to update contact_phone", http.StatusInternalServerError)
+		if err := h.Service.Upsert("contact_phone", *input.ContactPhone); err != nil {
+			logger.Error("Failed to update contact_phone: %v", err)
+			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.ContactEmail != nil {
-		if err := upsert("contact_email", *input.ContactEmail); err != nil {
-			render.Error(w, "failed to update contact_email", http.StatusInternalServerError)
+		if err := h.Service.Upsert("contact_email", *input.ContactEmail); err != nil {
+			logger.Error("Failed to update contact_email: %v", err)
+			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.ContactInstagram != nil {
-		if err := upsert("contact_instagram", *input.ContactInstagram); err != nil {
-			render.Error(w, "failed to update contact_instagram", http.StatusInternalServerError)
+		if err := h.Service.Upsert("contact_instagram", *input.ContactInstagram); err != nil {
+			logger.Error("Failed to update contact_instagram: %v", err)
+			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.ContactHours != nil {
-		if err := upsert("contact_hours", *input.ContactHours); err != nil {
-			render.Error(w, "failed to update contact_hours", http.StatusInternalServerError)
+		if err := h.Service.Upsert("contact_hours", *input.ContactHours); err != nil {
+			logger.Error("Failed to update contact_hours: %v", err)
+			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.FlatShippingFeeCOP != nil {
-		if err := upsert("flat_shipping_fee_cop", strconv.FormatFloat(*input.FlatShippingFeeCOP, 'f', 2, 64)); err != nil {
-			render.Error(w, "failed to update flat_shipping_fee_cop", http.StatusInternalServerError)
+		if err := h.Service.Upsert("flat_shipping_fee_cop", strconv.FormatFloat(*input.FlatShippingFeeCOP, 'f', 2, 64)); err != nil {
+			logger.Error("Failed to update flat_shipping_fee_cop: %v", err)
+			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.HotSalesThreshold != nil {
-		if err := upsert("hot_sales_threshold", strconv.Itoa(*input.HotSalesThreshold)); err != nil {
-			render.Error(w, "failed to update hot_sales_threshold", http.StatusInternalServerError)
+		if err := h.Service.Upsert("hot_sales_threshold", strconv.Itoa(*input.HotSalesThreshold)); err != nil {
+			logger.Error("Failed to update hot_sales_threshold: %v", err)
+			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.HotDaysThreshold != nil {
-		if err := upsert("hot_days_threshold", strconv.Itoa(*input.HotDaysThreshold)); err != nil {
-			render.Error(w, "failed to update hot_days_threshold", http.StatusInternalServerError)
+		if err := h.Service.Upsert("hot_days_threshold", strconv.Itoa(*input.HotDaysThreshold)); err != nil {
+			logger.Error("Failed to update hot_days_threshold: %v", err)
+			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.NewDaysThreshold != nil {
-		if err := upsert("new_threshold_days", strconv.Itoa(*input.NewDaysThreshold)); err != nil {
-			render.Error(w, "failed to update new_threshold_days", http.StatusInternalServerError)
+		if err := h.Service.Upsert("new_threshold_days", strconv.Itoa(*input.NewDaysThreshold)); err != nil {
+			logger.Error("Failed to update new_threshold_days: %v", err)
+			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.DefaultLocale != nil {
-		if err := upsert("default_locale", *input.DefaultLocale); err != nil {
-			render.Error(w, "failed to update default_locale", http.StatusInternalServerError)
+		if err := h.Service.Upsert("default_locale", *input.DefaultLocale); err != nil {
+			logger.Error("Failed to update default_locale: %v", err)
+			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
@@ -261,30 +157,26 @@ func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 		if *input.HideLanguageSelector {
 			val = "true"
 		}
-		if err := upsert("hide_language_selector", val); err != nil {
-			render.Error(w, "failed to update hide_language_selector", http.StatusInternalServerError)
+		if err := h.Service.Upsert("hide_language_selector", val); err != nil {
+			logger.Error("Failed to update hide_language_selector: %v", err)
+			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.DefaultThemeID != nil {
-		if err := upsert("default_theme_id", *input.DefaultThemeID); err != nil {
-			render.Error(w, "failed to update default_theme_id", http.StatusInternalServerError)
+		if err := h.Service.Upsert("default_theme_id", *input.DefaultThemeID); err != nil {
+			logger.Error("Failed to update default_theme_id: %v", err)
+			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 
-	// Invalidate cache
-	cacheMutex.Lock()
-	cacheTime = time.Time{}
-	cacheMutex.Unlock()
-
-	s, _ := loadSettings(h.DB)
+	s, err := h.Service.GetSettings()
+	if err != nil {
+		logger.Error("Failed to load settings after update: %v", err)
+		render.Error(w, "Update succeeded but failed to reload", http.StatusInternalServerError)
+		return
+	}
 	render.Success(w, s)
 }
 
-// ResetSettingsCache clears the global settings cache, primarily for testing.
-func ResetSettingsCache() {
-	cacheMutex.Lock()
-	cacheTime = time.Time{}
-	cacheMutex.Unlock()
-}

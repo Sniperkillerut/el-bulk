@@ -3,122 +3,132 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/service"
+	"github.com/el-bulk/backend/store"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
-	"github.com/el-bulk/backend/models"
 )
 
-func TestNoticeHandler_List(t *testing.T) {
-	db, mock, _ := sqlmock.New()
-	sqlxDB := sqlx.NewDb(db, "sqlmock")
-	h := NewNoticeHandler(sqlxDB)
-
-	rows := sqlmock.NewRows([]string{"id", "title", "slug"}).AddRow("n1", "Notice 1", "notice-1")
-	mock.ExpectQuery("SELECT \\* FROM notice WHERE is_published = true").WillReturnRows(rows)
-
-	req := httptest.NewRequest("GET", "/api/notices", nil)
-	rr := httptest.NewRecorder()
-	h.List(rr, req)
-
-	assert.Equal(t, http.StatusOK, rr.Code)
-}
-
-func TestNoticeHandler_GetBySlug(t *testing.T) {
-	db, mock, _ := sqlmock.New()
-	sqlxDB := sqlx.NewDb(db, "sqlmock")
-	h := NewNoticeHandler(sqlxDB)
-
-	mock.ExpectQuery("SELECT \\* FROM notice WHERE slug = \\$1").WithArgs("notice-1").WillReturnRows(sqlmock.NewRows([]string{"id", "title"}).AddRow("n1", "Notice 1"))
-
-	r := chi.NewRouter()
-	r.Get("/api/notices/{slug}", h.GetBySlug)
-	req := httptest.NewRequest("GET", "/api/notices/notice-1", nil)
-	rr := httptest.NewRecorder()
-	r.ServeHTTP(rr, req)
-
-	assert.Equal(t, http.StatusOK, rr.Code)
-}
-
 func TestNoticeHandler_AdminList(t *testing.T) {
-	db, mock, _ := sqlmock.New()
-	sqlxDB := sqlx.NewDb(db, "sqlmock")
-	h := NewNoticeHandler(sqlxDB)
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
 
-	mock.ExpectQuery("SELECT \\* FROM notice").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("n1"))
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	h := NewNoticeHandler(service.NewNoticeService(store.NewNoticeStore(sqlxDB)))
 
-	req := httptest.NewRequest("GET", "/api/admin/notices", nil)
-	rr := httptest.NewRecorder()
-	h.AdminList(rr, req)
+	t.Run("Success", func(t *testing.T) {
+		rows := sqlmock.NewRows([]string{"id", "title", "content_html", "is_published", "created_at"}).
+			AddRow("1", "Test Notice", "Content", true, time.Now())
+		mock.ExpectQuery("(?i)SELECT \\* FROM notice ORDER BY created_at DESC").WillReturnRows(rows)
 
-	assert.Equal(t, http.StatusOK, rr.Code)
+		req, _ := http.NewRequest("GET", "/api/admin/notices", nil)
+		rr := httptest.NewRecorder()
+		h.AdminList(rr, req)
+		assert.Equal(t, http.StatusOK, rr.Code)
+	})
+
+	t.Run("DB Error", func(t *testing.T) {
+		mock.ExpectQuery("(?i)SELECT \\* FROM notice").WillReturnError(fmt.Errorf("db error"))
+		req, _ := http.NewRequest("GET", "/api/admin/notices", nil)
+		rr := httptest.NewRecorder()
+		h.AdminList(rr, req)
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	})
 }
 
 func TestNoticeHandler_Create(t *testing.T) {
-	db, mock, _ := sqlmock.New()
-	sqlxDB := sqlx.NewDb(db, "sqlmock")
-	h := NewNoticeHandler(sqlxDB)
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
 
-	input := models.NoticeInput{
-		Title:       "Test",
-		Slug:        "test",
-		ContentHTML: "<p>Test</p>",
-		IsPublished: false,
-	}
-	body, _ := json.Marshal(input)
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	h := NewNoticeHandler(service.NewNoticeService(store.NewNoticeStore(sqlxDB)))
 
-	mock.ExpectQuery("INSERT INTO notice").WithArgs(input.Title, input.Slug, input.ContentHTML, nil, input.IsPublished).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "title"}).AddRow("n1", "Test"))
+	t.Run("Success", func(t *testing.T) {
+		input := models.NoticeInput{Title: "New Notice", ContentHTML: "Body"}
+		body, _ := json.Marshal(input)
+		mock.ExpectQuery("INSERT INTO notice").WillReturnRows(sqlmock.NewRows([]string{"id", "title"}).AddRow("1", "New Notice"))
 
-	req := httptest.NewRequest("POST", "/api/admin/notices", bytes.NewBuffer(body))
-	rr := httptest.NewRecorder()
-	h.Create(rr, req)
+		req, _ := http.NewRequest("POST", "/api/admin/notices", bytes.NewBuffer(body))
+		rr := httptest.NewRecorder()
+		h.Create(rr, req)
+		assert.Equal(t, http.StatusOK, rr.Code)
+	})
 
-	assert.Equal(t, http.StatusOK, rr.Code)
+	t.Run("Invalid JSON", func(t *testing.T) {
+		req, _ := http.NewRequest("POST", "/api/admin/notices", bytes.NewBuffer([]byte("{invalid}")))
+		rr := httptest.NewRecorder()
+		h.Create(rr, req)
+		assert.Equal(t, http.StatusBadRequest, rr.Code)
+	})
 }
 
 func TestNoticeHandler_Update(t *testing.T) {
-	db, mock, _ := sqlmock.New()
-	sqlxDB := sqlx.NewDb(db, "sqlmock")
-	h := NewNoticeHandler(sqlxDB)
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
 
-	input := models.NoticeInput{
-		Title:       "Updated",
-		Slug:        "updated",
-		ContentHTML: "<p>Updated</p>",
-		IsPublished: false,
-	}
-	body, _ := json.Marshal(input)
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	h := NewNoticeHandler(service.NewNoticeService(store.NewNoticeStore(sqlxDB)))
 
-	mock.ExpectQuery("UPDATE notice").WithArgs(input.Title, input.Slug, input.ContentHTML, nil, input.IsPublished, "n1").
-		WillReturnRows(sqlmock.NewRows([]string{"id", "title"}).AddRow("n1", "Updated"))
+	t.Run("Success", func(t *testing.T) {
+		input := models.NoticeInput{Title: "Updated Notice", ContentHTML: "New Body"}
+		body, _ := json.Marshal(input)
+		mock.ExpectQuery("UPDATE notice").WillReturnRows(sqlmock.NewRows([]string{"id", "title"}).AddRow("1", "Updated Notice"))
 
-	r := chi.NewRouter()
-	r.Put("/api/admin/notices/{id}", h.Update)
-	req := httptest.NewRequest("PUT", "/api/admin/notices/n1", bytes.NewBuffer(body))
-	rr := httptest.NewRecorder()
-	r.ServeHTTP(rr, req)
+		r := chi.NewRouter()
+		r.Put("/api/admin/notices/{id}", h.Update)
+		req, _ := http.NewRequest("PUT", "/api/admin/notices/1", bytes.NewBuffer(body))
+		rr := httptest.NewRecorder()
+		r.ServeHTTP(rr, req)
+		assert.Equal(t, http.StatusOK, rr.Code)
+	})
 
-	assert.Equal(t, http.StatusOK, rr.Code)
+	t.Run("Invalid Body", func(t *testing.T) {
+		r := chi.NewRouter()
+		r.Put("/api/admin/notices/{id}", h.Update)
+		req, _ := http.NewRequest("PUT", "/api/admin/notices/1", bytes.NewBuffer([]byte("{invalid}")))
+		rr := httptest.NewRecorder()
+		r.ServeHTTP(rr, req)
+		assert.Equal(t, http.StatusBadRequest, rr.Code)
+	})
 }
 
 func TestNoticeHandler_Delete(t *testing.T) {
-	db, mock, _ := sqlmock.New()
-	sqlxDB := sqlx.NewDb(db, "sqlmock")
-	h := NewNoticeHandler(sqlxDB)
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
 
-	mock.ExpectExec("DELETE FROM notice").WithArgs("n1").WillReturnResult(sqlmock.NewResult(1, 1))
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	h := NewNoticeHandler(service.NewNoticeService(store.NewNoticeStore(sqlxDB)))
 
-	r := chi.NewRouter()
-	r.Delete("/api/admin/notices/{id}", h.Delete)
-	req := httptest.NewRequest("DELETE", "/api/admin/notices/n1", nil)
-	rr := httptest.NewRecorder()
-	r.ServeHTTP(rr, req)
+	t.Run("Success", func(t *testing.T) {
+		mock.ExpectExec("DELETE FROM notice").WillReturnResult(sqlmock.NewResult(0, 1))
 
-	assert.Equal(t, http.StatusOK, rr.Code)
+		r := chi.NewRouter()
+		r.Delete("/api/admin/notices/{id}", h.Delete)
+		req, _ := http.NewRequest("DELETE", "/api/admin/notices/1", nil)
+		rr := httptest.NewRecorder()
+		r.ServeHTTP(rr, req)
+		assert.Equal(t, http.StatusOK, rr.Code)
+	})
+
+	t.Run("Invalid ID", func(t *testing.T) {
+		r := chi.NewRouter()
+		r.Delete("/api/admin/notices/{id}", h.Delete)
+		req, _ := http.NewRequest("DELETE", "/api/admin/notices/abc", nil)
+		rr := httptest.NewRecorder()
+		r.ServeHTTP(rr, req)
+		assert.Equal(t, http.StatusBadRequest, rr.Code)
+	})
 }

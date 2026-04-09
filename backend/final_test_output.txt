@@ -1,0 +1,567 @@
+=== RUN   TestAdminHandler_Login
+=== RUN   TestAdminHandler_Login/Successful_Login
+=== RUN   TestAdminHandler_Login/User_Not_Found
+=== RUN   TestAdminHandler_Login/Wrong_Password
+=== RUN   TestAdminHandler_Login/Invalid_JSON
+--- PASS: TestAdminHandler_Login (0.17s)
+    --- PASS: TestAdminHandler_Login/Successful_Login (0.06s)
+    --- PASS: TestAdminHandler_Login/User_Not_Found (0.00s)
+    --- PASS: TestAdminHandler_Login/Wrong_Password (0.06s)
+    --- PASS: TestAdminHandler_Login/Invalid_JSON (0.00s)
+=== RUN   TestAdminHandler_Login_MissingSecret
+--- PASS: TestAdminHandler_Login_MissingSecret (0.12s)
+=== RUN   TestBountyHandler_List
+=== RUN   TestBountyHandler_List/Success
+--- PASS: TestBountyHandler_List (0.00s)
+    --- PASS: TestBountyHandler_List/Success (0.00s)
+=== RUN   TestBountyHandler_Create
+=== RUN   TestBountyHandler_Create/Success
+=== RUN   TestBountyHandler_Create/Validation_Error
+--- PASS: TestBountyHandler_Create (0.00s)
+    --- PASS: TestBountyHandler_Create/Success (0.00s)
+    --- PASS: TestBountyHandler_Create/Validation_Error (0.00s)
+=== RUN   TestBountyHandler_Update
+=== RUN   TestBountyHandler_Update/Success
+--- PASS: TestBountyHandler_Update (0.00s)
+    --- PASS: TestBountyHandler_Update/Success (0.00s)
+=== RUN   TestBountyHandler_SubmitOffer
+=== RUN   TestBountyHandler_SubmitOffer/Success
+--- PASS: TestBountyHandler_SubmitOffer (0.00s)
+    --- PASS: TestBountyHandler_SubmitOffer/Success (0.00s)
+=== RUN   TestBountyHandler_CreateRequest
+=== RUN   TestBountyHandler_CreateRequest/Success
+--- PASS: TestBountyHandler_CreateRequest (0.00s)
+    --- PASS: TestBountyHandler_CreateRequest/Success (0.00s)
+=== RUN   TestBountyHandler_ListOffers
+[2026-04-08 17:31:31] [[33mWARN[0m] Decryption failed (returning original value): failed to decode base64: illegal base64 data at input byte 4
+--- PASS: TestBountyHandler_ListOffers (0.00s)
+=== RUN   TestBountyHandler_UpdateOfferStatus
+=== RUN   TestBountyHandler_UpdateOfferStatus/Success
+[2026-04-08 17:31:31] [[33mWARN[0m] Decryption failed (returning original value): failed to decode base64: illegal base64 data at input byte 4
+--- PASS: TestBountyHandler_UpdateOfferStatus (0.00s)
+    --- PASS: TestBountyHandler_UpdateOfferStatus/Success (0.00s)
+=== RUN   TestBountyHandler_ListRequests
+[2026-04-08 17:31:31] [[33mWARN[0m] Decryption failed (returning original value): failed to decode base64: illegal base64 data at input byte 4
+--- PASS: TestBountyHandler_ListRequests (0.00s)
+=== RUN   TestBountyHandler_UpdateRequestStatus
+=== RUN   TestBountyHandler_UpdateRequestStatus/Success
+--- PASS: TestBountyHandler_UpdateRequestStatus (0.00s)
+    --- PASS: TestBountyHandler_UpdateRequestStatus/Success (0.00s)
+=== RUN   TestBountyHandler_Delete
+--- PASS: TestBountyHandler_Delete (0.00s)
+=== RUN   TestCategoriesHandler_List
+=== RUN   TestCategoriesHandler_List/Admin_List
+=== RUN   TestCategoriesHandler_List/Public_List
+--- PASS: TestCategoriesHandler_List (0.00s)
+    --- PASS: TestCategoriesHandler_List/Admin_List (0.00s)
+    --- PASS: TestCategoriesHandler_List/Public_List (0.00s)
+=== RUN   TestCategoriesHandler_Create
+=== RUN   TestCategoriesHandler_Create/Success
+=== RUN   TestCategoriesHandler_Create/DB_Error
+--- PASS: TestCategoriesHandler_Create (0.00s)
+    --- PASS: TestCategoriesHandler_Create/Success (0.00s)
+    --- PASS: TestCategoriesHandler_Create/DB_Error (0.00s)
+=== RUN   TestCategoriesHandler_Update
+=== RUN   TestCategoriesHandler_Update/Success
+    categories_test.go:122: 
+        	Error Trace:	/home/christian/proyects/el-bulk/backend/handlers/categories_test.go:122
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 500
+        	Test:       	TestCategoriesHandler_Update/Success
+=== RUN   TestCategoriesHandler_Update/DB_General_Error
+--- FAIL: TestCategoriesHandler_Update (0.00s)
+    --- FAIL: TestCategoriesHandler_Update/Success (0.00s)
+    --- PASS: TestCategoriesHandler_Update/DB_General_Error (0.00s)
+=== RUN   TestCategoriesHandler_Delete
+=== RUN   TestCategoriesHandler_Delete/Success
+=== RUN   TestCategoriesHandler_Delete/Error
+--- PASS: TestCategoriesHandler_Delete (0.00s)
+    --- PASS: TestCategoriesHandler_Delete/Success (0.00s)
+    --- PASS: TestCategoriesHandler_Delete/Error (0.00s)
+=== RUN   TestConstructors
+--- PASS: TestConstructors (0.00s)
+=== RUN   TestCustomerAdminHandler_ListCustomers
+--- PASS: TestCustomerAdminHandler_ListCustomers (0.00s)
+=== RUN   TestCustomerAdminHandler_GetCustomerDetail
+=== RUN   TestCustomerAdminHandler_GetCustomerDetail/Success
+=== RUN   TestCustomerAdminHandler_GetCustomerDetail/Not_Found
+Error fetching customer nonexistent : assert.AnError general error for testing
+--- PASS: TestCustomerAdminHandler_GetCustomerDetail (0.00s)
+    --- PASS: TestCustomerAdminHandler_GetCustomerDetail/Success (0.00s)
+    --- PASS: TestCustomerAdminHandler_GetCustomerDetail/Not_Found (0.00s)
+=== RUN   TestCustomerAdminHandler_AddNote
+=== RUN   TestCustomerAdminHandler_AddNote/Success
+--- PASS: TestCustomerAdminHandler_AddNote (0.00s)
+    --- PASS: TestCustomerAdminHandler_AddNote/Success (0.00s)
+=== RUN   TestHealthHandler_Ping
+=== RUN   TestHealthHandler_Ping/Success
+=== RUN   TestHealthHandler_Ping/DB_Error
+=== RUN   TestHealthHandler_Ping/No_DB
+--- PASS: TestHealthHandler_Ping (0.00s)
+    --- PASS: TestHealthHandler_Ping/Success (0.00s)
+    --- PASS: TestHealthHandler_Ping/DB_Error (0.00s)
+    --- PASS: TestHealthHandler_Ping/No_DB (0.00s)
+=== RUN   TestHealthHandler_GetStats
+=== RUN   TestHealthHandler_GetStats/Success
+=== RUN   TestHealthHandler_GetStats/No_DB
+--- PASS: TestHealthHandler_GetStats (0.00s)
+    --- PASS: TestHealthHandler_GetStats/Success (0.00s)
+    --- PASS: TestHealthHandler_GetStats/No_DB (0.00s)
+=== RUN   TestLogHandler_Receive
+=== RUN   TestLogHandler_Receive/Success_Info
+[2026-04-08 17:31:31] [[32mINFO[0m] [frontend] Test message | context: {"user_id":"123"}
+=== RUN   TestLogHandler_Receive/Success_Error
+[2026-04-08 17:31:31] [[31mERROR[0m] [frontend] Critical error
+=== RUN   TestLogHandler_Receive/Invalid_JSON
+=== RUN   TestLogHandler_Receive/Unknown_Level
+[2026-04-08 17:31:31] [[32mINFO[0m] [frontend] [custom] Custom trace
+--- PASS: TestLogHandler_Receive (0.00s)
+    --- PASS: TestLogHandler_Receive/Success_Info (0.00s)
+    --- PASS: TestLogHandler_Receive/Success_Error (0.00s)
+    --- PASS: TestLogHandler_Receive/Invalid_JSON (0.00s)
+    --- PASS: TestLogHandler_Receive/Unknown_Level (0.00s)
+=== RUN   TestLookupHandler_MTG
+=== RUN   TestLookupHandler_MTG/Success
+=== RUN   TestLookupHandler_MTG/Missing_Name
+=== RUN   TestLookupHandler_MTG/Not_Found
+--- PASS: TestLookupHandler_MTG (0.21s)
+    --- PASS: TestLookupHandler_MTG/Success (0.10s)
+    --- PASS: TestLookupHandler_MTG/Missing_Name (0.00s)
+    --- PASS: TestLookupHandler_MTG/Not_Found (0.10s)
+=== RUN   TestLookupHandler_BatchMTG
+=== RUN   TestLookupHandler_BatchMTG/Success
+=== RUN   TestLookupHandler_BatchMTG/Invalid_JSON
+--- PASS: TestLookupHandler_BatchMTG (0.00s)
+    --- PASS: TestLookupHandler_BatchMTG/Success (0.00s)
+    --- PASS: TestLookupHandler_BatchMTG/Invalid_JSON (0.00s)
+=== RUN   TestLookupHandler_Pokemon_Error
+=== RUN   TestLookupHandler_Pokemon_Error/Missing_Name
+=== RUN   TestLookupHandler_Pokemon_Error/Pokemon_Bad_Gateway
+=== RUN   TestLookupHandler_Pokemon_Error/Pokemon_Not_Found
+--- PASS: TestLookupHandler_Pokemon_Error (10.01s)
+    --- PASS: TestLookupHandler_Pokemon_Error/Missing_Name (0.00s)
+    --- PASS: TestLookupHandler_Pokemon_Error/Pokemon_Bad_Gateway (10.01s)
+    --- PASS: TestLookupHandler_Pokemon_Error/Pokemon_Not_Found (0.00s)
+=== RUN   TestLookupHandler_Pokemon
+=== RUN   TestLookupHandler_Pokemon/Success
+--- PASS: TestLookupHandler_Pokemon (0.00s)
+    --- PASS: TestLookupHandler_Pokemon/Success (0.00s)
+=== RUN   TestNewsletterHandler_Subscribe
+=== RUN   TestNewsletterHandler_Subscribe/New_Subscription
+=== RUN   TestNewsletterHandler_Subscribe/Already_Subscribed
+=== RUN   TestNewsletterHandler_Subscribe/Subscribed_with_Customer_Match
+--- PASS: TestNewsletterHandler_Subscribe (0.00s)
+    --- PASS: TestNewsletterHandler_Subscribe/New_Subscription (0.00s)
+    --- PASS: TestNewsletterHandler_Subscribe/Already_Subscribed (0.00s)
+    --- PASS: TestNewsletterHandler_Subscribe/Subscribed_with_Customer_Match (0.00s)
+=== RUN   TestNewsletterHandler_Unsubscribe
+--- PASS: TestNewsletterHandler_Unsubscribe (0.00s)
+=== RUN   TestNewsletterHandler_AdminGetSubscribers
+--- PASS: TestNewsletterHandler_AdminGetSubscribers (0.00s)
+=== RUN   TestNoticeHandler_AdminList
+=== RUN   TestNoticeHandler_AdminList/Success
+=== RUN   TestNoticeHandler_AdminList/DB_Error
+[2026-04-08 17:31:41] [[31mERROR[0m] Error listing notices: db error
+--- PASS: TestNoticeHandler_AdminList (0.00s)
+    --- PASS: TestNoticeHandler_AdminList/Success (0.00s)
+    --- PASS: TestNoticeHandler_AdminList/DB_Error (0.00s)
+=== RUN   TestNoticeHandler_Create
+=== RUN   TestNoticeHandler_Create/Success
+=== RUN   TestNoticeHandler_Create/Invalid_JSON
+--- PASS: TestNoticeHandler_Create (0.00s)
+    --- PASS: TestNoticeHandler_Create/Success (0.00s)
+    --- PASS: TestNoticeHandler_Create/Invalid_JSON (0.00s)
+=== RUN   TestNoticeHandler_Update
+=== RUN   TestNoticeHandler_Update/Success
+=== RUN   TestNoticeHandler_Update/Invalid_Body
+--- PASS: TestNoticeHandler_Update (0.00s)
+    --- PASS: TestNoticeHandler_Update/Success (0.00s)
+    --- PASS: TestNoticeHandler_Update/Invalid_Body (0.00s)
+=== RUN   TestNoticeHandler_Delete
+=== RUN   TestNoticeHandler_Delete/Success
+=== RUN   TestNoticeHandler_Delete/Invalid_ID
+[2026-04-08 17:31:41] [[31mERROR[0m] Error deleting notice abc: all expectations were already fulfilled, call to ExecQuery 'DELETE FROM notice WHERE id = $1' with args [{Name: Ordinal:1 Value:abc}] was not expected
+    notice_test.go:131: 
+        	Error Trace:	/home/christian/proyects/el-bulk/backend/handlers/notice_test.go:131
+        	Error:      	Not equal: 
+        	            	expected: 400
+        	            	actual  : 500
+        	Test:       	TestNoticeHandler_Delete/Invalid_ID
+--- FAIL: TestNoticeHandler_Delete (0.00s)
+    --- PASS: TestNoticeHandler_Delete/Success (0.00s)
+    --- FAIL: TestNoticeHandler_Delete/Invalid_ID (0.00s)
+=== RUN   TestOrderHandler_Create
+=== RUN   TestOrderHandler_Create/Success
+=== RUN   TestOrderHandler_Create/Validation_Failure
+=== RUN   TestOrderHandler_Create/Tx_Error
+=== RUN   TestOrderHandler_Create/Customer_Upsert_Error
+=== RUN   TestOrderHandler_Create/Create_Order_Error
+--- PASS: TestOrderHandler_Create (0.00s)
+    --- PASS: TestOrderHandler_Create/Success (0.00s)
+    --- PASS: TestOrderHandler_Create/Validation_Failure (0.00s)
+    --- PASS: TestOrderHandler_Create/Tx_Error (0.00s)
+    --- PASS: TestOrderHandler_Create/Customer_Upsert_Error (0.00s)
+    --- PASS: TestOrderHandler_Create/Create_Order_Error (0.00s)
+=== RUN   TestOrderHandler_List
+=== RUN   TestOrderHandler_List/List_Admin
+--- PASS: TestOrderHandler_List (0.00s)
+    --- PASS: TestOrderHandler_List/List_Admin (0.00s)
+=== RUN   TestOrderHandler_GetDetail
+=== RUN   TestOrderHandler_GetDetail/Success
+[2026-04-08 17:31:41] [[33mWARN[0m] Decryption failed (returning original value): failed to decode base64: illegal base64 data at input byte 0
+[2026-04-08 17:31:41] [[33mWARN[0m] Decryption failed (returning original value): failed to decode base64: illegal base64 data at input byte 4
+[2026-04-08 17:31:41] [[33mWARN[0m] Decryption failed (returning original value): failed to decode base64: illegal base64 data at input byte 4
+=== RUN   TestOrderHandler_GetDetail/DB_Error_GetDetail
+--- PASS: TestOrderHandler_GetDetail (0.00s)
+    --- PASS: TestOrderHandler_GetDetail/Success (0.00s)
+    --- PASS: TestOrderHandler_GetDetail/DB_Error_GetDetail (0.00s)
+=== RUN   TestOrderHandler_Update
+=== RUN   TestOrderHandler_Update/Update_Status
+    orders_test.go:242: 
+        	Error Trace:	/home/christian/proyects/el-bulk/backend/handlers/orders_test.go:242
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 500
+        	Test:       	TestOrderHandler_Update/Update_Status
+=== RUN   TestOrderHandler_Update/Tx_Error
+--- FAIL: TestOrderHandler_Update (0.00s)
+    --- FAIL: TestOrderHandler_Update/Update_Status (0.00s)
+    --- PASS: TestOrderHandler_Update/Tx_Error (0.00s)
+=== RUN   TestOrderHandler_Confirm
+=== RUN   TestOrderHandler_Confirm/Success
+[2026-04-08 17:31:41] [[33mWARN[0m] Decryption failed (returning original value): failed to decode base64: illegal base64 data at input byte 0
+=== RUN   TestOrderHandler_Confirm/Insufficient_Stock
+[2026-04-08 17:31:41] [[31mERROR[0m] Confirm order SP failed: Insufficient stock
+=== RUN   TestOrderHandler_Confirm/Tx_Error
+[2026-04-08 17:31:41] [[31mERROR[0m] Confirm order SP failed: db error
+--- PASS: TestOrderHandler_Confirm (0.00s)
+    --- PASS: TestOrderHandler_Confirm/Success (0.00s)
+    --- PASS: TestOrderHandler_Confirm/Insufficient_Stock (0.00s)
+    --- PASS: TestOrderHandler_Confirm/Tx_Error (0.00s)
+=== RUN   TestProductHandler_BulkCreate_Errors
+=== RUN   TestProductHandler_BulkCreate_Errors/SP_Error
+    product_extra_test.go:38: 
+        	Error Trace:	/home/christian/proyects/el-bulk/backend/handlers/product_extra_test.go:38
+        	Error:      	Not equal: 
+        	            	expected: 500
+        	            	actual  : 400
+        	Test:       	TestProductHandler_BulkCreate_Errors/SP_Error
+--- FAIL: TestProductHandler_BulkCreate_Errors (0.00s)
+    --- FAIL: TestProductHandler_BulkCreate_Errors/SP_Error (0.00s)
+=== RUN   TestProductHandler_UpdateStorage_Errors
+=== RUN   TestProductHandler_UpdateStorage_Errors/Tx_Begin_Error
+[2026-04-08 17:31:41] [[31mERROR[0m] UpdateStorage p1 failed: tx error
+=== RUN   TestProductHandler_UpdateStorage_Errors/Delete_Error
+[2026-04-08 17:31:41] [[31mERROR[0m] UpdateStorage p1 failed: db error
+--- PASS: TestProductHandler_UpdateStorage_Errors (0.00s)
+    --- PASS: TestProductHandler_UpdateStorage_Errors/Tx_Begin_Error (0.00s)
+    --- PASS: TestProductHandler_UpdateStorage_Errors/Delete_Error (0.00s)
+=== RUN   TestProductHandler_Delete_Errors
+=== RUN   TestProductHandler_Delete_Errors/DB_Error
+[2026-04-08 17:31:41] [[31mERROR[0m] Delete product p1 failed: db error
+--- PASS: TestProductHandler_Delete_Errors (0.00s)
+    --- PASS: TestProductHandler_Delete_Errors/DB_Error (0.00s)
+=== RUN   TestProductHandler_ListTCGs
+=== RUN   TestProductHandler_ListTCGs/Success
+=== RUN   TestProductHandler_ListTCGs/List_Error
+[2026-04-08 17:31:41] [[31mERROR[0m] List TCGs failed: db error
+--- PASS: TestProductHandler_ListTCGs (0.00s)
+    --- PASS: TestProductHandler_ListTCGs/Success (0.00s)
+    --- PASS: TestProductHandler_ListTCGs/List_Error (0.00s)
+=== RUN   TestProductHandler_BulkCreate_Extra
+=== RUN   TestProductHandler_BulkCreate_Extra/Skip_Invalid
+    product_extra_test.go:149: 
+        	Error Trace:	/home/christian/proyects/el-bulk/backend/handlers/product_extra_test.go:149
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 400
+        	Test:       	TestProductHandler_BulkCreate_Extra/Skip_Invalid
+=== RUN   TestProductHandler_BulkCreate_Extra/Insert_Error
+    product_extra_test.go:161: 
+        	Error Trace:	/home/christian/proyects/el-bulk/backend/handlers/product_extra_test.go:161
+        	Error:      	Not equal: 
+        	            	expected: 500
+        	            	actual  : 400
+        	Test:       	TestProductHandler_BulkCreate_Extra/Insert_Error
+--- FAIL: TestProductHandler_BulkCreate_Extra (0.00s)
+    --- FAIL: TestProductHandler_BulkCreate_Extra/Skip_Invalid (0.00s)
+    --- FAIL: TestProductHandler_BulkCreate_Extra/Insert_Error (0.00s)
+=== RUN   TestProductHandler_List_FiltersInactiveTCG
+[2026-04-08 17:31:41] [[31mERROR[0m] List products failed: Query: could not match actual sql: "SELECT COUNT(*) FROM product p LEFT JOIN tcg t ON p.tcg = t.id WHERE (t.is_active IS NULL OR t.is_active = true)" with expected regexp "(?i)SELECT key, value FROM setting"
+    product_filter_test.go:49: 
+        	Error Trace:	/home/christian/proyects/el-bulk/backend/handlers/product_filter_test.go:49
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 500
+        	Test:       	TestProductHandler_List_FiltersInactiveTCG
+--- FAIL: TestProductHandler_List_FiltersInactiveTCG (0.00s)
+=== RUN   TestProductHandler_GetByID_Public_FiltersInactiveTCG
+[2026-04-08 17:31:41] [[31mERROR[0m] Get product 123 failed: Query: could not match actual sql: "SELECT fn_get_product_detail($1)" with expected regexp "(?i)SELECT key, value FROM setting"
+--- PASS: TestProductHandler_GetByID_Public_FiltersInactiveTCG (0.00s)
+=== RUN   TestProductHandler_BuildFilters_Comprehensive
+=== RUN   TestProductHandler_BuildFilters_Comprehensive/Multiple_Filters
+[2026-04-08 17:31:41] [[31mERROR[0m] List products failed: Query: could not match actual sql: "SELECT product_id FROM order_item oi JOIN "order" o ON oi.order_id = o.id WHERE o.created_at > (now() - interval '7 days') AND product_id IN ($1) GROUP BY product_id HAVING SUM(quantity) >= 3" with expected regexp "(?i)SELECT fn_get_product_facets"
+    product_filters_comprehensive_test.go:57: 
+        	Error Trace:	/home/christian/proyects/el-bulk/backend/handlers/product_filters_comprehensive_test.go:57
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 500
+        	Test:       	TestProductHandler_BuildFilters_Comprehensive/Multiple_Filters
+=== RUN   TestProductHandler_BuildFilters_Comprehensive/Color_Filter
+[2026-04-08 17:31:41] [[31mERROR[0m] List products failed: Query: could not match actual sql: "SELECT product_id FROM order_item oi JOIN "order" o ON oi.order_id = o.id WHERE o.created_at > (now() - interval '7 days') AND product_id IN ($1) GROUP BY product_id HAVING SUM(quantity) >= 3" with expected regexp "(?i)SELECT fn_get_product_facets"
+    product_filters_comprehensive_test.go:57: 
+        	Error Trace:	/home/christian/proyects/el-bulk/backend/handlers/product_filters_comprehensive_test.go:57
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 500
+        	Test:       	TestProductHandler_BuildFilters_Comprehensive/Color_Filter
+=== RUN   TestProductHandler_BuildFilters_Comprehensive/Storage_Filter
+[2026-04-08 17:31:41] [[31mERROR[0m] List products failed: Query: could not match actual sql: "SELECT product_id FROM order_item oi JOIN "order" o ON oi.order_id = o.id WHERE o.created_at > (now() - interval '7 days') AND product_id IN ($1) GROUP BY product_id HAVING SUM(quantity) >= 3" with expected regexp "(?i)SELECT fn_get_product_facets"
+    product_filters_comprehensive_test.go:57: 
+        	Error Trace:	/home/christian/proyects/el-bulk/backend/handlers/product_filters_comprehensive_test.go:57
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 500
+        	Test:       	TestProductHandler_BuildFilters_Comprehensive/Storage_Filter
+=== RUN   TestProductHandler_BuildFilters_Comprehensive/Collection_Filter
+[2026-04-08 17:31:41] [[31mERROR[0m] List products failed: Query: could not match actual sql: "SELECT product_id FROM order_item oi JOIN "order" o ON oi.order_id = o.id WHERE o.created_at > (now() - interval '7 days') AND product_id IN ($1) GROUP BY product_id HAVING SUM(quantity) >= 3" with expected regexp "(?i)SELECT fn_get_product_facets"
+    product_filters_comprehensive_test.go:57: 
+        	Error Trace:	/home/christian/proyects/el-bulk/backend/handlers/product_filters_comprehensive_test.go:57
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 500
+        	Test:       	TestProductHandler_BuildFilters_Comprehensive/Collection_Filter
+=== RUN   TestProductHandler_BuildFilters_Comprehensive/Treatment_Filter
+[2026-04-08 17:31:41] [[31mERROR[0m] List products failed: Query: could not match actual sql: "SELECT product_id FROM order_item oi JOIN "order" o ON oi.order_id = o.id WHERE o.created_at > (now() - interval '7 days') AND product_id IN ($1) GROUP BY product_id HAVING SUM(quantity) >= 3" with expected regexp "(?i)SELECT fn_get_product_facets"
+    product_filters_comprehensive_test.go:57: 
+        	Error Trace:	/home/christian/proyects/el-bulk/backend/handlers/product_filters_comprehensive_test.go:57
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 500
+        	Test:       	TestProductHandler_BuildFilters_Comprehensive/Treatment_Filter
+--- FAIL: TestProductHandler_BuildFilters_Comprehensive (0.00s)
+    --- FAIL: TestProductHandler_BuildFilters_Comprehensive/Multiple_Filters (0.00s)
+    --- FAIL: TestProductHandler_BuildFilters_Comprehensive/Color_Filter (0.00s)
+    --- FAIL: TestProductHandler_BuildFilters_Comprehensive/Storage_Filter (0.00s)
+    --- FAIL: TestProductHandler_BuildFilters_Comprehensive/Collection_Filter (0.00s)
+    --- FAIL: TestProductHandler_BuildFilters_Comprehensive/Treatment_Filter (0.00s)
+=== RUN   TestProductHandler_AdminVsPublic
+=== RUN   TestProductHandler_AdminVsPublic/Public_Joins_TCGs
+[2026-04-08 17:31:41] [[31mERROR[0m] List products failed: Query: could not match actual sql: "SELECT product_id FROM order_item oi JOIN "order" o ON oi.order_id = o.id WHERE o.created_at > (now() - interval '7 days') AND product_id IN ($1) GROUP BY product_id HAVING SUM(quantity) >= 3" with expected regexp "(?i)SELECT fn_get_product_facets"
+    product_filters_comprehensive_test.go:98: 
+        	Error Trace:	/home/christian/proyects/el-bulk/backend/handlers/product_filters_comprehensive_test.go:98
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 500
+        	Test:       	TestProductHandler_AdminVsPublic/Public_Joins_TCGs
+=== RUN   TestProductHandler_AdminVsPublic/Admin_No_Joins
+[2026-04-08 17:31:41] [[31mERROR[0m] List products failed: Query: could not match actual sql: "SELECT product_id FROM order_item oi JOIN "order" o ON oi.order_id = o.id WHERE o.created_at > (now() - interval '7 days') AND product_id IN ($1) GROUP BY product_id HAVING SUM(quantity) >= 3" with expected regexp "(?i)SELECT fn_get_product_facets"
+    product_filters_comprehensive_test.go:130: 
+        	Error Trace:	/home/christian/proyects/el-bulk/backend/handlers/product_filters_comprehensive_test.go:130
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 500
+        	Test:       	TestProductHandler_AdminVsPublic/Admin_No_Joins
+--- FAIL: TestProductHandler_AdminVsPublic (0.00s)
+    --- FAIL: TestProductHandler_AdminVsPublic/Public_Joins_TCGs (0.00s)
+    --- FAIL: TestProductHandler_AdminVsPublic/Admin_No_Joins (0.00s)
+=== RUN   TestProductHandler_List
+=== RUN   TestProductHandler_List/Basic_List
+[2026-04-08 17:31:41] [[31mERROR[0m] List products failed: Query: could not match actual sql: "SELECT ps.product_id, s.id as stored_in_id, s.name, ps.quantity FROM product_storage ps JOIN storage_location s ON ps.storage_id = s.id WHERE ps.quantity > 0 AND ps.product_id IN ($1)" with expected regexp "(?i)SELECT pc\.product_id, c\.id, c\.name, c\.slug, c\.show_badge, c\.is_active, c\.searchable FROM product_category pc JOIN custom_category c ON pc.category_id = c.id WHERE pc\.product_id IN \(\$1\) AND c\.show_badge = true ORDER BY c\.name"
+    products_test.go:57: 
+        	Error Trace:	/home/christian/proyects/el-bulk/backend/handlers/products_test.go:57
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 500
+        	Test:       	TestProductHandler_List/Basic_List
+    products_test.go:61: 
+        	Error Trace:	/home/christian/proyects/el-bulk/backend/handlers/products_test.go:61
+        	Error:      	"[]" should have 1 item(s), but has 0
+        	Test:       	TestProductHandler_List/Basic_List
+--- FAIL: TestProductHandler_List (0.00s)
+    --- FAIL: TestProductHandler_List/Basic_List (0.00s)
+=== RUN   TestProductHandler_GetByID
+=== RUN   TestProductHandler_GetByID/Found
+[2026-04-08 17:31:41] [[31mERROR[0m] Get product p1 failed: Query: could not match actual sql: "SELECT fn_get_product_detail($1)" with expected regexp "(?i)SELECT COALESCE\(t\.is_active, true\) FROM product p"
+    products_test.go:97: 
+        	Error Trace:	/home/christian/proyects/el-bulk/backend/handlers/products_test.go:97
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 404
+        	Test:       	TestProductHandler_GetByID/Found
+=== RUN   TestProductHandler_GetByID/Not_Found
+⚠️ Setting table error: Query: could not match actual sql: "SELECT key, value FROM setting" with expected regexp "(?i)SELECT COALESCE\(t\.is_active, true\) FROM product p" (using defaults)
+[2026-04-08 17:31:41] [[31mERROR[0m] Get product p99 failed: Query: could not match actual sql: "SELECT fn_get_product_detail($1)" with expected regexp "(?i)SELECT COALESCE\(t\.is_active, true\) FROM product p"
+--- FAIL: TestProductHandler_GetByID (0.00s)
+    --- FAIL: TestProductHandler_GetByID/Found (0.00s)
+    --- PASS: TestProductHandler_GetByID/Not_Found (0.00s)
+=== RUN   TestProductHandler_Create
+=== RUN   TestProductHandler_Create/Success
+[2026-04-08 17:31:41] [[31mERROR[0m] Failed to save storage for product p-new: call to ExecQuery 'DELETE FROM product_storage WHERE product_id = $1' with args [{Name: Ordinal:1 Value:p-new}], was not expected, next expectation is: ExpectedBegin => expecting database transaction Begin
+[2026-04-08 17:31:41] [[31mERROR[0m] Create product failed: call to Query '
+		SELECT ps.product_id, s.id as stored_in_id, s.name, ps.quantity 
+		FROM product_storage ps 
+		JOIN storage_location s ON ps.storage_id = s.id 
+		WHERE ps.quantity > 0 AND ps.product_id IN ($1)
+	' with args [{Name: Ordinal:1 Value:p-new}], was not expected, next expectation is: ExpectedBegin => expecting database transaction Begin
+    products_test.go:158: 
+        	Error Trace:	/home/christian/proyects/el-bulk/backend/handlers/products_test.go:158
+        	Error:      	Not equal: 
+        	            	expected: 201
+        	            	actual  : 500
+        	Test:       	TestProductHandler_Create/Success
+--- FAIL: TestProductHandler_Create (0.00s)
+    --- FAIL: TestProductHandler_Create/Success (0.00s)
+=== RUN   TestProductHandler_Update
+=== RUN   TestProductHandler_Update/Success
+[2026-04-08 17:31:41] [[31mERROR[0m] Failed to save storage for product p1: call to ExecQuery 'DELETE FROM product_storage WHERE product_id = $1' with args [{Name: Ordinal:1 Value:p1}], was not expected, next expectation is: ExpectedBegin => expecting database transaction Begin
+[2026-04-08 17:31:41] [[31mERROR[0m] Update product p1 failed: call to Query '
+		SELECT ps.product_id, s.id as stored_in_id, s.name, ps.quantity 
+		FROM product_storage ps 
+		JOIN storage_location s ON ps.storage_id = s.id 
+		WHERE ps.quantity > 0 AND ps.product_id IN ($1)
+	' with args [{Name: Ordinal:1 Value:p1}], was not expected, next expectation is: ExpectedBegin => expecting database transaction Begin
+    products_test.go:206: 
+        	Error Trace:	/home/christian/proyects/el-bulk/backend/handlers/products_test.go:206
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 404
+        	Test:       	TestProductHandler_Update/Success
+--- FAIL: TestProductHandler_Update (0.00s)
+    --- FAIL: TestProductHandler_Update/Success (0.00s)
+=== RUN   TestProductHandler_Delete
+=== RUN   TestProductHandler_Delete/Success
+--- PASS: TestProductHandler_Delete (0.00s)
+    --- PASS: TestProductHandler_Delete/Success (0.00s)
+=== RUN   TestProductHandler_BulkCreate
+=== RUN   TestProductHandler_BulkCreate/Success
+    products_test.go:260: 
+        	Error Trace:	/home/christian/proyects/el-bulk/backend/handlers/products_test.go:260
+        	Error:      	Not equal: 
+        	            	expected: 200
+        	            	actual  : 400
+        	Test:       	TestProductHandler_BulkCreate/Success
+--- FAIL: TestProductHandler_BulkCreate (0.00s)
+    --- FAIL: TestProductHandler_BulkCreate/Success (0.00s)
+=== RUN   TestProductHandler_GetStorage
+=== RUN   TestProductHandler_GetStorage/Success
+--- PASS: TestProductHandler_GetStorage (0.00s)
+    --- PASS: TestProductHandler_GetStorage/Success (0.00s)
+=== RUN   TestProductHandler_UpdateStorage
+=== RUN   TestProductHandler_UpdateStorage/Success
+--- PASS: TestProductHandler_UpdateStorage (0.00s)
+    --- PASS: TestProductHandler_UpdateStorage/Success (0.00s)
+=== RUN   TestRefreshHandler_RunPriceRefresh
+=== RUN   TestRefreshHandler_RunPriceRefresh/Success
+[2026-04-08 17:31:41] [[32mINFO[0m] [price-refresh] complete: 2 updated, 0 errors
+=== RUN   TestRefreshHandler_RunPriceRefresh/NoProducts
+[2026-04-08 17:31:41] [[32mINFO[0m] [price-refresh] no products with external price source, skipping
+=== RUN   TestRefreshHandler_RunPriceRefresh/DB_Error
+[2026-04-08 17:31:41] [[31mERROR[0m] [price-refresh] failed to query products: db error
+=== RUN   TestRefreshHandler_RunPriceRefresh/HTTP_Error
+[2026-04-08 17:31:41] [[31mERROR[0m] [price-refresh] scryfall bulk download failed: fetching bulk-data index: Get "http://invalid-url-123.com/bulk-data": dial tcp: lookup invalid-url-123.com on 10.255.255.254:53: no such host
+--- PASS: TestRefreshHandler_RunPriceRefresh (0.10s)
+    --- PASS: TestRefreshHandler_RunPriceRefresh/Success (0.10s)
+    --- PASS: TestRefreshHandler_RunPriceRefresh/NoProducts (0.00s)
+    --- PASS: TestRefreshHandler_RunPriceRefresh/DB_Error (0.00s)
+    --- PASS: TestRefreshHandler_RunPriceRefresh/HTTP_Error (0.01s)
+=== RUN   TestRefreshHandler_Trigger
+[2026-04-08 17:31:41] [[32mINFO[0m] [price-refresh] no products with external price source, skipping
+--- PASS: TestRefreshHandler_Trigger (0.00s)
+=== RUN   TestCSRFProtection_Integration
+=== RUN   TestCSRFProtection_Integration/Admin_POST_-_Missing_CSRF
+=== RUN   TestCSRFProtection_Integration/User_POST_-_Missing_CSRF
+=== RUN   TestCSRFProtection_Integration/Admin_GET_-_Missing_CSRF_(Allowed)
+--- PASS: TestCSRFProtection_Integration (0.00s)
+    --- PASS: TestCSRFProtection_Integration/Admin_POST_-_Missing_CSRF (0.00s)
+    --- PASS: TestCSRFProtection_Integration/User_POST_-_Missing_CSRF (0.00s)
+    --- PASS: TestCSRFProtection_Integration/Admin_GET_-_Missing_CSRF_(Allowed) (0.00s)
+=== RUN   TestSettingsHandler_Get
+=== RUN   TestSettingsHandler_Get/Success
+=== RUN   TestSettingsHandler_Get/Defaults_on_Error
+⚠️ Setting table error: assert.AnError general error for testing (using defaults)
+--- PASS: TestSettingsHandler_Get (0.00s)
+    --- PASS: TestSettingsHandler_Get/Success (0.00s)
+    --- PASS: TestSettingsHandler_Get/Defaults_on_Error (0.00s)
+=== RUN   TestSettingsHandler_Update
+=== RUN   TestSettingsHandler_Update/Success
+=== RUN   TestSettingsHandler_Update/Update_All_Fields
+=== RUN   TestSettingsHandler_Update/Invalid_JSON
+=== RUN   TestSettingsHandler_Update/DB_Error
+--- PASS: TestSettingsHandler_Update (0.00s)
+    --- PASS: TestSettingsHandler_Update/Success (0.00s)
+    --- PASS: TestSettingsHandler_Update/Update_All_Fields (0.00s)
+    --- PASS: TestSettingsHandler_Update/Invalid_JSON (0.00s)
+    --- PASS: TestSettingsHandler_Update/DB_Error (0.00s)
+=== RUN   TestStorageHandler_List
+=== RUN   TestStorageHandler_List/Success
+=== RUN   TestStorageHandler_List/DB_Error
+--- PASS: TestStorageHandler_List (0.00s)
+    --- PASS: TestStorageHandler_List/Success (0.00s)
+    --- PASS: TestStorageHandler_List/DB_Error (0.00s)
+=== RUN   TestStorageHandler_Create
+=== RUN   TestStorageHandler_Create/Success
+=== RUN   TestStorageHandler_Create/DB_Error
+--- PASS: TestStorageHandler_Create (0.00s)
+    --- PASS: TestStorageHandler_Create/Success (0.00s)
+    --- PASS: TestStorageHandler_Create/DB_Error (0.00s)
+=== RUN   TestStorageHandler_Update
+=== RUN   TestStorageHandler_Update/Success
+=== RUN   TestStorageHandler_Update/DB_Error
+--- PASS: TestStorageHandler_Update (0.00s)
+    --- PASS: TestStorageHandler_Update/Success (0.00s)
+    --- PASS: TestStorageHandler_Update/DB_Error (0.00s)
+=== RUN   TestStorageHandler_Delete
+=== RUN   TestStorageHandler_Delete/Success
+=== RUN   TestStorageHandler_Delete/DB_Error
+--- PASS: TestStorageHandler_Delete (0.00s)
+    --- PASS: TestStorageHandler_Delete/Success (0.00s)
+    --- PASS: TestStorageHandler_Delete/DB_Error (0.00s)
+=== RUN   TestTCGHandler_List
+=== RUN   TestTCGHandler_List/Success
+=== RUN   TestTCGHandler_List/Error
+[2026-04-08 17:31:41] [[31mERROR[0m] Error listing TCGs for admin: db error
+--- PASS: TestTCGHandler_List (0.00s)
+    --- PASS: TestTCGHandler_List/Success (0.00s)
+    --- PASS: TestTCGHandler_List/Error (0.00s)
+=== RUN   TestTCGHandler_Create
+=== RUN   TestTCGHandler_Create/Success
+=== RUN   TestTCGHandler_Create/Invalid_JSON
+=== RUN   TestTCGHandler_Create/Missing_Fields
+=== RUN   TestTCGHandler_Create/DB_Error
+[2026-04-08 17:31:41] [[31mERROR[0m] Error creating TCG: conflict
+--- PASS: TestTCGHandler_Create (0.00s)
+    --- PASS: TestTCGHandler_Create/Success (0.00s)
+    --- PASS: TestTCGHandler_Create/Invalid_JSON (0.00s)
+    --- PASS: TestTCGHandler_Create/Missing_Fields (0.00s)
+    --- PASS: TestTCGHandler_Create/DB_Error (0.00s)
+=== RUN   TestTCGHandler_Update
+=== RUN   TestTCGHandler_Update/Success
+=== RUN   TestTCGHandler_Update/DB_Error_(Not_Found)
+[2026-04-08 17:31:41] [[31mERROR[0m] Error updating TCG mtg: not found
+--- PASS: TestTCGHandler_Update (0.00s)
+    --- PASS: TestTCGHandler_Update/Success (0.00s)
+    --- PASS: TestTCGHandler_Update/DB_Error_(Not_Found) (0.00s)
+=== RUN   TestTCGHandler_Delete
+=== RUN   TestTCGHandler_Delete/Success
+[2026-04-08 17:31:41] [[32mINFO[0m] [TCG_DELETE] 📥 Received DELETE request for ID: mtg
+[2026-04-08 17:31:41] [[32mINFO[0m] [TCG_DELETE] Checking products for mtg: count=0
+=== RUN   TestTCGHandler_Delete/Conflict
+[2026-04-08 17:31:41] [[32mINFO[0m] [TCG_DELETE] 📥 Received DELETE request for ID: mtg
+[2026-04-08 17:31:41] [[32mINFO[0m] [TCG_DELETE] Checking products for mtg: count=1
+=== RUN   TestTCGHandler_Delete/DB_Error_Checking
+[2026-04-08 17:31:41] [[32mINFO[0m] [TCG_DELETE] 📥 Received DELETE request for ID: mtg
+[2026-04-08 17:31:41] [[32mINFO[0m] [TCG_DELETE] Checking products for mtg: count=0
+=== RUN   TestTCGHandler_Delete/DB_Error_Deleting
+[2026-04-08 17:31:41] [[32mINFO[0m] [TCG_DELETE] 📥 Received DELETE request for ID: mtg
+[2026-04-08 17:31:41] [[32mINFO[0m] [TCG_DELETE] Checking products for mtg: count=0
+[2026-04-08 17:31:41] [[31mERROR[0m] Error deleting TCG mtg: db error
+--- PASS: TestTCGHandler_Delete (0.00s)
+    --- PASS: TestTCGHandler_Delete/Success (0.00s)
+    --- PASS: TestTCGHandler_Delete/Conflict (0.00s)
+    --- PASS: TestTCGHandler_Delete/DB_Error_Checking (0.00s)
+    --- PASS: TestTCGHandler_Delete/DB_Error_Deleting (0.00s)
+FAIL
+FAIL	github.com/el-bulk/backend/handlers	10.661s
+FAIL

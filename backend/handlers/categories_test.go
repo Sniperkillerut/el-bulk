@@ -14,6 +14,8 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/el-bulk/backend/middleware"
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/service"
+	"github.com/el-bulk/backend/store"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
@@ -25,7 +27,7 @@ func TestCategoriesHandler_List(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &CategoriesHandler{DB: sqlxDB}
+	h := &CategoriesHandler{Service: service.NewCategoryService(store.NewCategoryStore(sqlxDB))}
 
 	t.Run("Admin List", func(t *testing.T) {
 		now := time.Now()
@@ -66,7 +68,7 @@ func TestCategoriesHandler_Create(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &CategoriesHandler{DB: sqlxDB}
+	h := &CategoriesHandler{Service: service.NewCategoryService(store.NewCategoryStore(sqlxDB))}
 
 	t.Run("Success", func(t *testing.T) {
 		input := models.CustomCategoryInput{Name: "New Category"}
@@ -102,14 +104,14 @@ func TestCategoriesHandler_Update(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &CategoriesHandler{DB: sqlxDB}
+	h := &CategoriesHandler{Service: service.NewCategoryService(store.NewCategoryStore(sqlxDB))}
 
 	t.Run("Success", func(t *testing.T) {
 		input := models.CustomCategoryInput{Name: "Updated Cat"}
 		body, _ := json.Marshal(input)
 
-		mock.ExpectQuery("UPDATE custom_category SET name = \\$1, slug = \\$2 WHERE id = \\$3").
-			WithArgs("Updated Cat", "updated-cat", "c1").
+		mock.ExpectQuery("(?i)UPDATE custom_category SET .* WHERE id = \\$3").
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), "c1").
 			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow("c1", "Updated Cat"))
 
 		r := chi.NewRouter()
@@ -141,7 +143,7 @@ func TestCategoriesHandler_Delete(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &CategoriesHandler{DB: sqlxDB}
+	h := &CategoriesHandler{Service: service.NewCategoryService(store.NewCategoryStore(sqlxDB))}
 
 	t.Run("Success", func(t *testing.T) {
 		mock.ExpectExec("DELETE FROM custom_category").

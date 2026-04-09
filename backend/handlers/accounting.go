@@ -7,17 +7,19 @@ import (
 	"time"
 
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/service"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/el-bulk/backend/utils/render"
 	"github.com/jmoiron/sqlx"
 )
 
 type AccountingHandler struct {
-	DB *sqlx.DB
+	DB       *sqlx.DB
+	Settings *service.SettingsService
 }
 
-func NewAccountingHandler(db *sqlx.DB) *AccountingHandler {
-	return &AccountingHandler{DB: db}
+func NewAccountingHandler(db *sqlx.DB, s *service.SettingsService) *AccountingHandler {
+	return &AccountingHandler{DB: db, Settings: s}
 }
 
 func (h *AccountingHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
@@ -163,9 +165,9 @@ func (h *AccountingHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 
 func (h *AccountingHandler) GetInventoryValuation(w http.ResponseWriter, r *http.Request) {
 	// 1. Fetch current exchange rates
-	s, err := loadSettings(h.DB)
+	s, err := h.Settings.GetSettings()
 	if err != nil {
-		s = models.Settings{USDToCOPRate: 4200, EURToCOPRate: 4600}
+		logger.Error("Failed to get settings in AccountingHandler.GetInventoryValuation: %v", err)
 	}
 
 	// 2. Fetch basic totals

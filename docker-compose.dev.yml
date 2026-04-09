@@ -4,7 +4,7 @@ services:
     container_name: el_bulk_db
     restart: unless-stopped
     env_file:
-      - ./backend/.env
+      - .env
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./backend/db/schema:/schema
@@ -39,7 +39,7 @@ services:
       db:
         condition: service_healthy
     env_file:
-      - ./backend/.env
+      - .env
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=verify-full&sslrootcert=/app/certs/ca.crt&sslcert=/app/certs/client.crt&sslkey=/app/certs/client.key
       # FRONTEND_ORIGIN: http://localhost (Already in .env)

@@ -2,18 +2,33 @@ package handlers
 
 import (
 	"testing"
+
+	"github.com/el-bulk/backend/service"
+	"github.com/el-bulk/backend/store"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestConstructors(t *testing.T) {
 	db := &sqlx.DB{}
+	settingsStore := store.NewSettingsStore(db)
+	settingsService := service.NewSettingsService(settingsStore)
+
+	orderStore := store.NewOrderStore(db)
+	customerStore := store.NewCustomerStore(db)
+	orderService := service.NewOrderService(orderStore, store.NewProductStore(db), customerStore, settingsService)
+
 	assert.NotNil(t, NewAdminHandler(db))
-	assert.NotNil(t, NewCategoriesHandler(db))
-	assert.NotNil(t, NewOrderHandler(db))
-	assert.NotNil(t, NewProductHandler(db))
+	assert.NotNil(t, NewCategoriesHandler(service.NewCategoryService(store.NewCategoryStore(db))))
+	assert.NotNil(t, NewOrderHandler(orderService))
+
+	ps := service.NewProductService(store.NewProductStore(db), store.NewTCGStore(db), settingsService)
+	assert.NotNil(t, NewProductHandler(ps, db))
+
 	assert.NotNil(t, NewRefreshHandler(db))
-	assert.NotNil(t, NewSettingsHandler(db))
+	assert.NotNil(t, NewSettingsHandler(settingsService))
 	assert.NotNil(t, NewStorageHandler(db))
-	assert.NotNil(t, NewTCGHandler(db))
+	assert.NotNil(t, NewTCGHandler(service.NewTCGService(store.NewTCGStore(db))))
+	assert.NotNil(t, NewThemeHandler(service.NewThemeService(store.NewThemeStore(db))))
+	assert.NotNil(t, NewNoticeHandler(service.NewNoticeService(store.NewNoticeStore(db))))
 }

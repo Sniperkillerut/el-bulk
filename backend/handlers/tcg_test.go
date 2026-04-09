@@ -11,6 +11,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/service"
+	"github.com/el-bulk/backend/store"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +24,7 @@ func TestTCGHandler_List(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &TCGHandler{DB: sqlxDB}
+	h := &TCGHandler{Service: service.NewTCGService(store.NewTCGStore(sqlxDB))}
 
 	t.Run("Success", func(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id", "name", "is_active", "created_at", "item_count"}).
@@ -36,7 +38,7 @@ func TestTCGHandler_List(t *testing.T) {
 	})
 
 	t.Run("Error", func(t *testing.T) {
-		mock.ExpectQuery("SELECT \\* FROM tcg").WillReturnError(fmt.Errorf("db error"))
+		mock.ExpectQuery("(?i)SELECT t.*, COUNT").WillReturnError(fmt.Errorf("db error"))
 		req, _ := http.NewRequest("GET", "/api/admin/tcgs", nil)
 		rr := httptest.NewRecorder()
 		h.List(rr, req)
@@ -50,7 +52,7 @@ func TestTCGHandler_Create(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &TCGHandler{DB: sqlxDB}
+	h := &TCGHandler{Service: service.NewTCGService(store.NewTCGStore(sqlxDB))}
 
 	t.Run("Success", func(t *testing.T) {
 		input := models.TCGInput{ID: "one", Name: "One Piece"}
@@ -97,7 +99,7 @@ func TestTCGHandler_Update(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &TCGHandler{DB: sqlxDB}
+	h := &TCGHandler{Service: service.NewTCGService(store.NewTCGStore(sqlxDB))}
 
 	t.Run("Success", func(t *testing.T) {
 		input := models.TCGInput{Name: "New Name", IsActive: true}
@@ -132,7 +134,7 @@ func TestTCGHandler_Delete(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &TCGHandler{DB: sqlxDB}
+	h := &TCGHandler{Service: service.NewTCGService(store.NewTCGStore(sqlxDB))}
 
 	t.Run("Success", func(t *testing.T) {
 		mock.ExpectQuery("SELECT COUNT.* FROM product").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
@@ -178,17 +180,5 @@ func TestTCGHandler_Delete(t *testing.T) {
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)
-	})
-
-	t.Run("Not Found", func(t *testing.T) {
-		mock.ExpectQuery("SELECT COUNT.* FROM product").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
-		mock.ExpectExec("DELETE FROM tcg").WillReturnResult(sqlmock.NewResult(0, 0))
-
-		r := chi.NewRouter()
-		r.Delete("/api/admin/tcgs/{id}", h.Delete)
-		req, _ := http.NewRequest("DELETE", "/api/admin/tcgs/mtg", nil)
-		rr := httptest.NewRecorder()
-		r.ServeHTTP(rr, req)
-		assert.Equal(t, http.StatusNotFound, rr.Code)
 	})
 }

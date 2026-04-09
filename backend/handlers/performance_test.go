@@ -6,6 +6,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/store"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -13,7 +14,7 @@ func BenchmarkSaveProductStorage_Bulk(b *testing.B) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &ProductHandler{DB: sqlxDB}
+	s := store.NewProductStore(sqlxDB)
 
 	productID := "test-product"
 	items := make([]models.StorageLocation, 10)
@@ -30,14 +31,9 @@ func BenchmarkSaveProductStorage_Bulk(b *testing.B) {
 			WithArgs(productID).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
-		// Construct the expected bulk insert query pattern
 		mock.ExpectExec("INSERT INTO product_storage").
 			WillReturnResult(sqlmock.NewResult(0, 10))
 
-		h.saveProductStorage(productID, items)
+		s.SaveStorage(productID, items)
 	}
 }
-
-// Note: To compare with the original N+1 implementation, one would need to revert the changes
-// in handlers/products.go and run a similar benchmark expecting 10 individual INSERTs.
-// This benchmark confirms that the new bulk implementation works as expected with a single Exec call.

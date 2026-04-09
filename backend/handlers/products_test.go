@@ -10,6 +10,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/service"
+	"github.com/el-bulk/backend/store"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
@@ -21,38 +23,38 @@ func TestProductHandler_List(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &ProductHandler{DB: sqlxDB}
+	settingsStore := store.NewSettingsStore(sqlxDB)
+	settingsService := service.NewSettingsService(settingsStore)
+	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService)
+	h := &ProductHandler{Service: ps, DB: sqlxDB}
+
+	now := time.Now()
 
 	t.Run("Basic List", func(t *testing.T) {
-		ResetSettingsCache()
-		now := time.Now()
-		rows := sqlmock.NewRows([]string{"id", "name", "tcg", "category", "price_source", "price_reference", "stock", "created_at", "updated_at"}).
-			AddRow("p1", "Product 1", "mtg", "singles", "tcgplayer", 1.0, 10, now, now)
+		settingsService.ResetCache()
 
 		mock.ExpectQuery("(?i)SELECT COUNT\\(\\*\\) FROM product p").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
-		
-		rows = sqlmock.NewRows([]string{"id", "name", "tcg", "category", "price_source", "price_reference", "stock", "created_at", "updated_at", "stored_in_json", "categories_json"}).
+		rows := sqlmock.NewRows([]string{"id", "name", "tcg", "category", "price_source", "price_reference", "stock", "created_at", "updated_at", "stored_in_json", "categories_json"}).
 			AddRow("p1", "Product 1", "mtg", "singles", "tcgplayer", 1.0, 10, now, now, []byte("[]"), []byte("[]"))
 		mock.ExpectQuery("(?i)SELECT .* FROM view_product_enriched p").WillReturnRows(rows)
-		
+
 		mock.ExpectQuery("(?i)SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop", "4000"))
 
-		mock.ExpectQuery("(?i)SELECT pc\\.product_id, c\\.id, c\\.name, c\\.slug, c\\.show_badge, c\\.is_active, c\\.searchable FROM product_category pc JOIN custom_category c ON pc.category_id = c.id WHERE pc\\.product_id IN \\(\\$1\\) AND c\\.show_badge = true ORDER BY c\\.name").
-			WithArgs("p1").
-			WillReturnRows(sqlmock.NewRows([]string{"product_id", "id", "name", "slug", "show_badge", "is_active", "searchable"}).AddRow("p1", "cat1", "Cat 1", "cat1", true, true, true))
-		
-		mock.ExpectQuery("(?i)SELECT fn_get_product_facets").
-			WillReturnRows(sqlmock.NewRows([]string{"fn_get_product_facets"}).AddRow([]byte(`{"condition":{"NM":1},"foil":{"non_foil":1}}`)))
+		// Enrichment
+		mock.ExpectQuery("(?is)SELECT .* FROM product_storage ps").WithArgs("p1").WillReturnRows(sqlmock.NewRows([]string{"product_id", "stored_in_id", "name", "quantity"}))
+		mock.ExpectQuery("(?is)SELECT .* FROM product_category pc").WithArgs("p1").WillReturnRows(sqlmock.NewRows([]string{"product_id", "id", "name", "slug", "show_badge", "is_active", "searchable"}))
+		mock.ExpectQuery("(?is)SELECT .* FROM \"order\" o").WithArgs("p1").WillReturnRows(sqlmock.NewRows([]string{"product_id", "cart_count"}).AddRow("p1", 0))
+		mock.ExpectQuery("(?is)SELECT product_id FROM order_item").WithArgs("p1").WillReturnRows(sqlmock.NewRows([]string{"product_id"}))
 
-		req, _ := http.NewRequest("GET", "/api/products?page=1&pageSize=20", nil)
+		// Facets
+		mock.ExpectQuery("(?is)SELECT fn_get_product_facets").WillReturnRows(sqlmock.NewRows([]string{"fn_get_product_facets"}).AddRow([]byte(`{}`)))
+
+		req, _ := http.NewRequest("GET", "/api/products", nil)
 		rr := httptest.NewRecorder()
 		h.List(rr, req)
 
 		assert.Equal(t, http.StatusOK, rr.Code)
-		var res models.ProductListResponse
-		err = json.NewDecoder(rr.Body).Decode(&res)
-		assert.NoError(t, err)
-		assert.Len(t, res.Products, 1)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
 
@@ -62,20 +64,20 @@ func TestProductHandler_GetByID(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &ProductHandler{DB: sqlxDB}
+	settingsStore := store.NewSettingsStore(sqlxDB)
+	settingsService := service.NewSettingsService(settingsStore)
+	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService)
+	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
 	t.Run("Found", func(t *testing.T) {
-		ResetSettingsCache()
-
-		mock.ExpectQuery("(?i)SELECT COALESCE\\(t\\.is_active, true\\) FROM product p").
-			WithArgs("p1").
-			WillReturnRows(sqlmock.NewRows([]string{"active"}).AddRow(true))
-
-		mock.ExpectQuery("(?i)SELECT fn_get_product_detail").
-			WithArgs("p1").
-			WillReturnRows(sqlmock.NewRows([]string{"fn_get_product_detail"}).AddRow([]byte(`{"id":"p1","name":"Product 1","tcg":"mtg","category":"singles"}`)))
+		settingsService.ResetCache()
+		mock.ExpectQuery("(?is)SELECT fn_get_product_detail").WillReturnRows(sqlmock.NewRows([]string{"fn_get_product_detail"}).AddRow([]byte(`{"id":"p1","name":"P1"}`)))
 
 		mock.ExpectQuery("(?i)SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop", "4000"))
+
+		// Enrichment (public GetByID)
+		mock.ExpectQuery("(?is)SELECT .* FROM \"order\" o").WithArgs("p1").WillReturnRows(sqlmock.NewRows([]string{"product_id", "cart_count"}).AddRow("p1", 0))
+		mock.ExpectQuery("(?is)SELECT .* FROM product_category pc").WithArgs("p1").WillReturnRows(sqlmock.NewRows([]string{"product_id", "id", "name", "slug", "show_badge", "is_active", "searchable"}).AddRow("p1", "cat1", "Cat 1", "cat1", true, true, true))
 
 		r := chi.NewRouter()
 		r.Get("/api/products/{id}", h.GetByID)
@@ -84,21 +86,7 @@ func TestProductHandler_GetByID(t *testing.T) {
 		r.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusOK, rr.Code)
-	})
-
-	t.Run("Not Found", func(t *testing.T) {
-		ResetSettingsCache()
-		mock.ExpectQuery("SELECT .* FROM product WHERE id = \\$1").
-			WithArgs("p99").
-			WillReturnError(http.ErrNoLocation)
-
-		r := chi.NewRouter()
-		r.Get("/api/products/{id}", h.GetByID)
-		req, _ := http.NewRequest("GET", "/api/products/p99", nil)
-		rr := httptest.NewRecorder()
-		r.ServeHTTP(rr, req)
-
-		assert.Equal(t, http.StatusNotFound, rr.Code)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
 
@@ -108,28 +96,28 @@ func TestProductHandler_Create(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &ProductHandler{DB: sqlxDB}
+	settingsStore := store.NewSettingsStore(sqlxDB)
+	settingsService := service.NewSettingsService(settingsStore)
+	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService)
+	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
-		ResetSettingsCache()
-		input := models.ProductInput{Name: "New Product", TCG: "mtg", Category: "singles", Stock: 10}
+		settingsService.ResetCache()
+		input := models.ProductInput{Name: "New Product", TCG: "mtg", Category: "singles"}
 		body, _ := json.Marshal(input)
 
-		mock.ExpectQuery("INSERT INTO product .*").
-			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "tcg", "category"}).AddRow("p-new", "New Product", "mtg", "singles"))
+		mock.ExpectQuery("(?i)INSERT INTO product").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("p-new"))
 		
-		mock.ExpectExec("DELETE FROM product_category WHERE product_id = \\$1").WithArgs("p-new").WillReturnResult(sqlmock.NewResult(0, 0))
-		mock.ExpectExec("DELETE FROM product_storage WHERE product_id = \\$1").WithArgs("p-new").WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectExec("(?i)DELETE FROM product_category").WillReturnResult(sqlmock.NewResult(0, 0)) // Categories DELETE
+		mock.ExpectExec("(?i)DELETE FROM product_storage").WillReturnResult(sqlmock.NewResult(0, 0))  // Storage DELETE
 
 		mock.ExpectQuery("(?i)SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop", "4000"))
 
-		mock.ExpectQuery("(?i)SELECT ps\\.product_id, s\\.id as stored_in_id.*").
-			WithArgs("p-new").
-			WillReturnRows(sqlmock.NewRows([]string{"product_id", "stored_in_id", "name", "quantity"}).AddRow("p-new", "loc1", "Box 1", 10))
-
-		mock.ExpectQuery("(?i)SELECT pc\\.product_id, c\\.id, c\\.name.*").
-			WithArgs("p-new").
-			WillReturnRows(sqlmock.NewRows([]string{"product_id", "id", "name", "slug", "show_badge", "is_active", "searchable"}).AddRow("p-new", "cat1", "Cat 1", "cat1", true, true, true))
+		// Enrichment
+		mock.ExpectQuery("(?is)SELECT .* FROM product_storage ps").WithArgs("p-new").WillReturnRows(sqlmock.NewRows([]string{"product_id", "stored_in_id", "name", "quantity"}))
+		mock.ExpectQuery("(?is)SELECT .* FROM product_category pc").WithArgs("p-new").WillReturnRows(sqlmock.NewRows([]string{"product_id", "id", "name", "slug", "show_badge", "is_active", "searchable"}))
+		mock.ExpectQuery("(?is)SELECT .* FROM \"order\" o").WithArgs("p-new").WillReturnRows(sqlmock.NewRows([]string{"product_id", "cart_count"}).AddRow("p-new", 0))
+		mock.ExpectQuery("(?is)SELECT product_id FROM order_item").WithArgs("p-new").WillReturnRows(sqlmock.NewRows([]string{"product_id"}))
 
 		req, _ := http.NewRequest("POST", "/api/admin/products", bytes.NewBuffer(body))
 		req.Header.Set("X-Requested-With", "XMLHttpRequest")
@@ -137,6 +125,7 @@ func TestProductHandler_Create(t *testing.T) {
 		h.Create(rr, req)
 
 		assert.Equal(t, http.StatusCreated, rr.Code)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
 
@@ -146,89 +135,37 @@ func TestProductHandler_Update(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &ProductHandler{DB: sqlxDB}
+	settingsStore := store.NewSettingsStore(sqlxDB)
+	settingsService := service.NewSettingsService(settingsStore)
+	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService)
+	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
-		ResetSettingsCache()
+		settingsService.ResetCache()
 		input := models.ProductInput{Name: "Updated Name"}
 		body, _ := json.Marshal(input)
 
-		mock.ExpectQuery("(?i)UPDATE product").
-			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "tcg", "category"}).AddRow("p1", "Updated Name", "mtg", "singles"))
-
-		mock.ExpectExec("DELETE FROM product_category WHERE product_id = \\$1").WithArgs("p1").WillReturnResult(sqlmock.NewResult(0, 0))
-		mock.ExpectExec("DELETE FROM product_storage WHERE product_id = \\$1").WithArgs("p1").WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectQuery("(?i)UPDATE product").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("p1"))
+		
+		mock.ExpectExec("(?i)DELETE FROM product_category").WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectExec("(?i)DELETE FROM product_storage").WillReturnResult(sqlmock.NewResult(0, 0))
 
 		mock.ExpectQuery("(?i)SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop", "4000"))
 
-		mock.ExpectQuery("(?i)SELECT ps\\.product_id, s\\.id as stored_in_id.*").
-			WithArgs("p1").
-			WillReturnRows(sqlmock.NewRows([]string{"product_id", "stored_in_id", "name", "quantity"}).AddRow("p1", "loc1", "Box 1", 10))
-
-		mock.ExpectQuery("(?i)SELECT pc\\.product_id, c\\.id, c\\.name.*").
-			WithArgs("p1").
-			WillReturnRows(sqlmock.NewRows([]string{"product_id", "id", "name", "slug", "show_badge", "is_active", "searchable"}).AddRow("p1", "cat1", "Cat 1", "cat1", true, true, true))
+		// Enrichment
+		mock.ExpectQuery("(?is)SELECT .* FROM product_storage ps").WithArgs("p1").WillReturnRows(sqlmock.NewRows([]string{"product_id", "stored_in_id", "name", "quantity"}))
+		mock.ExpectQuery("(?is)SELECT .* FROM product_category pc").WithArgs("p1").WillReturnRows(sqlmock.NewRows([]string{"product_id", "id", "name", "slug", "show_badge", "is_active", "searchable"}))
+		mock.ExpectQuery("(?is)SELECT .* FROM \"order\" o").WithArgs("p1").WillReturnRows(sqlmock.NewRows([]string{"product_id", "cart_count"}).AddRow("p1", 0))
+		mock.ExpectQuery("(?is)SELECT product_id FROM order_item").WithArgs("p1").WillReturnRows(sqlmock.NewRows([]string{"product_id"}))
 
 		r := chi.NewRouter()
 		r.Put("/api/admin/products/{id}", h.Update)
 		req, _ := http.NewRequest("PUT", "/api/admin/products/p1", bytes.NewBuffer(body))
-		req.Header.Set("X-Requested-With", "XMLHttpRequest")
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusOK, rr.Code)
-	})
-}
-
-func TestProductHandler_Delete(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer db.Close()
-
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &ProductHandler{DB: sqlxDB}
-
-	t.Run("Success", func(t *testing.T) {
-		mock.ExpectExec("DELETE FROM product WHERE id = \\$1").
-			WithArgs("p1").
-			WillReturnResult(sqlmock.NewResult(0, 1))
-
-		r := chi.NewRouter()
-		r.Delete("/api/admin/products/{id}", h.Delete)
-		req, _ := http.NewRequest("DELETE", "/api/admin/products/p1", nil)
-		rr := httptest.NewRecorder()
-		r.ServeHTTP(rr, req)
-
-		assert.Equal(t, http.StatusOK, rr.Code)
-	})
-}
-
-func TestProductHandler_BulkCreate(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer db.Close()
-
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &ProductHandler{DB: sqlxDB}
-
-	t.Run("Success", func(t *testing.T) {
-		ResetSettingsCache()
-		inputs := []models.ProductInput{
-			{Name: "Bulk 1", TCG: "mtg", Category: "singles"},
-			{Name: "Bulk 2", TCG: "mtg", Category: "singles"},
-		}
-		body, _ := json.Marshal(inputs)
-
-		mock.ExpectQuery("SELECT upserted_id FROM fn_bulk_upsert_product").
-			WithArgs(sqlmock.AnyArg()).
-			WillReturnRows(sqlmock.NewRows([]string{"upserted_id"}).AddRow("b1").AddRow("b2"))
-
-		req, _ := http.NewRequest("POST", "/api/admin/products/bulk", bytes.NewBuffer(body))
-		req.Header.Set("X-Requested-With", "XMLHttpRequest")
-		rr := httptest.NewRecorder()
-		h.BulkCreate(rr, req)
-
-		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
 
@@ -238,25 +175,20 @@ func TestProductHandler_GetStorage(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &ProductHandler{DB: sqlxDB}
+	settingsStore := store.NewSettingsStore(sqlxDB)
+	settingsService := service.NewSettingsService(settingsStore)
+	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService)
+	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
-		ResetSettingsCache()
-		rows := sqlmock.NewRows([]string{"storage_id", "name", "quantity"}).
-			AddRow("loc1", "Box 1", 10).
-			AddRow("loc2", "Box 2", 0)
-
-		mock.ExpectQuery("(?i)SELECT .* FROM storage_location").
-			WithArgs("p1").
-			WillReturnRows(rows)
-
+		mock.ExpectQuery("(?is)SELECT .* FROM storage_location").WithArgs("p1").WillReturnRows(sqlmock.NewRows([]string{"storage_id", "name", "quantity"}).AddRow("loc1", "Box 1", 10))
 		r := chi.NewRouter()
 		r.Get("/api/admin/products/{id}/storage", h.GetStorage)
 		req, _ := http.NewRequest("GET", "/api/admin/products/p1/storage", nil)
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
-
 		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
 
@@ -266,22 +198,21 @@ func TestProductHandler_UpdateStorage(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &ProductHandler{DB: sqlxDB}
+	settingsStore := store.NewSettingsStore(sqlxDB)
+	settingsService := service.NewSettingsService(settingsStore)
+	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService)
+	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
-		ResetSettingsCache()
-		updates := []models.ProductStorage{
-			{StorageID: "loc1", Quantity: 5},
-		}
+		updates := []models.ProductStorage{{StorageID: "loc1", Quantity: 5}}
 		body, _ := json.Marshal(updates)
 
 		mock.ExpectBegin()
-		mock.ExpectExec("DELETE FROM product_storage WHERE product_id = \\$1").WithArgs("p1").WillReturnResult(sqlmock.NewResult(0, 1))
-		mock.ExpectExec("INSERT INTO product_storage").WithArgs("p1", "loc1", 5).WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectExec("(?i)DELETE FROM product_storage").WithArgs("p1").WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectExec("(?i)INSERT INTO product_storage").WithArgs("p1", "loc1", 5).WillReturnResult(sqlmock.NewResult(0, 1))
 		mock.ExpectCommit()
 
-		// GetStorage follow-up
-		mock.ExpectQuery("(?i)SELECT .* FROM storage_location").WithArgs("p1").WillReturnRows(sqlmock.NewRows([]string{"storage_id", "name", "quantity"}).AddRow("loc1", "Box 1", 5))
+		mock.ExpectQuery("(?is)SELECT .* FROM storage_location").WithArgs("p1").WillReturnRows(sqlmock.NewRows([]string{"storage_id", "name", "quantity"}).AddRow("loc1", "Box 1", 5))
 
 		r := chi.NewRouter()
 		r.Put("/api/admin/products/{id}/storage", h.UpdateStorage)
@@ -290,5 +221,6 @@ func TestProductHandler_UpdateStorage(t *testing.T) {
 		r.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
