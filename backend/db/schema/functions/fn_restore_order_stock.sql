@@ -10,8 +10,14 @@ DECLARE
     v_status TEXT;
     v_pending_id UUID := (SELECT id FROM storage_location WHERE name = 'pending');
     v_check RECORD;
+    v_restored BOOLEAN;
 BEGIN
-    SELECT status INTO v_status FROM "order" WHERE id = p_order_id;
+    SELECT status, inventory_restored INTO v_status, v_restored FROM "order" WHERE id = p_order_id;
+    
+    IF v_restored THEN
+        RAISE EXCEPTION 'Inventory already restored for this order';
+    END IF;
+
     IF v_status != 'cancelled' THEN
         RAISE EXCEPTION 'Only cancelled orders can be restored to stock (current status: %)', v_status;
     END IF;

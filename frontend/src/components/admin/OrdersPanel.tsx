@@ -4,12 +4,12 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
   adminFetchOrders, adminFetchOrderDetail, adminUpdateOrder, adminConfirmOrder,
-  adminFetchProducts, adminRestoreOrderStock
+  adminFetchProducts, adminRestoreOrderStock, adminFetchStorage
 } from '@/lib/api';
 import {
   OrderWithCustomer, OrderDetail,
   ORDER_STATUS_LABELS, PAYMENT_METHODS, FOIL_LABELS, TREATMENT_LABELS, StorageLocation,
-  Product
+  Product, StoredIn
 } from '@/lib/types';
 import CardImage from '@/components/CardImage';
 import { useLanguage } from '@/context/LanguageContext';
@@ -71,6 +71,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
   const [searchingItems, setSearchingItems] = useState(false);
   const [stagedItems, setStagedItems] = useState<{ product: Product; quantity: number; unit_price_cop: number }[]>([]);
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
+  const [allStorage, setAllStorage] = useState<StoredIn[]>([]);
 
   const loadOrders = useCallback(async () => {
     // No longer setting loading synchronously at start to avoid cascaded renders
@@ -85,6 +86,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
   }, [statusFilter, debouncedSearch, page, pageSize]);
 
   useEffect(() => {
+    adminFetchStorage().then(setAllStorage).catch(console.error);
     const timer = setTimeout(() => {
       loadOrders();
     }, 0);
@@ -208,6 +210,15 @@ export default function OrdersPanel({ initialOrderId }: Props) {
 
   const handleStatusChange = async (status: string, trackingInfo?: { tracking_number?: string, tracking_url?: string }) => {
     if (!detail) return;
+
+    // Issue 3 & 4: Alert for final changes
+    if (status === 'completed' || status === 'cancelled') {
+        const msg = status === 'completed' 
+            ? '¿Estás seguro de marcar como COMPLETADA? Esta acción es final y la orden se bloqueará.'
+            : '¿Estás seguro de CANCELAR esta orden? Esta acción es final.';
+        if (!window.confirm(msg)) return;
+    }
+
     setSaving(true);
     try {
       const updated = await adminUpdateOrder(detail.order.id, { status, ...trackingInfo });
@@ -526,7 +537,8 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                   >
                     {Object.entries(ORDER_STATUS_LABELS)
                       .map(([k, v]) => {
-                        const isPostConfirmation = k === 'ready_for_pickup' || k === 'shipped' || k === 'completed';
+                        // Issue 1: confirmed is now a post-confirmation state
+                        const isPostConfirmation = k === 'confirmed' || k === 'ready_for_pickup' || k === 'shipped' || k === 'completed';
                         const isOriginalPending = k === 'pending';
                         
                         // Disable going back to pending if already confirmed
@@ -544,7 +556,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                         );
                       })}
                   </select>
-                  {detail.order.status !== 'completed' && detail.order.status !== 'confirmed' && detail.order.status !== 'cancelled' && (
+                  {detail.order.status === 'pending' && (
                     <button onClick={openConfirmModal} className="btn-primary" style={{ fontSize: '0.85rem', padding: '0.35rem 1rem' }}>
                       ✓ CONFIRMAR
                     </button>
@@ -1079,55 +1091,79 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                     </div>
 
                     <div className="space-y-2">
-                        {item.stored_in.filter((loc: StorageLocation) => loc.name.toLowerCase() !== 'pending').map((loc: StorageLocation) => {
-                          const val = productIncs[loc.stored_in_id] || 0;
-                          return (
-                            <div key={loc.stored_in_id} className="flex items-center justify-between gap-3">
-                              <div className="flex-1">
-                                <span className="text-sm font-semibold">{loc.name}</span>
-                                <span className="text-xs font-mono-stack ml-2" style={{ color: 'var(--text-muted)' }}>
-                                  (actual: {loc.quantity})
-                                </span>
+                        {allStorage
+                          .filter(as => as.name.toLowerCase() !== 'pending' && (item.stored_in.some(si => si.stored_in_id === as.id) || productIncs[as.id] !== undefined))
+                          .map(as => {
+                            const si = item.stored_in.find(s => s.stored_in_id === as.id);
+                            const val = productIncs[as.id] || 0;
+                            return (
+                              <div key={as.id} className="flex items-center justify-between gap-3">
+                                <div className="flex-1">
+                                  <span className="text-sm font-semibold">{as.name}</span>
+                                  <span className="text-xs font-mono-stack ml-2" style={{ color: 'var(--text-muted)' }}>
+                                    (actual: {si?.quantity || 0})
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={() => setIncrement(item.product_id!, as.id, val - 1)}
+                                    className="w-6 h-6 flex items-center justify-center text-xs"
+                                    style={{ background: 'var(--ink-border)', border: 'none', borderRadius: 2, cursor: 'pointer' }}
+                                    disabled={val <= 0}>−</button>
+                                  <input
+                                    type="number" min={0} max={item.quantity}
+                                    value={val || ''}
+                                    onChange={e => {
+                                      const newVal = Math.max(0, parseInt(e.target.value) || 0);
+                                      const otherTotal = totalAssigned - val;
+                                      const allowed = Math.max(0, item.quantity - otherTotal);
+                                      setIncrement(item.product_id!, as.id, Math.min(newVal, allowed));
+                                    }}
+                                    className="w-12 text-center text-sm font-mono-stack"
+                                    style={{ height: 24, padding: '0 2px' }}
+                                    placeholder="0"
+                                  />
+                                  <button
+                                    onClick={() => {
+                                      if (totalAssigned < item.quantity) {
+                                        setIncrement(item.product_id!, as.id, val + 1);
+                                      }
+                                    }}
+                                    className="w-6 h-6 flex items-center justify-center text-xs"
+                                    style={{ 
+                                      background: 'var(--ink-border)', 
+                                      border: 'none', 
+                                      borderRadius: 2, 
+                                      cursor: totalAssigned >= item.quantity ? 'not-allowed' : 'pointer',
+                                      opacity: totalAssigned >= item.quantity ? 0.5 : 1
+                                    }}
+                                    disabled={totalAssigned >= item.quantity}
+                                  >+</button>
+                                </div>
                               </div>
-                              <div className="flex items-center gap-1">
-                                <button
-                                  onClick={() => setIncrement(item.product_id!, loc.stored_in_id, val - 1)}
-                                  className="w-6 h-6 flex items-center justify-center text-xs"
-                                  style={{ background: 'var(--ink-border)', border: 'none', borderRadius: 2, cursor: 'pointer' }}
-                                  disabled={val <= 0}>−</button>
-                                <input
-                                  type="number" min={0} max={item.quantity}
-                                  value={val || ''}
-                                  onChange={e => {
-                                    const newVal = Math.max(0, parseInt(e.target.value) || 0);
-                                    const otherTotal = totalAssigned - val;
-                                    const allowed = Math.max(0, item.quantity - otherTotal);
-                                    setIncrement(item.product_id!, loc.stored_in_id, Math.min(newVal, allowed));
-                                  }}
-                                  className="w-12 text-center text-sm font-mono-stack"
-                                  style={{ height: 24, padding: '0 2px' }}
-                                  placeholder="0"
-                                />
-                                <button
-                                  onClick={() => {
-                                    if (totalAssigned < item.quantity) {
-                                      setIncrement(item.product_id!, loc.stored_in_id, val + 1);
-                                    }
-                                  }}
-                                  className="w-6 h-6 flex items-center justify-center text-xs"
-                                  style={{ 
-                                    background: 'var(--ink-border)', 
-                                    border: 'none', 
-                                    borderRadius: 2, 
-                                    cursor: totalAssigned >= item.quantity ? 'not-allowed' : 'pointer',
-                                    opacity: totalAssigned >= item.quantity ? 0.5 : 1
-                                  }}
-                                  disabled={totalAssigned >= item.quantity}
-                                >+</button>
-                              </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        
+                        {/* Add Location Dropdown */}
+                        <div className="mt-2 pt-2 border-t border-border-main/10 flex justify-end">
+                          <select 
+                            className="text-[10px] bg-transparent border-none text-gold-dark font-bold cursor-pointer outline-none hover:text-hp-color transition-colors"
+                            value=""
+                            onChange={e => {
+                              if (e.target.value) {
+                                setIncrement(item.product_id!, e.target.value, 0);
+                              }
+                            }}
+                          >
+                            <option value="">+ {t('pages.order.add_location', 'AÑADIR UBICACIÓN')}</option>
+                            {allStorage
+                              .filter(as => as.name.toLowerCase() !== 'pending' && !item.stored_in.some(si => si.stored_in_id === as.id) && productIncs[as.id] === undefined)
+                              .map(as => (
+                                <option key={as.id} value={as.id}>{as.name}</option>
+                              ))
+                            }
+                          </select>
+                        </div>
                     </div>
                   </div>
                 );
