@@ -22,14 +22,26 @@ BEGIN
         RAISE EXCEPTION 'Only cancelled orders can be restored to stock (current status: %)', v_status;
     END IF;
 
-    -- 1. Validate totals (sum per product must not exceed order_item quantity)
+    -- 1. Validate totals (every product in order must be fully restored)
     FOR v_check IN 
-        SELECT (elem->>'product_id')::uuid as pid, SUM((elem->>'quantity')::int) as total_qty
-        FROM jsonb_array_elements(increments) elem
-        GROUP BY (elem->>'product_id')::uuid
+        SELECT 
+            oi.product_id, 
+            oi.product_name,
+            oi.quantity as order_qty,
+            COALESCE(inc.inc_qty, 0) as restored_qty
+        FROM order_item oi
+        LEFT JOIN (
+            SELECT (elem->>'product_id')::uuid as pid, SUM((elem->>'quantity')::int) as inc_qty
+            FROM jsonb_array_elements(increments) AS elem
+            GROUP BY (elem->>'product_id')::uuid
+        ) inc ON oi.product_id = inc.pid
+        WHERE oi.order_id = p_order_id 
+          AND oi.product_id IS NOT NULL 
+          AND oi.quantity > 0
     LOOP
-        IF (SELECT COALESCE(SUM(quantity), 0) FROM order_item WHERE order_id = p_order_id AND product_id = v_check.pid) < v_check.total_qty THEN
-            RAISE EXCEPTION 'Restoring more than original quantity for product %', v_check.pid;
+        IF v_check.restored_qty != v_check.order_qty THEN
+            RAISE EXCEPTION 'Debes restaurar la cantidad total (%) para el producto % (asignado: %)', 
+                v_check.order_qty, v_check.product_name, v_check.restored_qty;
         END IF;
     END LOOP;
 

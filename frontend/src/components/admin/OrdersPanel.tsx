@@ -310,14 +310,14 @@ export default function OrdersPanel({ initialOrderId }: Props) {
     setRestoring(true);
     setRestoreError('');
     
-    // Validate: total increments per product must not exceed order quantity
+    // Validate: total increments per product must match order quantity exactly
     for (const item of detail.items) {
       if (item.quantity <= 0 || !item.product_id) continue;
       const productIncs = increments[item.product_id] || {};
       const totalAssigned = Object.values(productIncs).reduce((s, v) => s + v, 0);
       
-      if (totalAssigned > item.quantity) {
-        setRestoreError(`${item.product_name}: intentas restaurar ${totalAssigned} de ${item.quantity} comprados.`);
+      if (totalAssigned !== item.quantity) {
+        setRestoreError(`${item.product_name}: debes restaurar todos los productos (${totalAssigned} de ${item.quantity} asignados).`);
         setRestoring(false);
         return;
       }

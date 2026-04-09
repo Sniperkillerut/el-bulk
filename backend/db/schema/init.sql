@@ -11,6 +11,7 @@
 \i tables/migration.sql
 \i tables/setting.sql
 \i tables/tcg.sql
+\i tables/tcg_set.sql
 \i tables/storage_location.sql
 \i tables/customer.sql
 \i tables/customer_auth.sql
@@ -43,6 +44,7 @@
 \i functions/fn_get_product_facets.sql
 \i functions/fn_submit_client_request.sql
 \i functions/fn_submit_bounty_offer.sql
+\i functions/fn_restore_order_stock.sql
 
 -- 5. Views
 \i views/view_product_enriched.sql
