@@ -9,16 +9,7 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./backend/db/schema:/schema
       - ./backend/db/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql
-      - ./backend/db/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
-      - ./certs:/etc/postgresql/certs:ro
-    command: >
-      sh -c "cp /etc/postgresql/certs/server.crt /var/lib/postgresql/data/server.crt && 
-             cp /etc/postgresql/certs/server.key /var/lib/postgresql/data/server.key && 
-             cp /etc/postgresql/certs/ca.crt /var/lib/postgresql/data/root.crt && 
-             chown postgres:postgres /var/lib/postgresql/data/server.crt /var/lib/postgresql/data/server.key /var/lib/postgresql/data/root.crt && 
-             chmod 600 /var/lib/postgresql/data/server.key && 
-             exec su-exec postgres postgres -c ssl=on 
-                                           -c hba_file=/etc/postgresql/pg_hba.conf"
+    command: postgres
     ports:
       - "5432:5432"
     healthcheck:
@@ -41,7 +32,7 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=verify-full&sslrootcert=/app/certs/ca.crt&sslcert=/app/certs/client.crt&sslkey=/app/certs/client.key
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
       # FRONTEND_ORIGIN: http://localhost (Already in .env)
       # JWT_SECRET: ${JWT_SECRET:-dev-secret} (Already in .env)
       # PORT: "8080" (Already in .env)
@@ -55,7 +46,6 @@ services:
       start_period: 60s
     volumes:
       - ./backend:/app
-      - ./certs:/app/certs:ro
 
   frontend:
     build:

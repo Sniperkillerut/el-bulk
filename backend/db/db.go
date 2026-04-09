@@ -46,6 +46,42 @@ func ConnectResilient() (*sqlx.DB, error) {
 		return nil, fmt.Errorf("DATABASE_URL environment variable is required")
 	}
 
+	// 0. Dynamic SSL Provisioning (for GCP/Cloud Run without local cert files)
+	rootCert := os.Getenv("DB_SSL_ROOT_CERT")
+	if rootCert != "" {
+		certDir := "/tmp/elbulk-certs"
+		if err := os.MkdirAll(certDir, 0700); err != nil {
+			logger.Error("Failed to create cert directory: %v", err)
+		} else {
+			rootCertPath := filepath.Join(certDir, "root.crt")
+			if err := os.WriteFile(rootCertPath, []byte(rootCert), 0600); err != nil {
+				logger.Error("Failed to write root cert: %v", err)
+			} else {
+				// Append SSL parameters to DSN if not already present
+				if !strings.Contains(dsn, "sslrootcert") {
+					if strings.Contains(dsn, "?") {
+						dsn += "&"
+					} else {
+						dsn += "?"
+					}
+					dsn += fmt.Sprintf("sslmode=verify-full&sslrootcert=%s", rootCertPath)
+
+					// Optionally add client cert/key if provided
+					clientCert := os.Getenv("DB_SSL_CERT")
+					clientKey := os.Getenv("DB_SSL_KEY")
+					if clientCert != "" && clientKey != "" {
+						certPath := filepath.Join(certDir, "client.crt")
+						keyPath := filepath.Join(certDir, "client.key")
+						_ = os.WriteFile(certPath, []byte(clientCert), 0600)
+						_ = os.WriteFile(keyPath, []byte(clientKey), 0600)
+						dsn += fmt.Sprintf("&sslcert=%s&sslkey=%s", certPath, keyPath)
+					}
+					logger.Info("🔒 SSL Provisioning: Detected environment certificates, updated DSN for secure connection.")
+				}
+			}
+		}
+	}
+
 	db, err := sqlx.Connect("postgres", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %v", err)
