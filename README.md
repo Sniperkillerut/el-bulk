@@ -125,20 +125,34 @@ docker compose -f docker-compose.dev.yml up --build
 ## 🛠️ Data Initialization
 
 ### 1. Database Seeding
-To populate the database with initial products, categories, and translation keys, run the seeding script:
+To populate the database with initial data, use the modular seeding system. It supports two modes: `minimal` (safe for production) and `full` (exhaustive for development/testing).
+
+#### Seeding Modes Comparison
+
+| Feature | 🌱 Minimal Mode | 🌟 Full Mode |
+| :--- | :---: | :---: |
+| **Admin Account** | ✅ | ✅ |
+| **TCGs & Categories** | ✅ | ✅ |
+| **Store Settings & Themes** | ✅ | ✅ |
+| **Bilingual Translations** | ✅ | ✅ |
+| **Blog / Notices** | ✅ | ✅ |
+| **Reference Products** | 1 (Black Lotus) | Hundreds (All TCGs) |
+| **Scryfall Sync** | ❌ | ✅ (Real MTG Data) |
+| **Customers & CRM** | ❌ | ✅ (30+ Profiles) |
+| **Order History** | ❌ | ✅ (100+ Orders) |
+| **Bounties & Offers** | ❌ | ✅ |
+
+#### Running the Seed
 
 ```bash
-# Option A: Run via Docker (Recommended)
-docker exec -it el_bulk_backend_dev go run ./seed/main.go
+# Run via Docker (Recommended)
+docker exec -it el_bulk_backend_dev go run ./seed/ --mode=minimal  # Production
+docker exec -it el_bulk_backend_dev go run ./seed/ --mode=full     # Development
 
-# Option B: Run natively
+# Run natively (requires local Go/Postgres)
 cd backend
-go run ./seed/main.go
+go run ./seed/ --mode=minimal
 ```
-The seeding script will:
-- Initialize the product taxonomy (Singles, Sealed, Accessories).
-- Add initial stock for supported TCGs.
-- Populate the translation table with bilingual keys (ES/EN).
 
 ---
 
