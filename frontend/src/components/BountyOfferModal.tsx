@@ -78,7 +78,10 @@ export default function BountyOfferModal({ bounty, onClose }: BountyOfferModalPr
               {t('pages.auth.login.google', 'Login with Google')}
             </button>
             <button 
-              onClick={() => router.push('/login')} 
+              onClick={() => {
+                onClose();
+                router.push('/login');
+              }} 
               className="text-xs font-mono text-text-muted hover:text-accent-primary uppercase tracking-widest transition-colors py-2"
             >
                {t('components.bounty_offer.other_methods', 'View other methods')}

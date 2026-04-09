@@ -74,7 +74,10 @@ export default function ClientRequestModal({ onClose, onSuccess }: ClientRequest
               {t('pages.auth.login.google', 'Login with Google')}
             </button>
             <button 
-              onClick={() => router.push('/login')} 
+              onClick={() => {
+                onClose();
+                router.push('/login');
+              }} 
               className="text-xs font-mono text-text-muted hover:text-accent-primary uppercase tracking-widest transition-colors py-2"
             >
                {t('components.client_request_modal.other_methods', 'Other methods')}

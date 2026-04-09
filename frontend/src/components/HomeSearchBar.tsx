@@ -58,7 +58,7 @@ export default function HomeSearchBar({ placeholder }: HomeSearchBarProps) {
     <div className="relative w-full" ref={containerRef}>
       <div className="relative">
         <input
-          type="text" 
+          type="text"
           placeholder={placeholder || t('components.search.placeholder', 'Search for cards, sets, or products...')}
           className="w-full bg-bg-surface border-2 border-border-main p-4 pr-12 rounded-sm font-mono-stack text-sm focus:outline-none focus:border-accent-primary transition-colors shadow-inner"
           value={query}
@@ -82,9 +82,9 @@ export default function HomeSearchBar({ placeholder }: HomeSearchBarProps) {
             {results && results.length > 0 ? (
               <div className="divide-y divide-kraft-light">
                 {results.map((product) => (
-                  <div 
-                    key={product.id} 
-                    className="p-4 flex items-center gap-5 hover:bg-kraft-light/30 transition-colors group cursor-pointer" 
+                  <div
+                    key={product.id}
+                    className="p-4 flex items-center gap-5 hover:bg-kraft-light/30 transition-colors group cursor-pointer"
                     style={{ overflow: 'visible' }}
                     onClick={() => {
                       openProductModal(product);
@@ -92,7 +92,14 @@ export default function HomeSearchBar({ placeholder }: HomeSearchBarProps) {
                     }}
                   >
                     <div className="w-14 flex-shrink-0 thumb-hover-wrap">
-                      <CardImage imageUrl={product.image_url} name={product.name} tcg={product.tcg} foilTreatment={product.foil_treatment} height={70} />
+                      <CardImage 
+                        imageUrl={product.image_url} 
+                        name={product.name} 
+                        tcg={product.tcg} 
+                        foilTreatment={product.foil_treatment} 
+                        height={70} 
+                        enableHover={true}
+                      />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -101,7 +108,7 @@ export default function HomeSearchBar({ placeholder }: HomeSearchBarProps) {
                         </span>
                         <p className="text-base font-bold truncate" style={{ color: 'var(--text-main)' }}>{product.name}</p>
                       </div>
-                      
+
                       <div className="flex flex-wrap gap-1 mb-1">
                         {product.foil_treatment !== 'non_foil' && (
                           <span className="text-[10px] px-1.5 py-0.5 rounded bg-gold/10 text-gold-dark border border-gold/20 font-bold">
@@ -113,15 +120,12 @@ export default function HomeSearchBar({ placeholder }: HomeSearchBarProps) {
                             {TREATMENT_LABELS[product.card_treatment] || product.card_treatment}
                           </span>
                         )}
-                        {product.price_cop_override ? (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-kraft-mid/10 text-kraft-dark border border-kraft-dark/20 font-bold">{t('components.search.status.manual_price', 'MANUAL PRICE')}</span>
-                        ) : null}
                       </div>
 
                       <p className="text-xs text-text-muted truncate">
                         {product.set_name || t('components.search.status.no_set', 'No Set')} • <span className={product.stock > 0 ? 'text-text-primary' : 'text-hp-color font-bold'}>
-                          {product.stock > 0 
-                            ? t('components.search.status.in_stock', '{count} IN STOCK', { count: product.stock }) 
+                          {product.stock > 0
+                            ? t('components.search.status.in_stock', '{count} IN STOCK', { count: product.stock })
                             : t('components.search.status.out_of_stock', 'OUT OF STOCK')}
                         </span>
                       </p>
@@ -149,9 +153,9 @@ export default function HomeSearchBar({ placeholder }: HomeSearchBarProps) {
               </div>
             )}
             {results && results.length > 0 && (
-               <div className="p-2 bg-kraft-light/20 text-center border-t border-kraft-light">
-                  <p className="text-[10px] font-mono-stack text-text-muted italic">{t('components.search.status.top_results', 'Showing top results')}</p>
-               </div>
+              <div className="p-2 bg-kraft-light/20 text-center border-t border-kraft-light">
+                <p className="text-[10px] font-mono-stack text-text-muted italic">{t('components.search.status.top_results', 'Showing top results')}</p>
+              </div>
             )}
 
           </div>
