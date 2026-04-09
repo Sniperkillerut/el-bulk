@@ -87,20 +87,6 @@ func main() {
 				logger.Info("✅ Cloud Storage: Google Cloud Storage initialized (Bucket: %s)", bucket)
 			}
 		}
-	case "s3":
-		bucket := os.Getenv("AWS_S3_BUCKET")
-		region := os.Getenv("AWS_REGION")
-		if bucket == "" || region == "" {
-			logger.Warn("STORAGE_TYPE is s3 but AWS_S3_BUCKET or AWS_REGION is not set")
-		} else {
-			driver, err := storage.NewS3Driver(ctx, bucket, region)
-			if err != nil {
-				logger.Error("Failed to initialize S3 storage: %v", err)
-			} else {
-				storageDriver = driver
-				logger.Info("✅ Cloud Storage: AWS S3 initialized (Bucket: %s, Region: %s)", bucket, region)
-			}
-		}
 	default:
 		logger.Warn("⚠️ No Cloud Storage configured (STORAGE_TYPE empty or unknown). Image uploads will be disabled.")
 	}
@@ -139,10 +125,10 @@ func main() {
 		r.Get("/translations", translationHandler.List)
 
 		r.Get("/bounties", bountyHandler.List)
-		r.With(middleware.OptionalUserAuth).Post("/bounties/offers", bountyHandler.SubmitOffer)
+		r.With(middleware.RequireUserAuth).Post("/bounties/offers", bountyHandler.SubmitOffer)
 		r.With(middleware.RequireUserAuth).Get("/bounties/offers/me", bountyHandler.ListMeOffers)
 		r.With(middleware.RequireUserAuth).Delete("/bounties/offers/me/{id}", bountyHandler.CancelMeOffer)
-		r.With(middleware.OptionalUserAuth, middleware.RateLimit(5, 10*time.Minute)).Post("/client-requests", bountyHandler.CreateRequest)
+		r.With(middleware.RequireUserAuth, middleware.RateLimit(5, 10*time.Minute)).Post("/client-requests", bountyHandler.CreateRequest)
 		r.With(middleware.RequireUserAuth).Get("/client-requests/me", bountyHandler.ListMeRequests)
 		r.With(middleware.RequireUserAuth).Delete("/client-requests/me/{id}", bountyHandler.CancelMeRequest)
 		
@@ -151,7 +137,7 @@ func main() {
 		r.With(middleware.RateLimit(3, 30*time.Minute)).Post("/newsletter/subscribe", newsletterHandler.Subscribe)
 
 		// Public order creation (with optional user context)
-		r.With(middleware.OptionalUserAuth).Post("/orders", orderHandler.Create)
+		r.With(middleware.RequireUserAuth).Post("/orders", orderHandler.Create)
 		r.With(middleware.RequireUserAuth).Get("/orders/me", orderHandler.ListMe)
 		r.With(middleware.RequireUserAuth).Get("/orders/me/{id}", orderHandler.GetMeDetail)
 		r.With(middleware.RequireUserAuth).Post("/orders/me/{id}/cancel", orderHandler.CancelMe)

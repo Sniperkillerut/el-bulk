@@ -299,11 +299,13 @@ export interface Order {
   shipping_cop: number;
   tax_cop: number;
   total_cop: number;
+  inventory_restored: boolean;
   tracking_number?: string;
   tracking_url?: string;
   is_local_pickup: boolean;
   notes?: string;
   created_at: string;
+  confirmed_at?: string;
   completed_at?: string;
 }
 
@@ -398,6 +400,8 @@ export const PAYMENT_METHODS: Record<string, string> = {
 export const ORDER_STATUS_LABELS: Record<string, string> = {
   pending: 'Pendiente',
   confirmed: 'Confirmado',
+  ready_for_pickup: 'Listo para recoger',
+  shipped: 'Enviado',
   completed: 'Completado',
   cancelled: 'Cancelado',
 };

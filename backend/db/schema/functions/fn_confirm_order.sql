@@ -34,7 +34,8 @@ BEGIN
     END LOOP;
 
     UPDATE "order" 
-    SET status = 'confirmed' 
+    SET status = 'confirmed',
+        confirmed_at = now()
     WHERE id = p_order_id;
 END;
 $$ LANGUAGE plpgsql;

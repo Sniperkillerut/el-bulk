@@ -18,7 +18,7 @@ interface BountyOfferModalProps {
 
 export default function BountyOfferModal({ bounty, onClose }: BountyOfferModalProps) {
   const router = useRouter();
-  const { user } = useUser();
+  const { user, loginWithGoogle } = useUser();
   const { t } = useLanguage();
   const {
     form,
@@ -61,22 +61,32 @@ export default function BountyOfferModal({ bounty, onClose }: BountyOfferModalPr
           <h4 className="text-xl font-bold mb-2 text-text-main">{t('components.bounty_offer.success_title', 'Offer Received!')}</h4>
           <p className="text-text-muted text-sm">{t('components.bounty_offer.success_desc', "We'll review it and contact you soon.")}</p>
         </div>
+      ) : !user ? (
+        <div className="py-12 px-6 text-center animate-in fade-in zoom-in-95 duration-500">
+           <div className="w-20 h-20 bg-accent-primary/10 rounded-full flex items-center justify-center text-4xl mx-auto mb-8 border border-accent-primary/20 shadow-lg shadow-accent-primary/5">
+            🔒
+          </div>
+          <h4 className="text-2xl font-bold mb-4 text-text-main font-display">{t('components.bounty_offer.login_required.title', 'IDENTITY VERIFICATION')}</h4>
+          <p className="text-sm text-text-muted mb-10 leading-relaxed max-w-xs mx-auto">
+            {t('components.bounty_offer.login_required.desc', 'To protect our marketplace and ensure secure transactions, you must be logged in to submit an offer.')}
+          </p>
+          <div className="flex flex-col gap-4">
+            <button 
+              onClick={loginWithGoogle} 
+              className="w-full py-4 bg-accent-primary hover:bg-accent-primary-hover text-text-on-accent font-bold rounded-xl transition-all shadow-lg active:scale-95"
+            >
+              {t('pages.auth.login.google', 'Login with Google')}
+            </button>
+            <button 
+              onClick={() => router.push('/login')} 
+              className="text-xs font-mono text-text-muted hover:text-accent-primary uppercase tracking-widest transition-colors py-2"
+            >
+               {t('components.bounty_offer.other_methods', 'View other methods')}
+            </button>
+          </div>
+        </div>
       ) : (
         <form onSubmit={(e) => { e.preventDefault(); handleSubmit(onSubmit); }} className="space-y-4">
-          {!user && (
-            <div className="bg-accent-primary/10 border border-accent-primary/20 p-3 rounded-md mb-2 flex items-center justify-between gap-4 animate-fade-in">
-              <div className="text-[11px] text-text-main leading-tight">
-                <strong>{t('pages.common.labels.login', 'Login')}</strong> {t('components.bounty_offer.login_prompt', 'to automatically fill your info and track your offers.')}
-              </div>
-              <button 
-                type="button"
-                onClick={() => router.push('/login')}
-                className="btn-primary text-[10px] px-3 py-1.5 whitespace-nowrap font-bold"
-              >
-                {t('pages.common.buttons.login', 'LOGIN')}
-              </button>
-            </div>
-          )}
           <div className="flex items-center gap-4 bg-bg-surface p-3 rounded mb-6 border border-border-main">
             <div className="w-12 h-[68px] flex-shrink-0">
               <CardImage 

@@ -35,6 +35,7 @@ export default function ScryfallPopulate({
     const handleClick = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setShowSuggestions(false);
+        setHoverCard(null);
       }
     };
     document.addEventListener('mousedown', handleClick);
@@ -70,6 +71,7 @@ export default function ScryfallPopulate({
   const handleSelectCard = (card: ScryfallCard) => {
     onCardSelect(card);
     setShowSuggestions(false);
+    setHoverCard(null);
   };
 
   return (

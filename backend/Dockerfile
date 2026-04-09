@@ -19,7 +19,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o /el-bulk-api .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /el-bulk-api .
 
 # Final minimal image
 FROM alpine:3.20
@@ -30,7 +30,9 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 WORKDIR /app
 COPY --from=builder /el-bulk-api .
-COPY db/schema.sql ./db/
+
+# Optimizations for Cloud Run / Serverless memory limits
+ENV GOGC=50
 
 USER appuser
 

@@ -518,6 +518,8 @@ export async function adminFetchOrderDetail(id: string): Promise<import('./types
 
 export async function adminUpdateOrder(id: string, data: { 
   status?: string; 
+  payment_method?: string;
+  shipping_cop?: number;
   tracking_number?: string; 
   tracking_url?: string;
   items?: { id: string; quantity: number }[];

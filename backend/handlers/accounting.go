@@ -29,7 +29,7 @@ func (h *AccountingHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 	var args []interface{}
 
 	// Base queries
-	// Orders: Income (One row per product)
+	// Orders: Income (One row per product) + Outcome (Cost Basis)
 	orderQuery := `
 		SELECT 
 			o.completed_at as date, 
@@ -37,11 +37,11 @@ func (h *AccountingHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 			o.order_number as ref, 
 			oi.product_name || ' (x' || oi.quantity || ') (Order ' || o.order_number || ')' as detail, 
 			(oi.unit_price_cop * oi.quantity) as income, 
-			0 as outcome, 
+			(COALESCE(p.cost_basis_cop, 0) * oi.quantity) as outcome, 
 			'' as notes 
 		FROM "order" o
 		JOIN order_item oi ON o.id = oi.order_id
-		JOIN customer c ON o.customer_id = c.id
+		LEFT JOIN product p ON oi.product_id = p.id
 		WHERE o.status = 'completed'
 	`
 	if startDate != "" {
@@ -53,7 +53,7 @@ func (h *AccountingHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 		args = append(args, endDate)
 	}
 
-	// Bounty Offers: Outcome (Expense)
+	// Bounty Offers: Outcome (Expense of acquiring stock)
 	offerQuery := `
 		SELECT 
 			o.created_at as date, 
@@ -62,7 +62,7 @@ func (h *AccountingHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 			b.name || ' (from ' || c.first_name || ' ' || COALESCE(c.last_name, '') || ')' as detail, 
 			0 as income, 
 			COALESCE(b.target_price, 0) as outcome, 
-			'pending confirmation' as notes 
+			'acquired via bounty' as notes 
 		FROM bounty_offer o 
 		JOIN bounty b ON o.bounty_id = b.id 
 		JOIN customer c ON o.customer_id = c.id 
@@ -86,7 +86,7 @@ func (h *AccountingHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 			r.card_name || ' (for ' || r.customer_name || ')' as detail, 
 			COALESCE(b.target_price, 0) as income, 
 			0 as outcome, 
-			'pending confirmation' as notes 
+			'solved request' as notes 
 		FROM client_request r 
 		LEFT JOIN bounty b ON LOWER(r.card_name) = LOWER(b.name) 
 		WHERE r.status = 'solved'
@@ -100,6 +100,44 @@ func (h *AccountingHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 		args = append(args, endDate)
 	}
 
+	// Initial Stocking: Estimation of investment for non-bounty stock
+	// We use p.updated_at as the reference date for stocking costs as requested
+	stockQuery := `
+		SELECT 
+			p.updated_at as date, 
+			'Initial Stocking' as type, 
+			p.name as ref, 
+			p.name || ' (Estimated Inventory Investment)' as detail, 
+			0 as income, 
+			(p.cost_basis_cop * (p.stock + COALESCE(sold.qty, 0) - COALESCE(bounty.qty, 0))) as outcome, 
+			'excludes bounty qty to avoid double counting' as notes 
+		FROM product p
+		LEFT JOIN (
+			SELECT product_id, SUM(quantity) as qty 
+			FROM order_item oi 
+			JOIN "order" o ON oi.order_id = o.id 
+			WHERE o.status = 'completed' 
+			GROUP BY product_id
+		) sold ON p.id = sold.product_id
+		LEFT JOIN (
+			SELECT b.name, b.set_name, SUM(bo.quantity) as qty
+			FROM bounty_offer bo
+			JOIN bounty b ON bo.bounty_id = b.id
+			WHERE bo.status IN ('accepted', 'fulfilled')
+			GROUP BY b.name, b.set_name
+		) bounty ON p.name = bounty.name AND COALESCE(p.set_name, '') = COALESCE(bounty.set_name, '')
+		WHERE (p.stock + COALESCE(sold.qty, 0) - COALESCE(bounty.qty, 0)) > 0 
+		  AND p.cost_basis_cop > 0
+	`
+	if startDate != "" {
+		stockQuery += fmt.Sprintf(" AND p.updated_at >= $%d", len(args)+1)
+		args = append(args, startDate)
+	}
+	if endDate != "" {
+		stockQuery += fmt.Sprintf(" AND p.updated_at <= $%d", len(args)+1)
+		args = append(args, endDate)
+	}
+
 	// Combine all queries with UNION ALL
 	fullQuery := fmt.Sprintf(`
 		SELECT * FROM (
@@ -108,9 +146,11 @@ func (h *AccountingHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 			%s
 			UNION ALL
 			%s
+			UNION ALL
+			%s
 		) AS combined
 		ORDER BY date DESC
-	`, orderQuery, offerQuery, requestQuery)
+	`, orderQuery, offerQuery, requestQuery, stockQuery)
 
 	type Row struct {
 		Date    time.Time `db:"date"`

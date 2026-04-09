@@ -12,9 +12,10 @@ interface OrderDetailsModalProps {
   orderId: string | null;
   isOpen: boolean;
   onClose: () => void;
+  onOrderCancelled?: () => void;
 }
 
-export default function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDetailsModalProps) {
+export default function OrderDetailsModal({ orderId, isOpen, onClose, onOrderCancelled }: OrderDetailsModalProps) {
   const [detail, setDetail] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
@@ -75,6 +76,7 @@ export default function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDet
     try {
       const updated = await userCancelOrder(detail.order.id);
       setDetail(updated);
+      if (onOrderCancelled) onOrderCancelled();
     } catch (err) {
       console.error('Failed to cancel order:', err);
       alert(t('pages.order.modal.cancel_error', 'Failed to cancel order. Please contact support.'));
@@ -229,6 +231,34 @@ export default function OrderDetailsModal({ orderId, isOpen, onClose }: OrderDet
                     </div>
                   </div>
                 ))}
+                
+                {detail.order.shipping_cop > 0 && (
+                  <div className="flex items-center gap-4 p-3.5 rounded-xl border border-dashed border-border-main/60 bg-bg-card/10 hover:bg-bg-card/20 transition-all duration-300">
+                    <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center bg-accent-primary/5 rounded-lg border border-accent-primary/10">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-accent-primary opacity-60">
+                         <path d="M1 3h15v13H1V3z" strokeLinecap="round" strokeLinejoin="round"/>
+                         <path d="M16 8h4.4l3.6 4.35V16h-8V8z" strokeLinecap="round" strokeLinejoin="round"/>
+                         <circle cx="5.5" cy="18.5" r="2.5" stroke="currentColor"/>
+                         <circle cx="18.5" cy="18.5" r="2.5" stroke="currentColor"/>
+                      </svg>
+                    </div>
+                    <div className="flex-grow">
+                      <h5 className="font-bold text-text-main text-sm uppercase tracking-wide">
+                        {t('pages.order.modal.shipping_item_label', 'Shipping & Handling')}
+                      </h5>
+                      <p className="text-[10px] text-text-muted font-mono mt-0.5 uppercase">
+                        {detail.order.is_local_pickup 
+                          ? t('pages.order.modal.local_pickup', 'Local Pickup') 
+                          : t('pages.order.modal.standard_shipping', 'Standard Shipping')}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-display text-xl text-text-main leading-none">
+                        ${detail.order.shipping_cop.toLocaleString('es-CO')}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

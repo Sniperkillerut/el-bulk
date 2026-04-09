@@ -44,6 +44,12 @@ export default function OrdersPanel({ initialOrderId }: Props) {
   const [saving, setSaving] = useState(false);
   const [itemEdits, setItemEdits] = useState<Record<string, number>>({});
   const [detailsCache, setDetailsCache] = useState<Record<string, OrderDetail>>({});
+  const [paymentMethodEdit, setPaymentMethodEdit] = useState<string>('');
+  const [shippingCopEdit, setShippingCopEdit] = useState<number>(0);
+
+  const canEditMetadata = detail?.order.status === 'pending' || detail?.order.status === 'confirmed';
+  const canEditInventory = detail?.order.status === 'pending';
+  const isCompleted = detail?.order.status === 'completed' || detail?.order.status === 'cancelled';
 
   // Confirm modal state
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -92,6 +98,8 @@ export default function OrdersPanel({ initialOrderId }: Props) {
       const edits: Record<string, number> = {};
       detailsCache[id].items.forEach(i => { edits[i.id] = i.quantity; });
       setItemEdits(edits);
+      setPaymentMethodEdit(detailsCache[id].order.payment_method);
+      setShippingCopEdit(detailsCache[id].order.shipping_cop);
       setLoadingDetail(false);
       return;
     }
@@ -103,8 +111,9 @@ export default function OrdersPanel({ initialOrderId }: Props) {
       setDetailsCache(prev => ({ ...prev, [id]: d }));
       // Init item edits
       const edits: Record<string, number> = {};
-      d.items.forEach(i => { edits[i.id] = i.quantity; });
       setItemEdits(edits);
+      setPaymentMethodEdit(d.order.payment_method);
+      setShippingCopEdit(d.order.shipping_cop);
     } catch { }
     setLoadingDetail(false);
   }, [detailsCache]);
@@ -172,7 +181,15 @@ export default function OrdersPanel({ initialOrderId }: Props) {
         unit_price_cop: si.unit_price_cop
       }));
       const deleted_ids = deletedIds;
-      const updated = await adminUpdateOrder(detail.order.id, { items, added_items, deleted_ids });
+      const payment_method = paymentMethodEdit !== detail.order.payment_method ? paymentMethodEdit : undefined;
+      const shipping_cop = shippingCopEdit !== detail.order.shipping_cop ? shippingCopEdit : undefined;
+      const updated = await adminUpdateOrder(detail.order.id, { 
+        items, 
+        added_items, 
+        deleted_ids,
+        payment_method,
+        shipping_cop
+      });
       setDetail(updated);
       setStagedItems([]);
       setDeletedIds([]);
@@ -282,6 +299,19 @@ export default function OrdersPanel({ initialOrderId }: Props) {
     setRestoring(true);
     setRestoreError('');
     
+    // Validate: total increments per product must not exceed order quantity
+    for (const item of detail.items) {
+      if (item.quantity <= 0 || !item.product_id) continue;
+      const productIncs = increments[item.product_id] || {};
+      const totalAssigned = Object.values(productIncs).reduce((s, v) => s + v, 0);
+      
+      if (totalAssigned > item.quantity) {
+        setRestoreError(`${item.product_name}: intentas restaurar ${totalAssigned} de ${item.quantity} comprados.`);
+        setRestoring(false);
+        return;
+      }
+    }
+
     const incArr: { product_id: string; stored_in_id: string; quantity: number }[] = [];
     Object.entries(increments).forEach(([pid, locs]) => {
       Object.entries(locs).forEach(([sid, qty]) => {
@@ -490,34 +520,45 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                   <select
                     value={detail.order.status}
                     onChange={e => handleStatusChange(e.target.value)}
-                    disabled={saving}
+                    disabled={saving || isCompleted}
                     className="bg-surface border-dark text-gold rounded px-2 py-1 outline-none focus:border-gold transition-colors"
                     style={{ fontSize: '0.85rem', padding: '0.3rem 0.6rem', minWidth: 120 }}
                   >
                     {Object.entries(ORDER_STATUS_LABELS)
                       .map(([k, v]) => {
+                        const isPostConfirmation = k === 'ready_for_pickup' || k === 'shipped' || k === 'completed';
                         const isOriginalPending = k === 'pending';
-                        const isConfirmedOrCompleted = detail.order.status === 'confirmed' || detail.order.status === 'completed';
-                        const disabledStatus = isOriginalPending && isConfirmedOrCompleted;
                         
+                        // Disable going back to pending if already confirmed
+                        const disableBackToPending = isOriginalPending && (detail.order.status !== 'pending' && detail.order.status !== 'cancelled');
+                        
+                        // Hide post-confirmation states if currently pending
+                        const hidePostConfirmation = isPostConfirmation && detail.order.status === 'pending';
+                        
+                        if (hidePostConfirmation) return null;
+
                         return (
-                          <option key={k} value={k} disabled={disabledStatus}>
+                          <option key={k} value={k} disabled={disableBackToPending}>
                             {t(`pages.order.status.${k}`, v)}
                           </option>
                         );
                       })}
-                    <option value="ready_for_pickup">{t('pages.order.status.ready_for_pickup', 'Listo para recoger')}</option>
-                    <option value="shipped">{t('pages.order.status.shipped', 'Enviado')}</option>
                   </select>
                   {detail.order.status !== 'completed' && detail.order.status !== 'confirmed' && detail.order.status !== 'cancelled' && (
                     <button onClick={openConfirmModal} className="btn-primary" style={{ fontSize: '0.85rem', padding: '0.35rem 1rem' }}>
                       ✓ CONFIRMAR
                     </button>
                   )}
-                  {detail.order.status === 'cancelled' && (
-                    <button onClick={openRestoreModal} className="btn-primary" style={{ fontSize: '0.85rem', padding: '0.35rem 1rem', background: 'var(--status-nm)' }}>
-                      ♻ RESTAURAR INVENTARIO
-                    </button>
+                  {detail.order.status === 'cancelled' && detail.order.confirmed_at && (
+                    detail.order.inventory_restored ? (
+                      <span className="px-3 py-1.5 rounded bg-status-nm/10 text-status-nm border border-status-nm/20 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5">
+                        <span className="text-xs">✓</span> {t('pages.order.inventory_restored', 'Inventario Restaurado')}
+                      </span>
+                    ) : (
+                      <button onClick={openRestoreModal} className="btn-primary" style={{ fontSize: '0.85rem', padding: '0.35rem 1rem', background: 'var(--status-nm)' }}>
+                        ♻ {t('pages.order.restore_inventory', 'RESTAURAR INVENTARIO')}
+                      </button>
+                    )
                   )}
                 </div>
               </div>
@@ -536,7 +577,10 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                           type="text" 
                           defaultValue={detail.order.tracking_number || ''}
                           onBlur={e => handleStatusChange(detail.order.status, { tracking_number: e.target.value })}
-                          className="flex-1 text-sm p-1.5 bg-white border-kraft-dark/20"
+                          disabled={isCompleted}
+                          className={`flex-1 text-sm p-1.5 border-kraft-dark/20 ${
+                            isCompleted ? 'bg-zinc-100 text-text-muted cursor-not-allowed opacity-70' : 'bg-white'
+                          }`}
                           placeholder="Ej: ABC12345"
                         />
                       </div>
@@ -547,7 +591,10 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                         type="url" 
                         defaultValue={detail.order.tracking_url || ''}
                         onBlur={e => handleStatusChange(detail.order.status, { tracking_url: e.target.value })}
-                        className="w-full text-sm p-1.5 bg-white border-kraft-dark/20"
+                        disabled={isCompleted}
+                        className={`w-full text-sm p-1.5 border-kraft-dark/20 ${
+                          isCompleted ? 'bg-zinc-100 text-text-muted cursor-not-allowed opacity-70' : 'bg-white'
+                        }`}
                         placeholder="https://servientrega.com/..."
                       />
                     </div>
@@ -598,22 +645,49 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                     </div>
                   )}
                 </div>
-                <div className="cardbox p-3">
-                  <h4 className="text-xs font-mono-stack mb-2" style={{ color: 'var(--text-muted)' }}>PAGO</h4>
-                  <p className="font-semibold">{PAYMENT_METHODS[detail.order.payment_method] || detail.order.payment_method}</p>
+                <div className={`cardbox p-3 transition-all duration-300 ${!canEditMetadata ? 'opacity-70 grayscale-[0.8] bg-kraft-paper/30' : ''}`}>
+                  <h4 className="text-xs font-mono-stack mb-2 flex items-center gap-2" style={{ color: 'var(--text-muted)' }}>
+                    PAGO {!canEditMetadata && <span className="text-[10px] bg-red-100 text-red-600 px-1 rounded flex items-center gap-0.5">🔒 BLOQUEADO</span>}
+                  </h4>
+                  <div className="mb-3">
+                    <select 
+                      value={paymentMethodEdit}
+                      onChange={e => setPaymentMethodEdit(e.target.value)}
+                      disabled={!canEditMetadata}
+                      className={`w-full border border-kraft-dark/30 rounded p-1 text-sm font-semibold outline-none focus:border-gold transition-colors ${
+                        !canEditMetadata ? 'bg-zinc-100 cursor-not-allowed text-text-muted' : 'bg-white'
+                      }`}
+                    >
+                      {Object.entries(PAYMENT_METHODS).map(([key, label]) => (
+                        <option key={key} value={key}>{label}</option>
+                      ))}
+                    </select>
+                  </div>
                   <div className="flex justify-between items-center mt-2">
                     <span className="text-xs font-mono-stack text-text-muted uppercase">Subtotal</span>
-                    <span className="text-sm font-semibold">${detail.order.total_cop.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+                    <span className="text-sm font-semibold">${detail.order.subtotal_cop.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
                   </div>
-                  {detail.order.shipping_cop > 0 && (
-                    <div className="flex justify-between items-center mt-1">
-                      <span className="text-xs font-mono-stack text-text-muted uppercase">Envío</span>
-                      <span className="text-sm font-semibold">${detail.order.shipping_cop.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+                  <div className="flex justify-between items-center mt-2 pt-2 border-t border-kraft-dark/10">
+                    <span className="text-xs font-mono-stack text-text-muted uppercase">Envío</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm font-semibold">$</span>
+                      <input 
+                        type="number"
+                        value={shippingCopEdit}
+                        onChange={e => setShippingCopEdit(Number(e.target.value) || 0)}
+                        disabled={!canEditMetadata}
+                        className={`w-24 text-right border border-kraft-dark/30 rounded p-1 text-sm font-semibold outline-none focus:border-gold transition-colors ${
+                          !canEditMetadata ? 'bg-zinc-100 cursor-not-allowed text-text-muted' : 'bg-white'
+                        }`}
+                      />
                     </div>
-                  )}
-                  <p className="price text-xl mt-2 border-t border-border-main pt-2">
-                    ${(detail.order.total_cop + detail.order.shipping_cop).toLocaleString('en-US', { maximumFractionDigits: 0 })} COP
-                  </p>
+                  </div>
+                  <div className="price text-xl mt-3 border-t-2 border-gold/20 pt-2 flex justify-between items-center">
+                    <span className="text-xs font-mono-stack">TOTAL</span>
+                    <span>
+                      ${(detail.order.total_cop + (shippingCopEdit - detail.order.shipping_cop)).toLocaleString('en-US', { maximumFractionDigits: 0 })} COP
+                    </span>
+                  </div>
                   {detail.order.notes && (
                     <p className="text-xs mt-2" style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>📝 {detail.order.notes}</p>
                   )}
@@ -623,7 +697,15 @@ export default function OrdersPanel({ initialOrderId }: Props) {
               <div className="divider" />
 
               {/* Items */}
-              <h4 className="font-display text-xl mb-3">PRODUCTOS ({detail.items.length})</h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-display text-xl">PRODUCTOS ({detail.items.length})</h4>
+                {detail.order.status !== 'pending' && (
+                  <span className="flex items-center gap-1.5 px-2 py-1 rounded bg-hp-color/10 text-status-hp text-[10px] font-bold uppercase tracking-wider border border-status-hp/20">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    Inventario Bloqueado
+                  </span>
+                )}
+              </div>
               <div className="space-y-2">
                 {detail.items.map(item => {
                   const qty = itemEdits[item.id] ?? item.quantity;
@@ -679,9 +761,9 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => setItemEdits(prev => ({ ...prev, [item.id]: Math.max(0, (prev[item.id] ?? item.quantity) - 1) }))}
-                            disabled={detail.order.status === 'completed'}
-                            className="w-5 h-5 flex items-center justify-center text-xs"
-                            style={{ background: 'var(--border-main)', border: 'none', borderRadius: 2, cursor: detail.order.status === 'completed' ? 'not-allowed' : 'pointer' }}>−</button>
+                            disabled={!canEditInventory}
+                            className={`w-5 h-5 flex items-center justify-center text-xs transition-opacity ${!canEditInventory ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                            style={{ background: 'var(--border-main)', border: 'none', borderRadius: 2 }}>−</button>
                           <input
                             type="number"
                             value={qty}
@@ -697,14 +779,19 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                                 setItemEdits(prev => ({ ...prev, [item.id]: item.stock }));
                               }
                             }}
-                            className="w-10 text-center text-sm font-mono-stack"
+                            disabled={!canEditInventory}
+                            className={`w-10 text-center text-sm font-mono-stack transition-colors ${
+                              !canEditInventory ? 'bg-zinc-100 text-text-muted cursor-not-allowed' : 'bg-white'
+                            }`}
                             style={{ height: 20, padding: '0 2px' }}
                           />
                           <button
                             onClick={() => setItemEdits(prev => ({ ...prev, [item.id]: Math.min(item.stock, (prev[item.id] ?? item.quantity) + 1) }))}
-                            disabled={detail.order.status === 'completed' || qty >= item.stock || isDeleted}
-                            className="w-5 h-5 flex items-center justify-center text-xs"
-                            style={{ background: 'var(--border-main)', border: 'none', borderRadius: 2, cursor: (detail.order.status === 'completed' || qty >= item.stock || isDeleted) ? 'not-allowed' : 'pointer' }}>+</button>
+                            disabled={!canEditInventory || qty >= item.stock || isDeleted}
+                            className={`w-5 h-5 flex items-center justify-center text-xs transition-opacity ${
+                              (!canEditInventory || qty >= item.stock || isDeleted) ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
+                            }`}
+                            style={{ background: 'var(--border-main)', border: 'none', borderRadius: 2 }}>+</button>
                         </div>
                         {isZero && <span className="text-[8px] font-mono-stack" style={{ color: 'var(--status-hp)' }}>{isDeleted ? 'ELIMINADO' : 'REMOVIDO'}</span>}
                       </div>
@@ -744,7 +831,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
               </div>
 
               {/* Add New Product Search */}
-              {detail.order.status !== 'completed' && detail.order.status !== 'confirmed' && detail.order.status !== 'cancelled' && (
+              {detail.order.status === 'pending' && (
                 <div className="mt-6 mb-4 cardbox p-4 bg-ink-surface/30 border-dashed border-gold/30">
                   <h4 className="text-xs font-mono-stack mb-3 text-gold-dark font-bold uppercase tracking-widest flex items-center gap-2">
                     <span className="text-lg">🎁</span> AGREGAR PRODUCTO / REGALO
@@ -755,7 +842,10 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                       value={productSearch}
                       onChange={e => setProductSearch(e.target.value)}
                       placeholder="Buscar producto por nombre..."
-                      className="w-full text-sm p-3 bg-white border-kraft-dark/40 rounded shadow-inner"
+                      disabled={!canEditInventory}
+                      className={`w-full text-sm p-3 border-kraft-dark/40 rounded shadow-inner transition-colors ${
+                        !canEditInventory ? 'bg-zinc-100 text-text-muted cursor-not-allowed' : 'bg-white'
+                      }`}
                     />
                     {searchingItems && (
                       <div className="absolute right-3 top-3">
@@ -1006,17 +1096,33 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                                   style={{ background: 'var(--ink-border)', border: 'none', borderRadius: 2, cursor: 'pointer' }}
                                   disabled={val <= 0}>−</button>
                                 <input
-                                  type="number" min={0}
+                                  type="number" min={0} max={item.quantity}
                                   value={val || ''}
-                                  onChange={e => setIncrement(item.product_id!, loc.stored_in_id, Math.max(0, parseInt(e.target.value) || 0))}
+                                  onChange={e => {
+                                    const newVal = Math.max(0, parseInt(e.target.value) || 0);
+                                    const otherTotal = totalAssigned - val;
+                                    const allowed = Math.max(0, item.quantity - otherTotal);
+                                    setIncrement(item.product_id!, loc.stored_in_id, Math.min(newVal, allowed));
+                                  }}
                                   className="w-12 text-center text-sm font-mono-stack"
                                   style={{ height: 24, padding: '0 2px' }}
                                   placeholder="0"
                                 />
                                 <button
-                                  onClick={() => setIncrement(item.product_id!, loc.stored_in_id, val + 1)}
+                                  onClick={() => {
+                                    if (totalAssigned < item.quantity) {
+                                      setIncrement(item.product_id!, loc.stored_in_id, val + 1);
+                                    }
+                                  }}
                                   className="w-6 h-6 flex items-center justify-center text-xs"
-                                  style={{ background: 'var(--ink-border)', border: 'none', borderRadius: 2, cursor: 'pointer' }}
+                                  style={{ 
+                                    background: 'var(--ink-border)', 
+                                    border: 'none', 
+                                    borderRadius: 2, 
+                                    cursor: totalAssigned >= item.quantity ? 'not-allowed' : 'pointer',
+                                    opacity: totalAssigned >= item.quantity ? 0.5 : 1
+                                  }}
+                                  disabled={totalAssigned >= item.quantity}
                                 >+</button>
                               </div>
                             </div>

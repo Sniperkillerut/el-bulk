@@ -17,7 +17,7 @@ interface ClientRequestModalProps {
 export default function ClientRequestModal({ onClose, onSuccess }: ClientRequestModalProps) {
   const router = useRouter();
   const { t } = useLanguage();
-  const { user } = useUser();
+  const { user, loginWithGoogle } = useUser();
   const {
     form,
     handleChange,
@@ -57,95 +57,107 @@ export default function ClientRequestModal({ onClose, onSuccess }: ClientRequest
         </div>
       )}
       
-      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(onSubmit); }} className="space-y-4">
-        {!user && (
-          <div className="bg-accent-primary/10 border border-accent-primary/20 p-3 rounded-md mb-2 flex items-center justify-between gap-4 animate-fade-in">
-            <div className="text-[11px] text-text-main leading-tight">
-              <strong>{t('pages.common.labels.login', 'Login')}</strong> {t('components.client_request_modal.login_prompt', 'to automatically fill your info and track your request status.')}
-            </div>
+      {!user ? (
+        <div className="py-12 px-6 text-center animate-in fade-in zoom-in-95 duration-500">
+           <div className="w-20 h-20 bg-accent-primary/10 rounded-full flex items-center justify-center text-4xl mx-auto mb-8 border border-accent-primary/20 shadow-lg shadow-accent-primary/5">
+            🔍
+          </div>
+          <h4 className="text-2xl font-bold mb-4 text-text-main font-display">{t('components.client_request_modal.login_required.title', 'MISSION BRIEFING')}</h4>
+          <p className="text-sm text-text-muted mb-10 leading-relaxed max-w-xs mx-auto">
+            {t('components.client_request_modal.login_required.desc', "To start an acquisition mission, you'll need to sign in so we can contact you securely once your card is found.")}
+          </p>
+          <div className="flex flex-col gap-4">
             <button 
-              type="button"
-              onClick={() => router.push('/login')}
-              className="btn-primary text-[10px] px-3 py-1.5 whitespace-nowrap font-bold"
+              onClick={loginWithGoogle} 
+              className="w-full py-4 bg-accent-primary hover:bg-accent-primary-hover text-text-on-accent font-bold rounded-xl transition-all shadow-lg active:scale-95"
             >
-              {t('pages.common.buttons.login', 'LOGIN')}
+              {t('pages.auth.login.google', 'Login with Google')}
+            </button>
+            <button 
+              onClick={() => router.push('/login')} 
+              className="text-xs font-mono text-text-muted hover:text-accent-primary uppercase tracking-widest transition-colors py-2"
+            >
+               {t('components.client_request_modal.other_methods', 'Other methods')}
             </button>
           </div>
-        )}
-        <div className="grid grid-cols-2 gap-4">
+        </div>
+      ) : (
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(onSubmit); }} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">{t('components.client_request_modal.form.name_label', 'Your Name *')}</label>
+              <input 
+                name="customer_name"
+                type="text" 
+                className="w-full text-sm" 
+                required 
+                value={form.customer_name} 
+                onChange={handleChange} 
+                placeholder={t('components.client_request_modal.form.name_placeholder', 'John Doe')}
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">{t('components.client_request_modal.form.contact_label', 'Contact Info *')}</label>
+              <input 
+                name="customer_contact"
+                type="text" 
+                className="w-full text-sm" 
+                required 
+                value={form.customer_contact} 
+                onChange={handleChange} 
+                placeholder={t('components.client_request_modal.form.contact_placeholder', 'Phone or Instagram')}
+              />
+            </div>
+          </div>
+          
           <div>
-            <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">{t('components.client_request_modal.form.name_label', 'Your Name *')}</label>
+            <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">{t('components.client_request_modal.form.card_label', 'Card Name *')}</label>
             <input 
-              name="customer_name"
+              name="card_name"
               type="text" 
               className="w-full text-sm" 
               required 
-              value={form.customer_name} 
+              value={form.card_name} 
               onChange={handleChange} 
-              placeholder={t('components.client_request_modal.form.name_placeholder', 'John Doe')}
+              placeholder={t('components.client_request_modal.form.card_placeholder', 'e.g. Sheoldred, the Apocalypse')}
             />
           </div>
+          
           <div>
-            <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">{t('components.client_request_modal.form.contact_label', 'Contact Info *')}</label>
+            <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">{t('components.client_request_modal.form.set_label', 'Specific Set (Optional)')}</label>
             <input 
-              name="customer_contact"
+              name="set_name"
               type="text" 
               className="w-full text-sm" 
-              required 
-              value={form.customer_contact} 
+              value={form.set_name} 
               onChange={handleChange} 
-              placeholder={t('components.client_request_modal.form.contact_placeholder', 'Phone or Instagram')}
+              placeholder={t('components.client_request_modal.form.set_placeholder', 'e.g. Dominaria United')} 
             />
           </div>
-        </div>
-        
-        <div>
-          <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">{t('components.client_request_modal.form.card_label', 'Card Name *')}</label>
-          <input 
-            name="card_name"
-            type="text" 
-            className="w-full text-sm" 
-            required 
-            value={form.card_name} 
-            onChange={handleChange} 
-            placeholder={t('components.client_request_modal.form.card_placeholder', 'e.g. Sheoldred, the Apocalypse')}
-          />
-        </div>
-        
-        <div>
-          <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">{t('components.client_request_modal.form.set_label', 'Specific Set (Optional)')}</label>
-          <input 
-            name="set_name"
-            type="text" 
-            className="w-full text-sm" 
-            value={form.set_name} 
-            onChange={handleChange} 
-            placeholder={t('components.client_request_modal.form.set_placeholder', 'e.g. Dominaria United')} 
-          />
-        </div>
-        
-        <div>
-          <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">{t('components.client_request_modal.form.details_label', 'Additional Details')}</label>
-          <textarea 
-            name="details"
-            className="w-full text-sm resize-none" 
-            rows={3}
-            value={form.details} 
-            onChange={handleChange} 
-            placeholder={t('components.client_request_modal.form.details_placeholder', 'Condition, foil, language, etc...')} 
-          />
-        </div>
-        
-        <Button 
-          type="submit" 
-          loading={submitting} 
-          fullWidth 
-          size="lg" 
-          className="mt-4"
-        >
-          {t('components.client_request_modal.form.submit_btn', 'SUBMIT MISSION')}
-        </Button>
-      </form>
+          
+          <div>
+            <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">{t('components.client_request_modal.form.details_label', 'Additional Details')}</label>
+            <textarea 
+              name="details"
+              className="w-full text-sm resize-none" 
+              rows={3}
+              value={form.details} 
+              onChange={handleChange} 
+              placeholder={t('components.client_request_modal.form.details_placeholder', 'Condition, foil, language, etc...')} 
+            />
+          </div>
+          
+          <Button 
+            type="submit" 
+            loading={submitting} 
+            fullWidth 
+            size="lg" 
+            className="mt-4"
+          >
+            {t('components.client_request_modal.form.submit_btn', 'SUBMIT MISSION')}
+          </Button>
+        </form>
+      )}
     </Modal>
   );
 }

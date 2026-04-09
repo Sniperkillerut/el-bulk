@@ -371,8 +371,10 @@ type Order struct {
 	TrackingNumber  *string    `db:"tracking_number" json:"tracking_number,omitempty"`
 	TrackingURL     *string    `db:"tracking_url"    json:"tracking_url,omitempty"`
 	IsLocalPickup   bool       `db:"is_local_pickup" json:"is_local_pickup"`
+	InventoryRestored bool     `db:"inventory_restored" json:"inventory_restored"`
 	Notes           *string    `db:"notes"          json:"notes,omitempty"`
 	CreatedAt       time.Time  `db:"created_at"     json:"created_at"`
+	ConfirmedAt     *time.Time `db:"confirmed_at"   json:"confirmed_at,omitempty"`
 	CompletedAt     *time.Time `db:"completed_at"   json:"completed_at,omitempty"`
 }
 
@@ -434,9 +436,11 @@ type StockDecrement struct {
 }
 
 type UpdateOrderInput struct {
-	Status         *string `json:"status"`
-	TrackingNumber *string `json:"tracking_number"`
-	TrackingURL    *string `json:"tracking_url"`
+	Status         *string  `json:"status"`
+	PaymentMethod  *string  `json:"payment_method"`
+	ShippingCOP    *float64 `json:"shipping_cop"`
+	TrackingNumber *string  `json:"tracking_number"`
+	TrackingURL    *string  `json:"tracking_url"`
 	Items          []struct {
 		ID       string `json:"id"`
 		Quantity int    `json:"quantity"`

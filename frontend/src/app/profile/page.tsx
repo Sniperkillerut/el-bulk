@@ -294,7 +294,7 @@ export default function ProfilePage() {
 
           {/* Main Content Areas */}
           <div className="lg:col-span-2">
-            <div className="glass-card h-full border border-border-main rounded-xl bg-bg-surface/50 backdrop-blur-md overflow-hidden flex flex-col">
+            <div className="glass-card h-full max-h-[700px] border border-border-main rounded-xl bg-bg-surface/50 backdrop-blur-md overflow-hidden flex flex-col">
               
               {/* Tabs Header */}
               <div className="flex border-b border-border-main">
@@ -328,7 +328,7 @@ export default function ProfilePage() {
                 </button>
               </div>
 
-              <div className="flex-grow overflow-x-auto min-h-[400px]">
+              <div className="flex-grow overflow-auto min-h-[400px] scrollbar-thin">
                 {/* Orders Tab */}
                 {activeTab === 'orders' && (
                   ordersLoading ? (
@@ -526,6 +526,7 @@ export default function ProfilePage() {
         isOpen={isModalOpen}
         orderId={selectedOrderId}
         onClose={() => setIsModalOpen(false)}
+        onOrderCancelled={() => fetchOrders()}
       />
     </div>
   );

@@ -12,7 +12,7 @@ import { useLanguage } from '@/context/LanguageContext';
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, removedItems, totalPrice, updateQty, removeItem, restoreItem, permanentRemove, clearCart } = useCart();
-  const { user } = useUser();
+  const { user, loading, loginWithGoogle, loginWithFacebook } = useUser();
   const { t } = useLanguage();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -74,6 +74,51 @@ export default function CheckoutPage() {
       setSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="centered-container py-32 text-center flex flex-col items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-primary mb-6"></div>
+        <p className="text-text-muted font-mono text-xs tracking-widest uppercase animate-pulse">
+          {t('pages.checkout.loading_auth', 'Verifying secure session...')}
+        </p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="centered-container px-4 py-20 text-center flex flex-col items-center max-w-2xl">
+        <div className="w-20 h-20 bg-accent-primary/10 rounded-full flex items-center justify-center text-4xl mb-8 border border-accent-primary/20 shadow-lg shadow-accent-primary/5">
+          🔒
+        </div>
+        <h1 className="font-display text-5xl mb-6">{t('pages.checkout.auth_required.title', 'SIGN IN REQUIRED')}</h1>
+        <p className="text-text-muted mb-10 text-lg leading-relaxed max-w-md">
+          {t('pages.checkout.auth_required.desc', 'For your security and to track your orders, you must be logged in to finalize your purchase.')}
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 w-full">
+          <button 
+            onClick={loginWithGoogle} 
+            className="flex-1 py-4 bg-accent-primary hover:bg-accent-primary-hover text-text-on-accent font-bold rounded-lg transition-all shadow-xl shadow-accent-primary/20 active:scale-95"
+          >
+             {t('pages.auth.login.google', 'Login with Google')}
+          </button>
+          <button 
+            onClick={loginWithFacebook} 
+            className="flex-1 py-4 bg-[#1877F2]/10 hover:bg-[#1877F2]/20 text-[#1877F2] border border-[#1877F2]/30 font-bold rounded-lg transition-all active:scale-95"
+          >
+             {t('pages.auth.login.facebook', 'Login with Facebook')}
+          </button>
+        </div>
+        <button 
+          onClick={() => router.push('/')} 
+          className="mt-12 text-[10px] font-mono text-text-muted hover:text-accent-primary uppercase tracking-[0.2em] transition-all border-b border-transparent hover:border-accent-primary pb-1"
+        >
+          {t('pages.checkout.buttons.cancel_back', '← Return to Armory')}
+        </button>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (

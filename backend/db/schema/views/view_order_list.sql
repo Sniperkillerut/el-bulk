@@ -1,5 +1,3 @@
--- View: view_order_list
--- Consolidates order data with customer name and total item count
 DROP VIEW IF EXISTS view_order_list CASCADE;
 
 CREATE VIEW view_order_list AS

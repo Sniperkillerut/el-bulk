@@ -244,6 +244,96 @@ Schedule daily database dumps to prevent data loss:
 
 ---
 
+## 🌩️ Google Cloud Platform (GCP) Production Guide
+
+This guide focuses on a modern serverless stack using **Cloud Run** and **Cloud SQL** for high availability and zero maintenance.
+
+> [!NOTE]
+> **Why Caddy is omitted**: For Cloud Run, Caddy is not needed. GCP provides managed SSL certificates and edge routing natively. If you require path-based routing (e.g., `store.com/api`), it is handled by the **GCP Global HTTP(S) Load Balancer** rather than an internal container.
+
+### 1. Infrastructure Preparation
+Prepare your GCP environment and enable required services:
+```bash
+# Enable essential APIs
+gcloud services enable \
+    run.googleapis.com \
+    sqladmin.googleapis.com \
+    secretmanager.googleapis.com \
+    artifactregistry.googleapis.com
+
+# Create a private Docker repository
+gcloud artifacts repositories create el-bulk-repo --repository-format=docker --location=us-central1
+```
+
+### 2. Managed Database (Cloud SQL)
+Deploy a production-grade PostgreSQL 16 instance:
+1. **Instance**: Create a Cloud SQL for PostgreSQL instance (e.g., `el-bulk-db`).
+2. **Specs**: For small/medium stores, `db-f1-micro` or `db-g1-small` is sufficient.
+3. **Security**: Use **Private IP** with Serverless VPC Access for maximum security (prevents the DB from being exposed to the public internet).
+4. **Credentials**: Create a database user `elbulk` and a database `elbulk`.
+
+### 3. Secret Management
+ Centralize your production secrets in **Secret Manager**:
+ - `ELBULK_JWT_SECRET`: Random 32+ char string.
+ - `ELBULK_ENCRYPTION_KEY`: Persistent 32-char AES key.
+ - `ELBULK_DB_PASSWORD`: Password for your Cloud SQL user.
+ - `ELBULK_GOOGLE_CLIENT_SECRET`: For OAuth integration.
+ 
+ > [!TIP]
+ > **Quick Generation Commands**:
+ > ```bash
+ > # Generate and create the JWT Secret
+ > openssl rand -base64 32 | gcloud secrets create ELBULK_JWT_SECRET --data-file=-
+ > 
+ > # Generate and create the 32-character Encryption Key
+ > openssl rand -hex 16 | gcloud secrets create ELBULK_ENCRYPTION_KEY --data-file=-
+ > 
+ > # Create the DB Password secret (replace [PASSWORD])
+ > echo "[PASSWORD]" | gcloud secrets create ELBULK_DB_PASSWORD --replication-policy="automatic" --data-file=-
+ > ```
+ 
+ ### 4. Production Deployment (Cloud Run)
+Deploy the frontend and backend as independent serverless services:
+
+**Backend Service**:
+```bash
+# Build and push image
+docker build -t us-central1-docker.pkg.dev/[PROJECT_ID]/el-bulk-repo/backend ./backend
+docker push us-central1-docker.pkg.dev/[PROJECT_ID]/el-bulk-repo/backend
+
+# Deploy to Cloud Run
+gcloud run deploy el-bulk-backend \
+    --image us-central1-docker.pkg.dev/[PROJECT_ID]/el-bulk-repo/backend \
+    --set-env-vars="DATABASE_URL=postgres://elbulk:[PASSWORD]@/elbulk?host=/cloudsql/[CONNECTION_NAME]" \
+    --add-cloudsql-instances=[CONNECTION_NAME] \
+    --region=us-central1
+```
+
+**Frontend Service**:
+```bash
+# Build with build-time API URL
+docker build --build-arg NEXT_PUBLIC_API_URL=https://api.yourdomain.com -t us-central1-docker.pkg.dev/[PROJECT_ID]/el-bulk-repo/frontend ./frontend
+docker push us-central1-docker.pkg.dev/[PROJECT_ID]/el-bulk-repo/frontend
+
+# Deploy
+gcloud run deploy el-bulk-frontend \
+    --image us-central1-docker.pkg.dev/[PROJECT_ID]/el-bulk-repo/frontend \
+    --region=us-central1
+```
+
+### 5. Domain & SSL (Global Balancer)
+While Cloud Run provides `*.a.run.app` URLs with SSL, it is recommended to use **Cloud Load Balancing**:
+- **Global Load Balancer**: Map your domain (e.g., `store.elbulk.com`) to the frontend service.
+- **Google-Managed Certificates**: Automatically provisioned and renewed by GCP.
+- **Cloud CDN**: Enable for the frontend to cache static MTG card images globally.
+
+### 6. Automated Management
+- **Backups**: Cloud SQL handles automated point-in-time recovery (PITR) by default.
+- **Monitoring**: Use **Cloud Monitoring** dashboards to track request latency and DB CPU usage.
+- **Alerting**: Set up an alert for `Database Storage > 80%`.
+
+---
+
 ## 🧪 Testing
 
 ### Backend
@@ -299,23 +389,23 @@ To ensure system stability, we are refactoring the backend logic from a monolith
 ---
 
 ### Additional dvelopment:
-- [ ] the "restore inventory" modal is allowing to restore more items than the ones that were bought, fix it.
-- [ ] the "restore inventory" modal is not saving what was restored (visually when opening it again), either fix it or block it after correct item restoration.
-- [ ] restore inventory button should only appear if the order was canceled after confirming it. if the order was canceled before confirming it, it should not appear and automatically clear the correct ammount from the pending storage location, also check if the client canceled it and auto-restre stock.
-- [ ] when an order is confirmed its inventory can not be modified anymore, but shipping, pickup and cancel status can be changed.
-- [ ] allow the admin to change payment method on orders and to modify shipping costs.
-- [ ] "ready to pick up", "shipped" and "completed" can only be selected after the order is confirmed.
-- [ ] "Cancelled" should be a status that can be selected at any time, and it should restore the inventory or request the admin to do it with the modal.
-- [ ] when an order is "Completed" it can't be modified anymore.
-- [ ] sometimes "sell us your bulk" modal randomly closes, fix it.
-- [ ] the "ADD WANTED CARD" admin modal is not hidding the hovered card image after selecting a card, fix it.
-- [ ] admin /admin/clients/[id] has an order history scrollbar, add the same functionality to client requests and bounty offer, also marking pending like on the order history one.
-- [ ] on client /profile make the bounty offers, client requests and orders scrollable.
-- [ ] on client orders show shipping as an item in the order items list.
-- [ ] on client orders, when the client cancel an order refresh the orders status to show the newly canceled status.
-- [ ] some combinations of cookies are allowing clients to reach checkout without login in, fix it.
-- [ ] modify accounting so that it takes into consideration "COST BASIS" when making csv reports and show it as outcome or egress, take into consideration product quantity, you can show the creation or modification date as the out data and the order confirmed or completed date as income.
-- [ ] add after the orange pi deployment guide a gcp deployment guide, use the same structure as the orange pi deployment guide, being thorough and detailed.
+- [x] the "restore inventory" modal is allowing to restore more items than the ones that were bought, fix it.
+- [x] the "restore inventory" modal is not saving what was restored (visually when opening it again), either fix it or block it after correct item restoration.
+- [x] restore inventory button should only appear if the order was canceled after confirming it. if the order was canceled before confirming it, it should not appear and automatically clear the correct ammount from the pending storage location, also check if the client canceled it and auto-restre stock (from pending storage location).
+- [x] when an order is confirmed its inventory can not be modified anymore, but shipping, pickup and cancel status can be changed.
+- [x] allow the admin to change payment method on orders and to modify shipping costs.
+- [x] "ready to pick up", "shipped" and "completed" can only be selected after the order is confirmed.
+- [x] "Cancelled" should be a status that can be selected at any time, and it should restore the inventory or request the admin to do it with the modal.
+- [x] when an order is "Completed" or "canceled" it can't be modified anymore (with the exception of restoring stock for cancelled orders).
+- [ ] sometimes "sell us your bulk" modal randomly closes, fix it (could not replicate).
+- [x] the "ADD WANTED CARD" admin modal is not hidding the hovered card image after selecting a card, fix it.
+- [x] admin /admin/clients/[id] has an order history scrollbar, add the same functionality to client requests and bounty offers also marking pending like on the order history one.
+- [x] on client /profile make the bounty offers, client requests and orders scrollable.
+- [x] on client orders show shipping as an item in the order items list.
+- [x] on client orders, when the client cancel an order refresh the orders status to show the newly canceled status.
+- [x] some combinations of cookies are allowing clients to reach checkout without login in, fix it. (hard to replicate, may be dev restarting docker that causes the bug)
+- [x] modify accounting so that it takes into consideration "COST BASIS" when making csv reports and show it as outcome or egress, take into consideration product quantity, you can show the creation or modification date as the out data and the order confirmed or completed date as income.
+- [x] add after the orange pi deployment guide a gcp deployment guide, use the same structure as the orange pi deployment guide, being thorough and detailed.
 
 
 ## ⚖️ License

@@ -191,13 +191,40 @@ func (s *OrderService) UpdateOrder(orderID string, input models.UpdateOrderInput
 	}
 	defer tx.Rollback()
 
-	// 1. Update status and tracking if provided
-	if input.Status != nil || input.TrackingNumber != nil || input.TrackingURL != nil {
-		if input.Status != nil && *input.Status == "pending" {
-			var currentStatus string
-			err = tx.Get(&currentStatus, `SELECT status FROM "order" WHERE id = $1`, orderID)
-			if err == nil && (currentStatus == "confirmed" || currentStatus == "completed") {
-				return fmt.Errorf("cannot move a confirmed/completed order back to pending")
+	// 0. Check if inventory modification is allowed
+	var currentStatus string
+	err = tx.Get(&currentStatus, `SELECT status FROM "order" WHERE id = $1`, orderID)
+	if err != nil {
+		return fmt.Errorf("failed to get current order status: %w", err)
+	}
+
+	if currentStatus == "completed" || currentStatus == "cancelled" {
+		return fmt.Errorf("cannot modify an order in terminal state: %s", currentStatus)
+	}
+
+	inventoryChanged := len(input.Items) > 0 || len(input.AddedItems) > 0 || len(input.DeletedIDs) > 0
+	if inventoryChanged && currentStatus != "pending" {
+		return fmt.Errorf("cannot modify items of an order in status: %s", currentStatus)
+	}
+
+	metadataChanged := input.PaymentMethod != nil || input.ShippingCOP != nil
+	if metadataChanged && currentStatus != "pending" && currentStatus != "confirmed" {
+		return fmt.Errorf("cannot modify payment/shipping for order in status: %s", currentStatus)
+	}
+
+	// 1. Update status, tracking, payment, and shipping if provided
+	if input.Status != nil || input.TrackingNumber != nil || input.TrackingURL != nil || input.PaymentMethod != nil || input.ShippingCOP != nil {
+		if input.Status != nil {
+			newStatus := *input.Status
+			// Restriction: Cannot skip confirmation
+			isPostConfirmation := newStatus == "ready_for_pickup" || newStatus == "shipped" || newStatus == "completed"
+			if isPostConfirmation && currentStatus == "pending" {
+				return fmt.Errorf("order must be confirmed before moving to status: %s", newStatus)
+			}
+
+			// Existing restriction: No back to pending
+			if newStatus == "pending" && (currentStatus == "confirmed" || currentStatus == "shipped" || currentStatus == "completed") {
+				return fmt.Errorf("cannot move a confirmed/shipped/completed order back to pending")
 			}
 		}
 
@@ -205,11 +232,34 @@ func (s *OrderService) UpdateOrder(orderID string, input models.UpdateOrderInput
 			UPDATE "order" 
 			SET status = COALESCE($1, status),
 			    tracking_number = COALESCE($2, tracking_number),
-			    tracking_url = COALESCE($3, tracking_url)
-			WHERE id = $4`,
-			input.Status, input.TrackingNumber, input.TrackingURL, orderID)
+			    tracking_url = COALESCE($3, tracking_url),
+				payment_method = COALESCE($4, payment_method),
+				shipping_cop = COALESCE($5, shipping_cop)
+			WHERE id = $6`,
+			input.Status, input.TrackingNumber, input.TrackingURL, input.PaymentMethod, input.ShippingCOP, orderID)
 		if err != nil {
 			return fmt.Errorf("failed to update order info: %w", err)
+		}
+
+		// If moved from pending to cancelled, release the reserved stock from the 'pending' location
+		if input.Status != nil && *input.Status == "cancelled" && currentStatus == "pending" {
+			var pendingID string
+			err = tx.Get(&pendingID, `SELECT id FROM storage_location WHERE name = 'pending'`)
+			if err != nil {
+				return fmt.Errorf("failed to get pending storage id: %w", err)
+			}
+
+			_, err = tx.Exec(`
+				UPDATE product_storage ps
+				SET quantity = GREATEST(0, ps.quantity - oi.quantity)
+				FROM order_item oi
+				WHERE oi.order_id = $1
+				  AND ps.product_id = oi.product_id
+				  AND ps.storage_id = $2`,
+				orderID, pendingID)
+			if err != nil {
+				return fmt.Errorf("failed to clear pending inventory: %w", err)
+			}
 		}
 	}
 
@@ -329,11 +379,27 @@ func (s *OrderService) UpdateOrder(orderID string, input models.UpdateOrderInput
 		}
 	}
 
-	// 5. Recalculate total
-	var newTotal float64
-	err = tx.Get(&newTotal, `SELECT COALESCE(SUM(unit_price_cop * quantity), 0) FROM order_item WHERE order_id = $1`, orderID)
+	// 5. Recalculate subtotal and total
+	var summary struct {
+		Subtotal float64 `db:"subtotal"`
+		Shipping float64 `db:"shipping"`
+		Tax      float64 `db:"tax"`
+	}
+	err = tx.Get(&summary, `
+		SELECT 
+			COALESCE((SELECT SUM(unit_price_cop * quantity) FROM order_item WHERE order_id = $1), 0) as subtotal,
+			COALESCE(shipping_cop, 0) as shipping,
+			COALESCE(tax_cop, 0) as tax
+		FROM "order" WHERE id = $1
+	`, orderID)
+	
 	if err == nil {
-		tx.Exec(`UPDATE "order" SET total_cop = $1 WHERE id = $2`, newTotal, orderID)
+		newTotal := summary.Subtotal + summary.Shipping + summary.Tax
+		_, err = tx.Exec(`UPDATE "order" SET subtotal_cop = $1, total_cop = $2 WHERE id = $3`, 
+			summary.Subtotal, newTotal, orderID)
+		if err != nil {
+			return fmt.Errorf("failed to update order totals: %w", err)
+		}
 	}
 
 	return tx.Commit()
@@ -385,7 +451,13 @@ func (s *OrderService) ListMe(userID string) ([]models.OrderWithItemCount, error
 }
 
 func (s *OrderService) CancelMe(orderID, userID string) error {
-	res, err := s.Store.DB.Exec(`
+	tx, err := s.Store.DB.Beginx()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	res, err := tx.Exec(`
 		UPDATE "order" 
 		SET status = 'cancelled' 
 		WHERE id = $1 AND customer_id = $2 AND status = 'pending'
@@ -397,7 +469,27 @@ func (s *OrderService) CancelMe(orderID, userID string) error {
 	if rows == 0 {
 		return fmt.Errorf("order cannot be cancelled or not found")
 	}
-	return nil
+
+	// Release reserved stock from 'pending' location
+	var pendingID string
+	err = tx.Get(&pendingID, `SELECT id FROM storage_location WHERE name = 'pending'`)
+	if err != nil {
+		return fmt.Errorf("failed to get pending storage id: %w", err)
+	}
+
+	_, err = tx.Exec(`
+		UPDATE product_storage ps
+		SET quantity = GREATEST(0, ps.quantity - oi.quantity)
+		FROM order_item oi
+		WHERE oi.order_id = $1
+		  AND ps.product_id = oi.product_id
+		  AND ps.storage_id = $2`,
+		orderID, pendingID)
+	if err != nil {
+		return fmt.Errorf("failed to clear pending inventory: %w", err)
+	}
+
+	return tx.Commit()
 }
 
 // Helpers

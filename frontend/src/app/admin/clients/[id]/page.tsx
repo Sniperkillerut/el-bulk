@@ -218,12 +218,21 @@ export default function AdminClientDetailPage() {
 
           <div className="cardbox p-6 space-y-8">
             <div>
-              <h3 className="text-xl mb-4 font-display tracking-wider">
+              <h3 className="text-xl mb-4 font-display tracking-wider flex items-center gap-2">
                 {t('pages.admin.clients.details.requests_title', 'CLIENT REQUESTS')}
-                <span className="text-sm"> ({(detail.requests || []).length})</span>
+                <div className="flex items-center gap-1.5 ml-auto">
+                  {(detail.requests || []).filter(r => r.status === 'pending').length > 0 && (
+                    <span className="text-[10px] bg-amber-500 text-white px-2 py-0.5 rounded-full font-mono-stack font-bold animate-pulse">
+                      {(detail.requests || []).filter(r => r.status === 'pending').length} PENDING
+                    </span>
+                  )}
+                  <span className="text-[10px] bg-kraft-dark text-white px-2 py-0.5 rounded-full font-mono-stack">
+                    {(detail.requests || []).length} TOTAL
+                  </span>
+                </div>
               </h3>
 
-              <div className="space-y-4">
+              <div className="space-y-4 max-h-[300px] overflow-y-auto scrollbar-thin pr-1 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
                 <div>
                   <h4 className="text-xs font-mono-stack text-text-muted mb-2 font-bold tracking-widest uppercase">{t('pages.admin.clients.details.active_group', 'Active')}</h4>
                   <div className="space-y-2">
@@ -270,12 +279,21 @@ export default function AdminClientDetailPage() {
             </div>
 
             <div>
-              <h3 className="text-xl mb-4 font-display tracking-wider">
+              <h3 className="text-xl mb-4 font-display tracking-wider flex items-center gap-2">
                 {t('pages.admin.clients.details.offers_title', 'BOUNTY OFFERS')}
-                <span className="text-sm"> ({(detail.offers || []).length})</span>
+                <div className="flex items-center gap-1.5 ml-auto">
+                  {(detail.offers || []).filter(o => o.status === 'pending').length > 0 && (
+                    <span className="text-[10px] bg-amber-500 text-white px-2 py-0.5 rounded-full font-mono-stack font-bold animate-pulse">
+                      {(detail.offers || []).filter(o => o.status === 'pending').length} PENDING
+                    </span>
+                  )}
+                  <span className="text-[10px] bg-kraft-dark text-white px-2 py-0.5 rounded-full font-mono-stack">
+                    {(detail.offers || []).length} TOTAL
+                  </span>
+                </div>
               </h3>
 
-              <div className="space-y-4">
+              <div className="space-y-4 max-h-[300px] overflow-y-auto scrollbar-thin pr-1 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
                 <div>
                   <h4 className="text-xs font-mono-stack text-text-muted mb-2 font-bold tracking-widest uppercase">{t('pages.admin.clients.details.active_group', 'Active')}</h4>
                   <div className="space-y-2">
