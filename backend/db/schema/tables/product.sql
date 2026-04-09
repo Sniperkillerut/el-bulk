@@ -42,6 +42,20 @@ CREATE TABLE IF NOT EXISTS product (
   scryfall_id       UUID,
   legalities        JSONB, -- { "commander": "legal", "modern": "banned", ... }
 
+  -- Generated Full-Text Search Vector
+  search_vector tsvector GENERATED ALWAYS AS (
+    setweight(to_tsvector('english', name), 'A') ||
+    setweight(to_tsvector('english', COALESCE(set_name, '')), 'B') ||
+    setweight(to_tsvector('english', COALESCE(oracle_text, '')), 'C') ||
+    setweight(to_tsvector('english', 
+      COALESCE(set_code, '') || ' ' || 
+      COALESCE(collector_number, '') || ' ' || 
+      COALESCE(artist, '') || ' ' || 
+      COALESCE(type_line, '') || ' ' || 
+      COALESCE(promo_type, '')
+    ), 'D')
+  ) STORED,
+
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -49,8 +63,8 @@ CREATE TABLE IF NOT EXISTS product (
 -- Indices
 CREATE INDEX IF NOT EXISTS idx_product_tcg      ON product(tcg);
 CREATE INDEX IF NOT EXISTS idx_product_category ON product(category);
-CREATE INDEX IF NOT EXISTS idx_product_search   ON product USING gin(to_tsvector('english', name || ' ' || COALESCE(set_name, '')));
-CREATE INDEX IF NOT EXISTS idx_product_trgm     ON product USING gin (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_product_search_vector ON product USING gin(search_vector);
+CREATE INDEX IF NOT EXISTS idx_product_trgm          ON product USING gin (name gin_trgm_ops);
 
 -- Facet Indices for Performance
 CREATE INDEX IF NOT EXISTS idx_product_condition      ON product(condition);

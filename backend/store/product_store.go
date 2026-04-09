@@ -3,7 +3,6 @@ package store
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/el-bulk/backend/models"
@@ -74,7 +73,7 @@ func (s *ProductStore) ListWithFilters(params ProductFilterParams) ([]models.Pro
 		DeckCardsJSON  []byte `db:"deck_cards_json"`
 	}
 
-	if err := s.DB.Select(&rows, listQuery, listArgs...); err != nil {
+	if err := s.DB.Unsafe().Select(&rows, listQuery, listArgs...); err != nil {
 		return nil, 0, err
 	}
 
@@ -481,22 +480,9 @@ func (s *ProductStore) buildFilters(params ProductFilterParams) (string, []strin
 		mandatory = append(mandatory, "p.stock > 0")
 	}
 	if params.Search != "" {
-		searchTerms := strings.Fields(params.Search)
-		for _, term := range searchTerms {
-			placeholderIdx := len(args) + 1
-			for j := 0; j < 8; j++ {
-				args = append(args, "%"+term+"%")
-			}
-			p1 := fmt.Sprintf("$%d", placeholderIdx)
-			p2 := fmt.Sprintf("$%d", placeholderIdx+1)
-			p3 := fmt.Sprintf("$%d", placeholderIdx+2)
-			p4 := fmt.Sprintf("$%d", placeholderIdx+3)
-			p5 := fmt.Sprintf("$%d", placeholderIdx+4)
-			p6 := fmt.Sprintf("$%d", placeholderIdx+5)
-			p7 := fmt.Sprintf("$%d", placeholderIdx+6)
-			p8 := fmt.Sprintf("$%d", placeholderIdx+7)
-			mandatory = append(mandatory, fmt.Sprintf("(p.name ILIKE %s OR p.set_name ILIKE %s OR p.set_code ILIKE %s OR p.artist ILIKE %s OR p.collector_number ILIKE %s OR p.oracle_text ILIKE %s OR p.type_line ILIKE %s OR p.promo_type ILIKE %s)", p1, p2, p3, p4, p5, p6, p7, p8))
-		}
+		placeholderIdx := len(args) + 1
+		args = append(args, params.Search)
+		mandatory = append(mandatory, fmt.Sprintf("p.search_vector @@ websearch_to_tsquery('english', $%d)", placeholderIdx))
 	}
 
 	opLogic := " OR "
@@ -608,7 +594,8 @@ func (s *ProductStore) buildOrderBy(sortBy, sortDir, search string, argsLen int)
 	}
 	if sortBy == "" {
 		if search != "" {
-			return "similarity(p.name, $" + strconv.Itoa(argsLen-1) + ") DESC, p.created_at DESC"
+			placeholderIdx := argsLen // The search term is usually the last arg before limit/offset
+			return fmt.Sprintf("ts_rank(p.search_vector, websearch_to_tsquery('english', $%d)) DESC, p.created_at DESC", placeholderIdx)
 		}
 		return "p.created_at DESC"
 	}
@@ -644,7 +631,7 @@ func (s *ProductStore) buildOrderBy(sortBy, sortDir, search string, argsLen int)
 		col = "p.updated_at"
 	default:
 		if search != "" {
-			return "similarity(p.name, $" + strconv.Itoa(argsLen-1) + ") DESC, p.created_at DESC"
+			return fmt.Sprintf("ts_rank(p.search_vector, websearch_to_tsquery('english', $%d)) DESC, p.created_at DESC", argsLen)
 		}
 		return "p.created_at DESC"
 	}
