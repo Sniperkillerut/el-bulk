@@ -282,11 +282,3 @@ npm run test
 
 ## ⚖️ License
 MIT
-
-## to fix:
-- [ ] admin selecting "confirmed" on the dropdown bypasses confirmation modal and wont reduce inventory from storage locations, fix it.
-- [ ] when order in "ready for pick up" or "shipped" the confirm button should not appear as the order is already confirmed. (maybe add a confirmed flag?)
-- [ ] when admin sets an order as "completed" there should be an alert popup that the chang is final and order will lock and wont be editable anymore.
-- [ ] same for cancelled 
-- [ ] restore to inventory is allowing for multiple restores,  artifiaclly increasing the stock quantity, this is a bug, fix it.
-- [ ] restore to inventory should allow to add stock to multiple storage locations and to add to a newly selected storage location.
