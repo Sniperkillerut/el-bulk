@@ -14,5 +14,6 @@ INSERT INTO setting (key, value) VALUES
   ('contact_email', 'contact@el-bulk.co'),
   ('contact_instagram', 'el-bulk'),
   ('contact_hours', 'Mon - Sat: 11:00 AM - 7:00 PM'),
-  ('default_theme_id', '00000000-0000-0000-0000-000000000001')
+  ('default_theme_id', '00000000-0000-0000-0000-000000000001'),
+  ('flat_shipping_fee_cop', '15000')
 ON CONFLICT (key) DO NOTHING;

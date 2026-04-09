@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS product (
   stock             INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
   image_url         TEXT,
   description       TEXT,
+  cost_basis_cop    NUMERIC(12, 2) NOT NULL DEFAULT 0,
 
   -- MTG Metadata
   language          TEXT NOT NULL DEFAULT 'en',

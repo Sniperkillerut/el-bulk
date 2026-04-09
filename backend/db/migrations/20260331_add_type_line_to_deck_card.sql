@@ -1,1 +1,0 @@
-ALTER TABLE deck_card ADD COLUMN IF NOT EXISTS type_line TEXT;
