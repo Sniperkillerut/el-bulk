@@ -60,8 +60,9 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
       showHeader={true}
       title={product?.name || t('pages.common.status.loading', 'Loading...')}
       containerClassName="bg-bg-surface border border-border-main shadow-2xl overflow-hidden"
+      bodyClassName="md:overflow-hidden"
     >
-      <div className="min-h-[500px]">
+      <div className="h-full">
         {loading ? (
           <div className="p-8">
             <div className="grid md:grid-cols-2 gap-8">
@@ -96,6 +97,7 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
             idPrefix="modal" 
             showViewFullPage={true} 
             onClose={onClose} 
+            className="md:h-[min(800px,calc(100vh-10rem))]"
           />
         )}
       </div>

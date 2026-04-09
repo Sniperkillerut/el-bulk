@@ -10,6 +10,7 @@ interface ModalProps {
   maxWidth?: string; // e.g. 'max-w-md', 'max-w-2xl', 'max-w-5xl'
   showHeader?: boolean;
   containerClassName?: string;
+  bodyClassName?: string;
 }
 
 export default function Modal({
@@ -19,7 +20,8 @@ export default function Modal({
   children,
   maxWidth = 'max-w-md',
   showHeader = true,
-  containerClassName = ''
+  containerClassName = '',
+  bodyClassName = ''
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -71,7 +73,7 @@ export default function Modal({
           </div>
         )}
   
-        <div className="flex-1 overflow-y-auto custom-scrollbar" data-theme-area="modal-body">
+        <div className={`flex-1 overflow-y-auto custom-scrollbar ${bodyClassName}`} data-theme-area="modal-body">
           {children}
         </div>
       </div>

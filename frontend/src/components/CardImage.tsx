@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { useUI } from '@/context/UIContext';
 import ImageModal from './ImageModal';
@@ -24,7 +24,7 @@ const TCG_EMOJI: Record<string, string> = {
   accessories: '🛡️',
 };
 
-export default function CardImage({ 
+const CardImage = memo(function CardImage({ 
   imageUrl, name, tcg, foilTreatment, height, 
   enableHover = false, enableModal = false 
 }: CardImageProps) {
@@ -157,7 +157,9 @@ export default function CardImage({
       )}
     </div>
   );
-}
+});
+
+export default CardImage;
 
 export function FoilOverlay({ treatment }: { treatment: string }) {
   // Normalize treatment slug for CSS classes
@@ -191,23 +193,33 @@ function HoverPortal({ imageUrl, name, startRect, foilTreatment }: { imageUrl: s
   if (typeof document === 'undefined') return null;
 
   return createPortal(
-    <div className="hover-expand-portal" style={isMounted ? {
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-      height: Math.min(window.innerHeight * 0.85, 800),
-      aspectRatio: '63/88',
-      opacity: 1,
-    } : {
-      top: startRect.top,
-      left: startRect.left,
-      width: startRect.width,
-      height: startRect.height,
-      opacity: 0,
+    <div className="hover-expand-portal" style={{
+      zIndex: 10020, // Keep high enough for the 100-z-index modal
+      ...(isMounted ? {
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        height: Math.min(window.innerHeight * 0.85, 800),
+        aspectRatio: '63/88',
+        opacity: 1,
+      } : {
+        top: startRect.top,
+        left: startRect.left,
+        width: startRect.width,
+        height: startRect.height,
+        opacity: 0,
+      })
     }}>
       <div style={{ position: 'relative', width: '100%', height: '100%', borderRadius: 'inherit', overflow: 'hidden' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={imageUrl} alt={name} className="hover-expand-image" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <img 
+          src={imageUrl} 
+          alt={name} 
+          loading="eager"
+          decoding="sync"
+          className="hover-expand-image" 
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+        />
         {foilEffectsEnabled && foilTreatment && foilTreatment !== 'non_foil' && (
           <FoilOverlay treatment={foilTreatment} />
         )}

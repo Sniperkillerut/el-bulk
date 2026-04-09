@@ -17,9 +17,10 @@ interface ProductDetailsProps {
   idPrefix: string;
   showViewFullPage?: boolean;
   onClose?: () => void; // Used by modal to close when "View full page" is clicked
+  className?: string;
 }
 
-export default function ProductDetails({ product, idPrefix, showViewFullPage, onClose }: ProductDetailsProps) {
+export default function ProductDetails({ product, idPrefix, showViewFullPage, onClose, className = '' }: ProductDetailsProps) {
   const [added, setAdded] = useState(false);
   const { addItem } = useCart();
   const { t } = useLanguage();
@@ -46,9 +47,9 @@ export default function ProductDetails({ product, idPrefix, showViewFullPage, on
   const conditionClass = product.condition ? `badge-${product.condition.toLowerCase()}` : '';
 
   return (
-    <div className="grid md:grid-cols-2 gap-0 min-h-0">
+    <div className={`grid md:grid-cols-2 gap-0 min-h-0 ${className}`}>
       {/* Image Section */}
-      <div className="p-8 bg-bg-page flex items-center justify-center">
+      <div className="p-8 bg-bg-page flex items-center justify-center md:h-full md:sticky md:top-0">
         <div className="cardbox overflow-hidden shadow-md w-full max-w-sm aspect-[3/4] bg-bg-surface p-2">
           <div className="w-full h-full border border-border-main relative shadow-[inset_0_0_10px_rgba(0,0,0,0.05)]">
             <CardImage 
@@ -63,7 +64,7 @@ export default function ProductDetails({ product, idPrefix, showViewFullPage, on
       </div>
 
       {/* Details Section */}
-      <div className="p-8 flex flex-col h-full bg-bg-surface border-l-4 border-border-main overflow-y-auto custom-scrollbar">
+      <div className="p-8 flex flex-col h-full bg-bg-surface border-l-4 border-border-main md:overflow-y-auto custom-scrollbar">
         <div>
           <nav className="text-[10px] mb-2 font-mono-stack uppercase text-text-muted">
             {t(`tcg.${product.tcg}`, product.tcg.toUpperCase())} / {t(`pages.inventory.category.${product.category}`, product.category.toUpperCase())}
@@ -191,7 +192,7 @@ export default function ProductDetails({ product, idPrefix, showViewFullPage, on
         </div>
 
         {/* Description / Rules Text */}
-        <div className="min-h-0 mb-4">
+        <div className="mb-4 flex-shrink-0">
           {(product.oracle_text || product.description) ? (
             <div className="flex flex-col gap-4">
               {product.oracle_text && (

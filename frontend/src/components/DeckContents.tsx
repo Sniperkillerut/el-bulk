@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { DeckCard } from '@/lib/types';
 import CardImage from './CardImage';
 import { getDeckAnalytics } from '@/lib/mtg-logic';
@@ -11,7 +11,7 @@ interface DeckContentsProps {
 }
 
 export default function DeckContents({ cards, tcg, className = '' }: DeckContentsProps) {
-  const { total, summary, groups } = getDeckAnalytics(cards);
+  const { total, summary, groups } = useMemo(() => getDeckAnalytics(cards), [cards]);
   const { t } = useLanguage();
   
   // Track expanded groups. Default is all expanded.
@@ -54,7 +54,7 @@ export default function DeckContents({ cards, tcg, className = '' }: DeckContent
         </div>
       </div>
 
-      <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+      <div className="space-y-4 pr-2">
         {Object.entries(groups).map(([groupName, groupCards]) => {
           if (groupCards.length === 0) return null;
           const isExpanded = expandedGroups.includes(groupName);
@@ -78,26 +78,24 @@ export default function DeckContents({ cards, tcg, className = '' }: DeckContent
                 <div className="h-px flex-1 bg-ink-border/10 mx-4 opacity-50"></div>
               </button>
 
-              {isExpanded && (
-                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2 mt-2 px-1">
-                  {groupCards.map((card) => (
-                    <div key={card.id} className="relative group/card">
-                      <div className="border border-kraft-dark/30 rounded-sm overflow-hidden bg-ink-surface shadow-sm transition-transform hover:scale-105">
-                        <CardImage 
-                          imageUrl={card.image_url} 
-                          name={card.name} 
-                          tcg={tcg} 
-                          foilTreatment={card.foil_treatment}
-                          enableHover={true}
-                        />
-                      </div>
-                      <div className="absolute bottom-0 right-0 bg-ink-deep text-white text-[10px] font-mono-stack font-bold px-1.5 py-0.5 rounded-tl-sm pointer-events-none shadow-md z-10">
-                        x{card.quantity}
-                      </div>
+              <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2 mt-2 px-1" style={{ display: isExpanded ? 'grid' : 'none' }}>
+                {groupCards.map((card) => (
+                  <div key={card.id} className="relative group/card">
+                    <div className="border border-kraft-dark/30 rounded-sm overflow-hidden bg-ink-surface shadow-sm transition-transform hover:scale-105">
+                      <CardImage 
+                        imageUrl={card.image_url} 
+                        name={card.name} 
+                        tcg={tcg} 
+                        foilTreatment={card.foil_treatment}
+                        enableHover={true}
+                      />
                     </div>
-                  ))}
-                </div>
-              )}
+                    <div className="absolute bottom-0 right-0 bg-ink-deep text-white text-[10px] font-mono-stack font-bold px-1.5 py-0.5 rounded-tl-sm pointer-events-none shadow-md z-10">
+                      x{card.quantity}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           );
         })}
