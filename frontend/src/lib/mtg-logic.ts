@@ -174,9 +174,9 @@ export function getPromoOptions(prints: ScryfallCard[], set: string, treatment: 
     .forEach(p => {
       (p.promo_types || [])
         .forEach(pt => {
-          // Filter redundant tags that are already covered by treatment
-          if (treatment === 'showcase' && pt === 'showcase') return;
-          if (treatment === 'borderless' && pt === 'borderless') return;
+          // Filter redundant tags that are already covered by treatment or are standard UI-implied tags
+          const redundantTags = ['showcase', 'borderless', 'normal'];
+          if (redundantTags.includes(pt)) return;
           options.add(pt);
         });
     });

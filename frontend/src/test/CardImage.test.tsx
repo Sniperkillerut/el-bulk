@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from './renderWithProviders'
 import { vi, describe, it, expect } from 'vitest'
 import CardImage from '../components/CardImage'
 

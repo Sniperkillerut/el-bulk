@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from './renderWithProviders';
 import { vi, expect, it, describe, beforeEach } from 'vitest';
 import OrdersPanel from '../components/admin/OrdersPanel';
 import * as api from '@/lib/api';
@@ -9,6 +9,9 @@ vi.mock('@/lib/api', () => ({
   adminFetchOrderDetail: vi.fn(),
   adminUpdateOrder: vi.fn(),
   adminCompleteOrder: vi.fn(),
+  adminFetchStorage: vi.fn().mockResolvedValue([]),
+  fetchTranslations: vi.fn().mockResolvedValue({}),
+  fetchSettings: vi.fn().mockResolvedValue({}),
 }));
 
 const mockOrders = [
@@ -19,6 +22,11 @@ const mockOrders = [
     customer_name: 'John Doe',
     status: 'pending' as const,
     total_cop: 1000,
+    subtotal_cop: 1000,
+    shipping_cop: 0,
+    tax_cop: 0,
+    is_local_pickup: false,
+    inventory_restored: false,
     created_at: new Date().toISOString(),
     item_count: 1,
     payment_method: 'whatsapp',
@@ -45,6 +53,10 @@ const mockOrderDetail = {
       unit_price_cop: 1000,
       stock: 5,
       stored_in: [{ stored_in_id: 's1', name: 'Box 1', quantity: 5 }],
+      image_url: '/lotus.jpg',
+      condition: 'NM',
+      foil_treatment: 'non_foil',
+      card_treatment: 'normal',
     },
   ],
 };

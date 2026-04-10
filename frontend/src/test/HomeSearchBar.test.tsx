@@ -1,10 +1,14 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from './renderWithProviders'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import HomeSearchBar from '../components/HomeSearchBar'
 import { useLanguage } from "@/context/LanguageContext"
-vi.mock("@/context/LanguageContext", () => ({
-  useLanguage: vi.fn(),
-}))
+vi.mock("@/context/LanguageContext", async (importOriginal) => {
+  const actual = await importOriginal() as any;
+  return {
+    ...actual,
+    useLanguage: vi.fn(),
+  };
+})
 import * as api from '@/lib/api'
 
 // Mock the API using the alias
@@ -33,13 +37,11 @@ const mockFacets = {
   collection: {}
 }
 
-import { act } from '@testing-library/react'
-
 describe('HomeSearchBar', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(useLanguage).mockReturnValue({
-      t: (key: string) => key,
+      t: (key: string, fallback?: string) => fallback || key,
       locale: "en",
       setLocale: vi.fn(),
       isLoading: false,

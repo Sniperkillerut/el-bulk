@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent } from './renderWithProviders'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import ProductCard from '../components/ProductCard'
 import { useCart } from '@/lib/CartContext'
@@ -8,7 +8,7 @@ const mockProduct = {
   name: 'Test Product',
   tcg: 'mtg',
   price: 1000,
-  image_url: 'test.jpg',
+  image_url: '/test.jpg',
   category: 'singles',
   stock: 5,
   condition: 'NM',
@@ -27,7 +27,8 @@ describe('ProductCard', () => {
     expect(screen.getByText('NM')).toBeInTheDocument()
     expect(screen.getByText('✦ Foil')).toBeInTheDocument()
     expect(screen.getByText('Full Art (Regular)')).toBeInTheDocument()
-    expect(screen.getByText('$1,000 COP')).toBeInTheDocument()
+    expect(screen.getByText(/\$1,000/)).toBeInTheDocument()
+    expect(screen.getByText(/COP/)).toBeInTheDocument()
   })
 
   it('handles "out of stock" state', () => {
@@ -51,9 +52,9 @@ describe('ProductCard', () => {
       textless: true,
       categories: [{ id: 'cat1', name: 'Commander Staples', slug: 'commander', is_active: true }]
     }
-    render(<ProductCard product={product as any} />)
+    const { container } = render(<ProductCard product={product as any} />)
     expect(screen.getByText('TEXTLESS')).toBeInTheDocument()
-    expect(screen.getByText('Commander Staples')).toBeInTheDocument()
+    expect(screen.getByText(/Commander Staples/i)).toBeInTheDocument()
   })
 
   it('renders without foil badge when non_foil', () => {

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from './renderWithProviders'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import ProductGrid from '../components/ProductGrid'
 import * as api from '@/lib/api'
@@ -7,6 +7,9 @@ import * as api from '@/lib/api'
 vi.mock('@/lib/api', () => ({
   fetchProducts: vi.fn().mockResolvedValue({ products: [], total: 0, facets: {} }),
   fetchCategories: vi.fn().mockResolvedValue([]),
+  fetchTCGs: vi.fn().mockResolvedValue([]),
+  fetchTranslations: vi.fn().mockResolvedValue({}),
+  fetchSettings: vi.fn().mockResolvedValue({}),
 }))
 
 vi.mock('next/navigation', () => ({
@@ -30,7 +33,7 @@ const mockFacets = {
   collection: {}
 }
 
-import { act } from '@testing-library/react'
+import { act } from './renderWithProviders'
 
 describe('ProductGrid', () => {
   beforeEach(() => {
