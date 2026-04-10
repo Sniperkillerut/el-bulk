@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,6 +10,12 @@ import (
 	"strings"
 	"sync"
 	"time"
+)
+
+type ctxKey string
+
+const (
+	traceKey ctxKey = "traceID"
 )
 
 // Level represents the severity of a log message.
@@ -86,7 +93,8 @@ type Logger struct {
 	level  Level
 	Output io.Writer
 	Color  bool
-	JSON   bool
+	JSON      bool
+	ProjectID string
 }
 
 // New creates a new Logger with the specified level.
@@ -119,7 +127,26 @@ func (l *Logger) SetJSON(enabled bool) {
 	l.JSON = enabled
 }
 
-func (l *Logger) log(level Level, msg string, args ...interface{}) {
+// AutoDetectGCP automatically configures the logger for GCP environments.
+func (l *Logger) AutoDetectGCP() {
+	// Detect project ID from environment
+	projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
+	
+	// Detect Cloud Run or App Engine environment
+	if os.Getenv("K_SERVICE") != "" || projectID != "" {
+		l.mu.Lock()
+		l.JSON = true
+		l.Color = false
+		l.ProjectID = projectID
+		if l.level < INFO {
+			l.level = INFO
+		}
+		l.mu.Unlock()
+		// We don't log here because we might not be initialized yet
+	}
+}
+
+func (l *Logger) log(ctx context.Context, level Level, msg string, args ...interface{}) {
 	l.mu.RLock()
 	currentLevel := l.level
 	isJSON := l.JSON
@@ -151,6 +178,13 @@ func (l *Logger) log(level Level, msg string, args ...interface{}) {
 			"timestamp": time.Now().Format(time.RFC3339),
 		}
 
+		// Add Trace ID if available in context
+		if ctx != nil {
+			if traceID, ok := ctx.Value(traceKey).(string); ok && traceID != "" && l.ProjectID != "" {
+				entry["logging.googleapis.com/trace"] = fmt.Sprintf("projects/%s/traces/%s", l.ProjectID, traceID)
+			}
+		}
+
 		jsonBytes, _ := json.Marshal(entry)
 		fmt.Fprintln(l.Output, string(jsonBytes))
 		return
@@ -167,19 +201,34 @@ func (l *Logger) log(level Level, msg string, args ...interface{}) {
 }
 
 // Trace logs a trace message.
-func (l *Logger) Trace(msg string, args ...interface{}) { l.log(TRACE, msg, args...) }
+func (l *Logger) Trace(msg string, args ...interface{}) { l.log(context.Background(), TRACE, msg, args...) }
 
 // Debug logs a debug message.
-func (l *Logger) Debug(msg string, args ...interface{}) { l.log(DEBUG, msg, args...) }
+func (l *Logger) Debug(msg string, args ...interface{}) { l.log(context.Background(), DEBUG, msg, args...) }
 
 // Info logs an informational message.
-func (l *Logger) Info(msg string, args ...interface{}) { l.log(INFO, msg, args...) }
+func (l *Logger) Info(msg string, args ...interface{}) { l.log(context.Background(), INFO, msg, args...) }
 
 // Warn logs a warning message.
-func (l *Logger) Warn(msg string, args ...interface{}) { l.log(WARN, msg, args...) }
+func (l *Logger) Warn(msg string, args ...interface{}) { l.log(context.Background(), WARN, msg, args...) }
 
 // Error logs an error message.
-func (l *Logger) Error(msg string, args ...interface{}) { l.log(ERROR, msg, args...) }
+func (l *Logger) Error(msg string, args ...interface{}) { l.log(context.Background(), ERROR, msg, args...) }
+
+// TraceCtx logs a trace message with context.
+func (l *Logger) TraceCtx(ctx context.Context, msg string, args ...interface{}) { l.log(ctx, TRACE, msg, args...) }
+
+// DebugCtx logs a debug message with context.
+func (l *Logger) DebugCtx(ctx context.Context, msg string, args ...interface{}) { l.log(ctx, DEBUG, msg, args...) }
+
+// InfoCtx logs an informational message with context.
+func (l *Logger) InfoCtx(ctx context.Context, msg string, args ...interface{}) { l.log(ctx, INFO, msg, args...) }
+
+// WarnCtx logs a warning message with context.
+func (l *Logger) WarnCtx(ctx context.Context, msg string, args ...interface{}) { l.log(ctx, WARN, msg, args...) }
+
+// ErrorCtx logs an error message with context.
+func (l *Logger) ErrorCtx(ctx context.Context, msg string, args ...interface{}) { l.log(ctx, ERROR, msg, args...) }
 
 // Default is the global default logger instance.
 var Default = New(INFO)
@@ -189,6 +238,9 @@ func SetLevel(level Level) { Default.SetLevel(level) }
 
 // SetJSON sets the default logger JSON mode.
 func SetJSON(enabled bool) { Default.SetJSON(enabled) }
+
+// AutoDetectGCP configures the default logger for GCP.
+func AutoDetectGCP() { Default.AutoDetectGCP() }
 
 // Trace logs a trace message using the default logger.
 func Trace(msg string, args ...interface{}) { Default.Trace(msg, args...) }
@@ -205,26 +257,51 @@ func Warn(msg string, args ...interface{}) { Default.Warn(msg, args...) }
 // Error logs an error message using the default logger.
 func Error(msg string, args ...interface{}) { Default.Error(msg, args...) }
 
+// TraceCtx logs a trace message with context using the default logger.
+func TraceCtx(ctx context.Context, msg string, args ...interface{}) { Default.TraceCtx(ctx, msg, args...) }
+
+// DebugCtx logs a debug message with context using the default logger.
+func DebugCtx(ctx context.Context, msg string, args ...interface{}) { Default.DebugCtx(ctx, msg, args...) }
+
+// InfoCtx logs an informational message with context using the default logger.
+func InfoCtx(ctx context.Context, msg string, args ...interface{}) { Default.InfoCtx(ctx, msg, args...) }
+
+// WarnCtx logs a warning message with context using the default logger.
+func WarnCtx(ctx context.Context, msg string, args ...interface{}) { Default.WarnCtx(ctx, msg, args...) }
+
+// ErrorCtx logs an error message with context using the default logger.
+func ErrorCtx(ctx context.Context, msg string, args ...interface{}) { Default.ErrorCtx(ctx, msg, args...) }
+
 // RequestLogger is a middleware that logs the start and end of each request.
 func RequestLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		
+		ctx := r.Context()
+		// Extract GCP Trace ID from header: X-Cloud-Trace-Context: TRACE_ID/SPAN_ID;o=TRACE_TRUE
+		traceHeader := r.Header.Get("X-Cloud-Trace-Context")
+		if traceHeader != "" {
+			parts := strings.Split(traceHeader, "/")
+			if len(parts) > 0 {
+				ctx = context.WithValue(ctx, traceKey, parts[0])
+			}
+		}
+
 		// Create a custom response writer to capture the status code
 		ww := &statusResponseWriter{ResponseWriter: w, status: http.StatusOK}
 		
-		Trace("Request started: %s %s from %s", r.Method, r.URL.Path, r.RemoteAddr)
+		TraceCtx(ctx, "Request started: %s %s from %s", r.Method, r.URL.Path, r.RemoteAddr)
 		
-		next.ServeHTTP(ww, r)
+		next.ServeHTTP(ww, r.WithContext(ctx))
 		
 		duration := time.Since(start)
 		
 		// Log detailed info at DEBUG, summary at INFO
 		msg := fmt.Sprintf("%d | %s | %s %s", ww.status, duration.String(), r.Method, r.URL.Path)
 		if ww.status >= 400 {
-			Warn("%s", msg)
+			WarnCtx(ctx, "%s", msg)
 		} else {
-			Info("%s", msg)
+			InfoCtx(ctx, "%s", msg)
 		}
 	})
 }

@@ -6,11 +6,17 @@ import (
 	"path/filepath"
 	"strings"
 
+	"time"
+
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
-	"time"
+	
+	// Cloud SQL Connector imports
+	"cloud.google.com/go/cloudsqlconn"
+	"cloud.google.com/go/cloudsqlconn/postgres/pgxv5"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func init() {
@@ -46,6 +52,51 @@ func Connect() *sqlx.DB {
 
 func ConnectResilient() (*sqlx.DB, error) {
 	dsn := os.Getenv("DATABASE_URL")
+
+	// 0. Cloud SQL Connector (Recommended for GCP)
+	// If INSTANCE_CONNECTION_NAME is provided, we use the official connector.
+	instanceName := os.Getenv("INSTANCE_CONNECTION_NAME")
+	if instanceName != "" {
+		logger.Info("☁️ Using Cloud SQL Go Connector for instance: %s", instanceName)
+		
+		var opts []cloudsqlconn.Option
+		if os.Getenv("DB_IAM_AUTH") == "true" {
+			logger.Info("🔐 Cloud SQL: Using IAM-based authentication")
+			opts = append(opts, cloudsqlconn.WithIAMAuthN())
+		}
+
+		// Register the driver with pgxv5
+		cleanup, err := pgxv5.RegisterDriver("cloudsql-postgres", opts...)
+		if err != nil {
+			return nil, fmt.Errorf("failed to register cloudsql-postgres driver: %v", err)
+		}
+		// Note: logically, we'd want to call cleanup() on exit, but standard drivers
+		// don't easily allow for this in a simple Connect() function.
+		// However, pgxv5 handles this fairly well globally for the lifetime of the process.
+		_ = cleanup // suppress unused
+
+		// Construct DSN for the connector
+		// Format: host=<INSTANCE_CONNECTION_NAME> user=<DB_USER> password=<DB_PASS> dbname=<DB_NAME> sslmode=disable
+		// Note: password is ignored if IAM auth is enabled, but we pass what's in the DSN/env.
+		
+		db, err := sqlx.Open("cloudsql-postgres", dsn)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open database via Cloud SQL Connector: %v", err)
+		}
+		
+		db.SetMaxOpenConns(25)
+		db.SetMaxIdleConns(5)
+		
+		if err := Initialize(db); err != nil {
+			logger.Error("Schema initialization failure: %v", err)
+		}
+		if err := Migrate(db); err != nil {
+			logger.Error("Migration failure: %v", err)
+		}
+		
+		return db, nil
+	}
+
 	if dsn == "" {
 		return nil, fmt.Errorf("DATABASE_URL environment variable is required")
 	}

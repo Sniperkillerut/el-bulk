@@ -32,7 +32,9 @@ WORKDIR /app
 COPY --from=builder /el-bulk-api .
 
 # Optimizations for Cloud Run / Serverless memory limits
+# GOMEMLIMIT should be set to ~90% of your container's RAM limit.
 ENV GOGC=50
+ENV GOMEMLIMIT=450MiB
 
 USER appuser
 

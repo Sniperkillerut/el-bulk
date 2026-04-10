@@ -2,7 +2,9 @@ package logger
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"os"
 	"strings"
 	"testing"
 )
@@ -175,5 +177,49 @@ func TestLoggerJSONOutput(t *testing.T) {
 	json.Unmarshal(buf.Bytes(), &entry)
 	if entry["severity"] != "WARNING" {
 		t.Errorf("expected severity WARNING for Warn level, got %v", entry["severity"])
+	}
+}
+
+func TestLoggerTraceID(t *testing.T) {
+	var buf bytes.Buffer
+	l := New(INFO)
+	l.Output = &buf
+	l.SetJSON(true)
+	l.ProjectID = "test-project"
+
+	ctx := context.WithValue(context.Background(), traceKey, "test-trace-id")
+	l.InfoCtx(ctx, "trace message")
+
+	var entry map[string]interface{}
+	if err := json.Unmarshal(buf.Bytes(), &entry); err != nil {
+		t.Fatalf("failed to unmarshal JSON output: %v", err)
+	}
+
+	expectedTrace := "projects/test-project/traces/test-trace-id"
+	if entry["logging.googleapis.com/trace"] != expectedTrace {
+		t.Errorf("expected trace %q, got %q", expectedTrace, entry["logging.googleapis.com/trace"])
+	}
+}
+
+func TestAutoDetectGCP(t *testing.T) {
+	// Backup env
+	oldProject := os.Getenv("GOOGLE_CLOUD_PROJECT")
+	oldService := os.Getenv("K_SERVICE")
+	defer func() {
+		os.Setenv("GOOGLE_CLOUD_PROJECT", oldProject)
+		os.Setenv("K_SERVICE", oldService)
+	}()
+
+	os.Setenv("GOOGLE_CLOUD_PROJECT", "my-project")
+	os.Setenv("K_SERVICE", "my-service")
+
+	l := New(DEBUG)
+	l.AutoDetectGCP()
+
+	if !l.JSON {
+		t.Error("expected JSON to be true after AutoDetectGCP")
+	}
+	if l.ProjectID != "my-project" {
+		t.Errorf("expected ProjectID 'my-project', got %q", l.ProjectID)
 	}
 }

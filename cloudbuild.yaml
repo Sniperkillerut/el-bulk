@@ -1,0 +1,78 @@
+steps:
+  # 0. Enable required APIs
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args: ['services', 'enable', 'cloudtrace.googleapis.com', 'run.googleapis.com', 'sqladmin.googleapis.com']
+
+  # 1. Build Backend Image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', '${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/backend:${SHORT_SHA}', './backend']
+
+  # 2. Build Frontend Image (with build args)
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/frontend:${SHORT_SHA}'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_API_URL=${_API_URL}'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_GA_ID=${_GA_ID}'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_META_PIXEL_ID=${_META_PIXEL_ID}'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_GOOGLE_ADS_ID=${_GOOGLE_ADS_ID}'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_HOTJAR_ID=${_HOTJAR_ID}'
+      - './frontend'
+
+  # 3. Push Images
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', '${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/backend:${SHORT_SHA}']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', '${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/frontend:${SHORT_SHA}']
+
+  # 4. Deploy Backend
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'el-bulk-backend'
+      - '--image'
+      - '${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/backend:${SHORT_SHA}'
+      - '--region'
+      - '${_LOCATION}'
+      - '--add-cloudsql-instances=${_DB_CONNECTION_NAME}'
+      - '--set-secrets=DATABASE_URL=ELBULK_DB_URL:latest,ENCRYPTION_KEY=ELBULK_ENCRYPTION_KEY:latest,JWT_SECRET=ELBULK_JWT_SECRET:latest,SMTP_PASS=ELBULK_SMTP_PASS:latest,GOOGLE_CLIENT_SECRET=ELBULK_GOOGLE_CLIENT_SECRET:latest,DB_SSL_ROOT_CERT=DB_SSL_ROOT_CERT:latest'
+      - '--set-env-vars=STORAGE_TYPE=gcp,GCP_BUCKET_NAME=${_GCS_BUCKET},APP_ENV=production,INSTANCE_CONNECTION_NAME=${_DB_CONNECTION_NAME},DB_IAM_AUTH=true,GOOGLE_CLOUD_PROJECT=${PROJECT_ID}'
+
+  # 5. Deploy Frontend
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'el-bulk-frontend'
+      - '--image'
+      - '${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/frontend:${SHORT_SHA}'
+      - '--region'
+      - '${_LOCATION}'
+
+images:
+  - '${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/backend:${SHORT_SHA}'
+  - '${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/frontend:${SHORT_SHA}'
+
+substitutions:
+  _LOCATION: 'us-central1'
+  _REPOSITORY: 'el-bulk-repo'
+  _API_URL: 'https://api.elbulk.com'
+  _DB_CONNECTION_NAME: '' # project:region:instance
+  _GCS_BUCKET: ''
+  _GA_ID: ''
+  _META_PIXEL_ID: ''
+  _GOOGLE_ADS_ID: ''
+  _HOTJAR_ID: ''
+
+options:
+  logging: CLOUD_LOGGING

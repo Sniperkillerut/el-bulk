@@ -35,9 +35,13 @@ func main() {
 	if os.Getenv("LOG_FORMAT") == "json" {
 		logger.SetJSON(true)
 	}
+	
+	// Auto-detect GCP context (overrides manual format if on GCP)
+	logger.AutoDetectGCP()
+	
 	logger.Info("Logger initialized | Level: %s | Format: %s", 
 		logger.Default.GetLevel().String(), 
-		func() string { if os.Getenv("LOG_FORMAT") == "json" { return "JSON" }; return "TEXT" }())
+		func() string { if os.Getenv("LOG_FORMAT") == "json" || os.Getenv("K_SERVICE") != "" { return "JSON" }; return "TEXT" }())
 
 	database, err := db.ConnectResilient()
 	if err != nil {
@@ -97,6 +101,17 @@ func main() {
 			} else {
 				storageDriver = driver
 				logger.Info("✅ Cloud Storage: Google Cloud Storage initialized (Bucket: %s)", bucket)
+				
+				// Ensure driver is closed on shutdown
+				if closer, ok := storageDriver.(interface{ Close() error }); ok {
+					defer func() {
+						if err := closer.Close(); err != nil {
+							logger.Error("Failed to close storage driver: %v", err)
+						} else {
+							logger.Info("Storage driver closed successfully")
+						}
+					}()
+				}
 			}
 		}
 	default:

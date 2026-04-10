@@ -163,12 +163,14 @@ This guide focuses on a modern serverless stack using **Cloud Run** and **Cloud 
 ### 1. Infrastructure Preparation
 Prepare your GCP environment and enable required services:
 ```bash
-# Enable essential APIs
+# Enable required APIs
 gcloud services enable \
     run.googleapis.com \
     sqladmin.googleapis.com \
     secretmanager.googleapis.com \
-    artifactregistry.googleapis.com
+    artifactregistry.googleapis.com \
+    cloudbuild.googleapis.com \
+    cloudtrace.googleapis.com
 
 # Create a private Docker repository
 gcloud artifacts repositories create el-bulk-repo --repository-format=docker --location=us-central1
@@ -179,7 +181,8 @@ Deploy a production-grade PostgreSQL 16 instance:
 1. **Instance**: Create a Cloud SQL for PostgreSQL instance (e.g., `el-bulk-db`).
 2. **Specs**: For small/medium stores, `db-f1-micro` or `db-g1-small` is sufficient.
 3. **Security**: Use **Private IP** with Serverless VPC Access for maximum security.
-4. **Credentials**: Create a database user `elbulk` and a database `elbulk`.
+4. **IAM Authentication**: Go to **Instance Details** > **Users** > **Add User Account** > Select **IAM-based** > Add the Cloud Run service account email.
+5. **Database**: Create a database named `elbulk`.
 
 ### 3. Cloud Storage (GCS)
 Create a bucket for product images and card assets:
@@ -200,12 +203,14 @@ Create the following secrets. These are mounted into Cloud Run at runtime.
 
 | Secret Name | Description | Value Generation |
 | :--- | :--- | :--- |
-| `ELBULK_DB_URL` | Postgres connection string | `postgres://[USER]:[PASS]@/[DB]?host=/cloudsql/[CONN]` |
+| `ELBULK_DB_URL` | Postgres connection string | `user=[SERVICE_ACCOUNT_EMAIL] dbname=elbulk sslmode=disable` |
 | `ELBULK_JWT_SECRET` | Auth signing key | `openssl rand -base64 32` |
 | `ELBULK_ENCRYPTION_KEY` | PII Encryption key | `openssl rand -hex 16` |
 | `ELBULK_SMTP_PASS` | Email password | From your SMTP provider. |
 | `ELBULK_GOOGLE_CLIENT_SECRET` | OAuth Secret | From Google Cloud Console. |
-| `DB_SSL_ROOT_CERT` | Cloud SQL Server CA | Content of **server-ca.pem** (required for verify-full) |
+
+> [!TIP]
+> **IAM Authentication**: When using IAM auth, the password in the connection string is ignored. Ensure the `user` is the full email of the service account without the `.gserviceaccount.com` suffix if it's a standard user, OR use the full email for IAM users.
 
 #### 4b. Public Config (Cloud Run Environment)
 These variables are passed directly to the `gcloud run deploy` command.
@@ -214,6 +219,8 @@ These variables are passed directly to the `gcloud run deploy` command.
 | :--- | :--- | :--- |
 | `STORAGE_TYPE` | Storage engine | `gcp` |
 | `GCP_BUCKET_NAME` | Cloud Storage bucket | `[YOUR_GCS_BUCKET_NAME]` |
+| `INSTANCE_CONNECTION_NAME` | Cloud SQL Instance | `PROJECT:REGION:INSTANCE` |
+| `DB_IAM_AUTH` | Enable IAM Auth | `true` |
 | `APP_ENV` | Runtime environment | `production` |
 | `FRONTEND_ORIGIN` | CORS Security | `https://elbulk.com` |
 | `SITE_URL` | Email link generation | `https://elbulk.com` |
@@ -226,38 +233,66 @@ These variables are passed directly to the `gcloud run deploy` command.
 > - `NEXT_PUBLIC_GOOGLE_ADS_ID`
 > - `NEXT_PUBLIC_HOTJAR_ID`
 
-### 5. Production Deployment (Cloud Run)
+### 5. Deployment Options
 
-**Backend Service**:
+#### 5a. Automated Deployment (Cloud Build)
+This is the **recommended** method. It uses the `cloudbuild.yaml` file to build and deploy everything in one go.
+
+```bash
+gcloud builds submit --config cloudbuild.yaml \
+    --substitutions=_DB_CONNECTION_NAME="[CONN]",_GCS_BUCKET="[BUCKET]",_API_URL="https://api.elbulk.com"
+```
+
+#### 5b. Manual Deployment (Cloud Run)
+
+**Backend**:
 ```bash
 gcloud run deploy el-bulk-backend \
     --image us-central1-docker.pkg.dev/[PROJECT_ID]/el-bulk-repo/backend \
     --add-cloudsql-instances=[CONNECTION_NAME] \
     --region=us-central1 \
-    --set-secrets="DATABASE_URL=ELBULK_DB_URL:latest,ENCRYPTION_KEY=ELBULK_ENCRYPTION_KEY:latest,JWT_SECRET=ELBULK_JWT_SECRET:latest,SMTP_PASS=ELBULK_SMTP_PASS:latest,GOOGLE_CLIENT_SECRET=ELBULK_GOOGLE_CLIENT_SECRET:latest,DB_SSL_ROOT_CERT=DB_SSL_ROOT_CERT:latest" \
-    --set-env-vars="STORAGE_TYPE=gcp,GCP_BUCKET_NAME=[BUCKET],APP_ENV=production,FRONTEND_ORIGIN=https://elbulk.com,SITE_URL=https://elbulk.com,SMTP_HOST=[HOST],SMTP_PORT=[PORT],SMTP_USER=[USER],SMTP_FROM=[FROM],GOOGLE_CLIENT_ID=[ID]"
+    --set-secrets="DATABASE_URL=ELBULK_DB_URL:latest,ENCRYPTION_KEY=ELBULK_ENCRYPTION_KEY:latest,JWT_SECRET=ELBULK_JWT_SECRET:latest,SMTP_PASS=ELBULK_SMTP_PASS:latest,GOOGLE_CLIENT_SECRET=ELBULK_GOOGLE_CLIENT_SECRET:latest" \
+    --set-env-vars="STORAGE_TYPE=gcp,GCP_BUCKET_NAME=[BUCKET],INSTANCE_CONNECTION_NAME=[CONN],DB_IAM_AUTH=true,APP_ENV=production,FRONTEND_ORIGIN=https://elbulk.com,SITE_URL=https://elbulk.com"
 ```
 
-**Frontend Service**:
+**Frontend**:
 ```bash
-# Build with build-time variables
+# Build
 docker build \
     --build-arg NEXT_PUBLIC_API_URL=https://api.elbulk.com \
-    --build-arg NEXT_PUBLIC_GA_ID=[GA_ID] \
-    --build-arg NEXT_PUBLIC_META_PIXEL_ID=[PIXEL_ID] \
-    --build-arg NEXT_PUBLIC_GOOGLE_ADS_ID=[ADS_ID] \
-    --build-arg NEXT_PUBLIC_HOTJAR_ID=[HOTJAR_ID] \
     -t us-central1-docker.pkg.dev/[PROJECT_ID]/el-bulk-repo/frontend ./frontend
-docker push us-central1-docker.pkg.dev/[PROJECT_ID]/el-bulk-repo/frontend
 
-# Deploy
+# Push & Deploy
+docker push us-central1-docker.pkg.dev/[PROJECT_ID]/el-bulk-repo/frontend
 gcloud run deploy el-bulk-frontend \
     --image us-central1-docker.pkg.dev/[PROJECT_ID]/el-bulk-repo/frontend \
     --region=us-central1
 ```
 
+### 6. IAM Permissions
+The Cloud Run service account requires the following roles:
+- `Cloud SQL Client`
+- `Cloud SQL Instance User` (for IAM Auth)
+- `Storage Object Admin` (for image uploads)
+- `Secret Manager Secret Accessor`
+- `Cloud Trace Agent` (for tracing)
+
 ### 6. Domain & SSL (Global Balancer)
-Map your naked domain (**elbulk.com**) to the frontend service using the **GCP Global HTTP(S) Load Balancer** with Google-Managed SSL certificates.
+Map your naked domain (**elbulk.com**) to the frontend service and the API subdomain (**api.elbulk.com**) to the backend service using the **GCP Global HTTP(S) Load Balancer** or Cloud Run's native **Custom Domains**.
+
+#### 🔒 Understanding Domain & CORS Strategy
+El Bulk uses a **Decoupled Architecture** (Subdomain-based). This is the industry standard for Cloud Run deployments.
+
+| Service | Public URL | Purpose |
+| :--- | :--- | :--- |
+| **Frontend** | `https://elbulk.com` | User Interface & Static Assets |
+| **Backend** | `https://api.elbulk.com` | Business Logic & DB Access |
+
+> [!IMPORTANT]
+> **Production CORS Configuration**
+> Because the browser sees `api.elbulk.com` and `elbulk.com` as different origins, you **must** configure the following variables correctly to avoid "CORS blocked" errors:
+> 1. In the **Backend** Cloud Run service: Set `FRONTEND_ORIGIN=https://elbulk.com`.
+> 2. In the **Frontend** build: Set `NEXT_PUBLIC_API_URL=https://api.elbulk.com`.
 
 ### 7. Automated Management
 - **Backups**: Cloud SQL handles automated point-in-time recovery (PITR).

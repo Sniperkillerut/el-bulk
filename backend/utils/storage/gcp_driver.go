@@ -50,3 +50,11 @@ func NewGCPDriver(ctx context.Context, bucketName string) (*GCPDriver, error) {
 		Client:     client,
 	}, nil
 }
+
+// Close closes the underlying storage client.
+func (d *GCPDriver) Close() error {
+	if d.Client != nil {
+		return d.Client.Close()
+	}
+	return nil
+}
