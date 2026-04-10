@@ -1,7 +1,13 @@
 import type { NextConfig } from 'next';
 
+const isProd = process.env.APP_ENV === 'production' || process.env.NODE_ENV === 'production';
+const isDev = !isProd;
+
 const nextConfig: NextConfig = {
   output: 'standalone',
+  reactStrictMode: true,
+  poweredByHeader: false,
+  compress: isProd,
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'cards.scryfall.io' },
@@ -33,9 +39,10 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  turbopack: {},
-  webpack: (config, { dev, isServer }) => {
-    if (dev) {
+  devIndicators: isDev ? { position: 'bottom-right' } : false,
+  turbopack: isDev ? {} : undefined,
+  webpack: (config, { dev }) => {
+    if (dev && isDev) {
       config.watchOptions = {
         poll: 800,
         aggregateTimeout: 300,

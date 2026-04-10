@@ -1,7 +1,39 @@
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'off';
+
+const LEVEL_MAP: Record<LogLevel, number> = {
+  trace: 0,
+  debug: 1,
+  info: 2,
+  warn: 3,
+  error: 4,
+  off: 5,
+};
 
 class RemoteLogger {
+  private currentLevel: LogLevel = 'info';
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('EL_BULK_LOG_LEVEL') as LogLevel;
+      if (saved && LEVEL_MAP[saved] !== undefined) {
+        this.currentLevel = saved;
+      } else {
+        this.currentLevel = (process.env.LOG_LEVEL?.toLowerCase() as LogLevel) || 'info';
+      }
+    }
+  }
+
+  setLevel(level: LogLevel) {
+    this.currentLevel = level;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('EL_BULK_LOG_LEVEL', level);
+      console.info(`[RemoteLogger] Level changed to: ${level.toUpperCase()}`);
+    }
+  }
+
   private async send(level: LogLevel, message: string, context?: any) {
+    if (LEVEL_MAP[level] < LEVEL_MAP[this.currentLevel] || this.currentLevel === 'off') return;
+
     try {
       // Don't log if we're on the server (e.g. during SSR)
       if (typeof window === 'undefined') return;
@@ -31,6 +63,13 @@ class RemoteLogger {
       // Fallback to console if everything fails
       console.error('RemoteLogger critical failure:', err);
     }
+  }
+
+  trace(message: string, context?: any) {
+    if (process.env.NODE_ENV === 'development') {
+      this.logToConsole('trace', message, context);
+    }
+    this.send('trace', message, context);
   }
 
   debug(message: string, context?: any) {

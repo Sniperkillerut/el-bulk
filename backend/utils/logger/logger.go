@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
+	"sync"
 	"time"
 )
 
@@ -11,14 +13,18 @@ import (
 type Level int
 
 const (
-	DEBUG Level = iota
+	TRACE Level = iota
+	DEBUG
 	INFO
 	WARN
 	ERROR
+	OFF
 )
 
 func (l Level) String() string {
 	switch l {
+	case TRACE:
+		return "TRACE"
 	case DEBUG:
 		return "DEBUG"
 	case INFO:
@@ -27,6 +33,8 @@ func (l Level) String() string {
 		return "WARN"
 	case ERROR:
 		return "ERROR"
+	case OFF:
+		return "OFF"
 	default:
 		return "UNKNOWN"
 	}
@@ -35,6 +43,8 @@ func (l Level) String() string {
 // Color returns the ANSI color code for the level.
 func (l Level) Color() string {
 	switch l {
+	case TRACE:
+		return "\033[35m" // Magenta
 	case DEBUG:
 		return "\033[36m" // Cyan
 	case INFO:
@@ -48,9 +58,30 @@ func (l Level) Color() string {
 	}
 }
 
+// ParseLevel converts a string to a Level.
+func ParseLevel(s string) Level {
+	switch strings.ToUpper(strings.TrimSpace(s)) {
+	case "TRACE":
+		return TRACE
+	case "DEBUG":
+		return DEBUG
+	case "INFO":
+		return INFO
+	case "WARN":
+		return WARN
+	case "ERROR":
+		return ERROR
+	case "OFF":
+		return OFF
+	default:
+		return INFO
+	}
+}
+
 // Logger provides a simple leveled logging system.
 type Logger struct {
-	Level  Level
+	mu     sync.RWMutex
+	level  Level
 	Output io.Writer
 	Color  bool
 }
@@ -58,14 +89,32 @@ type Logger struct {
 // New creates a new Logger with the specified level.
 func New(level Level) *Logger {
 	return &Logger{
-		Level:  level,
+		level:  level,
 		Output: os.Stdout,
 		Color:  true,
 	}
 }
 
+// SetLevel sets the logger level thread-safely.
+func (l *Logger) SetLevel(level Level) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.level = level
+}
+
+// GetLevel gets the logger level thread-safely.
+func (l *Logger) GetLevel() Level {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+	return l.level
+}
+
 func (l *Logger) log(level Level, msg string, args ...interface{}) {
-	if level < l.Level {
+	l.mu.RLock()
+	currentLevel := l.level
+	l.mu.RUnlock()
+
+	if level < currentLevel || currentLevel == OFF {
 		return
 	}
 
@@ -79,6 +128,9 @@ func (l *Logger) log(level Level, msg string, args ...interface{}) {
 	content := fmt.Sprintf(msg, args...)
 	fmt.Fprintf(l.Output, "[%s] [%s] %s\n", timestamp, levelStr, content)
 }
+
+// Trace logs a trace message.
+func (l *Logger) Trace(msg string, args ...interface{}) { l.log(TRACE, msg, args...) }
 
 // Debug logs a debug message.
 func (l *Logger) Debug(msg string, args ...interface{}) { l.log(DEBUG, msg, args...) }
@@ -94,6 +146,12 @@ func (l *Logger) Error(msg string, args ...interface{}) { l.log(ERROR, msg, args
 
 // Default is the global default logger instance.
 var Default = New(INFO)
+
+// SetLevel sets the default logger level.
+func SetLevel(level Level) { Default.SetLevel(level) }
+
+// Trace logs a trace message using the default logger.
+func Trace(msg string, args ...interface{}) { Default.Trace(msg, args...) }
 
 // Debug logs a debug message using the default logger.
 func Debug(msg string, args ...interface{}) { Default.Debug(msg, args...) }

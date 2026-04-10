@@ -58,10 +58,12 @@ func TestLevelStrings(t *testing.T) {
 		level Level
 		want  string
 	}{
+		{TRACE, "TRACE"},
 		{DEBUG, "DEBUG"},
 		{INFO, "INFO"},
 		{WARN, "WARN"},
 		{ERROR, "ERROR"},
+		{OFF, "OFF"},
 		{Level(99), "UNKNOWN"},
 	}
 	for _, tt := range tests {
@@ -76,6 +78,7 @@ func TestLevelColors(t *testing.T) {
 		level Level
 		want  string
 	}{
+		{TRACE, "\033[35m"},
 		{DEBUG, "\033[36m"},
 		{INFO, "\033[32m"},
 		{WARN, "\033[33m"},
@@ -112,9 +115,13 @@ func TestGlobalLoggers(t *testing.T) {
 	var buf bytes.Buffer
 	oldOutput := Default.Output
 	Default.Output = &buf
-	Default.Level = DEBUG
+	oldLevel := Default.GetLevel()
+	Default.SetLevel(DEBUG)
 	Default.Color = false
-	defer func() { Default.Output = oldOutput }()
+	defer func() { 
+		Default.Output = oldOutput 
+		Default.SetLevel(oldLevel)
+	}()
 
 	Debug("dg")
 	if !strings.Contains(buf.String(), "[DEBUG] dg") {

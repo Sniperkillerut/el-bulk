@@ -12,6 +12,7 @@ backend/logs
 backend/tests
 backend/*.test
 backend/coverage.out
+backend/.air.toml
 
 # Frontend specific ignore
 frontend/.next

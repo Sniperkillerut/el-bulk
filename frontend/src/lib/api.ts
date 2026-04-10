@@ -234,6 +234,17 @@ export async function adminBulkCreateProducts(req: import('./types').BulkCreateR
   });
 }
 
+export async function adminFetchLogLevel(): Promise<{ level: string }> {
+  return apiFetch<{ level: string }>('/api/admin/logs/level', { cache: 'no-store' });
+}
+
+export async function adminUpdateLogLevel(level: string): Promise<{ message: string; level: string }> {
+  return apiFetch<{ message: string; level: string }>('/api/admin/logs/level', {
+    method: 'PUT',
+    body: JSON.stringify({ level }),
+  });
+}
+
 // ---------------------------------------------------------------------------
 // External card lookup (Scryfall for MTG, Pokémon TCG API for Pokémon)
 // ---------------------------------------------------------------------------

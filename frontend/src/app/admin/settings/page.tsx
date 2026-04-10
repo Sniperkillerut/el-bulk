@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { updateAdminSettings } from '@/lib/api';
+import { updateAdminSettings, adminFetchLogLevel, adminUpdateLogLevel } from '@/lib/api';
 import { Settings } from '@/lib/types';
+import { remoteLogger } from '@/lib/remoteLogger';
 import { useAdmin } from '@/hooks/useAdmin';
 import AdminHeader from '@/components/admin/AdminHeader';
 import { useLanguage } from '@/context/LanguageContext';
@@ -13,6 +14,23 @@ export default function AdminSettingsPage() {
   const [editingSettings, setEditingSettings] = useState<Settings | null>(null);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [backendLogLevel, setBackendLogLevel] = useState<string>('INFO');
+  const [frontendLogLevel, setFrontendLogLevel] = useState<string>('INFO');
+
+  useEffect(() => {
+    const fetchLogLevel = async () => {
+      try {
+        const { level } = await adminFetchLogLevel();
+        setBackendLogLevel(level);
+        // @ts-expect-error - access private currentLevel for UI display
+        const currentFront = remoteLogger.currentLevel;
+        setFrontendLogLevel(currentFront ? String(currentFront).toUpperCase() : 'INFO');
+      } catch {
+        console.error('Failed to fetch log level');
+      }
+    };
+    fetchLogLevel();
+  }, []);
 
   useEffect(() => {
     if (settings) {
@@ -36,6 +54,20 @@ export default function AdminSettingsPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleBackendLogLevelChange = async (level: string) => {
+    try {
+      await adminUpdateLogLevel(level);
+      setBackendLogLevel(level);
+    } catch (err) {
+      alert('Failed to update backend log level');
+    }
+  };
+
+  const handleFrontendLogLevelChange = (level: string) => {
+    remoteLogger.setLevel(level.toLowerCase() as any);
+    setFrontendLogLevel(level);
   };
 
   if (loading || !token) {
@@ -223,6 +255,60 @@ export default function AdminSettingsPage() {
                 />
               </div>
               <p className="text-[9px] mt-2 text-text-muted italic leading-tight">Standard fee applied to all shipping orders (ignored for local pickup).</p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* System Maintenance & Diagnostics Section */}
+      {editingSettings && (
+        <section className="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-800">
+          <div className="flex items-center gap-4 border-b border-kraft-dark pb-3">
+            <span className="text-3xl">🛠️</span>
+            <h2 className="font-display text-3xl m-0 text-ink-deep">SYSTEM MAINTENANCE & DIAGNOSTICS</h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Backend Logs */}
+            <div className="card p-3 bg-white shadow-sm border-l-4 border-gold">
+              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">Backend Server Log Level</label>
+              <div className="flex flex-wrap gap-2">
+                {['OFF', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'].map(level => (
+                  <button
+                    key={level}
+                    onClick={() => handleBackendLogLevelChange(level)}
+                    className={`px-3 py-1 text-[10px] font-bold rounded-sm border transition-all ${
+                      backendLogLevel === level 
+                        ? 'bg-ink-navy text-gold border-ink-navy shadow-md scale-105' 
+                        : 'bg-white text-ink-navy border-ink-border/20 hover:border-gold opacity-60'
+                    }`}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">Controls verbosity of the Go backend server logs. Changes apply instantly.</p>
+            </div>
+
+            {/* Frontend Logs */}
+            <div className="card p-3 bg-white shadow-sm border-l-4 border-indigo-400">
+              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">Frontend Client Log Level</label>
+              <div className="flex flex-wrap gap-2">
+                {['OFF', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'].map(level => (
+                  <button
+                    key={level}
+                    onClick={() => handleFrontendLogLevelChange(level)}
+                    className={`px-3 py-1 text-[10px] font-bold rounded-sm border transition-all ${
+                      frontendLogLevel === level 
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-md scale-105' 
+                        : 'bg-white text-ink-navy border-ink-border/20 hover:border-indigo-400 opacity-60'
+                    }`}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">Controls local and remote logging for this browser session. Persisted in localStorage.</p>
             </div>
           </div>
         </section>

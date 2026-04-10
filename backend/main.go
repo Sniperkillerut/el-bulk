@@ -27,6 +27,13 @@ func main() {
 		logger.Warn("No .env file found or error loading it: %v. Relying on system environment variables.", err)
 	}
 
+	// Initialize logger level
+	logLevel := os.Getenv("LOG_LEVEL")
+	if logLevel != "" {
+		logger.SetLevel(logger.ParseLevel(logLevel))
+		logger.Info("Logger initialized with level: %s", logger.Default.GetLevel().String())
+	}
+
 	database, err := db.ConnectResilient()
 	if err != nil {
 		logger.Warn("Could not connect to database on startup: %v", err)
@@ -260,6 +267,10 @@ func main() {
 				// Accounting
 				r.Get("/accounting/export", accountingHandler.ExportCSV)
 				r.Get("/accounting/valuation", accountingHandler.GetInventoryValuation)
+
+				// Dynamic Logging
+				r.Get("/logs/level", adminHandler.GetLogLevel)
+				r.Put("/logs/level", adminHandler.UpdateLogLevel)
 			})
 		})
 
