@@ -40,6 +40,9 @@
   mix-blend-mode: color-dodge;
   transition: opacity var(--duration-slow) ease;
   overflow: hidden;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0); /* Force hardware acceleration */
 }
 
 /* Classic Foil: Moving Rainbow Gradient */

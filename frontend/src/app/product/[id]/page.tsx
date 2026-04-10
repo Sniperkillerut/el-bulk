@@ -1,84 +1,85 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { Metadata } from 'next';
 import { fetchProduct } from '@/lib/api';
-import { Product } from '@/lib/types';
-import Link from 'next/link';
-import { useLanguage } from '@/context/LanguageContext';
-import ProductDetails from '@/components/ProductDetails';
+import ProductDetailClient from './ProductDetailClient';
 
-export default function ProductDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const { t } = useLanguage();
+interface Props {
+  params: Promise<{ id: string }>;
+}
 
-  const [prevId, setPrevId] = useState(id);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  try {
+    const product = await fetchProduct(id);
+    const title = `${product.name} - ${product.set_name} | El Bulk TCG`;
+    const description = `Buy ${product.name} from ${product.set_name}. Condition: ${product.condition}, Foil: ${product.foil_treatment}. Fast shipping from El Bulk.`;
+    
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        images: product.image_url ? [product.image_url] : [],
+        type: 'website',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: product.image_url ? [product.image_url] : [],
+      },
+    };
+  } catch {
+    return {
+      title: 'Product Not Found | El Bulk TCG',
+    };
+  }
+}
 
-  // Derived state to reset loading when ID changes, avoiding cascading render warning in useEffect
-  if (id !== prevId) {
-    setPrevId(id);
-    setLoading(true);
-    setProduct(null);
-    setError(false);
+export default async function ProductDetailPage({ params }: Props) {
+  const { id } = await params;
+  let product;
+  try {
+    product = await fetchProduct(id);
+  } catch {
+    return <ProductDetailClient product={null} error={true} />;
   }
 
-  useEffect(() => {
-    if (!id) return;
+  if (!product) {
+    return <ProductDetailClient product={null} error={true} />;
+  }
 
-    fetchProduct(id)
-      .then(p => {
-        setProduct(p);
-        setError(false);
-      })
-      .catch(() => {
-        // Error is already logged to the server via the API client's logAndThrow.
-        // We set local state to show the UI without triggering a red console error.
-        setError(true);
-      })
-      .finally(() => setLoading(false));
-  }, [id]);
-
-  if (loading) return (
-    <div className="max-w-5xl mx-auto px-4 py-12">
-      <div className="grid md:grid-cols-2 gap-8">
-        <div className="skeleton h-[500px] rounded-[2px]" />
-        <div className="flex flex-col gap-4">
-          <div className="skeleton h-10 w-[60%]" />
-          <div className="skeleton h-6 w-[40%]" />
-          <div className="skeleton h-16 w-[30%]" />
-          <div className="skeleton h-32 w-full" />
-        </div>
-      </div>
-    </div>
-  );
-
-  if (error || !product) return (
-    <div className="max-w-4xl mx-auto px-4 py-16 text-center stamp-border mt-12 bg-surface p-12">
-      <div role="heading" aria-level={1} className="font-display text-3xl mb-4 text-hp-color uppercase">{t('pages.product.details.not_found', 'ITEM NOT FOUND')}</div>
-      <p style={{ color: 'var(--text-muted)' }} className="mb-6 font-mono-stack">{t('pages.product.details.not_found_desc', 'This item may have been sold or removed.')}</p>
-      <Link href="/" className="btn-secondary">← {t('pages.common.buttons.back_to_home', 'Back to Shoebox')}</Link>
-    </div>
-  );
+  // Step 4.2: Structured Data (JSON-LD)
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    image: product.image_url,
+    description: product.description || `TCG Card: ${product.name} from ${product.set_name}`,
+    brand: {
+      '@type': 'Brand',
+      name: product.tcg.toUpperCase(),
+    },
+    offers: {
+      '@type': 'Offer',
+      price: product.price,
+      priceCurrency: 'COP',
+      availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+    },
+    additionalProperty: [
+      { '@type': 'PropertyValue', name: 'Set', value: product.set_name },
+      { '@type': 'PropertyValue', name: 'Condition', value: product.condition },
+      { '@type': 'PropertyValue', name: 'Rarity', value: product.rarity },
+    ],
+  };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12">
-      {/* Breadcrumb */}
-      <nav className="text-xs mb-6 font-mono-stack" style={{ color: 'var(--text-muted)' }}>
-        <Link href="/" className="hover:text-text-primary transition-colors" style={{ textDecoration: 'none' }}>{t('pages.common.breadcrumb.home', 'Home')}</Link>
-        {' / '}
-        <Link href={`/${product.tcg}/${product.category}`} className="hover:text-text-primary transition-colors uppercase" style={{ textDecoration: 'none' }}>
-          {product.tcg} {product.category}
-        </Link>
-        {' / '}
-        <span style={{ color: 'var(--text-primary)' }}>{product.name}</span>
-      </nav>
-
-      <div className="cardbox overflow-hidden bg-surface shadow-xl">
-        <ProductDetails product={product} idPrefix="detail" />
-      </div>
-    </div>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <ProductDetailClient product={product} />
+    </>
   );
 }

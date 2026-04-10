@@ -39,7 +39,12 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <div className="card flex flex-col overflow-hidden animate-fade-up" data-theme-area="product-card">
-      <a href={href} onClick={handleOpenModal} className="thumb-hover-wrap no-underline relative block">
+      <a 
+        href={href} 
+        onClick={handleOpenModal} 
+        className="thumb-hover-wrap no-underline relative block"
+        style={{ viewTransitionName: `card-image-${product.id}` } as React.CSSProperties}
+      >
         <CardImage imageUrl={product.image_url} name={product.name} tcg={product.tcg} foilTreatment={product.foil_treatment} />
         
         {/* Product Badges (Hot/New) */}

@@ -7,17 +7,20 @@ import (
 	"time"
 
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/utils/cache"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
 )
 
 type ProductStore struct {
 	*BaseStore[models.Product]
+	facetCache *cache.TTLMap[models.Facets]
 }
 
 func NewProductStore(db *sqlx.DB) *ProductStore {
 	return &ProductStore{
-		BaseStore: NewBaseStore[models.Product](db, "product"),
+		BaseStore:  NewBaseStore[models.Product](db, "product"),
+		facetCache: cache.NewTTLMap[models.Facets](5 * time.Minute),
 	}
 }
 
@@ -101,6 +104,16 @@ func (s *ProductStore) ListWithFilters(params ProductFilterParams) ([]models.Pro
 }
 
 func (s *ProductStore) GetFacets(params ProductFilterParams, isAdmin bool) (models.Facets, error) {
+	// Generate cache key from params
+	cacheKey := fmt.Sprintf("facets:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v",
+		params.TCG, params.Category, params.Search, params.StorageID, params.Foil, params.Treatment, params.Condition,
+		params.Rarity, params.Language, params.Color, params.Collection, params.SetName, params.InStock, params.FilterLogic, isAdmin)
+
+	if cached, ok := s.facetCache.Get(cacheKey); ok {
+		logger.Trace("[CACHE] Facet hit for key: %s", cacheKey)
+		return cached, nil
+	}
+
 	var result []byte
 	start := time.Now()
 	query := "SELECT fn_get_product_facets($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)"
@@ -119,6 +132,10 @@ func (s *ProductStore) GetFacets(params ProductFilterParams, isAdmin bool) (mode
 	if err := json.Unmarshal(result, &facets); err != nil {
 		return models.Facets{}, err
 	}
+
+	// Cache the result for 2 minutes
+	s.facetCache.Set(cacheKey, facets, 2*time.Minute)
+
 	return facets, nil
 }
 
@@ -300,6 +317,7 @@ func (s *ProductStore) GetHotProductIDs(days, minSales int, candidateIDs []strin
 }
 
 func (s *ProductStore) SaveCategories(productID string, categoryIDs []string) error {
+	s.facetCache.Clear()
 	_, err := s.DB.Exec("DELETE FROM product_category WHERE product_id = $1", productID)
 	if err != nil {
 		return err
@@ -314,6 +332,7 @@ func (s *ProductStore) SaveCategories(productID string, categoryIDs []string) er
 }
 
 func (s *ProductStore) SaveDeckCards(productID string, cards []models.DeckCard) error {
+	s.facetCache.Clear()
 	_, err := s.DB.Exec("DELETE FROM deck_card WHERE product_id = $1", productID)
 	if err != nil {
 		return err
@@ -342,6 +361,7 @@ func (s *ProductStore) SaveDeckCards(productID string, cards []models.DeckCard) 
 }
 
 func (s *ProductStore) SaveStorage(productID string, items []models.StorageLocation) error {
+	s.facetCache.Clear()
 	_, err := s.DB.Exec("DELETE FROM product_storage WHERE product_id = $1", productID)
 	if err != nil {
 		return err
@@ -388,6 +408,7 @@ func (s *ProductStore) CreateProduct(input models.ProductInput) (*models.Product
 	}
 
 	var product models.Product
+	s.facetCache.Clear()
 	query := `
 		INSERT INTO product (name, tcg, category, set_name, set_code, condition,
 		                      foil_treatment, card_treatment,
@@ -420,6 +441,7 @@ func (s *ProductStore) UpdateProduct(id string, input models.ProductInput) (*mod
 	}
 
 	var product models.Product
+	s.facetCache.Clear()
 	query := `
 		UPDATE product
 		SET name=$1, tcg=$2, category=$3, set_name=$4, set_code=$5, condition=$6,
@@ -468,6 +490,7 @@ func (s *ProductStore) BulkUpsert(jsonData string) ([]string, error) {
 	var ids []struct {
 		ID string `db:"upserted_id"`
 	}
+	s.facetCache.Clear()
 	query := "SELECT upserted_id FROM fn_bulk_upsert_product($1)"
 	logger.Trace("[DB] Executing BulkUpsert: %s | DataLen: %d", query, len(jsonData))
 	err := s.DB.Select(&ids, query, jsonData)

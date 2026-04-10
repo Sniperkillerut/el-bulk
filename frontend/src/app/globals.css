@@ -736,6 +736,15 @@ textarea:focus {
   }
 }
 
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 150% 50%;
+  }
+  100% {
+    background-position: -50% 50%;
+  }
+}
+
 /* Custom Checkbox Styling */
 input[type="checkbox"] {
   appearance: none;

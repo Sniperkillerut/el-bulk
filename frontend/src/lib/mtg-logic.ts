@@ -146,7 +146,13 @@ export interface ArtOption {
 export function getArtOptions(prints: ScryfallCard[], set: string, treatment: CardTreatment): ArtOption[] {
   const options = new Map<string, string>(); // cn -> artist
   prints
-    .filter(p => p.set?.toLowerCase() === set.toLowerCase() && resolveCardTreatment(p) === treatment)
+    .filter(p => {
+      const isSetMatch = p.set?.toLowerCase() === set.toLowerCase();
+      // For SLD (Secret Lair), we usually want to show all arts regardless of individual treatment matches,
+      // as they are often grouped together in complex ways.
+      if (set.toLowerCase() === 'sld') return isSetMatch;
+      return isSetMatch && resolveCardTreatment(p) === treatment;
+    })
     .forEach(p => {
       if (p.collector_number) {
         options.set(p.collector_number, p.artist || 'Unknown');
@@ -167,7 +173,12 @@ export function getPromoOptions(prints: ScryfallCard[], set: string, treatment: 
     .filter(p => !set || p.set?.toLowerCase() === set.toLowerCase() && resolveCardTreatment(p) === treatment && (p.collector_number === cn || !cn))
     .forEach(p => {
       (p.promo_types || [])
-        .forEach(pt => options.add(pt));
+        .forEach(pt => {
+          // Filter redundant tags that are already covered by treatment
+          if (treatment === 'showcase' && pt === 'showcase') return;
+          if (treatment === 'borderless' && pt === 'borderless') return;
+          options.add(pt);
+        });
     });
   return Array.from(options);
 }

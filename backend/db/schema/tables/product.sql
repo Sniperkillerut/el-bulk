@@ -74,3 +74,7 @@ CREATE INDEX IF NOT EXISTS idx_product_treatment      ON product(card_treatment)
 CREATE INDEX IF NOT EXISTS idx_product_rarity         ON product(rarity);
 CREATE INDEX IF NOT EXISTS idx_product_language       ON product(language);
 CREATE INDEX IF NOT EXISTS idx_product_color_identity ON product(color_identity);
+CREATE INDEX IF NOT EXISTS idx_product_set_name       ON product(set_name);
+
+-- Performance Optimization: Partial index for in-stock products
+CREATE INDEX IF NOT EXISTS idx_product_in_stock ON product(id) WHERE stock > 0;

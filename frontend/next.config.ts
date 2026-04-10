@@ -40,6 +40,10 @@ const nextConfig: NextConfig = {
     ];
   },
   devIndicators: isDev ? { position: 'bottom-right' } : false,
+  experimental: {
+    cacheComponents: true,
+    viewTransition: true,
+  },
   turbopack: isDev ? {} : undefined,
   webpack: (config, { dev }) => {
     if (dev && isDev) {
