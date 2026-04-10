@@ -67,7 +67,7 @@ export default function ProductDetailPage() {
     <div className="max-w-6xl mx-auto px-4 py-12">
       {/* Breadcrumb */}
       <nav className="text-xs mb-6 font-mono-stack" style={{ color: 'var(--text-muted)' }}>
-        <Link href="/" className="hover:text-text-primary transition-colors" style={{ textDecoration: 'none' }}>Home</Link>
+        <Link href="/" className="hover:text-text-primary transition-colors" style={{ textDecoration: 'none' }}>{t('pages.common.breadcrumb.home', 'Home')}</Link>
         {' / '}
         <Link href={`/${product.tcg}/${product.category}`} className="hover:text-text-primary transition-colors uppercase" style={{ textDecoration: 'none' }}>
           {product.tcg} {product.category}

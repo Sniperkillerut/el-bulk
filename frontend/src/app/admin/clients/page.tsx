@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminHeader from '@/components/admin/AdminHeader';
 import { useAdmin } from '@/hooks/useAdmin';
+import { useLanguage } from '@/context/LanguageContext';
 import { adminFetchClients } from '@/lib/api';
 import { CustomerStats } from '@/lib/types';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -14,6 +15,7 @@ const SortIcon = ({ field, sortField, sortOrder }: { field: keyof CustomerStats 
 };
 
 export default function AdminClientsPage() {
+  const { t } = useLanguage();
   const { token } = useAdmin();
   const router = useRouter();
   const [clients, setClients] = useState<CustomerStats[]>([]);
@@ -71,13 +73,13 @@ export default function AdminClientsPage() {
   return (
     <div className="flex-1 flex flex-col p-3 min-h-0 w-full max-w-full">
       <AdminHeader
-        title="CRM: Client Registry"
-        subtitle="Managing Relationships & Interactions"
+        title={t('pages.admin.clients.title', 'CRM: Client Registry')}
+        subtitle={t('pages.admin.clients.subtitle', 'Managing Relationships & Interactions')}
         actions={
           <div className="w-full max-w-64">
             <input
               type="text"
-              placeholder="SEARCH CLIENTS..."
+              placeholder={t('pages.admin.inventory.search_placeholder', 'SEARCH CLIENTS...')}
               value={search}
               onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
               className="text-xs font-mono-stack border-border-main"
@@ -94,49 +96,49 @@ export default function AdminClientsPage() {
                 className="p-4 font-display text-xs uppercase tracking-wider lg:w-[25%] cursor-pointer group hover:bg-gold/5 transition-colors"
                 onClick={() => handleSort('name')}
               >
-                <div className="flex items-center">Customer <SortIcon field="name" sortField={sortField} sortOrder={sortOrder} /></div>
+                <div className="flex items-center">{t('pages.admin.clients.table.customer', 'Customer')} <SortIcon field="name" sortField={sortField} sortOrder={sortOrder} /></div>
               </th>
               <th 
                 className="p-4 font-display text-xs uppercase tracking-wider hidden md:table-cell w-[20%] cursor-pointer group hover:bg-gold/5 transition-colors"
                 onClick={() => handleSort('email')}
               >
-                <div className="flex items-center">Contact <SortIcon field="email" sortField={sortField} sortOrder={sortOrder} /></div>
+                <div className="flex items-center">{t('pages.admin.clients.table.contact', 'Contact')} <SortIcon field="email" sortField={sortField} sortOrder={sortOrder} /></div>
               </th>
               <th 
                 className="p-4 font-display text-xs uppercase tracking-wider text-center w-[80px] lg:w-[10%] cursor-pointer group hover:bg-gold/5 transition-colors"
                 onClick={() => handleSort('order_count')}
               >
-                <div className="flex items-center justify-center">Orders <SortIcon field="order_count" sortField={sortField} sortOrder={sortOrder} /></div>
+                <div className="flex items-center justify-center">{t('pages.admin.clients.table.orders', 'Orders')} <SortIcon field="order_count" sortField={sortField} sortOrder={sortOrder} /></div>
               </th>
               <th 
                 className="p-4 font-display text-xs uppercase tracking-wider text-center text-gold-dark/80 hidden lg:table-cell w-[10%] cursor-pointer group hover:bg-gold/5 transition-colors"
                 onClick={() => handleSort('active_request_count')}
               >
-                <div className="flex items-center justify-center">Requests <SortIcon field="active_request_count" sortField={sortField} sortOrder={sortOrder} /></div>
+                <div className="flex items-center justify-center">{t('pages.admin.clients.table.requests', 'Requests')} <SortIcon field="active_request_count" sortField={sortField} sortOrder={sortOrder} /></div>
               </th>
               <th 
                 className="p-4 font-display text-xs uppercase tracking-wider text-center text-emerald-700/80 hidden lg:table-cell w-[10%] cursor-pointer group hover:bg-gold/5 transition-colors"
                 onClick={() => handleSort('active_offer_count')}
               >
-                <div className="flex items-center justify-center">Offers <SortIcon field="active_offer_count" sortField={sortField} sortOrder={sortOrder} /></div>
+                <div className="flex items-center justify-center">{t('pages.admin.clients.table.offers', 'Offers')} <SortIcon field="active_offer_count" sortField={sortField} sortOrder={sortOrder} /></div>
               </th>
               <th 
                 className="p-4 font-display text-xs uppercase tracking-wider text-right w-[120px] lg:w-[15%] cursor-pointer group hover:bg-gold/5 transition-colors"
                 onClick={() => handleSort('total_spend')}
               >
-                <div className="flex items-center justify-end">Spend (COP) <SortIcon field="total_spend" sortField={sortField} sortOrder={sortOrder} /></div>
+                <div className="flex items-center justify-end">{t('pages.admin.clients.table.spend', 'Spend (COP)')} <SortIcon field="total_spend" sortField={sortField} sortOrder={sortOrder} /></div>
               </th>
               <th 
                 className="p-4 font-display text-xs uppercase tracking-wider text-center hidden md:table-cell w-[10%] cursor-pointer group hover:bg-gold/5 transition-colors"
                 onClick={() => handleSort('is_subscriber')}
               >
-                <div className="flex items-center justify-center">Newsletter <SortIcon field="is_subscriber" sortField={sortField} sortOrder={sortOrder} /></div>
+                <div className="flex items-center justify-center">{t('pages.admin.clients.table.newsletter', 'Newsletter')} <SortIcon field="is_subscriber" sortField={sortField} sortOrder={sortOrder} /></div>
               </th>
               <th 
                 className="p-4 font-display text-xs uppercase tracking-wider hidden lg:table-cell w-[20%] cursor-pointer group hover:bg-gold/5 transition-colors"
                 onClick={() => handleSort('latest_note')}
               >
-                <div className="flex items-center">Recent Journal Entry <SortIcon field="latest_note" sortField={sortField} sortOrder={sortOrder} /></div>
+                <div className="flex items-center">{t('pages.admin.clients.table.recent_journal', 'Recent Journal Entry')} <SortIcon field="latest_note" sortField={sortField} sortOrder={sortOrder} /></div>
               </th>
             </tr>
           </thead>
@@ -188,16 +190,16 @@ export default function AdminClientsPage() {
                 </td>
                 <td className="p-4 text-center hidden md:table-cell">
                   {client.is_subscriber ? (
-                    <span className="badge badge-foil text-[9px]">SUBSCRIBED</span>
+                    <span className="badge badge-foil text-[9px]">{t('pages.admin.clients.status.subscribed', 'SUBSCRIBED')}</span>
                   ) : (
-                    <span className="text-[9px] opacity-30 font-mono-stack">NO</span>
+                    <span className="text-[9px] opacity-30 font-mono-stack">{t('pages.admin.clients.status.no', 'NO')}</span>
                   )}
                 </td>
                 <td className="p-4 text-xs font-mono-stack transition-opacity group-hover:opacity-100 opacity-70 hidden lg:table-cell">
                   {client.latest_note ? (
                     <div className="truncate italic">&quot;{client.latest_note}&quot;</div>
                   ) : (
-                    <span className="opacity-30 italic">No notes recorded...</span>
+                    <span className="opacity-30 italic">{t('pages.admin.clients.table.no_notes', 'No notes recorded...')}</span>
                   )}
                 </td>
               </tr>
@@ -210,11 +212,15 @@ export default function AdminClientsPage() {
         <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mt-3 p-3 bg-white shadow-sm border border-kraft-dark/20 rounded-lg flex-shrink-0">
           <div className="flex items-center gap-4">
             <div className="text-[10px] font-mono-stack text-text-muted uppercase tracking-widest font-bold">
-              MOSTRANDO {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, sortedClients.length)} DE {sortedClients.length}
+              {t('pages.common.pagination.showing_crm', 'SHOWING {start} - {end} OF {total}', {
+                start: (currentPage - 1) * pageSize + 1,
+                end: Math.min(currentPage * pageSize, sortedClients.length),
+                total: sortedClients.length
+              })}
             </div>
 
             <div className="flex items-center gap-2 border-l border-border-main/20 pl-4">
-              <span className="text-[10px] font-mono-stack text-text-muted uppercase">Mostrar</span>
+              <span className="text-[10px] font-mono-stack text-text-muted uppercase">{t('pages.common.labels.mostrar', 'Show')}</span>
               <select
                 value={pageSize}
                 onChange={e => {
@@ -237,7 +243,7 @@ export default function AdminClientsPage() {
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               className="btn-secondary py-1.5 px-4 text-[10px] font-bold disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              PREV
+              {t('pages.admin.dashboard.prev', 'PREV')}
             </button>
             <span className="text-[10px] font-mono-stack font-bold px-3 py-1.5 bg-kraft-paper/10 border border-border-main rounded shadow-sm">
               {currentPage} / {totalPages}
@@ -247,7 +253,7 @@ export default function AdminClientsPage() {
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               className="btn-secondary py-1.5 px-4 text-[10px] font-bold disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              NEXT
+              {t('pages.admin.dashboard.next', 'NEXT')}
             </button>
           </div>
         </div>

@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminLogin } from '@/lib/api';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function AdminLoginPage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -20,7 +22,7 @@ export default function AdminLoginPage() {
       localStorage.setItem('el_bulk_admin_token', token);
       router.push('/admin/dashboard');
     } catch {
-      setError('Invalid username or password.');
+      setError(t('pages.auth.login.error_invalid', 'Invalid username or password.'));
     } finally {
       setLoading(false);
     }
@@ -32,16 +34,16 @@ export default function AdminLoginPage() {
         {/* Logo */}
         <div className="text-center mb-4">
           <div style={{ display: 'inline-block', background: 'var(--gold)', borderRadius: 4, padding: '4px 12px', marginBottom: 8 }}>
-            <span className="font-display text-3xl" style={{ color: 'var(--ink-deep)', lineHeight: 1 }}>EL BULK</span>
+            <span className="font-display text-3xl" style={{ color: 'var(--ink-deep)', lineHeight: 1 }}>{t('pages.admin.login.title', 'VAULT ACCESS')}</span>
           </div>
-          <p className="text-xs font-mono-stack" style={{ color: 'var(--text-muted)' }}>ADMIN PANEL</p>
+          <p className="text-xs font-mono-stack" style={{ color: 'var(--text-muted)' }}>{t('pages.admin.login.subtitle', 'AUTHORIZED PERSONNEL ONLY')}</p>
         </div>
 
         <div className="gold-line mb-3" />
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>USERNAME</label>
+            <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>{t('pages.admin.login.email', 'System Identification (Email)')}</label>
             <input
               id="admin-username"
               type="text"
@@ -52,7 +54,7 @@ export default function AdminLoginPage() {
             />
           </div>
           <div>
-            <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>PASSWORD</label>
+            <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>{t('pages.admin.login.password', 'Security Clearance (Password)')}</label>
             <input
               id="admin-password"
               type="password"
@@ -74,7 +76,7 @@ export default function AdminLoginPage() {
             style={{ opacity: loading ? 0.7 : 1 }}
             disabled={loading}
           >
-            {loading ? 'SIGNING IN...' : 'SIGN IN'}
+            {loading ? t('pages.admin.login.authenticating', 'AUTHENTICATING...') : t('pages.admin.login.button', 'ESTABLISH CONNECTION')}
           </button>
         </form>
       </div>

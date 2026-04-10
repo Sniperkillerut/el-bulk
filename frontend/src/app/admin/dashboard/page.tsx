@@ -141,13 +141,13 @@ export default function AdminDashboard() {
                 href="/admin/accounting/valuation" 
                 className="btn-secondary !px-2 !py-1 !text-[10px] flex items-center gap-1 whitespace-nowrap !leading-none min-h-[30px]"
               >
-                <span>📊</span> <span className="hidden md:inline">VALUATION</span>
+                <span>📊</span> <span className="hidden md:inline">{t('pages.admin.dashboard.valuation', 'VALUATION')}</span>
               </Link>
               <Link 
                 href="/admin/inventory/low-stock" 
                 className="btn-secondary !px-2 !py-1 !text-[10px] flex items-center gap-1 border-hp-color/30 text-hp-color whitespace-nowrap !leading-none min-h-[30px]"
               >
-                <span>⚠️</span> <span className="hidden md:inline">LOW STOCK</span>
+                <span>⚠️</span> <span className="hidden md:inline">{t('pages.admin.dashboard.low_stock', 'LOW STOCK')}</span>
               </Link>
               <button
                 onClick={handleSyncSets}
@@ -155,7 +155,7 @@ export default function AdminDashboard() {
                 className="btn-secondary !px-2 !py-1 !text-[10px] flex items-center gap-1 border-l border-ink-border/10 !pl-2 ml-1 whitespace-nowrap !leading-none min-h-[30px]"
               >
                 <span>{isSyncing ? '⌛' : '🔄'}</span> 
-                <span className="hidden md:inline">{isSyncing ? 'SYNCING...' : 'SYNC'}</span>
+                <span className="hidden md:inline">{isSyncing ? t('pages.admin.dashboard.syncing', 'SYNCING...') : t('pages.admin.dashboard.sync', 'SYNC')}</span>
                 {settings?.last_set_sync && (
                   <span className="opacity-40 ml-1 font-mono-stack text-[9px]">
                     [{new Date(settings.last_set_sync).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })}]
@@ -166,7 +166,7 @@ export default function AdminDashboard() {
                 onClick={() => setShowImportModal(true)} 
                 className="btn-secondary !px-2 !py-1 !text-[10px] flex items-center gap-1 border-l border-ink-border/10 whitespace-nowrap ml-1 !leading-none min-h-[30px]"
               >
-                <span>📥</span> <span className="hidden md:inline">IMPORT CSV</span>
+                <span>📥</span> <span className="hidden md:inline">{t('pages.admin.dashboard.import_csv', 'IMPORT CSV')}</span>
               </button>
             </div>
 
@@ -186,7 +186,7 @@ export default function AdminDashboard() {
                 onClick={() => { setEditingProduct(null); setShowEditModal(true); }} 
                 className="btn-primary !px-4 min-h-[38px] h-auto text-xs font-bold flex items-center justify-center gap-2 whitespace-nowrap shadow-md shadow-gold/10 !leading-none"
               >
-                <span className="text-base leading-none translate-y-[-1px]">+</span> <span className="hidden sm:inline leading-none">PRODUCT</span>
+                <span className="text-base leading-none translate-y-[-1px]">+</span> <span className="hidden sm:inline leading-none">{t('pages.admin.dashboard.add_product', 'PRODUCT')}</span>
               </button>
             </div>
           </div>
@@ -253,13 +253,13 @@ export default function AdminDashboard() {
         </div>
         <div className="flex gap-1.5 order-1 sm:order-2 w-full sm:w-auto justify-center">
           <button disabled={page === 1} onClick={() => setPage(page - 1)} className="btn-secondary !py-1 !px-2 sm:!px-4 !text-[10px] sm:!text-xs font-bold disabled:opacity-30 flex items-center gap-1 min-h-[32px]">
-            <span>←</span> <span className="hidden sm:inline">PREV</span>
+            <span>←</span> <span className="hidden sm:inline">{t('pages.admin.dashboard.prev', 'PREV')}</span>
           </button>
           <div className="flex items-center px-3 font-mono-stack text-[10px] sm:text-xs font-bold bg-white rounded border border-kraft-dark/20 h-7 sm:h-8">
             {page} / {Math.max(1, Math.ceil(total / pageSize))}
           </div>
           <button disabled={page >= Math.ceil(total / pageSize)} onClick={() => setPage(page + 1)} className="btn-secondary !py-1 !px-2 sm:!px-4 !text-[10px] sm:!text-xs font-bold disabled:opacity-30 flex items-center gap-1 min-h-[32px]">
-            <span className="hidden sm:inline">NEXT</span> <span>→</span>
+            <span className="hidden sm:inline">{t('pages.admin.dashboard.next', 'NEXT')}</span> <span>→</span>
           </button>
         </div>
       </footer>

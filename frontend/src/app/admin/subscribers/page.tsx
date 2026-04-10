@@ -7,8 +7,10 @@ import { adminFetchSubscribers } from '@/lib/api';
 import { NewsletterSubscriber } from '@/lib/types';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import AdminHeader from '@/components/admin/AdminHeader';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function AdminSubscribersPage() {
+  const { t } = useLanguage();
   const { token } = useAdmin();
   const [subscribers, setSubscribers] = useState<NewsletterSubscriber[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,11 +29,11 @@ export default function AdminSubscribersPage() {
   return (
     <div className="flex-1 flex flex-col p-3 min-h-0 max-w-7xl mx-auto w-full">
       <AdminHeader 
-        title="SUBSCRIBERS"
-        subtitle="Newsletter Management"
+        title={t('pages.admin.subscribers.title', 'SUBSCRIBERS')}
+        subtitle={t('pages.admin.subscribers.subtitle', 'Newsletter Management')}
         actions={
           <div className="text-right">
-             <span className="font-mono-stack text-[10px] text-text-muted uppercase font-bold tracking-tighter">Secure Link Active</span>
+             <span className="font-mono-stack text-[10px] text-text-muted uppercase font-bold tracking-tighter">{t('pages.admin.subscribers.secure_link', 'Secure Link Active')}</span>
              <div className="flex items-center gap-2 mt-1">
                 <div className="w-1.5 h-1.5 rounded-full bg-lp-color animate-pulse"></div>
                 <span className="text-xs font-bold font-mono-stack">{subscribers.length} Emails</span>
@@ -44,10 +46,10 @@ export default function AdminSubscribersPage() {
         <table className="w-full text-left border-collapse">
           <thead className="sticky top-0 z-10 bg-kraft-light backdrop-blur-md shadow-sm border-b border-ink-border">
             <tr className="border-b border-ink-border">
-              <th className="p-2 font-display text-xs uppercase tracking-wider">Email Address</th>
-              <th className="p-2 font-display text-xs uppercase tracking-wider hidden md:table-cell">Linked User</th>
-              <th className="p-2 font-display text-xs uppercase tracking-wider">Subscription Date</th>
-              <th className="p-2 font-display text-xs uppercase tracking-wider text-right hidden md:table-cell">Actions</th>
+              <th className="p-2 font-display text-xs uppercase tracking-wider">{t('pages.admin.subscribers.table.email', 'Email Address')}</th>
+              <th className="p-2 font-display text-xs uppercase tracking-wider hidden md:table-cell">{t('pages.admin.subscribers.table.linked_user', 'Linked User')}</th>
+              <th className="p-2 font-display text-xs uppercase tracking-wider">{t('pages.admin.subscribers.table.date', 'Subscription Date')}</th>
+              <th className="p-2 font-display text-xs uppercase tracking-wider text-right hidden md:table-cell">{t('pages.admin.subscribers.table.actions', 'Actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-ink-border/30">
@@ -68,7 +70,7 @@ export default function AdminSubscribersPage() {
                       <span className="text-xs font-bold uppercase">{sub.first_name} {sub.last_name}</span>
                     </Link>
                   ) : (
-                    <span className="text-[10px] opacity-30 font-mono-stack italic">UNLINKED GUEST</span>
+                    <span className="text-[10px] opacity-30 font-mono-stack italic">{t('pages.admin.subscribers.status.unlinked', 'UNLINKED GUEST')}</span>
                   )}
                 </td>
                 <td className="p-2 text-[10px] font-mono-stack text-text-muted">
@@ -76,7 +78,7 @@ export default function AdminSubscribersPage() {
                 </td>
                 <td className="p-2 text-right hidden md:table-cell">
                   <button className="text-[10px] font-mono-stack text-hp-color hover:underline bg-transparent border-none cursor-pointer p-0 opacity-40 hover:opacity-100">
-                    REMOVE
+                    {t('pages.common.buttons.remove', 'REMOVE')}
                   </button>
                 </td>
               </tr>

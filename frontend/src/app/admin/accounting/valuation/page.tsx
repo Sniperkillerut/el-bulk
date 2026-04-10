@@ -31,7 +31,7 @@ export default function InventoryValuationPage() {
   }, [token]);
 
   if (authLoading || !token) {
-    return <div className="p-12 text-center font-mono uppercase animate-pulse">Authenticating Accounting...</div>;
+    return <div className="p-12 text-center font-mono uppercase animate-pulse">{t('pages.admin.valuation.authenticating', 'Authenticating Accounting...')}</div>;
   }
 
   const formatCurrency = (val: number) => `$${val.toLocaleString('en-US', { maximumFractionDigits: 0 })} COP`;
@@ -85,12 +85,12 @@ export default function InventoryValuationPage() {
                
                <div className="space-y-4">
                  <div>
-                   <span className="block text-[10px] font-mono-stack text-kraft-light/40 uppercase mb-1">TOTAL COST BASIS</span>
+                   <span className="block text-[10px] font-mono-stack text-kraft-light/40 uppercase mb-1">{t('pages.admin.accounting.total_cost', 'TOTAL COST BASIS')}</span>
                    <span className="text-2xl font-display text-kraft-light leading-none">{formatCurrency(data.total_cost_basis_cop)}</span>
                  </div>
                  <div className="pt-4 border-t border-white/10">
                    <div className="flex justify-between items-baseline">
-                     <span className="block text-[10px] font-mono-stack text-green-400/60 uppercase mb-1">NET POTENTIAL PROFIT</span>
+                     <span className="block text-[10px] font-mono-stack text-green-400/60 uppercase mb-1">{t('pages.admin.accounting.net_profit', 'NET POTENTIAL PROFIT')}</span>
                      <span className="text-[10px] font-mono-stack text-green-400 font-bold bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20">
                         {((data.potential_profit / data.total_value_cop) * 100).toFixed(1)}% MARGIN
                      </span>

@@ -5,8 +5,10 @@ import { updateAdminSettings } from '@/lib/api';
 import { Settings } from '@/lib/types';
 import { useAdmin } from '@/hooks/useAdmin';
 import AdminHeader from '@/components/admin/AdminHeader';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function AdminSettingsPage() {
+  const { t } = useLanguage();
   const { token, settings, refreshSettings, loading, logout } = useAdmin();
   const [editingSettings, setEditingSettings] = useState<Settings | null>(null);
   const [saving, setSaving] = useState(false);
@@ -57,7 +59,7 @@ export default function AdminSettingsPage() {
           <section className="space-y-8">
             <div className="flex items-center gap-4 border-b border-kraft-dark pb-3">
               <span className="text-3xl">📈</span>
-              <h2 className="font-display text-3xl m-0 text-ink-deep">FINANCIAL OVERRIDES</h2>
+              <h2 className="font-display text-3xl m-0 text-ink-deep">{t('pages.admin.settings.financial_overrides', 'FINANCIAL OVERRIDES')}</h2>
             </div>
             
             <div className="grid sm:grid-cols-2 gap-6">
@@ -101,12 +103,12 @@ export default function AdminSettingsPage() {
           <section className="space-y-8">
             <div className="flex items-center gap-4 border-b border-kraft-dark pb-3">
               <span className="text-3xl">🏛️</span>
-              <h2 className="font-display text-3xl m-0 text-ink-deep">STORE IDENTITY</h2>
+              <h2 className="font-display text-3xl m-0 text-ink-deep">{t('pages.admin.settings.store_identity', 'STORE IDENTITY')}</h2>
             </div>
 
             <div className="space-y-6">
               <div className="card p-3 bg-white shadow-sm border-l-4 border-ink-navy">
-                <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">Physical Store Address</label>
+                <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">{t('pages.admin.settings.address_label', 'Physical Store Address')}</label>
                 <input 
                   type="text" 
                   className="w-full bg-ink-surface/5 p-3 font-bold text-sm rounded-sm border-none outline-none focus:bg-white focus:ring-1 ring-gold transition-all"
@@ -117,7 +119,7 @@ export default function AdminSettingsPage() {
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">WhatsApp Contact</label>
+                  <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">{t('pages.admin.settings.whatsapp_label', 'WhatsApp Contact')}</label>
                   <input 
                     type="text" 
                     className="w-full bg-white p-3 text-sm font-bold rounded-sm border border-ink-border/20 outline-none focus:border-gold"
@@ -126,7 +128,7 @@ export default function AdminSettingsPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">Instagram Handle</label>
+                  <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">{t('pages.admin.settings.instagram_label', 'Instagram Handle')}</label>
                   <input 
                     type="text" 
                     className="w-full bg-white p-3 text-sm font-bold rounded-sm border border-ink-border/20 outline-none focus:border-gold"
@@ -138,7 +140,7 @@ export default function AdminSettingsPage() {
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">Support Email</label>
+                  <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">{t('pages.admin.settings.email_label', 'Support Email')}</label>
                   <input 
                     type="email" 
                     className="w-full bg-white p-3 text-sm font-bold rounded-sm border border-ink-border/20 outline-none focus:border-gold"
@@ -148,7 +150,7 @@ export default function AdminSettingsPage() {
                 </div>
                 
                 <div>
-                  <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">Business Hours</label>
+                  <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">{t('pages.admin.settings.hours_label', 'Business Hours')}</label>
                   <input 
                     type="text" 
                     className="w-full bg-white p-3 text-sm font-bold rounded-sm border border-ink-border/20 outline-none focus:border-gold"
@@ -173,7 +175,7 @@ export default function AdminSettingsPage() {
           <div className="grid md:grid-cols-3 gap-6">
             {/* Hot Threshold */}
             <div className="card p-3 bg-white shadow-sm border-l-4 border-hp-color">
-              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">Hot Items Threshold</label>
+              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">{t('pages.admin.settings.hot_threshold', 'Hot Items Threshold')}</label>
               <div className="flex items-center gap-2">
                 <input 
                   type="number" 
@@ -181,21 +183,21 @@ export default function AdminSettingsPage() {
                   value={editingSettings.hot_sales_threshold} 
                   onChange={e => setEditingSettings({ ...editingSettings, hot_sales_threshold: parseInt(e.target.value) || 0 })} 
                 />
-                <span className="text-[10px] font-mono-stack uppercase opacity-60">Sales in last</span>
+                <span className="text-[10px] font-mono-stack uppercase opacity-60">{t('pages.admin.settings.sales_in_last', 'Sales in last')}</span>
                 <input 
                   type="number" 
                   className="w-16 py-2 px-3 font-bold text-lg bg-ink-surface/10 rounded-sm focus:bg-white transition-all outline-none border border-transparent focus:border-hp-color"
                   value={editingSettings.hot_days_threshold} 
                   onChange={e => setEditingSettings({ ...editingSettings, hot_days_threshold: parseInt(e.target.value) || 0 })} 
                 />
-                <span className="text-[10px] font-mono-stack uppercase opacity-60">Days</span>
+                <span className="text-[10px] font-mono-stack uppercase opacity-60">{t('pages.admin.settings.days', 'Days')}</span>
               </div>
               <p className="text-[9px] mt-2 text-text-muted italic leading-tight">Products satisfying this threshold will display the 🔥 HOT badge.</p>
             </div>
 
             {/* New Threshold */}
             <div className="card p-3 bg-white shadow-sm border-l-4 border-lp-color">
-              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">New Items Threshold</label>
+              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">{t('pages.admin.settings.new_threshold', 'New Items Threshold')}</label>
               <div className="flex items-center gap-2">
                 <input 
                   type="number" 
@@ -203,7 +205,7 @@ export default function AdminSettingsPage() {
                   value={editingSettings.new_days_threshold} 
                   onChange={e => setEditingSettings({ ...editingSettings, new_days_threshold: parseInt(e.target.value) || 0 })} 
                 />
-                <span className="text-[10px] font-mono-stack uppercase opacity-60">Days Since Creation</span>
+                <span className="text-[10px] font-mono-stack uppercase opacity-60">{t('pages.admin.settings.days_since_creation', 'Days Since Creation')}</span>
               </div>
               <p className="text-[9px] mt-2 text-text-muted italic leading-tight">Products created within this window will display the 🆕 NEW badge.</p>
             </div>
@@ -229,7 +231,7 @@ export default function AdminSettingsPage() {
       {/* Persistent Save Footer */}
       <footer className="sticky bottom-2 mt-4 p-3 bg-ink-navy/95 backdrop-blur shadow-2xl rounded-xl border-x-4 border-t-2 border-gold flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 z-10">
         <div className="hidden md:block">
-          <h4 className="text-gold font-display text-xl m-0 leading-none">SAVE GLOBAL SETTINGS</h4>
+          <h4 className="text-gold font-display text-xl m-0 leading-none">{t('pages.admin.settings.save_btn', 'SAVE GLOBAL SETTINGS')}</h4>
           <p className="text-[10px] text-gold/40 font-mono-stack uppercase mt-1">These changes will update your shop&apos;s currency rates and identity across all pages.</p>
         </div>
         

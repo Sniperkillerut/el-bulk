@@ -7,6 +7,7 @@ import {
 } from '@/lib/api_themes';
 import { getAdminSettings, updateAdminSettings } from '@/lib/api';
 import { Theme, ThemeInput, Settings } from '@/lib/types';
+import { useLanguage } from '@/context/LanguageContext';
 
 // Simple SVG Icons to replace lucide-react
 const Icons = {
@@ -173,6 +174,7 @@ const CARDBOARD_DEFAULT: ThemeInput = {
 };
 
 export default function AdminThemesPage() {
+  const { t } = useLanguage();
   const { token } = useAdmin();
   const [themes, setThemes] = useState<Theme[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -335,15 +337,15 @@ export default function AdminThemesPage() {
         
         <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border-main pb-6">
           <div>
-            <h1 className="text-3xl font-display font-bold text-accent-primary">THEME ENGINE</h1>
-            <p className="text-text-secondary text-sm font-mono mt-1 opacity-60 uppercase tracking-wider">Configure visual identity and storefront skins</p>
+            <h1 className="text-3xl font-display font-bold text-accent-primary">{t('pages.admin.themes.title', 'THEME ENGINE')}</h1>
+            <p className="text-text-secondary text-sm font-mono mt-1 opacity-60 uppercase tracking-wider">{t('pages.admin.themes.subtitle', 'Configure visual identity and storefront skins')}</p>
           </div>
           <button 
             onClick={handleCreateNew}
             className="flex items-center gap-2 px-4 py-2 bg-accent-primary text-text-on-accent rounded shadow-lg hover:brightness-110 active:scale-95 transition-all font-bold uppercase text-xs tracking-widest"
           >
             <Icons.Plus />
-            Forge New Theme
+            {t('pages.admin.themes.forge_btn', 'Forge New Theme')}
           </button>
         </header>
 
@@ -362,7 +364,7 @@ export default function AdminThemesPage() {
           {/* 1. Left Sidebar: Available Skins (Compact) */}
           <div className="lg:col-span-2 space-y-4 lg:sticky lg:top-8">
             <h2 className="text-[10px] font-mono font-bold text-text-muted uppercase tracking-[0.2em] flex items-center gap-2 mb-2">
-              <Icons.Grid /> Skins
+              <Icons.Grid /> {t('pages.admin.themes.skins_label', 'Skins')}
             </h2>
             <div className="flex lg:grid gap-2 overflow-x-auto lg:overflow-visible no-scrollbar pb-2 lg:pb-0">
               {themes.map(t => (
@@ -456,7 +458,7 @@ export default function AdminThemesPage() {
             <form onSubmit={handleSave} className="bg-bg-surface border border-border-main rounded-lg shadow-xl overflow-hidden flex flex-col h-full max-h-[calc(100vh-12rem)]">
               <div className="p-4 border-b border-border-main bg-bg-header/50 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-xs font-display font-bold uppercase tracking-widest">{isNew ? 'Forge' : 'Edit'} Identity</h3>
+                  <h3 className="text-xs font-display font-bold uppercase tracking-widest">{isNew ? t('pages.admin.themes.forge_identity', 'Forge') : t('pages.admin.themes.edit_identity', 'Edit')} Identity</h3>
                 </div>
                 {editingTheme?.is_system && (
                   <button 
@@ -473,13 +475,13 @@ export default function AdminThemesPage() {
               <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                 {/* 1. Identity Section */}
                 <Collapsible 
-                  title="Base Info" 
+                  title={t('pages.admin.themes.sections.base_info', 'Base Info')} 
                   icon={<Icons.Type />} 
                   isOpen={expanded.identity} 
                   onToggle={() => setExpanded(p => ({...p, identity: !p.identity}))}
                 >
                   <div className="space-y-1">
-                    <label className="text-[10px] text-text-secondary uppercase font-bold tracking-tighter">Theme Name</label>
+                    <label className="text-[10px] text-text-secondary uppercase font-bold tracking-tighter">{t('pages.admin.themes.labels.theme_name', 'Theme Name')}</label>
                     <input 
                       type="text" 
                       value={form.name} 
@@ -492,7 +494,7 @@ export default function AdminThemesPage() {
 
                 {/* 2. Surface Palette */}
                 <Collapsible 
-                  title="Backgrounds & Surfaces" 
+                  title={t('pages.admin.themes.sections.surfaces', 'Backgrounds & Surfaces')} 
                   isOpen={expanded.surface} 
                   onToggle={() => setExpanded(p => ({...p, surface: !p.surface}))}
                 >
@@ -507,7 +509,7 @@ export default function AdminThemesPage() {
 
                 {/* 3. Brand Palette */}
                 <Collapsible 
-                  title="Brand & Highlights" 
+                  title={t('pages.admin.themes.sections.brand', 'Brand & Highlights')} 
                   isOpen={expanded.signature} 
                   onToggle={() => setExpanded(p => ({...p, signature: !p.signature}))}
                 >
@@ -523,7 +525,7 @@ export default function AdminThemesPage() {
                 </Collapsible>
 
                 <Collapsible 
-                  title="Buttons & Inputs" 
+                  title={t('pages.admin.themes.sections.interactive', 'Buttons & Inputs')} 
                   isOpen={expanded.interactive} 
                   onToggle={() => setExpanded(p => ({...p, interactive: !p.interactive}))}
                 >
@@ -548,7 +550,7 @@ export default function AdminThemesPage() {
 
                 {/* 4. Type Palette */}
                 <Collapsible 
-                  title="Typography & Content" 
+                  title={t('pages.admin.themes.sections.typography', 'Typography & Content')} 
                   isOpen={expanded.type} 
                   onToggle={() => setExpanded(p => ({...p, type: !p.type}))}
                 >
@@ -561,7 +563,7 @@ export default function AdminThemesPage() {
 
                 {/* 5. Logic Palette */}
                 <Collapsible 
-                  title="Condition Status Indicators" 
+                  title={t('pages.admin.themes.sections.logic', 'Condition Status Indicators')} 
                   isOpen={expanded.logic} 
                   onToggle={() => setExpanded(p => ({...p, logic: !p.logic}))}
                 >
@@ -576,7 +578,7 @@ export default function AdminThemesPage() {
 
                 {/* 6. Layout Geometry */}
                 <Collapsible 
-                  title="Layout & Card Geometry" 
+                  title={t('pages.admin.themes.sections.geometry', 'Layout & Card Geometry')} 
                   icon={<Icons.Maximize />} 
                   isOpen={expanded.geometry} 
                   onToggle={() => setExpanded(p => ({...p, geometry: !p.geometry}))}
@@ -590,7 +592,7 @@ export default function AdminThemesPage() {
 
                 {/* 7. Advanced Extensions */}
                 <Collapsible 
-                  title="Advanced Branding & Overrides" 
+                  title={t('pages.admin.themes.sections.advanced', 'Advanced Branding & Overrides')} 
                   icon={<Icons.Palette />} 
                   isOpen={expanded.advanced} 
                   onToggle={() => setExpanded(p => ({...p, advanced: !p.advanced}))}
@@ -610,7 +612,7 @@ export default function AdminThemesPage() {
                   disabled={loading}
                   className="w-full flex items-center justify-center gap-2 py-3 bg-accent-primary text-text-on-accent rounded shadow-lg hover:brightness-110 font-bold uppercase text-xs tracking-widest disabled:opacity-50 transition-all"
                 >
-                  <Icons.Save /> {isNew ? 'Initialize Skin' : 'Persist Blueprint'}
+                  <Icons.Save /> {isNew ? t('pages.admin.themes.buttons.initialize', 'Initialize Skin') : t('pages.admin.themes.buttons.persist', 'Persist Blueprint')}
                 </button>
                 
                 {!isNew && !editingTheme?.is_system && (
@@ -619,7 +621,7 @@ export default function AdminThemesPage() {
                     onClick={() => handleDelete(editingTheme!.id)}
                     className="w-full flex items-center justify-center gap-2 py-2 border border-hp-color/30 text-hp-color rounded hover:bg-hp-color/10 transition-colors uppercase text-[10px] font-bold tracking-widest"
                   >
-                    <Icons.Trash /> Purge Matrix
+                    <Icons.Trash /> {t('pages.admin.themes.buttons.purge', 'Purge Matrix')}
                   </button>
                 )}
               </div>
@@ -655,6 +657,7 @@ function Collapsible({ title, icon, isOpen, onToggle, children }: { title: strin
 }
 
 function MiniSinglesPreview({ form, mode = 'desktop' }: { form: ThemeInput, mode?: 'desktop' | 'mobile' }) {
+  const { t } = useLanguage();
   const isMobile = mode === 'mobile';
   
   // Convert standard hex/string values to CSS variables for preview scoping
@@ -745,14 +748,14 @@ function MiniSinglesPreview({ form, mode = 'desktop' }: { form: ThemeInput, mode
           <div className="w-8 h-8 rounded bg-accent-primary text-text-on-accent flex items-center justify-center font-display" style={{ fontFamily: 'var(--theme-font-heading)' }}>EB</div>
           {!isMobile && (
             <nav className="flex gap-4 text-[10px] font-bold uppercase tracking-widest">
-              <span className="opacity-60">SINGLES</span>
-              <span className="text-accent-header border-b-2 border-accent-header pb-1">EXPLORE</span>
-              <span className="opacity-60">DECKS</span>
+              <span className="opacity-60">{t('pages.admin.themes.preview.singles', 'SINGLES')}</span>
+              <span className="text-accent-header border-b-2 border-accent-header pb-1">{t('pages.admin.themes.preview.explore', 'EXPLORE')}</span>
+              <span className="opacity-60">{t('pages.admin.themes.preview.decks', 'DECKS')}</span>
             </nav>
           )}
         </div>
         <div className="flex items-center gap-3">
-           <div className="px-2 py-0.5 rounded-full text-[8px] font-bold uppercase border border-status-hp-header text-status-hp-header bg-status-hp-header/10 backdrop-blur-sm shadow-sm">Critical Alert</div>
+           <div className="px-2 py-0.5 rounded-full text-[8px] font-bold uppercase border border-status-hp-header text-status-hp-header bg-status-hp-header/10 backdrop-blur-sm shadow-sm">{t('pages.admin.themes.preview.critical_alert', 'Critical Alert')}</div>
            <div className="hidden sm:flex items-center gap-2">
              <div className="w-5 h-5 rounded-full border border-border-main bg-bg-surface flex items-center justify-center text-[8px] text-text-main shadow-inner">2</div>
            </div>
@@ -766,20 +769,20 @@ function MiniSinglesPreview({ form, mode = 'desktop' }: { form: ThemeInput, mode
           <aside className="w-56 p-4 border-r border-accent-secondary overflow-y-auto bg-bg-surface/60 backdrop-blur-sm custom-scrollbar">
             <div className="space-y-6">
               <div>
-                <p className="text-[8px] font-bold uppercase tracking-[0.2em] mb-2 text-text-muted">Vault Matrix Search</p>
-                <input type="search" placeholder="Search cards..." className="w-full" />
+                <p className="text-[8px] font-bold uppercase tracking-[0.2em] mb-2 text-text-muted">{t('pages.admin.themes.preview.vault_search', 'Vault Matrix Search')}</p>
+                <input type="search" placeholder={t('pages.admin.inventory.search_placeholder', 'Search cards...')} className="w-full" />
               </div>
               
               <div>
-                <p className="text-[8px] font-bold uppercase tracking-[0.2em] mb-3 text-text-muted">Filter State</p>
+                <p className="text-[8px] font-bold uppercase tracking-[0.2em] mb-3 text-text-muted">{t('pages.admin.themes.preview.filter_state', 'Filter State')}</p>
                 <div className="space-y-2.5">
                   <label className="flex items-center gap-2.5 cursor-pointer group">
                     <input type="checkbox" className="group-hover:border-accent-primary" />
-                    <span className="text-[10px] text-text-secondary group-hover:text-text-main transition-colors">Normal Inactive</span>
+                    <span className="text-[10px] text-text-secondary group-hover:text-text-main transition-colors">{t('pages.admin.themes.preview.normal_inactive', 'Normal Inactive')}</span>
                   </label>
                   <label className="flex items-center gap-2.5 cursor-pointer group">
                     <input type="checkbox" defaultChecked className="group-hover:border-accent-primary" />
-                    <span className="text-[10px] font-bold text-text-main">Active Selected</span>
+                    <span className="text-[10px] font-bold text-text-main">{t('pages.admin.themes.preview.active_selected', 'Active Selected')}</span>
                   </label>
                 </div>
               </div>
@@ -787,13 +790,13 @@ function MiniSinglesPreview({ form, mode = 'desktop' }: { form: ThemeInput, mode
               <div>
                 <p className="text-[10px] font-display font-bold uppercase text-text-main mb-3 border-b border-border-main pb-1" style={{ fontFamily: 'var(--theme-font-heading)' }}>Interactive ▼</p>
                 <div className="space-y-3 flex flex-col">
-                  <button className="btn-primary text-[10px] py-1.5 px-3">Primary Action</button>
-                  <button className="btn-secondary text-[10px] py-1.5 px-3">Secondary Action</button>
+                  <button className="btn-primary text-[10px] py-1.5 px-3">{t('pages.admin.themes.preview.primary_action', 'Primary Action')}</button>
+                  <button className="btn-secondary text-[10px] py-1.5 px-3">{t('pages.admin.themes.preview.secondary_action', 'Secondary Action')}</button>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <p className="text-[8px] font-bold uppercase tracking-[0.2em] mb-3 text-text-muted">Dynamic Status Flags</p>
+                <p className="text-[8px] font-bold uppercase tracking-[0.2em] mb-3 text-text-muted">{t('pages.admin.themes.preview.dynamic_flags', 'Dynamic Status Flags')}</p>
                 <div className="flex flex-wrap gap-2">
                   <span className="border border-status-nm text-status-nm bg-status-nm/10 px-1.5 py-0.5 rounded-sm text-[8px] font-bold uppercase tracking-wider">NM</span>
                   <span className="border border-status-lp text-status-lp bg-status-lp/10 px-1.5 py-0.5 rounded-sm text-[8px] font-bold uppercase tracking-wider">LP</span>
