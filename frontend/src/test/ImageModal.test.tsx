@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from './renderWithProviders'
+import { render, screen, fireEvent } from './renderWithProviders'
 import { vi, describe, it, expect } from 'vitest'
 import ImageModal from '../components/ImageModal'
 

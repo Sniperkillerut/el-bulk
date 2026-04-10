@@ -2,6 +2,7 @@ import { render, screen, waitFor } from './renderWithProviders'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import ProductGrid from '../components/ProductGrid'
 import * as api from '@/lib/api'
+import { Product, ProductListResponse, Facets } from '@/lib/types'
 
 // Mock the API using the alias
 vi.mock('@/lib/api', () => ({
@@ -22,12 +23,11 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '',
 }))
 
-const mockFacets = {
+const mockFacets: Facets = {
   condition: {},
   foil: {},
   treatment: {},
   rarity: {},
-  category: {},
   language: {},
   color: {},
   collection: {}
@@ -49,13 +49,13 @@ describe('ProductGrid', () => {
   })
 
   it('handles null products gracefully and shows NO RESULTS', async () => {
-    // @ts-ignore
     vi.mocked(api.fetchProducts).mockResolvedValueOnce({
-      products: null as any,
+      products: null as unknown as Product[],
       total: 0,
       page: 1,
       page_size: 20,
-      facets: mockFacets as any
+      facets: mockFacets,
+      query_time_ms: 0
     })
 
     await act(async () => {
@@ -70,7 +70,7 @@ describe('ProductGrid', () => {
   it('displays products when found', async () => {
     // Need to use mockImplementation instead of mockResolvedValueOnce because useSWR cache may re-fetch
     vi.mocked(api.fetchProducts).mockImplementation(async () => {
-      return {
+      const resp: ProductListResponse = {
         products: [
           {
             id: '1',
@@ -82,14 +82,26 @@ describe('ProductGrid', () => {
             stock: 1,
             condition: 'NM',
             foil_treatment: 'non_foil',
-            card_treatment: 'normal'
+            card_treatment: 'normal',
+            language: 'en',
+            price_source: 'tcgplayer',
+            is_legendary: false,
+            is_historic: false,
+            is_land: false,
+            is_basic_land: false,
+            full_art: false,
+            textless: false,
+            created_at: '',
+            updated_at: ''
           }
-        ] as any,
+        ],
         total: 1,
         page: 1,
         page_size: 20,
-        facets: mockFacets as any
+        facets: mockFacets,
+        query_time_ms: 0
       }
+      return resp
     })
 
     await act(async () => {

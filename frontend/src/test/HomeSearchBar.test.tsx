@@ -2,8 +2,9 @@ import { render, screen, fireEvent, waitFor, act } from './renderWithProviders'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import HomeSearchBar from '../components/HomeSearchBar'
 import { useLanguage } from "@/context/LanguageContext"
+import { ProductListResponse, Facets } from '@/lib/types'
 vi.mock("@/context/LanguageContext", async (importOriginal) => {
-  const actual = await importOriginal() as any;
+  const actual = await importOriginal() as Record<string, unknown>;
   return {
     ...actual,
     useLanguage: vi.fn(),
@@ -26,12 +27,11 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '',
 }))
 
-const mockFacets = {
+const mockFacets: Facets = {
   condition: {},
   foil: {},
   treatment: {},
   rarity: {},
-  category: {},
   language: {},
   color: {},
   collection: {}
@@ -58,14 +58,15 @@ describe('HomeSearchBar', () => {
 
   it('handles empty search results gracefully', async () => {
     vi.mocked(api.fetchProducts).mockImplementation(async () => {
-      return {
+      const resp: ProductListResponse = {
         products: [],
         total: 0,
         page: 1,
         page_size: 10,
-        facets: mockFacets as any,
+        facets: mockFacets,
         query_time_ms: 0
       }
+      return resp
     })
 
     await act(async () => {
@@ -91,7 +92,7 @@ describe('HomeSearchBar', () => {
 
   it('displays search results when found', async () => {
     vi.mocked(api.fetchProducts).mockImplementation(async () => {
-      return {
+      const resp: ProductListResponse = {
         products: [
           {
             id: '1',
@@ -112,15 +113,17 @@ describe('HomeSearchBar', () => {
             full_art: false,
             textless: false,
             created_at: '',
-            updated_at: ''
+            updated_at: '',
+            price_source: 'tcgplayer'
           }
-        ] as any,
+        ],
         total: 1,
         page: 1,
         page_size: 10,
-        facets: mockFacets as any,
+        facets: mockFacets,
         query_time_ms: 0
       }
+      return resp
     })
 
     await act(async () => {

@@ -1,5 +1,5 @@
-import { render, screen, fireEvent, waitFor } from './renderWithProviders'
-import { vi, describe, it, expect } from 'vitest'
+import { render, screen } from './renderWithProviders'
+import { describe, it, expect } from 'vitest'
 import CardImage from '../components/CardImage'
 
 describe('CardImage', () => {

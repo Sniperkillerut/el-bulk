@@ -1,9 +1,10 @@
 import { render, screen, fireEvent } from './renderWithProviders'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import ProductCard from '../components/ProductCard'
+import { Product } from '@/lib/types'
 import { useCart } from '@/lib/CartContext'
 
-const mockProduct = {
+const mockProduct: Product = {
   id: 'test-1',
   name: 'Test Product',
   tcg: 'mtg',
@@ -13,7 +14,17 @@ const mockProduct = {
   stock: 5,
   condition: 'NM',
   foil_treatment: 'foil',
-  card_treatment: 'full_art'
+  card_treatment: 'full_art',
+  price_source: 'tcgplayer',
+  language: 'en',
+  is_legendary: false,
+  is_historic: false,
+  is_land: false,
+  is_basic_land: false,
+  full_art: false,
+  textless: false,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
 }
 
 describe('ProductCard', () => {
@@ -47,12 +58,12 @@ describe('ProductCard', () => {
   })
 
   it('renders correctly when product has textless and alternate categories', () => {
-    const product = {
+    const product: Product = {
       ...mockProduct,
       textless: true,
-      categories: [{ id: 'cat1', name: 'Commander Staples', slug: 'commander', is_active: true }]
+      categories: [{ id: 'cat1', name: 'Commander Staples', slug: 'commander', is_active: true, show_badge: true, searchable: true }]
     }
-    const { container } = render(<ProductCard product={product as any} />)
+    render(<ProductCard product={product} />)
     expect(screen.getByText('TEXTLESS')).toBeInTheDocument()
     expect(screen.getByText(/Commander Staples/i)).toBeInTheDocument()
   })
