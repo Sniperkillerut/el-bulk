@@ -10,6 +10,7 @@ import (
 	"github.com/el-bulk/backend/middleware"
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/service"
+	"github.com/el-bulk/backend/utils/logger"
 	"github.com/el-bulk/backend/utils/render"
 	"github.com/go-chi/chi/v5"
 )
@@ -24,6 +25,7 @@ func NewCategoriesHandler(s *service.CategoryService) *CategoriesHandler {
 
 // GET /api/admin/categories
 func (h *CategoriesHandler) List(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering CategoriesHandler.List")
 	isAdmin, _ := r.Context().Value(middleware.IsAdminKey).(bool)
 	categories, err := h.Service.List(isAdmin)
 	if err != nil {
@@ -42,8 +44,10 @@ func generateSlug(name string) string {
 
 // POST /api/admin/categories
 func (h *CategoriesHandler) Create(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering CategoriesHandler.Create")
 	var input models.CustomCategoryInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		logger.Error("Failed to decode category input: %v", err)
 		render.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
@@ -75,8 +79,10 @@ func (h *CategoriesHandler) Create(w http.ResponseWriter, r *http.Request) {
 // PUT /api/admin/categories/:id
 func (h *CategoriesHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	logger.Trace("Entering CategoriesHandler.Update | ID: %s", id)
 	var input models.CustomCategoryInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		logger.Error("Failed to decode category update for %s: %v", id, err)
 		render.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
@@ -129,6 +135,7 @@ func (h *CategoriesHandler) Update(w http.ResponseWriter, r *http.Request) {
 // DELETE /api/admin/categories/:id
 func (h *CategoriesHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	logger.Trace("Entering CategoriesHandler.Delete | ID: %s", id)
 	err := h.Service.Delete(id)
 	if err != nil {
 		if err.Error() == "no rows deleted" {

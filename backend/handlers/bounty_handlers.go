@@ -25,6 +25,7 @@ func NewBountyHandler(db *sqlx.DB) *BountyHandler {
 // === BOUNTIES ===
 
 func (h *BountyHandler) List(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering BountyHandler.List | URL: %s", r.URL.String())
 	var bounties []models.Bounty
 	query := `
 		SELECT 
@@ -50,8 +51,10 @@ func (h *BountyHandler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BountyHandler) Create(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering BountyHandler.Create")
 	var input models.BountyInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		logger.Error("Failed to decode bounty input: %v", err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -91,8 +94,10 @@ func (h *BountyHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 func (h *BountyHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	logger.Trace("Entering BountyHandler.Update | ID: %s", id)
 	var input models.BountyInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		logger.Error("Failed to decode bounty update for %s: %v", id, err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -134,6 +139,7 @@ func (h *BountyHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 func (h *BountyHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	logger.Trace("Entering BountyHandler.Delete | ID: %s", id)
 	res, err := h.DB.Exec(`DELETE FROM bounty WHERE id = $1`, id)
 	if err != nil {
 		logger.Error("Failed to delete bounty: %v", err)
@@ -153,6 +159,7 @@ func (h *BountyHandler) Delete(w http.ResponseWriter, r *http.Request) {
 // === BOUNTY OFFERS ===
 
 func (h *BountyHandler) ListOffers(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering BountyHandler.ListOffers")
 	var offers []models.BountyOffer
 	query := `
 		SELECT 
@@ -184,8 +191,10 @@ func (h *BountyHandler) ListOffers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BountyHandler) SubmitOffer(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering BountyHandler.SubmitOffer")
 	var input models.BountyOfferInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		logger.Error("Failed to decode offer input: %v", err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -228,8 +237,10 @@ func (h *BountyHandler) SubmitOffer(w http.ResponseWriter, r *http.Request) {
 
 func (h *BountyHandler) UpdateOfferStatus(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	logger.Trace("Entering BountyHandler.UpdateOfferStatus | ID: %s", id)
 	var input models.UpdateBountyOfferStatusInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		logger.Error("Failed to decode offer status update for %s: %v", id, err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -275,6 +286,7 @@ func (h *BountyHandler) UpdateOfferStatus(w http.ResponseWriter, r *http.Request
 // === CLIENT REQUESTS ===
 
 func (h *BountyHandler) ListRequests(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering BountyHandler.ListRequests")
 	var requests []models.ClientRequest
 	query := `
 		SELECT id, customer_id, customer_name, customer_contact, card_name, set_name, details, status, created_at
@@ -301,8 +313,10 @@ func (h *BountyHandler) ListRequests(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BountyHandler) CreateRequest(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering BountyHandler.CreateRequest")
 	var input models.ClientRequestInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		logger.Error("Failed to decode client request input: %v", err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -341,8 +355,10 @@ func (h *BountyHandler) CreateRequest(w http.ResponseWriter, r *http.Request) {
 
 func (h *BountyHandler) UpdateRequestStatus(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	logger.Trace("Entering BountyHandler.UpdateRequestStatus | ID: %s", id)
 	var input models.UpdateClientRequestStatusInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		logger.Error("Failed to decode client request status update for %s: %v", id, err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -371,6 +387,7 @@ func (h *BountyHandler) UpdateRequestStatus(w http.ResponseWriter, r *http.Reque
 
 // GET /api/bounties/offers/me — list bounty offers for the current customer
 func (h *BountyHandler) ListMeOffers(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering BountyHandler.ListMeOffers")
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok || userID == "" {
 		render.Error(w, "Not logged in", http.StatusUnauthorized)
@@ -402,6 +419,7 @@ func (h *BountyHandler) ListMeOffers(w http.ResponseWriter, r *http.Request) {
 
 // DELETE /api/bounties/offers/me/{id} — cancel a pending bounty offer
 func (h *BountyHandler) CancelMeOffer(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering BountyHandler.CancelMeOffer")
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok || userID == "" {
 		render.Error(w, "Not logged in", http.StatusUnauthorized)
@@ -432,6 +450,7 @@ func (h *BountyHandler) CancelMeOffer(w http.ResponseWriter, r *http.Request) {
 
 // GET /api/client-requests/me — list requests for the current customer
 func (h *BountyHandler) ListMeRequests(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering BountyHandler.ListMeRequests")
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok || userID == "" {
 		render.Error(w, "Not logged in", http.StatusUnauthorized)
@@ -460,6 +479,7 @@ func (h *BountyHandler) ListMeRequests(w http.ResponseWriter, r *http.Request) {
 
 // DELETE /api/client-requests/me/{id} — cancel a pending client request
 func (h *BountyHandler) CancelMeRequest(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering BountyHandler.CancelMeRequest")
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok || userID == "" {
 		render.Error(w, "Not logged in", http.StatusUnauthorized)

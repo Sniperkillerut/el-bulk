@@ -2,7 +2,9 @@ package store
 
 import (
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
+	"time"
 )
 
 type CategoryStore struct {
@@ -38,10 +40,14 @@ func (s *CategoryStore) Create(input models.CustomCategoryInput) (*models.Custom
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
 		RETURNING *`
 	
+	logger.Trace("[DB] Executing CreateCategory: %s", query)
 	err := s.DB.QueryRowx(query, 
 		input.Name, input.Slug, isActive, showBadge, searchable, input.BgColor, input.TextColor, input.Icon,
 	).StructScan(&cat)
 	
+	if err != nil {
+		logger.Error("[DB] CreateCategory failed: %v", err)
+	}
 	return &cat, err
 }
 
@@ -64,6 +70,12 @@ func (s *CategoryStore) ListWithCount(isAdmin bool) ([]models.CustomCategory, er
 	}
 	query += ` ORDER BY c.name `
 	
+	start := time.Now()
+	logger.Trace("[DB] Executing ListWithCount (isAdmin=%v): %s", isAdmin, query)
 	err := s.DB.Select(&categories, query)
+	if err != nil {
+		logger.Error("[DB] ListWithCount failed: %v", err)
+	}
+	logger.Debug("[DB] ListWithCount took %v", time.Since(start))
 	return categories, err
 }

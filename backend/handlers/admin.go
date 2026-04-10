@@ -26,8 +26,10 @@ func NewAdminHandler(db *sqlx.DB) *AdminHandler {
 
 // POST /api/admin/login
 func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering AdminHandler.Login")
 	var req models.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.Error("Failed to decode login request: %v", err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -35,6 +37,7 @@ func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var admin models.Admin
 	err := h.DB.Get(&admin, "SELECT * FROM admin WHERE username = $1", req.Username)
 	if err != nil {
+		logger.Warn("Failed login attempt for username: %s", req.Username)
 		render.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
@@ -79,6 +82,7 @@ func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 // POST /api/admin/logout
 func (h *AdminHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering AdminHandler.Logout")
 	isSecure := strings.HasPrefix(os.Getenv("FRONTEND_ORIGIN"), "https://")
 	http.SetCookie(w, &http.Cookie{
 		Name:     "admin_token",

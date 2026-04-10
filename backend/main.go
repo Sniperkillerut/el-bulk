@@ -27,12 +27,17 @@ func main() {
 		logger.Warn("No .env file found or error loading it: %v. Relying on system environment variables.", err)
 	}
 
-	// Initialize logger level
+	// Initialize logger level and format
 	logLevel := os.Getenv("LOG_LEVEL")
 	if logLevel != "" {
 		logger.SetLevel(logger.ParseLevel(logLevel))
-		logger.Info("Logger initialized with level: %s", logger.Default.GetLevel().String())
 	}
+	if os.Getenv("LOG_FORMAT") == "json" {
+		logger.SetJSON(true)
+	}
+	logger.Info("Logger initialized | Level: %s | Format: %s", 
+		logger.Default.GetLevel().String(), 
+		func() string { if os.Getenv("LOG_FORMAT") == "json" { return "JSON" }; return "TEXT" }())
 
 	database, err := db.ConnectResilient()
 	if err != nil {
@@ -106,7 +111,7 @@ func main() {
 	r := chi.NewRouter()
 
 	// Global middleware
-	r.Use(chiMiddleware.Logger)
+	r.Use(logger.RequestLogger)
 	r.Use(chiMiddleware.Recoverer)
 	r.Use(chiMiddleware.RequestSize(1 << 20)) // 1MB global body limit
 	r.Use(middleware.CORS)

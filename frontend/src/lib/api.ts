@@ -51,7 +51,10 @@ export async function apiFetch<T>(endpoint: string, options: FetchOptions = {}):
   }
   headers.set('X-Requested-With', 'XMLHttpRequest'); // CSRF protection
 
-  const res = await fetch(url.toString(), {
+  const fullUrl = url.toString();
+  remoteLogger.trace(`API Request: ${rest.method || 'GET'} ${fullUrl}`, { params, headers: Object.fromEntries(headers.entries()) });
+
+  const res = await fetch(fullUrl, {
     credentials: 'include',
     ...rest,
     headers,

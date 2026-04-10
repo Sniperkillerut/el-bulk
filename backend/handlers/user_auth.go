@@ -1,7 +1,6 @@
 package handlers
 
 import (
-"github.com/el-bulk/backend/utils/render"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -9,17 +8,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/jmoiron/sqlx"
-	"github.com/go-chi/chi/v5"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
-
 	"github.com/el-bulk/backend/middleware"
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/crypto"
 	"github.com/el-bulk/backend/utils/logger"
+	"github.com/el-bulk/backend/utils/render"
+	"github.com/go-chi/chi/v5"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/jmoiron/sqlx"
+	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/facebook"
+	"golang.org/x/oauth2/google"
 )
 
 type UserAuthHandler struct {
@@ -59,6 +58,7 @@ func getProviderConfig(provider string) *oauth2.Config {
 // GET /api/auth/{provider}/login
 func (h *UserAuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	provider := chi.URLParam(r, "provider")
+	logger.Trace("Entering UserAuthHandler.Login | Provider: %s", provider)
 	config := getProviderConfig(provider)
 	if config == nil {
 		render.Error(w, "Unsupported auth provider", http.StatusBadRequest)
@@ -78,6 +78,7 @@ func (h *UserAuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 // GET /api/auth/{provider}/callback
 func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	provider := chi.URLParam(r, "provider")
+	logger.Trace("Entering UserAuthHandler.Callback | Provider: %s", provider)
 	state := r.FormValue("state")
 	if !strings.HasPrefix(state, "elbulk-oauth-state|"+provider+"|") {
 		http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=invalid_state", http.StatusTemporaryRedirect)
@@ -299,6 +300,7 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 
 // GET /api/auth/me
 func (h *UserAuthHandler) Me(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering UserAuthHandler.Me")
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok || userID == "" {
 		render.Error(w, "Not logged in", http.StatusUnauthorized)
@@ -331,6 +333,7 @@ func (h *UserAuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 
 // PUT /api/auth/me
 func (h *UserAuthHandler) UpdateMe(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering UserAuthHandler.UpdateMe")
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok || userID == "" {
 		render.Error(w, "Not logged in", http.StatusUnauthorized)
@@ -368,6 +371,7 @@ func (h *UserAuthHandler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 
 // POST /api/auth/logout
 func (h *UserAuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering UserAuthHandler.Logout")
 	isSecure := strings.HasPrefix(os.Getenv("FRONTEND_ORIGIN"), "https://")
 	http.SetCookie(w, &http.Cookie{
 		Name:     "user_token",

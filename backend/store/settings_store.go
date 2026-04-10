@@ -1,7 +1,9 @@
 package store
 
 import (
+	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
+	"time"
 )
 
 type SettingsStore struct {
@@ -13,8 +15,12 @@ func NewSettingsStore(db *sqlx.DB) *SettingsStore {
 }
 
 func (s *SettingsStore) GetAll() (map[string]string, error) {
-	rows, err := s.DB.Query("SELECT key, value FROM setting")
+	start := time.Now()
+	query := "SELECT key, value FROM setting"
+	logger.Trace("[DB] Executing GetAll Settings: %s", query)
+	rows, err := s.DB.Query(query)
 	if err != nil {
+		logger.Error("[DB] GetAll Settings failed: %v", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -27,10 +33,16 @@ func (s *SettingsStore) GetAll() (map[string]string, error) {
 		}
 		settings[key] = val
 	}
+	logger.Debug("[DB] GetAll Settings took %v", time.Since(start))
 	return settings, rows.Err()
 }
 
 func (s *SettingsStore) Upsert(key, value string) error {
-	_, err := s.DB.Exec("INSERT INTO setting(key, value) VALUES($1, $2) ON CONFLICT(key) DO UPDATE SET value = $2", key, value)
+	query := "INSERT INTO setting(key, value) VALUES($1, $2) ON CONFLICT(key) DO UPDATE SET value = $2"
+	logger.Trace("[DB] Executing Upsert Setting: %s | Key: %s", query, key)
+	_, err := s.DB.Exec(query, key, value)
+	if err != nil {
+		logger.Error("[DB] Upsert Setting failed for key %s: %v", key, err)
+	}
 	return err
 }

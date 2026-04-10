@@ -2,6 +2,7 @@ package logger
 
 import (
 	"bytes"
+	"encoding/json"
 	"strings"
 	"testing"
 )
@@ -144,5 +145,35 @@ func TestGlobalLoggers(t *testing.T) {
 	Error("eg")
 	if !strings.Contains(buf.String(), "[ERROR] eg") {
 		t.Errorf("Global Error() failed, got %q", buf.String())
+	}
+}
+
+func TestLoggerJSONOutput(t *testing.T) {
+	var buf bytes.Buffer
+	l := New(INFO)
+	l.Output = &buf
+	l.SetJSON(true)
+
+	l.Info("json message")
+	var entry map[string]interface{}
+	if err := json.Unmarshal(buf.Bytes(), &entry); err != nil {
+		t.Fatalf("failed to unmarshal JSON output: %v", err)
+	}
+
+	if entry["severity"] != "INFO" {
+		t.Errorf("expected severity INFO, got %v", entry["severity"])
+	}
+	if entry["message"] != "json message" {
+		t.Errorf("expected message 'json message', got %v", entry["message"])
+	}
+	if _, ok := entry["timestamp"]; !ok {
+		t.Errorf("expected timestamp field, got %v", entry)
+	}
+
+	buf.Reset()
+	l.Warn("warning message")
+	json.Unmarshal(buf.Bytes(), &entry)
+	if entry["severity"] != "WARNING" {
+		t.Errorf("expected severity WARNING for Warn level, got %v", entry["severity"])
 	}
 }

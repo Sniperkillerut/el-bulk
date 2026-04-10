@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/logger"
@@ -43,6 +44,7 @@ type ProductFilterParams struct {
 }
 
 func (s *ProductStore) ListWithFilters(params ProductFilterParams) ([]models.Product, int, error) {
+	start := time.Now()
 	fromClause, conditions, args := s.buildFilters(params)
 
 	where := ""
@@ -52,7 +54,9 @@ func (s *ProductStore) ListWithFilters(params ProductFilterParams) ([]models.Pro
 
 	var total int
 	countQuery := fmt.Sprintf("SELECT COUNT(*) %s %s", fromClause, where)
+	logger.Trace("[DB] Executing countQuery in ListWithFilters: %s | Args: %+v", countQuery, args)
 	if err := s.DB.Get(&total, countQuery, args...); err != nil {
+		logger.Error("[DB] ListWithFilters countQuery failed: %v", err)
 		return nil, 0, err
 	}
 
@@ -74,8 +78,10 @@ func (s *ProductStore) ListWithFilters(params ProductFilterParams) ([]models.Pro
 	}
 
 	if err := s.DB.Unsafe().Select(&rows, listQuery, listArgs...); err != nil {
+		logger.Error("[DB] ListWithFilters listQuery failed: %v", err)
 		return nil, 0, err
 	}
+	logger.Debug("[DB] ListWithFilters (count+list) took %v", time.Since(start))
 
 	products := make([]models.Product, len(rows))
 	for i, r := range rows {
@@ -96,13 +102,18 @@ func (s *ProductStore) ListWithFilters(params ProductFilterParams) ([]models.Pro
 
 func (s *ProductStore) GetFacets(params ProductFilterParams, isAdmin bool) (models.Facets, error) {
 	var result []byte
-	err := s.DB.Get(&result, "SELECT fn_get_product_facets($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
+	start := time.Now()
+	query := "SELECT fn_get_product_facets($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)"
+	logger.Trace("[DB] Executing GetFacets: %s", query)
+	err := s.DB.Get(&result, query,
 		params.TCG, params.Category, params.Search, params.StorageID, params.Foil, params.Treatment, params.Condition,
 		params.Rarity, params.Language, params.Color, params.Collection, params.SetName, params.InStock, params.FilterLogic, isAdmin)
 
 	if err != nil {
+		logger.Error("[DB] GetFacets failed: %v", err)
 		return models.Facets{}, err
 	}
+	logger.Debug("[DB] GetFacets took %v", time.Since(start))
 
 	var facets models.Facets
 	if err := json.Unmarshal(result, &facets); err != nil {
@@ -322,7 +333,11 @@ func (s *ProductStore) SaveDeckCards(productID string, cards []models.DeckCard) 
 	}
 
 	query += strings.Join(placeholders, ", ")
+	logger.Trace("[DB] Executing SaveDeckCards for product %s: %s | Values: %d", productID, query, len(values))
 	_, err = s.DB.Exec(query, values...)
+	if err != nil {
+		logger.Error("[DB] SaveDeckCards failed for product %s: %v", productID, err)
+	}
 	return err
 }
 
@@ -353,7 +368,11 @@ func (s *ProductStore) SaveStorage(productID string, items []models.StorageLocat
 	}
 
 	query += strings.Join(placeholders, ", ")
+	logger.Trace("[DB] Executing SaveStorage for product %s: %s | Values: %d", productID, query, len(values))
 	_, err = s.DB.Exec(query, values...)
+	if err != nil {
+		logger.Error("[DB] SaveStorage failed for product %s: %v", productID, err)
+	}
 	return err
 }
 
@@ -369,7 +388,7 @@ func (s *ProductStore) CreateProduct(input models.ProductInput) (*models.Product
 	}
 
 	var product models.Product
-	err := s.DB.QueryRowx(`
+	query := `
 		INSERT INTO product (name, tcg, category, set_name, set_code, condition,
 		                      foil_treatment, card_treatment,
 		                      price_reference, price_source, price_cop_override,
@@ -378,13 +397,19 @@ func (s *ProductStore) CreateProduct(input models.ProductInput) (*models.Product
 		                      oracle_text, artist, type_line, border_color, frame, full_art, textless, scryfall_id)
 		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34)
 		RETURNING *
-	`, input.Name, input.TCG, input.Category, input.SetName, input.SetCode, input.Condition,
+	`
+	logger.Trace("[DB] Executing CreateProduct: %s", query)
+	err := s.DB.QueryRowx(query, input.Name, input.TCG, input.Category, input.SetName, input.SetCode, input.Condition,
 		input.FoilTreatment, input.CardTreatment,
 		input.PriceReference, input.PriceSource, input.PriceCOPOverride,
 		input.Stock, input.CostBasis, input.ImageURL, input.Description, input.CollectorNumber, input.PromoType,
 		input.Language, input.ColorIdentity, input.Rarity, input.CMC, input.IsLegendary, input.IsHistoric, input.IsLand, input.IsBasicLand, input.ArtVariation,
 		input.OracleText, input.Artist, input.TypeLine, input.BorderColor, input.Frame, input.FullArt, input.Textless, input.ScryfallID,
 	).StructScan(&product)
+
+	if err != nil {
+		logger.Error("[DB] CreateProduct failed: %v", err)
+	}
 
 	return &product, err
 }
@@ -395,7 +420,7 @@ func (s *ProductStore) UpdateProduct(id string, input models.ProductInput) (*mod
 	}
 
 	var product models.Product
-	err := s.DB.QueryRowx(`
+	query := `
 		UPDATE product
 		SET name=$1, tcg=$2, category=$3, set_name=$4, set_code=$5, condition=$6,
 		    foil_treatment=$7, card_treatment=$8,
@@ -405,7 +430,9 @@ func (s *ProductStore) UpdateProduct(id string, input models.ProductInput) (*mod
 		    oracle_text=$27, artist=$28, type_line=$29, border_color=$30, frame=$31, full_art=$32, textless=$33, scryfall_id=$34
 		WHERE id=$35
 		RETURNING *
-	`, input.Name, input.TCG, input.Category, input.SetName, input.SetCode, input.Condition,
+	`
+	logger.Trace("[DB] Executing UpdateProduct for %s: %s", id, query)
+	err := s.DB.QueryRowx(query, input.Name, input.TCG, input.Category, input.SetName, input.SetCode, input.Condition,
 		input.FoilTreatment, input.CardTreatment,
 		input.PriceReference, input.PriceSource, input.PriceCOPOverride,
 		input.Stock, input.CostBasis, input.ImageURL, input.Description, input.CollectorNumber, input.PromoType,
@@ -414,13 +441,19 @@ func (s *ProductStore) UpdateProduct(id string, input models.ProductInput) (*mod
 		id,
 	).StructScan(&product)
 
+	if err != nil {
+		logger.Error("[DB] UpdateProduct failed for product %s: %v", id, err)
+	}
 	return &product, err
 }
 
 func (s *ProductStore) GetEnrichedByID(id string) (*models.Product, error) {
 	var jsonResult []byte
-	err := s.DB.Get(&jsonResult, "SELECT fn_get_product_detail($1)", id)
+	query := "SELECT fn_get_product_detail($1)"
+	logger.Trace("[DB] Executing GetEnrichedByID for %s: %s", id, query)
+	err := s.DB.Get(&jsonResult, query, id)
 	if err != nil {
+		logger.Error("[DB] GetEnrichedByID failed for %s: %v", id, err)
 		return nil, err
 	}
 
@@ -435,8 +468,11 @@ func (s *ProductStore) BulkUpsert(jsonData string) ([]string, error) {
 	var ids []struct {
 		ID string `db:"upserted_id"`
 	}
-	err := s.DB.Select(&ids, "SELECT upserted_id FROM fn_bulk_upsert_product($1)", jsonData)
+	query := "SELECT upserted_id FROM fn_bulk_upsert_product($1)"
+	logger.Trace("[DB] Executing BulkUpsert: %s | DataLen: %d", query, len(jsonData))
+	err := s.DB.Select(&ids, query, jsonData)
 	if err != nil {
+		logger.Error("[DB] BulkUpsert failed: %v", err)
 		return nil, err
 	}
 

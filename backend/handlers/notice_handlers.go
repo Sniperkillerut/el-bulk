@@ -22,6 +22,7 @@ func NewNoticeHandler(s *service.NoticeService) *NoticeHandler {
 
 // GET /api/notices - Public list
 func (h *NoticeHandler) List(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering NoticeHandler.List | URL: %s", r.URL.String())
 	q := r.URL.Query()
 	limitStr := q.Get("limit")
 	limit := 0
@@ -42,6 +43,7 @@ func (h *NoticeHandler) List(w http.ResponseWriter, r *http.Request) {
 // GET /api/notices/{slug} - Public detail
 func (h *NoticeHandler) GetBySlug(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
+	logger.Trace("Entering NoticeHandler.GetBySlug | Slug: %s", slug)
 
 	notice, err := h.Service.GetBySlug(slug)
 	if err != nil {
@@ -54,6 +56,7 @@ func (h *NoticeHandler) GetBySlug(w http.ResponseWriter, r *http.Request) {
 
 // GET /api/admin/notices
 func (h *NoticeHandler) AdminList(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering NoticeHandler.AdminList")
 	// Admin wants all notices, no limit
 	notices, err := h.Service.List(false, 0)
 	if err != nil {
@@ -66,8 +69,10 @@ func (h *NoticeHandler) AdminList(w http.ResponseWriter, r *http.Request) {
 
 // POST /api/admin/notices
 func (h *NoticeHandler) Create(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering NoticeHandler.Create")
 	var input models.NoticeInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		logger.Error("Failed to decode notice input: %v", err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -90,6 +95,7 @@ func (h *NoticeHandler) Create(w http.ResponseWriter, r *http.Request) {
 // PUT /api/admin/notices/{id}
 func (h *NoticeHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	logger.Trace("Entering NoticeHandler.Update | ID: %s", id)
 	if id == "" {
 		render.Error(w, "ID is required", http.StatusBadRequest)
 		return
@@ -97,6 +103,7 @@ func (h *NoticeHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	var input models.NoticeInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		logger.Error("Failed to decode notice update for %s: %v", id, err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -114,6 +121,7 @@ func (h *NoticeHandler) Update(w http.ResponseWriter, r *http.Request) {
 // DELETE /api/admin/notices/{id}
 func (h *NoticeHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	logger.Trace("Entering NoticeHandler.Delete | ID: %s", id)
 	if id == "" {
 		render.Error(w, "ID is required", http.StatusBadRequest)
 		return

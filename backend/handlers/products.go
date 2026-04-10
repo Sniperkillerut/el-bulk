@@ -30,6 +30,7 @@ func NewProductHandler(s *service.ProductService, db *sqlx.DB) *ProductHandler {
 }
 
 func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering ProductHandler.List | URL: %s", r.URL.String())
 	start := time.Now()
 	q := r.URL.Query()
 
@@ -75,6 +76,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 
 func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	logger.Trace("Entering ProductHandler.GetByID | ID: %s", id)
 	isAdmin, _ := r.Context().Value(middleware.IsAdminKey).(bool)
 
 	product, err := h.Service.GetByID(id, isAdmin)
@@ -99,8 +101,10 @@ func (h *ProductHandler) ListTCGs(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering ProductHandler.Create")
 	var input models.ProductInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		logger.Error("Failed to decode product input: %v", err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -123,8 +127,10 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	logger.Trace("Entering ProductHandler.Update | ID: %s", id)
 	var input models.ProductInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		logger.Error("Failed to decode update input for %s: %v", id, err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -141,6 +147,7 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	logger.Trace("Entering ProductHandler.Delete | ID: %s", id)
 	if err := h.Service.Delete(id); err != nil {
 		logger.Error("Delete product %s failed: %v", id, err)
 		render.Error(w, "Delete failed", http.StatusInternalServerError)
@@ -150,12 +157,13 @@ func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProductHandler) BulkCreate(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering ProductHandler.BulkCreate")
 	var req struct {
 		Products    []models.ProductInput `json:"products"`
 		CategoryIDs []string              `json:"category_ids,omitempty"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		// Try fallback if needed, but we'll stick to structured req
+		logger.Error("Failed to decode bulk create input: %v", err)
 		render.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
@@ -174,8 +182,10 @@ func (h *ProductHandler) BulkCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProductHandler) BulkSearch(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering ProductHandler.BulkSearch")
 	var req models.BulkSearchRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.Error("Failed to decode bulk search input: %v", err)
 		render.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
@@ -220,8 +230,10 @@ func (h *ProductHandler) GetStorage(w http.ResponseWriter, r *http.Request) {
 
 func (h *ProductHandler) UpdateStorage(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	logger.Trace("Entering ProductHandler.UpdateStorage | ID: %s", id)
 	var updates []models.ProductStorage
 	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
+		logger.Error("Failed to decode storage update for %s: %v", id, err)
 		render.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}

@@ -1,8 +1,10 @@
 package logger
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"strings"
 	"sync"
@@ -84,6 +86,7 @@ type Logger struct {
 	level  Level
 	Output io.Writer
 	Color  bool
+	JSON   bool
 }
 
 // New creates a new Logger with the specified level.
@@ -109,12 +112,47 @@ func (l *Logger) GetLevel() Level {
 	return l.level
 }
 
+// SetJSON enables or disables JSON logging mode.
+func (l *Logger) SetJSON(enabled bool) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.JSON = enabled
+}
+
 func (l *Logger) log(level Level, msg string, args ...interface{}) {
 	l.mu.RLock()
 	currentLevel := l.level
+	isJSON := l.JSON
 	l.mu.RUnlock()
 
 	if level < currentLevel || currentLevel == OFF {
+		return
+	}
+
+	content := fmt.Sprintf(msg, args...)
+
+	if isJSON {
+		// GCP Severity Mapping
+		severity := "INFO"
+		switch level {
+		case TRACE, DEBUG:
+			severity = "DEBUG"
+		case INFO:
+			severity = "INFO"
+		case WARN:
+			severity = "WARNING"
+		case ERROR:
+			severity = "ERROR"
+		}
+
+		entry := map[string]interface{}{
+			"severity":  severity,
+			"message":   content,
+			"timestamp": time.Now().Format(time.RFC3339),
+		}
+
+		jsonBytes, _ := json.Marshal(entry)
+		fmt.Fprintln(l.Output, string(jsonBytes))
 		return
 	}
 
@@ -125,7 +163,6 @@ func (l *Logger) log(level Level, msg string, args ...interface{}) {
 		levelStr = level.Color() + levelStr + "\033[0m"
 	}
 
-	content := fmt.Sprintf(msg, args...)
 	fmt.Fprintf(l.Output, "[%s] [%s] %s\n", timestamp, levelStr, content)
 }
 
@@ -150,6 +187,9 @@ var Default = New(INFO)
 // SetLevel sets the default logger level.
 func SetLevel(level Level) { Default.SetLevel(level) }
 
+// SetJSON sets the default logger JSON mode.
+func SetJSON(enabled bool) { Default.SetJSON(enabled) }
+
 // Trace logs a trace message using the default logger.
 func Trace(msg string, args ...interface{}) { Default.Trace(msg, args...) }
 
@@ -164,3 +204,37 @@ func Warn(msg string, args ...interface{}) { Default.Warn(msg, args...) }
 
 // Error logs an error message using the default logger.
 func Error(msg string, args ...interface{}) { Default.Error(msg, args...) }
+
+// RequestLogger is a middleware that logs the start and end of each request.
+func RequestLogger(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		
+		// Create a custom response writer to capture the status code
+		ww := &statusResponseWriter{ResponseWriter: w, status: http.StatusOK}
+		
+		Trace("Request started: %s %s from %s", r.Method, r.URL.Path, r.RemoteAddr)
+		
+		next.ServeHTTP(ww, r)
+		
+		duration := time.Since(start)
+		
+		// Log detailed info at DEBUG, summary at INFO
+		msg := fmt.Sprintf("%d | %s | %s %s", ww.status, duration.String(), r.Method, r.URL.Path)
+		if ww.status >= 400 {
+			Warn("%s", msg)
+		} else {
+			Info("%s", msg)
+		}
+	})
+}
+
+type statusResponseWriter struct {
+	http.ResponseWriter
+	status int
+}
+
+func (w *statusResponseWriter) WriteHeader(code int) {
+	w.status = code
+	w.ResponseWriter.WriteHeader(code)
+}

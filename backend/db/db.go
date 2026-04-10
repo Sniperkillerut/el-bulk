@@ -10,6 +10,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	"time"
 )
 
 func init() {
@@ -32,11 +33,14 @@ func init() {
 }
 
 func Connect() *sqlx.DB {
+	start := time.Now()
+	logger.Info("Attempting to connect to database...")
 	db, err := ConnectResilient()
 	if err != nil {
-		logger.Error("Database connection failed: %v", err)
+		logger.Error("Database connection failed after %v: %v", time.Since(start), err)
 		os.Exit(1)
 	}
+	logger.Info("Database connection established in %v", time.Since(start))
 	return db
 }
 
@@ -107,33 +111,37 @@ func ConnectResilient() (*sqlx.DB, error) {
 
 // Initialize runs the core schema defined in db/schema/init.sql
 func Initialize(db *sqlx.DB) error {
+	start := time.Now()
 	schemaDir := filepath.Join("db", "schema")
 	initPath := filepath.Join(schemaDir, "init.sql")
 
 	content, err := os.ReadFile(initPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil // No initial schema defined
+			logger.Debug("No init.sql found at %s, skipping initialization", initPath)
+			return nil
 		}
 		return err
 	}
 
+	logger.Info("Initializing database schema from %s", initPath)
 	lines := strings.Split(string(content), "\n")
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
-		// Basic parser for \i commands
 		if strings.HasPrefix(line, "\\i ") {
 			sqlFile := strings.TrimSpace(strings.TrimPrefix(line, "\\i "))
 			if strings.Contains(sqlFile, "..") {
 				return fmt.Errorf("invalid path in schema file: %s", sqlFile)
 			}
+			fileStart := time.Now()
 			err := executeSQLFile(db, filepath.Join(schemaDir, sqlFile))
 			if err != nil {
 				return fmt.Errorf("failed to execute schema file %s: %v", sqlFile, err)
 			}
-			logger.Info("Initialized schema component: %s", sqlFile)
+			logger.Trace("Initialized schema component: %s (took %v)", sqlFile, time.Since(fileStart))
 		}
 	}
+	logger.Info("Schema initialization completed in %v", time.Since(start))
 	return nil
 }
 
@@ -148,17 +156,17 @@ func executeSQLFile(db *sqlx.DB, path string) error {
 }
 
 func Migrate(db *sqlx.DB) error {
+	start := time.Now()
 	migrationsDir := filepath.Join("db", "migrations")
 	files, err := os.ReadDir(migrationsDir)
 	if err != nil {
-		// If directory doesn't exist, skip silently
 		if os.IsNotExist(err) {
+			logger.Debug("No migrations directory found, skipping migrations")
 			return nil
 		}
 		return err
 	}
 
-	// 1. Get already applied migrations
 	var applied []string
 	err = db.Select(&applied, "SELECT name FROM migration")
 	if err != nil {
@@ -174,12 +182,14 @@ func Migrate(db *sqlx.DB) error {
 	for _, f := range files {
 		if filepath.Ext(f.Name()) == ".sql" {
 			if appliedMap[f.Name()] {
-				continue // Skip already applied
+				logger.Trace("Migration already applied: %s", f.Name())
+				continue
 			}
 
 			path := filepath.Join(migrationsDir, f.Name())
+			logger.Info("Applying migration: %s", f.Name())
+			migStart := time.Now()
 
-			// Execute migration in a transaction for safety
 			tx, err := db.Beginx()
 			if err != nil {
 				return fmt.Errorf("failed to start transaction for %s: %v", f.Name(), err)
@@ -190,7 +200,6 @@ func Migrate(db *sqlx.DB) error {
 				return fmt.Errorf("failed to execute migration %s: %v", f.Name(), err)
 			}
 
-			// Record migration
 			if _, err := tx.Exec("INSERT INTO migration (name) VALUES ($1)", f.Name()); err != nil {
 				tx.Rollback()
 				return fmt.Errorf("failed to record migration %s: %v", f.Name(), err)
@@ -200,15 +209,15 @@ func Migrate(db *sqlx.DB) error {
 				return fmt.Errorf("failed to commit migration %s: %v", f.Name(), err)
 			}
 
-			logger.Info("Applied migration: %s", f.Name())
+			logger.Debug("Successfully applied migration %s in %v", f.Name(), time.Since(migStart))
 			count++
 		}
 	}
 
 	if count > 0 {
-		logger.Info("Successfully applied %d new migrations", count)
+		logger.Info("Migration run complete: applied %d new migrations in %v", count, time.Since(start))
 	} else {
-		logger.Info("No new migrations to apply")
+		logger.Info("No new migrations to apply (took %v)", time.Since(start))
 	}
 	return nil
 }

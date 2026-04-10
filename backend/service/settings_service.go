@@ -7,6 +7,7 @@ import (
 
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/store"
+	"github.com/el-bulk/backend/utils/logger"
 )
 
 type SettingsService struct {
@@ -30,9 +31,11 @@ func (s *SettingsService) GetSettings() (models.Settings, error) {
 	if time.Since(s.cacheTime) < s.cacheDuration {
 		val := s.cache
 		s.mu.RUnlock()
+		logger.Debug("Settings cache hit")
 		return val, nil
 	}
 	s.mu.RUnlock()
+	logger.Trace("Settings cache miss or expired, reloading from DB")
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -117,14 +120,17 @@ func (s *SettingsService) GetSettings() (models.Settings, error) {
 }
 
 func (s *SettingsService) Upsert(key, value string) error {
+	logger.Trace("Entering SettingsService.Upsert | Key: %s", key)
 	err := s.Store.Upsert(key, value)
 	if err != nil {
+		logger.Error("Failed to upsert setting %s: %v", key, err)
 		return err
 	}
 	
 	s.mu.Lock()
 	s.cacheTime = time.Time{} // Invalidate cache
 	s.mu.Unlock()
+	logger.Debug("Settings cache invalidated after upsert of %s", key)
 	
 	return nil
 }

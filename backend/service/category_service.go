@@ -5,6 +5,7 @@ import (
 
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/store"
+	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -17,6 +18,7 @@ func NewCategoryService(s *store.CategoryStore) *CategoryService {
 }
 
 func (s *CategoryService) List(isAdmin bool) ([]models.CustomCategory, error) {
+	logger.Trace("Entering CategoryService.List | Admin: %v", isAdmin)
 	categories, err := s.Store.ListWithCount(isAdmin)
 	if err != nil {
 		return nil, err
@@ -26,14 +28,17 @@ func (s *CategoryService) List(isAdmin bool) ([]models.CustomCategory, error) {
 }
 
 func (s *CategoryService) Create(input models.CustomCategoryInput) (*models.CustomCategory, error) {
+	logger.Trace("Entering CategoryService.Create | Name: %s", input.Name)
 	return s.Store.Create(input)
 }
 
 func (s *CategoryService) Update(id string, updates map[string]interface{}) (*models.CustomCategory, error) {
+	logger.Trace("Entering CategoryService.Update | ID: %s", id)
 	return s.Store.BaseStore.Update(id, updates)
 }
 
 func (s *CategoryService) Delete(id string) error {
+	logger.Trace("Entering CategoryService.Delete | ID: %s", id)
 	return s.Store.BaseStore.Delete(id)
 }
 

@@ -31,7 +31,7 @@ class RemoteLogger {
     }
   }
 
-  private async send(level: LogLevel, message: string, context?: any) {
+  private async send(level: LogLevel, message: string, context?: Record<string, unknown>) {
     if (LEVEL_MAP[level] < LEVEL_MAP[this.currentLevel] || this.currentLevel === 'off') return;
 
     try {
@@ -56,7 +56,7 @@ class RemoteLogger {
         },
         body: JSON.stringify(body),
         keepalive: true, // Ensure the log is sent even if the page is unloaded
-      }).catch((err) => {
+      }).catch(() => {
         // Silent fail for the network request itself to avoid infinite loops
       });
     } catch (err) {
@@ -65,38 +65,38 @@ class RemoteLogger {
     }
   }
 
-  trace(message: string, context?: any) {
+  trace(message: string, context?: Record<string, unknown>) {
     if (process.env.NODE_ENV === 'development') {
       this.logToConsole('trace', message, context);
     }
     this.send('trace', message, context);
   }
 
-  debug(message: string, context?: any) {
+  debug(message: string, context?: Record<string, unknown>) {
     if (process.env.NODE_ENV === 'development') {
       this.logToConsole('debug', message, context);
     }
     this.send('debug', message, context);
   }
 
-  info(message: string, context?: any) {
+  info(message: string, context?: Record<string, unknown>) {
     this.logToConsole('info', message, context);
     this.send('info', message, context);
   }
 
-  warn(message: string, context?: any) {
+  warn(message: string, context?: Record<string, unknown>) {
     this.logToConsole('warn', message, context);
     this.send('warn', message, context);
   }
 
-  error(message: string, context?: any) {
+  error(message: string, context?: Record<string, unknown>) {
     this.logToConsole('error', message, context);
     this.send('error', message, context);
   }
 
-  private logToConsole(level: LogLevel, message: string, context?: any) {
+  private logToConsole(level: LogLevel, message: string, context?: Record<string, unknown>) {
     const prefix = `[RemoteLog:${level}]`;
-    const args: any[] = [prefix, message];
+    const args: unknown[] = [prefix, message];
     if (context && Object.keys(context).length > 0) {
       args.push(context);
     }

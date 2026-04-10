@@ -33,6 +33,7 @@ func NewOrderService(s *store.OrderStore, ps *store.ProductStore, cs *store.Cust
 
 // CreateOrder handles the public checkout flow
 func (s *OrderService) CreateOrder(input models.CreateOrderInput, customerID string) (string, string, float64, error) {
+	logger.Trace("Entering OrderService.CreateOrder | CustomerID: %s | Items: %d", customerID, len(input.Items))
 	// 1. Load settings for rates and shipping
 	settings, err := s.Settings.GetSettings()
 	if err != nil {
@@ -150,10 +151,16 @@ func (s *OrderService) CreateOrder(input models.CreateOrderInput, customerID str
 
 	// 6. Execute Store method
 	orderID, orderNumber, err := s.Store.PlaceOrder(string(customerJSON), string(itemsJSON), string(metaJSON))
+	if err == nil {
+		logger.Debug("Order placed successfully: %s (%s) for total: %.2f COP", orderNumber, orderID, totalCOP)
+	} else {
+		logger.Error("Order placement failed: %v", err)
+	}
 	return orderID, orderNumber, totalCOP, err
 }
 
 func (s *OrderService) GetOrderDetail(orderID string) (*models.OrderDetail, error) {
+	logger.Trace("Entering OrderService.GetOrderDetail | OrderID: %s", orderID)
 	order, err := s.Store.GetByID(orderID)
 	if err != nil {
 		return nil, err
@@ -185,6 +192,7 @@ func (s *OrderService) GetOrderDetail(orderID string) (*models.OrderDetail, erro
 }
 
 func (s *OrderService) UpdateOrder(orderID string, input models.UpdateOrderInput) error {
+	logger.Trace("Entering OrderService.UpdateOrder | OrderID: %s | NewStatus: %v", orderID, input.Status)
 	tx, err := s.Store.DB.Beginx()
 	if err != nil {
 		return err
@@ -400,9 +408,14 @@ func (s *OrderService) UpdateOrder(orderID string, input models.UpdateOrderInput
 		if err != nil {
 			return fmt.Errorf("failed to update order totals: %w", err)
 		}
+		logger.Debug("Order %s recalculated: subtotal=%.2f, total=%.2f", orderID, summary.Subtotal, newTotal)
 	}
 
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	logger.Info("Order %s updated successfully", orderID)
+	return nil
 }
 
 func (s *OrderService) ConfirmOrder(orderID string, decrements []models.StockDecrement) error {
@@ -422,6 +435,7 @@ func (s *OrderService) RestoreStock(orderID string, increments []models.StockDec
 }
 
 func (s *OrderService) ListOrders(whereClause string, args []interface{}, page, pageSize int) ([]models.OrderWithCustomer, int, error) {
+	logger.Trace("Entering OrderService.ListOrders | Page: %d | PageSize: %d", page, pageSize)
 	total, err := s.Store.GetOrderCount(whereClause, args)
 	if err != nil {
 		return nil, 0, err
@@ -451,6 +465,7 @@ func (s *OrderService) ListMe(userID string) ([]models.OrderWithItemCount, error
 }
 
 func (s *OrderService) CancelMe(orderID, userID string) error {
+	logger.Trace("Entering OrderService.CancelMe | OrderID: %s | UserID: %s", orderID, userID)
 	tx, err := s.Store.DB.Beginx()
 	if err != nil {
 		return err

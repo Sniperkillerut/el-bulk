@@ -27,6 +27,7 @@ func NewProductService(s *store.ProductStore, tcg *store.TCGStore, settings *Set
 }
 
 func (s *ProductService) List(params store.ProductFilterParams, isAdmin bool) (models.ProductListResponse, error) {
+	logger.Trace("Entering ProductService.List | Admin: %v | Params: %+v", isAdmin, params)
 	products, total, err := s.Store.ListWithFilters(params)
 	if err != nil {
 		return models.ProductListResponse{}, err
@@ -56,6 +57,7 @@ func (s *ProductService) List(params store.ProductFilterParams, isAdmin bool) (m
 }
 
 func (s *ProductService) GetByID(id string, isAdmin bool) (*models.Product, error) {
+	logger.Trace("Entering ProductService.GetByID | ID: %s | Admin: %v", id, isAdmin)
 	product, err := s.Store.GetEnrichedByID(id)
 	if err != nil {
 		return nil, err
@@ -96,6 +98,7 @@ func (s *ProductService) GetByID(id string, isAdmin bool) (*models.Product, erro
 }
 
 func (s *ProductService) Create(input models.ProductInput) (*models.Product, error) {
+	logger.Trace("Entering ProductService.Create | Name: %s", input.Name)
 	product, err := s.Store.CreateProduct(input)
 	if err != nil {
 		return nil, err
@@ -124,6 +127,7 @@ func (s *ProductService) Create(input models.ProductInput) (*models.Product, err
 }
 
 func (s *ProductService) Update(id string, input models.ProductInput) (*models.Product, error) {
+	logger.Trace("Entering ProductService.Update | ID: %s", id)
 	product, err := s.Store.UpdateProduct(id, input)
 	if err != nil {
 		return nil, err
@@ -152,6 +156,7 @@ func (s *ProductService) Update(id string, input models.ProductInput) (*models.P
 }
 
 func (s *ProductService) Delete(id string) error {
+	logger.Trace("Entering ProductService.Delete | ID: %s", id)
 	return s.Store.Delete(id)
 }
 
@@ -251,6 +256,7 @@ func (s *ProductService) IdentifyHotNew(products []models.Product, settings mode
 }
 
 func (s *ProductService) BulkCreate(rawProducts []models.ProductInput, batchCategoryIDs []string) (int, error) {
+	logger.Trace("Entering ProductService.BulkCreate | Count: %d", len(rawProducts))
 	if len(rawProducts) == 0 {
 		return 0, nil
 	}
@@ -288,6 +294,7 @@ func (s *ProductService) BulkCreate(rawProducts []models.ProductInput, batchCate
 }
 
 func (s *ProductService) BulkSearch(list string) ([]models.DeckMatch, error) {
+	logger.Trace("Entering ProductService.BulkSearch | ListLength: %d", len(list))
 	settings, _ := s.Settings.GetSettings()
 	lines := strings.Split(list, "\n")
 	results := make([]models.DeckMatch, 0)
@@ -369,6 +376,15 @@ func (s *ProductService) BulkSearch(list string) ([]models.DeckMatch, error) {
 			RequestedCN:  cnHint,
 		})
 	}
+	logger.Debug("BulkSearch matched %d/%d lines", func() int {
+		matched := 0
+		for _, r := range results {
+			if r.IsMatched {
+				matched++
+			}
+		}
+		return matched
+	}(), len(results))
 	return results, nil
 }
 

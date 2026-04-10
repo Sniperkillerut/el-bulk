@@ -29,8 +29,10 @@ func NewOrderHandler(s *service.OrderService) *OrderHandler {
 
 // POST /api/orders — public checkout
 func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering OrderHandler.Create")
 	var input models.CreateOrderInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		logger.Error("Failed to decode order input: %v", err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -68,6 +70,7 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 // GET /api/admin/orders — list orders with pagination and filters
 func (h *OrderHandler) List(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering OrderHandler.List | URL: %s", r.URL.String())
 	q := r.URL.Query()
 	status := q.Get("status")
 	search := q.Get("search")
@@ -103,6 +106,7 @@ func (h *OrderHandler) List(w http.ResponseWriter, r *http.Request) {
 // GET /api/admin/orders/{id} — full order detail with product info
 func (h *OrderHandler) GetDetail(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	logger.Trace("Entering OrderHandler.GetDetail | ID: %s", id)
 
 	detail, err := h.Service.GetOrderDetail(id)
 	if err != nil {
@@ -120,9 +124,11 @@ func (h *OrderHandler) GetDetail(w http.ResponseWriter, r *http.Request) {
 // PUT /api/admin/orders/{id} — update order (status, item quantities)
 func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	logger.Trace("Entering OrderHandler.Update | ID: %s", id)
 
 	var input models.UpdateOrderInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		logger.Error("Failed to decode update input for %s: %v", id, err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -139,9 +145,11 @@ func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 // POST /api/admin/orders/{id}/confirm — mark order confirmed and decrement stock
 func (h *OrderHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	logger.Trace("Entering OrderHandler.Confirm | ID: %s", id)
 
 	var input models.ConfirmOrderInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		logger.Error("Failed to decode confirm input for %s: %v", id, err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -168,11 +176,13 @@ func (h *OrderHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 // POST /api/admin/orders/{id}/restore — manually restore stock for a cancelled order
 func (h *OrderHandler) RestoreStock(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	logger.Trace("Entering OrderHandler.RestoreStock | ID: %s", id)
 
 	var input struct {
 		Increments []models.StockDecrement `json:"increments"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		logger.Error("Failed to decode restore input for %s: %v", id, err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -188,6 +198,7 @@ func (h *OrderHandler) RestoreStock(w http.ResponseWriter, r *http.Request) {
 
 // GET /api/orders/me — list orders for the current customer
 func (h *OrderHandler) ListMe(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering OrderHandler.ListMe")
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok || userID == "" {
 		render.Error(w, "Not logged in", http.StatusUnauthorized)
@@ -206,6 +217,7 @@ func (h *OrderHandler) ListMe(w http.ResponseWriter, r *http.Request) {
 
 // GET /api/orders/me/{id} — get a single order for the current user
 func (h *OrderHandler) GetMeDetail(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering OrderHandler.GetMeDetail")
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok || userID == "" {
 		render.Error(w, "Not logged in", http.StatusUnauthorized)
@@ -231,6 +243,7 @@ func (h *OrderHandler) GetMeDetail(w http.ResponseWriter, r *http.Request) {
 
 // POST /api/orders/me/{id}/cancel — cancel a pending order for the current user
 func (h *OrderHandler) CancelMe(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering OrderHandler.CancelMe")
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok || userID == "" {
 		render.Error(w, "Not logged in", http.StatusUnauthorized)

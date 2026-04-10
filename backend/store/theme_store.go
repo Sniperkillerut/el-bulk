@@ -2,7 +2,9 @@ package store
 
 import (
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
+	"time"
 )
 
 type ThemeStore struct {
@@ -32,6 +34,7 @@ func (s *ThemeStore) Create(input models.ThemeInput) (*models.Theme, error) {
 			$26, $27, $28, $29
 		) RETURNING *
 	`
+	logger.Trace("[DB] Executing CreateTheme: %s | Name: %s", query, input.Name)
 	err := s.DB.Get(&theme, query,
 		input.Name, input.BgPage, input.BgHeader, input.BgSurface, input.BgCard,
 		input.TextMain, input.TextSecondary, input.TextMuted, input.TextOnAccent, input.TextOnHeader,
@@ -41,6 +44,9 @@ func (s *ThemeStore) Create(input models.ThemeInput) (*models.Theme, error) {
 		input.CheckboxBorder, input.CheckboxChecked,
 		input.BgImageURL, input.FontHeading, input.FontBody, input.AccentSecondary,
 	)
+	if err != nil {
+		logger.Error("[DB] CreateTheme failed for %s: %v", input.Name, err)
+	}
 	return &theme, err
 }
 
@@ -73,7 +79,14 @@ func (s *ThemeStore) Update(id string, input models.ThemeInput) (*models.Theme, 
 }
 
 func (s *ThemeStore) IsSystemTheme(id string) (bool, error) {
+	start := time.Now()
 	var isSystem bool
-	err := s.DB.Get(&isSystem, "SELECT is_system FROM theme WHERE id = $1", id)
+	query := "SELECT is_system FROM theme WHERE id = $1"
+	logger.Trace("[DB] Executing IsSystemTheme for %s: %s", id, query)
+	err := s.DB.Get(&isSystem, query, id)
+	if err != nil {
+		logger.Error("[DB] IsSystemTheme failed for %s: %v", id, err)
+	}
+	logger.Debug("[DB] IsSystemTheme for %s took %v", id, time.Since(start))
 	return isSystem, err
 }

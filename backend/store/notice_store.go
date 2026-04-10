@@ -2,7 +2,9 @@ package store
 
 import (
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
+	"time"
 )
 
 type NoticeStore struct {
@@ -16,6 +18,7 @@ func NewNoticeStore(db *sqlx.DB) *NoticeStore {
 }
 
 func (s *NoticeStore) List(isPublished bool, limit int) ([]models.Notice, error) {
+	start := time.Now()
 	query := "SELECT * FROM notice"
 	var args []interface{}
 	
@@ -30,14 +33,18 @@ func (s *NoticeStore) List(isPublished bool, limit int) ([]models.Notice, error)
 		args = append(args, limit)
 	}
 
+	rebound := s.DB.Rebind(query)
+	logger.Trace("[DB] Executing List (Notice): %s | Args: %+v", rebound, args)
 	var notices []models.Notice
-	err := s.DB.Select(&notices, s.DB.Rebind(query), args...)
+	err := s.DB.Select(&notices, rebound, args...)
 	if err != nil {
+		logger.Error("[DB] List (Notice) failed: %v", err)
 		return nil, err
 	}
 	if notices == nil {
 		notices = []models.Notice{}
 	}
+	logger.Debug("[DB] List (Notice) took %v", time.Since(start))
 	return notices, nil
 }
 
@@ -57,7 +64,11 @@ func (s *NoticeStore) Create(input models.NoticeInput) (*models.Notice, error) {
 		VALUES ($1, $2, $3, $4, $5)
 		RETURNING *
 	`
+	logger.Trace("[DB] Executing CreateNotice: %s | Title: %s", query, input.Title)
 	err := s.DB.Get(&notice, query, input.Title, input.Slug, input.ContentHTML, input.FeaturedImageURL, input.IsPublished)
+	if err != nil {
+		logger.Error("[DB] CreateNotice failed for %s: %v", input.Title, err)
+	}
 	return &notice, err
 }
 

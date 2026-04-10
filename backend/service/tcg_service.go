@@ -19,20 +19,24 @@ func NewTCGService(s *store.TCGStore) *TCGService {
 }
 
 func (s *TCGService) List(isAdmin bool) ([]models.TCG, error) {
+	logger.Trace("Entering TCGService.List | Admin: %v", isAdmin)
 	// For now, TCGStore.ListWithCount returns all with counts.
 	// We might want to filter activeOnly for public view in the future.
 	return s.Store.ListWithCount()
 }
 
 func (s *TCGService) Create(input models.TCGInput) (*models.TCG, error) {
+	logger.Trace("Entering TCGService.Create | ID: %s", input.ID)
 	return s.Store.Create(input)
 }
 
 func (s *TCGService) Update(id string, input models.TCGInput) (*models.TCG, error) {
+	logger.Trace("Entering TCGService.Update | ID: %s", id)
 	return s.Store.Update(id, input)
 }
 
 func (s *TCGService) Delete(id string) error {
+	logger.Trace("Entering TCGService.Delete | ID: %s", id)
 	count, err := s.Store.GetProductCount(id)
 	if err != nil {
 		return err
@@ -44,14 +48,17 @@ func (s *TCGService) Delete(id string) error {
 }
 
 func (s *TCGService) SyncSets(tcgID string) (int, error) {
+	logger.Trace("Entering TCGService.SyncSets | TCG: %s", tcgID)
 	if tcgID != "mtg" {
 		return 0, fmt.Errorf("sync currently only supported for MTG")
 	}
 
 	sets, err := external.FetchSets()
 	if err != nil {
+		logger.Error("Failed to fetch sets for %s: %v", tcgID, err)
 		return 0, fmt.Errorf("failed to fetch sets: %w", err)
 	}
+	logger.Debug("Fetched %d sets from external API for %s", len(sets), tcgID)
 
 	tx, err := s.Store.DB.Beginx()
 	if err != nil {
@@ -80,5 +87,6 @@ func (s *TCGService) SyncSets(tcgID string) (int, error) {
 		return 0, err
 	}
 
+	logger.Info("Successfully synced %d sets for %s", len(sets), tcgID)
 	return len(sets), nil
 }
