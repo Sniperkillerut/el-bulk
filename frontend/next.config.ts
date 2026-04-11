@@ -64,17 +64,18 @@ const nextConfig: NextConfig = {
   experimental: {
     viewTransition: true,
   },
-  turbopack: isDev ? {} : undefined,
-  webpack: (config, { dev }) => {
-    if (dev && isDev) {
-      config.watchOptions = {
-        poll: 800,
-        aggregateTimeout: 300,
-        ignored: ['**/node_modules', '**/.next'],
-      };
-    }
-    return config;
-  },
 };
+
+if (isDev) {
+  nextConfig.turbopack = {};
+  nextConfig.webpack = (config) => {
+    config.watchOptions = {
+      poll: 800,
+      aggregateTimeout: 300,
+      ignored: ['**/node_modules', '**/.next'],
+    };
+    return config;
+  };
+}
 
 export default nextConfig;
