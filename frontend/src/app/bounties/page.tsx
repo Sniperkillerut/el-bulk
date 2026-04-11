@@ -7,7 +7,8 @@ export const metadata: Metadata = {
   description: 'Cards we are actively looking to buy. Check our bounty list and sell to us!',
 };
 
-export const revalidate = 60; // Cache for 60 seconds
+// Cache values are managed via fetch/unstable_cache under PPR
+
 
 export default async function BountiesPage() {
   const bounties = await fetchBounties({ active: true }).catch(() => []);

@@ -107,7 +107,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
       try {
         const cats = await fetchCategories();
         // Only show collections that are searchable
-        setAvailableCollections(cats.filter(c => c.searchable));
+        setAvailableCollections((cats || []).filter(c => c.searchable));
       } catch (err) {
         console.error('Failed to load categories for grid:', err);
       }

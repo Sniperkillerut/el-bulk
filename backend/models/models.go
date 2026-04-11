@@ -137,6 +137,9 @@ type Product struct {
 
 	// DeckCards handles the cards included in a store_exclusives Deck
 	DeckCards       []DeckCard        `db:"-"                  json:"deck_cards,omitempty"`
+
+	// SearchVector is used for database mapping of Postgres tsvector (FTS)
+	SearchVector    interface{}       `db:"search_vector"      json:"-"`
 }
 
 type DeckCard struct {
@@ -147,6 +150,9 @@ type DeckCard struct {
 	ImageURL        string        `db:"image_url"        json:"image_url,omitempty"`
 	
 	MTGMetadata                   `db:",inline"`
+
+	// SearchVector for FTS mapping
+	SearchVector    interface{}       `db:"search_vector"      json:"-"`
 }
 
 

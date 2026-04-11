@@ -111,12 +111,14 @@ const metadataCache = new Map<string, { data: unknown; timestamp: number }>();
 const CACHE_TTL = 300000; // 5 minutes
 
 function getCached<T>(key: string): T | null {
+  if (isServer) return null;
   const entry = metadataCache.get(key);
   if (entry && Date.now() - entry.timestamp < CACHE_TTL) return entry.data as T;
   return null;
 }
 
 function setCached(key: string, data: unknown) {
+  if (isServer) return;
   metadataCache.set(key, { data, timestamp: Date.now() });
 }
 
