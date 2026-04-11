@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: isProd,
+  turbopack: {},
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'cards.scryfall.io' },

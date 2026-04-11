@@ -23,7 +23,7 @@ export default function AdminTCGsPage() {
       />
 
       <div className="flex-1 min-h-0 overflow-auto">
-        <TCGManager token={token} />
+        <TCGManager />
       </div>
     </div>
   );

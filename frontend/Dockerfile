@@ -21,6 +21,7 @@ CMD ["npm", "run", "dev"]
 ## =======================================
 FROM node:20-slim AS builder
 WORKDIR /app
+ENV NODE_ENV=production
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
