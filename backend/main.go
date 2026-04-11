@@ -146,9 +146,7 @@ func main() {
 		
 		r.Get("/themes", themeHandler.List)
 		
-		r.Get("/api/settings", settingsHandler.PublicGet)
-		r.Get("/api/translations", translationHandler.List)
-		
+		r.Get("/settings/public", settingsHandler.PublicGet)
 		r.Get("/translations", translationHandler.List)
 
 		r.Get("/bounties", bountyHandler.List)

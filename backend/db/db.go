@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"time"
@@ -84,8 +85,13 @@ func ConnectResilient() (*sqlx.DB, error) {
 			return nil, fmt.Errorf("failed to open database via Cloud SQL Connector: %v", err)
 		}
 		
-		db.SetMaxOpenConns(25)
-		db.SetMaxIdleConns(5)
+		maxOpen := getEnvInt("DB_MAX_OPEN_CONNS", 25)
+		maxIdle := getEnvInt("DB_MAX_IDLE_CONNS", 5)
+		db.SetMaxOpenConns(maxOpen)
+		db.SetMaxIdleConns(maxIdle)
+		db.SetConnMaxLifetime(time.Hour)
+		
+		logger.Info("⚙️ DB Pooling: MaxOpen=%d, MaxIdle=%d", maxOpen, maxIdle)
 		
 		if err := Initialize(db); err != nil {
 			logger.Error("Schema initialization failure: %v", err)
@@ -142,8 +148,13 @@ func ConnectResilient() (*sqlx.DB, error) {
 		return nil, fmt.Errorf("failed to connect to database: %v", err)
 	}
 
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(5)
+	maxOpen := getEnvInt("DB_MAX_OPEN_CONNS", 25)
+	maxIdle := getEnvInt("DB_MAX_IDLE_CONNS", 5)
+	db.SetMaxOpenConns(maxOpen)
+	db.SetMaxIdleConns(maxIdle)
+	db.SetConnMaxLifetime(time.Hour)
+	
+	logger.Info("⚙️ DB Pooling: MaxOpen=%d, MaxIdle=%d", maxOpen, maxIdle)
 
 	logger.Info("Database connected successfully")
 
@@ -281,4 +292,13 @@ func executeSQLFileTx(tx *sqlx.Tx, path string) error {
 
 	_, err = tx.Exec(string(content))
 	return err
+}
+
+func getEnvInt(key string, fallback int) int {
+	if val := os.Getenv(key); val != "" {
+		if i, err := strconv.Atoi(val); err == nil {
+			return i
+		}
+	}
+	return fallback
 }

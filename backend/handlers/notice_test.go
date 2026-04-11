@@ -88,7 +88,7 @@ func TestNoticeHandler_Update(t *testing.T) {
 
 		r := chi.NewRouter()
 		r.Put("/api/admin/notices/{id}", h.Update)
-		req, _ := http.NewRequest("PUT", "/api/admin/notices/1", bytes.NewBuffer(body))
+		req, _ := http.NewRequest("PUT", "/api/admin/notices/00000000-0000-0000-0000-000000000001", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusOK, rr.Code)
@@ -117,7 +117,7 @@ func TestNoticeHandler_Delete(t *testing.T) {
 
 		r := chi.NewRouter()
 		r.Delete("/api/admin/notices/{id}", h.Delete)
-		req, _ := http.NewRequest("DELETE", "/api/admin/notices/1", nil)
+		req, _ := http.NewRequest("DELETE", "/api/admin/notices/00000000-0000-0000-0000-000000000001", nil)
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusOK, rr.Code)

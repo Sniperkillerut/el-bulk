@@ -119,7 +119,7 @@ type Product struct {
 	Price            float64  `db:"-"                  json:"price"`
 
 	Stock           int               `db:"stock"              json:"stock"`
-	CostBasisCOP    float64           `db:"cost_basis_cop"     json:"cost_basis_cop"`
+	CostBasisCOP    float64           `db:"cost_basis_cop"     json:"-"`
 	StoredIn        []StorageLocation `db:"-"                  json:"stored_in,omitempty"`
 	Categories      []CustomCategory  `db:"-"                  json:"categories,omitempty"`
 	ImageURL        *string           `db:"image_url"          json:"image_url,omitempty"`
@@ -347,8 +347,8 @@ type Customer struct {
 	Phone          *string   `db:"phone"            json:"phone,omitempty"`
 	IDNumber       *string   `db:"id_number"        json:"id_number,omitempty"`
 	Address        *string   `db:"address"          json:"address,omitempty"`
-	AuthProvider   *string   `db:"auth_provider"    json:"auth_provider,omitempty"`
-	AuthProviderID *string   `db:"auth_provider_id" json:"auth_provider_id,omitempty"`
+	AuthProvider   *string   `db:"auth_provider"    json:"-"`
+	AuthProviderID *string   `db:"auth_provider_id" json:"-"`
 	AvatarURL      *string   `db:"avatar_url"       json:"avatar_url,omitempty"`
 	CreatedAt      time.Time `db:"created_at"       json:"created_at"`
 
