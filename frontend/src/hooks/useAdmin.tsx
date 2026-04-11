@@ -30,7 +30,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }): Reac
     try {
       // Try to get admin settings. If this fails on a protected route, 
       // the middleware would have already caught it, but we handle it here for the login page too.
-      const data = await getAdminSettings("").catch(() => fetchPublicSettings());
+      const data = await getAdminSettings().catch(() => fetchPublicSettings());
       setSettings(data);
       setToken("session_active"); // Marker for existing logic that expects a truthy token
     } catch (err) {

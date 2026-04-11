@@ -27,7 +27,7 @@ async function logAndThrow(res: Response, defaultMsg: string): Promise<never> {
   throw error;
 }
 
-interface FetchOptions extends RequestInit {
+export interface FetchOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined | null>;
 }
 
@@ -135,13 +135,17 @@ export async function fetchCategories(): Promise<import('./types').CustomCategor
   }
 }
 
-export async function fetchTCGs(activeOnly: boolean = true): Promise<import('./types').TCG[]> {
+export async function fetchTCGs(activeOnly: boolean = true, options: FetchOptions = {}): Promise<import('./types').TCG[]> {
   const key = `tcgs_${activeOnly}`;
   const cached = getCached<import('./types').TCG[]>(key);
   if (cached) return cached;
 
   try {
-    const data = await apiFetch<import('./types').TCG[] | { tcgs: import('./types').TCG[] }>('/api/tcgs', { params: { active_only: activeOnly }, cache: 'default' });
+    const data = await apiFetch<import('./types').TCG[] | { tcgs: import('./types').TCG[] }>('/api/tcgs', { 
+      params: { active_only: activeOnly }, 
+      ...options,
+      cache: options.cache || 'default' 
+    });
     const tcgs = Array.isArray(data) ? data : (data.tcgs || []);
     setCached(key, tcgs);
     return tcgs;
@@ -150,11 +154,14 @@ export async function fetchTCGs(activeOnly: boolean = true): Promise<import('./t
   }
 }
 
-export async function fetchPublicSettings(): Promise<import('./types').Settings> {
+export async function fetchPublicSettings(options: FetchOptions = {}): Promise<import('./types').Settings> {
   const cached = getCached<import('./types').Settings>('settings');
   if (cached) return cached;
 
-  const data = await apiFetch<import('./types').Settings>('/api/settings', { cache: 'default' });
+  const data = await apiFetch<import('./types').Settings>('/api/settings', { 
+    ...options,
+    cache: options.cache || 'default' 
+  });
   setCached('settings', data);
   return data;
 }

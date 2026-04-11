@@ -14,7 +14,11 @@ export default function PricingSettings({ }: PricingSettingsProps) {
     contact_phone: '',
     contact_email: '',
     contact_instagram: '',
-    contact_hours: ''
+    contact_hours: '',
+    flat_shipping_fee_cop: 0,
+    hot_sales_threshold: 0,
+    hot_days_threshold: 0,
+    new_days_threshold: 0
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

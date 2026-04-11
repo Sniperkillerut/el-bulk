@@ -21,6 +21,7 @@ const montserrat = Montserrat({ subsets: ['latin'], variable: '--font-montserrat
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { fetchPublicSettings } from '@/lib/api';
 import { fetchThemes } from '@/lib/api_themes';
+import { Suspense } from 'react';
 
 declare global {
   interface Window {
@@ -38,42 +39,57 @@ export const metadata: Metadata = {
 
 import { LanguageProvider } from '@/context/LanguageContext';
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  let defaultTheme = '00000000-0000-0000-0000-000000000001'; // Default to Cardboard
+/**
+ * RootProviders handles asynchronous configuration fetching.
+ * Wrapped in Suspense in the main layout to satisfy Next.js 15 Dynamic IO checks.
+ */
+async function RootProviders({ children }: { children: React.ReactNode }) {
+  let defaultTheme = '00000000-0000-0000-0000-000000000001'; // Default: Cardboard
   let themes: import('@/lib/types').Theme[] = [];
 
   try {
-    const [settings, fetchedThemes] = await Promise.all([
-      fetchPublicSettings(),
-      fetchThemes()
-    ]);
-    
-    themes = fetchedThemes;
-    if (settings.default_theme_id) {
+    // Sequential fetching with force-cache to satisfy Next.js 15 build-time checks
+    const settings = await fetchPublicSettings({ cache: 'force-cache' });
+    if (settings && settings.default_theme_id) {
       defaultTheme = settings.default_theme_id;
     }
-  } catch (err) {
-    console.error('Failed to fetch default theme settings or themes', err);
+    
+    const fetchedThemes = await fetchThemes({ cache: 'force-cache' });
+    if (fetchedThemes) {
+      themes = fetchedThemes;
+    }
+  } catch {
+    // Fallback to defaults if API is unreachable during build
   }
 
+  return (
+    <ThemeProvider allThemes={themes} defaultTheme={defaultTheme}>
+      <LanguageProvider>
+        <UserProvider>
+          <UIProvider>
+            <CartProvider>
+              <StorefrontLayoutWrapper>
+                {children}
+              </StorefrontLayoutWrapper>
+            </CartProvider>
+          </UIProvider>
+        </UserProvider>
+      </LanguageProvider>
+    </ThemeProvider>
+  );
+}
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${bebas.variable} ${spaceMono.variable} ${cinzel.variable} ${playfair.variable} ${outfit.variable} ${roboto.variable} ${montserrat.variable}`} suppressHydrationWarning>
       <body suppressHydrationWarning>
         <RemoteLogManager />
         
-        <ThemeProvider allThemes={themes} defaultTheme={defaultTheme}>
-          <LanguageProvider>
-            <UserProvider>
-              <UIProvider>
-                <CartProvider>
-                  <StorefrontLayoutWrapper>
-                    {children}
-                  </StorefrontLayoutWrapper>
-                </CartProvider>
-              </UIProvider>
-            </UserProvider>
-          </LanguageProvider>
-        </ThemeProvider>
+        <Suspense fallback={<div className="min-h-screen bg-bg-page animate-pulse" />}>
+          <RootProviders>
+            {children}
+          </RootProviders>
+        </Suspense>
 
         {/* Scripts at the end of body for stability */}
         <Script

@@ -1,0 +1,144 @@
+{
+  "bindings": [
+    {
+      "members": [
+        "serviceAccount:41267920201-compute@developer.gserviceaccount.com"
+      ],
+      "role": "roles/artifactregistry.reader"
+    },
+    {
+      "members": [
+        "serviceAccount:41267920201@cloudbuild.gserviceaccount.com"
+      ],
+      "role": "roles/artifactregistry.repoAdmin"
+    },
+    {
+      "members": [
+        "serviceAccount:service-41267920201@gcp-sa-artifactregistry.iam.gserviceaccount.com"
+      ],
+      "role": "roles/artifactregistry.serviceAgent"
+    },
+    {
+      "members": [
+        "serviceAccount:41267920201@cloudbuild.gserviceaccount.com",
+        "serviceAccount:service-41267920201@gcp-sa-cloudbuild.iam.gserviceaccount.com"
+      ],
+      "role": "roles/artifactregistry.writer"
+    },
+    {
+      "members": [
+        "serviceAccount:service-41267920201@gcp-sa-cloudaicompanion.iam.gserviceaccount.com"
+      ],
+      "role": "roles/cloudaicompanion.serviceAgent"
+    },
+    {
+      "members": [
+        "serviceAccount:41267920201@cloudbuild.gserviceaccount.com"
+      ],
+      "role": "roles/cloudbuild.builds.builder"
+    },
+    {
+      "members": [
+        "serviceAccount:service-41267920201@gcp-sa-cloudbuild.iam.gserviceaccount.com"
+      ],
+      "role": "roles/cloudbuild.serviceAgent"
+    },
+    {
+      "members": [
+        "serviceAccount:41267920201-compute@developer.gserviceaccount.com"
+      ],
+      "role": "roles/cloudsql.client"
+    },
+    {
+      "members": [
+        "serviceAccount:41267920201-compute@developer.gserviceaccount.com"
+      ],
+      "role": "roles/cloudsql.instanceUser"
+    },
+    {
+      "members": [
+        "serviceAccount:41267920201-compute@developer.gserviceaccount.com"
+      ],
+      "role": "roles/cloudtrace.agent"
+    },
+    {
+      "members": [
+        "serviceAccount:41267920201@cloudservices.gserviceaccount.com"
+      ],
+      "role": "roles/compute.instanceGroupManagerServiceAgent"
+    },
+    {
+      "members": [
+        "serviceAccount:service-41267920201@compute-system.iam.gserviceaccount.com"
+      ],
+      "role": "roles/compute.serviceAgent"
+    },
+    {
+      "members": [
+        "serviceAccount:service-41267920201@containerregistry.iam.gserviceaccount.com"
+      ],
+      "role": "roles/containerregistry.ServiceAgent"
+    },
+    {
+      "members": [
+        "serviceAccount:41267920201-compute@developer.gserviceaccount.com",
+        "serviceAccount:41267920201@cloudbuild.gserviceaccount.com"
+      ],
+      "role": "roles/iam.serviceAccountUser"
+    },
+    {
+      "members": [
+        "serviceAccount:41267920201-compute@developer.gserviceaccount.com",
+        "serviceAccount:41267920201@cloudbuild.gserviceaccount.com"
+      ],
+      "role": "roles/logging.logWriter"
+    },
+    {
+      "members": [
+        "user:admin@elbulk.com"
+      ],
+      "role": "roles/owner"
+    },
+    {
+      "members": [
+        "serviceAccount:service-41267920201@gcp-sa-pubsub.iam.gserviceaccount.com"
+      ],
+      "role": "roles/pubsub.serviceAgent"
+    },
+    {
+      "members": [
+        "serviceAccount:41267920201-compute@developer.gserviceaccount.com",
+        "serviceAccount:41267920201@cloudbuild.gserviceaccount.com"
+      ],
+      "role": "roles/run.admin"
+    },
+    {
+      "members": [
+        "serviceAccount:service-41267920201@serverless-robot-prod.iam.gserviceaccount.com"
+      ],
+      "role": "roles/run.serviceAgent"
+    },
+    {
+      "members": [
+        "serviceAccount:41267920201-compute@developer.gserviceaccount.com",
+        "serviceAccount:41267920201@cloudbuild.gserviceaccount.com"
+      ],
+      "role": "roles/secretmanager.secretAccessor"
+    },
+    {
+      "members": [
+        "serviceAccount:41267920201-compute@developer.gserviceaccount.com",
+        "serviceAccount:41267920201@cloudbuild.gserviceaccount.com"
+      ],
+      "role": "roles/serviceusage.serviceUsageAdmin"
+    },
+    {
+      "members": [
+        "serviceAccount:41267920201-compute@developer.gserviceaccount.com"
+      ],
+      "role": "roles/storage.objectAdmin"
+    }
+  ],
+  "etag": "BwZPNj0xneA=",
+  "version": 1
+}

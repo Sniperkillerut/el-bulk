@@ -1,8 +1,11 @@
-import { apiFetch } from './api';
+import { apiFetch, FetchOptions } from './api';
 import { Theme, ThemeInput } from './types';
 
-export async function fetchThemes(): Promise<Theme[]> {
-  return apiFetch<Theme[]>('/api/themes');
+export async function fetchThemes(options: FetchOptions = {}): Promise<Theme[]> {
+  return apiFetch<Theme[]>('/api/themes', {
+    ...options,
+    cache: options.cache || 'default'
+  });
 }
 
 export async function createTheme(input: ThemeInput): Promise<Theme> {
