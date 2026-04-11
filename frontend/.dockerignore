@@ -1,0 +1,35 @@
+# Dependencies (rebuilt inside Docker)
+node_modules/
+
+# Build output
+.next/
+out/
+
+# Test & coverage
+coverage/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+__tests__/
+__mocks__/
+vitest.config.ts
+jest.config.*
+
+# Environment (secrets must not be baked into images)
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+CLAUDE.md
+AGENTS.md

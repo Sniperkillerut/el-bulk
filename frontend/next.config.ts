@@ -30,13 +30,19 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'interrapidisimo.com' },
       { protocol: 'https', hostname: 'tcc.com.co' },
       { protocol: 'https', hostname: 'www.servientrega.com' },
+      { protocol: 'https', hostname: 'storage.googleapis.com' },
     ],
   },
   async rewrites() {
+    // INTERNAL_API_URL: Used for server-side requests (SSR) inside the same network.
+    //   - Docker Compose: http://backend:8080
+    //   - Cloud Run: the backend's internal URL (e.g., https://el-bulk-backend-xxx-uc.a.run.app)
+    // Falls back to the docker-compose internal hostname for local dev.
+    const apiBase = process.env.INTERNAL_API_URL || 'http://backend:8080';
     return [
       {
         source: '/api/:path*',
-        destination: 'http://backend:8080/api/:path*',
+        destination: `${apiBase}/api/:path*`,
       },
     ];
   },

@@ -459,7 +459,8 @@ _SMTP_FROM="El Bulk <notices@elbulk.com>",\
 _GA_ID="G-XXXXXXXXXX",\
 _META_PIXEL_ID="1234567890",\
 _GOOGLE_ADS_ID="AW-XXXXXXXXXX",\
-_HOTJAR_ID="1234567"
+_HOTJAR_ID="1234567",\
+_BACKEND_INTERNAL_URL="https://el-bulk-backend-xxxxx-uc.a.run.app"
 ```
 
 > [!IMPORTANT]
@@ -1131,6 +1132,7 @@ curl -X PUT "$BACKEND_URL/api/admin/logs/level" \
 | `NEXT_PUBLIC_META_PIXEL_ID` | ❌ | Facebook/Meta Pixel ID |
 | `NEXT_PUBLIC_GOOGLE_ADS_ID` | ❌ | Google Ads Conversion ID |
 | `NEXT_PUBLIC_HOTJAR_ID` | ❌ | Hotjar Site ID |
+| `INTERNAL_API_URL` | ✅ | Backend internal URL for SSR rewrites (provided at runtime via `_BACKEND_INTERNAL_URL`) |
 
 > [!IMPORTANT]
 > ✅ = Required for the service to function

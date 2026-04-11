@@ -1,0 +1,27 @@
+# Development artifacts
+tmp/
+logs/
+*.test
+coverage.out
+coverage/
+
+# IDE & OS
+.air.toml
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Environment (never send secrets to Docker build)
+.env
+.env.*
+
+# Test data
+scratch/
+*_test.go
+final_test_output.txt
+notices.json
+
+# Documentation
+*.md
+!db/schema/*.md
