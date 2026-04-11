@@ -1,90 +1,77 @@
 package handlers
 
 import (
-"github.com/el-bulk/backend/utils/render"
 	"encoding/json"
 	"net/http"
 
+	"github.com/el-bulk/backend/service"
+	"github.com/el-bulk/backend/utils/logger"
+	"github.com/el-bulk/backend/utils/render"
 	"github.com/go-chi/chi/v5"
-	"github.com/jmoiron/sqlx"
-
-	"github.com/el-bulk/backend/models"
 )
 
 type StorageHandler struct {
-	DB *sqlx.DB
+	Service *service.StorageLocationService
 }
 
-func NewStorageHandler(db *sqlx.DB) *StorageHandler {
-	return &StorageHandler{DB: db}
+func NewStorageHandler(s *service.StorageLocationService) *StorageHandler {
+	return &StorageHandler{Service: s}
 }
 
 // GET /api/admin/storage
 func (h *StorageHandler) List(w http.ResponseWriter, r *http.Request) {
-	var locations []models.StoredIn
-	err := h.DB.Select(&locations, `
-		SELECT 
-			s.id, 
-			s.name, 
-			COALESCE(SUM(ps.quantity), 0) AS item_count 
-		FROM storage_location s 
-		LEFT JOIN product_storage ps ON s.id = ps.storage_id 
-		GROUP BY s.id, s.name 
-		ORDER BY s.name
-	`)
+	logger.Trace("Entering StorageHandler.List")
+	locations, err := h.Service.List()
 	if err != nil {
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
-	}
-	if locations == nil {
-		locations = []models.StoredIn{}
 	}
 	render.Success(w, locations)
 }
 
 // POST /api/admin/storage
 func (h *StorageHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var input models.StoredIn
+	logger.Trace("Entering StorageHandler.Create")
+	var input struct {
+		Name string `json:"name"`
+	}
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-	if input.Name == "" {
-		render.Error(w, "Name is required", http.StatusBadRequest)
-		return
-	}
 
-	err := h.DB.QueryRow("INSERT INTO storage_location (name) VALUES ($1) RETURNING id", input.Name).Scan(&input.ID)
+	loc, err := h.Service.Create(input.Name)
 	if err != nil {
-		render.Error(w, "Failed to create location or name already exists", http.StatusInternalServerError)
+		render.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	render.Success(w, input)
+	render.Success(w, loc)
 }
 
 // PUT /api/admin/storage/:id
 func (h *StorageHandler) Update(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering StorageHandler.Update")
 	id := chi.URLParam(r, "id")
-	var input models.StoredIn
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil || input.Name == "" {
+	var input struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	_, err := h.DB.Exec("UPDATE storage_location SET name = $1 WHERE id = $2", input.Name, id)
-	if err != nil {
-		render.Error(w, "Failed to update location", http.StatusInternalServerError)
+	if err := h.Service.Update(id, input.Name); err != nil {
+		render.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	input.ID = id
-	render.Success(w, input)
+	render.Success(w, map[string]string{"id": id, "name": input.Name})
 }
 
 // DELETE /api/admin/storage/:id
 func (h *StorageHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering StorageHandler.Delete")
 	id := chi.URLParam(r, "id")
-	_, err := h.DB.Exec("DELETE FROM storage_location WHERE id = $1", id)
-	if err != nil {
+	if err := h.Service.Delete(id); err != nil {
 		render.Error(w, "Failed to delete location", http.StatusInternalServerError)
 		return
 	}

@@ -21,7 +21,7 @@ func TestAdminHandler_Login(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := NewAdminHandler(sqlxDB)
+	h := testAdminHandler(sqlxDB)
 
 	password := "password123"
 	hash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -76,9 +76,9 @@ func TestAdminHandler_Login(t *testing.T) {
 			expectedStatus: http.StatusUnauthorized,
 		},
 		{
-			name: "Invalid JSON",
-			reqBody: models.LoginRequest{}, // This won't trigger invalid JSON unless the body is actually malformed
-			mockSetup: func() {},
+			name:           "Invalid JSON",
+			reqBody:        models.LoginRequest{}, // This won't trigger invalid JSON unless the body is actually malformed
+			mockSetup:      func() {},
 			expectedStatus: http.StatusBadRequest,
 		},
 	}
@@ -125,7 +125,7 @@ func TestAdminHandler_Login_MissingSecret(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := NewAdminHandler(sqlxDB)
+	h := testAdminHandler(sqlxDB)
 
 	password := "password123"
 	hash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)

@@ -9,33 +9,34 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/jmoiron/sqlx"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/service"
 	"github.com/el-bulk/backend/utils/logger"
 )
 
 type AdminHandler struct {
-	DB *sqlx.DB
+	Service *service.AdminService
 }
 
-func NewAdminHandler(db *sqlx.DB) *AdminHandler {
-	return &AdminHandler{DB: db}
+func NewAdminHandler(s *service.AdminService) *AdminHandler {
+	return &AdminHandler{Service: s}
 }
 
 // POST /api/admin/login
 func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
 	logger.Trace("Entering AdminHandler.Login")
-	var req models.LoginRequest
+	var req struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Error("Failed to decode login request: %v", err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	var admin models.Admin
-	err := h.DB.Get(&admin, "SELECT * FROM admin WHERE username = $1", req.Username)
+	admin, err := h.Service.GetByUsername(req.Username)
 	if err != nil {
 		logger.Warn("Failed login attempt for username: %s", req.Username)
 		render.Error(w, "Invalid credentials", http.StatusUnauthorized)

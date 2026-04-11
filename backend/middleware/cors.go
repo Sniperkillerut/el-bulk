@@ -37,12 +37,8 @@ func CORS(next http.Handler) http.Handler {
 			}
 		}
 
-		if allowed || requestOrigin == "" {
-			if requestOrigin != "" {
-				w.Header().Set("Access-Control-Allow-Origin", requestOrigin)
-			} else {
-				w.Header().Set("Access-Control-Allow-Origin", "*")
-			}
+		if allowed && requestOrigin != "" {
+			w.Header().Set("Access-Control-Allow-Origin", requestOrigin)
 		}
 
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")

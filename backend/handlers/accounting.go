@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/service"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/el-bulk/backend/utils/render"
@@ -14,12 +13,12 @@ import (
 )
 
 type AccountingHandler struct {
-	DB       *sqlx.DB
-	Settings *service.SettingsService
+	DB       *sqlx.DB // Kept for CSV export complex query
+	Service  *service.AccountingService
 }
 
-func NewAccountingHandler(db *sqlx.DB, s *service.SettingsService) *AccountingHandler {
-	return &AccountingHandler{DB: db, Settings: s}
+func NewAccountingHandler(db *sqlx.DB, s *service.AccountingService) *AccountingHandler {
+	return &AccountingHandler{DB: db, Service: s}
 }
 
 func (h *AccountingHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
@@ -101,7 +100,6 @@ func (h *AccountingHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Initial Stocking: Estimation of investment for non-bounty stock
-	// We use p.updated_at as the reference date for stocking costs as requested
 	stockQuery := `
 		SELECT 
 			p.updated_at as date, 
@@ -204,57 +202,12 @@ func (h *AccountingHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AccountingHandler) GetInventoryValuation(w http.ResponseWriter, r *http.Request) {
-	// 1. Fetch current exchange rates
-	s, err := h.Settings.GetSettings()
+	valuation, err := h.Service.GetInventoryValuation()
 	if err != nil {
-		logger.Error("Failed to get settings in AccountingHandler.GetInventoryValuation: %v", err)
-	}
-
-	// 2. Fetch basic totals
-	var stats struct {
-		TotalItems int `db:"total_items"`
-		TotalStock int `db:"total_stock"`
-	}
-	err = h.DB.Get(&stats, "SELECT COUNT(*) as total_items, SUM(stock) as total_stock FROM product WHERE stock > 0")
-	if err != nil {
-		logger.Error("Accounting valuation failed on counts: %v", err)
+		logger.Error("Failed to get inventory valuation: %v", err)
 		render.Error(w, "Database failure", http.StatusInternalServerError)
 		return
 	}
 
-	// 3. Compute Value and Cost Basis
-	// We use the same price computation logic as the product handler
-	// Priority: price_cop_override > price_reference * rate
-	valQuery := fmt.Sprintf(`
-		SELECT 
-			SUM(stock * COALESCE(price_cop_override,
-				CASE price_source
-					WHEN 'tcgplayer' THEN price_reference * %f
-					WHEN 'cardmarket' THEN price_reference * %f
-					ELSE 0
-				END, 0)) as total_value_cop,
-			SUM(stock * cost_basis_cop) as total_cost_basis_cop
-		FROM product 
-		WHERE stock > 0
-	`, s.USDToCOPRate, s.EURToCOPRate)
-
-	var totals struct {
-		Value float64 `db:"total_value_cop"`
-		Cost  float64 `db:"total_cost_basis_cop"`
-	}
-	err = h.DB.Get(&totals, valQuery)
-	if err != nil {
-		logger.Error("Accounting valuation failed on sums: %v", err)
-		render.Error(w, "Database failure", http.StatusInternalServerError)
-		return
-	}
-
-	render.Success(w, models.InventoryValuation{
-		TotalItems:        stats.TotalItems,
-		TotalStock:        stats.TotalStock,
-		TotalValueCOP:     totals.Value,
-		TotalCostBasisCOP: totals.Cost,
-		PotentialProfit:   totals.Value - totals.Cost,
-	})
+	render.Success(w, valuation)
 }
-

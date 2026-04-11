@@ -20,6 +20,7 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 	}
 	defer db.Close()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	svc := testRefreshService(sqlxDB)
 
 	// 1. Mock Scryfall Bulk Data Index
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -83,7 +84,7 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 			).
 			WillReturnResult(sqlmock.NewResult(0, 2))
 
-		updated, errs := RunPriceRefresh(sqlxDB)
+		updated, errs := svc.RunPriceRefresh()
 
 		assert.Equal(t, 2, updated)
 		assert.Equal(t, 0, errs)
@@ -94,7 +95,7 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 		mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM product").
 			WillReturnRows(sqlmock.NewRows([]string{"id", "tcg", "name", "set_code", "foil_treatment", "price_source"}))
 
-		updated, errs := RunPriceRefresh(sqlxDB)
+		updated, errs := svc.RunPriceRefresh()
 
 		assert.Equal(t, 0, updated)
 		assert.Equal(t, 0, errs)
@@ -105,7 +106,7 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 		mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM product").
 			WillReturnError(fmt.Errorf("db error"))
 
-		updated, errs := RunPriceRefresh(sqlxDB)
+		updated, errs := svc.RunPriceRefresh()
 
 		assert.Equal(t, 0, updated)
 		assert.Equal(t, 1, errs)
@@ -120,7 +121,7 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 		external.ScryfallBase = "http://invalid-url-123.com"
 		defer func() { external.ScryfallBase = oldBase }()
 
-		updated, errs := RunPriceRefresh(sqlxDB)
+		updated, errs := svc.RunPriceRefresh()
 		assert.Equal(t, 0, updated)
 		assert.Equal(t, 1, errs)
 		assert.NoError(t, mock.ExpectationsWereMet())
@@ -135,7 +136,7 @@ func TestRefreshHandler_Trigger(t *testing.T) {
 	defer db.Close()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 
-	h := NewRefreshHandler(sqlxDB)
+	h := testRefreshHandler(sqlxDB)
 
 	mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM product").
 		WillReturnRows(sqlmock.NewRows([]string{"id", "tcg", "name", "set_code", "foil_treatment", "price_source"}))

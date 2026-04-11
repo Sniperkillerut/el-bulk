@@ -4,8 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/el-bulk/backend/middleware"
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/crypto"
+	"github.com/el-bulk/backend/utils/logger"
+	"github.com/el-bulk/backend/utils/render"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 )
@@ -15,6 +18,7 @@ type CustomerAdminHandler struct {
 }
 
 func (h *CustomerAdminHandler) ListCustomers(w http.ResponseWriter, r *http.Request) {
+	logger.Trace("Entering CustomerAdminHandler.ListCustomers")
 	var customers []models.CustomerStats
 	err := h.DB.Select(&customers, `
 		SELECT 
@@ -31,7 +35,8 @@ func (h *CustomerAdminHandler) ListCustomers(w http.ResponseWriter, r *http.Requ
 		ORDER BY created_at DESC
 	`)
 	if err != nil {
-		http.Error(w, "Database error", http.StatusInternalServerError)
+		logger.Error("Failed to list customers: %v", err)
+		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
 
@@ -46,22 +51,22 @@ func (h *CustomerAdminHandler) ListCustomers(w http.ResponseWriter, r *http.Requ
 		customers[i].Address = crypto.DecryptSafe(customers[i].Address)
 	}
 
-	json.NewEncoder(w).Encode(customers)
+	render.Success(w, customers)
 }
 
 func (h *CustomerAdminHandler) GetCustomerDetail(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	logger.Trace("Entering CustomerAdminHandler.GetCustomerDetail | ID: %s", id)
 	if id == "" {
-		http.Error(w, "ID is required", http.StatusBadRequest)
+		render.Error(w, "ID is required", http.StatusBadRequest)
 		return
 	}
 
 	var detail models.CustomerDetail
 	err := h.DB.Get(&detail.Customer, "SELECT * FROM customer WHERE id = $1", id)
 	if err != nil {
-		// Log the error for debugging
-		println("Error fetching customer", id, ":", err.Error())
-		http.Error(w, "Customer not found", http.StatusNotFound)
+		logger.Error("Error fetching customer %s: %v", id, err)
+		render.Error(w, "Customer not found", http.StatusNotFound)
 		return
 	}
 
@@ -73,7 +78,8 @@ func (h *CustomerAdminHandler) GetCustomerDetail(w http.ResponseWriter, r *http.
 	// Fetch orders
 	err = h.DB.Select(&detail.Orders, "SELECT * FROM \"order\" WHERE customer_id = $1 ORDER BY created_at DESC", id)
 	if err != nil {
-		http.Error(w, "Error fetching orders", http.StatusInternalServerError)
+		logger.Error("Error fetching orders for customer %s: %v", id, err)
+		render.Error(w, "Error fetching orders", http.StatusInternalServerError)
 		return
 	}
 
@@ -86,12 +92,13 @@ func (h *CustomerAdminHandler) GetCustomerDetail(w http.ResponseWriter, r *http.
 		ORDER BY n.created_at DESC
 	`, id)
 	if err != nil {
-		http.Error(w, "Error fetching notes", http.StatusInternalServerError)
+		logger.Error("Error fetching notes for customer %s: %v", id, err)
+		render.Error(w, "Error fetching notes", http.StatusInternalServerError)
 		return
 	}
 
 	// Fetch subscription status
-	err = h.DB.Get(&detail.IsSubscriber, "SELECT EXISTS(SELECT 1 FROM newsletter_subscriber WHERE customer_id = $1 OR email = $2)", id, detail.Email)
+	_ = h.DB.Get(&detail.IsSubscriber, "SELECT EXISTS(SELECT 1 FROM newsletter_subscriber WHERE customer_id = $1 OR email = $2)", id, detail.Email)
 	
 	// Fetch requests
 	err = h.DB.Select(&detail.Requests, `SELECT * FROM client_request WHERE customer_id = $1 OR customer_contact = $2 ORDER BY created_at DESC`, id, detail.Email)
@@ -124,13 +131,14 @@ func (h *CustomerAdminHandler) GetCustomerDetail(w http.ResponseWriter, r *http.
 		detail.Offers = []models.BountyOffer{}
 	}
 
-	json.NewEncoder(w).Encode(detail)
+	render.Success(w, detail)
 }
 
 func (h *CustomerAdminHandler) AddNote(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	logger.Trace("Entering CustomerAdminHandler.AddNote | CustomerID: %s", id)
 	if id == "" {
-		http.Error(w, "ID is required", http.StatusBadRequest)
+		render.Error(w, "ID is required", http.StatusBadRequest)
 		return
 	}
 
@@ -139,18 +147,17 @@ func (h *CustomerAdminHandler) AddNote(w http.ResponseWriter, r *http.Request) {
 		OrderID *string `json:"order_id,omitempty"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
+		render.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
 
 	if input.Content == "" {
-		http.Error(w, "Content is required", http.StatusBadRequest)
+		render.Error(w, "Content is required", http.StatusBadRequest)
 		return
 	}
 
-	// Get admin ID from context or session (assuming it's there via middleware)
-	// For now, we'll try to find an admin or leave as null if not strictly enforced
-	adminID := r.Context().Value("admin_id")
+	// Get admin ID from context (set by AdminAuth middleware)
+	adminID := r.Context().Value(middleware.AdminContextKey)
 
 	_, err := h.DB.Exec(`
 		INSERT INTO customer_note (customer_id, order_id, content, admin_id)
@@ -158,10 +165,11 @@ func (h *CustomerAdminHandler) AddNote(w http.ResponseWriter, r *http.Request) {
 	`, id, input.OrderID, input.Content, adminID)
 
 	if err != nil {
-		http.Error(w, "Failed to add note", http.StatusInternalServerError)
+		logger.Error("Failed to add note for customer %s: %v", id, err)
+		render.Error(w, "Failed to add note", http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Note added successfully"})
+	render.Success(w, map[string]string{"message": "Note added successfully"})
 }

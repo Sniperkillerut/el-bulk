@@ -21,7 +21,7 @@ func TestStorageHandler_List(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &StorageHandler{DB: sqlxDB}
+	h := testStorageHandler(sqlxDB)
 
 	t.Run("Success", func(t *testing.T) {
 		mock.ExpectQuery("SELECT .* FROM storage_location").WillReturnRows(sqlmock.NewRows([]string{"id", "name", "item_count"}).AddRow("1", "Shelf", 10))
@@ -46,7 +46,7 @@ func TestStorageHandler_Create(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &StorageHandler{DB: sqlxDB}
+	h := testStorageHandler(sqlxDB)
 
 	t.Run("Success", func(t *testing.T) {
 		input := models.StoredIn{Name: "New Box"}
@@ -67,7 +67,7 @@ func TestStorageHandler_Create(t *testing.T) {
 		req, _ := http.NewRequest("POST", "/api/admin/storage", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
 		h.Create(rr, req)
-		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+		assert.Equal(t, http.StatusBadRequest, rr.Code)
 	})
 }
 
@@ -77,7 +77,7 @@ func TestStorageHandler_Update(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &StorageHandler{DB: sqlxDB}
+	h := testStorageHandler(sqlxDB)
 
 	t.Run("Success", func(t *testing.T) {
 		input := models.StoredIn{Name: "Updated Name"}
@@ -102,7 +102,7 @@ func TestStorageHandler_Update(t *testing.T) {
 		req, _ := http.NewRequest("PUT", "/api/admin/storage/1", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
-		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+		assert.Equal(t, http.StatusBadRequest, rr.Code)
 	})
 }
 
@@ -112,7 +112,7 @@ func TestStorageHandler_Delete(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &StorageHandler{DB: sqlxDB}
+	h := testStorageHandler(sqlxDB)
 
 	t.Run("Success", func(t *testing.T) {
 		mock.ExpectExec("DELETE FROM storage_location").WillReturnResult(sqlmock.NewResult(0, 1))

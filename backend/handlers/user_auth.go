@@ -9,24 +9,22 @@ import (
 	"time"
 
 	"github.com/el-bulk/backend/middleware"
-	"github.com/el-bulk/backend/models"
-	"github.com/el-bulk/backend/utils/crypto"
+	"github.com/el-bulk/backend/service"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/el-bulk/backend/utils/render"
 	"github.com/go-chi/chi/v5"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/jmoiron/sqlx"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/facebook"
 	"golang.org/x/oauth2/google"
 )
 
 type UserAuthHandler struct {
-	DB *sqlx.DB
+	Service *service.AuthService
 }
 
-func NewUserAuthHandler(db *sqlx.DB) *UserAuthHandler {
-	return &UserAuthHandler{DB: db}
+func NewUserAuthHandler(s *service.AuthService) *UserAuthHandler {
+	return &UserAuthHandler{Service: s}
 }
 
 func getProviderConfig(provider string) *oauth2.Config {
@@ -173,15 +171,12 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 1. Check if identity is already linked to SOMEONE
-	var linkedCustomerID string
-	err = h.DB.Get(&linkedCustomerID, "SELECT customer_id FROM customer_auth WHERE provider = $1 AND provider_id = $2", provider, finalID)
-	
+	linkedCustomerID, linkErr := h.Service.FindLinkedCustomerID(provider, finalID)
+
 	currentUserID, _ := r.Context().Value(middleware.UserIDKey).(string)
 	if currentUserID != "" {
-		var exists bool
-		err := h.DB.Get(&exists, "SELECT EXISTS(SELECT 1 FROM customer WHERE id = $1)", currentUserID)
+		exists, err := h.Service.CustomerExists(currentUserID)
 		if err != nil || !exists {
-			// User has a valid token but does not exist in DB (stale session after data wipe)
 			logger.Warn("Stale session for deleted user %s. Treating as guest.", currentUserID)
 			currentUserID = "" // Revert to guest flow
 		}
@@ -189,87 +184,63 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 
 	if currentUserID != "" {
 		// LINKING FLOW
-		if err == nil {
+		if linkErr == nil {
 			if linkedCustomerID == currentUserID {
-				// Already linked to this user, just return
 				http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+redirectURL, http.StatusFound)
 				return
 			}
-			// Already linked to ANOTHER user
 			http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/profile?error=already_linked", http.StatusTemporaryRedirect)
 			return
 		}
-		
-		// Link it
-		_, linkErr := h.DB.Exec("INSERT INTO customer_auth (customer_id, provider, provider_id) VALUES ($1, $2, $3)", currentUserID, provider, finalID)
-		if linkErr != nil {
-			logger.Error("Failed to link account: %v", linkErr)
+
+		if err := h.Service.LinkProvider(currentUserID, provider, finalID); err != nil {
+			logger.Error("Failed to link account: %v", err)
 			http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/profile?error=link_failed", http.StatusTemporaryRedirect)
 			return
 		}
-		
-		// Success linking
+
 		http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+redirectURL, http.StatusFound)
 		return
 	}
 
 	// LOGIN / SIGNUP FLOW
-	var customer models.Customer
+	var customerID string
 	found := false
-	if err == nil {
-		// Found via customer_auth
-		err = h.DB.Get(&customer, "SELECT * FROM customer WHERE id = $1", linkedCustomerID)
+	if linkErr == nil {
+		customer, err := h.Service.GetCustomerByID(linkedCustomerID)
 		if err == nil {
+			customerID = customer.ID
 			found = true
 		} else {
-			// Orphaned auth record (possibly due to developer deleting users but not auth records)
-			// Treat as if not found and let it fall through to signup/email check
 			logger.Warn("Customer linked in auth but missing in database: %s. Cleaning up orphan record.", linkedCustomerID)
-			h.DB.Exec("DELETE FROM customer_auth WHERE provider = $1 AND provider_id = $2", provider, finalID)
+			h.Service.CleanOrphanAuth(provider, finalID)
 		}
 	}
 
 	if !found {
-		// Not found in customer_auth (or record was orphan), try email lookup
-		err = h.DB.Get(&customer, "SELECT * FROM customer WHERE email = $1", finalEmail)
+		customer, err := h.Service.GetCustomerByEmail(finalEmail)
 		if err != nil {
 			// First time user, create account
-			tx, _ := h.DB.Beginx()
-			defer tx.Rollback()
-
-			query := `
-				INSERT INTO customer (first_name, last_name, email, avatar_url)
-				VALUES ($1, $2, $3, $4)
-				RETURNING *
-			`
-			err = tx.Get(&customer, query, finalFirstName, finalLastName, finalEmail, finalAvatar)
+			customer, err = h.Service.CreateCustomerWithAuth(finalFirstName, finalLastName, finalEmail, finalAvatar, provider, finalID)
 			if err != nil {
 				logger.Error("Failed to create user: %v", err)
 				http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=db_error", http.StatusTemporaryRedirect)
 				return
 			}
-
-			// Add auth link
-			_, err = tx.Exec("INSERT INTO customer_auth (customer_id, provider, provider_id) VALUES ($1, $2, $3)", customer.ID, provider, finalID)
-			if err != nil {
-				logger.Error("Failed to create auth link: %v", err)
-				http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=db_error", http.StatusTemporaryRedirect)
-				return
-			}
-			tx.Commit()
+			customerID = customer.ID
 		} else {
 			// Found by email, link this provider to it
-			_, err = h.DB.Exec("INSERT INTO customer_auth (customer_id, provider, provider_id) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING", customer.ID, provider, finalID)
-			if err != nil {
+			if err := h.Service.LinkProviderIfNotExists(customer.ID, provider, finalID); err != nil {
 				logger.Error("Failed to link provider to existing user by email: %v", err)
 			}
+			customerID = customer.ID
 		}
 	}
 
 	// Generate JWT Token
 	secret := os.Getenv("JWT_SECRET")
 	claims := jwt.MapClaims{
-		"sub": customer.ID,
+		"sub": customerID,
 		"exp": time.Now().Add(24 * 7 * time.Hour).Unix(), // 7 days
 		"iat": time.Now().Unix(),
 	}
@@ -294,7 +265,6 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 	})
 
-	// Redirect back to frontend
 	http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+redirectURL, http.StatusFound)
 }
 
@@ -307,26 +277,11 @@ func (h *UserAuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var customer models.Customer
-	err := h.DB.Get(&customer, "SELECT * FROM customer WHERE id = $1", userID)
+	customer, err := h.Service.GetMe(userID)
 	if err != nil {
 		render.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
-
-	// Fetch linked providers
-	var providers []string
-	err = h.DB.Select(&providers, "SELECT provider FROM customer_auth WHERE customer_id = $1", userID)
-	if err == nil {
-		customer.LinkedProviders = providers
-	} else {
-		customer.LinkedProviders = []string{}
-	}
-
-	// Decrypt sensitive fields
-	customer.Phone = crypto.DecryptSafe(customer.Phone)
-	customer.IDNumber = crypto.DecryptSafe(customer.IDNumber)
-	customer.Address = crypto.DecryptSafe(customer.Address)
 
 	render.Success(w, customer)
 }
@@ -350,17 +305,7 @@ func (h *UserAuthHandler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Encrypt sensitive fields before saving
-	encPhone, _ := crypto.Encrypt(input.Phone)
-	encIDNumber, _ := crypto.Encrypt(input.IDNumber)
-	encAddress, _ := crypto.Encrypt(input.Address)
-
-	_, err := h.DB.Exec(`
-		UPDATE customer SET phone = $1, id_number = $2, address = $3
-		WHERE id = $4
-	`, encPhone, encIDNumber, encAddress, userID)
-
-	if err != nil {
+	if err := h.Service.UpdateProfile(userID, input.Phone, input.IDNumber, input.Address); err != nil {
 		logger.Error("Failed to update user %s: %v", userID, err)
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/el-bulk/backend/service"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )
@@ -14,7 +15,7 @@ import (
 func TestHealthHandler_Ping(t *testing.T) {
 	db, mock, _ := sqlmock.New(sqlmock.MonitorPingsOption(true))
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
-	h := NewHealthHandler(sqlxDB)
+	h := testHealthHandler(sqlxDB)
 
 	t.Run("Success", func(t *testing.T) {
 		mock.ExpectPing()
@@ -41,7 +42,7 @@ func TestHealthHandler_Ping(t *testing.T) {
 	})
 
 	t.Run("No DB", func(t *testing.T) {
-		hNoDB := NewHealthHandler(nil)
+		hNoDB := NewHealthHandler(&service.HealthService{})
 		req := httptest.NewRequest("GET", "/health/ping", nil)
 		rr := httptest.NewRecorder()
 		hNoDB.Ping(rr, req)
@@ -53,7 +54,7 @@ func TestHealthHandler_Ping(t *testing.T) {
 func TestHealthHandler_GetStats(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
-	h := NewHealthHandler(sqlxDB)
+	h := testHealthHandler(sqlxDB)
 
 	t.Run("Success", func(t *testing.T) {
 		mock.ExpectQuery("SELECT pg_size_pretty").WillReturnRows(sqlmock.NewRows([]string{"pg_size_pretty"}).AddRow("10 MB"))
@@ -72,7 +73,7 @@ func TestHealthHandler_GetStats(t *testing.T) {
 		h.GetStats(rr, req)
 
 		assert.Equal(t, http.StatusOK, rr.Code)
-		var stats DBStats
+		var stats service.DBStats
 		json.NewDecoder(rr.Body).Decode(&stats)
 		assert.Equal(t, "10 MB", stats.DatabaseSize)
 		assert.Equal(t, 95.5, stats.CacheHitRatio)
@@ -81,7 +82,7 @@ func TestHealthHandler_GetStats(t *testing.T) {
 	})
 
 	t.Run("No DB", func(t *testing.T) {
-		hNoDB := NewHealthHandler(nil)
+		hNoDB := NewHealthHandler(&service.HealthService{})
 		req := httptest.NewRequest("GET", "/health/stats", nil)
 		rr := httptest.NewRecorder()
 		hNoDB.GetStats(rr, req)

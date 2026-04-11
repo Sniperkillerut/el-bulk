@@ -63,7 +63,7 @@ func TestCORS(t *testing.T) {
 			frontendOrigin: "https://example.com",
 			requestOrigin:  "",
 			requestMethod:  "GET",
-			expectedOrigin: "*",
+			expectedOrigin: "", // No ACAO header when no origin is sent (server-to-server/same-origin)
 			expectedStatus: http.StatusOK,
 		},
 		{

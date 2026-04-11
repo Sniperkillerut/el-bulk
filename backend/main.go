@@ -38,6 +38,10 @@ func main() {
 	
 	// Auto-detect GCP context (overrides manual format if on GCP)
 	logger.AutoDetectGCP()
+
+	if os.Getenv("APP_ENV") == "" {
+		logger.Warn("⚠️ APP_ENV is not set. CORS and security middleware will run in development mode.")
+	}
 	
 	logger.Info("Logger initialized | Level: %s | Format: %s", 
 		logger.Default.GetLevel().String(), 
@@ -60,6 +64,15 @@ func main() {
 	settingsStore := store.NewSettingsStore(database)
 	orderStore := store.NewOrderStore(database)
 	customerStore := store.NewCustomerStore(database)
+	bountyStore := store.NewBountyStore(database)
+	adminStore := store.NewAdminStore(database)
+	newsletterStore := store.NewNewsletterStore(database)
+	storageLocationStore := store.NewStorageLocationStore(database)
+	authStore := store.NewAuthStore(database)
+	healthStore := store.NewHealthStore(database)
+	refreshStore := store.NewRefreshStore(database)
+	accountingStore := store.NewAccountingStore(database)
+	translationStore := store.NewTranslationStore(database)
 
 	// Initialize Services
 	settingsService := service.NewSettingsService(settingsStore)
@@ -69,21 +82,35 @@ func main() {
 	tcgService := service.NewTCGService(tcgStore)
 	noticeService := service.NewNoticeService(noticeStore)
 	themeService := service.NewThemeService(themeStore)
+	bountyService := service.NewBountyService(bountyStore)
+	adminService := service.NewAdminService(adminStore)
+	newsletterService := service.NewNewsletterService(newsletterStore)
+	storageLocationService := service.NewStorageLocationService(storageLocationStore)
+	authService := service.NewAuthService(authStore)
+	healthService := service.NewHealthService(healthStore)
+	refreshService := service.NewRefreshService(refreshStore)
+	accountingService := service.NewAccountingService(accountingStore, settingsService)
+	translationService := service.NewTranslationService(translationStore)
 
+	// Initialize Handlers
 	productHandler := handlers.NewProductHandler(productService, database)
-	adminHandler := handlers.NewAdminHandler(database)
+	adminHandler := handlers.NewAdminHandler(adminService)
 	categoriesHandler := handlers.NewCategoriesHandler(categoryService)
 	lookupHandler := handlers.NewLookupHandler()
 	settingsHandler := handlers.NewSettingsHandler(settingsService)
-	refreshHandler := handlers.NewRefreshHandler(database)
+	refreshHandler := handlers.NewRefreshHandler(refreshService)
 	orderHandler := handlers.NewOrderHandler(orderService)
 	tcgHandler := handlers.NewTCGHandler(tcgService)
-	bountyHandler := handlers.NewBountyHandler(database)
-	healthHandler := handlers.NewHealthHandler(database)
-	accountingHandler := handlers.NewAccountingHandler(database, settingsService)
-	translationHandler := handlers.NewTranslationHandler(database)
+	bountyHandler := handlers.NewBountyHandler(bountyService)
+	healthHandler := handlers.NewHealthHandler(healthService)
+	accountingHandler := handlers.NewAccountingHandler(database, accountingService)
+	translationHandler := handlers.NewTranslationHandler(translationService)
 	themeHandler := handlers.NewThemeHandler(themeService)
 	noticeHandler := handlers.NewNoticeHandler(noticeService)
+	userAuthHandler := handlers.NewUserAuthHandler(authService)
+	newsletterHandler := handlers.NewNewsletterHandler(newsletterService)
+	storageLocationHandler := handlers.NewStorageHandler(storageLocationService)
+
 	// Initialize Storage Backend
 	var storageDriver storage.StorageDriver
 	storageType := os.Getenv("STORAGE_TYPE")
@@ -121,7 +148,7 @@ func main() {
 	uploadHandler := handlers.NewUploadHandler(storageDriver)
 
 	// Start nightly price refresh at midnight
-	handlers.StartMidnightScheduler(database)
+	handlers.StartMidnightScheduler(refreshService)
 
 	r := chi.NewRouter()
 
@@ -158,7 +185,6 @@ func main() {
 		r.With(middleware.RequireUserAuth).Delete("/client-requests/me/{id}", bountyHandler.CancelMeRequest)
 		
 		// Newsletter
-		newsletterHandler := &handlers.NewsletterHandler{DB: database}
 		r.With(middleware.RateLimit(3, 30*time.Minute)).Post("/newsletter/subscribe", newsletterHandler.Subscribe)
 
 		// Public order creation (with optional user context)
@@ -172,7 +198,6 @@ func main() {
 		r.Post("/logs", logHandler.Receive)
 
 		// User Auth
-		userAuthHandler := handlers.NewUserAuthHandler(database)
 		r.Route("/auth", func(r chi.Router) {
 			r.With(middleware.RateLimit(10, 5*time.Minute)).Get("/{provider}/login", userAuthHandler.Login)
 			r.With(middleware.OptionalUserAuth).Get("/{provider}/callback", userAuthHandler.Callback)
@@ -212,11 +237,10 @@ func main() {
 				r.Put("/products/{id}/storage", productHandler.UpdateStorage)
 
 				// Storage Locations CRUD
-				storageHandler := handlers.NewStorageHandler(database)
-				r.Get("/storage", storageHandler.List)
-				r.Post("/storage", storageHandler.Create)
-				r.Put("/storage/{id}", storageHandler.Update)
-				r.Delete("/storage/{id}", storageHandler.Delete)
+				r.Get("/storage", storageLocationHandler.List)
+				r.Post("/storage", storageLocationHandler.Create)
+				r.Put("/storage/{id}", storageLocationHandler.Update)
+				r.Delete("/storage/{id}", storageLocationHandler.Delete)
 
 				// Custom Categories CRUD
 				r.Get("/categories", categoriesHandler.List)
@@ -264,9 +288,6 @@ func main() {
 				r.Put("/bounties/offers/{id}/status", bountyHandler.UpdateOfferStatus)
 				r.Get("/client-requests", bountyHandler.ListRequests)
 				r.Put("/client-requests/{id}/status", bountyHandler.UpdateRequestStatus)
-
-				// System Health & Stats
-				r.Get("/stats", healthHandler.GetStats)
 
 				// Notices (Blog/News) CRUD
 				r.Get("/notices", noticeHandler.AdminList)

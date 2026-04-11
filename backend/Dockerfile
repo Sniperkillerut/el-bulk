@@ -30,6 +30,8 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 WORKDIR /app
 COPY --from=builder /el-bulk-api .
+COPY --from=builder /app/db/schema ./db/schema
+COPY --from=builder /app/db/migrations ./db/migrations
 
 # Optimizations for Cloud Run / Serverless memory limits
 # GOMEMLIMIT should be set to ~90% of your container's RAM limit.

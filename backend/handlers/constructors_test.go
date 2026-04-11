@@ -18,16 +18,16 @@ func TestConstructors(t *testing.T) {
 	customerStore := store.NewCustomerStore(db)
 	orderService := service.NewOrderService(orderStore, store.NewProductStore(db), customerStore, settingsService)
 
-	assert.NotNil(t, NewAdminHandler(db))
+	assert.NotNil(t, testAdminHandler(db))
 	assert.NotNil(t, NewCategoriesHandler(service.NewCategoryService(store.NewCategoryStore(db))))
 	assert.NotNil(t, NewOrderHandler(orderService))
 
 	ps := service.NewProductService(store.NewProductStore(db), store.NewTCGStore(db), settingsService)
 	assert.NotNil(t, NewProductHandler(ps, db))
 
-	assert.NotNil(t, NewRefreshHandler(db))
+	assert.NotNil(t, testRefreshHandler(db))
 	assert.NotNil(t, NewSettingsHandler(settingsService))
-	assert.NotNil(t, NewStorageHandler(db))
+	assert.NotNil(t, testStorageHandler(db))
 	assert.NotNil(t, NewTCGHandler(service.NewTCGService(store.NewTCGStore(db))))
 	assert.NotNil(t, NewThemeHandler(service.NewThemeService(store.NewThemeStore(db))))
 	assert.NotNil(t, NewNoticeHandler(service.NewNoticeService(store.NewNoticeStore(db))))
