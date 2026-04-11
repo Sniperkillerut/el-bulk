@@ -76,11 +76,31 @@ func ConnectResilient() (*sqlx.DB, error) {
 		// However, pgxv5 handles this fairly well globally for the lifetime of the process.
 		_ = cleanup // suppress unused
 
-		// Construct DSN for the connector
-		// Format: host=<INSTANCE_CONNECTION_NAME> user=<DB_USER> password=<DB_PASS> dbname=<DB_NAME> sslmode=disable
-		// Note: password is ignored if IAM auth is enabled, but we pass what's in the DSN/env.
-		
-		db, err := sqlx.Open("cloudsql-postgres", dsn)
+		// Construct a clean DSN that the Cloud SQL connector expects.
+		// It MUST have the instance name as the 'host'.
+		user := "elbulk" // Default for production
+		dbName := "elbulk"
+
+		// If a DATABASE_URL is provided, try to extract dbname/user to stay consistent
+		// with legacy secrets if they are still being passed.
+		if dsn != "" {
+			if strings.Contains(dsn, "/") {
+				parts := strings.Split(dsn, "/")
+				lastPart := parts[len(parts)-1]
+				dbName = strings.Split(lastPart, "?")[0]
+			}
+			if strings.HasPrefix(dsn, "postgres://") {
+				userInfo := strings.Split(strings.TrimPrefix(dsn, "postgres://"), "@")[0]
+				user = strings.Split(userInfo, ":")[0]
+			}
+		}
+
+		cleanDsn := fmt.Sprintf("host=%s dbname=%s sslmode=disable", instanceName, dbName)
+		if os.Getenv("DB_IAM_AUTH") != "true" && user != "" {
+			cleanDsn += fmt.Sprintf(" user=%s", user)
+		}
+
+		db, err := sqlx.Open("cloudsql-postgres", cleanDsn)
 		if err != nil {
 			return nil, fmt.Errorf("failed to open database via Cloud SQL Connector: %v", err)
 		}
