@@ -13,6 +13,7 @@ export default function PrivacyPage() {
     'cookies',
     'data_usage',
     'rights',
+    'data_deletion',
     'contact'
   ];
 
@@ -38,7 +39,7 @@ export default function PrivacyPage() {
           {/* Sections */}
           <div className="space-y-12">
             {sections.map((section) => (
-              <section key={section} className="scroll-mt-24">
+              <section key={section} id={section.replace(/_/g, '-')} className="scroll-mt-24">
                 <h2 className="text-xl font-display text-accent-main mb-4 tracking-wide uppercase border-l-2 border-accent-main pl-4">
                   {t(`pages.privacy.sections.${section}.title`)}
                 </h2>

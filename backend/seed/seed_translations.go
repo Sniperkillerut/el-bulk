@@ -600,10 +600,15 @@ func seedTranslations(db *sqlx.DB) {
 		{"pages.privacy.sections.rights.content", "en", "You have the right to access, correct, or delete your personal data at any time through your profile settings or by contacting us directly."},
 		{"pages.privacy.sections.rights.content", "es", "Tienes el derecho de acceder, corregir o eliminar tus datos personales en cualquier momento a través de la configuración de tu perfil o contactándonos directamente."},
 
-		{"pages.privacy.sections.contact.title", "en", "7. Contact Us"},
-		{"pages.privacy.sections.contact.title", "es", "7. Contáctanos"},
-		{"pages.privacy.sections.contact.content", "en", "If you have questions about this policy, please reach out to us at notices@elbulk.com or visit us at our physical location."},
-		{"pages.privacy.sections.contact.content", "es", "Si tienes dudas sobre esta política, por favor escríbenos a notices@elbulk.com o visítanos en nuestra ubicación física."},
+		{"pages.privacy.sections.data_deletion.title", "en", "7. Data Deletion Request"},
+		{"pages.privacy.sections.data_deletion.title", "es", "7. Solicitud de Eliminación de Datos"},
+		{"pages.privacy.sections.data_deletion.content", "en", "To delete your data, you can remove 'El Bulk' from your Facebook Profile Settings under 'Apps and Websites'. Alternatively, you can request manual deletion of your account and all associated data by sending an email to admin@elbulk.com with the subject 'Data Deletion Request'."},
+		{"pages.privacy.sections.data_deletion.content", "es", "Para eliminar tus datos, puedes quitar 'El Bulk' desde la Configuración de tu perfil de Facebook en 'Apps y sitios web'. Alternativamente, puedes solicitar la eliminación manual de tu cuenta y todos los datos asociados enviando un correo a admin@elbulk.com con el asunto 'Solicitud de Eliminación de Datos'."},
+
+		{"pages.privacy.sections.contact.title", "en", "8. Contact Us"},
+		{"pages.privacy.sections.contact.title", "es", "8. Contáctanos"},
+		{"pages.privacy.sections.contact.content", "en", "If you have questions about this policy, please reach out to us at admin@elbulk.com or visit us at our physical location."},
+		{"pages.privacy.sections.contact.content", "es", "Si tienes dudas sobre esta política, por favor escríbenos a admin@elbulk.com o visítanos en nuestra ubicación física."},
 
 		// Terms of Engagement
 		{"pages.terms.title", "en", "Terms of Engagement"},
