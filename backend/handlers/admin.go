@@ -38,7 +38,12 @@ func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	admin, err := h.Service.GetByUsername(req.Username)
 	if err != nil {
-		logger.Warn("Failed login attempt for username: %s", req.Username)
+		// Differentiate between user not found and other errors (like DB connection)
+		if strings.Contains(err.Error(), "no rows") {
+			logger.Warn("Failed login attempt: user '%s' not found", req.Username)
+		} else {
+			logger.Error("Database error during login for '%s': %v", req.Username, err)
+		}
 		render.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
@@ -75,10 +80,13 @@ func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(24 * time.Hour),
 		HttpOnly: true,
 		Secure:   isSecure,
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 	})
 
-	render.Success(w, map[string]string{"message": "Logged in successfully"})
+	render.Success(w, map[string]string{
+		"message": "Logged in successfully",
+		"token":   signed,
+	})
 }
 
 // POST /api/admin/logout

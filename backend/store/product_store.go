@@ -66,7 +66,16 @@ func (s *ProductStore) ListWithFilters(params ProductFilterParams) ([]models.Pro
 	orderBy := s.buildOrderBy(params.SortBy, params.SortDir, params.Search, len(args))
 
 	// Use enriched view for listing
-	viewFrom := strings.Replace(fromClause, "FROM product p", "FROM view_product_enriched p", 1)
+	viewFromClause, conditions, args := s.buildFilters(params)
+	viewFrom := strings.Replace(viewFromClause, "FROM product p", "FROM view_product_enriched p", 1)
+
+	where = ""
+	if len(conditions) > 0 {
+		where = "WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	orderBy = s.buildOrderBy(params.SortBy, params.SortDir, params.Search, len(args))
+
 	listQuery := fmt.Sprintf("SELECT p.* %s %s ORDER BY %s LIMIT $%d OFFSET $%d",
 		viewFrom, where, orderBy, len(args)+1, len(args)+2)
 
