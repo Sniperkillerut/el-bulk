@@ -89,7 +89,7 @@ INSERT INTO theme (
   text_main, text_secondary, text_muted, text_on_accent, text_on_header,
   accent_primary, accent_primary_hover, border_main, border_focus,
   status_nm, status_lp, status_mp, status_hp, status_dmg,
-  accent_header, status_hp_header,
+  accent_header, status_hp_header
   btn_primary_bg, btn_primary_text, btn_secondary_bg, btn_secondary_text,
   checkbox_border, checkbox_checked,
   radius_base, padding_card, gap_grid
@@ -113,7 +113,7 @@ INSERT INTO theme (
   text_main, text_secondary, text_muted, text_on_accent, text_on_header,
   accent_primary, accent_primary_hover, border_main, border_focus,
   status_nm, status_lp, status_mp, status_hp, status_dmg,
-  accent_header, status_hp_header,
+  accent_header, status_hp_header
   btn_primary_bg, btn_primary_text, btn_secondary_bg, btn_secondary_text,
   checkbox_border, checkbox_checked,
   radius_base, padding_card, gap_grid
@@ -137,7 +137,7 @@ INSERT INTO theme (
   text_main, text_secondary, text_muted, text_on_accent, text_on_header,
   accent_primary, accent_primary_hover, border_main, border_focus,
   status_nm, status_lp, status_mp, status_hp, status_dmg,
-  accent_header, status_hp_header,
+  accent_header, status_hp_header
   btn_primary_bg, btn_primary_text, btn_secondary_bg, btn_secondary_text,
   checkbox_border, checkbox_checked,
   radius_base, padding_card, gap_grid
@@ -161,7 +161,7 @@ INSERT INTO theme (
   text_main, text_secondary, text_muted, text_on_accent, text_on_header,
   accent_primary, accent_primary_hover, border_main, border_focus,
   status_nm, status_lp, status_mp, status_hp, status_dmg,
-  accent_header, status_hp_header,
+  accent_header, status_hp_header
   btn_primary_bg, btn_primary_text, btn_secondary_bg, btn_secondary_text,
   checkbox_border, checkbox_checked,
   radius_base, padding_card, gap_grid
@@ -185,7 +185,7 @@ INSERT INTO theme (
   text_main, text_secondary, text_muted, text_on_accent, text_on_header,
   accent_primary, accent_primary_hover, border_main, border_focus,
   status_nm, status_lp, status_mp, status_hp, status_dmg,
-  accent_header, status_hp_header,
+  accent_header, status_hp_header
   btn_primary_bg, btn_primary_text, btn_secondary_bg, btn_secondary_text,
   checkbox_border, checkbox_checked,
   radius_base, padding_card, gap_grid
@@ -209,7 +209,7 @@ INSERT INTO theme (
   text_main, text_secondary, text_muted, text_on_accent, text_on_header,
   accent_primary, accent_primary_hover, border_main, border_focus,
   status_nm, status_lp, status_mp, status_hp, status_dmg,
-  accent_header, status_hp_header,
+  accent_header, status_hp_header
   btn_primary_bg, btn_primary_text, btn_secondary_bg, btn_secondary_text,
   checkbox_border, checkbox_checked,
   radius_base, padding_card, gap_grid
