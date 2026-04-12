@@ -3,17 +3,18 @@
 import React from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 
-export default function PrivacyPage() {
+export default function TermsPage() {
   const { t } = useLanguage();
 
   const sections = [
-    'info_collected',
-    'habeas_data',
-    'auth',
-    'cookies',
-    'data_usage',
-    'rights',
-    'contact'
+    'rules_of_engagement',
+    'condition_grading',
+    'inventory_availability',
+    'order_fulfillment',
+    'pricing_inventory',
+    'bulk_submissions',
+    'user_conduct',
+    'limits_of_liability'
   ];
 
   return (
@@ -22,17 +23,17 @@ export default function PrivacyPage() {
         {/* Header */}
         <div className="border-b border-border-main pb-8 mb-12">
           <h1 className="text-4xl sm:text-5xl font-display text-accent-header mb-4 tracking-tight uppercase">
-            {t('pages.privacy.title', 'Privacy Policy')}
+            {t('pages.terms.title', 'Terms of Engagement')}
           </h1>
           <p className="text-sm font-mono text-text-muted">
-            {t('pages.privacy.last_updated', 'Last updated: April 12, 2026')}
+            {t('pages.terms.last_updated', 'Last updated: April 12, 2026')}
           </p>
         </div>
 
         {/* Intro */}
         <div className="prose prose-invert prose-emerald max-w-none">
           <p className="text-lg text-text-main leading-relaxed mb-12 italic opacity-90">
-            {t('pages.privacy.intro', 'At El Bulk, we are committed to protecting your privacy.')}
+            {t('pages.terms.intro', 'By accessing El Bulk, you agree to these protocols. We curate the common, the uncommon, and the essential pieces of your TCG strategy.')}
           </p>
 
           {/* Sections */}
@@ -40,10 +41,10 @@ export default function PrivacyPage() {
             {sections.map((section) => (
               <section key={section} className="scroll-mt-24">
                 <h2 className="text-xl font-display text-accent-main mb-4 tracking-wide uppercase border-l-2 border-accent-main pl-4">
-                  {t(`pages.privacy.sections.${section}.title`)}
+                  {t(`pages.terms.sections.${section}.title`)}
                 </h2>
                 <div className="text-text-main leading-relaxed opacity-80 pl-5">
-                  {t(`pages.privacy.sections.${section}.content`)}
+                  {t(`pages.terms.sections.${section}.content`)}
                 </div>
               </section>
             ))}

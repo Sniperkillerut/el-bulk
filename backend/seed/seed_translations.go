@@ -574,31 +574,84 @@ func seedTranslations(db *sqlx.DB) {
 		{"pages.privacy.sections.info_collected.title", "es", "1. Información que Recopilamos"},
 		{"pages.privacy.sections.info_collected.content", "en", "We collect information you provide directly to us, such as your name, email address, physical address (for shipping), and phone number when you create an account or place an order."},
 		{"pages.privacy.sections.info_collected.content", "es", "Recopilamos la información que nos proporcionas directamente, como tu nombre, correo electrónico, dirección física (para envíos) y número de teléfono cuando creas una cuenta o realizas un pedido."},
+		
+		{"pages.privacy.sections.habeas_data.title", "en", "2. Habeas Data Protocol (Law 1581 of 2012)"},
+		{"pages.privacy.sections.habeas_data.title", "es", "2. Protocolo de Habeas Data (Ley 1581 de 2012)"},
+		{"pages.privacy.sections.habeas_data.content", "en", "In accordance with Colombian law, by using this platform you authorize El Bulk to process your personal data for order fulfillment, logistical coordination with third-party carriers, and business intelligence. You maintain the right to access, update, rectify, or request the deletion of your data through our secure communication channels."},
+		{"pages.privacy.sections.habeas_data.content", "es", "De acuerdo con la ley colombiana, al usar esta plataforma autorizas a El Bulk a tratar tus datos personales para el cumplimiento de pedidos, coordinación logística con transportadores externos e inteligencia de negocios. Mantienes el derecho de acceder, actualizar, rectificar o solicitar la supresión de tus datos a través de nuestros canales de comunicación seguros."},
 
-		{"pages.privacy.sections.auth.title", "en", "2. Authentication Services (OAuth)"},
-		{"pages.privacy.sections.auth.title", "es", "2. Servicios de Autenticación (OAuth)"},
+		{"pages.privacy.sections.auth.title", "en", "3. Authentication Services (OAuth)"},
+		{"pages.privacy.sections.auth.title", "es", "3. Servicios de Autenticación (OAuth)"},
 		{"pages.privacy.sections.auth.content", "en", "If you choose to log in using Google or Facebook, we receive your basic profile information (name, email, and profile picture). We use this data only to create and manage your account. We do not post to your social profiles or share your social data with third parties."},
 		{"pages.privacy.sections.auth.content", "es", "Si eliges iniciar sesión con Google o Facebook, recibimos tu información de perfil básica (nombre, correo y foto de perfil). Usamos estos datos solo para crear y administrar tu cuenta. No publicamos en tus perfiles sociales ni compartimos tus datos sociales con terceros."},
 
-		{"pages.privacy.sections.cookies.title", "en", "3. Cookies and Tracking"},
-		{"pages.privacy.sections.cookies.title", "es", "3. Cookies y Seguimiento"},
+		{"pages.privacy.sections.cookies.title", "en", "4. Cookies and Tracking"},
+		{"pages.privacy.sections.cookies.title", "es", "4. Cookies y Seguimiento"},
 		{"pages.privacy.sections.cookies.content", "en", "We use essential cookies to manage your session, cart, and preferences. With your consent, we also use analytics (Google Analytics) and marketing cookies (Meta Pixel) to improve our store and offer relevant content."},
 		{"pages.privacy.sections.cookies.content", "es", "Usamos cookies esenciales para gestionar tu sesión, carrito y preferencias. Con tu consentimiento, también usamos cookies de analítica (Google Analytics) y marketing (Meta Pixel) para mejorar nuestra tienda y ofrecer contenido relevante."},
 
-		{"pages.privacy.sections.data_usage.title", "en", "4. How We Use Your Data"},
-		{"pages.privacy.sections.data_usage.title", "es", "4. Cómo Usamos tus Datos"},
+		{"pages.privacy.sections.data_usage.title", "en", "5. How We Use Your Data"},
+		{"pages.privacy.sections.data_usage.title", "es", "5. Cómo Usamos tus Datos"},
 		{"pages.privacy.sections.data_usage.content", "en", "Your data is used to process orders, coordinate deliveries via WhatsApp, and (if you subscribe) send you shop updates. We never sell your personal information to third parties."},
 		{"pages.privacy.sections.data_usage.content", "es", "Tus datos se usan para procesar pedidos, coordinar entregas vía WhatsApp y (si te suscribes) enviarte novedades. Nunca vendemos tu información personal a terceros."},
 
-		{"pages.privacy.sections.rights.title", "en", "5. Your Rights"},
-		{"pages.privacy.sections.rights.title", "es", "5. Tus Derechos"},
+		{"pages.privacy.sections.rights.title", "en", "6. Your Rights"},
+		{"pages.privacy.sections.rights.title", "es", "6. Tus Derechos"},
 		{"pages.privacy.sections.rights.content", "en", "You have the right to access, correct, or delete your personal data at any time through your profile settings or by contacting us directly."},
 		{"pages.privacy.sections.rights.content", "es", "Tienes el derecho de acceder, corregir o eliminar tus datos personales en cualquier momento a través de la configuración de tu perfil o contactándonos directamente."},
 
-		{"pages.privacy.sections.contact.title", "en", "6. Contact Us"},
-		{"pages.privacy.sections.contact.title", "es", "6. Contáctanos"},
+		{"pages.privacy.sections.contact.title", "en", "7. Contact Us"},
+		{"pages.privacy.sections.contact.title", "es", "7. Contáctanos"},
 		{"pages.privacy.sections.contact.content", "en", "If you have questions about this policy, please reach out to us at notices@elbulk.com or visit us at our physical location."},
 		{"pages.privacy.sections.contact.content", "es", "Si tienes dudas sobre esta política, por favor escríbenos a notices@elbulk.com o visítanos en nuestra ubicación física."},
+
+		// Terms of Engagement
+		{"pages.terms.title", "en", "Terms of Engagement"},
+		{"pages.terms.title", "es", "Términos de Participación"},
+		{"pages.terms.last_updated", "en", "Last updated: April 12, 2026"},
+		{"pages.terms.last_updated", "es", "Última actualización: 12 de abril, 2026"},
+		{"pages.terms.intro", "en", "By accessing El Bulk, you agree to these protocols. We curate the common, the uncommon, and the essential pieces of your TCG strategy."},
+		{"pages.terms.intro", "es", "Al acceder a El Bulk, aceptas estos protocolos. Curamos las piezas comunes, infrecuentes y esenciales de tu estrategia TCG."},
+
+		{"pages.terms.sections.rules_of_engagement.title", "en", "1. Rules of Engagement"},
+		{"pages.terms.sections.rules_of_engagement.title", "es", "1. Reglas de Participación"},
+		{"pages.terms.sections.rules_of_engagement.content", "en", "We provide a specialized platform for browsing, acquiring, and liquidating TCG products. Any unauthorized extraction of data or systemic abuse will result in protocol termination."},
+		{"pages.terms.sections.rules_of_engagement.content", "es", "Proveemos una plataforma especializada para navegar, adquirir y liquidar productos TCG. Cualquier extracción no autorizada de datos o abuso sistémico resultará en la terminación del protocolo."},
+
+		{"pages.terms.sections.condition_grading.title", "en", "2. Card Condition Protocol"},
+		{"pages.terms.sections.condition_grading.title", "es", "2. Protocolo de Estado de Cartas"},
+		{"pages.terms.sections.condition_grading.content", "en", "All assets are classified into NM (Near Mint), LP (Lightly Played), or MP (Moderately Played). We do not guarantee 'Gem Mint' status. Language is determined by the specific product metadata provided in the title or description."},
+		{"pages.terms.sections.condition_grading.content", "es", "Todos los activos se clasifican en NM (Near Mint), LP (Lightly Played) o MP (Moderately Played). No garantizamos el estado 'Gem Mint'. El idioma se determina por los metadatos específicos del producto proporcionados en el título o descripción."},
+
+		{"pages.terms.sections.inventory_availability.title", "en", "3. Intelligence Integrity"},
+		{"pages.terms.sections.inventory_availability.title", "es", "3. Integridad de Inteligencia"},
+		{"pages.terms.sections.inventory_availability.content", "en", "While we maintain high-precision sensors on our inventory, synchronization errors may occur. El Bulk reserves the right to cancel any order and provide a full refund if the asset is no longer available in the vault."},
+		{"pages.terms.sections.inventory_availability.content", "es", "Aunque mantenemos sensores de alta precisión en nuestro inventario, pueden ocurrir errores de sincronización. El Bulk se reserva el derecho de cancelar cualquier pedido y proporcionar un reembolso completo si el activo ya no está disponible en la bóveda."},
+
+		{"pages.terms.sections.order_fulfillment.title", "en", "4. Tactical Communications"},
+		{"pages.terms.sections.order_fulfillment.title", "es", "4. Comunicaciones Tácticas"},
+		{"pages.terms.sections.order_fulfillment.content", "en", "All registrations are preliminary. Final confirmation and extraction coordination will be handled via secure WhatsApp link. Orders for store pickup must be retrieved within 30 days or risk protocol expiration."},
+		{"pages.terms.sections.order_fulfillment.content", "es", "Todos los registros son preliminares. La confirmación final y la coordinación de extracción se manejarán vía enlace seguro de WhatsApp. Los pedidos para recogida en tienda deben retirarse en 30 días o arriesgan la expiración del protocolo."},
+
+		{"pages.terms.sections.pricing_inventory.title", "en", "5. Pricing Dynamics"},
+		{"pages.terms.sections.pricing_inventory.title", "es", "5. Dinámica de Precios"},
+		{"pages.terms.sections.pricing_inventory.content", "en", "Prices are denoted in COP based on current market intelligence. We reserve the right to adjust values for pending extractions if extreme market shifts are detected before confirmation."},
+		{"pages.terms.sections.pricing_inventory.content", "es", "Los precios se denotan en COP basados en la inteligencia de mercado actual. Nos reservamos el derecho de ajustar los valores para extracciones pendientes si se detectan cambios extremos en el mercado antes de la confirmación."},
+
+		{"pages.terms.sections.bulk_submissions.title", "en", "6. Bulk Liquidations"},
+		{"pages.terms.sections.bulk_submissions.title", "es", "6. Liquidaciones de Bulk"},
+		{"pages.terms.sections.bulk_submissions.content", "en", "Submissions must meet our grading standards. We do not accept assets in 'Damaged' condition for full buy-in rates. All assets are subject to physical inspection at our extraction point."},
+		{"pages.terms.sections.bulk_submissions.content", "es", "Las entregas deben cumplir con nuestros estándares de clasificación. No aceptamos activos en estado 'Dañado' para las tasas completas de compra. Todos los activos están sujetos a inspección física en nuestro punto de extracción."},
+
+		{"pages.terms.sections.user_conduct.title", "en", "7. User Protocols"},
+		{"pages.terms.sections.user_conduct.title", "es", "7. Protocolos de Usuario"},
+		{"pages.terms.sections.user_conduct.content", "en", "Users are responsible for the encryption and safety of their login credentials. Maintain professional conduct when interacting with El Bulk operatives during confirmation cycles."},
+		{"pages.terms.sections.user_conduct.content", "es", "Los usuarios son responsables de la encriptación y seguridad de sus credenciales de acceso. Mantén una conducta profesional al interactuar con los operativos de El Bulk durante los ciclos de confirmación."},
+
+		{"pages.terms.sections.limits_of_liability.title", "en", "8. Boundary of Responsibility"},
+		{"pages.terms.sections.limits_of_liability.title", "es", "8. Límite de Responsabilidad"},
+		{"pages.terms.sections.limits_of_liability.content", "en", "El Bulk is not liable for data loss or physical intercept once the extraction has been handed to third-party couriers. Risk passes to the recipient upon courier verification."},
+		{"pages.terms.sections.limits_of_liability.content", "es", "El Bulk no es responsable por la pérdida de datos o interceptación física una vez que la extracción ha sido entregada a mensajeros externos. El riesgo pasa al destinatario tras la verificación del mensajero."},
 
 		// Cart Drawer
 		{"pages.cart.drawer.title", "en", "YOUR CART"},

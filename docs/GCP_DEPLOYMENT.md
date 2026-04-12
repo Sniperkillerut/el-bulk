@@ -301,15 +301,6 @@ El Bulk uses Secret Manager as the **Single Source of Truth** for all configurat
 
 Run this script once to create all the required secrets in your project. Replace `YOUR_VALUE` placeholders with your actual production configuration.
 
-# JWT Secret (256-bit random)
-#openssl rand -hex 32
-# AES-256 Encryption Key (exactly 32 bytes of random)
-#openssl rand -hex 16 | xxd -p | tr -d '\n' | head -c 32
-# Or simpler:
-#python3 -c "import secrets; print(secrets.token_urlsafe(32)[:32])"
-# Strong admin password
-#openssl rand -base64 24
-
 ```bash
 # Define your variables (Format: "category:name:value")
 vars=(
@@ -393,6 +384,31 @@ gcloud projects add-iam-policy-binding $(gcloud config get-value project) \
   --member="serviceAccount:$RUN_SA" \
   --role="roles/secretmanager.secretAccessor"
 ```
+
+---
+
+## 7. Google OAuth Configuration
+
+You must create your OAuth credentials in the [GCP API & Services > Credentials](https://console.cloud.google.com/apis/credentials) page.
+
+### 7.1 Create Admin OAuth Client
+
+Create a **Web Application** client for administrative access. Use these values:
+
+*   **Name**: `El Bulk Admin Panel`
+*   **Authorized JavaScript origins**: `https://elbulk.com`
+*   **Authorized redirect URIs**: `https://elbulk.com/api/admin/auth/google/callback`
+
+### 7.2 Create Public OAuth Client
+
+Create a second **Web Application** client for storefront users. Use these values:
+
+*   **Name**: `El Bulk Storefront`
+*   **Authorized JavaScript origins**: `https://elbulk.com`
+*   **Authorized redirect URIs**: `https://elbulk.com/api/auth/google/callback`
+
+> [!TIP]
+> **Local Development**: If testing locally, add `http://localhost:3000` to the origins and `http://localhost:3000/api/auth/google/callback` (or `/admin/auth/...`) to the redirect URIs of your development client.
 
 ---
 

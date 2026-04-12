@@ -40,7 +40,7 @@ export default function StorefrontLayoutWrapper({ children }: { children: React.
             {t('pages.layout.footer.slogan', 'We buy bulk. We sell singles. We love cardboard.')}
           </p>
           <p className="text-xs text-text-muted font-mono">
-            © {new Date().getFullYear()} El Bulk • <Link href="/privacy" className="hover:text-accent-main transition-colors underline decoration-border-main underline-offset-4">{t('pages.privacy.title', 'Privacy')}</Link>
+            © {new Date().getFullYear()} El Bulk • <Link href="/terms" className="hover:text-accent-main transition-colors underline decoration-border-main underline-offset-4">{t('pages.terms.title', 'Terms')}</Link> • <Link href="/privacy" className="hover:text-accent-main transition-colors underline decoration-border-main underline-offset-4">{t('pages.privacy.title', 'Privacy')}</Link>
           </p>
         </div>
       </footer>
