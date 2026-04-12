@@ -73,11 +73,15 @@ func main() {
 	refreshStore := store.NewRefreshStore(database)
 	accountingStore := store.NewAccountingStore(database)
 	translationStore := store.NewTranslationStore(database)
+	auditStore := store.NewAuditStore(database)
+
+	translationService := service.NewTranslationService(translationStore)
+	auditService := service.NewAuditService(auditStore, adminStore)
 
 	// Initialize Services
 	settingsService := service.NewSettingsService(settingsStore)
-	productService := service.NewProductService(productStore, tcgStore, settingsService)
-	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService)
+	productService := service.NewProductService(productStore, tcgStore, settingsService, auditService)
+	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, auditService)
 	categoryService := service.NewCategoryService(categoryStore)
 	tcgService := service.NewTCGService(tcgStore)
 	noticeService := service.NewNoticeService(noticeStore)
@@ -90,11 +94,10 @@ func main() {
 	healthService := service.NewHealthService(healthStore)
 	refreshService := service.NewRefreshService(refreshStore)
 	accountingService := service.NewAccountingService(accountingStore, settingsService)
-	translationService := service.NewTranslationService(translationStore)
 
 	// Initialize Handlers
 	productHandler := handlers.NewProductHandler(productService, database)
-	adminHandler := handlers.NewAdminHandler(adminService)
+	adminHandler := handlers.NewAdminHandler(adminService, auditService)
 	categoriesHandler := handlers.NewCategoriesHandler(categoryService)
 	lookupHandler := handlers.NewLookupHandler()
 	settingsHandler := handlers.NewSettingsHandler(settingsService)
@@ -209,6 +212,8 @@ func main() {
 		// Admin routes (protected)
 		r.Route("/admin", func(r chi.Router) {
 			r.With(middleware.RateLimit(5, 15*time.Minute)).Post("/login", adminHandler.Login)
+			r.Get("/auth/google/login", adminHandler.GoogleLogin)
+			r.Get("/auth/google/callback", adminHandler.GoogleCallback)
 			r.Post("/logout", adminHandler.Logout)
 
 			r.Group(func(r chi.Router) {
@@ -310,6 +315,9 @@ func main() {
 				// Dynamic Logging
 				r.Get("/logs/level", adminHandler.GetLogLevel)
 				r.Put("/logs/level", adminHandler.UpdateLogLevel)
+
+				// Audit Logs
+				r.Get("/audit-logs", adminHandler.ListAuditLogs)
 			})
 		})
 

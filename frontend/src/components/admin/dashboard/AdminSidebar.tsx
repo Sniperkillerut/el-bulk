@@ -51,6 +51,7 @@ export default function AdminSidebar() {
     { label: t('components.admin.sidebar.nav.clients', 'CLIENTS'), href: '/admin/clients', icon: '👥', id: 'CLIENTS' },
     { label: t('components.admin.sidebar.nav.subscribers', 'SUBSCRIBERS'), href: '/admin/subscribers', icon: '📧', id: 'SUBSCRIBERS' },
     { label: t('components.admin.sidebar.nav.notices', 'NOTICES'), href: '/admin/notices', icon: '📢', id: 'NOTICES' },
+    { label: t('components.admin.sidebar.nav.audit_logs', 'ACTION LOG'), href: '/admin/audit-logs', icon: '📜', id: 'ACTION LOG' },
   ];
 
   const customizationNavItems = [

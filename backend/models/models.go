@@ -300,10 +300,24 @@ type Facets struct {
 }
 
 type Admin struct {
-	ID           string    `db:"id"`
-	Username     string    `db:"username"`
-	PasswordHash string    `db:"password_hash"`
-	CreatedAt    time.Time `db:"created_at"`
+	ID           string    `db:"id"           json:"id"`
+	Username     string    `db:"username"     json:"username"`
+	Email        string    `db:"email"        json:"email"`
+	PasswordHash *string   `db:"password_hash" json:"-"`
+	AvatarURL    *string   `db:"avatar_url"    json:"avatar_url,omitempty"`
+	CreatedAt    time.Time `db:"created_at"    json:"created_at"`
+}
+
+type AuditLog struct {
+	ID            string    `db:"id"               json:"id"`
+	AdminID       *string   `db:"admin_id"         json:"admin_id,omitempty"`
+	AdminUsername string    `db:"admin_username"   json:"admin_username"`
+	Action        string    `db:"action"           json:"action"`
+	ResourceType  string    `db:"resource_type"    json:"resource_type"`
+	ResourceID    string    `db:"resource_id"      json:"resource_id"`
+	Details       JSONB     `db:"details"          json:"details"`
+	IPAddress     *string   `db:"ip_address"       json:"ip_address,omitempty"`
+	CreatedAt     time.Time `db:"created_at"       json:"created_at"`
 }
 
 type LoginRequest struct {

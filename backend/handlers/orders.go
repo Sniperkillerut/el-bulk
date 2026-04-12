@@ -133,7 +133,7 @@ func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.Service.UpdateOrder(id, input); err != nil {
+	if err := h.Service.UpdateOrder(r.Context(), id, input); err != nil {
 		logger.Error("UpdateOrder failed for %s: %v", id, err)
 		render.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -154,7 +154,7 @@ func (h *OrderHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.Service.ConfirmOrder(id, input.Decrements); err != nil {
+	if err := h.Service.ConfirmOrder(r.Context(), id, input.Decrements); err != nil {
 		logger.Error("Confirm order failed: %v", err)
 		status := http.StatusInternalServerError
 		errMsg := "Failed to confirm order: " + err.Error()
@@ -187,7 +187,7 @@ func (h *OrderHandler) RestoreStock(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.Service.RestoreStock(id, input.Increments); err != nil {
+	if err := h.Service.RestoreStock(r.Context(), id, input.Increments); err != nil {
 		logger.Error("Restore stock failed: %v", err)
 		render.Error(w, "Failed to restore stock: "+err.Error(), http.StatusInternalServerError)
 		return

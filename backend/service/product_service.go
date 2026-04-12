@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"context"
 
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/store"
@@ -13,16 +14,18 @@ import (
 )
 
 type ProductService struct {
-	Store *store.ProductStore
+	Store    *store.ProductStore
 	TCGStore *store.TCGStore
 	Settings *SettingsService
+	Audit    *AuditService
 }
 
-func NewProductService(s *store.ProductStore, tcg *store.TCGStore, settings *SettingsService) *ProductService {
+func NewProductService(s *store.ProductStore, tcg *store.TCGStore, settings *SettingsService, audit *AuditService) *ProductService {
 	return &ProductService{
-		Store: s,
+		Store:    s,
 		TCGStore: tcg,
 		Settings: settings,
+		Audit:    audit,
 	}
 }
 
@@ -97,13 +100,16 @@ func (s *ProductService) GetByID(id string, isAdmin bool) (*models.Product, erro
 	return &products[0], nil
 }
 
-func (s *ProductService) Create(input models.ProductInput) (*models.Product, error) {
+func (s *ProductService) Create(ctx context.Context, input models.ProductInput) (*models.Product, error) {
 	logger.Trace("Entering ProductService.Create | Name: %s", input.Name)
 	product, err := s.Store.CreateProduct(input)
 	if err != nil {
 		return nil, err
 	}
 
+	// Logging
+	s.Audit.LogAction(ctx, "CREATE_PRODUCT", "product", product.ID, models.JSONB{"input": input})
+
 	if err := s.Store.SaveCategories(product.ID, input.CategoryIDs); err != nil {
 		logger.Error("Failed to save categories for product %s: %v", product.ID, err)
 	}
@@ -126,13 +132,22 @@ func (s *ProductService) Create(input models.ProductInput) (*models.Product, err
 	return &products[0], nil
 }
 
-func (s *ProductService) Update(id string, input models.ProductInput) (*models.Product, error) {
+func (s *ProductService) Update(ctx context.Context, id string, input models.ProductInput) (*models.Product, error) {
 	logger.Trace("Entering ProductService.Update | ID: %s", id)
+	
+	oldProduct, _ := s.Store.GetEnrichedByID(id)
+	
 	product, err := s.Store.UpdateProduct(id, input)
 	if err != nil {
 		return nil, err
 	}
 
+	// Logging
+	s.Audit.LogAction(ctx, "UPDATE_PRODUCT", "product", id, models.JSONB{
+		"before": oldProduct,
+		"after":  input,
+	})
+
 	if err := s.Store.SaveCategories(product.ID, input.CategoryIDs); err != nil {
 		logger.Error("Failed to save categories for product %s: %v", product.ID, err)
 	}
@@ -155,9 +170,16 @@ func (s *ProductService) Update(id string, input models.ProductInput) (*models.P
 	return &products[0], nil
 }
 
-func (s *ProductService) Delete(id string) error {
+func (s *ProductService) Delete(ctx context.Context, id string) error {
 	logger.Trace("Entering ProductService.Delete | ID: %s", id)
-	return s.Store.Delete(id)
+	
+	oldProduct, _ := s.Store.GetEnrichedByID(id)
+	
+	err := s.Store.Delete(id)
+	if err == nil {
+		s.Audit.LogAction(ctx, "DELETE_PRODUCT", "product", id, models.JSONB{"deleted": oldProduct})
+	}
+	return err
 }
 
 func (s *ProductService) EnrichProducts(products []models.Product, settings models.Settings, isAdmin bool) error {

@@ -692,3 +692,23 @@ export interface Translation {
   value: string;
   updated_at: string;
 }
+
+// ── Audit Logs ──────────────────────────────────────────
+
+export interface AuditLog {
+  id: string;
+  admin_id: string;
+  admin_name: string;
+  action: string;
+  target_type: string;
+  target_id: string;
+  details: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export interface AuditLogListResponse {
+  logs: AuditLog[];
+  total: number;
+  page: number;
+  page_size: number;
+}

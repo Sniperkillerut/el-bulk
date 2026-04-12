@@ -13,7 +13,7 @@ func testBountyHandler(db *sqlx.DB) *BountyHandler {
 
 // testAdminHandler creates an AdminHandler wired through Store→Service for testing.
 func testAdminHandler(db *sqlx.DB) *AdminHandler {
-	return NewAdminHandler(service.NewAdminService(store.NewAdminStore(db)))
+	return NewAdminHandler(service.NewAdminService(store.NewAdminStore(db)), nil)
 }
 
 // testNewsletterHandler creates a NewsletterHandler wired through Store→Service for testing.

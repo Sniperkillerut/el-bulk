@@ -114,7 +114,7 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	product, err := h.Service.Create(input)
+	product, err := h.Service.Create(r.Context(), input)
 	if err != nil {
 		logger.Error("Create product failed: %v", err)
 		render.Error(w, "Failed to create product", http.StatusInternalServerError)
@@ -135,7 +135,7 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	product, err := h.Service.Update(id, input)
+	product, err := h.Service.Update(r.Context(), id, input)
 	if err != nil {
 		logger.Error("Update product %s failed: %v", id, err)
 		render.Error(w, "Product not found or update failed", http.StatusNotFound)
@@ -148,7 +148,7 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	logger.Trace("Entering ProductHandler.Delete | ID: %s", id)
-	if err := h.Service.Delete(id); err != nil {
+	if err := h.Service.Delete(r.Context(), id); err != nil {
 		logger.Error("Delete product %s failed: %v", id, err)
 		render.Error(w, "Delete failed", http.StatusInternalServerError)
 		return

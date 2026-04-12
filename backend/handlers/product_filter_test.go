@@ -22,7 +22,7 @@ func TestProductHandler_List_FiltersInactiveTCG(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	settingsStore := store.NewSettingsStore(sqlxDB)
 	settingsService := service.NewSettingsService(settingsStore)
-	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService)
+	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, nil)
 	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
 	// 1. Total count query (buildFilters in store)
@@ -68,7 +68,7 @@ func TestProductHandler_GetByID_Public_FiltersInactiveTCG(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	settingsStore := store.NewSettingsStore(sqlxDB)
 	settingsService := service.NewSettingsService(settingsStore)
-	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService)
+	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, nil)
 	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
         // Mocking a scenario where product is not found (e.g. inactive)

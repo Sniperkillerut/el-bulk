@@ -13,6 +13,7 @@ import (
 	"github.com/el-bulk/backend/utils/crypto"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
+	"context"
 )
 
 type OrderService struct {
@@ -20,14 +21,16 @@ type OrderService struct {
 	ProductStore  *store.ProductStore
 	CustomerStore *store.CustomerStore
 	Settings      *SettingsService
+	Audit         *AuditService
 }
 
-func NewOrderService(s *store.OrderStore, ps *store.ProductStore, cs *store.CustomerStore, settings *SettingsService) *OrderService {
+func NewOrderService(s *store.OrderStore, ps *store.ProductStore, cs *store.CustomerStore, settings *SettingsService, audit *AuditService) *OrderService {
 	return &OrderService{
 		Store:         s,
 		ProductStore:  ps,
 		CustomerStore: cs,
 		Settings:      settings,
+		Audit:         audit,
 	}
 }
 
@@ -191,8 +194,11 @@ func (s *OrderService) GetOrderDetail(orderID string) (*models.OrderDetail, erro
 	}, nil
 }
 
-func (s *OrderService) UpdateOrder(orderID string, input models.UpdateOrderInput) error {
+func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input models.UpdateOrderInput) error {
 	logger.Trace("Entering OrderService.UpdateOrder | OrderID: %s | NewStatus: %v", orderID, input.Status)
+	
+	oldOrder, _ := s.Store.GetByID(orderID)
+	
 	tx, err := s.Store.DB.Beginx()
 	if err != nil {
 		return err
@@ -414,24 +420,38 @@ func (s *OrderService) UpdateOrder(orderID string, input models.UpdateOrderInput
 	if err := tx.Commit(); err != nil {
 		return err
 	}
+	
+	s.Audit.LogAction(ctx, "UPDATE_ORDER", "order", orderID, models.JSONB{
+		"before": oldOrder,
+		"after":  input,
+	})
+	
 	logger.Info("Order %s updated successfully", orderID)
 	return nil
 }
 
-func (s *OrderService) ConfirmOrder(orderID string, decrements []models.StockDecrement) error {
+func (s *OrderService) ConfirmOrder(ctx context.Context, orderID string, decrements []models.StockDecrement) error {
 	jsonData, err := json.Marshal(decrements)
 	if err != nil {
 		return err
 	}
-	return s.Store.ConfirmOrder(orderID, string(jsonData))
+	err = s.Store.ConfirmOrder(orderID, string(jsonData))
+	if err == nil {
+		s.Audit.LogAction(ctx, "CONFIRM_ORDER", "order", orderID, models.JSONB{"decrements": decrements})
+	}
+	return err
 }
 
-func (s *OrderService) RestoreStock(orderID string, increments []models.StockDecrement) error {
+func (s *OrderService) RestoreStock(ctx context.Context, orderID string, increments []models.StockDecrement) error {
 	jsonData, err := json.Marshal(increments)
 	if err != nil {
 		return err
 	}
-	return s.Store.RestoreStock(orderID, string(jsonData))
+	err = s.Store.RestoreStock(orderID, string(jsonData))
+	if err == nil {
+		s.Audit.LogAction(ctx, "RESTORE_STOCK", "order", orderID, models.JSONB{"increments": increments})
+	}
+	return err
 }
 
 func (s *OrderService) ListOrders(whereClause string, args []interface{}, page, pageSize int) ([]models.OrderWithCustomer, int, error) {

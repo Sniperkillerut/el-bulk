@@ -16,13 +16,13 @@ func TestConstructors(t *testing.T) {
 
 	orderStore := store.NewOrderStore(db)
 	customerStore := store.NewCustomerStore(db)
-	orderService := service.NewOrderService(orderStore, store.NewProductStore(db), customerStore, settingsService)
+	orderService := service.NewOrderService(orderStore, store.NewProductStore(db), customerStore, settingsService, nil)
 
 	assert.NotNil(t, testAdminHandler(db))
 	assert.NotNil(t, NewCategoriesHandler(service.NewCategoryService(store.NewCategoryStore(db))))
 	assert.NotNil(t, NewOrderHandler(orderService))
 
-	ps := service.NewProductService(store.NewProductStore(db), store.NewTCGStore(db), settingsService)
+	ps := service.NewProductService(store.NewProductStore(db), store.NewTCGStore(db), settingsService, nil)
 	assert.NotNil(t, NewProductHandler(ps, db))
 
 	assert.NotNil(t, testRefreshHandler(db))

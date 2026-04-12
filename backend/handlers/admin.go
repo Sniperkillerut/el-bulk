@@ -13,14 +13,23 @@ import (
 
 	"github.com/el-bulk/backend/service"
 	"github.com/el-bulk/backend/utils/logger"
+	"github.com/el-bulk/backend/models"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
+	"context"
+	"strconv"
 )
 
 type AdminHandler struct {
-	Service *service.AdminService
+	Service      *service.AdminService
+	AuditService *service.AuditService
 }
 
-func NewAdminHandler(s *service.AdminService) *AdminHandler {
-	return &AdminHandler{Service: s}
+func NewAdminHandler(s *service.AdminService, audit *service.AuditService) *AdminHandler {
+	return &AdminHandler{
+		Service:      s,
+		AuditService: audit,
+	}
 }
 
 // POST /api/admin/login
@@ -48,7 +57,12 @@ func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(admin.PasswordHash), []byte(req.Password)); err != nil {
+	if admin.PasswordHash == nil {
+		render.Error(w, "Authentication method not supported for this account", http.StatusUnauthorized)
+		return
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(*admin.PasswordHash), []byte(req.Password)); err != nil {
 		render.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
@@ -131,4 +145,172 @@ func (h *AdminHandler) UpdateLogLevel(w http.ResponseWriter, r *http.Request) {
 		"message": "Log level updated successfully",
 		"level":   newLevel.String(),
 	})
+}
+
+// GET /api/admin/audit-logs
+func (h *AdminHandler) ListAuditLogs(w http.ResponseWriter, r *http.Request) {
+	page := 1
+	pageSize := 20
+	
+	if pStr := r.URL.Query().Get("page"); pStr != "" {
+		if p, err := strconv.Atoi(pStr); err == nil && p > 0 {
+			page = p
+		}
+	}
+
+	adminID := r.URL.Query().Get("admin_id")
+	action := r.URL.Query().Get("action")
+	resourceType := r.URL.Query().Get("resource_type")
+
+	logs, total, err := h.AuditService.List(page, pageSize, adminID, action, resourceType)
+	if err != nil {
+		logger.Error("Failed to list audit logs: %v", err)
+		render.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+
+	render.Success(w, map[string]interface{}{
+		"logs":      logs,
+		"total":     total,
+		"page":      page,
+		"page_size": pageSize,
+	})
+}
+
+// GET /api/admin/auth/google/login
+func (h *AdminHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
+	clientID := os.Getenv("GOOGLE_CLIENT_ID_ADMIN")
+	if clientID == "" {
+		clientID = os.Getenv("GOOGLE_CLIENT_ID")
+	}
+	clientSecret := os.Getenv("GOOGLE_CLIENT_SECRET_ADMIN")
+	if clientSecret == "" {
+		clientSecret = os.Getenv("GOOGLE_CLIENT_SECRET")
+	}
+
+	config := &oauth2.Config{
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		RedirectURL:  os.Getenv("FRONTEND_ORIGIN") + "/api/admin/auth/google/callback",
+		Scopes: []string{
+			"https://www.googleapis.com/auth/userinfo.email",
+			"https://www.googleapis.com/auth/userinfo.profile",
+		},
+		Endpoint: google.Endpoint,
+	}
+
+	state := "elbulk-admin-oauth-state"
+	url := config.AuthCodeURL(state, oauth2.AccessTypeOffline)
+	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+}
+
+// GET /api/admin/auth/google/callback
+func (h *AdminHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
+	state := r.FormValue("state")
+	if state != "elbulk-admin-oauth-state" {
+		http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/admin/login?error=invalid_state", http.StatusTemporaryRedirect)
+		return
+	}
+
+	clientID := os.Getenv("GOOGLE_CLIENT_ID_ADMIN")
+	if clientID == "" {
+		clientID = os.Getenv("GOOGLE_CLIENT_ID")
+	}
+	clientSecret := os.Getenv("GOOGLE_CLIENT_SECRET_ADMIN")
+	if clientSecret == "" {
+		clientSecret = os.Getenv("GOOGLE_CLIENT_SECRET")
+	}
+
+	code := r.FormValue("code")
+	config := &oauth2.Config{
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		RedirectURL:  os.Getenv("FRONTEND_ORIGIN") + "/api/admin/auth/google/callback",
+		Endpoint:     google.Endpoint,
+	}
+
+	token, err := config.Exchange(context.Background(), code)
+	if err != nil {
+		logger.Error("Admin OAuth exchange failed: %v", err)
+		http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/admin/login?error=exchange_failed", http.StatusTemporaryRedirect)
+		return
+	}
+
+	client := config.Client(context.Background(), token)
+	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
+	if err != nil {
+		logger.Error("Failed to get Google admin info: %v", err)
+		http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/admin/login?error=userinfo_failed", http.StatusTemporaryRedirect)
+		return
+	}
+	defer resp.Body.Close()
+
+	var gInfo struct {
+		Email     string `json:"email"`
+		Name      string `json:"name"`
+		Picture   string `json:"picture"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&gInfo); err != nil {
+		logger.Error("Failed to parse Google admin info: %v", err)
+		http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/admin/login?error=parse_failed", http.StatusTemporaryRedirect)
+		return
+	}
+
+	// 1. Verify Whitelist
+	allowedEmails := strings.Split(os.Getenv("ADMIN_EMAILS"), ",")
+	allowed := false
+	for _, e := range allowedEmails {
+		if strings.TrimSpace(e) == gInfo.Email {
+			allowed = true
+			break
+		}
+	}
+
+	if !allowed {
+		logger.Warn("Unauthorized admin login attempt: %s", gInfo.Email)
+		http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/admin/login?error=unauthorized_email", http.StatusTemporaryRedirect)
+		return
+	}
+
+	// 2. Find or Create Admin
+	admin, err := h.Service.GetByEmail(gInfo.Email)
+	if err != nil {
+		// Create admin
+		username := strings.Split(gInfo.Email, "@")[0]
+		newAdmin := models.Admin{
+			Username:  username,
+			Email:     gInfo.Email,
+			AvatarURL: &gInfo.Picture,
+		}
+		admin, err = h.Service.Create(newAdmin)
+		if err != nil {
+			logger.Error("Failed to create admin via OAuth: %v", err)
+			http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/admin/login?error=db_error", http.StatusTemporaryRedirect)
+			return
+		}
+		h.AuditService.LogAction(r.Context(), "OAUTH_SIGNUP", "admin", admin.ID, models.JSONB{"email": gInfo.Email})
+	}
+
+	// 3. Issue Token
+	secret := os.Getenv("JWT_SECRET")
+	claims := jwt.MapClaims{
+		"sub": admin.ID,
+		"exp": time.Now().Add(24 * time.Hour).Unix(),
+		"iat": time.Now().Unix(),
+	}
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signed, _ := jwtToken.SignedString([]byte(secret))
+
+	isSecure := strings.HasPrefix(os.Getenv("FRONTEND_ORIGIN"), "https://")
+	http.SetCookie(w, &http.Cookie{
+		Name:     "admin_token",
+		Value:    signed,
+		Path:     "/",
+		Expires:  time.Now().Add(24 * time.Hour),
+		HttpOnly: true,
+		Secure:   isSecure,
+		SameSite: http.SameSiteLaxMode,
+	})
+
+	http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/admin/dashboard", http.StatusFound)
 }

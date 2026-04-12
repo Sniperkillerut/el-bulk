@@ -31,7 +31,7 @@ func TestOrderHandler_Create(t *testing.T) {
 	orderStore := store.NewOrderStore(sqlxDB)
 	customerStore := store.NewCustomerStore(sqlxDB)
 	productStore := store.NewProductStore(sqlxDB)
-	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService)
+	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil)
 	h := NewOrderHandler(orderService)
 
 	t.Run("Success", func(t *testing.T) {
@@ -145,7 +145,7 @@ func TestOrderHandler_List(t *testing.T) {
 	orderStore := store.NewOrderStore(sqlxDB)
 	customerStore := store.NewCustomerStore(sqlxDB)
 	productStore := store.NewProductStore(sqlxDB)
-	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService)
+	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil)
 	h := NewOrderHandler(orderService)
 
 	t.Run("List Admin", func(t *testing.T) {
@@ -176,7 +176,7 @@ func TestOrderHandler_GetDetail(t *testing.T) {
 	orderStore := store.NewOrderStore(sqlxDB)
 	customerStore := store.NewCustomerStore(sqlxDB)
 	productStore := store.NewProductStore(sqlxDB)
-	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService)
+	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil)
 	h := NewOrderHandler(orderService)
 
 	t.Run("Success", func(t *testing.T) {
@@ -225,7 +225,7 @@ func TestOrderHandler_Update(t *testing.T) {
 	orderStore := store.NewOrderStore(sqlxDB)
 	customerStore := store.NewCustomerStore(sqlxDB)
 	productStore := store.NewProductStore(sqlxDB)
-	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService)
+	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil)
 	h := NewOrderHandler(orderService)
 
 	t.Run("Update Status", func(t *testing.T) {
@@ -419,7 +419,7 @@ func TestOrderHandler_Confirm(t *testing.T) {
 	orderStore := store.NewOrderStore(sqlxDB)
 	customerStore := store.NewCustomerStore(sqlxDB)
 	productStore := store.NewProductStore(sqlxDB)
-	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService)
+	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil)
 	h := NewOrderHandler(orderService)
 
 	t.Run("Success", func(t *testing.T) {
@@ -495,7 +495,7 @@ func TestOrderHandler_RestoreStock(t *testing.T) {
 	orderStore := store.NewOrderStore(sqlxDB)
 	customerStore := store.NewCustomerStore(sqlxDB)
 	productStore := store.NewProductStore(sqlxDB)
-	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService)
+	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil)
 	h := NewOrderHandler(orderService)
 
 	t.Run("Success", func(t *testing.T) {
@@ -549,7 +549,7 @@ func TestOrderHandler_CancelMe(t *testing.T) {
 	orderStore := store.NewOrderStore(sqlxDB)
 	customerStore := store.NewCustomerStore(sqlxDB)
 	productStore := store.NewProductStore(sqlxDB)
-	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService)
+	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil)
 	h := NewOrderHandler(orderService)
 
 	t.Run("Success", func(t *testing.T) {

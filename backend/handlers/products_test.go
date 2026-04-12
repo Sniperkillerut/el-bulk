@@ -25,7 +25,7 @@ func TestProductHandler_List(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	settingsStore := store.NewSettingsStore(sqlxDB)
 	settingsService := service.NewSettingsService(settingsStore)
-	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService)
+	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, nil)
 	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
 	now := time.Now()
@@ -66,7 +66,7 @@ func TestProductHandler_GetByID(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	settingsStore := store.NewSettingsStore(sqlxDB)
 	settingsService := service.NewSettingsService(settingsStore)
-	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService)
+	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, nil)
 	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
 	t.Run("Found", func(t *testing.T) {
@@ -98,7 +98,7 @@ func TestProductHandler_Create(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	settingsStore := store.NewSettingsStore(sqlxDB)
 	settingsService := service.NewSettingsService(settingsStore)
-	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService)
+	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, nil)
 	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
@@ -137,7 +137,7 @@ func TestProductHandler_Update(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	settingsStore := store.NewSettingsStore(sqlxDB)
 	settingsService := service.NewSettingsService(settingsStore)
-	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService)
+	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, nil)
 	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
@@ -177,7 +177,7 @@ func TestProductHandler_GetStorage(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	settingsStore := store.NewSettingsStore(sqlxDB)
 	settingsService := service.NewSettingsService(settingsStore)
-	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService)
+	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, nil)
 	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
@@ -200,7 +200,7 @@ func TestProductHandler_UpdateStorage(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	settingsStore := store.NewSettingsStore(sqlxDB)
 	settingsService := service.NewSettingsService(settingsStore)
-	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService)
+	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, nil)
 	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
