@@ -138,7 +138,23 @@ steps:
       - '--allow-unauthenticated'
       - '--add-cloudsql-instances=${_DB_CONNECTION_NAME}'
       - '--set-secrets=DATABASE_URL=ELBULK_DB_URL:latest,ENCRYPTION_KEY=ELBULK_ENCRYPTION_KEY:latest,JWT_SECRET=ELBULK_JWT_SECRET:latest,SMTP_PASS=ELBULK_SMTP_PASS:latest,GOOGLE_CLIENT_SECRET=ELBULK_GOOGLE_CLIENT_SECRET:latest,FACEBOOK_CLIENT_SECRET=ELBULK_FACEBOOK_CLIENT_SECRET:latest'
-      - '--set-env-vars=STORAGE_TYPE=gcp,GCP_BUCKET_NAME=${_GCS_BUCKET},APP_ENV=production,INSTANCE_CONNECTION_NAME=${_DB_CONNECTION_NAME},DB_IAM_AUTH=true,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},FRONTEND_ORIGIN=${_FRONTEND_ORIGIN},GOOGLE_CLIENT_ID=${_GOOGLE_CLIENT_ID},FACEBOOK_CLIENT_ID=${_FACEBOOK_CLIENT_ID},SMTP_HOST=${_SMTP_HOST},SMTP_PORT=${_SMTP_PORT},SMTP_USER=${_SMTP_USER},SMTP_FROM=${_SMTP_FROM},LOG_LEVEL=INFO,LOG_FORMAT=json,POKEMON_TCG_API_KEY=${_POKEMON_TCG_API_KEY}'
+      - '--set-env-vars=STORAGE_TYPE=gcp'
+      - '--set-env-vars=GCP_BUCKET_NAME=${_GCS_BUCKET}'
+      - '--set-env-vars=APP_ENV=production'
+      - '--set-env-vars=INSTANCE_CONNECTION_NAME=${_DB_CONNECTION_NAME}'
+      - '--set-env-vars=DB_IAM_AUTH=${_DB_IAM_AUTH}'
+      - '--set-env-vars=DB_IAM_USER=${_DB_IAM_USER}'
+      - '--set-env-vars=GOOGLE_CLOUD_PROJECT=${PROJECT_ID}'
+      - '--set-env-vars=FRONTEND_ORIGIN=${_FRONTEND_ORIGIN}'
+      - '--set-env-vars=GOOGLE_CLIENT_ID=${_GOOGLE_CLIENT_ID}'
+      - '--set-env-vars=FACEBOOK_CLIENT_ID=${_FACEBOOK_CLIENT_ID}'
+      - '--set-env-vars=SMTP_HOST=${_SMTP_HOST}'
+      - '--set-env-vars=SMTP_PORT=${_SMTP_PORT}'
+      - '--set-env-vars=SMTP_USER=${_SMTP_USER}'
+      - '--set-env-vars=SMTP_FROM=${_SMTP_FROM}'
+      - '--set-env-vars=LOG_LEVEL=INFO'
+      - '--set-env-vars=LOG_FORMAT=json'
+      - '--set-env-vars=POKEMON_TCG_API_KEY=${_POKEMON_TCG_API_KEY}'
 
   # ------------------------------------------------------------------
   # 5. Deploy Frontend to Cloud Run
@@ -213,6 +229,10 @@ substitutions:
 
   # --- External APIs ---
   _POKEMON_TCG_API_KEY: ''
+  
+  # --- IAM Authentication ---
+  _DB_IAM_AUTH: 'true'
+  _DB_IAM_USER: '41267920201-compute@developer'
 
   # --- Analytics (baked into frontend at build time) ---
   _GA_ID: ''

@@ -53,10 +53,13 @@ func Connect() *sqlx.DB {
 
 func ConnectResilient() (*sqlx.DB, error) {
 	dsn := os.Getenv("DATABASE_URL")
+	instanceName := os.Getenv("INSTANCE_CONNECTION_NAME")
+
+	logger.Info("🔍 [DB] Diagnostics: INSTANCE_CONNECTION_NAME=%q | DATABASE_URL_SET=%v (len=%d) | DB_IAM_AUTH=%q", 
+		instanceName, dsn != "", len(dsn), os.Getenv("DB_IAM_AUTH"))
 
 	// 0. Cloud SQL Connector (Recommended for GCP)
 	// If INSTANCE_CONNECTION_NAME is provided, we use the official connector.
-	instanceName := os.Getenv("INSTANCE_CONNECTION_NAME")
 	if instanceName != "" {
 		logger.Info("☁️ Using Cloud SQL Go Connector for instance: %s", instanceName)
 		
@@ -66,41 +69,68 @@ func ConnectResilient() (*sqlx.DB, error) {
 			opts = append(opts, cloudsqlconn.WithIAMAuthN())
 		}
 
-		// Register the driver with pgxv5
+		// Register the driver with pgxv5 (once only)
 		cleanup, err := pgxv5.RegisterDriver("cloudsql-postgres", opts...)
 		if err != nil {
-			return nil, fmt.Errorf("failed to register cloudsql-postgres driver: %v", err)
+			// Check if it's just already registered
+			if !strings.Contains(err.Error(), "already registered") {
+				return nil, fmt.Errorf("failed to register cloudsql-postgres driver: %v", err)
+			}
+			logger.Debug("Cloud SQL driver already registered, continuing...")
 		}
-		// Note: logically, we'd want to call cleanup() on exit, but standard drivers
-		// don't easily allow for this in a simple Connect() function.
-		// However, pgxv5 handles this fairly well globally for the lifetime of the process.
-		_ = cleanup // suppress unused
+		_ = cleanup // cleanup is managed globally by the driver
 
 		// Construct a clean DSN that the Cloud SQL connector expects.
-		// It MUST have the instance name as the 'host'.
-		user := "elbulk" // Default for production
+		// We extract the credentials from the DATABASE_URL secret.
+		user := "elbulk"
+		pass := ""
 		dbName := "elbulk"
 
-		// If a DATABASE_URL is provided, try to extract dbname/user to stay consistent
-		// with legacy secrets if they are still being passed.
 		if dsn != "" {
-			if strings.Contains(dsn, "/") {
-				parts := strings.Split(dsn, "/")
-				lastPart := parts[len(parts)-1]
-				dbName = strings.Split(lastPart, "?")[0]
-			}
 			if strings.HasPrefix(dsn, "postgres://") {
-				userInfo := strings.Split(strings.TrimPrefix(dsn, "postgres://"), "@")[0]
-				user = strings.Split(userInfo, ":")[0]
+				noScheme := strings.TrimPrefix(dsn, "postgres://")
+				atSplit := strings.Split(noScheme, "@")
+				if len(atSplit) > 1 {
+					credentials := atSplit[0]
+					credSplit := strings.Split(credentials, ":")
+					user = credSplit[0]
+					if len(credSplit) > 1 {
+						pass = credSplit[1]
+					}
+					
+					remaining := atSplit[1]
+					pathSplit := strings.Split(remaining, "/")
+					if len(pathSplit) > 1 {
+						dbName = strings.Split(pathSplit[1], "?")[0]
+					}
+				}
 			}
 		}
 
-		cleanDsn := fmt.Sprintf("host=%s dbname=%s sslmode=disable", instanceName, dbName)
-		if os.Getenv("DB_IAM_AUTH") != "true" && user != "" {
-			cleanDsn += fmt.Sprintf(" user=%s", user)
+		// Build the DSN for pgx/cloudsqlconn
+		connectorDsn := fmt.Sprintf("host=%s dbname=%s sslmode=disable", instanceName, dbName)
+		
+		if os.Getenv("DB_IAM_AUTH") == "true" {
+			iamUser := os.Getenv("DB_IAM_USER")
+			if iamUser == "" {
+				iamUser = user
+			}
+
+			// For Cloud SQL Postgres, the IAM username must exclude the .gserviceaccount.com suffix.
+			iamUser = strings.TrimSuffix(iamUser, ".gserviceaccount.com")
+
+			logger.Info("🔐 Cloud SQL: Using IAM-based auth for user: %s", iamUser)
+			connectorDsn += fmt.Sprintf(" user=%s", iamUser)
+		} else {
+			if user != "" {
+				connectorDsn += fmt.Sprintf(" user=%s", user)
+			}
+			if pass != "" {
+				connectorDsn += fmt.Sprintf(" password=%s", pass)
+			}
 		}
 
-		db, err := sqlx.Open("cloudsql-postgres", cleanDsn)
+		db, err := sqlx.Open("cloudsql-postgres", connectorDsn)
 		if err != nil {
 			return nil, fmt.Errorf("failed to open database via Cloud SQL Connector: %v", err)
 		}

@@ -562,6 +562,44 @@ func seedTranslations(db *sqlx.DB) {
 		{"pages.nav.user.logout", "en", "Logout"},
 		{"pages.nav.user.logout", "es", "Cerrar Sesión"},
 
+		// Privacy Policy
+		{"pages.privacy.title", "en", "Privacy Policy"},
+		{"pages.privacy.title", "es", "Política de Privacidad"},
+		{"pages.privacy.last_updated", "en", "Last updated: April 12, 2026"},
+		{"pages.privacy.last_updated", "es", "Última actualización: 12 de abril, 2026"},
+		{"pages.privacy.intro", "en", "At El Bulk, we are committed to protecting your privacy. This policy explains how we collect, use, and safeguard your data when you visit our store or use our services."},
+		{"pages.privacy.intro", "es", "En El Bulk, estamos comprometidos con la protección de tu privacidad. Esta política explica cómo recopilamos, usamos y protegemos tus datos cuando visitas nuestra tienda o usas nuestros servicios."},
+		
+		{"pages.privacy.sections.info_collected.title", "en", "1. Information We Collect"},
+		{"pages.privacy.sections.info_collected.title", "es", "1. Información que Recopilamos"},
+		{"pages.privacy.sections.info_collected.content", "en", "We collect information you provide directly to us, such as your name, email address, physical address (for shipping), and phone number when you create an account or place an order."},
+		{"pages.privacy.sections.info_collected.content", "es", "Recopilamos la información que nos proporcionas directamente, como tu nombre, correo electrónico, dirección física (para envíos) y número de teléfono cuando creas una cuenta o realizas un pedido."},
+
+		{"pages.privacy.sections.auth.title", "en", "2. Authentication Services (OAuth)"},
+		{"pages.privacy.sections.auth.title", "es", "2. Servicios de Autenticación (OAuth)"},
+		{"pages.privacy.sections.auth.content", "en", "If you choose to log in using Google or Facebook, we receive your basic profile information (name, email, and profile picture). We use this data only to create and manage your account. We do not post to your social profiles or share your social data with third parties."},
+		{"pages.privacy.sections.auth.content", "es", "Si eliges iniciar sesión con Google o Facebook, recibimos tu información de perfil básica (nombre, correo y foto de perfil). Usamos estos datos solo para crear y administrar tu cuenta. No publicamos en tus perfiles sociales ni compartimos tus datos sociales con terceros."},
+
+		{"pages.privacy.sections.cookies.title", "en", "3. Cookies and Tracking"},
+		{"pages.privacy.sections.cookies.title", "es", "3. Cookies y Seguimiento"},
+		{"pages.privacy.sections.cookies.content", "en", "We use essential cookies to manage your session, cart, and preferences. With your consent, we also use analytics (Google Analytics) and marketing cookies (Meta Pixel) to improve our store and offer relevant content."},
+		{"pages.privacy.sections.cookies.content", "es", "Usamos cookies esenciales para gestionar tu sesión, carrito y preferencias. Con tu consentimiento, también usamos cookies de analítica (Google Analytics) y marketing (Meta Pixel) para mejorar nuestra tienda y ofrecer contenido relevante."},
+
+		{"pages.privacy.sections.data_usage.title", "en", "4. How We Use Your Data"},
+		{"pages.privacy.sections.data_usage.title", "es", "4. Cómo Usamos tus Datos"},
+		{"pages.privacy.sections.data_usage.content", "en", "Your data is used to process orders, coordinate deliveries via WhatsApp, and (if you subscribe) send you shop updates. We never sell your personal information to third parties."},
+		{"pages.privacy.sections.data_usage.content", "es", "Tus datos se usan para procesar pedidos, coordinar entregas vía WhatsApp y (si te suscribes) enviarte novedades. Nunca vendemos tu información personal a terceros."},
+
+		{"pages.privacy.sections.rights.title", "en", "5. Your Rights"},
+		{"pages.privacy.sections.rights.title", "es", "5. Tus Derechos"},
+		{"pages.privacy.sections.rights.content", "en", "You have the right to access, correct, or delete your personal data at any time through your profile settings or by contacting us directly."},
+		{"pages.privacy.sections.rights.content", "es", "Tienes el derecho de acceder, corregir o eliminar tus datos personales en cualquier momento a través de la configuración de tu perfil o contactándonos directamente."},
+
+		{"pages.privacy.sections.contact.title", "en", "6. Contact Us"},
+		{"pages.privacy.sections.contact.title", "es", "6. Contáctanos"},
+		{"pages.privacy.sections.contact.content", "en", "If you have questions about this policy, please reach out to us at notices@elbulk.com or visit us at our physical location."},
+		{"pages.privacy.sections.contact.content", "es", "Si tienes dudas sobre esta política, por favor escríbenos a notices@elbulk.com o visítanos en nuestra ubicación física."},
+
 		// Cart Drawer
 		{"pages.cart.drawer.title", "en", "YOUR CART"},
 		{"pages.cart.drawer.title", "es", "TU CARRITO"},

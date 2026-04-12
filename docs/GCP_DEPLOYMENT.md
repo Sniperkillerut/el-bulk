@@ -1,5 +1,7 @@
 # 🌩️ El Bulk — GCP Production Deployment Guide
 
+**Last Updated:** 2026-04-12
+
 A complete, step-by-step guide to deploying the El Bulk TCG Store on Google Cloud Platform using **Cloud Run**, **Cloud SQL**, **Cloud Storage**, and **Cloud Build**.
 
 ---
@@ -26,6 +28,7 @@ A complete, step-by-step guide to deploying the El Bulk TCG Store on Google Clou
 18. [Troubleshooting](#18-troubleshooting)
 19. [Maintenance Operations](#19-maintenance-operations)
 20. [Environment Variable Reference](#20-environment-variable-reference)
+21. [CI/CD: Automated Triggers](#21-cicd-automated-triggers)
 
 ---
 
@@ -144,6 +147,7 @@ el-bulk-repo  DOCKER  us-central1    El Bulk container images
 ```bash
 gcloud sql instances create el-bulk-db \
     --database-version=POSTGRES_16 \
+    --edition=ENTERPRISE \
     --tier=db-f1-micro \
     --region=us-central1 \
     --storage-type=SSD \
@@ -202,34 +206,39 @@ Then create an IAM database user for the Cloud Run service account:
 
 ```bash
 # Get the Cloud Run service account email
+# (Correctly identifies the default compute service account)
 SA_EMAIL=$(gcloud iam service-accounts list \
-    --filter="displayName:Compute Engine default" \
+    --filter="email ~ ^[0-9]+-compute@developer.gserviceaccount.com$" \
     --format="value(email)")
 echo "Service Account: $SA_EMAIL"
 
 # Create IAM user in Cloud SQL
-gcloud sql users create $SA_EMAIL \
+# NOTE: The suffix ".gserviceaccount.com" MUST be stripped for this command
+IAM_USER=$(echo "$SA_EMAIL" | sed 's/\.gserviceaccount\.com$//')
+
+gcloud sql users create "$IAM_USER" \
     --instance=el-bulk-db \
     --type=CLOUD_IAM_SERVICE_ACCOUNT
 ```
 
-Then grant the IAM user access to the database:
+Then grant the IAM user access to the database by running this block (it uses the `$IAM_USER` variable from the step above):
 
 ```bash
-# Connect to the database to grant permissions
-gcloud sql connect el-bulk-db --user=postgres --database=elbulk
+# Connect to the database and grant permissions
+# You will be prompted for the postgres user password
+# We ensure the database exists first just in case Step 4.2 was skipped
+gcloud sql databases create elbulk --instance=el-bulk-db 2>/dev/null || echo "Database exists"
 
-# Inside the psql shell, run:
-GRANT ALL PRIVILEGES ON DATABASE elbulk TO "<SA_EMAIL_WITHOUT_@gserviceaccount.com>";
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO "<SA_EMAIL_WITHOUT_@gserviceaccount.com>";
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO "<SA_EMAIL_WITHOUT_@gserviceaccount.com>";
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "<SA_EMAIL_WITHOUT_@gserviceaccount.com>";
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "<SA_EMAIL_WITHOUT_@gserviceaccount.com>";
-\q
+gcloud sql connect el-bulk-db --user=postgres --database=elbulk <<EOF
+GRANT ALL PRIVILEGES ON DATABASE elbulk TO "$IAM_USER";
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO "$IAM_USER";
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO "$IAM_USER";
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "$IAM_USER";
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "$IAM_USER";
+EOF
 ```
 
-> [!IMPORTANT]
-> Replace `<SA_EMAIL_WITHOUT_@gserviceaccount.com>` with just the part before `.iam` — the format Cloud SQL expects for IAM users. For example, if the SA email is `123456-compute@developer.gserviceaccount.com`, use that full email as the PostgreSQL username.
+
 
 ---
 
@@ -306,8 +315,8 @@ echo "ENCRYPTION_KEY: $ENCRYPTION_KEY"
 
 ```bash
 # Database URL
-# If using IAM auth:
-echo -n "user=<SA_EMAIL> dbname=elbulk sslmode=disable" | \
+# If using IAM auth (uses the $IAM_USER variable defined in Step 4.5):
+echo -n "user=$IAM_USER dbname=elbulk sslmode=disable" | \
     gcloud secrets create ELBULK_DB_URL --data-file=-
 
 # If using password auth:
@@ -372,7 +381,7 @@ Cloud Run's service account needs specific roles to access GCP resources.
 ```bash
 # Cloud Run uses the Compute Engine default service account unless customized
 SA_EMAIL=$(gcloud iam service-accounts list \
-    --filter="displayName:Compute Engine default" \
+    --filter="email ~ ^[0-9]+-compute@developer.gserviceaccount.com$" \
     --format="value(email)")
 echo "Service Account: $SA_EMAIL"
 ```
@@ -380,7 +389,15 @@ echo "Service Account: $SA_EMAIL"
 ### 7.2 Grant Required Roles
 
 ```bash
+# Fetch current project ID
 PROJECT_ID=$(gcloud config get-value project)
+
+# Verify Project ID before proceeding (Safe for interactive shell)
+if [ -z "$PROJECT_ID" ]; then
+    echo "❌ ERROR: PROJECT_ID is empty. Run 'gcloud config set project [NAME]' first."
+else
+    echo "✅ Project ID detected: $PROJECT_ID"
+fi
 
 # Access Cloud SQL
 gcloud projects add-iam-policy-binding $PROJECT_ID \
@@ -406,27 +423,56 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:$SA_EMAIL" \
     --role="roles/cloudtrace.agent"
+
+# Write Logs to Cloud Logging
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:$SA_EMAIL" \
+    --role="roles/logging.logWriter"
 ```
 
 ### 7.3 Grant Cloud Build Permissions
 
-Cloud Build also needs to deploy to Cloud Run:
+Cloud Build needs permissions to enable APIs (Step 0) and deploy services to Cloud Run.
+
+> [!IMPORTANT]
+> **Check which Service Account is running your build.**
+> By default, Cloud Build uses `[PROJECT_NUMBER]@cloudbuild.gserviceaccount.com`. However, in some configurations, it may default to the **Compute Engine default service account** `[PROJECT_NUMBER]-compute@developer.gserviceaccount.com`.
+> If your build fails with "Permission Denied", verify the service account in the build logs and grant the roles to that specific account.
 
 ```bash
-# Get Cloud Build service account
-BUILD_SA="${PROJECT_ID}@cloudbuild.gserviceaccount.com"
+# Get Project Details
+PROJECT_ID=$(gcloud config get-value project)
+PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
 
+# Identify the Build Service Account (usually cloudbuild, but check logs)
+BUILD_SA="${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com"
+# OR if your build uses compute SA:
+# BUILD_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+
+# Enable services (Required for Step 0)
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:$BUILD_SA" \
+    --role="roles/serviceusage.serviceUsageAdmin"
+
+# Deploy to Cloud Run
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:$BUILD_SA" \
     --role="roles/run.admin"
 
+# Act as Service Account
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:$BUILD_SA" \
     --role="roles/iam.serviceAccountUser"
 
+# Access Secrets
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:$BUILD_SA" \
     --role="roles/secretmanager.secretAccessor"
+
+# Write Logs (Required if using Compute SA for build execution)
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:$BUILD_SA" \
+    --role="roles/logging.logWriter"
 ```
 
 ---
@@ -446,6 +492,7 @@ This is the **recommended** deployment method. The `cloudbuild.yaml` file in the
 gcloud builds submit \
     --config cloudbuild.yaml \
     --substitutions=\
+_TAG=$(git rev-parse --short HEAD 2>/dev/null || echo "latest"),\
 _DB_CONNECTION_NAME="my-elbulk-prod:us-central1:el-bulk-db",\
 _GCS_BUCKET="elbulk-media-prod",\
 _FRONTEND_ORIGIN="https://elbulk.com",\
@@ -585,7 +632,7 @@ BACKEND_URL=$(gcloud run services describe el-bulk-backend \
 gcloud run jobs create el-bulk-seed \
     --image=$REGION-docker.pkg.dev/$PROJECT_ID/el-bulk-repo/backend:latest \
     --region=us-central1 \
-    --add-cloudsql-instances=my-elbulk-prod:us-central1:el-bulk-db \
+    --set-cloudsql-instances=my-elbulk-prod:us-central1:el-bulk-db \
     --set-secrets="DATABASE_URL=ELBULK_DB_URL:latest,ENCRYPTION_KEY=ELBULK_ENCRYPTION_KEY:latest" \
     --set-env-vars="INSTANCE_CONNECTION_NAME=my-elbulk-prod:us-central1:el-bulk-db,DB_IAM_AUTH=true,ADMIN_USERNAME=admin,ADMIN_PASSWORD=YourSecurePassword!" \
     --command="go" \
@@ -625,13 +672,13 @@ El Bulk uses a **subdomain-based** architecture:
 
 ```bash
 # Frontend domain
-gcloud run domain-mappings create \
+gcloud beta run domain-mappings create \
     --service=el-bulk-frontend \
     --domain=elbulk.com \
     --region=us-central1
 
 # Backend (API) domain
-gcloud run domain-mappings create \
+gcloud beta run domain-mappings create \
     --service=el-bulk-backend \
     --domain=api.elbulk.com \
     --region=us-central1
@@ -642,7 +689,7 @@ gcloud run domain-mappings create \
 After creating domain mappings, Cloud Run tells you what DNS records to create:
 
 ```bash
-gcloud run domain-mappings describe \
+gcloud beta run domain-mappings describe \
     --domain=elbulk.com \
     --region=us-central1
 ```
@@ -662,8 +709,8 @@ Configure these records at your domain registrar (Namecheap, GoDaddy, Cloudflare
 
 | Type | Name | Value | TTL |
 |:---|:---|:---|:---|
-| `A` | `@` (root) | *(IP from Cloud Run domain mapping)* | 300 |
-| `AAAA` | `@` (root) | *(IPv6 from Cloud Run domain mapping)* | 300 |
+| `A` | `@` (root) | `216.239.32.21`, `216.239.34.21`, `216.239.36.21`, `216.239.38.21` | 300 |
+| `AAAA` | `@` (root) | `2001:4860:4802:32::15`, `2001:4860:4802:34::15`, `2001:4860:4802:36::15`, `2001:4860:4802:38::15` | 300 |
 | `CNAME` | `api` | `ghs.googlehosted.com.` | 300 |
 | `CNAME` | `www` | `ghs.googlehosted.com.` | 300 |
 
@@ -711,27 +758,39 @@ DNS propagation can take **up to 48 hours** (usually 15-60 minutes).
 - `Client ID` → `_GOOGLE_CLIENT_ID` in Cloud Build substitutions
 - `Client Secret` → `ELBULK_GOOGLE_CLIENT_SECRET` in Secret Manager
 
-### 13.2 Facebook OAuth (Optional)
+### 13.2 Facebook OAuth (Meta for Developers)
 
-1. Go to [Meta for Developers](https://developers.facebook.com/)
-2. Create an app → **Consumer** type
-3. Add **Facebook Login** product
-4. In **Settings → Basic**:
-   - App Domains: `elbulk.com`
-   - Privacy Policy URL: `https://elbulk.com/privacy`
-5. In **Facebook Login → Settings**:
-   - Valid OAuth Redirect URIs:
-     ```
-     https://api.elbulk.com/api/auth/facebook/callback
-     ```
-6. Copy the **App ID** and **App Secret**
-
-**Where to use these values:**
-- `App ID` → `_FACEBOOK_CLIENT_ID` in Cloud Build substitutions
-- `App Secret` → `ELBULK_FACEBOOK_CLIENT_SECRET` in Secret Manager
+> [!IMPORTANT]
+> **Avoid Generic Emails**: Facebook often blocks account registration using `admin@`, `info@`, or `support@` emails. Use a personal-sounding email (e.g., `your.name@elbulk.com`) or simply use your personal Facebook account to manage the developer app.
 
 > [!WARNING]
-> Facebook requires your app to be in **Live mode** for non-admin users to log in. Submit the app for review before launch.
+> **Real Name Policy**: Facebook requires personal accounts to use real human names. Do not name your administrative account "El Bulk Store" or it may be suspended. Use your personal profile and create a **Meta Business Portfolio** for the company.
+
+#### Step-by-Step Configuration:
+
+1.  Go to [Meta for Developers](https://developers.facebook.com/) and log in.
+2.  Click **My Apps** -> **Create App**.
+3.  Select **"Authenticate and request data from users with Facebook Login"**.
+4.  Enter your **App Name** (e.g., "El Bulk Storefront").
+5.  **Business Portfolio**: Select your newly created Meta Business Portfolio from the dropdown to ensure professional ownership.
+6.  In the left sidebar, go to **App Settings** → **Basic**:
+    - **Privacy Policy URL**: `https://elbulk.com/privacy` (Required to go live).
+    - **User Data Deletion**: `https://elbulk.com/privacy` (You can point this to your privacy page or a dedicated instructions page).
+7.  In the left sidebar, go to **Use Cases** (or "Add Product") → **Facebook Login** → **Settings**:
+    - Under **Client OAuth Settings**, add these to **Valid OAuth Redirect URIs**:
+      ```
+      https://api.elbulk.com/api/auth/facebook/callback
+      http://localhost:8080/api/auth/facebook/callback
+      ```
+8.  Go back to **App Settings** → **Basic**:
+    - Copy the **App ID** and **App Secret**.
+
+**Where to use these values:**
+- `App ID` → `_FACEBOOK_CLIENT_ID` in Cloud Build substitutions.
+- `App Secret` → `ELBULK_FACEBOOK_CLIENT_SECRET` in Secret Manager.
+
+> [!CAUTION]
+> Facebook requires your app to be in **Live mode** for customers to log in. You must provide a valid Privacy Policy URL and optionally submit for "App Review" if you request advanced permissions (though standard `email` and `public_profile` usually don't require review).
 
 ---
 
@@ -1165,3 +1224,36 @@ Use this checklist for your first production deployment:
 - [ ] CORS working (frontend can call backend API)
 - [ ] Images uploading and displaying correctly
 - [ ] Newsletter subscription working (if SMTP configured)
+
+---
+
+## 21. CI/CD: Automated Triggers
+
+To automate deployments when the `main` branch is updated while allowing you to work on local branches (like `dv`) without triggering builds:
+
+### 21.1 Create a Trigger
+1.  Go to **Cloud Build > Triggers** in the [GCP Console](https://console.cloud.google.com/cloud-build/triggers).
+2.  Click **Create Trigger**.
+3.  **Name**: `deploy-on-main`
+4.  **Event**: Select **Push to a branch**.
+5.  **Repository**: Connect your GitHub/GitLab/Bitbucket repository.
+6.  **Branch**: Set the filter to `^main$` (uses regex to match only the main branch).
+7.  **Configuration**: Select **Cloud Build configuration file (yaml/json)** and set the path to `cloudbuild.yaml`.
+
+### 21.2 Configure Substitutions
+Automated triggers require you to define the variables usually passed via the `--substitutions` flag in the UI:
+
+1.  In the Trigger settings, scroll down to **Substitution variables**.
+2.  Click **Add Variable** for each required substitution in `cloudbuild.yaml`.
+3.  **Keys** must start with an underscore (e.g., `_DB_CONNECTION_NAME`).
+4.  **Values** should be the production-specific strings.
+
+**Common Substitutions to add:**
+- `_DB_CONNECTION_NAME`
+- `_GCS_BUCKET`
+- `_API_URL`
+- `_FRONTEND_ORIGIN`
+- `_GOOGLE_CLIENT_ID`
+- `_BACKEND_INTERNAL_URL`
+
+This setup ensures that only merges to `main` go live, while your local development workflow remains isolated.
