@@ -635,8 +635,11 @@ gcloud run jobs create el-bulk-seed \
     --set-cloudsql-instances=my-elbulk-prod:us-central1:el-bulk-db \
     --set-secrets="DATABASE_URL=ELBULK_DB_URL:latest,ENCRYPTION_KEY=ELBULK_ENCRYPTION_KEY:latest" \
     --set-env-vars="INSTANCE_CONNECTION_NAME=my-elbulk-prod:us-central1:el-bulk-db,DB_IAM_AUTH=true,ADMIN_USERNAME=admin,ADMIN_PASSWORD=YourSecurePassword!" \
-    --command="go" \
-    --args="run,./seed/,--mode=minimal"
+    --command="./el-bulk-seed" \
+    --args="--mode=minimal"
+
+> [!TIP]
+> **Using IAM Authentication**: If using `DB_IAM_AUTH=true`, the Service Account must have `roles/cloudsql.instanceUser` and you must create the IAM user in Postgres (stripped email format: `[PROJECT_NUMBER]-compute@developer`).
 
 gcloud run jobs execute el-bulk-seed --region=us-central1 --wait
 
