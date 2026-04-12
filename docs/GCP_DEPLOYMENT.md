@@ -293,81 +293,105 @@ gcloud storage ls gs://elbulk-media-prod
 
 ---
 
-## 6. Secret Manager (Sensitive Configuration)
+## 6. Secret Manager (Centralized Configuration)
 
-Secrets are mounted into Cloud Run containers at runtime. They are **never** baked into Docker images.
+El Bulk uses Secret Manager as the **Single Source of Truth** for all configurations and secrets. This replaces manually passing environment variables through Cloud Build.
 
-### 6.1 Generate Secrets
+### 6.1 Secret Initialization Script
+
+Run this script once to create all the required secrets in your project. Replace `YOUR_VALUE` placeholders with your actual production configuration.
+
+# JWT Secret (256-bit random)
+#openssl rand -hex 32
+# AES-256 Encryption Key (exactly 32 bytes of random)
+#openssl rand -hex 16 | xxd -p | tr -d '\n' | head -c 32
+# Or simpler:
+#python3 -c "import secrets; print(secrets.token_urlsafe(32)[:32])"
+# Strong admin password
+#openssl rand -base64 24
 
 ```bash
-# Generate cryptographically secure values
-JWT_SECRET=$(openssl rand -base64 32)
-ENCRYPTION_KEY=$(openssl rand -hex 16)
+# Define your variables (Format: "category:name:value")
+vars=(
+  # --- 1. Infrastructure (Public Configs) ---
+  "infrastructure:ELBULK_GCS_BUCKET:elbulk-media-prod"          # GCS bucket for product images and media
+  "infrastructure:ELBULK_FRONTEND_ORIGIN:https://elbulk.com"    # Allowed CORS origin for the backend
+  "infrastructure:ELBULK_SITE_URL:https://elbulk.com"           # Base URL for generated links and metadata
+  "infrastructure:ELBULK_API_URL:https://api.elbulk.com"        # Public API URL (baked into frontend)
 
-echo "JWT_SECRET:     $JWT_SECRET"
-echo "ENCRYPTION_KEY: $ENCRYPTION_KEY"
+  # --- 2. Administrative & Auth ---
+  "auth:ELBULK_ADMIN_EMAILS:your.email@gmail.com"              # Whitelist for Google OAuth admin access
+  "auth:ELBULK_ADMIN_USERNAME:admin"                           # Username for initial admin account (Seed Job)
+  "auth:ELBULK_ADMIN_PASSWORD:$(openssl rand -base64 12)"      # Password for initial admin account (Seed Job)
+  "auth:ELBULK_GOOGLE_CLIENT_ID:YOUR_GOOGLE_ID"                # OAuth Client ID for public users
+  "auth:ELBULK_GOOGLE_CLIENT_ID_ADMIN:YOUR_ADMIN_ID"           # Isolated OAuth Client ID for administrators
+  "auth:ELBULK_GOOGLE_CLIENT_SECRET_ADMIN:YOUR_ADMIN_SECRET"    # OAuth Client Secret for administrators
+  "auth:ELBULK_FACEBOOK_CLIENT_ID:YOUR_FB_ID"                  # Facebook App ID for social login
+
+  # --- 3. SMTP / Email ---
+  "email:ELBULK_SMTP_HOST:smtp.sendgrid.net"                    # SMTP server host for notifications
+  "email:ELBULK_SMTP_PORT:587"                                  # SMTP server port (usually 587 for TLS)
+  "email:ELBULK_SMTP_USER:apikey"                               # SMTP username
+  "email:ELBULK_SMTP_FROM:El Bulk <notices@elbulk.com>"          # Sender address for outgoing emails
+  "email:ELBULK_SMTP_PASS:YOUR_PASS"                            # SMTP password or API key
+
+  # --- 4. External APIs & Analytics ---
+  "analytics:ELBULK_POKEMON_TCG_API_KEY:YOUR_KEY"               # API key for the Pokemon TCG SDK (if used)
+  "analytics:ELBULK_GA_ID:G-XXXXXXXXXX"                         # Google Analytics measurement ID
+  "analytics:ELBULK_META_PIXEL_ID:YOUR_ID"                      # Meta Pixel ID for tracking
+  "analytics:ELBULK_GOOGLE_ADS_ID:AW-XXXXXXXXXX"                # Google Ads conversion tracking ID
+  "analytics:ELBULK_HOTJAR_ID:YOUR_ID"                          # Hotjar Site ID for heatmaps
+
+  # --- 5. Core Security Secrets ---
+  "security:ELBULK_JWT_SECRET:$(openssl rand -base64 32)"       # Secret key for signing session tokens
+  "security:ELBULK_ENCRYPTION_KEY:$(openssl rand -hex 16)"      # AES-256 key for PII data at rest
+  "security:ELBULK_GOOGLE_CLIENT_SECRET:YOUR_SECRET"           # OAuth Client Secret for public users
+  "security:ELBULK_FACEBOOK_CLIENT_SECRET:YOUR_SECRET"         # Facebook App Secret
+  "security:ELBULK_DB_URL:user=... dbname=elbulk sslmode=disable" # Cloud SQL connection string
+)
+
+# Loop and create secrets
+for entry in "${vars[@]}"; do
+  # Parse category, name, and value
+  category="${entry%%:*}"
+  rest="${entry#*:}"
+  name="${rest%%:*}"
+  value="${rest#*:}"
+
+  echo "Setting up secret [$category]: $name"
+  
+  gcloud secrets create "$name" \
+    --replication-policy="automatic" \
+    --labels=app=elbulk,managed-by=manual,category=$category \
+    2>/dev/null || true
+    
+  echo -n "$value" | gcloud secrets versions add "$name" --data-file=-
+done
 ```
 
 > [!CAUTION]
-> **Save these values securely (password manager).** If you lose `ENCRYPTION_KEY`, all encrypted PII (customer phones, addresses, ID numbers) becomes **permanently unrecoverable**.
+> **Backup your ENCRYPTION_KEY and JWT_SECRET.** If you lose the encryption key, all customer PII becomes permanently unrecoverable.
 
-### 6.2 Create Each Secret
+### 6.2 Grant Access
 
-```bash
-# Database URL
-# If using IAM auth (uses the $IAM_USER variable defined in Step 4.5):
-echo -n "user=$IAM_USER dbname=elbulk sslmode=disable" | \
-    gcloud secrets create ELBULK_DB_URL --data-file=-
-
-# If using password auth:
-echo -n "postgres://<USER>:<PASSWORD>@/<DB_NAME>?host=/cloudsql/<CONNECTION_NAME>&sslmode=disable" | \
-    gcloud secrets create ELBULK_DB_URL --data-file=-
-
-# JWT Secret
-echo -n "$JWT_SECRET" | \
-    gcloud secrets create ELBULK_JWT_SECRET --data-file=-
-
-# Encryption Key (32 characters for AES-256)
-echo -n "$ENCRYPTION_KEY" | \
-    gcloud secrets create ELBULK_ENCRYPTION_KEY --data-file=-
-
-# SMTP Password
-echo -n "your-smtp-password" | \
-    gcloud secrets create ELBULK_SMTP_PASS --data-file=-
-
-# Google OAuth Client Secret
-echo -n "GOOGLExxxxx.apps.googleusercontent.com-secret" | \
-    gcloud secrets create ELBULK_GOOGLE_CLIENT_SECRET --data-file=-
-
-# Facebook OAuth Client Secret (optional)
-echo -n "facebook-app-secret-here" | \
-    gcloud secrets create ELBULK_FACEBOOK_CLIENT_SECRET --data-file=-
-```
-
-### 6.3 Verify Secrets Exist
+The Cloud Build and Cloud Run service accounts must be able to read these secrets.
 
 ```bash
-gcloud secrets list --format="table(name, createTime)"
-```
+PROJECT_NUMBER=$(gcloud projects describe $(gcloud config get-value project) --format='value(projectNumber)')
 
-**Expected output:**
-```
-NAME                            CREATE_TIME
-ELBULK_DB_URL                   2026-04-11...
-ELBULK_ENCRYPTION_KEY           2026-04-11...
-ELBULK_FACEBOOK_CLIENT_SECRET   2026-04-11...
-ELBULK_GOOGLE_CLIENT_SECRET     2026-04-11...
-ELBULK_JWT_SECRET               2026-04-11...
-ELBULK_SMTP_PASS                2026-04-11...
-```
+# Define the accounts
+BUILD_SA="${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com"
+RUN_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
 
-### 6.4 Update a Secret Value
+# Grant access to ALL secrets in the project for simplicity
+# (Or repeat for each specific secret)
+gcloud projects add-iam-policy-binding $(gcloud config get-value project) \
+  --member="serviceAccount:$BUILD_SA" \
+  --role="roles/secretmanager.secretAccessor"
 
-If you ever need to rotate a secret:
-
-```bash
-echo -n "new-secret-value" | \
-    gcloud secrets versions add ELBULK_JWT_SECRET --data-file=-
+gcloud projects add-iam-policy-binding $(gcloud config get-value project) \
+  --member="serviceAccount:$RUN_SA" \
+  --role="roles/secretmanager.secretAccessor"
 ```
 
 ---
@@ -485,7 +509,9 @@ This is the **recommended** deployment method. The `cloudbuild.yaml` file in the
 3. Pushes images to Artifact Registry
 4. Deploys both services to Cloud Run
 
-### 8.1 First Deployment
+### 8.1 Automated Deployment
+
+With Secret Manager configured, deployment is drastically simplified. You no longer need to pass common environment variables as flags.
 
 ```bash
 # From the project root directory
@@ -494,20 +520,7 @@ gcloud builds submit \
     --substitutions=\
 _TAG=$(git rev-parse --short HEAD 2>/dev/null || echo "latest"),\
 _DB_CONNECTION_NAME="my-elbulk-prod:us-central1:el-bulk-db",\
-_GCS_BUCKET="elbulk-media-prod",\
-_FRONTEND_ORIGIN="https://elbulk.com",\
-_API_URL="https://api.elbulk.com",\
-_GOOGLE_CLIENT_ID="your-google-client-id.apps.googleusercontent.com",\
-_FACEBOOK_CLIENT_ID="your-facebook-app-id",\
-_SMTP_HOST="smtp.sendgrid.net",\
-_SMTP_PORT="587",\
-_SMTP_USER="apikey",\
-_SMTP_FROM="El Bulk <notices@elbulk.com>",\
-_GA_ID="G-XXXXXXXXXX",\
-_META_PIXEL_ID="1234567890",\
-_GOOGLE_ADS_ID="AW-XXXXXXXXXX",\
-_HOTJAR_ID="1234567",\
-_BACKEND_INTERNAL_URL="https://el-bulk-backend-xxxxx-uc.a.run.app"
+_BACKEND_INTERNAL_URL="https://api.elbulk.com"
 ```
 
 > [!IMPORTANT]
@@ -633,8 +646,8 @@ gcloud run jobs create el-bulk-seed \
     --image=$REGION-docker.pkg.dev/$PROJECT_ID/el-bulk-repo/backend:latest \
     --region=us-central1 \
     --set-cloudsql-instances=my-elbulk-prod:us-central1:el-bulk-db \
-    --set-secrets="DATABASE_URL=ELBULK_DB_URL:latest,ENCRYPTION_KEY=ELBULK_ENCRYPTION_KEY:latest" \
-    --set-env-vars="INSTANCE_CONNECTION_NAME=my-elbulk-prod:us-central1:el-bulk-db,DB_IAM_AUTH=true,ADMIN_USERNAME=admin,ADMIN_PASSWORD=YourSecurePassword!" \
+    --set-secrets="DATABASE_URL=ELBULK_DB_URL:latest,ENCRYPTION_KEY=ELBULK_ENCRYPTION_KEY:latest,ADMIN_USERNAME=ELBULK_ADMIN_USERNAME:latest,ADMIN_PASSWORD=ELBULK_ADMIN_PASSWORD:latest" \
+    --set-env-vars="INSTANCE_CONNECTION_NAME=my-elbulk-prod:us-central1:el-bulk-db,DB_IAM_AUTH=true" \
     --command="./el-bulk-seed" \
     --args="--mode=minimal"
 
