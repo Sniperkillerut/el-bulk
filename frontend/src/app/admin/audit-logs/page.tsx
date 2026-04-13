@@ -144,7 +144,7 @@ export default function AuditLogsPage() {
                       </td>
                       <td className="px-4 py-3">
                         <span className="text-text-muted uppercase text-[10px]">{log.target_type}</span>
-                        <div className="text-[10px] opacity-60">ID: {log.target_id.substring(0, 8)}...</div>
+                        <div className="text-[10px] opacity-60">ID: {log.target_id?.substring(0, 8) || 'N/A'}...</div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap opacity-70 cursor-help group relative" 
