@@ -65,6 +65,7 @@ const (
 	// PriceSource values
 	PriceSourceTCGPlayer   = "tcgplayer"   // USD via Scryfall, use usd_to_cop_rate
 	PriceSourceCardmarket  = "cardmarket"  // EUR via Scryfall, use eur_to_cop_rate
+	PriceSourceCardKingdom = "cardkingdom" // USD via CardKingdom API
 	PriceSourceManual      = "manual"      // price_cop_override is authoritative
 )
 

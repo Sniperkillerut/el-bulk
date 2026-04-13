@@ -29,22 +29,36 @@ func (s *RefreshService) RunPriceRefresh(ctx context.Context) (updated int, errs
 
 	// Separate MTG products (use Scryfall) from non-MTG (not yet supported)
 	var mtgRows []store.RefreshRow
+	needsCK := false
 	for _, r := range rows {
 		if r.TCG == "mtg" {
 			mtgRows = append(mtgRows, r)
+			if r.PriceSource == "cardkingdom" {
+				needsCK = true
+			}
 		}
 	}
 
-	var priceMap map[external.PriceKey]external.CardMetadata
+	var scryPriceMap map[external.PriceKey]external.CardMetadata
+	var ckPriceMap map[string]*float64
 	if len(mtgRows) > 0 {
-		priceMap, err = external.BuildPriceMap(ctx)
+		var err error
+		scryPriceMap, err = external.BuildPriceMap(ctx)
 		if err != nil {
 			logger.ErrorCtx(ctx, "[price-refresh] scryfall bulk download failed: %v", err)
 			return 0, len(mtgRows)
 		}
+
+		if needsCK {
+			ckPriceMap, err = external.BuildCardKingdomPriceMap(ctx)
+			if err != nil {
+				logger.ErrorCtx(ctx, "[price-refresh] cardkingdom pricelist download failed: %v", err)
+				errs += len(mtgRows) // Consider them all errors if we can't get the source
+			}
+		}
 	}
 
-	updates, resolveErrs := store.BuildPriceUpdates(mtgRows, priceMap)
+	updates, resolveErrs := store.BuildPriceUpdates(mtgRows, scryPriceMap, ckPriceMap)
 	errs += resolveErrs
 
 	updated, updateErrs := s.Store.BulkUpdateMetadata(ctx, updates)

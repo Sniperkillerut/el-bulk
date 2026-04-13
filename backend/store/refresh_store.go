@@ -24,17 +24,19 @@ type RefreshRow struct {
 	ID            string  `db:"id"`
 	TCG           string  `db:"tcg"`
 	Name          string  `db:"name"`
+	SetName       *string `db:"set_name"`
 	SetCode       *string `db:"set_code"`
 	FoilTreatment string  `db:"foil_treatment"`
+	CardTreatment string  `db:"card_treatment"`
 	PriceSource   string  `db:"price_source"`
 }
 
 func (s *RefreshStore) ListRefreshableProducts(ctx context.Context) ([]RefreshRow, error) {
 	var rows []RefreshRow
 	err := s.DB.SelectContext(ctx, &rows, `
-		SELECT id, tcg, name, set_code, foil_treatment, price_source
+		SELECT id, tcg, name, set_name, set_code, foil_treatment, card_treatment, price_source
 		FROM product
-		WHERE price_source IN ('tcgplayer', 'cardmarket')
+		WHERE price_source IN ('tcgplayer', 'cardmarket', 'cardkingdom')
 	`)
 	return rows, err
 }
@@ -108,8 +110,8 @@ func (s *RefreshStore) BulkUpdateMetadata(ctx context.Context, updates []Metadat
 	return totalUpdated, totalErrors
 }
 
-// BuildPriceUpdates resolves prices from a Scryfall price map for the given products.
-func BuildPriceUpdates(rows []RefreshRow, priceMap map[external.PriceKey]external.CardMetadata) ([]MetadataUpdate, int) {
+// BuildPriceUpdates resolves prices from Scryfall and CardKingdom price maps.
+func BuildPriceUpdates(rows []RefreshRow, scryPriceMap map[external.PriceKey]external.CardMetadata, ckPriceMap map[string]*float64) ([]MetadataUpdate, int) {
 	var updates []MetadataUpdate
 	errs := 0
 
@@ -122,12 +124,13 @@ func BuildPriceUpdates(rows []RefreshRow, priceMap map[external.PriceKey]externa
 		name := strings.ToLower(p.Name)
 
 		// Try specific set first, fall back to any set
-		prices, ok := priceMap[external.PriceKey{Name: name, SetCode: setCode, Foil: foil}]
-		if !ok {
-			prices, ok = priceMap[external.PriceKey{Name: name, SetCode: "", Foil: foil}]
+		scryMeta, hasScry := scryPriceMap[external.PriceKey{Name: name, SetCode: setCode, Foil: foil}]
+		if !hasScry {
+			scryMeta, hasScry = scryPriceMap[external.PriceKey{Name: name, SetCode: "", Foil: foil}]
 		}
-		if !ok {
-			logger.Warn("[price-refresh] no price found for %q set=%s foil=%s", p.Name, setCode, foil)
+
+		if !hasScry && p.PriceSource != "cardkingdom" {
+			logger.Warn("[price-refresh] no Scryfall metadata found for %q set=%s foil=%s", p.Name, setCode, foil)
 			errs++
 			continue
 		}
@@ -135,20 +138,64 @@ func BuildPriceUpdates(rows []RefreshRow, priceMap map[external.PriceKey]externa
 		var refPrice *float64
 		switch p.PriceSource {
 		case "tcgplayer":
-			refPrice = prices.TCGPlayerUSD
+			refPrice = scryMeta.TCGPlayerUSD
 		case "cardmarket":
-			refPrice = prices.CardmarketEUR
+			refPrice = scryMeta.CardmarketEUR
+		case "cardkingdom":
+			// 1. Try matching by CardKingdom ID if we have Scryfall metadata
+			if hasScry && scryMeta.CardKingdomID != "" {
+				if cp, ok := ckPriceMap["ckid:"+scryMeta.CardKingdomID]; ok {
+					refPrice = cp
+				}
+			}
+
+			// 2. Fallback to Name + Edition + Variation matching
+			if refPrice == nil {
+				setName := ""
+				if p.SetName != nil {
+					setName = *p.SetName
+				}
+				variation := external.MapFoilTreatmentToCKVariation(models.FoilTreatment(p.FoilTreatment), models.CardTreatment(p.CardTreatment))
+				isFoil := p.FoilTreatment != "non_foil"
+
+				key := fmt.Sprintf("%s|%s|%s|%s",
+					strings.ToLower(p.Name),
+					strings.ToLower(setName),
+					strings.ToLower(variation),
+					func() string {
+						if isFoil {
+							return "foil"
+						}
+						return "non_foil"
+					}())
+
+				if cp, ok := ckPriceMap[key]; ok {
+					refPrice = cp
+				}
+			}
 		}
 
-		updates = append(updates, MetadataUpdate{
-			ID:         p.ID,
-			Price:      refPrice,
-			Legalities: prices.Legalities,
-			OracleText: prices.OracleText,
-			ScryfallID: prices.ScryfallID,
-			TypeLine:   prices.TypeLine,
-			ImageURL:   prices.ImageURL,
-		})
+		if refPrice == nil {
+			logger.Warn("[price-refresh] no price found for %q source=%s set=%s foil=%s", p.Name, p.PriceSource, setCode, foil)
+			errs++
+			continue
+		}
+
+		update := MetadataUpdate{
+			ID:    p.ID,
+			Price: refPrice,
+		}
+
+		// Update metadata only if we have Scryfall info
+		if hasScry {
+			update.Legalities = scryMeta.Legalities
+			update.OracleText = scryMeta.OracleText
+			update.ScryfallID = scryMeta.ScryfallID
+			update.TypeLine = scryMeta.TypeLine
+			update.ImageURL = scryMeta.ImageURL
+		}
+
+		updates = append(updates, update)
 	}
 
 	return updates, errs

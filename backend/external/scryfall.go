@@ -488,6 +488,8 @@ type ScryfallBulkCard struct {
 		EUR       *string `json:"eur"`
 		EURFoil   *string `json:"eur_foil"`
 	} `json:"prices"`
+	CardKingdomID     *string `json:"card_kingdom_id"`
+	CardKingdomFoilID *string `json:"card_kingdom_foil_id"`
 }
 
 // PriceKey uniquely identifies a card+foil combination for the in-memory map.
@@ -506,6 +508,7 @@ type CardMetadata struct {
 	ScryfallID     string
 	TypeLine       string
 	ImageURL       string
+	CardKingdomID  string
 }
 
 // BuildPriceMap downloads Scryfall's "default_cards" bulk file and
@@ -603,6 +606,13 @@ func BuildPriceMap(ctx context.Context) (map[PriceKey]CardMetadata, error) {
 			entry := meta
 			entry.TCGPlayerUSD = tcg
 			entry.CardmarketEUR = cm
+
+			// Add CK ID if applicable for this finish
+			if v.foil == "non_foil" && card.CardKingdomID != nil {
+				entry.CardKingdomID = *card.CardKingdomID
+			} else if (v.foil == "foil" || v.foil == "holo_foil") && card.CardKingdomFoilID != nil {
+				entry.CardKingdomID = *card.CardKingdomFoilID
+			}
 
 			// Index by specific set
 			priceMap[PriceKey{Name: name, SetCode: set, Foil: v.foil}] = entry
