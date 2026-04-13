@@ -71,9 +71,9 @@ export default function AuditLogsPage() {
           >
             <option value="">{t('pages.admin.audit.filter.all_actions', 'All Actions')}</option>
             <option value="create">CREATE</option>
-            <option value="update">UPDATE</option>
             <option value="delete">DELETE</option>
             <option value="login">LOGIN</option>
+            <option value="update">UPDATE</option>
           </select>
 
           <select 
@@ -82,9 +82,9 @@ export default function AuditLogsPage() {
             className="input-sm text-xs"
           >
             <option value="">{t('pages.admin.audit.filter.all_targets', 'All Targets')}</option>
-            <option value="product">PRODUCT</option>
-            <option value="order">ORDER</option>
             <option value="admin">ADMIN</option>
+            <option value="order">ORDER</option>
+            <option value="product">PRODUCT</option>
           </select>
 
           <button 

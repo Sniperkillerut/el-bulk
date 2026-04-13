@@ -60,13 +60,13 @@ export default function AdminSettingsPage() {
     try {
       await adminUpdateLogLevel(level);
       setBackendLogLevel(level);
-    } catch (err) {
+    } catch {
       alert('Failed to update backend log level');
     }
   };
 
   const handleFrontendLogLevelChange = (level: string) => {
-    remoteLogger.setLevel(level.toLowerCase() as any);
+    remoteLogger.setLevel(level.toLowerCase() as 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'off');
     setFrontendLogLevel(level);
   };
 
@@ -273,7 +273,7 @@ export default function AdminSettingsPage() {
             <div className="card p-3 bg-white shadow-sm border-l-4 border-gold">
               <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">Backend Server Log Level</label>
               <div className="flex flex-wrap gap-2">
-                {['OFF', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'].map(level => (
+                {['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'OFF'].map(level => (
                   <button
                     key={level}
                     onClick={() => handleBackendLogLevelChange(level)}
@@ -294,7 +294,7 @@ export default function AdminSettingsPage() {
             <div className="card p-3 bg-white shadow-sm border-l-4 border-indigo-400">
               <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">Frontend Client Log Level</label>
               <div className="flex flex-wrap gap-2">
-                {['OFF', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'].map(level => (
+                {['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'OFF'].map(level => (
                   <button
                     key={level}
                     onClick={() => handleFrontendLogLevelChange(level)}
