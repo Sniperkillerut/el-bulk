@@ -66,6 +66,7 @@ steps:
           --build-arg NEXT_PUBLIC_META_PIXEL_ID=$$META_PIXEL_ID \
           --build-arg NEXT_PUBLIC_GOOGLE_ADS_ID=$$GOOGLE_ADS_ID \
           --build-arg NEXT_PUBLIC_HOTJAR_ID=$$HOTJAR_ID \
+          --build-arg INTERNAL_API_URL=${_BACKEND_INTERNAL_URL} \
           ./frontend
     secretEnv: ['API_URL', 'GA_ID', 'META_PIXEL_ID', 'GOOGLE_ADS_ID', 'HOTJAR_ID']
 

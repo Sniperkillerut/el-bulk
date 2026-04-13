@@ -35,11 +35,12 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    // INTERNAL_API_URL: Used for server-side requests (SSR) inside the same network.
-    //   - Docker Compose: http://backend:8080
-    //   - Cloud Run: the backend's internal URL (e.g., https://el-bulk-backend-xxx-uc.a.run.app)
-    // Falls back to the docker-compose internal hostname for local dev.
-    const apiBase = process.env.INTERNAL_API_URL || 'http://backend:8080';
+    // INTERNAL_API_URL: Used for server-side requests (SSR).
+    // In Cloud Run, this should be the backend's internal or public URL.
+    // If missing, we fall back to NEXT_PUBLIC_API_URL to ensure production stability.
+    const apiBase = process.env.INTERNAL_API_URL || 
+                    process.env.NEXT_PUBLIC_API_URL || 
+                    'http://backend:8080';
     return [
       {
         source: '/api/:path*',
