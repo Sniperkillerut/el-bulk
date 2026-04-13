@@ -34,6 +34,8 @@ func (s *AuditService) LogAction(ctx context.Context, action, resourceType, reso
 		admin, err := s.AdminStore.GetByID(ctx, adminID)
 		if err == nil && admin != nil {
 			username = admin.Username
+		} else {
+			logger.WarnCtx(ctx, "AuditLog: Admin ID %s present but profile retrieval failed (err: %v). Using 'system' fallback.", adminID, err)
 		}
 	}
 

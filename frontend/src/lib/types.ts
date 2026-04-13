@@ -698,10 +698,10 @@ export interface Translation {
 export interface AuditLog {
   id: string;
   admin_id: string;
-  admin_name: string;
+  admin_username: string;
   action: string;
-  target_type: string;
-  target_id: string;
+  resource_type: string;
+  resource_id: string;
   details: Record<string, unknown> | null;
   created_at: string;
 }

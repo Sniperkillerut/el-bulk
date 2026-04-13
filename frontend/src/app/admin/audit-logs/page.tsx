@@ -18,7 +18,7 @@ export default function AuditLogsPage() {
 
   const [filters, setFilters] = useState({
     action: '',
-    target_type: '',
+    resource_type: '',
   });
 
   const fetchLogs = useCallback(async () => {
@@ -77,8 +77,8 @@ export default function AuditLogsPage() {
           </select>
 
           <select 
-            value={filters.target_type}
-            onChange={(e) => handleFilterChange('target_type', e.target.value)}
+            value={filters.resource_type}
+            onChange={(e) => handleFilterChange('resource_type', e.target.value)}
             className="input-sm text-xs"
           >
             <option value="">{t('pages.admin.audit.filter.all_targets', 'All Targets')}</option>
@@ -130,7 +130,7 @@ export default function AuditLogsPage() {
                         {format(new Date(log.created_at), 'yyyy-MM-dd HH:mm:ss')}
                       </td>
                       <td className="px-4 py-3 font-bold text-ink-navy">
-                        {log.admin_name}
+                        {log.admin_username}
                       </td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-0.5 rounded-sm border text-[10px] uppercase font-bold ${
@@ -143,8 +143,8 @@ export default function AuditLogsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-text-muted uppercase text-[10px]">{log.target_type}</span>
-                        <div className="text-[10px] opacity-60">ID: {log.target_id?.substring(0, 8) || 'N/A'}...</div>
+                        <span className="text-text-muted uppercase text-[10px]">{log.resource_type}</span>
+                        <div className="text-[10px] opacity-60">ID: {log.resource_id?.substring(0, 8) || 'N/A'}...</div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap opacity-70 cursor-help group relative" 

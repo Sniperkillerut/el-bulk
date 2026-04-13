@@ -262,7 +262,7 @@ export async function adminUpdateLogLevel(level: string): Promise<{ message: str
   });
 }
 
-export async function adminFetchAuditLogs(filters: { action?: string; target_type?: string; page?: number; page_size?: number } = {}): Promise<import('./types').AuditLogListResponse> {
+export async function adminFetchAuditLogs(filters: { action?: string; resource_type?: string; page?: number; page_size?: number } = {}): Promise<import('./types').AuditLogListResponse> {
   return apiFetch<import('./types').AuditLogListResponse>('/api/admin/audit-logs', { params: filters, cache: 'no-store' });
 }
 
