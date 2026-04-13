@@ -24,7 +24,7 @@ func TestTCGHandler_List(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &TCGHandler{Service: service.NewTCGService(store.NewTCGStore(sqlxDB))}
+	h := &TCGHandler{Service: service.NewTCGService(store.NewTCGStore(sqlxDB), nil)}
 
 	t.Run("Success", func(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id", "name", "is_active", "created_at", "item_count"}).
@@ -52,7 +52,7 @@ func TestTCGHandler_Create(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &TCGHandler{Service: service.NewTCGService(store.NewTCGStore(sqlxDB))}
+	h := &TCGHandler{Service: service.NewTCGService(store.NewTCGStore(sqlxDB), nil)}
 
 	t.Run("Success", func(t *testing.T) {
 		input := models.TCGInput{ID: "one", Name: "One Piece"}
@@ -99,7 +99,7 @@ func TestTCGHandler_Update(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &TCGHandler{Service: service.NewTCGService(store.NewTCGStore(sqlxDB))}
+	h := &TCGHandler{Service: service.NewTCGService(store.NewTCGStore(sqlxDB), nil)}
 
 	t.Run("Success", func(t *testing.T) {
 		input := models.TCGInput{Name: "New Name", IsActive: true}
@@ -134,7 +134,7 @@ func TestTCGHandler_Delete(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &TCGHandler{Service: service.NewTCGService(store.NewTCGStore(sqlxDB))}
+	h := &TCGHandler{Service: service.NewTCGService(store.NewTCGStore(sqlxDB), nil)}
 
 	t.Run("Success", func(t *testing.T) {
 		mock.ExpectQuery("SELECT COUNT.* FROM product").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))

@@ -12,11 +12,15 @@ import (
 )
 
 type TCGService struct {
-	Store *store.TCGStore
+	Store          *store.TCGStore
+	RefreshService *RefreshService
 }
 
-func NewTCGService(s *store.TCGStore) *TCGService {
-	return &TCGService{Store: s}
+func NewTCGService(s *store.TCGStore, refresh *RefreshService) *TCGService {
+	return &TCGService{
+		Store:          s,
+		RefreshService: refresh,
+	}
 }
 
 func (s *TCGService) List(ctx context.Context, isAdmin bool) ([]models.TCG, error) {
@@ -89,4 +93,16 @@ func (s *TCGService) SyncSets(ctx context.Context, tcgID string) (int, error) {
 
 	logger.InfoCtx(ctx, "Successfully synced %d sets for %s", len(sets), tcgID)
 	return len(sets), nil
+}
+
+func (s *TCGService) SyncPrices(ctx context.Context, tcgID string) (int, int, error) {
+	logger.TraceCtx(ctx, "Entering TCGService.SyncPrices | TCG: %s", tcgID)
+	
+	// Price refresh is currently only implemented for MTG via Scryfall/CardKingdom
+	if tcgID != "mtg" {
+		return 0, 0, fmt.Errorf("price sync currently only supported for MTG")
+	}
+
+	updated, errs := s.RefreshService.RunPriceRefresh(ctx, tcgID)
+	return updated, errs, nil
 }

@@ -15,7 +15,7 @@ func NewRefreshService(s *store.RefreshStore) *RefreshService {
 	return &RefreshService{Store: s}
 }
 
-func (s *RefreshService) RunPriceRefresh(ctx context.Context) (updated int, errs int) {
+func (s *RefreshService) RunPriceRefresh(ctx context.Context, tcgID string) (updated int, errs int) {
 	rows, err := s.Store.ListRefreshableProducts(ctx)
 	if err != nil {
 		logger.ErrorCtx(ctx, "[price-refresh] failed to query products: %v", err)
@@ -27,10 +27,27 @@ func (s *RefreshService) RunPriceRefresh(ctx context.Context) (updated int, errs
 		return 0, 0
 	}
 
+	// Filter by TCG if tcgID is provided
+	var filteredRows []store.RefreshRow
+	if tcgID != "" {
+		for _, r := range rows {
+			if r.TCG == tcgID {
+				filteredRows = append(filteredRows, r)
+			}
+		}
+	} else {
+		filteredRows = rows
+	}
+
+	if len(filteredRows) == 0 {
+		logger.InfoCtx(ctx, "[price-refresh] no products found for TCG %q, skipping", tcgID)
+		return 0, 0
+	}
+
 	// Separate MTG products (use Scryfall) from non-MTG (not yet supported)
 	var mtgRows []store.RefreshRow
 	needsCK := false
-	for _, r := range rows {
+	for _, r := range filteredRows {
 		if r.TCG == "mtg" {
 			mtgRows = append(mtgRows, r)
 			if r.PriceSource == "cardkingdom" {

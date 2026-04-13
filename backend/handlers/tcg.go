@@ -122,3 +122,20 @@ func (h *TCGHandler) SyncSets(w http.ResponseWriter, r *http.Request) {
 		"sets_count": count,
 	})
 }
+
+// POST /api/admin/tcgs/{id}/sync-prices
+func (h *TCGHandler) SyncPrices(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	updated, errs, err := h.Service.SyncPrices(r.Context(), id)
+	if err != nil {
+		logger.ErrorCtx(r.Context(), "Error syncing prices for TCG %s: %v", id, err)
+		render.Error(w, "Sync failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	render.Success(w, map[string]interface{}{
+		"message": "Sync completed",
+		"updated": updated,
+		"errors":  errs,
+	})
+}

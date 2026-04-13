@@ -1,10 +1,20 @@
 package handlers
 
 import (
+	"context"
+	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/service"
 	"github.com/el-bulk/backend/store"
 	"github.com/jmoiron/sqlx"
 )
+
+type NopAuditer struct{}
+
+func (n *NopAuditer) LogAction(ctx context.Context, action, resourceType, resourceID string, details models.JSONB) {
+}
+func (n *NopAuditer) List(ctx context.Context, page, pageSize int, adminID, action, resourceType string) ([]models.AuditLog, int, error) {
+	return nil, 0, nil
+}
 
 // testBountyHandler creates a BountyHandler wired through Store→Service for testing.
 func testBountyHandler(db *sqlx.DB) *BountyHandler {
@@ -13,7 +23,7 @@ func testBountyHandler(db *sqlx.DB) *BountyHandler {
 
 // testAdminHandler creates an AdminHandler wired through Store→Service for testing.
 func testAdminHandler(db *sqlx.DB) *AdminHandler {
-	return NewAdminHandler(service.NewAdminService(store.NewAdminStore(db)), nil)
+	return NewAdminHandler(service.NewAdminService(store.NewAdminStore(db)), &NopAuditer{})
 }
 
 // testNewsletterHandler creates a NewsletterHandler wired through Store→Service for testing.

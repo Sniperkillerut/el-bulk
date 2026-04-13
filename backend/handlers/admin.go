@@ -23,10 +23,10 @@ import (
 
 type AdminHandler struct {
 	Service      *service.AdminService
-	AuditService *service.AuditService
+	AuditService service.Auditer
 }
 
-func NewAdminHandler(s *service.AdminService, audit *service.AuditService) *AdminHandler {
+func NewAdminHandler(s *service.AdminService, audit service.Auditer) *AdminHandler {
 	return &AdminHandler{
 		Service:      s,
 		AuditService: audit,

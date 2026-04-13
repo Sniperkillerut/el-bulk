@@ -22,7 +22,8 @@ func NewRefreshHandler(s *service.RefreshService) *RefreshHandler {
 // POST /api/admin/prices/refresh
 func (h *RefreshHandler) Trigger(w http.ResponseWriter, r *http.Request) {
 	logger.TraceCtx(r.Context(), "Entering RefreshHandler.Trigger")
-	updated, errs := h.Service.RunPriceRefresh(r.Context())
+	// Manual trigger from price menu syncs everything
+	updated, errs := h.Service.RunPriceRefresh(r.Context(), "")
 	render.Success(w, map[string]int{"updated": updated, "errors": errs})
 }
 
@@ -39,7 +40,7 @@ func StartMidnightScheduler(svc *service.RefreshService) {
 			time.Sleep(sleepDur)
 
 			logger.Info("[price-refresh] Starting scheduled midnight refresh...")
-			updated, errs := svc.RunPriceRefresh(context.Background())
+			updated, errs := svc.RunPriceRefresh(context.Background(), "")
 			logger.Info("[price-refresh] Done: %d updated, %d errors", updated, errs)
 		}
 	}()

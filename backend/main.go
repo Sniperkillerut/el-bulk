@@ -83,7 +83,8 @@ func main() {
 	productService := service.NewProductService(productStore, tcgStore, settingsService, auditService)
 	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, auditService)
 	categoryService := service.NewCategoryService(categoryStore)
-	tcgService := service.NewTCGService(tcgStore)
+	refreshService := service.NewRefreshService(refreshStore)
+	tcgService := service.NewTCGService(tcgStore, refreshService)
 	noticeService := service.NewNoticeService(noticeStore)
 	themeService := service.NewThemeService(themeStore)
 	bountyService := service.NewBountyService(bountyStore)
@@ -92,7 +93,7 @@ func main() {
 	storageLocationService := service.NewStorageLocationService(storageLocationStore)
 	authService := service.NewAuthService(authStore)
 	healthService := service.NewHealthService(healthStore)
-	refreshService := service.NewRefreshService(refreshStore)
+	// refreshService already initialized above
 	accountingService := service.NewAccountingService(accountingStore, settingsService)
 
 	// Initialize Handlers
@@ -261,7 +262,8 @@ func main() {
 				r.Post("/tcgs", tcgHandler.Create)
 				r.Put("/tcgs/{id}", tcgHandler.Update)
 				r.Delete("/tcgs/{id}", tcgHandler.Delete)
-				r.Post("/tcgs/sync-sets", tcgHandler.SyncSets)
+				r.Post("/tcgs/{id}/sync-sets", tcgHandler.SyncSets)
+				r.Post("/tcgs/{id}/sync-prices", tcgHandler.SyncPrices)
 
 				// Exchange rate settings
 				r.Get("/settings", settingsHandler.Get)

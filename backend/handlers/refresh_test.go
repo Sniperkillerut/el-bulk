@@ -71,10 +71,10 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 	defer func() { external.ScryfallBase = oldBase }()
 
 	t.Run("Success", func(t *testing.T) {
-		rows := sqlmock.NewRows([]string{"id", "tcg", "name", "set_code", "foil_treatment", "price_source"}).
-			AddRow("550e8400-e29b-41d4-a716-446655440000", "mtg", "Black Lotus", "lea", "non_foil", "tcgplayer").
-			AddRow("550e8400-e29b-41d4-a716-446655440001", "mtg", "Mox Pearl", "lea", "non_foil", "tcgplayer")
-		mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM product").
+		rows := sqlmock.NewRows([]string{"id", "tcg", "name", "set_name", "set_code", "foil_treatment", "card_treatment", "price_source"}).
+			AddRow("550e8400-e29b-41d4-a716-446655440000", "mtg", "Black Lotus", "Limited Edition Alpha", "lea", "non_foil", "normal", "tcgplayer").
+			AddRow("550e8400-e29b-41d4-a716-446655440001", "mtg", "Mox Pearl", "Limited Edition Alpha", "lea", "non_foil", "normal", "tcgplayer")
+		mock.ExpectQuery("(?i)SELECT id, tcg, name, set_name, set_code, foil_treatment, card_treatment, price_source FROM product").
 			WillReturnRows(rows)
 
 		// Mock bulk update (chunked) - expectations must match the 7 fields updated per row
@@ -85,7 +85,7 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 			).
 			WillReturnResult(sqlmock.NewResult(0, 2))
 
-		updated, errs := svc.RunPriceRefresh(context.Background())
+		updated, errs := svc.RunPriceRefresh(context.Background(), "")
 
 		assert.Equal(t, 2, updated)
 		assert.Equal(t, 0, errs)
@@ -93,10 +93,10 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 	})
 
 	t.Run("NoProducts", func(t *testing.T) {
-		mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM product").
-			WillReturnRows(sqlmock.NewRows([]string{"id", "tcg", "name", "set_code", "foil_treatment", "price_source"}))
+		mock.ExpectQuery("(?i)SELECT id, tcg, name, set_name, set_code, foil_treatment, card_treatment, price_source FROM product").
+			WillReturnRows(sqlmock.NewRows([]string{"id", "tcg", "name", "set_name", "set_code", "foil_treatment", "card_treatment", "price_source"}))
 
-		updated, errs := svc.RunPriceRefresh(context.Background())
+		updated, errs := svc.RunPriceRefresh(context.Background(), "")
 
 		assert.Equal(t, 0, updated)
 		assert.Equal(t, 0, errs)
@@ -104,10 +104,10 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 	})
 
 	t.Run("DB Error", func(t *testing.T) {
-		mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM product").
+		mock.ExpectQuery("(?i)SELECT id, tcg, name, set_name, set_code, foil_treatment, card_treatment, price_source FROM product").
 			WillReturnError(fmt.Errorf("db error"))
 
-		updated, errs := svc.RunPriceRefresh(context.Background())
+		updated, errs := svc.RunPriceRefresh(context.Background(), "")
 
 		assert.Equal(t, 0, updated)
 		assert.Equal(t, 1, errs)
@@ -115,14 +115,15 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 	})
 
 	t.Run("HTTP Error", func(t *testing.T) {
-		mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM product").
-			WillReturnRows(sqlmock.NewRows([]string{"id", "tcg", "name", "set_code", "foil_treatment", "price_source"}).AddRow("1", "mtg", "N1", "S1", "non_foil", "tcgplayer"))
+		mock.ExpectQuery("(?i)SELECT id, tcg, name, set_name, set_code, foil_treatment, card_treatment, price_source FROM product").
+			WillReturnRows(sqlmock.NewRows([]string{"id", "tcg", "name", "set_name", "set_code", "foil_treatment", "card_treatment", "price_source"}).
+				AddRow("1", "mtg", "N1", "S1_NAME", "S1", "non_foil", "normal", "tcgplayer"))
 
 		oldBase := external.ScryfallBase
 		external.ScryfallBase = "http://invalid-url-123.com"
 		defer func() { external.ScryfallBase = oldBase }()
 
-		updated, errs := svc.RunPriceRefresh(context.Background())
+		updated, errs := svc.RunPriceRefresh(context.Background(), "")
 		assert.Equal(t, 0, updated)
 		assert.Equal(t, 1, errs)
 		assert.NoError(t, mock.ExpectationsWereMet())
@@ -139,8 +140,8 @@ func TestRefreshHandler_Trigger(t *testing.T) {
 
 	h := testRefreshHandler(sqlxDB)
 
-	mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM product").
-		WillReturnRows(sqlmock.NewRows([]string{"id", "tcg", "name", "set_code", "foil_treatment", "price_source"}))
+	mock.ExpectQuery("(?i)SELECT id, tcg, name, set_name, set_code, foil_treatment, card_treatment, price_source FROM product").
+		WillReturnRows(sqlmock.NewRows([]string{"id", "tcg", "name", "set_name", "set_code", "foil_treatment", "card_treatment", "price_source"}))
 
 	req, _ := http.NewRequest("POST", "/api/admin/prices/refresh", nil)
 	rr := httptest.NewRecorder()

@@ -11,6 +11,7 @@ import (
 
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/logger"
+	"sync"
 )
 
 const CardKingdomPricelistURL = "https://api.cardkingdom.com/api/v2/pricelist"
@@ -36,10 +37,36 @@ type CardKingdomResponse struct {
 
 var ckClient = &http.Client{Timeout: 60 * time.Second}
 
+var (
+	ckCache      map[string]*float64
+	ckCacheMutex sync.RWMutex
+	ckCacheTime  time.Time
+)
+
+const CacheDuration = 1 * time.Hour
+
 // BuildCardKingdomPriceMap downloads the CK pricelist and builds a lookup map.
 // The map is keyed by a composite of (Name, Edition, Variation, IsFoil).
+// Uses an in-memory cache valid for 1 hour to avoid excessive downloads.
 func BuildCardKingdomPriceMap(ctx context.Context) (map[string]*float64, error) {
-	logger.InfoCtx(ctx, "Downloading CardKingdom pricelist...")
+	ckCacheMutex.RLock()
+	if ckCache != nil && time.Since(ckCacheTime) < CacheDuration {
+		logger.DebugCtx(ctx, "Using cached CardKingdom pricelist (downloaded %s ago)", time.Since(ckCacheTime).Round(time.Minute))
+		cacheCopy := ckCache // Reference copy is enough for read-only use
+		ckCacheMutex.RUnlock()
+		return cacheCopy, nil
+	}
+	ckCacheMutex.RUnlock()
+
+	ckCacheMutex.Lock()
+	defer ckCacheMutex.Unlock()
+
+	// Double-check after acquiring lock
+	if ckCache != nil && time.Since(ckCacheTime) < CacheDuration {
+		return ckCache, nil
+	}
+
+	logger.InfoCtx(ctx, "Downloading CardKingdom pricelist (cache empty or expired)...")
 	
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, CardKingdomPricelistURL, nil)
 	if err != nil {
@@ -69,16 +96,16 @@ func BuildCardKingdomPriceMap(ctx context.Context) (map[string]*float64, error) 
 			continue
 		}
 
-		// Create a unique key for the card. 
-		// We use Name, Edition (Set), and normalized Variation.
 		key := generateCKKey(p.Name, p.Edition, p.Variation, p.IsFoil)
 		priceMap[key] = &price
 		
-		// Also store by CK ID for direct matching if available
 		priceMap[fmt.Sprintf("ckid:%d", p.ID)] = &price
 	}
 
-	logger.InfoCtx(ctx, "Parsed %d CardKingdom products", len(ckResp.Data))
+	ckCache = priceMap
+	ckCacheTime = time.Now()
+
+	logger.InfoCtx(ctx, "Parsed and cached %d CardKingdom products", len(ckResp.Data))
 	return priceMap, nil
 }
 
