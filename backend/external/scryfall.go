@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/utils/logger"
+	"sync"
 )
 
 var ScryfallBase = "https://api.scryfall.com"
@@ -474,8 +476,9 @@ type ScryfallBulkMeta struct {
 type ScryfallBulkCard struct {
 	ID         string            `json:"id"`
 	Name       string            `json:"name"`
-	Set        string            `json:"set"` // set code, e.g. "m11"
-	TypeLine   string            `json:"type_line"`
+	Set             string            `json:"set"` // set code, e.g. "m11"
+	CollectorNumber string            `json:"collector_number"`
+	TypeLine        string            `json:"type_line"`
 	OracleText string            `json:"oracle_text"`
 	Legalities map[string]string `json:"legalities"`
 	ImageURIs  struct {
@@ -494,9 +497,10 @@ type ScryfallBulkCard struct {
 
 // PriceKey uniquely identifies a card+foil combination for the in-memory map.
 type PriceKey struct {
-	Name    string // lowercase
-	SetCode string // lowercase; empty = any set
-	Foil    string // foil_treatment value
+	Name      string // lowercase
+	SetCode   string // lowercase; empty = any set
+	Collector string // NEW: collector number
+	Foil      string // foil_treatment value
 }
 
 // CardMetadata holds extracted USD/EUR prices and MTG card data for one PriceKey.
@@ -511,11 +515,32 @@ type CardMetadata struct {
 	CardKingdomID  string
 }
 
+var (
+	scryCache      map[PriceKey]CardMetadata
+	scryCacheMutex sync.RWMutex
+	scryCacheTime  time.Time
+)
+
 // BuildPriceMap downloads Scryfall's "default_cards" bulk file and
-// builds a lookup map keyed by (name, setCode, foilTreatment).
-// The download is streamed so memory usage stays bounded.
+// builds a lookup map. Uses an in-memory cache valid for 1 hour.
 func BuildPriceMap(ctx context.Context) (map[PriceKey]CardMetadata, error) {
-	client := &http.Client{Timeout: 5 * time.Minute} // bulk file can be 600MB
+	scryCacheMutex.RLock()
+	if scryCache != nil && time.Since(scryCacheTime) < 1*time.Hour {
+		cache := scryCache
+		scryCacheMutex.RUnlock()
+		return cache, nil
+	}
+	scryCacheMutex.RUnlock()
+
+	scryCacheMutex.Lock()
+	defer scryCacheMutex.Unlock()
+
+	if scryCache != nil && time.Since(scryCacheTime) < 1*time.Hour {
+		return scryCache, nil
+	}
+
+	logger.InfoCtx(ctx, "Downloading Scryfall bulk data (cache empty or expired)...")
+	client := &http.Client{Timeout: 5 * time.Minute} 
 
 	// Step 1: discover today's bulk-data download URL
 	metaReq, _ := http.NewRequestWithContext(ctx, http.MethodGet, ScryfallBase+"/bulk-data", nil)
@@ -614,14 +639,19 @@ func BuildPriceMap(ctx context.Context) (map[PriceKey]CardMetadata, error) {
 				entry.CardKingdomID = *card.CardKingdomFoilID
 			}
 
-			// Index by specific set
-			priceMap[PriceKey{Name: name, SetCode: set, Foil: v.foil}] = entry
-			// Also index by name+foil only (no set), so products missing set_code still match;
-			// later entries overwrite earlier ones which is fine (any printing is better than none)
-			priceMap[PriceKey{Name: name, SetCode: "", Foil: v.foil}] = entry
+			// Index by specific set + collector number
+			priceMap[PriceKey{Name: name, SetCode: set, Collector: card.CollectorNumber, Foil: v.foil}] = entry
+			
+			// Maintain previous set-only/name-only fallbacks
+			priceMap[PriceKey{Name: name, SetCode: set, Collector: "", Foil: v.foil}] = entry
+			priceMap[PriceKey{Name: name, SetCode: "", Collector: "", Foil: v.foil}] = entry
 		}
 	}
 
+	scryCache = priceMap
+	scryCacheTime = time.Now()
+
+	logger.InfoCtx(ctx, "Parsed and cached %d Scryfall cards in price map", len(priceMap))
 	return priceMap, nil
 }
 // ─── Scryfall sets data structures ──────────────────────────────────────────

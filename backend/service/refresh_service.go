@@ -2,6 +2,9 @@ package service
 
 import (
 	"context"
+	"fmt"
+	"strings"
+
 	"github.com/el-bulk/backend/external"
 	"github.com/el-bulk/backend/store"
 	"github.com/el-bulk/backend/utils/logger"
@@ -83,4 +86,61 @@ func (s *RefreshService) RunPriceRefresh(ctx context.Context, tcgID string) (upd
 
 	logger.InfoCtx(ctx, "[price-refresh] complete: %d updated, %d errors", updated, errs)
 	return updated, errs
+}
+
+func (s *RefreshService) GetSuggestedPrice(ctx context.Context, name, set, collector, foil, source string) (*float64, error) {
+	foil = strings.ToLower(foil)
+	if source == "tcgplayer" || source == "cardmarket" || source == "cardkingdom" {
+		if source == "cardkingdom" {
+			ckMap, err := external.BuildCardKingdomPriceMap(ctx)
+			if err != nil {
+				return nil, err
+			}
+			// CK Key logic: name|edition|variation|foil
+			// We try to match variations if possible, but standard is the fallback
+			key := fmt.Sprintf("%s|%s||%s", strings.ToLower(name), strings.ToLower(set), func() string {
+				if foil != "non_foil" && foil != "" {
+					return "foil"
+				}
+				return "non_foil"
+			}())
+			if price, ok := ckMap[key]; ok {
+				return price, nil
+			}
+		}
+
+		// Try Scryfall for TCGPlayer/Cardmarket or if CK fails (suggested price)
+		scryMap, err := external.BuildPriceMap(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		key := external.PriceKey{
+			Name:      strings.ToLower(name),
+			SetCode:   strings.ToLower(set),
+			Collector: strings.TrimSpace(collector),
+			Foil:      foil,
+		}
+
+		if meta, ok := scryMap[key]; ok {
+			if source == "cardmarket" {
+				return meta.CardmarketEUR, nil
+			}
+			return meta.TCGPlayerUSD, nil
+		}
+		
+		// Fallbacks
+		key.Collector = ""
+		if meta, ok := scryMap[key]; ok {
+			if source == "cardmarket" { return meta.CardmarketEUR, nil }
+			return meta.TCGPlayerUSD, nil
+		}
+		key.SetCode = ""
+		if meta, ok := scryMap[key]; ok {
+			if source == "cardmarket" { return meta.CardmarketEUR, nil }
+			return meta.TCGPlayerUSD, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no price found for %s", source)
 }

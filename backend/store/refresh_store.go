@@ -21,20 +21,21 @@ func NewRefreshStore(db *sqlx.DB) *RefreshStore {
 
 // RefreshRow is the minimal product data needed for a price refresh.
 type RefreshRow struct {
-	ID            string  `db:"id"`
-	TCG           string  `db:"tcg"`
-	Name          string  `db:"name"`
-	SetName       *string `db:"set_name"`
-	SetCode       *string `db:"set_code"`
-	FoilTreatment string  `db:"foil_treatment"`
-	CardTreatment string  `db:"card_treatment"`
-	PriceSource   string  `db:"price_source"`
+	ID              string  `db:"id"`
+	TCG             string  `db:"tcg"`
+	Name            string  `db:"name"`
+	SetName         *string `db:"set_name"`
+	SetCode         *string `db:"set_code"`
+	CollectorNumber string  `db:"collector_number"`
+	FoilTreatment   string  `db:"foil_treatment"`
+	CardTreatment   string  `db:"card_treatment"`
+	PriceSource     string  `db:"price_source"`
 }
 
 func (s *RefreshStore) ListRefreshableProducts(ctx context.Context) ([]RefreshRow, error) {
 	var rows []RefreshRow
 	err := s.DB.SelectContext(ctx, &rows, `
-		SELECT id, tcg, name, set_name, set_code, foil_treatment, card_treatment, price_source
+		SELECT id, tcg, name, set_name, set_code, collector_number, foil_treatment, card_treatment, price_source
 		FROM product
 		WHERE price_source IN ('tcgplayer', 'cardmarket', 'cardkingdom')
 	`)
@@ -124,9 +125,22 @@ func BuildPriceUpdates(rows []RefreshRow, scryPriceMap map[external.PriceKey]ext
 		name := strings.ToLower(p.Name)
 
 		// Try specific set first, fall back to any set
-		scryMeta, hasScry := scryPriceMap[external.PriceKey{Name: name, SetCode: setCode, Foil: foil}]
+		// Hierarchical lookup:
+		// 1. Exact match (Name + Set + Collector + Foil)
+		// 2. Set fallback (Name + Set + Foil)
+		// 3. Global fallback (Name + Foil)
+		
+		scryMeta, hasScry := scryPriceMap[external.PriceKey{
+			Name: name, SetCode: setCode, 
+			Collector: strings.TrimSpace(p.CollectorNumber), 
+			Foil: foil,
+		}]
+		
 		if !hasScry {
-			scryMeta, hasScry = scryPriceMap[external.PriceKey{Name: name, SetCode: "", Foil: foil}]
+			scryMeta, hasScry = scryPriceMap[external.PriceKey{Name: name, SetCode: setCode, Collector: "", Foil: foil}]
+		}
+		if !hasScry {
+			scryMeta, hasScry = scryPriceMap[external.PriceKey{Name: name, SetCode: "", Collector: "", Foil: foil}]
 		}
 
 		if !hasScry && p.PriceSource != "cardkingdom" {

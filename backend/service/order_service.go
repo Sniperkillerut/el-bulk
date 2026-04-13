@@ -100,7 +100,7 @@ func (s *OrderService) CreateOrder(ctx context.Context, input models.CreateOrder
 		if !ok || item.Quantity <= 0 {
 			continue
 		}
-		price := p.ComputePrice(settings.USDToCOPRate, settings.EURToCOPRate)
+		price := p.ComputePrice(settings.USDToCOPRate, settings.EURToCOPRate, settings.CKToCOPRate)
 		subtotalCOP += price * float64(item.Quantity)
 
 		orderItems = append(orderItems, map[string]interface{}{

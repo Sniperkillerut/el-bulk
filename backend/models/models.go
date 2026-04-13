@@ -61,12 +61,15 @@ const (
 	TreatmentAlternateArt CardTreatment = "alternate_art"
 	TreatmentSerialized   CardTreatment = "serialized"
 	TreatmentStepAndCompleat CardTreatment = "step_and_compleat"
+)
 
-	// PriceSource values
-	PriceSourceTCGPlayer   = "tcgplayer"   // USD via Scryfall, use usd_to_cop_rate
-	PriceSourceCardmarket  = "cardmarket"  // EUR via Scryfall, use eur_to_cop_rate
-	PriceSourceCardKingdom = "cardkingdom" // USD via CardKingdom API
-	PriceSourceManual      = "manual"      // price_cop_override is authoritative
+type PriceSource string
+
+const (
+	PriceSourceTCGPlayer   PriceSource = "tcgplayer"
+	PriceSourceCardmarket  PriceSource = "cardmarket"
+	PriceSourceCardKingdom PriceSource = "cardkingdom"
+	PriceSourceManual      PriceSource = "manual"
 )
 
 // MTGMetadata holds specific data for Magic: The Gathering cards.
@@ -114,7 +117,7 @@ type Product struct {
 
 	// Pricing fields
 	PriceReference   *float64 `db:"price_reference"    json:"price_reference,omitempty"`
-	PriceSource      string   `db:"price_source"       json:"price_source"`
+	PriceSource      PriceSource `db:"price_source"       json:"price_source"`
 	PriceCOPOverride *float64 `db:"price_cop_override" json:"price_cop_override,omitempty"`
 	// Price is the computed COP value injected by the handler (not a DB column)
 	Price            float64  `db:"-"                  json:"price"`
@@ -159,14 +162,16 @@ type DeckCard struct {
 
 // ComputePrice calculates the COP price for this product given the exchange rates.
 // Priority: price_cop_override > price_reference * rate > 0
-func (p *Product) ComputePrice(usdToCOP, eurToCOP float64) float64 {
+func (p *Product) ComputePrice(usdToCOP, eurToCOP, ckToCOP float64) float64 {
 	if p.PriceCOPOverride != nil {
 		return *p.PriceCOPOverride
 	}
 	if p.PriceReference != nil {
 		switch p.PriceSource {
-		case PriceSourceTCGPlayer, PriceSourceCardKingdom:
+		case PriceSourceTCGPlayer:
 			return *p.PriceReference * usdToCOP
+		case PriceSourceCardKingdom:
+			return *p.PriceReference * ckToCOP
 		case PriceSourceCardmarket:
 			return *p.PriceReference * eurToCOP
 		}
@@ -184,7 +189,7 @@ type ProductInput struct {
 
 	// Pricing
 	PriceReference   *float64 `json:"price_reference,omitempty"`
-	PriceSource      string   `json:"price_source,omitempty"`
+	PriceSource      PriceSource   `json:"price_source,omitempty"`
 	PriceCOPOverride *float64 `json:"price_cop_override,omitempty"`
 
 	Stock           int      `json:"stock"`
@@ -226,6 +231,7 @@ type InventoryValuation struct {
 type Settings struct {
 	USDToCOPRate float64 `json:"usd_to_cop_rate"`
 	EURToCOPRate float64 `json:"eur_to_cop_rate"`
+	CKToCOPRate  float64 `json:"ck_to_cop_rate"`
 
 	// Contact Info
 	ContactAddress   string   `json:"contact_address"`

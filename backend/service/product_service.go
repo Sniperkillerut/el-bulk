@@ -8,9 +8,11 @@ import (
 	"time"
 	"context"
 
+	"github.com/el-bulk/backend/external"
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/store"
 	"github.com/el-bulk/backend/utils/logger"
+	"github.com/jmoiron/sqlx"
 )
 
 type ProductService struct {
@@ -245,7 +247,7 @@ func (s *ProductService) EnrichProducts(ctx context.Context, products []models.P
 
 func (s *ProductService) CalculatePrices(products []models.Product, settings models.Settings) error {
 	for i := range products {
-		products[i].Price = products[i].ComputePrice(settings.USDToCOPRate, settings.EURToCOPRate)
+		products[i].Price = products[i].ComputePrice(settings.USDToCOPRate, settings.EURToCOPRate, settings.CKToCOPRate)
 	}
 	return nil
 }
@@ -505,4 +507,57 @@ func (h *ProductService) UpdateStorage(ctx context.Context, id string, updates [
 	}
 	
 	return h.GetStorage(ctx, id)
+}
+func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, source models.PriceSource) (int, error) {
+	logger.TraceCtx(ctx, "Entering ProductService.BulkUpdateSource | Count: %d | Source: %s", len(ids), source)
+	if len(ids) == 0 {
+		return 0, nil
+	}
+
+	// 1. Update source in DB
+	query, args, err := sqlx.In(`UPDATE product SET price_source = ?, updated_at = now() WHERE id IN (?)`, source, ids)
+	if err != nil {
+		return 0, err
+	}
+	res, err := s.Store.DB.ExecContext(ctx, s.Store.DB.Rebind(query), args...)
+	if err != nil {
+		return 0, err
+	}
+	count, _ := res.RowsAffected()
+
+	// 2. Trigger price refresh for these specific products
+	// We use the RefreshService directly to ensure they get the latest external prices
+	// But first we need the full product data (foil, set_code, etc)
+	var rows []store.RefreshRow
+	query, args, err = sqlx.In(`
+		SELECT id, tcg, name, set_name, set_code, collector_number, foil_treatment, card_treatment, price_source
+		FROM product WHERE id IN (?)`, ids)
+	if err == nil {
+		_ = s.Store.DB.SelectContext(ctx, &rows, s.Store.DB.Rebind(query), args...)
+		
+		if len(rows) > 0 {
+			// Resolve external prices
+			var scryPriceMap map[external.PriceKey]external.CardMetadata
+			var ckPriceMap map[string]*float64
+			
+			// For simplicity and safety, we fetch the full maps (they are cached now anyway)
+			scryPriceMap, _ = external.BuildPriceMap(ctx)
+			ckPriceMap, _ = external.BuildCardKingdomPriceMap(ctx)
+
+			updates, _ := store.BuildPriceUpdates(rows, scryPriceMap, ckPriceMap)
+			if len(updates) > 0 {
+				// We need RefreshStore for BulkUpdateMetadata
+				rs := store.RefreshStore{DB: s.Store.DB}
+				_, _ = rs.BulkUpdateMetadata(ctx, updates)
+			}
+		}
+	}
+
+	s.Audit.LogAction(ctx, "BULK_UPDATE_SOURCE", "product", "", models.JSONB{
+		"ids":    ids,
+		"source": source,
+		"count":  count,
+	})
+
+	return int(count), nil
 }

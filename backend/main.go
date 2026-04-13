@@ -240,6 +240,7 @@ func main() {
 				r.Put("/products/{id}", productHandler.Update)
 				r.Delete("/products/{id}", productHandler.Delete)
 				r.Get("/products/low-stock", productHandler.GetLowStock)
+				r.Put("/products/bulk-source", productHandler.BulkUpdateSource)
 
 				// Product Storage
 				r.Get("/products/{id}/storage", productHandler.GetStorage)
@@ -279,6 +280,9 @@ func main() {
 				r.Get("/lookup/mtg", lookupHandler.MTG)
 				r.Post("/lookup/mtg/batch", lookupHandler.BatchMTG)
 				r.Get("/lookup/pokemon", lookupHandler.Pokemon)
+				
+				// External Price Lookups
+				r.Get("/lookup/external/prices", tcgHandler.GetExternalPrice)
 
 				// Price refresh (manual trigger + scheduled nightly)
 				r.Post("/prices/refresh", refreshHandler.Trigger)

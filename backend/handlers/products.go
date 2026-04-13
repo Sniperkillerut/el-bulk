@@ -247,3 +247,33 @@ func (h *ProductHandler) UpdateStorage(w http.ResponseWriter, r *http.Request) {
 
 	render.Success(w, items)
 }
+
+func (h *ProductHandler) BulkUpdateSource(w http.ResponseWriter, r *http.Request) {
+	logger.TraceCtx(r.Context(), "Entering ProductHandler.BulkUpdateSource")
+	var req struct {
+		IDs    []string           `json:"ids"`
+		Source models.PriceSource `json:"source"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.ErrorCtx(r.Context(), "Failed to decode bulk update source input: %v", err)
+		render.Error(w, "Invalid input", http.StatusBadRequest)
+		return
+	}
+
+	if len(req.IDs) == 0 || req.Source == "" {
+		render.Error(w, "ids and source are required", http.StatusBadRequest)
+		return
+	}
+
+	count, err := h.Service.BulkUpdateSource(r.Context(), req.IDs, req.Source)
+	if err != nil {
+		logger.ErrorCtx(r.Context(), "BulkUpdateSource failed: %v", err)
+		render.Error(w, "Bulk update failed", http.StatusInternalServerError)
+		return
+	}
+
+	render.Success(w, map[string]interface{}{
+		"message": fmt.Sprintf("Successfully updated %d products to source %s", count, req.Source),
+		"count":   count,
+	})
+}

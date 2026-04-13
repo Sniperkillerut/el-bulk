@@ -55,6 +55,7 @@ func (s *SettingsService) GetSettings(ctx context.Context) (models.Settings, err
 	settings := models.Settings{
 		USDToCOPRate:       4200,
 		EURToCOPRate:       4600,
+		CKToCOPRate:        4000,
 		ContactAddress:     "Cra. 15 # 76-54, Local 201, Centro Comercial Unilago, Bogotá",
 		ContactPhone:       "+57 300 000 0000",
 		ContactEmail:       "contact@el-bulk.co",
@@ -82,6 +83,10 @@ func (s *SettingsService) GetSettings(ctx context.Context) (models.Settings, err
 		case "eur_to_cop_rate":
 			if f, err := strconv.ParseFloat(val, 64); err == nil {
 				settings.EURToCOPRate = f
+			}
+		case "ck_to_cop_rate":
+			if f, err := strconv.ParseFloat(val, 64); err == nil {
+				settings.CKToCOPRate = f
 			}
 		case "contact_address":
 			settings.ContactAddress = val

@@ -61,7 +61,7 @@ func TestProduct_ComputePrice(t *testing.T) {
 			name: "Unknown Source",
 			product: Product{
 				PriceReference: &priceReference,
-				PriceSource:    "unknown",
+				PriceSource:    PriceSource("unknown"),
 			},
 			usdToCOP:      4000,
 			eurToCOP:      4500,
@@ -71,7 +71,7 @@ func TestProduct_ComputePrice(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.product.ComputePrice(tt.usdToCOP, tt.eurToCOP)
+			got := tt.product.ComputePrice(tt.usdToCOP, tt.eurToCOP, 4000.0)
 			assert.Equal(t, tt.expectedPrice, got)
 		})
 	}

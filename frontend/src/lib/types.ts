@@ -79,6 +79,7 @@ export interface Product {
 export interface Settings {
   usd_to_cop_rate: number; // TCGPlayer prices
   eur_to_cop_rate: number; // Cardmarket prices
+  ck_to_cop_rate: number;  // CardKingdom prices
   contact_address: string;
   contact_phone: string;
   contact_email: string;

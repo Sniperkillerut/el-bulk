@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   adminFetchTCGs, adminFetchStorage, adminCreateStorage, adminUpdateStorage, adminDeleteStorage,
   adminFetchCategories, adminCreateCategory, adminUpdateCategory, adminDeleteCategory,
-  adminDeleteProduct, adminSyncSets
+  adminDeleteProduct, adminSyncSets, adminBulkUpdateSource
 } from '@/lib/api';
 import { Product, StoredIn, CustomCategory, TCG } from '@/lib/types';
 import { useAdmin } from '@/hooks/useAdmin';
@@ -42,6 +42,8 @@ export default function AdminDashboard() {
   const [showStorageModal, setShowStorageModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isBulkSyncing, setIsBulkSyncing] = useState(false);
 
   const loadStaticData = useCallback(async () => {
     try {
@@ -127,6 +129,29 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleBulkUpdateSource = async (source: 'tcgplayer' | 'cardkingdom') => {
+    if (selectedIds.length === 0) return;
+    setIsBulkSyncing(true);
+    try {
+      const res = await adminBulkUpdateSource(selectedIds, source);
+      alert(t('pages.admin.inventory.bulk_sync_success', 'Updated {count} products and triggered price refresh.', { count: res.count }));
+      setSelectedIds([]);
+      refreshProducts();
+    } catch {
+      alert(t('pages.admin.inventory.bulk_sync_error', 'Failed to update price source.'));
+    } finally {
+      setIsBulkSyncing(false);
+    }
+  };
+
+  const handleSelect = (id: string, selected: boolean) => {
+    setSelectedIds(prev => selected ? [...prev, id] : prev.filter(i => i !== id));
+  };
+
+  const handleSelectAll = (selected: boolean) => {
+    setSelectedIds(selected ? products.map(p => p.id) : []);
+  };
+
   return (
     <div className="flex-1 flex flex-col p-1.5 lg:p-3 min-h-0 max-w-7xl mx-auto w-full">
       <AdminHeader
@@ -193,6 +218,43 @@ export default function AdminDashboard() {
         }
       />
 
+      {/* Bulk Action Toolbar - Appears when items are selected */}
+      {selectedIds.length > 0 && (
+        <div className="mb-2 p-2 bg-gold/10 border border-gold/30 rounded-lg flex items-center justify-between animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-bold text-ink-deep">
+              {t('pages.admin.inventory.selected_count', '{count} items selected', { count: selectedIds.length })}
+            </span>
+            <div className="h-4 w-px bg-gold/30" />
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase text-text-muted opacity-70">
+                {t('pages.admin.inventory.bulk_sync_to', 'SYNC SOURCE TO:')}
+              </span>
+              <button 
+                onClick={() => handleBulkUpdateSource('tcgplayer')}
+                disabled={isBulkSyncing}
+                className="btn-secondary !py-1 !px-2 !text-[10px] bg-white border-gold/20 hover:border-gold hover:text-gold transition-all"
+              >
+                TCGPLAYER
+              </button>
+              <button 
+                onClick={() => handleBulkUpdateSource('cardkingdom')}
+                disabled={isBulkSyncing}
+                className="btn-secondary !py-1 !px-2 !text-[10px] bg-white border-gold/20 hover:border-gold hover:text-gold transition-all"
+              >
+                CARDKINGDOM
+              </button>
+            </div>
+          </div>
+          <button 
+            onClick={() => setSelectedIds([])}
+            className="text-[10px] font-bold text-hp-color hover:underline"
+          >
+            {t('pages.common.actions.clear_selection', 'Clear Selection')}
+          </button>
+        </div>
+      )}
+
       {/* High-Density Filter Bar Area */}
       <div className="mb-2 flex-shrink-0 card p-1.5 bg-white/40 backdrop-blur shadow-sm border-ink-border/10">
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
@@ -232,6 +294,9 @@ export default function AdminDashboard() {
         <div className="flex-1 overflow-auto">
           <ProductTable
             products={products}
+            selectedIds={selectedIds}
+            onSelect={handleSelect}
+            onSelectAll={handleSelectAll}
             sortKey={sortKey}
             sortDir={sortDir}
             onSort={handleSort}

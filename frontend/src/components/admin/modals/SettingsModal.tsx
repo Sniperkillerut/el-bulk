@@ -37,10 +37,14 @@ export default function SettingsModal({
               <span className="text-2xl">📈</span>
               <h4 className="text-lg font-display text-text-main m-0">EXCHANGE RATES</h4>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div className="p-4 bg-bg-surface/50 border border-border-main rounded">
                 <label className="text-xs font-mono-stack mb-2 block uppercase tracking-tighter text-text-muted">USD TO COP (TCG)</label>
                 <input type="number" className="font-bold text-lg bg-bg-page" value={editingSettings.usd_to_cop_rate} onChange={e => setEditingSettings({ ...editingSettings, usd_to_cop_rate: parseFloat(e.target.value) })} />
+              </div>
+              <div className="p-4 bg-bg-surface/50 border border-border-main rounded">
+                <label className="text-xs font-mono-stack mb-2 block uppercase tracking-tighter text-text-muted">USD TO COP (CK)</label>
+                <input type="number" className="font-bold text-lg bg-bg-page" value={editingSettings.ck_to_cop_rate} onChange={e => setEditingSettings({ ...editingSettings, ck_to_cop_rate: parseFloat(e.target.value) })} />
               </div>
               <div className="p-4 bg-bg-surface/50 border border-border-main rounded">
                 <label className="text-xs font-mono-stack mb-2 block uppercase tracking-tighter text-text-muted">EUR TO COP (MCK)</label>

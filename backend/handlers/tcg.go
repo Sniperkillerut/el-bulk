@@ -139,3 +139,28 @@ func (h *TCGHandler) SyncPrices(w http.ResponseWriter, r *http.Request) {
 		"errors":  errs,
 	})
 }
+
+// GET /api/admin/external/prices/cardkingdom?name=...&set=...&collector=...&foil=...
+func (h *TCGHandler) GetExternalPrice(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("name")
+	set := r.URL.Query().Get("set")
+	collector := r.URL.Query().Get("collector")
+	foil := r.URL.Query().Get("foil")
+	source := r.URL.Query().Get("source")
+
+	if name == "" || source == "" {
+		render.Error(w, "name and source are required", http.StatusBadRequest)
+		return
+	}
+
+	price, err := h.Service.RefreshService.GetSuggestedPrice(r.Context(), name, set, collector, foil, source)
+	if err != nil {
+		render.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	render.Success(w, map[string]interface{}{
+		"price":  price,
+		"source": source,
+	})
+}

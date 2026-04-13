@@ -4,11 +4,13 @@ import { useLanguage } from '@/context/LanguageContext';
 
 interface ProductTableRowProps {
   product: Product;
+  selected: boolean;
+  onSelect: (id: string, selected: boolean) => void;
   onEdit: (p: Product) => void;
   onDelete: (id: string, name: string) => void;
 }
 
-export function ProductTableRow({ product: p, onEdit, onDelete }: ProductTableRowProps) {
+export function ProductTableRow({ product: p, selected, onSelect, onEdit, onDelete }: ProductTableRowProps) {
   const { t, locale } = useLanguage();
   const tcgName = p.tcg.length <= 4 ? p.tcg.toUpperCase() : (TCG_SHORT[p.tcg] || p.tcg.substring(0, 3).toUpperCase());
 
@@ -33,6 +35,17 @@ export function ProductTableRow({ product: p, onEdit, onDelete }: ProductTableRo
     <tr key={p.id} onClick={() => onEdit(p)}
       className="cursor-pointer transition-all duration-200 group border-b border-ink-border/30 last:border-0 relative hover:bg-gold/[0.03]"
     >
+      <td className="relative overflow-hidden pl-2 pr-0 w-8">
+        <div className="flex items-center justify-center h-full">
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={(e) => onSelect(p.id, e.target.checked)}
+            onClick={(e) => e.stopPropagation()}
+            className="w-4 h-4 rounded border-ink-border/30 text-gold focus:ring-gold bg-white cursor-pointer"
+          />
+        </div>
+      </td>
       <td className="relative overflow-hidden">
         {/* Hover Highlight Bar */}
         <div className="absolute left-0 top-0 bottom-0 w-1 bg-gold scale-y-0 group-hover:scale-y-100 transition-transform duration-200 origin-center" />
@@ -174,6 +187,9 @@ export function ProductTableRow({ product: p, onEdit, onDelete }: ProductTableRo
 
 interface ProductTableProps {
   products: Product[];
+  selectedIds: string[];
+  onSelect: (id: string, selected: boolean) => void;
+  onSelectAll: (selected: boolean) => void;
   sortKey: string;
   sortDir: 'asc' | 'desc';
   onSort: (key: string) => void;
@@ -184,6 +200,9 @@ interface ProductTableProps {
 
 export default function ProductTable({
   products,
+  selectedIds,
+  onSelect,
+  onSelectAll,
   sortKey,
   sortDir,
   onSort,
@@ -211,6 +230,16 @@ export default function ProductTable({
         <table className="w-full">
           <thead>
             <tr>
+              <th className="w-8 pl-2 pr-0">
+                <div className="flex items-center justify-center">
+                  <input
+                    type="checkbox"
+                    checked={products.length > 0 && selectedIds.length === products.length}
+                    onChange={(e) => onSelectAll(e.target.checked)}
+                    className="w-4 h-4 rounded border-ink-border/30 text-gold focus:ring-gold bg-white cursor-pointer"
+                  />
+                </div>
+              </th>
               <th onClick={() => onSort('name')} className="cursor-pointer hover:bg-ink-surface transition-colors">
                 <div className="flex items-center">{t('pages.admin.inventory.table.product', 'PRODUCT')} {renderSortIcon('name')}</div>
               </th>
@@ -237,7 +266,14 @@ export default function ProductTable({
           </thead>
           <tbody>
             {products.map(p => (
-              <ProductTableRow key={p.id} product={p} onEdit={onEdit} onDelete={onDelete} />
+              <ProductTableRow 
+                key={p.id} 
+                product={p} 
+                selected={selectedIds.includes(p.id)}
+                onSelect={onSelect}
+                onEdit={onEdit} 
+                onDelete={onDelete} 
+              />
             ))}
             {!loading && products.length === 0 && (
               <tr>

@@ -251,6 +251,13 @@ export async function adminBulkCreateProducts(req: import('./types').BulkCreateR
   });
 }
 
+export async function adminBulkUpdateSource(ids: string[], source: import('./types').PriceSource): Promise<{ count: number }> {
+  return apiFetch<{ count: number }>('/api/admin/products/bulk-source', {
+    method: 'PUT',
+    body: JSON.stringify({ ids, source }),
+  });
+}
+
 export async function adminFetchLogLevel(): Promise<{ level: string }> {
   return apiFetch<{ level: string }>('/api/admin/logs/level', { cache: 'no-store' });
 }
@@ -302,6 +309,12 @@ export interface CardLookupResult {
   card_treatment: import('./types').CardTreatment;
   promo_type?: string;
   scryfall_id?: string;
+}
+
+export async function adminFetchExternalPrice(productId: string, source: import('./types').PriceSource): Promise<{ price: number; currency: string }> {
+  return apiFetch<{ price: number; currency: string }>('/api/admin/lookup/external/prices', {
+    params: { product_id: productId, source },
+  });
 }
 
 export async function lookupMTGCard(

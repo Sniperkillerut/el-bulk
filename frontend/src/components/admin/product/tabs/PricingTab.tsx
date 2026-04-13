@@ -5,6 +5,7 @@ import { CustomCategory, PriceSource, Settings, StorageLocation, StoredIn } from
 import StorageManager from '../StorageManager';
 import { useLanguage } from '@/context/LanguageContext';
 import { useState } from 'react';
+import { adminFetchExternalPrice } from '@/lib/api';
 
 interface PricingTabProps {
   form: FormState;
@@ -35,6 +36,20 @@ export default function PricingTab({
 }: PricingTabProps) {
 	const { t } = useLanguage();
 	const [isUploading, setIsUploading] = useState(false);
+	const [fetchingPrice, setFetchingPrice] = useState(false);
+
+	const fetchSuggestedPrice = async () => {
+		if (!form.id || form.price_source === 'manual') return;
+		setFetchingPrice(true);
+		try {
+			const res = await adminFetchExternalPrice(form.id, form.price_source);
+			onUpdate({ price_reference: res.price });
+		} catch (err) {
+			console.error('Failed to fetch suggested price:', err);
+		} finally {
+			setFetchingPrice(false);
+		}
+	};
 
 	const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
@@ -83,11 +98,15 @@ export default function PricingTab({
         <div className="flex justify-between items-center mb-3">
           <h3 className="text-xs font-mono-stack uppercase" style={{ color: 'var(--text-muted)', letterSpacing: '0.1em' }}>{t('components.admin.product_modal.pricing.title', 'PRICING')}</h3>
           <div className="text-xs font-mono-stack px-2 py-1 rounded" style={{ background: 'var(--ink-surface)', color: 'var(--gold)' }}>
-            {(form.price_source === 'tcgplayer' || form.price_source === 'cardkingdom') && `(x ${settings?.usd_to_cop_rate || 0} COP)`}
+            {(form.price_source === 'tcgplayer' || form.price_source === 'cardkingdom') && `(x ${form.price_source === 'tcgplayer' ? (settings?.usd_to_cop_rate || 0) : (settings?.ck_to_cop_rate || settings?.usd_to_cop_rate || 0)} COP)`}
             {form.price_source === 'cardmarket' && `(x ${settings?.eur_to_cop_rate || 0} COP)`}
             {form.price_source !== 'manual' && typeof form.price_reference === 'number' && (
               <span className="ml-2 font-bold text-sm" style={{ color: form.price_reference === 0 ? 'var(--hp-color)' : 'var(--gold)' }}>
-                = ${(form.price_reference * ((form.price_source === 'tcgplayer' || form.price_source === 'cardkingdom') ? (settings?.usd_to_cop_rate || 0) : (settings?.eur_to_cop_rate || 0))).toLocaleString('en-US', { maximumFractionDigits: 0 })} COP
+                = ${(form.price_reference * (
+                  form.price_source === 'tcgplayer' ? (settings?.usd_to_cop_rate || 0) : 
+                  form.price_source === 'cardkingdom' ? (settings?.ck_to_cop_rate || settings?.usd_to_cop_rate || 0) : 
+                  (settings?.eur_to_cop_rate || 0)
+                )).toLocaleString('en-US', { maximumFractionDigits: 0 })} COP
               </span>
             )}
           </div>
@@ -109,9 +128,21 @@ export default function PricingTab({
             </div>
           ) : (
             <div>
-              <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>
-                {t('components.admin.product_modal.pricing.ref_price_label', 'REFERENCE PRICE ({currency}) *', { currency: (form.price_source === 'tcgplayer' || form.price_source === 'cardkingdom') ? 'USD' : 'EUR' })}
-              </label>
+              <div className="flex justify-between items-center mb-1">
+                <label className="text-[10px] font-mono-stack block" style={{ color: 'var(--text-muted)' }}>
+                  {t('components.admin.product_modal.pricing.ref_price_label', 'REFERENCE PRICE ({currency}) *', { currency: (form.price_source === 'tcgplayer' || form.price_source === 'cardkingdom') ? 'USD' : 'EUR' })}
+                </label>
+                {form.id && (
+                  <button 
+                    type="button"
+                    onClick={fetchSuggestedPrice}
+                    disabled={fetchingPrice}
+                    className="text-[9px] font-bold text-gold hover:underline uppercase tracking-tighter"
+                  >
+                    {fetchingPrice ? '...' : t('components.admin.product_modal.pricing.suggested_btn', 'FETCH SUGGESTED')}
+                  </button>
+                )}
+              </div>
               <input type="number" step="0.01" value={form.price_reference ?? ''} onChange={e => onUpdate({ price_reference: e.target.value === '' ? '' : Number(e.target.value) })} style={{ 
                   color: form.price_reference === 0 ? 'var(--hp-color)' : 'inherit', 
                   borderColor: form.price_reference === 0 ? 'var(--hp-color)' : 'var(--ink-border)' 
