@@ -58,7 +58,8 @@ const generateThemeCSS = (t: Theme, selector: string) => `
   }
 `;
 
-export function ThemeProvider({ children, allThemes = [], ...props }: ExtendedThemeProviderProps) {
+export function ThemeProvider({ children, allThemes: passedThemes = [], ...props }: ExtendedThemeProviderProps) {
+  const allThemes = passedThemes || [];
   const defaultThemeObj = allThemes.find(t => t.id === props.defaultTheme || t.name === props.defaultTheme);
   
   const rootStyles = defaultThemeObj ? generateThemeCSS(defaultThemeObj, ':root') : '';

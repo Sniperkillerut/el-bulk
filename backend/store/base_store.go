@@ -23,7 +23,7 @@ func NewBaseStore[T any](db *sqlx.DB, tableName string) *BaseStore[T] {
 }
 
 func (s *BaseStore[T]) List(conditions string, args ...interface{}) ([]T, error) {
-	var items []T
+	items := make([]T, 0)
 	query := fmt.Sprintf("SELECT * FROM %s", s.TableName)
 	if conditions != "" {
 		if !strings.HasPrefix(strings.ToUpper(strings.TrimSpace(conditions)), "ORDER BY") && 

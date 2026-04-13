@@ -48,12 +48,7 @@ type ProductFilterParams struct {
 
 func (s *ProductStore) ListWithFilters(params ProductFilterParams) ([]models.Product, int, error) {
 	start := time.Now()
-	fromClause, conditions, args := s.buildFilters(params)
-
-	where := ""
-	if len(conditions) > 0 {
-		where = "WHERE " + strings.Join(conditions, " AND ")
-	}
+	fromClause, where, args := s.buildFilters(params)
 
 	var total int
 	countQuery := fmt.Sprintf("SELECT COUNT(*) %s %s", fromClause, where)
@@ -66,13 +61,7 @@ func (s *ProductStore) ListWithFilters(params ProductFilterParams) ([]models.Pro
 	orderBy := s.buildOrderBy(params.SortBy, params.SortDir, params.Search, len(args))
 
 	// Use enriched view for listing
-	viewFromClause, conditions, args := s.buildFilters(params)
-	viewFrom := strings.Replace(viewFromClause, "FROM product p", "FROM view_product_enriched p", 1)
-
-	where = ""
-	if len(conditions) > 0 {
-		where = "WHERE " + strings.Join(conditions, " AND ")
-	}
+	viewFrom, where, args := s.buildFilters(params, "view_product_enriched")
 
 	orderBy = s.buildOrderBy(params.SortBy, params.SortDir, params.Search, len(args))
 
@@ -515,8 +504,13 @@ func (s *ProductStore) BulkUpsert(jsonData string) ([]string, error) {
 	return result, nil
 }
 
-func (s *ProductStore) buildFilters(params ProductFilterParams) (string, []string, []interface{}) {
-	fromClause := "FROM product p"
+func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...string) (string, string, []interface{}) {
+	table := "product"
+	if len(baseFrom) > 0 {
+		table = baseFrom[0]
+	}
+
+	fromClause := fmt.Sprintf("FROM %s p", table)
 	args := []interface{}{}
 
 	var mandatory []string
@@ -526,7 +520,8 @@ func (s *ProductStore) buildFilters(params ProductFilterParams) (string, []strin
 	mandatory = append(mandatory, "(t.is_active IS NULL OR t.is_active = true)")
 
 	if params.StorageID != "" {
-		fromClause = "FROM product p JOIN product_storage ps ON p.id = ps.product_id"
+		fromClause = fmt.Sprintf("FROM %s p JOIN product_storage ps ON p.id = ps.product_id", table)
+		fromClause += " LEFT JOIN tcg t ON p.tcg = t.id"
 		placeholder := fmt.Sprintf("$%d", len(args)+1)
 		args = append(args, params.StorageID)
 		mandatory = append(mandatory, "ps.storage_id = "+placeholder)
@@ -652,7 +647,12 @@ func (s *ProductStore) buildFilters(params ProductFilterParams) (string, []strin
 		finalConditions = append(finalConditions, "("+strings.Join(optional, opLogic)+")")
 	}
 
-	return fromClause, finalConditions, args
+	whereClause := ""
+	if len(finalConditions) > 0 {
+		whereClause = "WHERE " + strings.Join(finalConditions, " AND ")
+	}
+
+	return fromClause, whereClause, args
 }
 
 func (s *ProductStore) buildOrderBy(sortBy, sortDir, search string, argsLen int) string {

@@ -16,12 +16,12 @@ export default function ThemeSelector() {
   useEffect(() => {
     // Hydration safety
     setMounted(true);
-    fetchThemes().then(setThemes).catch(console.error);
+    fetchThemes().then(res => setThemes(res || [])).catch(console.error);
   }, []);
 
   if (!mounted) return null;
 
-  const activeThemeName = themes.find(t => t.id === activeTheme)?.name || 'Theme';
+  const activeThemeName = (themes || []).find(t => t.id === activeTheme)?.name || 'Theme';
 
   return (
     <Dropdown

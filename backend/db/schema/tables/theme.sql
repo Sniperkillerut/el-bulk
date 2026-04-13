@@ -1,7 +1,5 @@
 -- Dynamic Themes Table
-DROP TABLE IF EXISTS theme CASCADE;
-
-CREATE TABLE theme (
+CREATE TABLE IF NOT EXISTS theme (
   id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name                TEXT NOT NULL,
   is_system           BOOLEAN NOT NULL DEFAULT false,
