@@ -165,7 +165,7 @@ func (p *Product) ComputePrice(usdToCOP, eurToCOP float64) float64 {
 	}
 	if p.PriceReference != nil {
 		switch p.PriceSource {
-		case PriceSourceTCGPlayer:
+		case PriceSourceTCGPlayer, PriceSourceCardKingdom:
 			return *p.PriceReference * usdToCOP
 		case PriceSourceCardmarket:
 			return *p.PriceReference * eurToCOP

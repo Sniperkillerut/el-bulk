@@ -226,7 +226,7 @@ export function getTreatmentType(card: ScryfallCard): CardTreatment {
 export function applyPrintPrices(card: ScryfallCard | undefined, foil: FoilTreatment, source: PriceSource): number {
   if (!card) return 0;
   const p = card.prices || {};
-  if (source === 'tcgplayer') {
+  if (source === 'tcgplayer' || source === 'cardkingdom') {
     if (foil === 'foil') return parseFloat(p.usd_foil || '0');
     if (foil === 'etched_foil') return parseFloat(p.usd_etched || '0');
     return parseFloat(p.usd || '0');
@@ -311,7 +311,7 @@ export function getSuggestedPrice(card: ScryfallCard | undefined, foil: FoilTrea
   const ref = applyPrintPrices(card, foil, source);
   if (!ref) return 0;
   
-  const rate = source === 'tcgplayer' ? settings.usd_to_cop_rate : settings.eur_to_cop_rate;
+  const rate = (source === 'tcgplayer' || source === 'cardkingdom') ? settings.usd_to_cop_rate : settings.eur_to_cop_rate;
   if (!rate) return 0;
 
   // Round to nearest 100 COP as a standard

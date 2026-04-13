@@ -3,7 +3,7 @@ export type CardTreatment = string;
 
 export type Condition = 'NM' | 'LP' | 'MP' | 'HP' | 'DMG';
 
-export type PriceSource = 'tcgplayer' | 'cardmarket' | 'manual';
+export type PriceSource = 'tcgplayer' | 'cardmarket' | 'cardkingdom' | 'manual';
 
 export interface DeckCard {
   id?: string;

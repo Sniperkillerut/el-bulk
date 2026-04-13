@@ -83,11 +83,11 @@ export default function PricingTab({
         <div className="flex justify-between items-center mb-3">
           <h3 className="text-xs font-mono-stack uppercase" style={{ color: 'var(--text-muted)', letterSpacing: '0.1em' }}>{t('components.admin.product_modal.pricing.title', 'PRICING')}</h3>
           <div className="text-xs font-mono-stack px-2 py-1 rounded" style={{ background: 'var(--ink-surface)', color: 'var(--gold)' }}>
-            {form.price_source === 'tcgplayer' && `(x ${settings?.usd_to_cop_rate || 0} COP)`}
+            {(form.price_source === 'tcgplayer' || form.price_source === 'cardkingdom') && `(x ${settings?.usd_to_cop_rate || 0} COP)`}
             {form.price_source === 'cardmarket' && `(x ${settings?.eur_to_cop_rate || 0} COP)`}
             {form.price_source !== 'manual' && typeof form.price_reference === 'number' && (
               <span className="ml-2 font-bold text-sm" style={{ color: form.price_reference === 0 ? 'var(--hp-color)' : 'var(--gold)' }}>
-                = ${(form.price_reference * (form.price_source === 'tcgplayer' ? (settings?.usd_to_cop_rate || 0) : (settings?.eur_to_cop_rate || 0))).toLocaleString('en-US', { maximumFractionDigits: 0 })} COP
+                = ${(form.price_reference * ((form.price_source === 'tcgplayer' || form.price_source === 'cardkingdom') ? (settings?.usd_to_cop_rate || 0) : (settings?.eur_to_cop_rate || 0))).toLocaleString('en-US', { maximumFractionDigits: 0 })} COP
               </span>
             )}
           </div>
@@ -97,6 +97,7 @@ export default function PricingTab({
             <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>{t('components.admin.product_modal.pricing.source_label', 'PRICE SOURCE *')}</label>
             <select value={form.price_source} onChange={e => onSourceChange(e.target.value as PriceSource)}>
               <option value="manual">{t('components.admin.product_modal.pricing.source_manual', 'Manual Override (COP)')}</option>
+              <option value="cardkingdom">{t('components.admin.product_modal.pricing.source_cardkingdom', 'External: CardKingdom (USD)')}</option>
               <option value="tcgplayer">{t('components.admin.product_modal.pricing.source_tcgplayer', 'External: TCGPlayer (USD)')}</option>
               <option value="cardmarket">{t('components.admin.product_modal.pricing.source_cardmarket', 'External: Cardmarket (EUR)')}</option>
             </select>
@@ -109,7 +110,7 @@ export default function PricingTab({
           ) : (
             <div>
               <label className="text-[10px] font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>
-                {t('components.admin.product_modal.pricing.ref_price_label', 'REFERENCE PRICE ({currency}) *', { currency: form.price_source === 'tcgplayer' ? 'USD' : 'EUR' })}
+                {t('components.admin.product_modal.pricing.ref_price_label', 'REFERENCE PRICE ({currency}) *', { currency: (form.price_source === 'tcgplayer' || form.price_source === 'cardkingdom') ? 'USD' : 'EUR' })}
               </label>
               <input type="number" step="0.01" value={form.price_reference ?? ''} onChange={e => onUpdate({ price_reference: e.target.value === '' ? '' : Number(e.target.value) })} style={{ 
                   color: form.price_reference === 0 ? 'var(--hp-color)' : 'inherit', 

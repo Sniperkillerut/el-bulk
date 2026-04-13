@@ -559,7 +559,8 @@ export default function ProductEditModal({
               value={form.tcg} 
               onChange={e => {
                 const newTcg = e.target.value;
-                setForm(f => ({ ...EMPTY_FORM, tcg: newTcg, category: f.category, condition: f.condition }));
+                const newSource: PriceSource = (newTcg === 'mtg' && (form.category === 'singles' || form.category === 'store_exclusives')) ? 'cardkingdom' : 'manual';
+                setForm(f => ({ ...EMPTY_FORM, tcg: newTcg, category: f.category, condition: f.condition, price_source: newSource }));
                 setScryfallPrints([]);
                 if (!editProduct) {
                   if (form.category === 'store_exclusives') setActiveTab('deck');
@@ -579,7 +580,8 @@ export default function ProductEditModal({
               value={form.category} 
               onChange={e => {
                 const newCat = e.target.value as 'singles' | 'sealed' | 'accessories' | 'store_exclusives';
-                setForm(f => ({ ...EMPTY_FORM, tcg: f.tcg, category: newCat, condition: f.condition }));
+                const newSource: PriceSource = (form.tcg === 'mtg' && (newCat === 'singles' || newCat === 'store_exclusives')) ? 'cardkingdom' : 'manual';
+                setForm(f => ({ ...EMPTY_FORM, tcg: f.tcg, category: newCat, condition: f.condition, price_source: newSource }));
                 setScryfallPrints([]);
                 if (!editProduct) {
                   if (newCat === 'store_exclusives') setActiveTab('deck');

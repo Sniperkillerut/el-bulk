@@ -102,6 +102,16 @@ func (s *ProductService) GetByID(ctx context.Context, id string, isAdmin bool) (
 
 func (s *ProductService) Create(ctx context.Context, input models.ProductInput) (*models.Product, error) {
 	logger.TraceCtx(ctx, "Entering ProductService.Create | Name: %s", input.Name)
+
+	// Conditional Default Pricing Source
+	if input.PriceSource == "" {
+		if input.TCG == "mtg" && (input.Category == "singles" || input.Category == "store_exclusives") {
+			input.PriceSource = models.PriceSourceCardKingdom
+		} else {
+			input.PriceSource = models.PriceSourceManual
+		}
+	}
+
 	product, err := s.Store.CreateProduct(ctx, input)
 	if err != nil {
 		logger.ErrorCtx(ctx, "Core product creation failed: %v", err)

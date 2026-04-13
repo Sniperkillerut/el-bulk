@@ -291,7 +291,11 @@ export default function BountyEditModal({
             <div className="flex gap-4">
               <div className="flex-1">
                 <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">{t('components.admin.bounty_modal.tcg_label', 'TCG SYSTEM')}</label>
-                <select className="bg-white/50 border-white/40 w-full" value={form.tcg} onChange={e => setForm(f => ({ ...f, tcg: e.target.value }))}>
+                <select className="bg-white/50 border-white/40 w-full" value={form.tcg} onChange={e => {
+                  const newTcg = e.target.value;
+                  const newSource: PriceSource = newTcg === 'mtg' ? 'cardkingdom' : 'manual';
+                  setForm(f => ({ ...f, tcg: newTcg, price_source: newSource }));
+                }}>
                   {tcgs.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                 </select>
               </div>
@@ -359,7 +363,7 @@ export default function BountyEditModal({
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-xs font-mono-stack uppercase text-text-muted tracking-widest m-0">{t('components.admin.bounty_modal.pricing_title', 'PRICING')}</h3>
                 <div className="text-xs font-mono-stack px-2 py-1 rounded bg-ink-surface text-gold shadow-sm">
-                  {form.price_source === 'tcgplayer' && `(x ${settings?.usd_to_cop_rate || 0} COP)`}
+                  {(form.price_source === 'tcgplayer' || form.price_source === 'cardkingdom') && `(x ${settings?.usd_to_cop_rate || 0} COP)`}
                   {form.price_source === 'cardmarket' && `(x ${settings?.eur_to_cop_rate || 0} COP)`}
                   {form.price_source !== 'manual' && (
                     <span className="ml-2 font-bold text-sm">
@@ -374,6 +378,7 @@ export default function BountyEditModal({
                   <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">{t('components.admin.bounty_modal.price_source', 'PRICE SOURCE *')}</label>
                   <select className="bg-white/80 border-white/40 w-full" value={form.price_source} onChange={e => handlePriceSourceChange(e.target.value as PriceSource)}>
                     <option value="manual">{t('components.admin.bounty_modal.source_manual', 'Manual Override (COP)')}</option>
+                    <option value="cardkingdom">{t('components.admin.bounty_modal.source_cardkingdom', 'External: CardKingdom (USD)')}</option>
                     <option value="tcgplayer">{t('components.admin.bounty_modal.source_tcgplayer', 'External: TCGPlayer (USD)')}</option>
                     <option value="cardmarket">{t('components.admin.bounty_modal.source_cardmarket', 'External: Cardmarket (EUR)')}</option>
                   </select>
@@ -382,14 +387,14 @@ export default function BountyEditModal({
                 {form.price_source !== 'manual' ? (
                   <div>
                     <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">
-                      {t('components.admin.bounty_modal.ref_price_label', 'REFERENCE PRICE ({source}) *', { source: form.price_source === 'tcgplayer' ? 'USD' : 'EUR' })}
+                      {t('components.admin.bounty_modal.ref_price_label', 'REFERENCE PRICE ({source}) *', { source: (form.price_source === 'tcgplayer' || form.price_source === 'cardkingdom') ? 'USD' : 'EUR' })}
                     </label>
                     <input 
                       type="number" step="0.01" className="w-full font-mono bg-white/90 border-white/40" 
                       value={form.price_reference || ''} 
                       onChange={e => {
                         const val = parseFloat(e.target.value) || 0;
-                        const rate = form.price_source === 'tcgplayer' ? (settings?.usd_to_cop_rate || 0) : (settings?.eur_to_cop_rate || 0);
+                        const rate = (form.price_source === 'tcgplayer' || form.price_source === 'cardkingdom') ? (settings?.usd_to_cop_rate || 0) : (settings?.eur_to_cop_rate || 0);
                         setForm(f => ({ ...f, price_reference: val, target_price: Math.round(val * rate) }));
                       }} 
                     />

@@ -195,7 +195,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                 collector_number: res.collector_number || item.collector_number,
                 image_url: res.image_url,
                 price_reference: (item.foil_treatment === 'non_foil' ? res.price_tcgplayer : res.price_cardmarket) || item.price_reference,
-                price_source: item.foil_treatment === 'non_foil' ? 'tcgplayer' : 'cardmarket',
+                price_source: item.tcg === 'mtg' ? 'cardkingdom' : (item.foil_treatment === 'non_foil' ? 'tcgplayer' : 'cardmarket'),
                 rarity: res.rarity,
                 cmc: res.cmc,
                 color_identity: res.color_identity,
@@ -218,7 +218,9 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                 scryfall_id: res.scryfall_id || item.scryfall_id,
               };
 
-              if (item.foil_treatment === 'non_foil' && res.price_tcgplayer) {
+              if (item.tcg === 'mtg') {
+                newData[dataIndex].price_source = 'cardkingdom';
+              } else if (item.foil_treatment === 'non_foil' && res.price_tcgplayer) {
                 newData[dataIndex].price_reference = res.price_tcgplayer;
                 newData[dataIndex].price_source = 'tcgplayer';
               } else if (item.foil_treatment !== 'non_foil' && res.price_cardmarket) {
@@ -249,7 +251,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
               collector_number: res.collector_number || item.collector_number,
               image_url: res.image_url,
               price_reference: (item.foil_treatment === 'non_foil' ? res.price_tcgplayer : res.price_cardmarket) || item.price_reference,
-              price_source: item.foil_treatment === 'non_foil' ? 'tcgplayer' : 'cardmarket',
+              price_source: item.tcg === 'mtg' ? 'cardkingdom' : (item.foil_treatment === 'non_foil' ? 'tcgplayer' : 'cardmarket'),
               rarity: res.rarity,
               cmc: res.cmc,
               color_identity: res.color_identity,
@@ -308,7 +310,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
           collector_number: res.collector_number || next[index].collector_number,
           image_url: res.image_url,
           price_reference: (item.foil_treatment === 'non_foil' ? res.price_tcgplayer : res.price_cardmarket) || item.price_reference,
-          price_source: item.foil_treatment === 'non_foil' ? 'tcgplayer' : 'cardmarket',
+          price_source: item.tcg === 'mtg' ? 'cardkingdom' : (item.foil_treatment === 'non_foil' ? 'tcgplayer' : 'cardmarket'),
           rarity: res.rarity,
           cmc: res.cmc,
           color_identity: res.color_identity,
@@ -761,7 +763,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                         </td>
                         <td className="p-4 border-r border-border-main/10">
                           <div className="text-[10px] text-text-muted font-black uppercase mb-1 tracking-widest text-center">
-                            {item.price_source === 'tcgplayer' ? 'REF (USD)' : 'REF (EUR)'}
+                            {(item.price_source === 'tcgplayer' || item.price_source === 'cardkingdom') ? 'REF (USD)' : 'REF (EUR)'}
                           </div>
                           <input
                             type="number"
