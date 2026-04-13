@@ -192,7 +192,7 @@ substitutions:
   _TAG: 'latest'
   _LOCATION: 'us-central1'
   _REPOSITORY: 'el-bulk-repo'
-  _DB_CONNECTION_NAME: '' # REQUIRED: project:region:instance
+  _DB_CONNECTION_NAME: 'my-elbulk-prod:us-central1:el-bulk-db' # REQUIRED: project:region:instance
 
   # --- URLs ---
   _BACKEND_INTERNAL_URL: 'https://api.elbulk.com'

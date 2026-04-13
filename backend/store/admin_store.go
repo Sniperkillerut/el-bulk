@@ -15,7 +15,7 @@ func NewAdminStore(db *sqlx.DB) *AdminStore {
 
 func (s *AdminStore) GetByUsername(username string) (*models.Admin, error) {
 	var admin models.Admin
-	err := s.DB.Get(&admin, "SELECT * FROM admin WHERE username = $1", username)
+	err := s.DB.Unsafe().Get(&admin, "SELECT * FROM admin WHERE username = $1", username)
 	if err != nil {
 		return nil, err
 	}
@@ -24,7 +24,7 @@ func (s *AdminStore) GetByUsername(username string) (*models.Admin, error) {
 
 func (s *AdminStore) GetByID(id string) (*models.Admin, error) {
 	var admin models.Admin
-	err := s.DB.Get(&admin, "SELECT * FROM admin WHERE id = $1", id)
+	err := s.DB.Unsafe().Get(&admin, "SELECT * FROM admin WHERE id = $1", id)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +33,7 @@ func (s *AdminStore) GetByID(id string) (*models.Admin, error) {
 
 func (s *AdminStore) GetByEmail(email string) (*models.Admin, error) {
 	var admin models.Admin
-	err := s.DB.Get(&admin, "SELECT * FROM admin WHERE email = $1", email)
+	err := s.DB.Unsafe().Get(&admin, "SELECT * FROM admin WHERE email = $1", email)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (s *AdminStore) Create(admin models.Admin) (*models.Admin, error) {
 		RETURNING *
 	`
 	var newAdmin models.Admin
-	err := s.DB.Get(&newAdmin, query, admin.Username, admin.Email, admin.PasswordHash, admin.AvatarURL)
+	err := s.DB.Unsafe().Get(&newAdmin, query, admin.Username, admin.Email, admin.PasswordHash, admin.AvatarURL)
 	if err != nil {
 		return nil, err
 	}

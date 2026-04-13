@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/el-bulk/backend/utils/logger"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -27,8 +28,10 @@ func AdminAuth(next http.Handler) http.Handler {
 		var tokenStr string
 		cookie, err := r.Cookie("admin_token")
 		if err == nil {
+			logger.Trace("[Auth] Found admin_token cookie")
 			tokenStr = cookie.Value
 		} else {
+			logger.Trace("[Auth] admin_token cookie NOT found: %v", err)
 			authHeader := r.Header.Get("Authorization")
 			if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
 				tokenStr = strings.TrimPrefix(authHeader, "Bearer ")
@@ -36,6 +39,7 @@ func AdminAuth(next http.Handler) http.Handler {
 		}
 
 		if tokenStr == "" {
+			logger.Trace("[Auth] No authentication token providing for request: %s %s", r.Method, r.URL.Path)
 			http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 			return
 		}

@@ -2,9 +2,12 @@ package handlers
 
 import (
 	"github.com/el-bulk/backend/utils/render"
+	"context"
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,10 +17,9 @@ import (
 	"github.com/el-bulk/backend/service"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/utils/authutil"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
-	"context"
-	"strconv"
 )
 
 type AdminHandler struct {
@@ -91,6 +93,7 @@ func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Name:     "admin_token",
 		Value:    signed,
 		Path:     "/",
+		Domain:   authutil.GetCookieDomain(),
 		Expires:  time.Now().Add(24 * time.Hour),
 		HttpOnly: true,
 		Secure:   isSecure,
@@ -111,6 +114,7 @@ func (h *AdminHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		Name:     "admin_token",
 		Value:    "",
 		Path:     "/",
+		Domain:   authutil.GetCookieDomain(),
 		Expires:  time.Unix(0, 0),
 		HttpOnly: true,
 		Secure:   isSecure,
@@ -275,20 +279,26 @@ func (h *AdminHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	// 2. Find or Create Admin
 	admin, err := h.Service.GetByEmail(gInfo.Email)
 	if err != nil {
-		// Create admin
-		username := strings.Split(gInfo.Email, "@")[0]
-		newAdmin := models.Admin{
-			Username:  username,
-			Email:     gInfo.Email,
-			AvatarURL: &gInfo.Picture,
-		}
-		admin, err = h.Service.Create(newAdmin)
-		if err != nil {
-			logger.Error("Failed to create admin via OAuth: %v", err)
+		if err == sql.ErrNoRows {
+			// Create admin
+			username := strings.Split(gInfo.Email, "@")[0]
+			newAdmin := models.Admin{
+				Username:  username,
+				Email:     gInfo.Email,
+				AvatarURL: &gInfo.Picture,
+			}
+			admin, err = h.Service.Create(newAdmin)
+			if err != nil {
+				logger.Error("[AdminAuth] Failed to create admin via OAuth for %s: %v", gInfo.Email, err)
+				http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/admin/login?error=db_error", http.StatusTemporaryRedirect)
+				return
+			}
+			h.AuditService.LogAction(r.Context(), "OAUTH_SIGNUP", "admin", admin.ID, models.JSONB{"email": gInfo.Email})
+		} else {
+			logger.Error("[AdminAuth] Database error looking up admin %s: %v", gInfo.Email, err)
 			http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/admin/login?error=db_error", http.StatusTemporaryRedirect)
 			return
 		}
-		h.AuditService.LogAction(r.Context(), "OAUTH_SIGNUP", "admin", admin.ID, models.JSONB{"email": gInfo.Email})
 	}
 
 	// 3. Issue Token
@@ -306,6 +316,7 @@ func (h *AdminHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		Name:     "admin_token",
 		Value:    signed,
 		Path:     "/",
+		Domain:   authutil.GetCookieDomain(),
 		Expires:  time.Now().Add(24 * time.Hour),
 		HttpOnly: true,
 		Secure:   isSecure,

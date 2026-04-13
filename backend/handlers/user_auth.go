@@ -12,6 +12,7 @@ import (
 	"github.com/el-bulk/backend/service"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/el-bulk/backend/utils/render"
+	"github.com/el-bulk/backend/utils/authutil"
 	"github.com/go-chi/chi/v5"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/oauth2"
@@ -259,6 +260,7 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		Name:     "user_token",
 		Value:    signed,
 		Path:     "/",
+		Domain:   authutil.GetCookieDomain(),
 		Expires:  time.Now().Add(24 * 7 * time.Hour),
 		HttpOnly: true,
 		Secure:   isSecure,
@@ -322,6 +324,7 @@ func (h *UserAuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		Name:     "user_token",
 		Value:    "",
 		Path:     "/",
+		Domain:   authutil.GetCookieDomain(),
 		Expires:  time.Unix(0, 0),
 		HttpOnly: true,
 		Secure:   isSecure,
