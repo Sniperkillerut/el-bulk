@@ -48,12 +48,16 @@ func (s *CategoryService) populateHotNew(categories []models.CustomCategory) {
 	}
 	tenDaysAgo := time.Now().AddDate(0, 0, -10)
 	
-	var ids []string
+	ids := make([]string, 0, len(categories))
 	for i := range categories {
 		if categories[i].CreatedAt.After(tenDaysAgo) {
 			categories[i].IsNew = true
 		}
 		ids = append(ids, categories[i].ID)
+	}
+
+	if len(ids) == 0 {
+		return
 	}
 
 	query, args, err := sqlx.In(`
@@ -72,7 +76,7 @@ func (s *CategoryService) populateHotNew(categories []models.CustomCategory) {
 	}
 
 	var hotIDs []string
-	if err := s.Store.DB.Select(&hotIDs, s.Store.DB.Rebind(query), args...); err == nil {
+	if err := s.Store.DB.Select(&hotIDs, sqlx.Rebind(sqlx.DOLLAR, query), args...); err == nil {
 		hotMap := make(map[string]bool)
 		for _, id := range hotIDs {
 			hotMap[id] = true

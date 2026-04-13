@@ -31,14 +31,14 @@ export default function HomePageClient({ categories, tcgs, collections, bounties
       {/* TCG Nav strips */}
       <section style={{ background: 'var(--ink-surface)', borderBottom: '1px dashed var(--kraft-dark)', padding: '1rem' }}>
         <div className="centered-container px-4 flex flex-wrap gap-x-6 gap-y-3 justify-center">
-          {tcgs.map(t => (
+          {(tcgs || []).map(t => (
             <Link key={t.id} href={`/${t.id}/singles`}
               className="text-xs sm:text-sm font-display tracking-widest transition-opacity hover:opacity-70 whitespace-nowrap"
               style={{ color: 'var(--text-primary)' }}>
               {t.name.toUpperCase()}
             </Link>
           ))}
-          {categories.filter(cat => cat.searchable).map(cat => (
+          {(categories || []).filter(cat => cat.searchable).map(cat => (
             <Link key={cat.id} href={`/collection/${cat.slug}`}
               className="text-xs sm:text-sm font-display tracking-widest transition-opacity hover:text-gold whitespace-nowrap"
               style={{ color: 'var(--text-muted)' }}>
@@ -52,7 +52,7 @@ export default function HomePageClient({ categories, tcgs, collections, bounties
       </section>
 
       <div className="centered-container px-4 py-8 space-y-16">
-        {collections.length === 0 ? (
+        {(!collections || collections.length === 0) ? (
           <div className="stamp-border rounded-sm p-8 text-center" style={{ color: 'var(--text-muted)' }}>
             <p className="font-display text-2xl mb-2">{t('pages.home.status.empty', 'STORE IS EMPTY')}</p>
             <p className="font-mono-stack text-sm">{t('pages.home.status.empty_desc', 'No collections have been populated yet.')}</p>
@@ -68,7 +68,7 @@ export default function HomePageClient({ categories, tcgs, collections, bounties
                   {t('pages.home.buttons.view_all', 'VIEW ALL →')}
                 </Link>
               </div>
-              {col.products.length === 0 ? (
+              {(col.products || []).length === 0 ? (
                 <div className="text-center p-8 bg-ink-surface border border-dashed border-ink-border rounded-sm">
                   <p className="font-mono-stack text-sm text-text-muted">{t('pages.home.status.no_items', 'No items assigned to this collection yet.')}</p>
                 </div>
@@ -82,7 +82,7 @@ export default function HomePageClient({ categories, tcgs, collections, bounties
         )}
 
         {/* Featured Bounties Section */}
-        {bounties.length > 0 && (
+        {(bounties || []).length > 0 && (
           <section>
             <div className="flex items-baseline justify-between gap-4 mb-6 border-b-2 border-kraft-dark pb-2">
               <div className="flex items-center gap-3">

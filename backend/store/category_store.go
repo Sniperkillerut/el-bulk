@@ -52,7 +52,7 @@ func (s *CategoryStore) Create(input models.CustomCategoryInput) (*models.Custom
 }
 
 func (s *CategoryStore) ListWithCount(isAdmin bool) ([]models.CustomCategory, error) {
-	var categories []models.CustomCategory
+	categories := []models.CustomCategory{}
 	
 	query := `
 		SELECT c.id, c.name, c.slug, c.is_active, c.show_badge, c.searchable, c.bg_color, c.text_color, c.icon, c.created_at, COUNT(pc.product_id) as item_count

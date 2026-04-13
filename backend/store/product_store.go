@@ -313,6 +313,18 @@ func (s *ProductStore) GetHotProductIDs(hotDays, hotSales int, candidateIDs []st
 		return []string{}, nil
 	}
 
+	// Filter out empty IDs to prevent syntax errors
+	validIDs := []string{}
+	for _, id := range candidateIDs {
+		if id != "" {
+			validIDs = append(validIDs, id)
+		}
+	}
+
+	if len(validIDs) == 0 {
+		return []string{}, nil
+	}
+
 	query, args, err := sqlx.In(fmt.Sprintf(`
 		SELECT product_id
 		FROM order_item oi
@@ -321,14 +333,16 @@ func (s *ProductStore) GetHotProductIDs(hotDays, hotSales int, candidateIDs []st
 		  AND product_id IN (?)
 		GROUP BY product_id
 		HAVING SUM(quantity) >= %d
-	`, hotDays, hotSales), candidateIDs)
+	`, hotDays, hotSales), validIDs)
 
 	if err != nil {
 		return nil, err
 	}
 
 	var hotIDs []string
-	err = s.DB.Select(&hotIDs, s.DB.Rebind(query), args...)
+	// Explicitly rebind using DOLLAR for Postgres compatibility, 
+	// as some custom driver names (like cloudsql-postgres) might not be auto-detected by sqlx.
+	err = s.DB.Select(&hotIDs, sqlx.Rebind(sqlx.DOLLAR, query), args...)
 	return hotIDs, err
 }
 

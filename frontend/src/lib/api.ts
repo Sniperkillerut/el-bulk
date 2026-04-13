@@ -15,15 +15,19 @@ async function logAndThrow(res: Response, defaultMsg: string): Promise<never> {
     errorMessage = res.statusText || defaultMsg;
   }
 
-  remoteLogger.error(`API Error [${res.status}]: ${errorMessage}`, {
-    url: String(res.url),
-    status: Number(res.status),
-    statusText: String(res.statusText || res.status),
-  });
+  // Reduce log noise for common unauthorized checks (e.g. /api/auth/me) 
+  if (res.status === 401) {
+    remoteLogger.info(`API Auth [401]: ${errorMessage}`, { url: String(res.url) });
+  } else {
+    remoteLogger.error(`API Error [${res.status}]: ${errorMessage}`, {
+      url: String(res.url),
+      status: Number(res.status),
+      statusText: String(res.statusText || res.status),
+    });
+  }
 
   const error = new Error(errorMessage);
   (error as Error & { _remoteLogged?: boolean })._remoteLogged = true;
-  if (res.status === 401) throw error;
   throw error;
 }
 
@@ -128,8 +132,9 @@ export async function fetchCategories(): Promise<import('./types').CustomCategor
 
   try {
     const data = await apiFetch<import('./types').CustomCategory[]>('/api/categories', { cache: 'default' });
-    setCached('categories', data);
-    return data;
+    const categories = data || [];
+    setCached('categories', categories);
+    return categories;
   } catch {
     return [];
   }
@@ -582,7 +587,12 @@ export async function adminFetchStats(): Promise<AdminStats> {
 // ---------------------------------------------------------------------------
 
 export async function fetchBounties(params?: { active?: boolean }): Promise<import('./types').Bounty[]> {
-  return apiFetch<import('./types').Bounty[]>('/api/bounties', { params, cache: 'no-store' });
+  try {
+    const data = await apiFetch<import('./types').Bounty[]>('/api/bounties', { params, cache: 'no-store' });
+    return data || [];
+  } catch {
+    return [];
+  }
 }
 
 export async function adminCreateBounty(data: import('./types').BountyInput): Promise<import('./types').Bounty> {
@@ -711,7 +721,12 @@ export async function adminFetchSubscribers(): Promise<NewsletterSubscriber[]> {
 
 // CRM - Clients
 export async function adminFetchClients(): Promise<CustomerStats[]> {
-  return apiFetch<CustomerStats[]>('/api/admin/clients', {});
+  try {
+    const data = await apiFetch<CustomerStats[]>('/api/admin/clients', {});
+    return data || [];
+  } catch {
+    return [];
+  }
 }
 
 export async function adminFetchClientDetail(id: string): Promise<CustomerDetail> {

@@ -16,7 +16,7 @@ func NewBountyStore(db *sqlx.DB) *BountyStore {
 }
 
 func (s *BountyStore) ListBounties(activeParam string) ([]models.Bounty, error) {
-	var bounties []models.Bounty
+	bounties := []models.Bounty{}
 	query := `
 		SELECT 
 			id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, 
@@ -82,7 +82,7 @@ func (s *BountyStore) DeleteBounty(id string) (int64, error) {
 // ── Offers ──────────────────────────────────────────────
 
 func (s *BountyStore) ListOffers() ([]models.BountyOffer, error) {
-	var offers []models.BountyOffer
+	offers := []models.BountyOffer{}
 	query := `
 		SELECT 
 			o.id, o.bounty_id, o.customer_id, o.quantity, o.condition, o.status, o.notes, o.admin_notes, o.created_at, o.updated_at,
@@ -131,7 +131,7 @@ func (s *BountyStore) UpdateOfferStatus(id, status string) (*models.BountyOffer,
 }
 
 func (s *BountyStore) ListMeOffers(userID string) ([]models.BountyOffer, error) {
-	var offers []models.BountyOffer
+	offers := []models.BountyOffer{}
 	query := `
 		SELECT 
 			o.id, o.bounty_id, o.customer_id, o.quantity, o.condition, o.status, o.notes, o.admin_notes, o.created_at, o.updated_at,
@@ -160,7 +160,7 @@ func (s *BountyStore) CancelMeOffer(id, userID string) (int64, error) {
 // ── Client Requests ─────────────────────────────────────
 
 func (s *BountyStore) ListRequests() ([]models.ClientRequest, error) {
-	var requests []models.ClientRequest
+	requests := []models.ClientRequest{}
 	query := `
 		SELECT id, customer_id, customer_name, customer_contact, card_name, set_name, details, status, created_at
 		FROM client_request
@@ -193,7 +193,7 @@ func (s *BountyStore) UpdateRequestStatus(id, status string) (*models.ClientRequ
 }
 
 func (s *BountyStore) ListMeRequests(userID string) ([]models.ClientRequest, error) {
-	var requests []models.ClientRequest
+	requests := []models.ClientRequest{}
 	query := `
 		SELECT id, customer_id, customer_name, customer_contact, card_name, set_name, details, status, created_at
 		FROM client_request
