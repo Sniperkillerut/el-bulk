@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/el-bulk/backend/external"
@@ -8,7 +9,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func seedTCGs(db *sqlx.DB) {
+func seedTCGs(db *sqlx.DB) error {
 	logger.Info("🎮 Seeding TCG systems...")
 
 	type TCG struct {
@@ -38,23 +39,28 @@ func seedTCGs(db *sqlx.DB) {
 				is_active = EXCLUDED.is_active
 		`, t.ID, t.Name, t.ImageURL, t.IsActive)
 		if err != nil {
-			logger.Error("Failed to seed TCG '%s': %v", t.ID, err)
+			return fmt.Errorf("failed to seed TCG '%s': %w", t.ID, err)
 		}
 	}
 	logger.Info("✅ %d TCGs seeded", len(tcgs))
+	return nil
 }
 
-func seedSets(db *sqlx.DB) {
+func seedSets(db *sqlx.DB) error {
 	logger.Info("🔭 Syncing MTG Sets from Scryfall...")
 	sets, err := external.FetchSets()
 	if err != nil {
-		logger.Warn("⚠️ Failed to fetch sets for seeding: %v", err)
-		return
+		logger.Warn("⚠️ Failed to fetch sets for seeding (non-fatal): %v", err)
+		return nil
 	}
 
-	tx, _ := db.Beginx()
+	tx, err := db.Beginx()
+	if err != nil {
+		return fmt.Errorf("failed to start transaction for sets: %w", err)
+	}
+
 	for _, s := range sets {
-		tx.Exec(`
+		_, err := tx.Exec(`
 			INSERT INTO tcg_set (tcg, code, name, released_at, set_type)
 			VALUES ($1, $2, $3, $4, $5)
 			ON CONFLICT (tcg, code) DO UPDATE SET
@@ -62,12 +68,26 @@ func seedSets(db *sqlx.DB) {
 				released_at = EXCLUDED.released_at,
 				set_type = EXCLUDED.set_type
 		`, "mtg", s.Code, s.Name, s.ReleasedAt, s.SetType)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to seed set %s: %w", s.Code, err)
+		}
 	}
-	tx.Exec(`
+
+	_, err = tx.Exec(`
 		INSERT INTO setting (key, value)
 		VALUES ($1, $2)
 		ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()
 	`, "last_set_sync", time.Now().Format(time.RFC3339))
-	tx.Commit()
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to update last_set_sync: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit sets: %w", err)
+	}
+
 	logger.Info("✅ %d MTG sets synchronized", len(sets))
+	return nil
 }

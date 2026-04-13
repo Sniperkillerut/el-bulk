@@ -16,7 +16,7 @@ type CustomerSeeded struct {
 	Phone     string
 }
 
-func seedCustomers(db *sqlx.DB) []CustomerSeeded {
+func seedCustomers(db *sqlx.DB) ([]CustomerSeeded, error) {
 	logger.Info("👥 Seeding customers (30 — full field coverage)...")
 
 	type Cust struct {
@@ -129,8 +129,7 @@ func seedCustomers(db *sqlx.DB) []CustomerSeeded {
 			authProvider, authProviderID, createdAt,
 		).Scan(&id)
 		if err != nil {
-			logger.Error("Failed to seed customer '%s %s': %v", c.FirstName, c.LastName, err)
-			continue
+			return nil, fmt.Errorf("failed to seed customer '%s %s': %w", c.FirstName, c.LastName, err)
 		}
 
 		// Seed customer_auth separately for first 15 (OAuth users)
@@ -161,5 +160,5 @@ func seedCustomers(db *sqlx.DB) []CustomerSeeded {
 	}
 
 	logger.Info("✅ %d customers seeded", len(seeded))
-	return seeded
+	return seeded, nil
 }

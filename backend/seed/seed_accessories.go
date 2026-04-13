@@ -1,11 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
 )
 
-func seedAccessories(db *sqlx.DB, cats CategoryMap, storage StorageMap) []string {
+func seedAccessories(db *sqlx.DB, cats CategoryMap, storage StorageMap) ([]string, error) {
 	logger.Info("🛡️  Seeding Accessories...")
 
 	type Acc struct {
@@ -168,8 +169,7 @@ func seedAccessories(db *sqlx.DB, cats CategoryMap, storage StorageMap) []string
 			item.ImageURL, item.Desc, costBasis, createdAt,
 		).Scan(&pID)
 		if err != nil {
-			logger.Error("Failed to insert accessory '%s': %v", item.Name, err)
-			continue
+			return nil, fmt.Errorf("failed to insert accessory '%s': %w", item.Name, err)
 		}
 		ids = append(ids, pID)
 
@@ -191,5 +191,5 @@ func seedAccessories(db *sqlx.DB, cats CategoryMap, storage StorageMap) []string
 	}
 
 	logger.Info("✅ %d accessories seeded", len(ids))
-	return ids
+	return ids, nil
 }

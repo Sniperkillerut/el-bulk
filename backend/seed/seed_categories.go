@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
 )
@@ -8,7 +9,7 @@ import (
 // CategoryMap maps slug → UUID
 type CategoryMap map[string]string
 
-func seedCategories(db *sqlx.DB) CategoryMap {
+func seedCategories(db *sqlx.DB) (CategoryMap, error) {
 	logger.Info("🏷️  Seeding custom categories...")
 
 	type Cat struct {
@@ -47,11 +48,30 @@ func seedCategories(db *sqlx.DB) CategoryMap {
 			RETURNING id
 		`, cat.Name, cat.Slug, cat.BgColor, cat.TextColor, cat.Icon, cat.ShowBadge, cat.Searchable, cat.IsActive).Scan(&id)
 		if err != nil {
-			logger.Error("Failed to seed category '%s': %v", cat.Name, err)
-			continue
+			return nil, fmt.Errorf("failed to seed category '%s': %w", cat.Name, err)
 		}
 		result[cat.Slug] = id
 	}
 	logger.Info("✅ %d categories seeded", len(result))
-	return result
+	return result, nil
+}
+func loadCategories(db *sqlx.DB) (CategoryMap, error) {
+	result := make(CategoryMap)
+	rows, err := db.Queryx("SELECT slug, id FROM custom_category")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var c struct {
+			Slug string `db:"slug"`
+			ID   string `db:"id"`
+		}
+		if err := rows.StructScan(&c); err != nil {
+			return nil, err
+		}
+		result[c.Slug] = c.ID
+	}
+	return result, nil
 }

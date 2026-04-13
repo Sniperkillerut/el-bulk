@@ -1,13 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
 )
 
-func seedSettings(db *sqlx.DB) {
+func seedSettings(db *sqlx.DB) error {
 	logger.Info("⚙️  Seeding settings...")
 
 	settings := map[string]string{
@@ -18,7 +19,7 @@ func seedSettings(db *sqlx.DB) {
 		// Contact info
 		"contact_address":   "Cra. 15 # 76-54, Local 201, Centro Comercial Unilago, Bogotá",
 		"contact_phone":     "+57 300 123 4567",
-		"contact_email":     "contact@el-bulk.co",
+		"contact_email":     "admin@elbulk.com",
 		"contact_instagram": "elbulktcg",
 		"contact_hours":     "Mon - Sat: 11:00 AM - 7:00 PM",
 
@@ -48,8 +49,9 @@ func seedSettings(db *sqlx.DB) {
 			ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()
 		`, k, v)
 		if err != nil {
-			logger.Error("Failed to set '%s': %v", k, err)
+			return fmt.Errorf("failed to set '%s': %w", k, err)
 		}
 	}
 	logger.Info("✅ %d settings seeded", len(settings))
+	return nil
 }

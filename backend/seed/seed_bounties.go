@@ -1,11 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
 )
 
-func seedBounties(db *sqlx.DB) []string {
+func seedBounties(db *sqlx.DB) ([]string, error) {
 	logger.Info("🎯 Seeding bounties (all fields exercised)...")
 
 	type Bounty struct {
@@ -195,14 +196,13 @@ func seedBounties(db *sqlx.DB) []string {
 			nilIfEmpty(b.ImageURL), b.PriceSource, b.PriceReference, b.IsActive,
 		).Scan(&id)
 		if err != nil {
-			logger.Error("Failed to seed bounty '%s': %v", b.Name, err)
-			continue
+			return nil, fmt.Errorf("failed to seed bounty '%s': %w", b.Name, err)
 		}
 		ids = append(ids, id)
 	}
 
 	logger.Info("✅ %d bounties seeded", len(ids))
-	return ids
+	return ids, nil
 }
 
 // nilIfEmpty converts an empty string to nil for nullable TEXT columns.

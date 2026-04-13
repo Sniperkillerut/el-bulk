@@ -1,11 +1,12 @@
 package main
 
 import (
-"github.com/el-bulk/backend/utils/logger"
-"github.com/jmoiron/sqlx"
+	"fmt"
+	"github.com/el-bulk/backend/utils/logger"
+	"github.com/jmoiron/sqlx"
 )
 
-func seedTranslations(db *sqlx.DB) {
+func seedTranslations(db *sqlx.DB) error {
 	logger.Info("🌐 Seeding Storefront Translations...")
 
 	type Transl struct {
@@ -1962,8 +1963,9 @@ func seedTranslations(db *sqlx.DB) {
 			ON CONFLICT (key, locale) DO UPDATE SET value = EXCLUDED.value
 		`, t.Key, t.Locale, t.Value)
 		if err != nil {
-			logger.Error("Failed to seed translation [key: %s, locale: %s]: %v", t.Key, t.Locale, err)
+			return fmt.Errorf("failed to seed translation [key: %s, locale: %s]: %w", t.Key, t.Locale, err)
 		}
 	}
 	logger.Info("✅ %d translation records seeded", len(data))
+	return nil
 }

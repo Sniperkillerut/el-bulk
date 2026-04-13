@@ -1,16 +1,17 @@
 package main
 
 import (
+	"fmt"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
 )
 
-func seedCRM(db *sqlx.DB, adminID string, customers []CustomerSeeded, bountyIDs []string) {
+func seedCRM(db *sqlx.DB, adminID string, customers []CustomerSeeded, bountyIDs []string) error {
 	logger.Info("📋 Seeding CRM data (subscribers, notes, client requests, bounty offers)...")
 
 	if len(customers) == 0 {
 		logger.Warn("No customers available — skipping CRM seed")
-		return
+		return nil
 	}
 
 	// ── Newsletter Subscribers ──────────────────────────────────────────────
@@ -22,11 +23,13 @@ func seedCRM(db *sqlx.DB, adminID string, customers []CustomerSeeded, bountyIDs 
 		}
 		var custID *string
 		custID = &c.ID
-		db.Exec(`
+		if _, err := db.Exec(`
 			INSERT INTO newsletter_subscriber (email, customer_id, created_at)
 			VALUES ($1, $2, $3)
 			ON CONFLICT (email) DO NOTHING
-		`, c.Email, custID, daysAgo(randInt(5, 90)))
+		`, c.Email, custID, daysAgo(randInt(5, 90))); err != nil {
+			return fmt.Errorf("failed to seed subscriber '%s': %w", c.Email, err)
+		}
 	}
 	// A few anonymous subscribers that never placed orders
 	anonEmails := []string{
@@ -75,10 +78,12 @@ func seedCRM(db *sqlx.DB, adminID string, customers []CustomerSeeded, bountyIDs 
 		}
 		c := customers[n.Idx]
 		content := n.Content
-		db.Exec(`
+		if _, err := db.Exec(`
 			INSERT INTO customer_note (customer_id, content, admin_id, created_at)
 			VALUES ($1, $2, $3, $4)
-		`, c.ID, content, adminID, daysAgo(randInt(1, 45)))
+		`, c.ID, content, adminID, daysAgo(randInt(1, 45))); err != nil {
+			return fmt.Errorf("failed to seed customer note for %s: %w", c.ID, err)
+		}
 	}
 
 	// ── Client Requests (from storefront form) ──────────────────────────────
@@ -138,7 +143,7 @@ func seedCRM(db *sqlx.DB, adminID string, customers []CustomerSeeded, bountyIDs 
 
 	if len(bountyIDs) == 0 {
 		logger.Warn("  No bounties to make offers on — skipping bounty offers")
-		return
+		return nil
 	}
 
 	type BountyOffer struct {
@@ -186,4 +191,5 @@ func seedCRM(db *sqlx.DB, adminID string, customers []CustomerSeeded, bountyIDs 
 	}
 
 	logger.Info("✅ CRM data seeded")
+	return nil
 }

@@ -1,11 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
 )
 
-func seedNotices(db *sqlx.DB) {
+func seedNotices(db *sqlx.DB) error {
 	logger.Info("📰 Seeding notices (blog posts)...")
 
 	type Notice struct {
@@ -163,8 +164,9 @@ func seedNotices(db *sqlx.DB) {
 				is_published = EXCLUDED.is_published
 		`, n.Title, n.Slug, n.HTML, imageURL, n.IsPublished, daysAgoFixed(n.DaysAgo))
 		if err != nil {
-			logger.Error("Failed to seed notice '%s': %v", n.Slug, err)
+			return fmt.Errorf("failed to seed notice '%s': %w", n.Slug, err)
 		}
 	}
 	logger.Info("✅ %d notices seeded (%d published, 1 draft)", len(notices), len(notices)-1)
+	return nil
 }

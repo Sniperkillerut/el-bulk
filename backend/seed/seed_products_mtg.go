@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -12,7 +13,7 @@ import (
 
 // seedMTGSingles fetches real card data from Scryfall and inserts
 // into the product table with exhaustive field coverage.
-func seedMTGSingles(db *sqlx.DB, cats CategoryMap, storage StorageMap) []string {
+func seedMTGSingles(db *sqlx.DB, cats CategoryMap, storage StorageMap) ([]string, error) {
 	logger.Info("🔮 Seeding MTG Singles via Scryfall...")
 
 	// Curated list: Modern/Legacy staples, Alpha duals, Commander bombs, new Standard
@@ -212,8 +213,7 @@ func seedMTGSingles(db *sqlx.DB, cats CategoryMap, storage StorageMap) []string 
 		)
 
 		if err != nil {
-			logger.Error("  ❌ Insert failed for '%s': %v", res.Name, err)
-			continue
+			return nil, fmt.Errorf("insert failed for '%s': %w", res.Name, err)
 		}
 		productIDs = append(productIDs, pID)
 
@@ -261,11 +261,11 @@ func seedMTGSingles(db *sqlx.DB, cats CategoryMap, storage StorageMap) []string 
 	}
 
 	logger.Info("✅ %d MTG singles seeded", len(productIDs))
-	return productIDs
+	return productIDs, nil
 }
 
 // seedMTGSealed inserts sealed MTG product with real set data.
-func seedMTGSealed(db *sqlx.DB, cats CategoryMap, storage StorageMap) []string {
+func seedMTGSealed(db *sqlx.DB, cats CategoryMap, storage StorageMap) ([]string, error) {
 	logger.Info("📦 Seeding MTG Sealed Products...")
 
 	type SealedItem struct {
@@ -350,8 +350,7 @@ func seedMTGSealed(db *sqlx.DB, cats CategoryMap, storage StorageMap) []string {
 			item.CreatedAt,
 		).Scan(&pID)
 		if err != nil {
-			logger.Error("Failed to seed MTG sealed '%s': %v", item.Name, err)
-			continue
+			return nil, fmt.Errorf("failed to seed MTG sealed '%s': %w", item.Name, err)
 		}
 		ids = append(ids, pID)
 
@@ -369,5 +368,5 @@ func seedMTGSealed(db *sqlx.DB, cats CategoryMap, storage StorageMap) []string {
 	}
 
 	logger.Info("✅ %d MTG sealed products seeded", len(ids))
-	return ids
+	return ids, nil
 }

@@ -1,12 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
 )
 
-func seedThemes(db *sqlx.DB) {
+func seedThemes(db *sqlx.DB) error {
 	logger.Info("🎨 Seeding Theme Palette Pack...")
 
 	themes := []models.Theme{
@@ -236,8 +237,9 @@ func seedThemes(db *sqlx.DB) {
 			t.AccentHeader, t.StatusHPHeader,
 		)
 		if err != nil {
-			logger.Error("Failed to seed theme '%s': %v", t.Name, err)
+			return fmt.Errorf("failed to seed theme '%s': %w", t.Name, err)
 		}
 	}
 	logger.Info("✅ %d themes seeded", len(themes))
+	return nil
 }

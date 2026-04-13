@@ -9,12 +9,12 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func seedOrders(db *sqlx.DB, customers []CustomerSeeded, allProductIDs []string) {
+func seedOrders(db *sqlx.DB, customers []CustomerSeeded, allProductIDs []string) error {
 	logger.Info("🛒 Seeding orders (all statuses, all payment methods, varied datetimes)...")
 
 	if len(allProductIDs) == 0 || len(customers) == 0 {
 		logger.Warn("⚠️ No products or customers available — skipping order seeding")
-		return
+		return nil
 	}
 
 	// Cache product info to avoid repeated queries
@@ -175,8 +175,7 @@ func seedOrders(db *sqlx.DB, customers []CustomerSeeded, allProductIDs []string)
 				createdAt, confirmedAt, completedAt,
 			).Scan(&oID)
 			if err != nil {
-				logger.Error("Failed to create order %s: %v", orderNum, err)
-				continue
+				return fmt.Errorf("failed to create order %s: %w", orderNum, err)
 			}
 
 			// Seed 1-4 order items
@@ -235,4 +234,5 @@ func seedOrders(db *sqlx.DB, customers []CustomerSeeded, allProductIDs []string)
 	}
 
 	logger.Info("✅ Orders seeded (counter reached %d)", orderCounter-1)
+	return nil
 }

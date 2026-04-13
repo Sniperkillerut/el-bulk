@@ -1,12 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
 )
 
 // seedMultiTCGProducts seeds Pokémon, Yu-Gi-Oh!, Lorcana and One Piece products.
-func seedMultiTCGProducts(db *sqlx.DB, cats CategoryMap, storage StorageMap) []string {
+func seedMultiTCGProducts(db *sqlx.DB, cats CategoryMap, storage StorageMap) ([]string, error) {
 	logger.Info("🌍 Seeding multi-TCG products (Pokémon, Yu-Gi-Oh!, Lorcana, One Piece)...")
 
 	type Item struct {
@@ -224,8 +225,7 @@ func seedMultiTCGProducts(db *sqlx.DB, cats CategoryMap, storage StorageMap) []s
 			cond, item.Price, item.Stock, item.ImageURL, costBasis, createdAt,
 		).Scan(&pID)
 		if err != nil {
-			logger.Error("Failed to insert '%s' (%s): %v", item.Name, item.TCG, err)
-			continue
+			return nil, fmt.Errorf("failed to insert '%s' (%s): %w", item.Name, item.TCG, err)
 		}
 		ids = append(ids, pID)
 
@@ -251,5 +251,5 @@ func seedMultiTCGProducts(db *sqlx.DB, cats CategoryMap, storage StorageMap) []s
 	}
 
 	logger.Info("✅ %d multi-TCG products seeded", len(ids))
-	return ids
+	return ids, nil
 }
