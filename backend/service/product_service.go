@@ -202,11 +202,11 @@ func (s *ProductService) EnrichProducts(products []models.Product, settings mode
 	// We log errors but continue to ensure the basic resource remains accessible
 	
 	if err := s.Store.PopulateStorage(products); err != nil {
-		logger.Error("Failed to populate storage info: %v", err)
+		logger.Error("Failed to populate storage info for %d products: %v", len(products), err)
 	}
 	
 	if err := s.Store.PopulateCategories(products); err != nil {
-		logger.Error("Failed to populate category info: %v", err)
+		logger.Error("Failed to populate category info for %d products: %v", len(products), err)
 	}
 	
 	if !isAdmin {
@@ -223,11 +223,11 @@ func (s *ProductService) EnrichProducts(products []models.Product, settings mode
 	}
 
 	if err := s.Store.PopulateCartCounts(products); err != nil {
-		logger.Error("Failed to populate cart counts: %v", err)
+		logger.Error("Failed to populate cart counts for %d products: %v", len(products), err)
 	}
 	
 	if err := s.IdentifyHotNew(products, settings); err != nil {
-		logger.Error("Failed to identify hot/new status: %v", err)
+		logger.Error("Failed to identify hot/new status for %d products: %v", len(products), err)
 	}
 
 	return nil

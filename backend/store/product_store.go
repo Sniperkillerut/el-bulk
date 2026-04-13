@@ -143,7 +143,13 @@ func (s *ProductStore) PopulateStorage(products []models.Product) error {
 	}
 	var pids []string
 	for _, p := range products {
-		pids = append(pids, p.ID)
+		if p.ID != "" {
+			pids = append(pids, p.ID)
+		}
+	}
+
+	if len(pids) == 0 {
+		return nil
 	}
 
 	query, args, err := sqlx.In(`
@@ -192,7 +198,13 @@ func (s *ProductStore) PopulateCategories(products []models.Product) error {
 	}
 	var pids []string
 	for _, p := range products {
-		pids = append(pids, p.ID)
+		if p.ID != "" {
+			pids = append(pids, p.ID)
+		}
+	}
+
+	if len(pids) == 0 {
+		return nil
 	}
 
 	sql := `
@@ -256,7 +268,13 @@ func (s *ProductStore) PopulateCartCounts(products []models.Product) error {
 	}
 	var pids []string
 	for _, p := range products {
-		pids = append(pids, p.ID)
+		if p.ID != "" {
+			pids = append(pids, p.ID)
+		}
+	}
+
+	if len(pids) == 0 {
+		return nil
 	}
 
 	query, args, err := sqlx.In(`
@@ -290,7 +308,7 @@ func (s *ProductStore) PopulateCartCounts(products []models.Product) error {
 	return nil
 }
 
-func (s *ProductStore) GetHotProductIDs(days, minSales int, candidateIDs []string) ([]string, error) {
+func (s *ProductStore) GetHotProductIDs(hotDays, hotSales int, candidateIDs []string) ([]string, error) {
 	if len(candidateIDs) == 0 {
 		return []string{}, nil
 	}
@@ -303,7 +321,7 @@ func (s *ProductStore) GetHotProductIDs(days, minSales int, candidateIDs []strin
 		  AND product_id IN (?)
 		GROUP BY product_id
 		HAVING SUM(quantity) >= %d
-	`, days, minSales), candidateIDs)
+	`, hotDays, hotSales), candidateIDs)
 
 	if err != nil {
 		return nil, err
