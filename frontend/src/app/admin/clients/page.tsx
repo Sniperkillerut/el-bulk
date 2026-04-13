@@ -10,8 +10,8 @@ import { CustomerStats } from '@/lib/types';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
 const SortIcon = ({ field, sortField, sortOrder }: { field: keyof CustomerStats | 'name', sortField: string, sortOrder: string }) => {
-  if (sortField !== field) return <span className="ml-1 opacity-20 group-hover:opacity-100 transition-opacity">↕</span>;
-  return <span className="ml-1 text-gold-dark font-bold">{sortOrder === 'asc' ? '↑' : '↓'}</span>;
+  if (sortField !== field) return <span className="ml-1 opacity-40 group-hover:opacity-100 transition-opacity">↕</span>;
+  return <span className="ml-1 text-accent-header font-bold">{sortOrder === 'asc' ? '↑' : '↓'}</span>;
 };
 
 export default function AdminClientsPage() {
@@ -90,7 +90,7 @@ export default function AdminClientsPage() {
 
       <div className="flex-1 min-h-0 overflow-auto cardbox scrollbar-thin rounded-lg border border-border-main bg-white overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
         <table className="w-full text-left border-collapse table-fixed min-w-[500px] lg:min-w-0">
-          <thead className="sticky top-0 z-10 bg-bg-header backdrop-blur-md shadow-sm border-b border-border-main">
+          <thead className="sticky top-0 z-10 bg-bg-header text-text-on-header backdrop-blur-md shadow-sm border-b border-border-main">
             <tr className="border-b border-border-main">
               <th 
                 className="p-4 font-display text-xs uppercase tracking-wider lg:w-[25%] cursor-pointer group hover:bg-gold/5 transition-colors"
@@ -111,13 +111,13 @@ export default function AdminClientsPage() {
                 <div className="flex items-center justify-center">{t('pages.admin.clients.table.orders', 'Orders')} <SortIcon field="order_count" sortField={sortField} sortOrder={sortOrder} /></div>
               </th>
               <th 
-                className="p-4 font-display text-xs uppercase tracking-wider text-center text-gold-dark/80 hidden lg:table-cell w-[10%] cursor-pointer group hover:bg-gold/5 transition-colors"
+                className="p-4 font-display text-xs uppercase tracking-wider text-center text-accent-header hidden lg:table-cell w-[10%] cursor-pointer group hover:bg-white/10 transition-colors"
                 onClick={() => handleSort('active_request_count')}
               >
                 <div className="flex items-center justify-center">{t('pages.admin.clients.table.requests', 'Requests')} <SortIcon field="active_request_count" sortField={sortField} sortOrder={sortOrder} /></div>
               </th>
               <th 
-                className="p-4 font-display text-xs uppercase tracking-wider text-center text-emerald-700/80 hidden lg:table-cell w-[10%] cursor-pointer group hover:bg-gold/5 transition-colors"
+                className="p-4 font-display text-xs uppercase tracking-wider text-center text-green-400 hidden lg:table-cell w-[10%] cursor-pointer group hover:bg-white/10 transition-colors"
                 onClick={() => handleSort('active_offer_count')}
               >
                 <div className="flex items-center justify-center">{t('pages.admin.clients.table.offers', 'Offers')} <SortIcon field="active_offer_count" sortField={sortField} sortOrder={sortOrder} /></div>
@@ -146,7 +146,7 @@ export default function AdminClientsPage() {
             {paginatedClients.map((client) => (
               <tr
                 key={client.id}
-                className="hover:bg-gold/5 transition-colors group cursor-pointer"
+                className="hover:bg-gold/10 transition-all group cursor-pointer border-b border-border-main/20"
                 onClick={() => router.push(`/admin/clients/${client.id}`)}
               >
                 <td className="p-4 overflow-hidden">
@@ -155,14 +155,14 @@ export default function AdminClientsPage() {
                       {client.first_name[0]}{client.last_name[0]}
                     </div>
                     <div className="min-w-0">
-                      <div className="font-bold text-sm uppercase group-hover:text-gold-dark transition-colors truncate">{client.first_name} {client.last_name}</div>
-                      <div className="text-[10px] font-mono-stack text-text-muted truncate">ID: {client.id.slice(0, 8)}</div>
+                      <div className="font-bold text-sm uppercase group-hover:text-gold-dark transition-colors truncate text-text-main">{client.first_name} {client.last_name}</div>
+                      <div className="text-[10px] font-mono-stack text-text-secondary font-bold truncate">ID: {client.id.slice(0, 8)}</div>
                     </div>
                   </div>
                 </td>
-                <td className="p-4 text-xs font-mono-stack hidden md:table-cell overflow-hidden">
-                  <div className="truncate">{client.email || 'N/A'}</div>
-                  <div className="opacity-60 truncate">{client.phone || ''}</div>
+                <td className="p-4 text-xs font-mono-stack hidden md:table-cell overflow-hidden text-text-secondary">
+                  <div className="truncate font-bold">{client.email || 'N/A'}</div>
+                  <div className="opacity-70 truncate">{client.phone || ''}</div>
                 </td>
                 <td className="p-4 text-center font-mono-stack text-xs font-bold">
                   {client.order_count}
@@ -195,11 +195,11 @@ export default function AdminClientsPage() {
                     <span className="text-[9px] opacity-30 font-mono-stack">{t('pages.admin.clients.status.no', 'NO')}</span>
                   )}
                 </td>
-                <td className="p-4 text-xs font-mono-stack transition-opacity group-hover:opacity-100 opacity-70 hidden lg:table-cell">
+                <td className="p-4 text-xs font-mono-stack transition-opacity group-hover:opacity-100 opacity-90 hidden lg:table-cell">
                   {client.latest_note ? (
-                    <div className="truncate italic">&quot;{client.latest_note}&quot;</div>
+                    <div className="truncate italic text-text-secondary">&quot;{client.latest_note}&quot;</div>
                   ) : (
-                    <span className="opacity-30 italic">{t('pages.admin.clients.table.no_notes', 'No notes recorded...')}</span>
+                    <span className="opacity-50 italic text-text-muted">{t('pages.admin.clients.table.no_notes', 'No notes recorded...')}</span>
                   )}
                 </td>
               </tr>
