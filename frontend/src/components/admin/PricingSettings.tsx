@@ -10,6 +10,7 @@ export default function PricingSettings({ }: PricingSettingsProps) {
   const [settings, setSettings] = useState<Settings>({ 
     usd_to_cop_rate: 4200, 
     eur_to_cop_rate: 4600,
+    ck_to_cop_rate: 4200,
     contact_address: '',
     contact_phone: '',
     contact_email: '',
@@ -96,6 +97,29 @@ export default function PricingSettings({ }: PricingSettingsProps) {
             />
             <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
               $1.00 USD = <strong style={{ color: 'var(--gold)' }}>{settings.usd_to_cop_rate.toLocaleString('es-CO')} COP</strong>
+            </span>
+          </div>
+        </div>
+
+        <div>
+          <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'Space Mono, monospace', marginBottom: '0.4rem' }}>
+            CK → COP RATE <span style={{ opacity: 0.5 }}>(CardKingdom)</span>
+          </label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <input
+              type="number"
+              value={settings.ck_to_cop_rate}
+              onChange={e => setSettings(s => ({ ...s, ck_to_cop_rate: parseFloat(e.target.value) || 0 }))}
+              min={0}
+              step={10}
+              style={{
+                background: 'var(--ink-deep)', border: '1px solid var(--ink-border)',
+                borderRadius: 6, padding: '0.5rem 0.75rem', color: 'var(--text-primary)',
+                fontFamily: 'Space Mono, monospace', width: 140,
+              }}
+            />
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+              $1.00 USD = <strong style={{ color: 'var(--gold)' }}>{settings.ck_to_cop_rate.toLocaleString('es-CO')} COP</strong>
             </span>
           </div>
         </div>
