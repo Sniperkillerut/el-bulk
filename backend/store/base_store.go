@@ -38,7 +38,7 @@ func (s *BaseStore[T]) List(conditions string, args ...interface{}) ([]T, error)
 	rebound := s.DB.Rebind(query)
 	logger.Trace("[DB] Executing List on %s: %s | Args: %+v", s.TableName, rebound, args)
 	
-	err := s.DB.Select(&items, rebound, args...)
+	err := s.DB.Unsafe().Select(&items, rebound, args...)
 	if err != nil {
 		logger.Error("[DB] List on %s failed: %v", s.TableName, err)
 		return nil, err
@@ -54,7 +54,7 @@ func (s *BaseStore[T]) GetByID(id string) (*T, error) {
 	start := time.Now()
 	logger.Trace("[DB] Executing GetByID on %s: %s | ID: %s", s.TableName, query, id)
 	
-	err := s.DB.Get(&item, query, id)
+	err := s.DB.Unsafe().Get(&item, query, id)
 	if err != nil {
 		logger.Error("[DB] GetByID on %s (%s) failed: %v", s.TableName, id, err)
 		return nil, err

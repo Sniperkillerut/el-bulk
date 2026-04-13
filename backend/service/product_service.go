@@ -426,10 +426,7 @@ func (s *ProductService) GetLowStock(threshold int) ([]models.Product, error) {
 }
 
 func (s *ProductService) GetTCGs(activeOnly bool) ([]models.TCG, error) {
-	if activeOnly {
-		return s.TCGStore.List("is_active = true ORDER BY name")
-	}
-	return s.TCGStore.List("ORDER BY name")
+	return s.TCGStore.ListWithCount(activeOnly)
 }
 
 func (s *ProductService) GetStorage(id string) ([]models.StorageLocation, error) {

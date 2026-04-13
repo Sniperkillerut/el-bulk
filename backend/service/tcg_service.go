@@ -19,10 +19,9 @@ func NewTCGService(s *store.TCGStore) *TCGService {
 }
 
 func (s *TCGService) List(isAdmin bool) ([]models.TCG, error) {
-	logger.Trace("Entering TCGService.List | Admin: %v", isAdmin)
-	// For now, TCGStore.ListWithCount returns all with counts.
-	// We might want to filter activeOnly for public view in the future.
-	return s.Store.ListWithCount()
+	logger.Trace("TCGService.List | Admin: %v", isAdmin)
+	// If not admin, only show active TCGs
+	return s.Store.ListWithCount(!isAdmin)
 }
 
 func (s *TCGService) Create(input models.TCGInput) (*models.TCG, error) {
