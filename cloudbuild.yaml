@@ -164,7 +164,7 @@ steps:
       - '--platform'
       - 'managed'
       - '--memory'
-      - '256Mi'
+      - '512Mi'
       - '--cpu'
       - '1'
       - '--min-instances'
