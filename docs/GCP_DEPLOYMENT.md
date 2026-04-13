@@ -834,7 +834,21 @@ DNS propagation can take **up to 48 hours** (usually 15-60 minutes).
 
 El Bulk sends emails for newsletter notifications. Choose one of these providers:
 
-### Option A: SendGrid (Recommended)
+### Option A: Resend (Modern & Scalable - Recommended)
+
+1. Create account at [resend.com](https://resend.com)
+2. Verify your domain (`elbulk.com`) in the **Domains** tab.
+3. Create an API Key in **API Keys** with "Sending Access".
+4. Configure:
+   ```
+   SMTP_HOST=smtp.resend.com
+   SMTP_PORT=587
+   SMTP_USER=resend
+   SMTP_PASS=re_your_api_key_here
+   SMTP_FROM=El Bulk <admin@elbulk.com>
+   ```
+
+### Option B: SendGrid
 
 1. Create account at [sendgrid.com](https://sendgrid.com)
 2. Go to **Settings → API Keys → Create API Key** (Full Access)
@@ -844,10 +858,10 @@ El Bulk sends emails for newsletter notifications. Choose one of these providers
    SMTP_PORT=587
    SMTP_USER=apikey
    SMTP_PASS=<your-api-key>
-   SMTP_FROM=El Bulk <notices@elbulk.com>
+   SMTP_FROM=El Bulk <admin@elbulk.com>
    ```
 
-### Option B: Brevo (Free Tier)
+### Option C: Brevo (Free Tier)
 
 1. Create account at [brevo.com](https://brevo.com)
 2. Go to **SMTP & API → SMTP Settings**
@@ -857,7 +871,7 @@ El Bulk sends emails for newsletter notifications. Choose one of these providers
    SMTP_PORT=587
    SMTP_USER=<your-brevo-email>
    SMTP_PASS=<your-smtp-key>
-   SMTP_FROM=El Bulk <notices@elbulk.com>
+   SMTP_FROM=El Bulk <admin@elbulk.com>
    ```
 
 ### Option C: Gmail App Password (Not Recommended for Production)
