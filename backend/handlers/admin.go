@@ -261,7 +261,11 @@ func (h *AdminHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 1. Verify Whitelist
-	allowedEmails := strings.Split(os.Getenv("ADMIN_EMAILS"), ",")
+	envEmails := os.Getenv("ADMIN_EMAILS")
+	if envEmails == "" {
+		logger.Error("[AdminAuth] ADMIN_EMAILS environment variable is NOT SET. All OAuth login attempts will fail.")
+	}
+	allowedEmails := strings.Split(envEmails, ",")
 	allowed := false
 	for _, e := range allowedEmails {
 		if strings.TrimSpace(e) == gInfo.Email {
@@ -295,7 +299,7 @@ func (h *AdminHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 			}
 			h.AuditService.LogAction(r.Context(), "OAUTH_SIGNUP", "admin", admin.ID, models.JSONB{"email": gInfo.Email})
 		} else {
-			logger.Error("[AdminAuth] Database error looking up admin %s: %v", gInfo.Email, err)
+			logger.Error("[AdminAuth] Database error looking up admin %s: %v. Check if 'email' column exists in 'admin' table.", gInfo.Email, err)
 			http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/admin/login?error=db_error", http.StatusTemporaryRedirect)
 			return
 		}
