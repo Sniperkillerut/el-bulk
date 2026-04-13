@@ -80,6 +80,9 @@ func ConnectResilient() (*sqlx.DB, error) {
 				return nil, fmt.Errorf("failed to register cloudsql-postgres driver: %v", err)
 			}
 			logger.DebugCtx(ctx, "Cloud SQL driver already registered, continuing...")
+		} else {
+			// Register with sqlx so Rebind() works correctly with this custom driver name
+			sqlx.BindDriver("cloudsql-postgres", sqlx.DOLLAR)
 		}
 		_ = cleanup // cleanup is managed globally by the driver
 

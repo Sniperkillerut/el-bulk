@@ -341,9 +341,7 @@ func (s *ProductStore) GetHotProductIDs(ctx context.Context, hotDays, hotSales i
 	}
 
 	var hotIDs []string
-	// Explicitly rebind using DOLLAR for Postgres compatibility, 
-	// as some custom driver names (like cloudsql-postgres) might not be auto-detected by sqlx.
-	err = s.DB.SelectContext(ctx, &hotIDs, sqlx.Rebind(sqlx.DOLLAR, query), args...)
+	err = s.DB.SelectContext(ctx, &hotIDs, s.DB.Rebind(query), args...)
 	return hotIDs, err
 }
 

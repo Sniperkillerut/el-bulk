@@ -77,7 +77,7 @@ func (s *CategoryService) populateHotNew(ctx context.Context, categories []model
 	}
 
 	var hotIDs []string
-	if err := s.Store.DB.SelectContext(ctx, &hotIDs, sqlx.Rebind(sqlx.DOLLAR, query), args...); err == nil {
+	if err := s.Store.DB.SelectContext(ctx, &hotIDs, s.Store.DB.Rebind(query), args...); err == nil {
 		hotMap := make(map[string]bool)
 		for _, id := range hotIDs {
 			hotMap[id] = true
