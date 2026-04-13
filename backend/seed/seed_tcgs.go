@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -48,7 +49,7 @@ func seedTCGs(db *sqlx.DB) error {
 
 func seedSets(db *sqlx.DB) error {
 	logger.Info("🔭 Syncing MTG Sets from Scryfall...")
-	sets, err := external.FetchSets()
+	sets, err := external.FetchSets(context.Background())
 	if err != nil {
 		logger.Warn("⚠️ Failed to fetch sets for seeding (non-fatal): %v", err)
 		return nil

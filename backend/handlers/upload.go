@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/el-bulk/backend/utils/logger"
 	"github.com/el-bulk/backend/utils/storage"
 	"github.com/google/uuid"
 )
@@ -17,6 +18,7 @@ type UploadHandler struct {
 
 // Upload receives a multipart file and saves it using the configured cloud driver.
 func (h *UploadHandler) Upload(w http.ResponseWriter, r *http.Request) {
+	logger.TraceCtx(r.Context(), "Entering UploadHandler.Upload")
 	if h.Storage == nil {
 		http.Error(w, "Storage not configured", http.StatusInternalServerError)
 		return

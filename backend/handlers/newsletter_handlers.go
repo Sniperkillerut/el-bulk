@@ -18,7 +18,7 @@ func NewNewsletterHandler(s *service.NewsletterService) *NewsletterHandler {
 }
 
 func (h *NewsletterHandler) Subscribe(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering NewsletterHandler.Subscribe")
+	logger.TraceCtx(r.Context(), "Entering NewsletterHandler.Subscribe")
 	var input struct {
 		Email string `json:"email"`
 	}
@@ -32,9 +32,9 @@ func (h *NewsletterHandler) Subscribe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	msg, err := h.Service.Subscribe(input.Email)
+	msg, err := h.Service.Subscribe(r.Context(), input.Email)
 	if err != nil {
-		logger.Error("Newsletter subscribe failed: %v", err)
+		logger.ErrorCtx(r.Context(), "Newsletter subscribe failed: %v", err)
 		render.Error(w, "Failed to subscribe", http.StatusInternalServerError)
 		return
 	}
@@ -49,10 +49,10 @@ func (h *NewsletterHandler) Subscribe(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *NewsletterHandler) AdminGetSubscribers(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering NewsletterHandler.AdminGetSubscribers")
-	subscribers, err := h.Service.ListAll()
+	logger.TraceCtx(r.Context(), "Entering NewsletterHandler.AdminGetSubscribers")
+	subscribers, err := h.Service.ListAll(r.Context())
 	if err != nil {
-		logger.Error("Failed to list subscribers: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to list subscribers: %v", err)
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
@@ -60,7 +60,7 @@ func (h *NewsletterHandler) AdminGetSubscribers(w http.ResponseWriter, r *http.R
 }
 
 func (h *NewsletterHandler) Unsubscribe(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering NewsletterHandler.Unsubscribe")
+	logger.TraceCtx(r.Context(), "Entering NewsletterHandler.Unsubscribe")
 	var input struct {
 		Email string `json:"email"`
 	}
@@ -69,8 +69,8 @@ func (h *NewsletterHandler) Unsubscribe(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err := h.Service.Unsubscribe(input.Email); err != nil {
-		logger.Error("Failed to unsubscribe %s: %v", input.Email, err)
+	if err := h.Service.Unsubscribe(r.Context(), input.Email); err != nil {
+		logger.ErrorCtx(r.Context(), "Failed to unsubscribe %s: %v", input.Email, err)
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}

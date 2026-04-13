@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -28,9 +29,9 @@ type RefreshRow struct {
 	PriceSource   string  `db:"price_source"`
 }
 
-func (s *RefreshStore) ListRefreshableProducts() ([]RefreshRow, error) {
+func (s *RefreshStore) ListRefreshableProducts(ctx context.Context) ([]RefreshRow, error) {
 	var rows []RefreshRow
-	err := s.DB.Select(&rows, `
+	err := s.DB.SelectContext(ctx, &rows, `
 		SELECT id, tcg, name, set_code, foil_treatment, price_source
 		FROM product
 		WHERE price_source IN ('tcgplayer', 'cardmarket')
@@ -48,7 +49,7 @@ type MetadataUpdate struct {
 	ImageURL   string
 }
 
-func (s *RefreshStore) BulkUpdateMetadata(updates []MetadataUpdate) (int, int) {
+func (s *RefreshStore) BulkUpdateMetadata(ctx context.Context, updates []MetadataUpdate) (int, int) {
 	var totalUpdated, totalErrors int
 
 	chunkSize := 1000
@@ -94,9 +95,9 @@ func (s *RefreshStore) BulkUpdateMetadata(updates []MetadataUpdate) (int, int) {
 		query += strings.Join(placeholders, ", ")
 		query += ") AS v(id, price_reference, legalities, oracle_text, scryfall_id, type_line, image_url) WHERE p.id = v.id"
 
-		res, err := s.DB.Exec(query, args...)
+		res, err := s.DB.ExecContext(ctx, query, args...)
 		if err != nil {
-			logger.Error("[price-refresh] Bulk DB update failed for chunk %d-%d: %v", i, end, err)
+			logger.ErrorCtx(ctx, "[price-refresh] Bulk DB update failed for chunk %d-%d: %v", i, end, err)
 			totalErrors += len(chunk)
 		} else {
 			count, _ := res.RowsAffected()

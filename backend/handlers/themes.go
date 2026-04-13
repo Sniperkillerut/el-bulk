@@ -7,6 +7,7 @@ import (
 
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/service"
+	"github.com/el-bulk/backend/utils/logger"
 	"github.com/el-bulk/backend/utils/render"
 	"github.com/go-chi/chi/v5"
 )
@@ -22,7 +23,8 @@ func NewThemeHandler(s *service.ThemeService) *ThemeHandler {
 // List returns all themes.
 // GET /api/themes
 func (h *ThemeHandler) List(w http.ResponseWriter, r *http.Request) {
-	themes, err := h.Service.List()
+	logger.TraceCtx(r.Context(), "Entering ThemeHandler.List")
+	themes, err := h.Service.List(r.Context())
 	if err != nil {
 		render.Error(w, "failed to fetch themes", http.StatusInternalServerError)
 		return
@@ -33,13 +35,14 @@ func (h *ThemeHandler) List(w http.ResponseWriter, r *http.Request) {
 // Create adds a new custom theme.
 // POST /api/admin/themes
 func (h *ThemeHandler) Create(w http.ResponseWriter, r *http.Request) {
+	logger.TraceCtx(r.Context(), "Entering ThemeHandler.Create")
 	var input models.ThemeInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		render.Error(w, "invalid input", http.StatusBadRequest)
 		return
 	}
 
-	theme, err := h.Service.Create(input)
+	theme, err := h.Service.Create(r.Context(), input)
 	if err != nil {
 		render.Error(w, "failed to create theme: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -52,13 +55,14 @@ func (h *ThemeHandler) Create(w http.ResponseWriter, r *http.Request) {
 // PUT /api/admin/themes/{id}
 func (h *ThemeHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	logger.TraceCtx(r.Context(), "Entering ThemeHandler.Update | ID: %s", id)
 	var input models.ThemeInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		render.Error(w, "invalid input", http.StatusBadRequest)
 		return
 	}
 
-	theme, err := h.Service.Update(id, input)
+	theme, err := h.Service.Update(r.Context(), id, input)
 	if err != nil {
 		render.Error(w, "failed to update theme: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -71,8 +75,9 @@ func (h *ThemeHandler) Update(w http.ResponseWriter, r *http.Request) {
 // DELETE /api/admin/themes/{id}
 func (h *ThemeHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	logger.TraceCtx(r.Context(), "Entering ThemeHandler.Delete | ID: %s", id)
 	
-	err := h.Service.Delete(id)
+	err := h.Service.Delete(r.Context(), id)
 	if err != nil {
 		if strings.Contains(err.Error(), "system theme") {
 			render.Error(w, err.Error(), http.StatusForbidden)

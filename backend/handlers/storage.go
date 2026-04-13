@@ -20,8 +20,8 @@ func NewStorageHandler(s *service.StorageLocationService) *StorageHandler {
 
 // GET /api/admin/storage
 func (h *StorageHandler) List(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering StorageHandler.List")
-	locations, err := h.Service.List()
+	logger.TraceCtx(r.Context(), "Entering StorageHandler.List")
+	locations, err := h.Service.List(r.Context())
 	if err != nil {
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
@@ -31,7 +31,7 @@ func (h *StorageHandler) List(w http.ResponseWriter, r *http.Request) {
 
 // POST /api/admin/storage
 func (h *StorageHandler) Create(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering StorageHandler.Create")
+	logger.TraceCtx(r.Context(), "Entering StorageHandler.Create")
 	var input struct {
 		Name string `json:"name"`
 	}
@@ -40,7 +40,7 @@ func (h *StorageHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	loc, err := h.Service.Create(input.Name)
+	loc, err := h.Service.Create(r.Context(), input.Name)
 	if err != nil {
 		render.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -50,7 +50,7 @@ func (h *StorageHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 // PUT /api/admin/storage/:id
 func (h *StorageHandler) Update(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering StorageHandler.Update")
+	logger.TraceCtx(r.Context(), "Entering StorageHandler.Update")
 	id := chi.URLParam(r, "id")
 	var input struct {
 		Name string `json:"name"`
@@ -60,7 +60,7 @@ func (h *StorageHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.Service.Update(id, input.Name); err != nil {
+	if err := h.Service.Update(r.Context(), id, input.Name); err != nil {
 		render.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -69,9 +69,9 @@ func (h *StorageHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 // DELETE /api/admin/storage/:id
 func (h *StorageHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering StorageHandler.Delete")
+	logger.TraceCtx(r.Context(), "Entering StorageHandler.Delete")
 	id := chi.URLParam(r, "id")
-	if err := h.Service.Delete(id); err != nil {
+	if err := h.Service.Delete(r.Context(), id); err != nil {
 		render.Error(w, "Failed to delete location", http.StatusInternalServerError)
 		return
 	}

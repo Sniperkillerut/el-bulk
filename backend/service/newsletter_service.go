@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/store"
 )
@@ -13,8 +14,8 @@ func NewNewsletterService(s *store.NewsletterStore) *NewsletterService {
 	return &NewsletterService{Store: s}
 }
 
-func (s *NewsletterService) Subscribe(email string) (string, error) {
-	count, err := s.Store.CountByEmail(email)
+func (s *NewsletterService) Subscribe(ctx context.Context, email string) (string, error) {
+	count, err := s.Store.CountByEmail(ctx, email)
 	if err != nil {
 		return "", err
 	}
@@ -23,21 +24,21 @@ func (s *NewsletterService) Subscribe(email string) (string, error) {
 	}
 
 	// Link to existing customer if email matches
-	customerID, _ := s.Store.FindCustomerIDByEmail(email)
+	customerID, _ := s.Store.FindCustomerIDByEmail(ctx, email)
 
-	err = s.Store.Subscribe(email, customerID)
+	err = s.Store.Subscribe(ctx, email, customerID)
 	if err != nil {
 		return "", err
 	}
 	return "Subscribed successfully", nil
 }
 
-func (s *NewsletterService) Unsubscribe(email string) error {
-	return s.Store.Unsubscribe(email)
+func (s *NewsletterService) Unsubscribe(ctx context.Context, email string) error {
+	return s.Store.Unsubscribe(ctx, email)
 }
 
-func (s *NewsletterService) ListAll() ([]models.NewsletterSubscriber, error) {
-	subs, err := s.Store.ListAll()
+func (s *NewsletterService) ListAll(ctx context.Context) ([]models.NewsletterSubscriber, error) {
+	subs, err := s.Store.ListAll(ctx)
 	if err != nil {
 		return nil, err
 	}

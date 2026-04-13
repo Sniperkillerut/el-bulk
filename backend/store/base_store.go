@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -22,7 +23,7 @@ func NewBaseStore[T any](db *sqlx.DB, tableName string) *BaseStore[T] {
 	}
 }
 
-func (s *BaseStore[T]) List(conditions string, args ...interface{}) ([]T, error) {
+func (s *BaseStore[T]) List(ctx context.Context, conditions string, args ...interface{}) ([]T, error) {
 	items := make([]T, 0)
 	query := fmt.Sprintf("SELECT * FROM %s", s.TableName)
 	if conditions != "" {
@@ -36,30 +37,30 @@ func (s *BaseStore[T]) List(conditions string, args ...interface{}) ([]T, error)
 	
 	start := time.Now()
 	rebound := s.DB.Rebind(query)
-	logger.Trace("[DB] Executing List on %s: %s | Args: %+v", s.TableName, rebound, args)
+	logger.TraceCtx(ctx, "[DB] Executing List on %s: %s | Args: %+v", s.TableName, rebound, args)
 	
-	err := s.DB.Unsafe().Select(&items, rebound, args...)
+	err := s.DB.Unsafe().SelectContext(ctx, &items, rebound, args...)
 	if err != nil {
-		logger.Error("[DB] List on %s failed: %v", s.TableName, err)
+		logger.ErrorCtx(ctx, "[DB] List on %s failed: %v", s.TableName, err)
 		return nil, err
 	}
-	logger.Debug("[DB] List on %s took %v", s.TableName, time.Since(start))
+	logger.DebugCtx(ctx, "[DB] List on %s took %v", s.TableName, time.Since(start))
 	return items, nil
 }
 
-func (s *BaseStore[T]) GetByID(id string) (*T, error) {
+func (s *BaseStore[T]) GetByID(ctx context.Context, id string) (*T, error) {
 	var item T
 	query := fmt.Sprintf("SELECT * FROM %s WHERE id = $1", s.TableName)
 	
 	start := time.Now()
-	logger.Trace("[DB] Executing GetByID on %s: %s | ID: %s", s.TableName, query, id)
+	logger.TraceCtx(ctx, "[DB] Executing GetByID on %s: %s | ID: %s", s.TableName, query, id)
 	
-	err := s.DB.Unsafe().Get(&item, query, id)
+	err := s.DB.Unsafe().GetContext(ctx, &item, query, id)
 	if err != nil {
-		logger.Error("[DB] GetByID on %s (%s) failed: %v", s.TableName, id, err)
+		logger.ErrorCtx(ctx, "[DB] GetByID on %s (%s) failed: %v", s.TableName, id, err)
 		return nil, err
 	}
-	logger.Debug("[DB] GetByID on %s took %v", s.TableName, time.Since(start))
+	logger.DebugCtx(ctx, "[DB] GetByID on %s took %v", s.TableName, time.Since(start))
 	return &item, nil
 }
 
@@ -71,9 +72,9 @@ func (s *BaseStore[T]) Create(item *T) error {
 	return fmt.Errorf("generic Create not fully implemented, use specific store methods")
 }
 
-func (s *BaseStore[T]) Update(id string, updates map[string]interface{}) (*T, error) {
+func (s *BaseStore[T]) Update(ctx context.Context, id string, updates map[string]interface{}) (*T, error) {
 	if len(updates) == 0 {
-		return s.GetByID(id)
+		return s.GetByID(ctx, id)
 	}
 
 	setClauses := []string{}
@@ -89,33 +90,33 @@ func (s *BaseStore[T]) Update(id string, updates map[string]interface{}) (*T, er
 	args = append(args, id)
 
 	start := time.Now()
-	logger.Trace("[DB] Executing Update on %s: %s | Args: %+v", s.TableName, query, args)
+	logger.TraceCtx(ctx, "[DB] Executing Update on %s: %s | Args: %+v", s.TableName, query, args)
 
 	var item T
-	err := s.DB.QueryRowx(query, args...).StructScan(&item)
+	err := s.DB.QueryRowxContext(ctx, query, args...).StructScan(&item)
 	if err != nil {
-		logger.Error("[DB] Update on %s (%s) failed: %v", s.TableName, id, err)
+		logger.ErrorCtx(ctx, "[DB] Update on %s (%s) failed: %v", s.TableName, id, err)
 		return nil, err
 	}
-	logger.Debug("[DB] Update on %s took %v", s.TableName, time.Since(start))
+	logger.DebugCtx(ctx, "[DB] Update on %s took %v", s.TableName, time.Since(start))
 	return &item, nil
 }
 
-func (s *BaseStore[T]) Delete(id string) error {
+func (s *BaseStore[T]) Delete(ctx context.Context, id string) error {
 	query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", s.TableName)
 	
 	start := time.Now()
-	logger.Trace("[DB] Executing Delete on %s | ID: %s", s.TableName, id)
+	logger.TraceCtx(ctx, "[DB] Executing Delete on %s | ID: %s", s.TableName, id)
 	
-	res, err := s.DB.Exec(query, id)
+	res, err := s.DB.ExecContext(ctx, query, id)
 	if err != nil {
-		logger.Error("[DB] Delete on %s (%s) failed: %v", s.TableName, id, err)
+		logger.ErrorCtx(ctx, "[DB] Delete on %s (%s) failed: %v", s.TableName, id, err)
 		return err
 	}
 	rows, _ := res.RowsAffected()
 	if rows == 0 {
 		return fmt.Errorf("no rows deleted")
 	}
-	logger.Debug("[DB] Delete on %s took %v", s.TableName, time.Since(start))
+	logger.DebugCtx(ctx, "[DB] Delete on %s took %v", s.TableName, time.Since(start))
 	return nil
 }

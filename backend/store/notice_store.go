@@ -1,10 +1,12 @@
 package store
 
 import (
+	"context"
+	"time"
+
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
-	"time"
 )
 
 type NoticeStore struct {
@@ -17,7 +19,7 @@ func NewNoticeStore(db *sqlx.DB) *NoticeStore {
 	}
 }
 
-func (s *NoticeStore) List(isPublished bool, limit int) ([]models.Notice, error) {
+func (s *NoticeStore) List(ctx context.Context, isPublished bool, limit int) ([]models.Notice, error) {
 	start := time.Now()
 	query := "SELECT * FROM notice"
 	var args []interface{}
@@ -34,45 +36,45 @@ func (s *NoticeStore) List(isPublished bool, limit int) ([]models.Notice, error)
 	}
 
 	rebound := s.DB.Rebind(query)
-	logger.Trace("[DB] Executing List (Notice): %s | Args: %+v", rebound, args)
+	logger.TraceCtx(ctx, "[DB] Executing List (Notice): %s | Args: %+v", rebound, args)
 	var notices []models.Notice
-	err := s.DB.Select(&notices, rebound, args...)
+	err := s.DB.SelectContext(ctx, &notices, rebound, args...)
 	if err != nil {
-		logger.Error("[DB] List (Notice) failed: %v", err)
+		logger.ErrorCtx(ctx, "[DB] List (Notice) failed: %v", err)
 		return nil, err
 	}
 	if notices == nil {
 		notices = []models.Notice{}
 	}
-	logger.Debug("[DB] List (Notice) took %v", time.Since(start))
+	logger.DebugCtx(ctx, "[DB] List (Notice) took %v", time.Since(start))
 	return notices, nil
 }
 
-func (s *NoticeStore) GetBySlug(slug string) (*models.Notice, error) {
+func (s *NoticeStore) GetBySlug(ctx context.Context, slug string) (*models.Notice, error) {
 	var notice models.Notice
-	err := s.DB.Get(&notice, "SELECT * FROM notice WHERE slug = $1 AND is_published = true", slug)
+	err := s.DB.GetContext(ctx, &notice, "SELECT * FROM notice WHERE slug = $1 AND is_published = true", slug)
 	if err != nil {
 		return nil, err
 	}
 	return &notice, nil
 }
 
-func (s *NoticeStore) Create(input models.NoticeInput) (*models.Notice, error) {
+func (s *NoticeStore) Create(ctx context.Context, input models.NoticeInput) (*models.Notice, error) {
 	var notice models.Notice
 	query := `
 		INSERT INTO notice (title, slug, content_html, featured_image_url, is_published)
 		VALUES ($1, $2, $3, $4, $5)
 		RETURNING *
 	`
-	logger.Trace("[DB] Executing CreateNotice: %s | Title: %s", query, input.Title)
-	err := s.DB.Get(&notice, query, input.Title, input.Slug, input.ContentHTML, input.FeaturedImageURL, input.IsPublished)
+	logger.TraceCtx(ctx, "[DB] Executing CreateNotice: %s | Title: %s", query, input.Title)
+	err := s.DB.GetContext(ctx, &notice, query, input.Title, input.Slug, input.ContentHTML, input.FeaturedImageURL, input.IsPublished)
 	if err != nil {
-		logger.Error("[DB] CreateNotice failed for %s: %v", input.Title, err)
+		logger.ErrorCtx(ctx, "[DB] CreateNotice failed for %s: %v", input.Title, err)
 	}
 	return &notice, err
 }
 
-func (s *NoticeStore) Update(id string, input models.NoticeInput) (*models.Notice, error) {
+func (s *NoticeStore) Update(ctx context.Context, id string, input models.NoticeInput) (*models.Notice, error) {
 	var notice models.Notice
 	query := `
 		UPDATE notice 
@@ -80,6 +82,6 @@ func (s *NoticeStore) Update(id string, input models.NoticeInput) (*models.Notic
 		WHERE id = $6
 		RETURNING *
 	`
-	err := s.DB.Get(&notice, query, input.Title, input.Slug, input.ContentHTML, input.FeaturedImageURL, input.IsPublished, id)
+	err := s.DB.GetContext(ctx, &notice, query, input.Title, input.Slug, input.ContentHTML, input.FeaturedImageURL, input.IsPublished, id)
 	return &notice, err
 }

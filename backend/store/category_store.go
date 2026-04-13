@@ -1,10 +1,12 @@
 package store
 
 import (
+	"context"
+	"time"
+
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
-	"time"
 )
 
 type CategoryStore struct {
@@ -17,7 +19,7 @@ func NewCategoryStore(db *sqlx.DB) *CategoryStore {
 	}
 }
 
-func (s *CategoryStore) Create(input models.CustomCategoryInput) (*models.CustomCategory, error) {
+func (s *CategoryStore) Create(ctx context.Context, input models.CustomCategoryInput) (*models.CustomCategory, error) {
 	// Custom implementation for Create to handle specific logic like slug generation if needed,
 	// or just mapping the input struct to the DB.
 	var cat models.CustomCategory
@@ -40,18 +42,18 @@ func (s *CategoryStore) Create(input models.CustomCategoryInput) (*models.Custom
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
 		RETURNING *`
 	
-	logger.Trace("[DB] Executing CreateCategory: %s", query)
-	err := s.DB.QueryRowx(query, 
+	logger.TraceCtx(ctx, "[DB] Executing CreateCategory: %s", query)
+	err := s.DB.QueryRowxContext(ctx, query, 
 		input.Name, input.Slug, isActive, showBadge, searchable, input.BgColor, input.TextColor, input.Icon,
 	).StructScan(&cat)
 	
 	if err != nil {
-		logger.Error("[DB] CreateCategory failed: %v", err)
+		logger.ErrorCtx(ctx, "[DB] CreateCategory failed: %v", err)
 	}
 	return &cat, err
 }
 
-func (s *CategoryStore) ListWithCount(isAdmin bool) ([]models.CustomCategory, error) {
+func (s *CategoryStore) ListWithCount(ctx context.Context, isAdmin bool) ([]models.CustomCategory, error) {
 	categories := []models.CustomCategory{}
 	
 	query := `
@@ -71,11 +73,11 @@ func (s *CategoryStore) ListWithCount(isAdmin bool) ([]models.CustomCategory, er
 	query += ` ORDER BY c.name `
 	
 	start := time.Now()
-	logger.Trace("[DB] Executing ListWithCount (isAdmin=%v): %s", isAdmin, query)
-	err := s.DB.Select(&categories, query)
+	logger.TraceCtx(ctx, "[DB] Executing ListWithCount (isAdmin=%v): %s", isAdmin, query)
+	err := s.DB.SelectContext(ctx, &categories, query)
 	if err != nil {
-		logger.Error("[DB] ListWithCount failed: %v", err)
+		logger.ErrorCtx(ctx, "[DB] ListWithCount failed: %v", err)
 	}
-	logger.Debug("[DB] ListWithCount took %v", time.Since(start))
+	logger.DebugCtx(ctx, "[DB] ListWithCount took %v", time.Since(start))
 	return categories, err
 }

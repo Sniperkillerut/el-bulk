@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"github.com/el-bulk/backend/external"
 	"github.com/el-bulk/backend/store"
 	"github.com/el-bulk/backend/utils/logger"
@@ -14,15 +15,15 @@ func NewRefreshService(s *store.RefreshStore) *RefreshService {
 	return &RefreshService{Store: s}
 }
 
-func (s *RefreshService) RunPriceRefresh() (updated int, errs int) {
-	rows, err := s.Store.ListRefreshableProducts()
+func (s *RefreshService) RunPriceRefresh(ctx context.Context) (updated int, errs int) {
+	rows, err := s.Store.ListRefreshableProducts(ctx)
 	if err != nil {
-		logger.Error("[price-refresh] failed to query products: %v", err)
+		logger.ErrorCtx(ctx, "[price-refresh] failed to query products: %v", err)
 		return 0, 1
 	}
 
 	if len(rows) == 0 {
-		logger.Info("[price-refresh] no products with external price source, skipping")
+		logger.InfoCtx(ctx, "[price-refresh] no products with external price source, skipping")
 		return 0, 0
 	}
 
@@ -36,9 +37,9 @@ func (s *RefreshService) RunPriceRefresh() (updated int, errs int) {
 
 	var priceMap map[external.PriceKey]external.CardMetadata
 	if len(mtgRows) > 0 {
-		priceMap, err = external.BuildPriceMap()
+		priceMap, err = external.BuildPriceMap(ctx)
 		if err != nil {
-			logger.Error("[price-refresh] scryfall bulk download failed: %v", err)
+			logger.ErrorCtx(ctx, "[price-refresh] scryfall bulk download failed: %v", err)
 			return 0, len(mtgRows)
 		}
 	}
@@ -46,9 +47,9 @@ func (s *RefreshService) RunPriceRefresh() (updated int, errs int) {
 	updates, resolveErrs := store.BuildPriceUpdates(mtgRows, priceMap)
 	errs += resolveErrs
 
-	updated, updateErrs := s.Store.BulkUpdateMetadata(updates)
+	updated, updateErrs := s.Store.BulkUpdateMetadata(ctx, updates)
 	errs += updateErrs
 
-	logger.Info("[price-refresh] complete: %d updated, %d errors", updated, errs)
+	logger.InfoCtx(ctx, "[price-refresh] complete: %d updated, %d errors", updated, errs)
 	return updated, errs
 }

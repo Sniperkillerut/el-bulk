@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"time"
 
 	"github.com/el-bulk/backend/store"
@@ -34,28 +35,28 @@ type TranslationLocaleStats struct {
 	MissingKeys int     `json:"missing_keys"`
 }
 
-func (s *HealthService) Ping() error {
-	return s.Store.Ping()
+func (s *HealthService) Ping(ctx context.Context) error {
+	return s.Store.Ping(ctx)
 }
 
 func (s *HealthService) IsAvailable() bool {
 	return s.Store != nil && s.Store.DB != nil
 }
 
-func (s *HealthService) GetStats() (*DBStats, error) {
+func (s *HealthService) GetStats(ctx context.Context) (*DBStats, error) {
 	stats := &DBStats{}
 
-	size, err := s.Store.GetDatabaseSize()
+	size, err := s.Store.GetDatabaseSize(ctx)
 	if err == nil {
 		stats.DatabaseSize = size
 	}
 
-	ratio, err := s.Store.GetCacheHitRatio()
+	ratio, err := s.Store.GetCacheHitRatio(ctx)
 	if err == nil {
 		stats.CacheHitRatio = ratio
 	}
 
-	conns, err := s.Store.GetActiveConnections()
+	conns, err := s.Store.GetActiveConnections(ctx)
 	if err == nil {
 		stats.ActiveConns = conns
 	} else {
@@ -64,30 +65,30 @@ func (s *HealthService) GetStats() (*DBStats, error) {
 
 	stats.MaxConns = s.Store.GetMaxOpenConns()
 
-	products, err := s.Store.GetProductCount()
+	products, err := s.Store.GetProductCount(ctx)
 	if err == nil {
 		stats.TotalProducts = products
 	}
 	stats.TotalSKURecords = stats.TotalProducts
 
-	pending, _ := s.Store.GetPendingOrdersCount()
+	pending, _ := s.Store.GetPendingOrdersCount(ctx)
 	stats.PendingOrdersCount = pending
 
-	offers, _ := s.Store.GetPendingOffersCount()
+	offers, _ := s.Store.GetPendingOffersCount(ctx)
 	stats.PendingOffersCount = offers
 
-	requests, _ := s.Store.GetPendingRequestsCount()
+	requests, _ := s.Store.GetPendingRequestsCount(ctx)
 	stats.PendingRequestsCount = requests
 
 	// Query speed
 	start := time.Now()
-	_ = s.Store.PingQuery()
+	_ = s.Store.PingQuery(ctx)
 	stats.QuerySpeedMS = int(time.Since(start).Milliseconds())
 
 	// Translation progress
-	totalKeys, _ := s.Store.GetTotalTranslationKeys()
+	totalKeys, _ := s.Store.GetTotalTranslationKeys(ctx)
 	if totalKeys > 0 {
-		localeCounts, err := s.Store.GetTranslationLocaleCounts()
+		localeCounts, err := s.Store.GetTranslationLocaleCounts(ctx)
 		if err == nil {
 			for _, lc := range localeCounts {
 				completion := (float64(lc.Count) / float64(totalKeys)) * 100

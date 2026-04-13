@@ -1,6 +1,7 @@
 package external
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -59,33 +60,33 @@ func TestLookupMTGCard(t *testing.T) {
 	defer func() { ScryfallBase = originalBase }()
 
 	t.Run("Direct ID Lookup", func(t *testing.T) {
-		res, err := LookupMTGCard("584837f0-1709-467a-8df1-0b8dc08f9146", "", "", "", "non_foil")
+		res, err := LookupMTGCard(context.Background(), "584837f0-1709-467a-8df1-0b8dc08f9146", "", "", "", "non_foil")
 		assert.NoError(t, err)
 		assert.Equal(t, "Lightning Bolt", res.Name)
 		assert.Equal(t, "584837f0-1709-467a-8df1-0b8dc08f9146", *res.ScryfallID)
 	})
 
 	t.Run("Exact Match", func(t *testing.T) {
-		res, err := LookupMTGCard("", "Lightning Bolt", "m11", "1", "non_foil")
+		res, err := LookupMTGCard(context.Background(), "", "Lightning Bolt", "m11", "1", "non_foil")
 		assert.NoError(t, err)
 		assert.Equal(t, "Lightning Bolt", res.Name)
 		assert.Equal(t, "m11", *res.SetCode)
 	})
 
 	t.Run("Fuzzy Match", func(t *testing.T) {
-		res, err := LookupMTGCard("", "bolt", "", "", "non_foil")
+		res, err := LookupMTGCard(context.Background(), "", "bolt", "", "", "non_foil")
 		assert.NoError(t, err)
 		assert.Equal(t, "Lightning Bolt", res.Name)
 	})
 
 	t.Run("Not Found", func(t *testing.T) {
-		_, err := LookupMTGCard("", "nonexistent", "xxx", "999", "non_foil")
+		_, err := LookupMTGCard(context.Background(), "", "nonexistent", "xxx", "999", "non_foil")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "card not found")
 	})
 
 	t.Run("Empty Input", func(t *testing.T) {
-		_, err := LookupMTGCard("", "", "", "", "non_foil")
+		_, err := LookupMTGCard(context.Background(), "", "", "", "", "non_foil")
 		assert.Error(t, err)
 	})
 
@@ -120,7 +121,7 @@ func TestLookupMTGCard(t *testing.T) {
 		ScryfallBase = server.URL
 		defer func() { ScryfallBase = originalBase }()
 
-		res, err := LookupMTGCard("", "Delver of Secrets", "ISD", "51", "non_foil")
+		res, err := LookupMTGCard(context.Background(), "", "Delver of Secrets", "ISD", "51", "non_foil")
 		assert.NoError(t, err)
 		assert.Contains(t, *res.OracleText, "Look at top")
 		assert.Equal(t, "face1.png", res.ImageURL)
@@ -151,11 +152,11 @@ func TestLookupMTGCard(t *testing.T) {
 		ScryfallBase = server.URL
 		defer func() { ScryfallBase = originalBase }()
 
-		res, err := LookupMTGCard("", "Foil Card", "", "", "foil")
+		res, err := LookupMTGCard(context.Background(), "", "Foil Card", "", "", "foil")
 		assert.NoError(t, err)
 		assert.Equal(t, 5.0, *res.PriceTCGPlayer)
 
-		resEtched, _ := LookupMTGCard("", "Foil Card", "", "", "etched_foil")
+		resEtched, _ := LookupMTGCard(context.Background(), "", "Foil Card", "", "", "etched_foil")
 		assert.Equal(t, 10.0, *resEtched.PriceTCGPlayer)
 	})
 }
@@ -185,14 +186,14 @@ func TestBatchLookupMTGCard(t *testing.T) {
 			{Name: "Card 1", Set: "m11"},
 			{Name: "Card 2", Set: "m11"},
 		}
-		res, err := BatchLookupMTGCard(ids)
+		res, err := BatchLookupMTGCard(context.Background(), ids)
 		assert.NoError(t, err)
 		assert.Equal(t, 2, len(res))
 		assert.Equal(t, "Card 1", res[0].Name)
 	})
 
 	t.Run("Empty", func(t *testing.T) {
-		res, err := BatchLookupMTGCard(nil)
+		res, err := BatchLookupMTGCard(context.Background(), nil)
 		assert.NoError(t, err)
 		assert.Nil(t, res)
 	})
@@ -241,13 +242,13 @@ func TestScryfall_ErrorPaths(t *testing.T) {
 	defer func() { ScryfallBase = oldBase }()
 
 	t.Run("Internal Server Error", func(t *testing.T) {
-		_, err := scryfallGet(ScryfallBase+"/error", "non_foil")
+		_, err := scryfallGet(context.Background(), ScryfallBase+"/error", "non_foil")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "500")
 	})
 
 	t.Run("Decode Error", func(t *testing.T) {
-		_, err := scryfallGet(ScryfallBase+"/decode-fail", "non_foil")
+		_, err := scryfallGet(context.Background(), ScryfallBase+"/decode-fail", "non_foil")
 		assert.Error(t, err)
 	})
 }

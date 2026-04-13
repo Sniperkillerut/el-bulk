@@ -23,7 +23,7 @@ func NewNoticeHandler(s *service.NoticeService) *NoticeHandler {
 
 // GET /api/notices - Public list
 func (h *NoticeHandler) List(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering NoticeHandler.List | URL: %s", r.URL.String())
+	logger.TraceCtx(r.Context(), "Entering NoticeHandler.List | URL: %s", r.URL.String())
 	q := r.URL.Query()
 	limitStr := q.Get("limit")
 	limit := 0
@@ -31,9 +31,9 @@ func (h *NoticeHandler) List(w http.ResponseWriter, r *http.Request) {
 		limit, _ = strconv.Atoi(limitStr)
 	}
 
-	notices, err := h.Service.List(true, limit)
+	notices, err := h.Service.List(r.Context(), true, limit)
 	if err != nil {
-		logger.Error("Failed to list notices: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to list notices: %v", err)
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
@@ -44,9 +44,9 @@ func (h *NoticeHandler) List(w http.ResponseWriter, r *http.Request) {
 // GET /api/notices/{slug} - Public detail
 func (h *NoticeHandler) GetBySlug(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
-	logger.Trace("Entering NoticeHandler.GetBySlug | Slug: %s", slug)
+	logger.TraceCtx(r.Context(), "Entering NoticeHandler.GetBySlug | Slug: %s", slug)
 
-	notice, err := h.Service.GetBySlug(slug)
+	notice, err := h.Service.GetBySlug(r.Context(), slug)
 	if err != nil {
 		render.Error(w, "Notice not found", http.StatusNotFound)
 		return
@@ -57,11 +57,11 @@ func (h *NoticeHandler) GetBySlug(w http.ResponseWriter, r *http.Request) {
 
 // GET /api/admin/notices
 func (h *NoticeHandler) AdminList(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering NoticeHandler.AdminList")
+	logger.TraceCtx(r.Context(), "Entering NoticeHandler.AdminList")
 	// Admin wants all notices, no limit
-	notices, err := h.Service.List(false, 0)
+	notices, err := h.Service.List(r.Context(), false, 0)
 	if err != nil {
-		logger.Error("Error listing notices: %v", err)
+		logger.ErrorCtx(r.Context(), "Error listing notices: %v", err)
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
@@ -70,10 +70,10 @@ func (h *NoticeHandler) AdminList(w http.ResponseWriter, r *http.Request) {
 
 // POST /api/admin/notices
 func (h *NoticeHandler) Create(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering NoticeHandler.Create")
+	logger.TraceCtx(r.Context(), "Entering NoticeHandler.Create")
 	var input models.NoticeInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		logger.Error("Failed to decode notice input: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to decode notice input: %v", err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -83,9 +83,9 @@ func (h *NoticeHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := h.Service.Create(input)
+	res, err := h.Service.Create(r.Context(), input)
 	if err != nil {
-		logger.Error("Error creating notice: %v", err)
+		logger.ErrorCtx(r.Context(), "Error creating notice: %v", err)
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
@@ -96,7 +96,7 @@ func (h *NoticeHandler) Create(w http.ResponseWriter, r *http.Request) {
 // PUT /api/admin/notices/{id}
 func (h *NoticeHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	logger.Trace("Entering NoticeHandler.Update | ID: %s", id)
+	logger.TraceCtx(r.Context(), "Entering NoticeHandler.Update | ID: %s", id)
 	if _, err := uuid.Parse(id); err != nil {
 		render.Error(w, "Valid UUID is required", http.StatusBadRequest)
 		return
@@ -104,14 +104,14 @@ func (h *NoticeHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	var input models.NoticeInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		logger.Error("Failed to decode notice update for %s: %v", id, err)
+		logger.ErrorCtx(r.Context(), "Failed to decode notice update for %s: %v", id, err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	res, err := h.Service.Update(id, input)
+	res, err := h.Service.Update(r.Context(), id, input)
 	if err != nil {
-		logger.Error("Error updating notice %s: %v", id, err)
+		logger.ErrorCtx(r.Context(), "Error updating notice %s: %v", id, err)
 		render.Error(w, "Notice not found or database error", http.StatusInternalServerError)
 		return
 	}
@@ -122,14 +122,14 @@ func (h *NoticeHandler) Update(w http.ResponseWriter, r *http.Request) {
 // DELETE /api/admin/notices/{id}
 func (h *NoticeHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	logger.Trace("Entering NoticeHandler.Delete | ID: %s", id)
+	logger.TraceCtx(r.Context(), "Entering NoticeHandler.Delete | ID: %s", id)
 	if _, err := uuid.Parse(id); err != nil {
 		render.Error(w, "Valid UUID is required", http.StatusBadRequest)
 		return
 	}
 
-	if err := h.Service.Delete(id); err != nil {
-		logger.Error("Error deleting notice %s: %v", id, err)
+	if err := h.Service.Delete(r.Context(), id); err != nil {
+		logger.ErrorCtx(r.Context(), "Error deleting notice %s: %v", id, err)
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}

@@ -21,12 +21,12 @@ func NewTranslationHandler(s *service.TranslationService) *TranslationHandler {
 
 // List returns all translations grouped by locale: { "en": { "key": "value" }, "es": { ... } }
 func (h *TranslationHandler) List(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering TranslationHandler.List")
+	logger.TraceCtx(r.Context(), "Entering TranslationHandler.List")
 	locale := r.URL.Query().Get("locale")
 	if locale != "" {
-		translations, err := h.Service.GetByLocale(locale)
+		translations, err := h.Service.GetByLocale(r.Context(), locale)
 		if err != nil {
-			logger.Error("Failed to get translations for locale %s: %v", locale, err)
+			logger.ErrorCtx(r.Context(), "Failed to get translations for locale %s: %v", locale, err)
 			render.Error(w, "Database error", http.StatusInternalServerError)
 			return
 		}
@@ -34,9 +34,9 @@ func (h *TranslationHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	translations, err := h.Service.GetAll()
+	translations, err := h.Service.GetAll(r.Context())
 	if err != nil {
-		logger.Error("Failed to get all translations: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to get all translations: %v", err)
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
@@ -45,10 +45,10 @@ func (h *TranslationHandler) List(w http.ResponseWriter, r *http.Request) {
 
 // AdminList returns all translations as a flat list for the admin table
 func (h *TranslationHandler) AdminList(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering TranslationHandler.AdminList")
-	translations, err := h.Service.ListKeys()
+	logger.TraceCtx(r.Context(), "Entering TranslationHandler.AdminList")
+	translations, err := h.Service.ListKeys(r.Context())
 	if err != nil {
-		logger.Error("Failed to list translation keys: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to list translation keys: %v", err)
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
@@ -57,7 +57,7 @@ func (h *TranslationHandler) AdminList(w http.ResponseWriter, r *http.Request) {
 
 // Update upserts a translation
 func (h *TranslationHandler) Update(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering TranslationHandler.Update")
+	logger.TraceCtx(r.Context(), "Entering TranslationHandler.Update")
 	var t models.Translation
 	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -69,8 +69,8 @@ func (h *TranslationHandler) Update(w http.ResponseWriter, r *http.Request) {
 		t.Key = key
 	}
 
-	if err := h.Service.Upsert(t); err != nil {
-		logger.Error("Failed to upsert translation %s/%s: %v", t.Locale, t.Key, err)
+	if err := h.Service.Upsert(r.Context(), t); err != nil {
+		logger.ErrorCtx(r.Context(), "Failed to upsert translation %s/%s: %v", t.Locale, t.Key, err)
 		render.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -80,7 +80,7 @@ func (h *TranslationHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 // Delete removes a translation
 func (h *TranslationHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering TranslationHandler.Delete")
+	logger.TraceCtx(r.Context(), "Entering TranslationHandler.Delete")
 	key := chi.URLParam(r, "key")
 	locale := r.URL.Query().Get("locale")
 
@@ -89,8 +89,8 @@ func (h *TranslationHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.Service.Delete(key, locale); err != nil {
-		logger.Error("Failed to delete translation %s/%s: %v", locale, key, err)
+	if err := h.Service.Delete(r.Context(), key, locale); err != nil {
+		logger.ErrorCtx(r.Context(), "Failed to delete translation %s/%s: %v", locale, key, err)
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
@@ -100,7 +100,7 @@ func (h *TranslationHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 // DeleteLocale removes all translations for a full locale
 func (h *TranslationHandler) DeleteLocale(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering TranslationHandler.DeleteLocale")
+	logger.TraceCtx(r.Context(), "Entering TranslationHandler.DeleteLocale")
 	locale := chi.URLParam(r, "locale")
 
 	if locale == "" {
@@ -108,8 +108,8 @@ func (h *TranslationHandler) DeleteLocale(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if err := h.Service.DeleteLocale(locale); err != nil {
-		logger.Error("Failed to delete locale %s: %v", locale, err)
+	if err := h.Service.DeleteLocale(r.Context(), locale); err != nil {
+		logger.ErrorCtx(r.Context(), "Failed to delete locale %s: %v", locale, err)
 		render.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

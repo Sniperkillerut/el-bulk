@@ -25,9 +25,9 @@ func NewCategoriesHandler(s *service.CategoryService) *CategoriesHandler {
 
 // GET /api/admin/categories
 func (h *CategoriesHandler) List(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering CategoriesHandler.List")
+	logger.TraceCtx(r.Context(), "Entering CategoriesHandler.List")
 	isAdmin, _ := r.Context().Value(middleware.IsAdminKey).(bool)
-	categories, err := h.Service.List(isAdmin)
+	categories, err := h.Service.List(r.Context(), isAdmin)
 	if err != nil {
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
@@ -44,10 +44,10 @@ func generateSlug(name string) string {
 
 // POST /api/admin/categories
 func (h *CategoriesHandler) Create(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering CategoriesHandler.Create")
+	logger.TraceCtx(r.Context(), "Entering CategoriesHandler.Create")
 	var input models.CustomCategoryInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		logger.Error("Failed to decode category input: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to decode category input: %v", err)
 		render.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
@@ -60,7 +60,7 @@ func (h *CategoriesHandler) Create(w http.ResponseWriter, r *http.Request) {
 		input.Slug = generateSlug(input.Name)
 	}
 
-	cat, err := h.Service.Create(input)
+	cat, err := h.Service.Create(r.Context(), input)
 
 	if err != nil {
 		// handle unique constraint violation
@@ -79,10 +79,10 @@ func (h *CategoriesHandler) Create(w http.ResponseWriter, r *http.Request) {
 // PUT /api/admin/categories/:id
 func (h *CategoriesHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	logger.Trace("Entering CategoriesHandler.Update | ID: %s", id)
+	logger.TraceCtx(r.Context(), "Entering CategoriesHandler.Update | ID: %s", id)
 	var input models.CustomCategoryInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		logger.Error("Failed to decode category update for %s: %v", id, err)
+		logger.ErrorCtx(r.Context(), "Failed to decode category update for %s: %v", id, err)
 		render.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
@@ -115,7 +115,7 @@ func (h *CategoriesHandler) Update(w http.ResponseWriter, r *http.Request) {
 		updates["icon"] = input.Icon
 	}
 
-	cat, err := h.Service.Update(id, updates)
+	cat, err := h.Service.Update(r.Context(), id, updates)
 
 	if err == sql.ErrNoRows {
 		render.Error(w, "Category not found", http.StatusNotFound)
@@ -135,8 +135,8 @@ func (h *CategoriesHandler) Update(w http.ResponseWriter, r *http.Request) {
 // DELETE /api/admin/categories/:id
 func (h *CategoriesHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	logger.Trace("Entering CategoriesHandler.Delete | ID: %s", id)
-	err := h.Service.Delete(id)
+	logger.TraceCtx(r.Context(), "Entering CategoriesHandler.Delete | ID: %s", id)
+	err := h.Service.Delete(r.Context(), id)
 	if err != nil {
 		if err.Error() == "no rows deleted" {
 			render.Error(w, "Category not found", http.StatusNotFound)

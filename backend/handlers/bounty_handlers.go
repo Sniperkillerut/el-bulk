@@ -24,11 +24,11 @@ func NewBountyHandler(s *service.BountyService) *BountyHandler {
 // === BOUNTIES ===
 
 func (h *BountyHandler) List(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering BountyHandler.List | URL: %s", r.URL.String())
+	logger.TraceCtx(r.Context(), "Entering BountyHandler.List | URL: %s", r.URL.String())
 	activeParam := r.URL.Query().Get("active")
-	bounties, err := h.Service.ListBounties(activeParam)
+	bounties, err := h.Service.ListBounties(r.Context(), activeParam)
 	if err != nil {
-		logger.Error("Failed to list bounties: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to list bounties: %v", err)
 		render.Error(w, "Failed to fetch bounties", http.StatusInternalServerError)
 		return
 	}
@@ -36,17 +36,17 @@ func (h *BountyHandler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BountyHandler) Create(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering BountyHandler.Create")
+	logger.TraceCtx(r.Context(), "Entering BountyHandler.Create")
 	var input models.BountyInput
 	if err := decodeJSON(r, &input); err != nil {
-		logger.Error("Failed to decode bounty input: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to decode bounty input: %v", err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	bounty, err := h.Service.CreateBounty(input)
+	bounty, err := h.Service.CreateBounty(r.Context(), input)
 	if err != nil {
-		logger.Error("Failed to create bounty: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to create bounty: %v", err)
 		render.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -57,21 +57,21 @@ func (h *BountyHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 func (h *BountyHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	logger.Trace("Entering BountyHandler.Update | ID: %s", id)
+	logger.TraceCtx(r.Context(), "Entering BountyHandler.Update | ID: %s", id)
 	var input models.BountyInput
 	if err := decodeJSON(r, &input); err != nil {
-		logger.Error("Failed to decode bounty update for %s: %v", id, err)
+		logger.ErrorCtx(r.Context(), "Failed to decode bounty update for %s: %v", id, err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	bounty, err := h.Service.UpdateBounty(id, input)
+	bounty, err := h.Service.UpdateBounty(r.Context(), id, input)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			render.Error(w, "Bounty not found", http.StatusNotFound)
 			return
 		}
-		logger.Error("Failed to update bounty: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to update bounty: %v", err)
 		render.Error(w, "Failed to update bounty", http.StatusInternalServerError)
 		return
 	}
@@ -81,10 +81,10 @@ func (h *BountyHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 func (h *BountyHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	logger.Trace("Entering BountyHandler.Delete | ID: %s", id)
-	count, err := h.Service.DeleteBounty(id)
+	logger.TraceCtx(r.Context(), "Entering BountyHandler.Delete | ID: %s", id)
+	count, err := h.Service.DeleteBounty(r.Context(), id)
 	if err != nil {
-		logger.Error("Failed to delete bounty: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to delete bounty: %v", err)
 		render.Error(w, "Failed to delete bounty", http.StatusInternalServerError)
 		return
 	}
@@ -100,10 +100,10 @@ func (h *BountyHandler) Delete(w http.ResponseWriter, r *http.Request) {
 // === BOUNTY OFFERS ===
 
 func (h *BountyHandler) ListOffers(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering BountyHandler.ListOffers")
-	offers, err := h.Service.ListOffers()
+	logger.TraceCtx(r.Context(), "Entering BountyHandler.ListOffers")
+	offers, err := h.Service.ListOffers(r.Context())
 	if err != nil {
-		logger.Error("Failed to list bounty offers: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to list bounty offers: %v", err)
 		render.Error(w, "Failed to fetch bounty offers", http.StatusInternalServerError)
 		return
 	}
@@ -111,10 +111,10 @@ func (h *BountyHandler) ListOffers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BountyHandler) SubmitOffer(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering BountyHandler.SubmitOffer")
+	logger.TraceCtx(r.Context(), "Entering BountyHandler.SubmitOffer")
 	var input models.BountyOfferInput
 	if err := decodeJSON(r, &input); err != nil {
-		logger.Error("Failed to decode offer input: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to decode offer input: %v", err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -124,9 +124,9 @@ func (h *BountyHandler) SubmitOffer(w http.ResponseWriter, r *http.Request) {
 		userID = &val
 	}
 
-	offer, err := h.Service.SubmitOffer(input, userID)
+	offer, err := h.Service.SubmitOffer(r.Context(), input, userID)
 	if err != nil {
-		logger.Error("Failed to submit offer: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to submit offer: %v", err)
 		render.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -137,10 +137,10 @@ func (h *BountyHandler) SubmitOffer(w http.ResponseWriter, r *http.Request) {
 
 func (h *BountyHandler) UpdateOfferStatus(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	logger.Trace("Entering BountyHandler.UpdateOfferStatus | ID: %s", id)
+	logger.TraceCtx(r.Context(), "Entering BountyHandler.UpdateOfferStatus | ID: %s", id)
 	var input models.UpdateBountyOfferStatusInput
 	if err := decodeJSON(r, &input); err != nil {
-		logger.Error("Failed to decode offer status update for %s: %v", id, err)
+		logger.ErrorCtx(r.Context(), "Failed to decode offer status update for %s: %v", id, err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -151,9 +151,9 @@ func (h *BountyHandler) UpdateOfferStatus(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	offer, err := h.Service.UpdateOfferStatus(id, input.Status)
+	offer, err := h.Service.UpdateOfferStatus(r.Context(), id, input.Status)
 	if err != nil {
-		logger.Error("Failed to update offer status: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to update offer status: %v", err)
 		render.Error(w, "Failed to update offer status", http.StatusInternalServerError)
 		return
 	}
@@ -164,10 +164,10 @@ func (h *BountyHandler) UpdateOfferStatus(w http.ResponseWriter, r *http.Request
 // === CLIENT REQUESTS ===
 
 func (h *BountyHandler) ListRequests(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering BountyHandler.ListRequests")
-	requests, err := h.Service.ListRequests()
+	logger.TraceCtx(r.Context(), "Entering BountyHandler.ListRequests")
+	requests, err := h.Service.ListRequests(r.Context())
 	if err != nil {
-		logger.Error("Failed to list client requests: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to list client requests: %v", err)
 		render.Error(w, "Failed to fetch client requests", http.StatusInternalServerError)
 		return
 	}
@@ -175,10 +175,10 @@ func (h *BountyHandler) ListRequests(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BountyHandler) CreateRequest(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering BountyHandler.CreateRequest")
+	logger.TraceCtx(r.Context(), "Entering BountyHandler.CreateRequest")
 	var input models.ClientRequestInput
 	if err := decodeJSON(r, &input); err != nil {
-		logger.Error("Failed to decode client request input: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to decode client request input: %v", err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -188,9 +188,9 @@ func (h *BountyHandler) CreateRequest(w http.ResponseWriter, r *http.Request) {
 		userID = &val
 	}
 
-	req, err := h.Service.SubmitRequest(input, userID)
+	req, err := h.Service.SubmitRequest(r.Context(), input, userID)
 	if err != nil {
-		logger.Error("Failed to submit request: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to submit request: %v", err)
 		render.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -201,10 +201,10 @@ func (h *BountyHandler) CreateRequest(w http.ResponseWriter, r *http.Request) {
 
 func (h *BountyHandler) UpdateRequestStatus(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	logger.Trace("Entering BountyHandler.UpdateRequestStatus | ID: %s", id)
+	logger.TraceCtx(r.Context(), "Entering BountyHandler.UpdateRequestStatus | ID: %s", id)
 	var input models.UpdateClientRequestStatusInput
 	if err := decodeJSON(r, &input); err != nil {
-		logger.Error("Failed to decode client request status update for %s: %v", id, err)
+		logger.ErrorCtx(r.Context(), "Failed to decode client request status update for %s: %v", id, err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -215,13 +215,13 @@ func (h *BountyHandler) UpdateRequestStatus(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	req, err := h.Service.UpdateRequestStatus(id, input.Status)
+	req, err := h.Service.UpdateRequestStatus(r.Context(), id, input.Status)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			render.Error(w, "Request not found", http.StatusNotFound)
 			return
 		}
-		logger.Error("Failed to update client request status: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to update client request status: %v", err)
 		render.Error(w, "Failed to update request status", http.StatusInternalServerError)
 		return
 	}
@@ -232,16 +232,16 @@ func (h *BountyHandler) UpdateRequestStatus(w http.ResponseWriter, r *http.Reque
 // === USER-FACING (Me) ===
 
 func (h *BountyHandler) ListMeOffers(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering BountyHandler.ListMeOffers")
+	logger.TraceCtx(r.Context(), "Entering BountyHandler.ListMeOffers")
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok || userID == "" {
 		render.Error(w, "Not logged in", http.StatusUnauthorized)
 		return
 	}
 
-	offers, err := h.Service.ListMeOffers(userID)
+	offers, err := h.Service.ListMeOffers(r.Context(), userID)
 	if err != nil {
-		logger.Error("Failed to list user bounty offers for %s: %v", userID, err)
+		logger.ErrorCtx(r.Context(), "Failed to list user bounty offers for %s: %v", userID, err)
 		render.Error(w, "Failed to fetch bounty offers", http.StatusInternalServerError)
 		return
 	}
@@ -249,7 +249,7 @@ func (h *BountyHandler) ListMeOffers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BountyHandler) CancelMeOffer(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering BountyHandler.CancelMeOffer")
+	logger.TraceCtx(r.Context(), "Entering BountyHandler.CancelMeOffer")
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok || userID == "" {
 		render.Error(w, "Not logged in", http.StatusUnauthorized)
@@ -257,8 +257,8 @@ func (h *BountyHandler) CancelMeOffer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := chi.URLParam(r, "id")
-	if err := h.Service.CancelMeOffer(id, userID); err != nil {
-		logger.Error("Failed to cancel user bounty offer %s for user %s: %v", id, userID, err)
+	if err := h.Service.CancelMeOffer(r.Context(), id, userID); err != nil {
+		logger.ErrorCtx(r.Context(), "Failed to cancel user bounty offer %s for user %s: %v", id, userID, err)
 		render.Error(w, "Offer cannot be cancelled. It may not exist, belong to you, or is already being processed.", http.StatusBadRequest)
 		return
 	}
@@ -266,16 +266,16 @@ func (h *BountyHandler) CancelMeOffer(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BountyHandler) ListMeRequests(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering BountyHandler.ListMeRequests")
+	logger.TraceCtx(r.Context(), "Entering BountyHandler.ListMeRequests")
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok || userID == "" {
 		render.Error(w, "Not logged in", http.StatusUnauthorized)
 		return
 	}
 
-	requests, err := h.Service.ListMeRequests(userID)
+	requests, err := h.Service.ListMeRequests(r.Context(), userID)
 	if err != nil {
-		logger.Error("Failed to list user client requests for %s: %v", userID, err)
+		logger.ErrorCtx(r.Context(), "Failed to list user client requests for %s: %v", userID, err)
 		render.Error(w, "Failed to fetch client requests", http.StatusInternalServerError)
 		return
 	}
@@ -283,7 +283,7 @@ func (h *BountyHandler) ListMeRequests(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BountyHandler) CancelMeRequest(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering BountyHandler.CancelMeRequest")
+	logger.TraceCtx(r.Context(), "Entering BountyHandler.CancelMeRequest")
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok || userID == "" {
 		render.Error(w, "Not logged in", http.StatusUnauthorized)
@@ -291,8 +291,8 @@ func (h *BountyHandler) CancelMeRequest(w http.ResponseWriter, r *http.Request) 
 	}
 
 	id := chi.URLParam(r, "id")
-	if err := h.Service.CancelMeRequest(id, userID); err != nil {
-		logger.Error("Failed to cancel user client request %s for user %s: %v", id, userID, err)
+	if err := h.Service.CancelMeRequest(r.Context(), id, userID); err != nil {
+		logger.ErrorCtx(r.Context(), "Failed to cancel user client request %s for user %s: %v", id, userID, err)
 		render.Error(w, "Request cannot be cancelled. It may not exist, belong to you, or is already being processed.", http.StatusBadRequest)
 		return
 	}

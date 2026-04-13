@@ -35,16 +35,18 @@ func (h *LogHandler) Receive(w http.ResponseWriter, r *http.Request) {
 
 	prefix := "[frontend] "
 	switch log.Level {
+	case "trace":
+		logger.TraceCtx(r.Context(), "%s%s%s", prefix, log.Message, ctxStr)
 	case "debug":
-		logger.Debug("%s%s%s", prefix, log.Message, ctxStr)
+		logger.DebugCtx(r.Context(), "%s%s%s", prefix, log.Message, ctxStr)
 	case "info":
-		logger.Info("%s%s%s", prefix, log.Message, ctxStr)
+		logger.InfoCtx(r.Context(), "%s%s%s", prefix, log.Message, ctxStr)
 	case "warn":
-		logger.Warn("%s%s%s", prefix, log.Message, ctxStr)
+		logger.WarnCtx(r.Context(), "%s%s%s", prefix, log.Message, ctxStr)
 	case "error":
-		logger.Error("%s%s%s", prefix, log.Message, ctxStr)
+		logger.ErrorCtx(r.Context(), "%s%s%s", prefix, log.Message, ctxStr)
 	default:
-		logger.Info("%s[%s] %s%s", prefix, log.Level, log.Message, ctxStr)
+		logger.InfoCtx(r.Context(), "%s[%s] %s%s", prefix, log.Level, log.Message, ctxStr)
 	}
 
 	w.WriteHeader(http.StatusNoContent)

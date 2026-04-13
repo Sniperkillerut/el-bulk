@@ -1,6 +1,7 @@
 package external
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -137,14 +138,14 @@ func (c *scryfallCard) scryfallPrices(foilTreatment string) (tcgUSD, cmEUR *floa
 // 2. By name and set code (exact)
 // 3. By name and set code (fuzzy)
 // 4. By name only (fuzzy)
-func LookupMTGCard(scryfallID, name, setCode, collectorNumber, foilTreatment string) (*CardLookupResult, error) {
+func LookupMTGCard(ctx context.Context, scryfallID, name, setCode, collectorNumber, foilTreatment string) (*CardLookupResult, error) {
 	if scryfallID == "" && name == "" && (setCode == "" || collectorNumber == "") {
 		return nil, errors.New("scryfall id, card name or set/collector number is required")
 	}
 
 	// Step 0: Direct Scryfall ID Lookup
 	if scryfallID != "" {
-		res, err := scryfallGet(fmt.Sprintf("%s/cards/%s", ScryfallBase, url.PathEscape(scryfallID)), foilTreatment)
+		res, err := scryfallGet(ctx, fmt.Sprintf("%s/cards/%s", ScryfallBase, url.PathEscape(scryfallID)), foilTreatment)
 		if err == nil {
 			return res, nil
 		}
@@ -152,7 +153,7 @@ func LookupMTGCard(scryfallID, name, setCode, collectorNumber, foilTreatment str
 
 	// Step 1: Exact Set + Collector Number
 	if setCode != "" && collectorNumber != "" {
-		res, err := scryfallGet(fmt.Sprintf("%s/cards/%s/%s", ScryfallBase, url.PathEscape(setCode), url.PathEscape(collectorNumber)), foilTreatment)
+		res, err := scryfallGet(ctx, fmt.Sprintf("%s/cards/%s/%s", ScryfallBase, url.PathEscape(setCode), url.PathEscape(collectorNumber)), foilTreatment)
 		if err == nil {
 			return res, nil
 		}
@@ -163,7 +164,7 @@ func LookupMTGCard(scryfallID, name, setCode, collectorNumber, foilTreatment str
 		params := url.Values{}
 		params.Set("exact", name)
 		params.Set("set", setCode)
-		res, err := scryfallGet(fmt.Sprintf("%s/cards/named?%s", ScryfallBase, params.Encode()), foilTreatment)
+		res, err := scryfallGet(ctx, fmt.Sprintf("%s/cards/named?%s", ScryfallBase, params.Encode()), foilTreatment)
 		if err == nil {
 			return res, nil
 		}
@@ -174,7 +175,7 @@ func LookupMTGCard(scryfallID, name, setCode, collectorNumber, foilTreatment str
 		params := url.Values{}
 		params.Set("fuzzy", name)
 		params.Set("set", setCode)
-		res, err := scryfallGet(fmt.Sprintf("%s/cards/named?%s", ScryfallBase, params.Encode()), foilTreatment)
+		res, err := scryfallGet(ctx, fmt.Sprintf("%s/cards/named?%s", ScryfallBase, params.Encode()), foilTreatment)
 		if err == nil {
 			return res, nil
 		}
@@ -184,20 +185,20 @@ func LookupMTGCard(scryfallID, name, setCode, collectorNumber, foilTreatment str
 	if name != "" {
 		params := url.Values{}
 		params.Set("fuzzy", name)
-		return scryfallGet(fmt.Sprintf("%s/cards/named?%s", ScryfallBase, params.Encode()), foilTreatment)
+		return scryfallGet(ctx, fmt.Sprintf("%s/cards/named?%s", ScryfallBase, params.Encode()), foilTreatment)
 	}
 
 	return nil, errors.New("card not found")
 }
 
 // BatchLookupMTGCard fetches multiple cards from Scryfall using the collection endpoint.
-func BatchLookupMTGCard(identifiers []CardIdentifier) ([]CardLookupResult, error) {
+func BatchLookupMTGCard(ctx context.Context, identifiers []CardIdentifier) ([]CardLookupResult, error) {
 	if len(identifiers) == 0 {
 		return nil, nil
 	}
 
 	reqBody, _ := json.Marshal(scryfallCollectionRequest{Identifiers: identifiers})
-	req, err := http.NewRequest(http.MethodPost, ScryfallBase+"/cards/collection", strings.NewReader(string(reqBody)))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, ScryfallBase+"/cards/collection", strings.NewReader(string(reqBody)))
 	if err != nil {
 		return nil, err
 	}
@@ -230,8 +231,8 @@ func BatchLookupMTGCard(identifiers []CardIdentifier) ([]CardLookupResult, error
 	return results, nil
 }
 
-func scryfallGet(reqURL string, foilTreatment string) (*CardLookupResult, error) {
-	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
+func scryfallGet(ctx context.Context, reqURL string, foilTreatment string) (*CardLookupResult, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -510,11 +511,11 @@ type CardMetadata struct {
 // BuildPriceMap downloads Scryfall's "default_cards" bulk file and
 // builds a lookup map keyed by (name, setCode, foilTreatment).
 // The download is streamed so memory usage stays bounded.
-func BuildPriceMap() (map[PriceKey]CardMetadata, error) {
+func BuildPriceMap(ctx context.Context) (map[PriceKey]CardMetadata, error) {
 	client := &http.Client{Timeout: 5 * time.Minute} // bulk file can be 600MB
 
 	// Step 1: discover today's bulk-data download URL
-	metaReq, _ := http.NewRequest(http.MethodGet, ScryfallBase+"/bulk-data", nil)
+	metaReq, _ := http.NewRequestWithContext(ctx, http.MethodGet, ScryfallBase+"/bulk-data", nil)
 	metaReq.Header.Set("User-Agent", "ElBulkTCGStore/1.0 (contact@elbulk.com)")
 	metaReq.Header.Set("Accept", "application/json")
 
@@ -541,7 +542,7 @@ func BuildPriceMap() (map[PriceKey]CardMetadata, error) {
 	}
 
 	// Step 2: stream the bulk card JSON array
-	dlReq, _ := http.NewRequest(http.MethodGet, downloadURL, nil)
+	dlReq, _ := http.NewRequestWithContext(ctx, http.MethodGet, downloadURL, nil)
 	dlReq.Header.Set("User-Agent", "ElBulkTCGStore/1.0 (contact@elbulk.com)")
 
 	dlResp, err := client.Do(dlReq)
@@ -627,8 +628,8 @@ type ScryfallSetsResponse struct {
 }
 
 // FetchSets retrieves all MTG sets from Scryfall.
-func FetchSets() ([]ScryfallSet, error) {
-	req, err := http.NewRequest(http.MethodGet, ScryfallBase+"/sets", nil)
+func FetchSets(ctx context.Context) ([]ScryfallSet, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ScryfallBase+"/sets", nil)
 	if err != nil {
 		return nil, err
 	}

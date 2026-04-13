@@ -29,23 +29,23 @@ func NewProductService(s *store.ProductStore, tcg *store.TCGStore, settings *Set
 	}
 }
 
-func (s *ProductService) List(params store.ProductFilterParams, isAdmin bool) (models.ProductListResponse, error) {
-	logger.Trace("Entering ProductService.List | Admin: %v | Params: %+v", isAdmin, params)
-	products, total, err := s.Store.ListWithFilters(params)
+func (s *ProductService) List(ctx context.Context, params store.ProductFilterParams, isAdmin bool) (models.ProductListResponse, error) {
+	logger.TraceCtx(ctx, "Entering ProductService.List | Admin: %v | Params: %+v", isAdmin, params)
+	products, total, err := s.Store.ListWithFilters(ctx, params)
 	if err != nil {
 		return models.ProductListResponse{}, err
 	}
 
-	settings, err := s.Settings.GetSettings()
+	settings, err := s.Settings.GetSettings(ctx)
 	if err != nil {
-		logger.Error("Failed to get settings in ProductService.List: %v", err)
+		logger.ErrorCtx(ctx, "Failed to get settings in ProductService.List: %v", err)
 	}
 
-	if err := s.EnrichProducts(products, settings, isAdmin); err != nil {
+	if err := s.EnrichProducts(ctx, products, settings, isAdmin); err != nil {
 		return models.ProductListResponse{}, err
 	}
 
-	facets, err := s.Store.GetFacets(params, isAdmin)
+	facets, err := s.Store.GetFacets(ctx, params, isAdmin)
 	if err != nil {
 		return models.ProductListResponse{}, err
 	}
@@ -59,33 +59,33 @@ func (s *ProductService) List(params store.ProductFilterParams, isAdmin bool) (m
 	}, nil
 }
 
-func (s *ProductService) GetByID(id string, isAdmin bool) (*models.Product, error) {
-	logger.Trace("Entering ProductService.GetByID | ID: %s | Admin: %v", id, isAdmin)
-	product, err := s.Store.GetEnrichedByID(id)
+func (s *ProductService) GetByID(ctx context.Context, id string, isAdmin bool) (*models.Product, error) {
+	logger.TraceCtx(ctx, "Entering ProductService.GetByID | ID: %s | Admin: %v", id, isAdmin)
+	product, err := s.Store.GetEnrichedByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	settings, err := s.Settings.GetSettings()
+	settings, err := s.Settings.GetSettings(ctx)
 	if err != nil {
-		logger.Error("Failed to get settings in ProductService.GetByID: %v", err)
+		logger.ErrorCtx(ctx, "Failed to get settings in ProductService.GetByID: %v", err)
 	}
 
 	products := []models.Product{*product}
 	if err := s.CalculatePrices(products, settings); err != nil {
 		return nil, err
 	}
-	if err := s.Store.PopulateCartCounts(products); err != nil {
+	if err := s.Store.PopulateCartCounts(ctx, products); err != nil {
 		return nil, err
 	}
 	
 	if isAdmin {
-		if err := s.Store.PopulateStorage(products); err != nil {
+		if err := s.Store.PopulateStorage(ctx, products); err != nil {
 			return nil, err
 		}
 	} else {
 		// Filter categories for public view
-		if err := s.Store.PopulateCategories(products); err != nil {
+		if err := s.Store.PopulateCategories(ctx, products); err != nil {
 			return nil, err
 		}
 		filtered := []models.CustomCategory{}
@@ -101,48 +101,48 @@ func (s *ProductService) GetByID(id string, isAdmin bool) (*models.Product, erro
 }
 
 func (s *ProductService) Create(ctx context.Context, input models.ProductInput) (*models.Product, error) {
-	logger.Trace("Entering ProductService.Create | Name: %s", input.Name)
-	product, err := s.Store.CreateProduct(input)
+	logger.TraceCtx(ctx, "Entering ProductService.Create | Name: %s", input.Name)
+	product, err := s.Store.CreateProduct(ctx, input)
 	if err != nil {
-		logger.Error("Core product creation failed: %v", err)
+		logger.ErrorCtx(ctx, "Core product creation failed: %v", err)
 		return nil, err
 	}
 
 	// Logging (Asynchronous/Non-blocking)
 	s.Audit.LogAction(ctx, "CREATE_PRODUCT", "product", product.ID, models.JSONB{"input": input})
 
-	if err := s.Store.SaveCategories(product.ID, input.CategoryIDs); err != nil {
-		logger.Error("Failed to save categories for product %s: %v", product.ID, err)
+	if err := s.Store.SaveCategories(ctx, product.ID, input.CategoryIDs); err != nil {
+		logger.ErrorCtx(ctx, "Failed to save categories for product %s: %v", product.ID, err)
 	}
-	if err := s.Store.SaveStorage(product.ID, input.StorageItems); err != nil {
-		logger.Error("Failed to save storage for product %s: %v", product.ID, err)
+	if err := s.Store.SaveStorage(ctx, product.ID, input.StorageItems); err != nil {
+		logger.ErrorCtx(ctx, "Failed to save storage for product %s: %v", product.ID, err)
 	}
 	if input.Category == "store_exclusives" {
-		if err := s.Store.SaveDeckCards(product.ID, input.DeckCards); err != nil {
-			logger.Error("Failed to save deck cards for product %s: %v", product.ID, err)
+		if err := s.Store.SaveDeckCards(ctx, product.ID, input.DeckCards); err != nil {
+			logger.ErrorCtx(ctx, "Failed to save deck cards for product %s: %v", product.ID, err)
 		}
 		product.DeckCards = input.DeckCards
 	}
 
-	settings, _ := s.Settings.GetSettings()
+	settings, _ := s.Settings.GetSettings(ctx)
 	products := []models.Product{*product}
 	
 	// Enrichment is highly recommended but non-terminal for a successful POST
-	if err := s.EnrichProducts(products, settings, true); err != nil {
-		logger.Warn("Partial enrichment failure for product %s: %v", product.ID, err)
+	if err := s.EnrichProducts(ctx, products, settings, true); err != nil {
+		logger.WarnCtx(ctx, "Partial enrichment failure for product %s: %v", product.ID, err)
 	}
 
 	return &products[0], nil
 }
 
 func (s *ProductService) Update(ctx context.Context, id string, input models.ProductInput) (*models.Product, error) {
-	logger.Trace("Entering ProductService.Update | ID: %s", id)
+	logger.TraceCtx(ctx, "Entering ProductService.Update | ID: %s", id)
 	
-	oldProduct, _ := s.Store.GetEnrichedByID(id)
+	oldProduct, _ := s.Store.GetEnrichedByID(ctx, id)
 	
-	product, err := s.Store.UpdateProduct(id, input)
+	product, err := s.Store.UpdateProduct(ctx, id, input)
 	if err != nil {
-		logger.Error("Core product update failed for %s: %v", id, err)
+		logger.ErrorCtx(ctx, "Core product update failed for %s: %v", id, err)
 		return nil, err
 	}
 
@@ -152,43 +152,43 @@ func (s *ProductService) Update(ctx context.Context, id string, input models.Pro
 		"after":  input,
 	})
 
-	if err := s.Store.SaveCategories(product.ID, input.CategoryIDs); err != nil {
-		logger.Error("Failed to save categories for product %s: %v", product.ID, err)
+	if err := s.Store.SaveCategories(ctx, product.ID, input.CategoryIDs); err != nil {
+		logger.ErrorCtx(ctx, "Failed to save categories for product %s: %v", product.ID, err)
 	}
-	if err := s.Store.SaveStorage(product.ID, input.StorageItems); err != nil {
-		logger.Error("Failed to save storage for product %s: %v", product.ID, err)
+	if err := s.Store.SaveStorage(ctx, product.ID, input.StorageItems); err != nil {
+		logger.ErrorCtx(ctx, "Failed to save storage for product %s: %v", product.ID, err)
 	}
 	if input.Category == "store_exclusives" {
-		if err := s.Store.SaveDeckCards(product.ID, input.DeckCards); err != nil {
-			logger.Error("Failed to save deck cards for product %s: %v", product.ID, err)
+		if err := s.Store.SaveDeckCards(ctx, product.ID, input.DeckCards); err != nil {
+			logger.ErrorCtx(ctx, "Failed to save deck cards for product %s: %v", product.ID, err)
 		}
 		product.DeckCards = input.DeckCards
 	}
 
-	settings, _ := s.Settings.GetSettings()
+	settings, _ := s.Settings.GetSettings(ctx)
 	products := []models.Product{*product}
 	
 	// Enrichment is highly recommended but non-terminal for a successful PUT
-	if err := s.EnrichProducts(products, settings, true); err != nil {
-		logger.Warn("Partial enrichment failure during update for product %s: %v", product.ID, err)
+	if err := s.EnrichProducts(ctx, products, settings, true); err != nil {
+		logger.WarnCtx(ctx, "Partial enrichment failure during update for product %s: %v", product.ID, err)
 	}
 
 	return &products[0], nil
 }
 
 func (s *ProductService) Delete(ctx context.Context, id string) error {
-	logger.Trace("Entering ProductService.Delete | ID: %s", id)
+	logger.TraceCtx(ctx, "Entering ProductService.Delete | ID: %s", id)
 	
-	oldProduct, _ := s.Store.GetEnrichedByID(id)
+	oldProduct, _ := s.Store.GetEnrichedByID(ctx, id)
 	
-	err := s.Store.Delete(id)
+	err := s.Store.Delete(ctx, id)
 	if err == nil {
 		s.Audit.LogAction(ctx, "DELETE_PRODUCT", "product", id, models.JSONB{"deleted": oldProduct})
 	}
 	return err
 }
 
-func (s *ProductService) EnrichProducts(products []models.Product, settings models.Settings, isAdmin bool) error {
+func (s *ProductService) EnrichProducts(ctx context.Context, products []models.Product, settings models.Settings, isAdmin bool) error {
 	if len(products) == 0 {
 		return nil
 	}
@@ -201,12 +201,12 @@ func (s *ProductService) EnrichProducts(products []models.Product, settings mode
 	// 2. Secondary Enrichment: Side-data population
 	// We log errors but continue to ensure the basic resource remains accessible
 	
-	if err := s.Store.PopulateStorage(products); err != nil {
-		logger.Error("Failed to populate storage info for %d products: %v", len(products), err)
+	if err := s.Store.PopulateStorage(ctx, products); err != nil {
+		logger.ErrorCtx(ctx, "Failed to populate storage info for %d products: %v", len(products), err)
 	}
 	
-	if err := s.Store.PopulateCategories(products); err != nil {
-		logger.Error("Failed to populate category info for %d products: %v", len(products), err)
+	if err := s.Store.PopulateCategories(ctx, products); err != nil {
+		logger.ErrorCtx(ctx, "Failed to populate category info for %d products: %v", len(products), err)
 	}
 	
 	if !isAdmin {
@@ -222,12 +222,12 @@ func (s *ProductService) EnrichProducts(products []models.Product, settings mode
 		}
 	}
 
-	if err := s.Store.PopulateCartCounts(products); err != nil {
-		logger.Error("Failed to populate cart counts for %d products: %v", len(products), err)
+	if err := s.Store.PopulateCartCounts(ctx, products); err != nil {
+		logger.ErrorCtx(ctx, "Failed to populate cart counts for %d products: %v", len(products), err)
 	}
 	
-	if err := s.IdentifyHotNew(products, settings); err != nil {
-		logger.Error("Failed to identify hot/new status for %d products: %v", len(products), err)
+	if err := s.IdentifyHotNew(ctx, products, settings); err != nil {
+		logger.ErrorCtx(ctx, "Failed to identify hot/new status for %d products: %v", len(products), err)
 	}
 
 	return nil
@@ -240,7 +240,7 @@ func (s *ProductService) CalculatePrices(products []models.Product, settings mod
 	return nil
 }
 
-func (s *ProductService) IdentifyHotNew(products []models.Product, settings models.Settings) error {
+func (s *ProductService) IdentifyHotNew(ctx context.Context, products []models.Product, settings models.Settings) error {
 	if len(products) == 0 {
 		return nil
 	}
@@ -271,7 +271,7 @@ func (s *ProductService) IdentifyHotNew(products []models.Product, settings mode
 		pids[i] = p.ID
 	}
 
-	hotIDs, err := s.Store.GetHotProductIDs(hotDays, hotSales, pids)
+	hotIDs, err := s.Store.GetHotProductIDs(ctx, hotDays, hotSales, pids)
 	if err != nil {
 		return err
 	}
@@ -290,8 +290,8 @@ func (s *ProductService) IdentifyHotNew(products []models.Product, settings mode
 	return nil
 }
 
-func (s *ProductService) BulkCreate(rawProducts []models.ProductInput, batchCategoryIDs []string) (int, error) {
-	logger.Trace("Entering ProductService.BulkCreate | Count: %d", len(rawProducts))
+func (s *ProductService) BulkCreate(ctx context.Context, rawProducts []models.ProductInput, batchCategoryIDs []string) (int, error) {
+	logger.TraceCtx(ctx, "Entering ProductService.BulkCreate | Count: %d", len(rawProducts))
 	if len(rawProducts) == 0 {
 		return 0, nil
 	}
@@ -320,7 +320,7 @@ func (s *ProductService) BulkCreate(rawProducts []models.ProductInput, batchCate
 		return 0, err
 	}
 
-	ids, err := s.Store.BulkUpsert(string(jsonData))
+	ids, err := s.Store.BulkUpsert(ctx, string(jsonData))
 	if err != nil {
 		return 0, err
 	}
@@ -328,9 +328,9 @@ func (s *ProductService) BulkCreate(rawProducts []models.ProductInput, batchCate
 	return len(ids), nil
 }
 
-func (s *ProductService) BulkSearch(list string) ([]models.DeckMatch, error) {
-	logger.Trace("Entering ProductService.BulkSearch | ListLength: %d", len(list))
-	settings, _ := s.Settings.GetSettings()
+func (s *ProductService) BulkSearch(ctx context.Context, list string) ([]models.DeckMatch, error) {
+	logger.TraceCtx(ctx, "Entering ProductService.BulkSearch | ListLength: %d", len(list))
+	settings, _ := s.Settings.GetSettings(ctx)
 	lines := strings.Split(list, "\n")
 	results := make([]models.DeckMatch, 0)
 
@@ -382,24 +382,24 @@ func (s *ProductService) BulkSearch(list string) ([]models.DeckMatch, error) {
 			sql := `SELECT * FROM product WHERE (LOWER(name) = LOWER($1) OR name ILIKE $1) 
 			        AND (LOWER(set_code) = LOWER($2) OR LOWER(set_name) = LOWER($2))
 					AND collector_number = $3 AND stock > 0 ORDER BY stock DESC LIMIT 5`
-			_ = s.Store.DB.Select(&matches, sql, cleanName, setHint, cnHint)
+			_ = s.Store.DB.SelectContext(ctx, &matches, sql, cleanName, setHint, cnHint)
 		}
 
 		if len(matches) == 0 && setHint != "" {
 			sql := `SELECT * FROM product WHERE (LOWER(name) = LOWER($1) OR name ILIKE $1) 
 			        AND (LOWER(set_code) = LOWER($2) OR LOWER(set_name) = LOWER($2))
 					AND stock > 0 ORDER BY stock DESC LIMIT 5`
-			_ = s.Store.DB.Select(&matches, sql, cleanName, setHint)
+			_ = s.Store.DB.SelectContext(ctx, &matches, sql, cleanName, setHint)
 		}
 
 		if len(matches) == 0 {
 			sql := `SELECT * FROM product WHERE (LOWER(name) = LOWER($1) OR name ILIKE $1) 
 					AND stock > 0 ORDER BY stock DESC LIMIT 5`
-			_ = s.Store.DB.Select(&matches, sql, cleanName)
+			_ = s.Store.DB.SelectContext(ctx, &matches, sql, cleanName)
 		}
 
-		if err := s.EnrichProducts(matches, settings, false); err != nil {
-			logger.Error("Enrichment failed in BulkSearch: %v", err)
+		if err := s.EnrichProducts(ctx, matches, settings, false); err != nil {
+			logger.ErrorCtx(ctx, "Enrichment failed in BulkSearch: %v", err)
 		}
 
 		results = append(results, models.DeckMatch{
@@ -411,7 +411,7 @@ func (s *ProductService) BulkSearch(list string) ([]models.DeckMatch, error) {
 			RequestedCN:  cnHint,
 		})
 	}
-	logger.Debug("BulkSearch matched %d/%d lines", func() int {
+	logger.DebugCtx(ctx, "BulkSearch matched %d/%d lines", func() int {
 		matched := 0
 		for _, r := range results {
 			if r.IsMatched {
@@ -423,28 +423,28 @@ func (s *ProductService) BulkSearch(list string) ([]models.DeckMatch, error) {
 	return results, nil
 }
 
-func (s *ProductService) GetLowStock(threshold int) ([]models.Product, error) {
+func (s *ProductService) GetLowStock(ctx context.Context, threshold int) ([]models.Product, error) {
 	var products []models.Product
-	err := s.Store.DB.Select(&products, "SELECT * FROM product WHERE stock <= $1 AND stock > 0 ORDER BY stock ASC LIMIT 100", threshold)
+	err := s.Store.DB.SelectContext(ctx, &products, "SELECT * FROM product WHERE stock <= $1 AND stock > 0 ORDER BY stock ASC LIMIT 100", threshold)
 	if err != nil {
 		return nil, err
 	}
 
-	settings, _ := s.Settings.GetSettings()
-	if err := s.EnrichProducts(products, settings, true); err != nil {
+	settings, _ := s.Settings.GetSettings(ctx)
+	if err := s.EnrichProducts(ctx, products, settings, true); err != nil {
 		return nil, err
 	}
 
 	return products, nil
 }
 
-func (s *ProductService) GetTCGs(activeOnly bool) ([]models.TCG, error) {
-	return s.TCGStore.ListWithCount(activeOnly)
+func (s *ProductService) GetTCGs(ctx context.Context, activeOnly bool) ([]models.TCG, error) {
+	return s.TCGStore.ListWithCount(ctx, activeOnly)
 }
 
-func (s *ProductService) GetStorage(id string) ([]models.StorageLocation, error) {
+func (s *ProductService) GetStorage(ctx context.Context, id string) ([]models.StorageLocation, error) {
 	var items []models.StorageLocation
-	err := s.Store.DB.Select(&items, `
+	err := s.Store.DB.SelectContext(ctx, &items, `
 		SELECT s.id as storage_id, s.name, COALESCE(ps.quantity, 0) as quantity
 		FROM storage_location s
 		LEFT JOIN product_storage ps ON s.id = ps.storage_id AND ps.product_id = $1
@@ -453,13 +453,13 @@ func (s *ProductService) GetStorage(id string) ([]models.StorageLocation, error)
 	return items, err
 }
 
-func (s *ProductService) UpdateStorage(id string, updates []models.ProductStorage) ([]models.StorageLocation, error) {
-	tx, err := s.Store.DB.Beginx()
+func (h *ProductService) UpdateStorage(ctx context.Context, id string, updates []models.ProductStorage) ([]models.StorageLocation, error) {
+	tx, err := h.Store.DB.BeginTxx(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = tx.Exec(`DELETE FROM product_storage WHERE product_id = $1`, id)
+	_, err = tx.ExecContext(ctx, `DELETE FROM product_storage WHERE product_id = $1`, id)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
@@ -483,7 +483,7 @@ func (s *ProductService) UpdateStorage(id string, updates []models.ProductStorag
 		}
 
 		query += strings.Join(placeholders, ", ")
-		_, err = tx.Exec(query, values...)
+		_, err = tx.ExecContext(ctx, query, values...)
 		if err != nil {
 			tx.Rollback()
 			return nil, err
@@ -494,5 +494,5 @@ func (s *ProductService) UpdateStorage(id string, updates []models.ProductStorag
 		return nil, err
 	}
 	
-	return s.GetStorage(id)
+	return h.GetStorage(ctx, id)
 }

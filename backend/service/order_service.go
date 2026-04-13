@@ -35,12 +35,12 @@ func NewOrderService(s *store.OrderStore, ps *store.ProductStore, cs *store.Cust
 }
 
 // CreateOrder handles the public checkout flow
-func (s *OrderService) CreateOrder(input models.CreateOrderInput, customerID string) (string, string, float64, error) {
-	logger.Trace("Entering OrderService.CreateOrder | CustomerID: %s | Items: %d", customerID, len(input.Items))
+func (s *OrderService) CreateOrder(ctx context.Context, input models.CreateOrderInput, customerID string) (string, string, float64, error) {
+	logger.TraceCtx(ctx, "Entering OrderService.CreateOrder | CustomerID: %s | Items: %d", customerID, len(input.Items))
 	// 1. Load settings for rates and shipping
-	settings, err := s.Settings.GetSettings()
+	settings, err := s.Settings.GetSettings(ctx)
 	if err != nil {
-		logger.Error("Failed to get settings in OrderService.CreateOrder: %v", err)
+		logger.ErrorCtx(ctx, "Failed to get settings in OrderService.CreateOrder: %v", err)
 	}
 
 	// 2. Fetch products and compute prices
@@ -61,7 +61,7 @@ func (s *OrderService) CreateOrder(input models.CreateOrderInput, customerID str
 	if err != nil {
 		return "", "", 0, fmt.Errorf("failed to build product query: %w", err)
 	}
-	if err := s.Store.DB.Select(&products, s.Store.DB.Rebind(query), args...); err != nil {
+	if err := s.Store.DB.SelectContext(ctx, &products, s.Store.DB.Rebind(query), args...); err != nil {
 		return "", "", 0, fmt.Errorf("failed to fetch products: %w", err)
 	}
 
@@ -84,7 +84,7 @@ func (s *OrderService) CreateOrder(input models.CreateOrderInput, customerID str
 		WHERE ps.product_id IN (?) AND ps.quantity > 0 AND sl.name != 'pending'
 	`, productIDs)
 	if err == nil {
-		err = s.Store.DB.Select(&rows, s.Store.DB.Rebind(qStorage), aStorage...)
+		err = s.Store.DB.SelectContext(ctx, &rows, s.Store.DB.Rebind(qStorage), aStorage...)
 		if err == nil {
 			for _, row := range rows {
 				storageMap[row.ProductID] = append(storageMap[row.ProductID], row.StorageLocation)
@@ -153,23 +153,23 @@ func (s *OrderService) CreateOrder(input models.CreateOrderInput, customerID str
 	})
 
 	// 6. Execute Store method
-	orderID, orderNumber, err := s.Store.PlaceOrder(string(customerJSON), string(itemsJSON), string(metaJSON))
+	orderID, orderNumber, err := s.Store.PlaceOrder(ctx, string(customerJSON), string(itemsJSON), string(metaJSON))
 	if err == nil {
-		logger.Debug("Order placed successfully: %s (%s) for total: %.2f COP", orderNumber, orderID, totalCOP)
+		logger.DebugCtx(ctx, "Order placed successfully: %s (%s) for total: %.2f COP", orderNumber, orderID, totalCOP)
 	} else {
-		logger.Error("Order placement failed: %v", err)
+		logger.ErrorCtx(ctx, "Order placement failed: %v", err)
 	}
 	return orderID, orderNumber, totalCOP, err
 }
 
-func (s *OrderService) GetOrderDetail(orderID string) (*models.OrderDetail, error) {
-	logger.Trace("Entering OrderService.GetOrderDetail | OrderID: %s", orderID)
-	order, err := s.Store.GetByID(orderID)
+func (s *OrderService) GetOrderDetail(ctx context.Context, orderID string) (*models.OrderDetail, error) {
+	logger.TraceCtx(ctx, "Entering OrderService.GetOrderDetail | OrderID: %s", orderID)
+	order, err := s.Store.GetByID(ctx, orderID)
 	if err != nil {
 		return nil, err
 	}
 
-	customer, err := s.CustomerStore.GetByID(order.CustomerID)
+	customer, err := s.CustomerStore.GetByID(ctx, order.CustomerID)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +179,7 @@ func (s *OrderService) GetOrderDetail(orderID string) (*models.OrderDetail, erro
 	customer.IDNumber = crypto.DecryptSafe(customer.IDNumber)
 	customer.Address = crypto.DecryptSafe(customer.Address)
 
-	items, err := s.Store.GetEnrichedItems(orderID)
+	items, err := s.Store.GetEnrichedItems(ctx, orderID)
 	if err != nil {
 		return nil, err
 	}
@@ -195,11 +195,11 @@ func (s *OrderService) GetOrderDetail(orderID string) (*models.OrderDetail, erro
 }
 
 func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input models.UpdateOrderInput) error {
-	logger.Trace("Entering OrderService.UpdateOrder | OrderID: %s | NewStatus: %v", orderID, input.Status)
+	logger.TraceCtx(ctx, "Entering OrderService.UpdateOrder | OrderID: %s | NewStatus: %v", orderID, input.Status)
 	
-	oldOrder, _ := s.Store.GetByID(orderID)
+	oldOrder, _ := s.Store.GetByID(ctx, orderID)
 	
-	tx, err := s.Store.DB.Beginx()
+	tx, err := s.Store.DB.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -207,7 +207,7 @@ func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input mo
 
 	// 0. Check if inventory modification is allowed
 	var currentStatus string
-	err = tx.Get(&currentStatus, `SELECT status FROM "order" WHERE id = $1`, orderID)
+	err = tx.GetContext(ctx, &currentStatus, `SELECT status FROM "order" WHERE id = $1`, orderID)
 	if err != nil {
 		return fmt.Errorf("failed to get current order status: %w", err)
 	}
@@ -242,7 +242,7 @@ func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input mo
 			}
 		}
 
-		_, err = tx.Exec(`
+		_, err = tx.ExecContext(ctx, `
 			UPDATE "order" 
 			SET status = COALESCE($1, status),
 			    tracking_number = COALESCE($2, tracking_number),
@@ -258,12 +258,12 @@ func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input mo
 		// If moved from pending to cancelled, release the reserved stock from the 'pending' location
 		if input.Status != nil && *input.Status == "cancelled" && currentStatus == "pending" {
 			var pendingID string
-			err = tx.Get(&pendingID, `SELECT id FROM storage_location WHERE name = 'pending'`)
+			err = tx.GetContext(ctx, &pendingID, `SELECT id FROM storage_location WHERE name = 'pending'`)
 			if err != nil {
 				return fmt.Errorf("failed to get pending storage id: %w", err)
 			}
 
-			_, err = tx.Exec(`
+			_, err = tx.ExecContext(ctx, `
 				UPDATE product_storage ps
 				SET quantity = GREATEST(0, ps.quantity - oi.quantity)
 				FROM order_item oi
@@ -289,7 +289,7 @@ func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input mo
 			ProductID string `db:"product_id"`
 			Stock     int    `db:"stock"`
 		}
-		err = tx.Get(&current, `
+		err = tx.GetContext(ctx, &current, `
 			SELECT oi.quantity, oi.product_id, p.stock 
 			FROM order_item oi 
 			JOIN product p ON p.id = oi.product_id 
@@ -308,13 +308,13 @@ func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input mo
 			return fmt.Errorf("cannot increase order by %d; only %d in stock", delta, current.Stock)
 		}
 
-		_, err = tx.Exec(`UPDATE order_item SET quantity = $1 WHERE id = $2 AND order_id = $3`,
+		_, err = tx.ExecContext(ctx, `UPDATE order_item SET quantity = $1 WHERE id = $2 AND order_id = $3`,
 			qty, item.ID, orderID)
 		if err != nil {
 			return fmt.Errorf("failed to update item quantity: %w", err)
 		}
 
-		_, err = tx.Exec(`
+		_, err = tx.ExecContext(ctx, `
 			UPDATE product_storage 
 			SET quantity = quantity + $1 
 			WHERE product_id = $2 
@@ -339,7 +339,7 @@ func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input mo
 			Condition     *string `db:"condition"`
 			Stock         int     `db:"stock"`
 		}
-		err = tx.Get(&product, `SELECT name, set_name, foil_treatment, card_treatment, condition, stock FROM product WHERE id = $1`, item.ProductID)
+		err = tx.GetContext(ctx, &product, `SELECT name, set_name, foil_treatment, card_treatment, condition, stock FROM product WHERE id = $1`, item.ProductID)
 		if err != nil {
 			return fmt.Errorf("product not found while adding to order: %w", err)
 		}
@@ -348,7 +348,7 @@ func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input mo
 			return fmt.Errorf("added quantity %d exceeds available stock %d", item.Quantity, product.Stock)
 		}
 
-		_, err = tx.Exec(`
+		_, err = tx.ExecContext(ctx, `
 			INSERT INTO order_item (order_id, product_id, product_name, product_set, foil_treatment, card_treatment, condition, quantity, unit_price_cop)
 			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		`, orderID, item.ProductID, product.Name, product.SetName, product.FoilTreatment, product.CardTreatment, product.Condition, item.Quantity, item.UnitPriceCOP)
@@ -356,7 +356,7 @@ func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input mo
 			return fmt.Errorf("failed to add new item to order: %w", err)
 		}
 
-		_, err = tx.Exec(`
+		_, err = tx.ExecContext(ctx, `
 			INSERT INTO product_storage (product_id, storage_id, quantity)
 			VALUES ($1, (SELECT id FROM storage_location WHERE name = 'pending' LIMIT 1), $2)
 			ON CONFLICT (product_id, storage_id) DO UPDATE SET quantity = product_storage.quantity + EXCLUDED.quantity
@@ -372,17 +372,17 @@ func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input mo
 			Quantity  int    `db:"quantity"`
 			ProductID string `db:"product_id"`
 		}
-		err = tx.Get(&current, `SELECT quantity, product_id FROM order_item WHERE id = $1 AND order_id = $2`, itemID, orderID)
+		err = tx.GetContext(ctx, &current, `SELECT quantity, product_id FROM order_item WHERE id = $1 AND order_id = $2`, itemID, orderID)
 		if err != nil {
 			continue
 		}
 
-		_, err = tx.Exec(`DELETE FROM order_item WHERE id = $1 AND order_id = $2`, itemID, orderID)
+		_, err = tx.ExecContext(ctx, `DELETE FROM order_item WHERE id = $1 AND order_id = $2`, itemID, orderID)
 		if err != nil {
 			return fmt.Errorf("failed to delete item from order: %w", err)
 		}
 
-		_, err = tx.Exec(`
+		_, err = tx.ExecContext(ctx, `
 			UPDATE product_storage 
 			SET quantity = GREATEST(0, quantity - $1) 
 			WHERE product_id = $2 
@@ -399,7 +399,7 @@ func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input mo
 		Shipping float64 `db:"shipping"`
 		Tax      float64 `db:"tax"`
 	}
-	err = tx.Get(&summary, `
+	err = tx.GetContext(ctx, &summary, `
 		SELECT 
 			COALESCE((SELECT SUM(unit_price_cop * quantity) FROM order_item WHERE order_id = $1), 0) as subtotal,
 			COALESCE(shipping_cop, 0) as shipping,
@@ -409,12 +409,12 @@ func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input mo
 	
 	if err == nil {
 		newTotal := summary.Subtotal + summary.Shipping + summary.Tax
-		_, err = tx.Exec(`UPDATE "order" SET subtotal_cop = $1, total_cop = $2 WHERE id = $3`, 
+		_, err = tx.ExecContext(ctx, `UPDATE "order" SET subtotal_cop = $1, total_cop = $2 WHERE id = $3`, 
 			summary.Subtotal, newTotal, orderID)
 		if err != nil {
 			return fmt.Errorf("failed to update order totals: %w", err)
 		}
-		logger.Debug("Order %s recalculated: subtotal=%.2f, total=%.2f", orderID, summary.Subtotal, newTotal)
+		logger.DebugCtx(ctx, "Order %s recalculated: subtotal=%.2f, total=%.2f", orderID, summary.Subtotal, newTotal)
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -426,7 +426,7 @@ func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input mo
 		"after":  input,
 	})
 	
-	logger.Info("Order %s updated successfully", orderID)
+	logger.InfoCtx(ctx, "Order %s updated successfully", orderID)
 	return nil
 }
 
@@ -435,7 +435,7 @@ func (s *OrderService) ConfirmOrder(ctx context.Context, orderID string, decreme
 	if err != nil {
 		return err
 	}
-	err = s.Store.ConfirmOrder(orderID, string(jsonData))
+	err = s.Store.ConfirmOrder(ctx, orderID, string(jsonData))
 	if err == nil {
 		s.Audit.LogAction(ctx, "CONFIRM_ORDER", "order", orderID, models.JSONB{"decrements": decrements})
 	}
@@ -447,29 +447,29 @@ func (s *OrderService) RestoreStock(ctx context.Context, orderID string, increme
 	if err != nil {
 		return err
 	}
-	err = s.Store.RestoreStock(orderID, string(jsonData))
+	err = s.Store.RestoreStock(ctx, orderID, string(jsonData))
 	if err == nil {
 		s.Audit.LogAction(ctx, "RESTORE_STOCK", "order", orderID, models.JSONB{"increments": increments})
 	}
 	return err
 }
 
-func (s *OrderService) ListOrders(whereClause string, args []interface{}, page, pageSize int) ([]models.OrderWithCustomer, int, error) {
-	logger.Trace("Entering OrderService.ListOrders | Page: %d | PageSize: %d", page, pageSize)
-	total, err := s.Store.GetOrderCount(whereClause, args)
+func (s *OrderService) ListOrders(ctx context.Context, whereClause string, args []interface{}, page, pageSize int) ([]models.OrderWithCustomer, int, error) {
+	logger.TraceCtx(ctx, "Entering OrderService.ListOrders | Page: %d | PageSize: %d", page, pageSize)
+	total, err := s.Store.GetOrderCount(ctx, whereClause, args)
 	if err != nil {
 		return nil, 0, err
 	}
 
 	limit := pageSize
 	offset := (page - 1) * pageSize
-	orders, err := s.Store.ListWithCustomer(whereClause, args, limit, offset)
+	orders, err := s.Store.ListWithCustomer(ctx, whereClause, args, limit, offset)
 	return orders, total, err
 }
 
-func (s *OrderService) ListMe(userID string) ([]models.OrderWithItemCount, error) {
+func (s *OrderService) ListMe(ctx context.Context, userID string) ([]models.OrderWithItemCount, error) {
 	var orders []models.OrderWithItemCount
-	err := s.Store.DB.Select(&orders, `
+	err := s.Store.DB.SelectContext(ctx, &orders, `
 		SELECT o.*, (SELECT SUM(quantity) FROM order_item WHERE order_id = o.id) as item_count
 		FROM "order" o 
 		WHERE o.customer_id = $1 
@@ -484,15 +484,15 @@ func (s *OrderService) ListMe(userID string) ([]models.OrderWithItemCount, error
 	return orders, nil
 }
 
-func (s *OrderService) CancelMe(orderID, userID string) error {
-	logger.Trace("Entering OrderService.CancelMe | OrderID: %s | UserID: %s", orderID, userID)
-	tx, err := s.Store.DB.Beginx()
+func (s *OrderService) CancelMe(ctx context.Context, orderID, userID string) error {
+	logger.TraceCtx(ctx, "Entering OrderService.CancelMe | OrderID: %s | UserID: %s", orderID, userID)
+	tx, err := s.Store.DB.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
 
-	res, err := tx.Exec(`
+	res, err := tx.ExecContext(ctx, `
 		UPDATE "order" 
 		SET status = 'cancelled' 
 		WHERE id = $1 AND customer_id = $2 AND status = 'pending'
@@ -507,12 +507,12 @@ func (s *OrderService) CancelMe(orderID, userID string) error {
 
 	// Release reserved stock from 'pending' location
 	var pendingID string
-	err = tx.Get(&pendingID, `SELECT id FROM storage_location WHERE name = 'pending'`)
+	err = tx.GetContext(ctx, &pendingID, `SELECT id FROM storage_location WHERE name = 'pending'`)
 	if err != nil {
 		return fmt.Errorf("failed to get pending storage id: %w", err)
 	}
 
-	_, err = tx.Exec(`
+	_, err = tx.ExecContext(ctx, `
 		UPDATE product_storage ps
 		SET quantity = GREATEST(0, ps.quantity - oi.quantity)
 		FROM order_item oi

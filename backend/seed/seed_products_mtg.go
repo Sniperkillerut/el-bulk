@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"time"
@@ -147,7 +148,7 @@ func seedMTGSingles(db *sqlx.DB, cats CategoryMap, storage StorageMap) ([]string
 		var res []external.CardLookupResult
 		var err error
 		for attempt := 1; attempt <= 3; attempt++ {
-			res, err = external.BatchLookupMTGCard(chunk)
+			res, err = external.BatchLookupMTGCard(context.Background(), chunk)
 			if err == nil {
 				break
 			}

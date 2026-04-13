@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -57,7 +56,7 @@ func getProviderConfig(provider string) *oauth2.Config {
 // GET /api/auth/{provider}/login
 func (h *UserAuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	provider := chi.URLParam(r, "provider")
-	logger.Trace("Entering UserAuthHandler.Login | Provider: %s", provider)
+	logger.TraceCtx(r.Context(), "Entering UserAuthHandler.Login | Provider: %s", provider)
 	config := getProviderConfig(provider)
 	if config == nil {
 		render.Error(w, "Unsupported auth provider", http.StatusBadRequest)
@@ -77,7 +76,7 @@ func (h *UserAuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 // GET /api/auth/{provider}/callback
 func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	provider := chi.URLParam(r, "provider")
-	logger.Trace("Entering UserAuthHandler.Callback | Provider: %s", provider)
+	logger.TraceCtx(r.Context(), "Entering UserAuthHandler.Callback | Provider: %s", provider)
 	state := r.FormValue("state")
 	if !strings.HasPrefix(state, "elbulk-oauth-state|"+provider+"|") {
 		http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=invalid_state", http.StatusTemporaryRedirect)
@@ -96,22 +95,22 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := config.Exchange(context.Background(), code)
+	token, err := config.Exchange(r.Context(), code)
 	if err != nil {
-		logger.Error("OAuth exchange failed: %v", err)
+		logger.ErrorCtx(r.Context(), "OAuth exchange failed: %v", err)
 		http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=exchange_failed", http.StatusTemporaryRedirect)
 		return
 	}
 
 	// Fetch and Normalize User Info based on provider
-	client := config.Client(context.Background(), token)
+	client := config.Client(r.Context(), token)
 	var finalFirstName, finalLastName, finalEmail, finalAvatar, finalID string
 
 	switch provider {
 	case "google":
 		resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
 		if err != nil {
-			logger.Error("Failed to get Google user info: %v", err)
+			logger.ErrorCtx(r.Context(), "Failed to get Google user info: %v", err)
 			http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=userinfo_failed", http.StatusTemporaryRedirect)
 			return
 		}
@@ -125,7 +124,7 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 			Picture    string `json:"picture"`
 		}
 		if err := json.NewDecoder(resp.Body).Decode(&gInfo); err != nil {
-			logger.Error("Failed to parse Google user info: %v", err)
+			logger.ErrorCtx(r.Context(), "Failed to parse Google user info: %v", err)
 			http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=parse_failed", http.StatusTemporaryRedirect)
 			return
 		}
@@ -138,7 +137,7 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	case "facebook":
 		resp, err := client.Get("https://graph.facebook.com/me?fields=id,name,first_name,last_name,email,picture.type(large)")
 		if err != nil {
-			logger.Error("Failed to get Facebook user info: %v", err)
+			logger.ErrorCtx(r.Context(), "Failed to get Facebook user info: %v", err)
 			http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=userinfo_failed", http.StatusTemporaryRedirect)
 			return
 		}
@@ -156,7 +155,7 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 			} `json:"picture"`
 		}
 		if err := json.NewDecoder(resp.Body).Decode(&fbInfo); err != nil {
-			logger.Error("Failed to parse Facebook user info: %v", err)
+			logger.ErrorCtx(r.Context(), "Failed to parse Facebook user info: %v", err)
 			http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=parse_failed", http.StatusTemporaryRedirect)
 			return
 		}
@@ -172,13 +171,13 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 1. Check if identity is already linked to SOMEONE
-	linkedCustomerID, linkErr := h.Service.FindLinkedCustomerID(provider, finalID)
+	linkedCustomerID, linkErr := h.Service.FindLinkedCustomerID(r.Context(), provider, finalID)
 
 	currentUserID, _ := r.Context().Value(middleware.UserIDKey).(string)
 	if currentUserID != "" {
-		exists, err := h.Service.CustomerExists(currentUserID)
+		exists, err := h.Service.CustomerExists(r.Context(), currentUserID)
 		if err != nil || !exists {
-			logger.Warn("Stale session for deleted user %s. Treating as guest.", currentUserID)
+			logger.WarnCtx(r.Context(), "Stale session for deleted user %s. Treating as guest.", currentUserID)
 			currentUserID = "" // Revert to guest flow
 		}
 	}
@@ -194,8 +193,8 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if err := h.Service.LinkProvider(currentUserID, provider, finalID); err != nil {
-			logger.Error("Failed to link account: %v", err)
+		if err := h.Service.LinkProvider(r.Context(), currentUserID, provider, finalID); err != nil {
+			logger.ErrorCtx(r.Context(), "Failed to link account: %v", err)
 			http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/profile?error=link_failed", http.StatusTemporaryRedirect)
 			return
 		}
@@ -208,31 +207,31 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	var customerID string
 	found := false
 	if linkErr == nil {
-		customer, err := h.Service.GetCustomerByID(linkedCustomerID)
+		customer, err := h.Service.GetCustomerByID(r.Context(), linkedCustomerID)
 		if err == nil {
 			customerID = customer.ID
 			found = true
 		} else {
-			logger.Warn("Customer linked in auth but missing in database: %s. Cleaning up orphan record.", linkedCustomerID)
-			h.Service.CleanOrphanAuth(provider, finalID)
+			logger.WarnCtx(r.Context(), "Customer linked in auth but missing in database: %s. Cleaning up orphan record.", linkedCustomerID)
+			h.Service.CleanOrphanAuth(r.Context(), provider, finalID)
 		}
 	}
 
 	if !found {
-		customer, err := h.Service.GetCustomerByEmail(finalEmail)
+		customer, err := h.Service.GetCustomerByEmail(r.Context(), finalEmail)
 		if err != nil {
 			// First time user, create account
-			customer, err = h.Service.CreateCustomerWithAuth(finalFirstName, finalLastName, finalEmail, finalAvatar, provider, finalID)
+			customer, err = h.Service.CreateCustomerWithAuth(r.Context(), finalFirstName, finalLastName, finalEmail, finalAvatar, provider, finalID)
 			if err != nil {
-				logger.Error("Failed to create user: %v", err)
+				logger.ErrorCtx(r.Context(), "Failed to create user: %v", err)
 				http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=db_error", http.StatusTemporaryRedirect)
 				return
 			}
 			customerID = customer.ID
 		} else {
 			// Found by email, link this provider to it
-			if err := h.Service.LinkProviderIfNotExists(customer.ID, provider, finalID); err != nil {
-				logger.Error("Failed to link provider to existing user by email: %v", err)
+			if err := h.Service.LinkProviderIfNotExists(r.Context(), customer.ID, provider, finalID); err != nil {
+				logger.ErrorCtx(r.Context(), "Failed to link provider to existing user by email: %v", err)
 			}
 			customerID = customer.ID
 		}
@@ -249,7 +248,7 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signed, err := jwtToken.SignedString([]byte(secret))
 	if err != nil {
-		logger.Error("Failed to sign user token: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to sign user token: %v", err)
 		http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=token_failed", http.StatusTemporaryRedirect)
 		return
 	}
@@ -272,14 +271,14 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 
 // GET /api/auth/me
 func (h *UserAuthHandler) Me(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering UserAuthHandler.Me")
+	logger.TraceCtx(r.Context(), "Entering UserAuthHandler.Me")
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok || userID == "" {
 		render.Error(w, "Not logged in", http.StatusUnauthorized)
 		return
 	}
 
-	customer, err := h.Service.GetMe(userID)
+	customer, err := h.Service.GetMe(r.Context(), userID)
 	if err != nil {
 		render.Error(w, "User not found", http.StatusNotFound)
 		return
@@ -290,7 +289,7 @@ func (h *UserAuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 
 // PUT /api/auth/me
 func (h *UserAuthHandler) UpdateMe(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering UserAuthHandler.UpdateMe")
+	logger.TraceCtx(r.Context(), "Entering UserAuthHandler.UpdateMe")
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok || userID == "" {
 		render.Error(w, "Not logged in", http.StatusUnauthorized)
@@ -307,8 +306,8 @@ func (h *UserAuthHandler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.Service.UpdateProfile(userID, input.Phone, input.IDNumber, input.Address); err != nil {
-		logger.Error("Failed to update user %s: %v", userID, err)
+	if err := h.Service.UpdateProfile(r.Context(), userID, input.Phone, input.IDNumber, input.Address); err != nil {
+		logger.ErrorCtx(r.Context(), "Failed to update user %s: %v", userID, err)
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
@@ -318,7 +317,7 @@ func (h *UserAuthHandler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 
 // POST /api/auth/logout
 func (h *UserAuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering UserAuthHandler.Logout")
+	logger.TraceCtx(r.Context(), "Entering UserAuthHandler.Logout")
 	isSecure := strings.HasPrefix(os.Getenv("FRONTEND_ORIGIN"), "https://")
 	http.SetCookie(w, &http.Cookie{
 		Name:     "user_token",

@@ -24,9 +24,10 @@ func NewTCGHandler(s *service.TCGService) *TCGHandler {
 
 // GET /api/admin/tcgs
 func (h *TCGHandler) List(w http.ResponseWriter, r *http.Request) {
-	tcgs, err := h.Service.List(true) // For now returns all with counts
+	logger.TraceCtx(r.Context(), "Entering TCGHandler.List")
+	tcgs, err := h.Service.List(r.Context(), true) // For now returns all with counts
 	if err != nil {
-		logger.Error("Error listing TCGs for admin: %v", err)
+		logger.ErrorCtx(r.Context(), "Error listing TCGs for admin: %v", err)
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
@@ -46,9 +47,9 @@ func (h *TCGHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tcg, err := h.Service.Create(input)
+	tcg, err := h.Service.Create(r.Context(), input)
 	if err != nil {
-		logger.Error("Error creating TCG: %v", err)
+		logger.ErrorCtx(r.Context(), "Error creating TCG: %v", err)
 		
 		// Check for PostgreSQL unique constraint violation
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == "23505" {
@@ -72,9 +73,9 @@ func (h *TCGHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tcg, err := h.Service.Update(id, input)
+	tcg, err := h.Service.Update(r.Context(), id, input)
 	if err != nil {
-		logger.Error("Error updating TCG %s: %v", id, err)
+		logger.ErrorCtx(r.Context(), "Error updating TCG %s: %v", id, err)
 		render.Error(w, "TCG not found or update failed", http.StatusNotFound)
 		return
 	}
@@ -85,16 +86,16 @@ func (h *TCGHandler) Update(w http.ResponseWriter, r *http.Request) {
 // DELETE /api/admin/tcgs/{id}
 func (h *TCGHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	logger.Info("[TCG_DELETE] 📥 Received DELETE request for ID: %s", id)
+	logger.InfoCtx(r.Context(), "[TCG_DELETE] 📥 Received DELETE request for ID: %s", id)
 
 	if id == "" {
 		render.Error(w, "ID is required", http.StatusBadRequest)
 		return
 	}
 
-	err := h.Service.Delete(id)
+	err := h.Service.Delete(r.Context(), id)
 	if err != nil {
-		logger.Error("Error deleting TCG %s: %v", id, err)
+		logger.ErrorCtx(r.Context(), "Error deleting TCG %s: %v", id, err)
 		if strings.Contains(err.Error(), "existing products") {
 			render.Error(w, err.Error(), http.StatusConflict)
 			return
@@ -109,9 +110,9 @@ func (h *TCGHandler) Delete(w http.ResponseWriter, r *http.Request) {
 // POST /api/admin/tcgs/{id}/sync-sets
 func (h *TCGHandler) SyncSets(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	count, err := h.Service.SyncSets(id)
+	count, err := h.Service.SyncSets(r.Context(), id)
 	if err != nil {
-		logger.Error("Error syncing TCG %s: %v", id, err)
+		logger.ErrorCtx(r.Context(), "Error syncing TCG %s: %v", id, err)
 		render.Error(w, "Sync failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}

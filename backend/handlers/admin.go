@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"github.com/el-bulk/backend/utils/render"
-	"context"
 	"database/sql"
 	"encoding/json"
 	"net/http"
@@ -36,24 +35,24 @@ func NewAdminHandler(s *service.AdminService, audit *service.AuditService) *Admi
 
 // POST /api/admin/login
 func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering AdminHandler.Login")
+	logger.TraceCtx(r.Context(), "Entering AdminHandler.Login")
 	var req struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Error("Failed to decode login request: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to decode login request: %v", err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	admin, err := h.Service.GetByUsername(req.Username)
+	admin, err := h.Service.GetByUsername(r.Context(), req.Username)
 	if err != nil {
 		// Differentiate between user not found and other errors (like DB connection)
 		if strings.Contains(err.Error(), "no rows") {
-			logger.Warn("Failed login attempt: user '%s' not found", req.Username)
+			logger.WarnCtx(r.Context(), "Failed login attempt: user '%s' not found", req.Username)
 		} else {
-			logger.Error("Database error during login for '%s': %v", req.Username, err)
+			logger.ErrorCtx(r.Context(), "Database error during login for '%s': %v", req.Username, err)
 		}
 		render.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
@@ -84,6 +83,7 @@ func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signed, err := token.SignedString([]byte(secret))
 	if err != nil {
+		logger.ErrorCtx(r.Context(), "Failed to generate token: %v", err)
 		render.Error(w, "Failed to generate token", http.StatusInternalServerError)
 		return
 	}
@@ -108,7 +108,7 @@ func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 // POST /api/admin/logout
 func (h *AdminHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering AdminHandler.Logout")
+	logger.TraceCtx(r.Context(), "Entering AdminHandler.Logout")
 	isSecure := strings.HasPrefix(os.Getenv("FRONTEND_ORIGIN"), "https://")
 	http.SetCookie(w, &http.Cookie{
 		Name:     "admin_token",
@@ -144,7 +144,7 @@ func (h *AdminHandler) UpdateLogLevel(w http.ResponseWriter, r *http.Request) {
 	newLevel := logger.ParseLevel(req.Level)
 	logger.SetLevel(newLevel)
 
-	logger.Info("Log level hot-changed to: %s", newLevel.String())
+	logger.InfoCtx(r.Context(), "Log level hot-changed to: %s", newLevel.String())
 	render.Success(w, map[string]string{
 		"message": "Log level updated successfully",
 		"level":   newLevel.String(),
@@ -166,9 +166,9 @@ func (h *AdminHandler) ListAuditLogs(w http.ResponseWriter, r *http.Request) {
 	action := r.URL.Query().Get("action")
 	resourceType := r.URL.Query().Get("resource_type")
 
-	logs, total, err := h.AuditService.List(page, pageSize, adminID, action, resourceType)
+	logs, total, err := h.AuditService.List(r.Context(), page, pageSize, adminID, action, resourceType)
 	if err != nil {
-		logger.Error("Failed to list audit logs: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to list audit logs: %v", err)
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
@@ -233,17 +233,17 @@ func (h *AdminHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		Endpoint:     google.Endpoint,
 	}
 
-	token, err := config.Exchange(context.Background(), code)
+	token, err := config.Exchange(r.Context(), code)
 	if err != nil {
-		logger.Error("Admin OAuth exchange failed: %v", err)
+		logger.ErrorCtx(r.Context(), "Admin OAuth exchange failed: %v", err)
 		http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/admin/login?error=exchange_failed", http.StatusTemporaryRedirect)
 		return
 	}
 
-	client := config.Client(context.Background(), token)
+	client := config.Client(r.Context(), token)
 	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
 	if err != nil {
-		logger.Error("Failed to get Google admin info: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to get Google admin info: %v", err)
 		http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/admin/login?error=userinfo_failed", http.StatusTemporaryRedirect)
 		return
 	}
@@ -255,7 +255,7 @@ func (h *AdminHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		Picture   string `json:"picture"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&gInfo); err != nil {
-		logger.Error("Failed to parse Google admin info: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to parse Google admin info: %v", err)
 		http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/admin/login?error=parse_failed", http.StatusTemporaryRedirect)
 		return
 	}
@@ -263,7 +263,7 @@ func (h *AdminHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	// 1. Verify Whitelist
 	envEmails := os.Getenv("ADMIN_EMAILS")
 	if envEmails == "" {
-		logger.Error("[AdminAuth] ADMIN_EMAILS environment variable is NOT SET. All OAuth login attempts will fail.")
+		logger.ErrorCtx(r.Context(), "[AdminAuth] ADMIN_EMAILS environment variable is NOT SET. All OAuth login attempts will fail.")
 	}
 	allowedEmails := strings.Split(envEmails, ",")
 	allowed := false
@@ -275,13 +275,13 @@ func (h *AdminHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !allowed {
-		logger.Warn("Unauthorized admin login attempt: %s", gInfo.Email)
+		logger.WarnCtx(r.Context(), "Unauthorized admin login attempt: %s", gInfo.Email)
 		http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/admin/login?error=unauthorized_email", http.StatusTemporaryRedirect)
 		return
 	}
 
 	// 2. Find or Create Admin
-	admin, err := h.Service.GetByEmail(gInfo.Email)
+	admin, err := h.Service.GetByEmail(r.Context(), gInfo.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// Create admin
@@ -291,15 +291,15 @@ func (h *AdminHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 				Email:     gInfo.Email,
 				AvatarURL: &gInfo.Picture,
 			}
-			admin, err = h.Service.Create(newAdmin)
+			admin, err = h.Service.Create(r.Context(), newAdmin)
 			if err != nil {
-				logger.Error("[AdminAuth] Failed to create admin via OAuth for %s: %v", gInfo.Email, err)
+				logger.ErrorCtx(r.Context(), "[AdminAuth] Failed to create admin via OAuth for %s: %v", gInfo.Email, err)
 				http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/admin/login?error=db_error", http.StatusTemporaryRedirect)
 				return
 			}
 			h.AuditService.LogAction(r.Context(), "OAUTH_SIGNUP", "admin", admin.ID, models.JSONB{"email": gInfo.Email})
 		} else {
-			logger.Error("[AdminAuth] Database error looking up admin %s: %v. Check if 'email' column exists in 'admin' table.", gInfo.Email, err)
+			logger.ErrorCtx(r.Context(), "[AdminAuth] Database error looking up admin %s: %v. Check if 'email' column exists in 'admin' table.", gInfo.Email, err)
 			http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/admin/login?error=db_error", http.StatusTemporaryRedirect)
 			return
 		}

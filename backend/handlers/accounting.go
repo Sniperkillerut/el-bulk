@@ -161,9 +161,9 @@ func (h *AccountingHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var rows []Row
-	err := h.DB.Select(&rows, fullQuery, args...)
+	err := h.DB.SelectContext(r.Context(), &rows, fullQuery, args...)
 	if err != nil {
-		logger.Error("Failed to fetch accounting data: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to fetch accounting data: %v", err)
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
@@ -202,9 +202,9 @@ func (h *AccountingHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AccountingHandler) GetInventoryValuation(w http.ResponseWriter, r *http.Request) {
-	valuation, err := h.Service.GetInventoryValuation()
+	valuation, err := h.Service.GetInventoryValuation(r.Context())
 	if err != nil {
-		logger.Error("Failed to get inventory valuation: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to get inventory valuation: %v", err)
 		render.Error(w, "Database failure", http.StatusInternalServerError)
 		return
 	}

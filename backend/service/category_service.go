@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"time"
 
 	"github.com/el-bulk/backend/models"
@@ -17,32 +18,32 @@ func NewCategoryService(s *store.CategoryStore) *CategoryService {
 	return &CategoryService{Store: s}
 }
 
-func (s *CategoryService) List(isAdmin bool) ([]models.CustomCategory, error) {
-	logger.Trace("Entering CategoryService.List | Admin: %v", isAdmin)
-	categories, err := s.Store.ListWithCount(isAdmin)
+func (s *CategoryService) List(ctx context.Context, isAdmin bool) ([]models.CustomCategory, error) {
+	logger.TraceCtx(ctx, "Entering CategoryService.List | Admin: %v", isAdmin)
+	categories, err := s.Store.ListWithCount(ctx, isAdmin)
 	if err != nil {
 		return nil, err
 	}
-	s.populateHotNew(categories)
+	s.populateHotNew(ctx, categories)
 	return categories, nil
 }
 
-func (s *CategoryService) Create(input models.CustomCategoryInput) (*models.CustomCategory, error) {
-	logger.Trace("Entering CategoryService.Create | Name: %s", input.Name)
-	return s.Store.Create(input)
+func (s *CategoryService) Create(ctx context.Context, input models.CustomCategoryInput) (*models.CustomCategory, error) {
+	logger.TraceCtx(ctx, "Entering CategoryService.Create | Name: %s", input.Name)
+	return s.Store.Create(ctx, input)
 }
 
-func (s *CategoryService) Update(id string, updates map[string]interface{}) (*models.CustomCategory, error) {
-	logger.Trace("Entering CategoryService.Update | ID: %s", id)
-	return s.Store.BaseStore.Update(id, updates)
+func (s *CategoryService) Update(ctx context.Context, id string, updates map[string]interface{}) (*models.CustomCategory, error) {
+	logger.TraceCtx(ctx, "Entering CategoryService.Update | ID: %s", id)
+	return s.Store.BaseStore.Update(ctx, id, updates)
 }
 
-func (s *CategoryService) Delete(id string) error {
-	logger.Trace("Entering CategoryService.Delete | ID: %s", id)
-	return s.Store.BaseStore.Delete(id)
+func (s *CategoryService) Delete(ctx context.Context, id string) error {
+	logger.TraceCtx(ctx, "Entering CategoryService.Delete | ID: %s", id)
+	return s.Store.BaseStore.Delete(ctx, id)
 }
 
-func (s *CategoryService) populateHotNew(categories []models.CustomCategory) {
+func (s *CategoryService) populateHotNew(ctx context.Context, categories []models.CustomCategory) {
 	if len(categories) == 0 {
 		return
 	}
@@ -76,7 +77,7 @@ func (s *CategoryService) populateHotNew(categories []models.CustomCategory) {
 	}
 
 	var hotIDs []string
-	if err := s.Store.DB.Select(&hotIDs, sqlx.Rebind(sqlx.DOLLAR, query), args...); err == nil {
+	if err := s.Store.DB.SelectContext(ctx, &hotIDs, sqlx.Rebind(sqlx.DOLLAR, query), args...); err == nil {
 		hotMap := make(map[string]bool)
 		for _, id := range hotIDs {
 			hotMap[id] = true

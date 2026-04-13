@@ -1,10 +1,12 @@
 package store
 
 import (
+	"context"
+	"time"
+
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
-	"time"
 )
 
 type ThemeStore struct {
@@ -17,11 +19,11 @@ func NewThemeStore(db *sqlx.DB) *ThemeStore {
 	}
 }
 
-func (s *ThemeStore) List() ([]models.Theme, error) {
-	return s.BaseStore.List("ORDER BY is_system DESC, name ASC")
+func (s *ThemeStore) List(ctx context.Context) ([]models.Theme, error) {
+	return s.BaseStore.List(ctx, "ORDER BY is_system DESC, name ASC")
 }
 
-func (s *ThemeStore) Create(input models.ThemeInput) (*models.Theme, error) {
+func (s *ThemeStore) Create(ctx context.Context, input models.ThemeInput) (*models.Theme, error) {
 	var theme models.Theme
 	query := `
 		INSERT INTO theme (
@@ -34,8 +36,8 @@ func (s *ThemeStore) Create(input models.ThemeInput) (*models.Theme, error) {
 			$26, $27, $28, $29
 		) RETURNING *
 	`
-	logger.Trace("[DB] Executing CreateTheme: %s | Name: %s", query, input.Name)
-	err := s.DB.Get(&theme, query,
+	logger.TraceCtx(ctx, "[DB] Executing CreateTheme: %s | Name: %s", query, input.Name)
+	err := s.DB.GetContext(ctx, &theme, query,
 		input.Name, input.BgPage, input.BgHeader, input.BgSurface, input.BgCard,
 		input.TextMain, input.TextSecondary, input.TextMuted, input.TextOnAccent, input.TextOnHeader,
 		input.AccentPrimary, input.AccentPrimaryHover, input.BorderMain, input.BorderFocus,
@@ -45,12 +47,12 @@ func (s *ThemeStore) Create(input models.ThemeInput) (*models.Theme, error) {
 		input.BgImageURL, input.FontHeading, input.FontBody, input.AccentSecondary,
 	)
 	if err != nil {
-		logger.Error("[DB] CreateTheme failed for %s: %v", input.Name, err)
+		logger.ErrorCtx(ctx, "[DB] CreateTheme failed for %s: %v", input.Name, err)
 	}
 	return &theme, err
 }
 
-func (s *ThemeStore) Update(id string, input models.ThemeInput) (*models.Theme, error) {
+func (s *ThemeStore) Update(ctx context.Context, id string, input models.ThemeInput) (*models.Theme, error) {
 	var theme models.Theme
 	query := `
 		UPDATE theme SET
@@ -65,7 +67,7 @@ func (s *ThemeStore) Update(id string, input models.ThemeInput) (*models.Theme, 
 		WHERE id = $30
 		RETURNING *
 	`
-	err := s.DB.Get(&theme, query,
+	err := s.DB.GetContext(ctx, &theme, query,
 		input.Name, input.BgPage, input.BgHeader, input.BgSurface, input.BgCard,
 		input.TextMain, input.TextSecondary, input.TextMuted, input.TextOnAccent, input.TextOnHeader,
 		input.AccentPrimary, input.AccentPrimaryHover, input.BorderMain, input.BorderFocus,
@@ -78,15 +80,15 @@ func (s *ThemeStore) Update(id string, input models.ThemeInput) (*models.Theme, 
 	return &theme, err
 }
 
-func (s *ThemeStore) IsSystemTheme(id string) (bool, error) {
+func (s *ThemeStore) IsSystemTheme(ctx context.Context, id string) (bool, error) {
 	start := time.Now()
 	var isSystem bool
 	query := "SELECT is_system FROM theme WHERE id = $1"
-	logger.Trace("[DB] Executing IsSystemTheme for %s: %s", id, query)
-	err := s.DB.Get(&isSystem, query, id)
+	logger.TraceCtx(ctx, "[DB] Executing IsSystemTheme for %s: %s", id, query)
+	err := s.DB.GetContext(ctx, &isSystem, query, id)
 	if err != nil {
-		logger.Error("[DB] IsSystemTheme failed for %s: %v", id, err)
+		logger.ErrorCtx(ctx, "[DB] IsSystemTheme failed for %s: %v", id, err)
 	}
-	logger.Debug("[DB] IsSystemTheme for %s took %v", id, time.Since(start))
+	logger.DebugCtx(ctx, "[DB] IsSystemTheme for %s took %v", id, time.Since(start))
 	return isSystem, err
 }

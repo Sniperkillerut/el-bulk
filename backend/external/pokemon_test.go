@@ -1,6 +1,7 @@
 package external
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -51,26 +52,26 @@ func TestLookupPokemonCard(t *testing.T) {
 	defer func() { PokemonTCGBase = originalBase }()
 
 	t.Run("Success", func(t *testing.T) {
-		res, err := LookupPokemonCard("Charizard", "base1")
+		res, err := LookupPokemonCard(context.Background(), "Charizard", "base1")
 		assert.NoError(t, err)
 		assert.Equal(t, "Charizard", res.Name)
 		assert.Equal(t, "large.png", res.ImageURL)
 	})
 
 	t.Run("No Image Error", func(t *testing.T) {
-		_, err := LookupPokemonCard("No Image", "")
+		_, err := LookupPokemonCard(context.Background(), "No Image", "")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "no image")
 	})
 
 	t.Run("Not Found", func(t *testing.T) {
-		_, err := LookupPokemonCard("Nonexistent", "")
+		_, err := LookupPokemonCard(context.Background(), "Nonexistent", "")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "card not found")
 	})
 
 	t.Run("Empty Name", func(t *testing.T) {
-		_, err := LookupPokemonCard("", "")
+		_, err := LookupPokemonCard(context.Background(), "", "")
 		assert.Error(t, err)
 	})
 }

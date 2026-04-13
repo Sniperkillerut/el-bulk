@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -84,7 +85,7 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 			).
 			WillReturnResult(sqlmock.NewResult(0, 2))
 
-		updated, errs := svc.RunPriceRefresh()
+		updated, errs := svc.RunPriceRefresh(context.Background())
 
 		assert.Equal(t, 2, updated)
 		assert.Equal(t, 0, errs)
@@ -95,7 +96,7 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 		mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM product").
 			WillReturnRows(sqlmock.NewRows([]string{"id", "tcg", "name", "set_code", "foil_treatment", "price_source"}))
 
-		updated, errs := svc.RunPriceRefresh()
+		updated, errs := svc.RunPriceRefresh(context.Background())
 
 		assert.Equal(t, 0, updated)
 		assert.Equal(t, 0, errs)
@@ -106,7 +107,7 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 		mock.ExpectQuery("SELECT id, tcg, name, set_code, foil_treatment, price_source FROM product").
 			WillReturnError(fmt.Errorf("db error"))
 
-		updated, errs := svc.RunPriceRefresh()
+		updated, errs := svc.RunPriceRefresh(context.Background())
 
 		assert.Equal(t, 0, updated)
 		assert.Equal(t, 1, errs)
@@ -121,7 +122,7 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 		external.ScryfallBase = "http://invalid-url-123.com"
 		defer func() { external.ScryfallBase = oldBase }()
 
-		updated, errs := svc.RunPriceRefresh()
+		updated, errs := svc.RunPriceRefresh(context.Background())
 		assert.Equal(t, 0, updated)
 		assert.Equal(t, 1, errs)
 		assert.NoError(t, mock.ExpectationsWereMet())

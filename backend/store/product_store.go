@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -46,15 +47,15 @@ type ProductFilterParams struct {
 	Offset      int
 }
 
-func (s *ProductStore) ListWithFilters(params ProductFilterParams) ([]models.Product, int, error) {
+func (s *ProductStore) ListWithFilters(ctx context.Context, params ProductFilterParams) ([]models.Product, int, error) {
 	start := time.Now()
 	fromClause, where, args := s.buildFilters(params)
 
 	var total int
 	countQuery := fmt.Sprintf("SELECT COUNT(*) %s %s", fromClause, where)
-	logger.Trace("[DB] Executing countQuery in ListWithFilters: %s | Args: %+v", countQuery, args)
-	if err := s.DB.Get(&total, countQuery, args...); err != nil {
-		logger.Error("[DB] ListWithFilters countQuery failed: %v", err)
+	logger.TraceCtx(ctx, "[DB] Executing countQuery in ListWithFilters: %s | Args: %+v", countQuery, args)
+	if err := s.DB.GetContext(ctx, &total, countQuery, args...); err != nil {
+		logger.ErrorCtx(ctx, "[DB] ListWithFilters countQuery failed: %v", err)
 		return nil, 0, err
 	}
 
@@ -78,11 +79,11 @@ func (s *ProductStore) ListWithFilters(params ProductFilterParams) ([]models.Pro
 		DeckCardsJSON  []byte `db:"deck_cards_json"`
 	}
 
-	if err := s.DB.Unsafe().Select(&rows, listQuery, listArgs...); err != nil {
-		logger.Error("[DB] ListWithFilters listQuery failed: %v", err)
+	if err := s.DB.Unsafe().SelectContext(ctx, &rows, listQuery, listArgs...); err != nil {
+		logger.ErrorCtx(ctx, "[DB] ListWithFilters listQuery failed: %v", err)
 		return nil, 0, err
 	}
-	logger.Debug("[DB] ListWithFilters (count+list) took %v", time.Since(start))
+	logger.DebugCtx(ctx, "[DB] ListWithFilters (count+list) took %v", time.Since(start))
 
 	products := make([]models.Product, len(rows))
 	for i, r := range rows {
@@ -101,30 +102,30 @@ func (s *ProductStore) ListWithFilters(params ProductFilterParams) ([]models.Pro
 	return products, total, nil
 }
 
-func (s *ProductStore) GetFacets(params ProductFilterParams, isAdmin bool) (models.Facets, error) {
+func (s *ProductStore) GetFacets(ctx context.Context, params ProductFilterParams, isAdmin bool) (models.Facets, error) {
 	// Generate cache key from params
 	cacheKey := fmt.Sprintf("facets:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v",
 		params.TCG, params.Category, params.Search, params.StorageID, params.Foil, params.Treatment, params.Condition,
 		params.Rarity, params.Language, params.Color, params.Collection, params.SetName, params.InStock, params.FilterLogic, isAdmin)
 
 	if cached, ok := s.facetCache.Get(cacheKey); ok {
-		logger.Trace("[CACHE] Facet hit for key: %s", cacheKey)
+		logger.TraceCtx(ctx, "[CACHE] Facet hit for key: %s", cacheKey)
 		return cached, nil
 	}
 
 	var result []byte
 	start := time.Now()
 	query := "SELECT fn_get_product_facets($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)"
-	logger.Trace("[DB] Executing GetFacets: %s", query)
-	err := s.DB.Get(&result, query,
+	logger.TraceCtx(ctx, "[DB] Executing GetFacets: %s", query)
+	err := s.DB.GetContext(ctx, &result, query,
 		params.TCG, params.Category, params.Search, params.StorageID, params.Foil, params.Treatment, params.Condition,
 		params.Rarity, params.Language, params.Color, params.Collection, params.SetName, params.InStock, params.FilterLogic, isAdmin)
 
 	if err != nil {
-		logger.Error("[DB] GetFacets failed: %v", err)
+		logger.ErrorCtx(ctx, "[DB] GetFacets failed: %v", err)
 		return models.Facets{}, err
 	}
-	logger.Debug("[DB] GetFacets took %v", time.Since(start))
+	logger.DebugCtx(ctx, "[DB] GetFacets took %v", time.Since(start))
 
 	var facets models.Facets
 	if err := json.Unmarshal(result, &facets); err != nil {
@@ -137,7 +138,7 @@ func (s *ProductStore) GetFacets(params ProductFilterParams, isAdmin bool) (mode
 	return facets, nil
 }
 
-func (s *ProductStore) PopulateStorage(products []models.Product) error {
+func (s *ProductStore) PopulateStorage(ctx context.Context, products []models.Product) error {
 	if len(products) == 0 {
 		return nil
 	}
@@ -169,7 +170,7 @@ func (s *ProductStore) PopulateStorage(products []models.Product) error {
 		Name      string `db:"name"`
 		Quantity  int    `db:"quantity"`
 	}
-	if err := s.DB.Select(&storageRows, query, args...); err != nil {
+	if err := s.DB.SelectContext(ctx, &storageRows, query, args...); err != nil {
 		return err
 	}
 
@@ -192,7 +193,7 @@ func (s *ProductStore) PopulateStorage(products []models.Product) error {
 	return nil
 }
 
-func (s *ProductStore) PopulateCategories(products []models.Product) error {
+func (s *ProductStore) PopulateCategories(ctx context.Context, products []models.Product) error {
 	if len(products) == 0 {
 		return nil
 	}
@@ -233,7 +234,7 @@ func (s *ProductStore) PopulateCategories(products []models.Product) error {
 		TextColor  *string `db:"text_color"`
 		Icon       *string `db:"icon"`
 	}
-	if err := s.DB.Select(&catRows, query, args...); err != nil {
+	if err := s.DB.SelectContext(ctx, &catRows, query, args...); err != nil {
 		return err
 	}
 
@@ -262,7 +263,7 @@ func (s *ProductStore) PopulateCategories(products []models.Product) error {
 	return nil
 }
 
-func (s *ProductStore) PopulateCartCounts(products []models.Product) error {
+func (s *ProductStore) PopulateCartCounts(ctx context.Context, products []models.Product) error {
 	if len(products) == 0 {
 		return nil
 	}
@@ -293,7 +294,7 @@ func (s *ProductStore) PopulateCartCounts(products []models.Product) error {
 		ProductID string `db:"product_id"`
 		CartCount int    `db:"cart_count"`
 	}
-	if err := s.DB.Select(&countRows, query, args...); err != nil {
+	if err := s.DB.SelectContext(ctx, &countRows, query, args...); err != nil {
 		return err
 	}
 
@@ -308,7 +309,7 @@ func (s *ProductStore) PopulateCartCounts(products []models.Product) error {
 	return nil
 }
 
-func (s *ProductStore) GetHotProductIDs(hotDays, hotSales int, candidateIDs []string) ([]string, error) {
+func (s *ProductStore) GetHotProductIDs(ctx context.Context, hotDays, hotSales int, candidateIDs []string) ([]string, error) {
 	if len(candidateIDs) == 0 {
 		return []string{}, nil
 	}
@@ -342,28 +343,28 @@ func (s *ProductStore) GetHotProductIDs(hotDays, hotSales int, candidateIDs []st
 	var hotIDs []string
 	// Explicitly rebind using DOLLAR for Postgres compatibility, 
 	// as some custom driver names (like cloudsql-postgres) might not be auto-detected by sqlx.
-	err = s.DB.Select(&hotIDs, sqlx.Rebind(sqlx.DOLLAR, query), args...)
+	err = s.DB.SelectContext(ctx, &hotIDs, sqlx.Rebind(sqlx.DOLLAR, query), args...)
 	return hotIDs, err
 }
 
-func (s *ProductStore) SaveCategories(productID string, categoryIDs []string) error {
+func (s *ProductStore) SaveCategories(ctx context.Context, productID string, categoryIDs []string) error {
 	s.facetCache.Clear()
-	_, err := s.DB.Exec("DELETE FROM product_category WHERE product_id = $1", productID)
+	_, err := s.DB.ExecContext(ctx, "DELETE FROM product_category WHERE product_id = $1", productID)
 	if err != nil {
 		return err
 	}
 	for _, cid := range categoryIDs {
-		_, err := s.DB.Exec("INSERT INTO product_category (product_id, category_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", productID, cid)
+		_, err := s.DB.ExecContext(ctx, "INSERT INTO product_category (product_id, category_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", productID, cid)
 		if err != nil {
-			logger.Error("Error inserting product_category (product=%s, cat=%s): %v", productID, cid, err)
+			logger.ErrorCtx(ctx, "Error inserting product_category (product=%s, cat=%s): %v", productID, cid, err)
 		}
 	}
 	return nil
 }
 
-func (s *ProductStore) SaveDeckCards(productID string, cards []models.DeckCard) error {
+func (s *ProductStore) SaveDeckCards(ctx context.Context, productID string, cards []models.DeckCard) error {
 	s.facetCache.Clear()
-	_, err := s.DB.Exec("DELETE FROM deck_card WHERE product_id = $1", productID)
+	_, err := s.DB.ExecContext(ctx, "DELETE FROM deck_card WHERE product_id = $1", productID)
 	if err != nil {
 		return err
 	}
@@ -382,17 +383,17 @@ func (s *ProductStore) SaveDeckCards(productID string, cards []models.DeckCard) 
 	}
 
 	query += strings.Join(placeholders, ", ")
-	logger.Trace("[DB] Executing SaveDeckCards for product %s: %s | Values: %d", productID, query, len(values))
-	_, err = s.DB.Exec(query, values...)
+	logger.TraceCtx(ctx, "[DB] Executing SaveDeckCards for product %s: %s | Values: %d", productID, query, len(values))
+	_, err = s.DB.ExecContext(ctx, query, values...)
 	if err != nil {
-		logger.Error("[DB] SaveDeckCards failed for product %s: %v", productID, err)
+		logger.ErrorCtx(ctx, "[DB] SaveDeckCards failed for product %s: %v", productID, err)
 	}
 	return err
 }
 
-func (s *ProductStore) SaveStorage(productID string, items []models.StorageLocation) error {
+func (s *ProductStore) SaveStorage(ctx context.Context, productID string, items []models.StorageLocation) error {
 	s.facetCache.Clear()
-	_, err := s.DB.Exec("DELETE FROM product_storage WHERE product_id = $1", productID)
+	_, err := s.DB.ExecContext(ctx, "DELETE FROM product_storage WHERE product_id = $1", productID)
 	if err != nil {
 		return err
 	}
@@ -418,15 +419,15 @@ func (s *ProductStore) SaveStorage(productID string, items []models.StorageLocat
 	}
 
 	query += strings.Join(placeholders, ", ")
-	logger.Trace("[DB] Executing SaveStorage for product %s: %s | Values: %d", productID, query, len(values))
-	_, err = s.DB.Exec(query, values...)
+	logger.TraceCtx(ctx, "[DB] Executing SaveStorage for product %s: %s | Values: %d", productID, query, len(values))
+	_, err = s.DB.ExecContext(ctx, query, values...)
 	if err != nil {
-		logger.Error("[DB] SaveStorage failed for product %s: %v", productID, err)
+		logger.ErrorCtx(ctx, "[DB] SaveStorage failed for product %s: %v", productID, err)
 	}
 	return err
 }
 
-func (s *ProductStore) CreateProduct(input models.ProductInput) (*models.Product, error) {
+func (s *ProductStore) CreateProduct(ctx context.Context, input models.ProductInput) (*models.Product, error) {
 	if input.FoilTreatment == "" {
 		input.FoilTreatment = models.FoilNonFoil
 	}
@@ -450,7 +451,7 @@ func (s *ProductStore) CreateProduct(input models.ProductInput) (*models.Product
 		$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34
 	) RETURNING *`
 
-	err := s.DB.QueryRowx(query,
+	err := s.DB.QueryRowxContext(ctx, query,
 		input.Name, input.TCG, input.Category, input.SetName, input.SetCode, input.Condition,
 		input.FoilTreatment, input.CardTreatment,
 		input.PriceReference, input.PriceSource, input.PriceCOPOverride,
@@ -459,12 +460,12 @@ func (s *ProductStore) CreateProduct(input models.ProductInput) (*models.Product
 		input.OracleText, input.Artist, input.TypeLine, input.BorderColor, input.Frame, input.FullArt, input.Textless, input.ScryfallID,
 	).StructScan(&product)
 
-	logger.Debug("[DB] CreateProduct result: %+v | Error: %v", product.ID, err)
+	logger.DebugCtx(ctx, "[DB] CreateProduct result: %+v | Error: %v", product.ID, err)
 
 	return &product, err
 }
 
-func (s *ProductStore) UpdateProduct(id string, input models.ProductInput) (*models.Product, error) {
+func (s *ProductStore) UpdateProduct(ctx context.Context, id string, input models.ProductInput) (*models.Product, error) {
 	if input.PriceSource == "" {
 		input.PriceSource = models.PriceSourceManual
 	}
@@ -480,7 +481,7 @@ func (s *ProductStore) UpdateProduct(id string, input models.ProductInput) (*mod
 		oracle_text=$27, artist=$28, type_line=$29, border_color=$30, frame=$31, full_art=$32, textless=$33, scryfall_id=$34
 	WHERE id=$35 RETURNING *`
 
-	err := s.DB.QueryRowx(query,
+	err := s.DB.QueryRowxContext(ctx, query,
 		input.Name, input.TCG, input.Category, input.SetName, input.SetCode, input.Condition,
 		input.FoilTreatment, input.CardTreatment,
 		input.PriceReference, input.PriceSource, input.PriceCOPOverride,
@@ -490,17 +491,17 @@ func (s *ProductStore) UpdateProduct(id string, input models.ProductInput) (*mod
 		id,
 	).StructScan(&product)
 
-	logger.Debug("[DB] UpdateProduct result: %+v | Error: %v", product.ID, err)
+	logger.DebugCtx(ctx, "[DB] UpdateProduct result: %+v | Error: %v", product.ID, err)
 	return &product, err
 }
 
-func (s *ProductStore) GetEnrichedByID(id string) (*models.Product, error) {
+func (s *ProductStore) GetEnrichedByID(ctx context.Context, id string) (*models.Product, error) {
 	var jsonResult []byte
 	query := "SELECT fn_get_product_detail($1)"
-	logger.Trace("[DB] Executing GetEnrichedByID for %s: %s", id, query)
-	err := s.DB.Get(&jsonResult, query, id)
+	logger.TraceCtx(ctx, "[DB] Executing GetEnrichedByID for %s: %s", id, query)
+	err := s.DB.GetContext(ctx, &jsonResult, query, id)
 	if err != nil {
-		logger.Error("[DB] GetEnrichedByID failed for %s: %v", id, err)
+		logger.ErrorCtx(ctx, "[DB] GetEnrichedByID failed for %s: %v", id, err)
 		return nil, err
 	}
 
@@ -511,16 +512,16 @@ func (s *ProductStore) GetEnrichedByID(id string) (*models.Product, error) {
 	return &product, nil
 }
 
-func (s *ProductStore) BulkUpsert(jsonData string) ([]string, error) {
+func (s *ProductStore) BulkUpsert(ctx context.Context, jsonData string) ([]string, error) {
 	var ids []struct {
 		ID string `db:"upserted_id"`
 	}
 	s.facetCache.Clear()
 	query := "SELECT upserted_id FROM fn_bulk_upsert_product($1)"
-	logger.Trace("[DB] Executing BulkUpsert: %s | DataLen: %d", query, len(jsonData))
-	err := s.DB.Select(&ids, query, jsonData)
+	logger.TraceCtx(ctx, "[DB] Executing BulkUpsert: %s | DataLen: %d", query, len(jsonData))
+	err := s.DB.SelectContext(ctx, &ids, query, jsonData)
 	if err != nil {
-		logger.Error("[DB] BulkUpsert failed: %v", err)
+		logger.ErrorCtx(ctx, "[DB] BulkUpsert failed: %v", err)
 		return nil, err
 	}
 

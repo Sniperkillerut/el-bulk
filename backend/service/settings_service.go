@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"strconv"
 	"sync"
 	"time"
@@ -26,16 +27,16 @@ func NewSettingsService(s *store.SettingsStore) *SettingsService {
 	}
 }
 
-func (s *SettingsService) GetSettings() (models.Settings, error) {
+func (s *SettingsService) GetSettings(ctx context.Context) (models.Settings, error) {
 	s.mu.RLock()
 	if time.Since(s.cacheTime) < s.cacheDuration {
 		val := s.cache
 		s.mu.RUnlock()
-		logger.Debug("Settings cache hit")
+		logger.DebugCtx(ctx, "Settings cache hit")
 		return val, nil
 	}
 	s.mu.RUnlock()
-	logger.Trace("Settings cache miss or expired, reloading from DB")
+	logger.TraceCtx(ctx, "Settings cache miss or expired, reloading from DB")
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -61,7 +62,7 @@ func (s *SettingsService) GetSettings() (models.Settings, error) {
 		HideLanguageSelector: false,
 	}
 
-	raw, err := s.Store.GetAll()
+	raw, err := s.Store.GetAll(ctx)
 	if err != nil {
 		return settings, err
 	}
@@ -119,18 +120,18 @@ func (s *SettingsService) GetSettings() (models.Settings, error) {
 	return settings, nil
 }
 
-func (s *SettingsService) Upsert(key, value string) error {
-	logger.Trace("Entering SettingsService.Upsert | Key: %s", key)
-	err := s.Store.Upsert(key, value)
+func (s *SettingsService) Upsert(ctx context.Context, key, value string) error {
+	logger.TraceCtx(ctx, "Entering SettingsService.Upsert | Key: %s", key)
+	err := s.Store.Upsert(ctx, key, value)
 	if err != nil {
-		logger.Error("Failed to upsert setting %s: %v", key, err)
+		logger.ErrorCtx(ctx, "Failed to upsert setting %s: %v", key, err)
 		return err
 	}
 	
 	s.mu.Lock()
 	s.cacheTime = time.Time{} // Invalidate cache
 	s.mu.Unlock()
-	logger.Debug("Settings cache invalidated after upsert of %s", key)
+	logger.DebugCtx(ctx, "Settings cache invalidated after upsert of %s", key)
 	
 	return nil
 }

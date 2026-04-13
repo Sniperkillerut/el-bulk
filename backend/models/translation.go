@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -13,9 +14,9 @@ type Translation struct {
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
 
-func GetAllTranslations(db *sqlx.DB) (map[string]map[string]string, error) {
+func GetAllTranslations(ctx context.Context, db *sqlx.DB) (map[string]map[string]string, error) {
 	query := `SELECT key, locale, value FROM translation`
-	rows, err := db.Query(query)
+	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -36,9 +37,9 @@ func GetAllTranslations(db *sqlx.DB) (map[string]map[string]string, error) {
 	return translations, nil
 }
 
-func GetTranslationsByLocale(db *sqlx.DB, locale string) (map[string]string, error) {
+func GetTranslationsByLocale(ctx context.Context, db *sqlx.DB, locale string) (map[string]string, error) {
 	query := `SELECT key, value FROM translation WHERE locale = $1`
-	rows, err := db.Query(query, locale)
+	rows, err := db.QueryContext(ctx, query, locale)
 	if err != nil {
 		return nil, err
 	}
@@ -55,26 +56,26 @@ func GetTranslationsByLocale(db *sqlx.DB, locale string) (map[string]string, err
 	return translations, nil
 }
 
-func UpsertTranslation(db *sqlx.DB, t Translation) error {
+func UpsertTranslation(ctx context.Context, db *sqlx.DB, t Translation) error {
 	query := `
 		INSERT INTO translation (key, locale, value, updated_at)
 		VALUES ($1, $2, $3, now())
 		ON CONFLICT (key, locale) DO UPDATE
 		SET value = EXCLUDED.value, updated_at = now()
 	`
-	_, err := db.Exec(query, t.Key, t.Locale, t.Value)
+	_, err := db.ExecContext(ctx, query, t.Key, t.Locale, t.Value)
 	return err
 }
 
-func DeleteTranslation(db *sqlx.DB, key, locale string) error {
+func DeleteTranslation(ctx context.Context, db *sqlx.DB, key, locale string) error {
 	query := `DELETE FROM translation WHERE key = $1 AND locale = $2`
-	_, err := db.Exec(query, key, locale)
+	_, err := db.ExecContext(ctx, query, key, locale)
 	return err
 }
 
-func ListAllTranslationKeys(db *sqlx.DB) ([]Translation, error) {
+func ListAllTranslationKeys(ctx context.Context, db *sqlx.DB) ([]Translation, error) {
 	query := `SELECT key, locale, value, updated_at FROM translation ORDER BY key, locale`
-	rows, err := db.Query(query)
+	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -91,8 +92,8 @@ func ListAllTranslationKeys(db *sqlx.DB) ([]Translation, error) {
 	return translations, nil
 }
 
-func DeleteLocale(db *sqlx.DB, locale string) error {
+func DeleteLocale(ctx context.Context, db *sqlx.DB, locale string) error {
 	query := `DELETE FROM translation WHERE locale = $1`
-	_, err := db.Exec(query, locale)
+	_, err := db.ExecContext(ctx, query, locale)
 	return err
 }

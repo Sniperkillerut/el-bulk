@@ -18,9 +18,9 @@ type CustomerAdminHandler struct {
 }
 
 func (h *CustomerAdminHandler) ListCustomers(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering CustomerAdminHandler.ListCustomers")
+	logger.TraceCtx(r.Context(), "Entering CustomerAdminHandler.ListCustomers")
 	var customers []models.CustomerStats
-	err := h.DB.Select(&customers, `
+	err := h.DB.SelectContext(r.Context(), &customers, `
 		SELECT 
 			c.*,
 			(SELECT COUNT(*) FROM "order" o WHERE o.customer_id = c.id) as order_count,
@@ -35,7 +35,7 @@ func (h *CustomerAdminHandler) ListCustomers(w http.ResponseWriter, r *http.Requ
 		ORDER BY created_at DESC
 	`)
 	if err != nil {
-		logger.Error("Failed to list customers: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to list customers: %v", err)
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
@@ -56,16 +56,16 @@ func (h *CustomerAdminHandler) ListCustomers(w http.ResponseWriter, r *http.Requ
 
 func (h *CustomerAdminHandler) GetCustomerDetail(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	logger.Trace("Entering CustomerAdminHandler.GetCustomerDetail | ID: %s", id)
+	logger.TraceCtx(r.Context(), "Entering CustomerAdminHandler.GetCustomerDetail | ID: %s", id)
 	if id == "" {
 		render.Error(w, "ID is required", http.StatusBadRequest)
 		return
 	}
 
 	var detail models.CustomerDetail
-	err := h.DB.Get(&detail.Customer, "SELECT * FROM customer WHERE id = $1", id)
+	err := h.DB.GetContext(r.Context(), &detail.Customer, "SELECT * FROM customer WHERE id = $1", id)
 	if err != nil {
-		logger.Error("Error fetching customer %s: %v", id, err)
+		logger.ErrorCtx(r.Context(), "Error fetching customer %s: %v", id, err)
 		render.Error(w, "Customer not found", http.StatusNotFound)
 		return
 	}
@@ -76,15 +76,15 @@ func (h *CustomerAdminHandler) GetCustomerDetail(w http.ResponseWriter, r *http.
 	detail.Customer.Address = crypto.DecryptSafe(detail.Customer.Address)
 
 	// Fetch orders
-	err = h.DB.Select(&detail.Orders, "SELECT * FROM \"order\" WHERE customer_id = $1 ORDER BY created_at DESC", id)
+	err = h.DB.SelectContext(r.Context(), &detail.Orders, "SELECT * FROM \"order\" WHERE customer_id = $1 ORDER BY created_at DESC", id)
 	if err != nil {
-		logger.Error("Error fetching orders for customer %s: %v", id, err)
+		logger.ErrorCtx(r.Context(), "Error fetching orders for customer %s: %v", id, err)
 		render.Error(w, "Error fetching orders", http.StatusInternalServerError)
 		return
 	}
 
 	// Fetch notes
-	err = h.DB.Select(&detail.Notes, `
+	err = h.DB.SelectContext(r.Context(), &detail.Notes, `
 		SELECT n.*, a.username as admin_name
 		FROM customer_note n
 		LEFT JOIN admin a ON n.admin_id = a.id
@@ -92,22 +92,22 @@ func (h *CustomerAdminHandler) GetCustomerDetail(w http.ResponseWriter, r *http.
 		ORDER BY n.created_at DESC
 	`, id)
 	if err != nil {
-		logger.Error("Error fetching notes for customer %s: %v", id, err)
+		logger.ErrorCtx(r.Context(), "Error fetching notes for customer %s: %v", id, err)
 		render.Error(w, "Error fetching notes", http.StatusInternalServerError)
 		return
 	}
 
 	// Fetch subscription status
-	_ = h.DB.Get(&detail.IsSubscriber, "SELECT EXISTS(SELECT 1 FROM newsletter_subscriber WHERE customer_id = $1 OR email = $2)", id, detail.Email)
+	_ = h.DB.GetContext(r.Context(), &detail.IsSubscriber, "SELECT EXISTS(SELECT 1 FROM newsletter_subscriber WHERE customer_id = $1 OR email = $2)", id, detail.Email)
 	
 	// Fetch requests
-	err = h.DB.Select(&detail.Requests, `SELECT * FROM client_request WHERE customer_id = $1 OR customer_contact = $2 ORDER BY created_at DESC`, id, detail.Email)
+	err = h.DB.SelectContext(r.Context(), &detail.Requests, `SELECT * FROM client_request WHERE customer_id = $1 OR customer_contact = $2 ORDER BY created_at DESC`, id, detail.Email)
 	if err != nil {
 		detail.Requests = []models.ClientRequest{}
 	}
 
 	// Fetch bounty offers
-	err = h.DB.Select(&detail.Offers, `
+	err = h.DB.SelectContext(r.Context(), &detail.Offers, `
 		SELECT o.*, b.name as bounty_name
 		FROM bounty_offer o
 		JOIN bounty b ON o.bounty_id = b.id
@@ -136,7 +136,7 @@ func (h *CustomerAdminHandler) GetCustomerDetail(w http.ResponseWriter, r *http.
 
 func (h *CustomerAdminHandler) AddNote(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	logger.Trace("Entering CustomerAdminHandler.AddNote | CustomerID: %s", id)
+	logger.TraceCtx(r.Context(), "Entering CustomerAdminHandler.AddNote | CustomerID: %s", id)
 	if id == "" {
 		render.Error(w, "ID is required", http.StatusBadRequest)
 		return
@@ -159,13 +159,13 @@ func (h *CustomerAdminHandler) AddNote(w http.ResponseWriter, r *http.Request) {
 	// Get admin ID from context (set by AdminAuth middleware)
 	adminID := r.Context().Value(middleware.AdminContextKey)
 
-	_, err := h.DB.Exec(`
+	_, err := h.DB.ExecContext(r.Context(), `
 		INSERT INTO customer_note (customer_id, order_id, content, admin_id)
 		VALUES ($1, $2, $3, $4)
 	`, id, input.OrderID, input.Content, adminID)
 
 	if err != nil {
-		logger.Error("Failed to add note for customer %s: %v", id, err)
+		logger.ErrorCtx(r.Context(), "Failed to add note for customer %s: %v", id, err)
 		render.Error(w, "Failed to add note", http.StatusInternalServerError)
 		return
 	}

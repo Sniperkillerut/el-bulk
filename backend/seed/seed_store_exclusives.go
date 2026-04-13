@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -18,6 +19,7 @@ func seedStoreExclusives(db *sqlx.DB, cats CategoryMap, storage StorageMap) ([]s
 		inserted := 0
 		for _, identifier := range identifiers {
 			res, err := external.LookupMTGCard(
+				context.Background(),
 				identifier.ScryfallID, identifier.Name, identifier.Set,
 				identifier.CollectorNumber, "non_foil",
 			)

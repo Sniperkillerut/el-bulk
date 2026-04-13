@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -17,8 +18,8 @@ func NewBountyService(s *store.BountyStore) *BountyService {
 	return &BountyService{Store: s}
 }
 
-func (s *BountyService) ListBounties(activeParam string) ([]models.Bounty, error) {
-	bounties, err := s.Store.ListBounties(activeParam)
+func (s *BountyService) ListBounties(ctx context.Context, activeParam string) ([]models.Bounty, error) {
+	bounties, err := s.Store.ListBounties(ctx, activeParam)
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +29,7 @@ func (s *BountyService) ListBounties(activeParam string) ([]models.Bounty, error
 	return bounties, nil
 }
 
-func (s *BountyService) CreateBounty(input models.BountyInput) (*models.Bounty, error) {
+func (s *BountyService) CreateBounty(ctx context.Context, input models.BountyInput) (*models.Bounty, error) {
 	if input.Name == "" || input.TCG == "" {
 		return nil, fmt.Errorf("name and tcg are required")
 	}
@@ -36,25 +37,25 @@ func (s *BountyService) CreateBounty(input models.BountyInput) (*models.Bounty, 
 	if input.IsActive != nil {
 		isActive = *input.IsActive
 	}
-	return s.Store.CreateBounty(input, isActive)
+	return s.Store.CreateBounty(ctx, input, isActive)
 }
 
-func (s *BountyService) UpdateBounty(id string, input models.BountyInput) (*models.Bounty, error) {
+func (s *BountyService) UpdateBounty(ctx context.Context, id string, input models.BountyInput) (*models.Bounty, error) {
 	isActive := true
 	if input.IsActive != nil {
 		isActive = *input.IsActive
 	}
-	return s.Store.UpdateBounty(id, input, isActive)
+	return s.Store.UpdateBounty(ctx, id, input, isActive)
 }
 
-func (s *BountyService) DeleteBounty(id string) (int64, error) {
-	return s.Store.DeleteBounty(id)
+func (s *BountyService) DeleteBounty(ctx context.Context, id string) (int64, error) {
+	return s.Store.DeleteBounty(ctx, id)
 }
 
 // ── Offers ──────────────────────────────────────────────
 
-func (s *BountyService) ListOffers() ([]models.BountyOffer, error) {
-	offers, err := s.Store.ListOffers()
+func (s *BountyService) ListOffers(ctx context.Context) ([]models.BountyOffer, error) {
+	offers, err := s.Store.ListOffers(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +69,7 @@ func (s *BountyService) ListOffers() ([]models.BountyOffer, error) {
 	return offers, nil
 }
 
-func (s *BountyService) SubmitOffer(input models.BountyOfferInput, userID *string) (*models.BountyOffer, error) {
+func (s *BountyService) SubmitOffer(ctx context.Context, input models.BountyOfferInput, userID *string) (*models.BountyOffer, error) {
 	if input.BountyID == "" || input.CustomerName == "" || input.CustomerContact == "" {
 		return nil, fmt.Errorf("BountyID, customer_name, and customer_contact are required")
 	}
@@ -77,7 +78,7 @@ func (s *BountyService) SubmitOffer(input models.BountyOfferInput, userID *strin
 	}
 
 	result, err := s.Store.SubmitOffer(
-		input.BountyID, input.CustomerName, input.CustomerContact,
+		ctx, input.BountyID, input.CustomerName, input.CustomerContact,
 		input.Quantity, input.Condition, input.Notes, input.Status, userID,
 	)
 	if err != nil {
@@ -91,8 +92,8 @@ func (s *BountyService) SubmitOffer(input models.BountyOfferInput, userID *strin
 	return &offer, nil
 }
 
-func (s *BountyService) UpdateOfferStatus(id, status string) (*models.BountyOffer, error) {
-	offer, err := s.Store.UpdateOfferStatus(id, status)
+func (s *BountyService) UpdateOfferStatus(ctx context.Context, id, status string) (*models.BountyOffer, error) {
+	offer, err := s.Store.UpdateOfferStatus(ctx, id, status)
 	if err != nil {
 		return nil, err
 	}
@@ -101,8 +102,8 @@ func (s *BountyService) UpdateOfferStatus(id, status string) (*models.BountyOffe
 	return offer, nil
 }
 
-func (s *BountyService) ListMeOffers(userID string) ([]models.BountyOffer, error) {
-	offers, err := s.Store.ListMeOffers(userID)
+func (s *BountyService) ListMeOffers(ctx context.Context, userID string) ([]models.BountyOffer, error) {
+	offers, err := s.Store.ListMeOffers(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -112,8 +113,8 @@ func (s *BountyService) ListMeOffers(userID string) ([]models.BountyOffer, error
 	return offers, nil
 }
 
-func (s *BountyService) CancelMeOffer(id, userID string) error {
-	rows, err := s.Store.CancelMeOffer(id, userID)
+func (s *BountyService) CancelMeOffer(ctx context.Context, id, userID string) error {
+	rows, err := s.Store.CancelMeOffer(ctx, id, userID)
 	if err != nil {
 		return err
 	}
@@ -125,8 +126,8 @@ func (s *BountyService) CancelMeOffer(id, userID string) error {
 
 // ── Client Requests ─────────────────────────────────────
 
-func (s *BountyService) ListRequests() ([]models.ClientRequest, error) {
-	requests, err := s.Store.ListRequests()
+func (s *BountyService) ListRequests(ctx context.Context) ([]models.ClientRequest, error) {
+	requests, err := s.Store.ListRequests(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -140,13 +141,13 @@ func (s *BountyService) ListRequests() ([]models.ClientRequest, error) {
 	return requests, nil
 }
 
-func (s *BountyService) SubmitRequest(input models.ClientRequestInput, userID *string) (*models.ClientRequest, error) {
+func (s *BountyService) SubmitRequest(ctx context.Context, input models.ClientRequestInput, userID *string) (*models.ClientRequest, error) {
 	if input.CustomerName == "" || input.CustomerContact == "" || input.CardName == "" {
 		return nil, fmt.Errorf("customer_name, customer_contact, and card_name are required")
 	}
 
 	result, err := s.Store.SubmitRequest(
-		input.CustomerName, input.CustomerContact, input.CardName,
+		ctx, input.CustomerName, input.CustomerContact, input.CardName,
 		input.SetName, input.Details, userID,
 	)
 	if err != nil {
@@ -160,12 +161,12 @@ func (s *BountyService) SubmitRequest(input models.ClientRequestInput, userID *s
 	return &req, nil
 }
 
-func (s *BountyService) UpdateRequestStatus(id, status string) (*models.ClientRequest, error) {
-	return s.Store.UpdateRequestStatus(id, status)
+func (s *BountyService) UpdateRequestStatus(ctx context.Context, id, status string) (*models.ClientRequest, error) {
+	return s.Store.UpdateRequestStatus(ctx, id, status)
 }
 
-func (s *BountyService) ListMeRequests(userID string) ([]models.ClientRequest, error) {
-	requests, err := s.Store.ListMeRequests(userID)
+func (s *BountyService) ListMeRequests(ctx context.Context, userID string) ([]models.ClientRequest, error) {
+	requests, err := s.Store.ListMeRequests(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -175,8 +176,8 @@ func (s *BountyService) ListMeRequests(userID string) ([]models.ClientRequest, e
 	return requests, nil
 }
 
-func (s *BountyService) CancelMeRequest(id, userID string) error {
-	rows, err := s.Store.CancelMeRequest(id, userID)
+func (s *BountyService) CancelMeRequest(ctx context.Context, id, userID string) error {
+	rows, err := s.Store.CancelMeRequest(ctx, id, userID)
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -34,6 +35,6 @@ func BenchmarkSaveProductStorage_Bulk(b *testing.B) {
 		mock.ExpectExec("INSERT INTO product_storage").
 			WillReturnResult(sqlmock.NewResult(0, 10))
 
-		s.SaveStorage(productID, items)
+		s.SaveStorage(context.Background(), productID, items)
 	}
 }

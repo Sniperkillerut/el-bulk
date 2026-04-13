@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -16,16 +17,16 @@ func NewAuditStore(db *sqlx.DB) *AuditStore {
 	return &AuditStore{DB: db}
 }
 
-func (s *AuditStore) Create(log models.AuditLog) error {
+func (s *AuditStore) Create(ctx context.Context, log models.AuditLog) error {
 	query := `
 		INSERT INTO admin_audit_log (admin_id, admin_username, action, resource_type, resource_id, details, ip_address)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
-	_, err := s.DB.Exec(query, log.AdminID, log.AdminUsername, log.Action, log.ResourceType, log.ResourceID, log.Details, log.IPAddress)
+	_, err := s.DB.ExecContext(ctx, query, log.AdminID, log.AdminUsername, log.Action, log.ResourceType, log.ResourceID, log.Details, log.IPAddress)
 	return err
 }
 
-func (s *AuditStore) List(page, pageSize int, adminID, action, resourceType string) ([]models.AuditLog, int, error) {
+func (s *AuditStore) List(ctx context.Context, page, pageSize int, adminID, action, resourceType string) ([]models.AuditLog, int, error) {
 	var logs []models.AuditLog
 	var total int
 
@@ -55,7 +56,7 @@ func (s *AuditStore) List(page, pageSize int, adminID, action, resourceType stri
 	}
 
 	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM admin_audit_log %s", whereStr)
-	if err := s.DB.Get(&total, countQuery, args...); err != nil {
+	if err := s.DB.GetContext(ctx, &total, countQuery, args...); err != nil {
 		return nil, 0, err
 	}
 
@@ -68,7 +69,7 @@ func (s *AuditStore) List(page, pageSize int, adminID, action, resourceType stri
 		LIMIT $%d OFFSET $%d
 	`, whereStr, argIdx, argIdx+1)
 
-	if err := s.DB.Select(&logs, listQuery, limitArgs...); err != nil {
+	if err := s.DB.SelectContext(ctx, &logs, listQuery, limitArgs...); err != nil {
 		return nil, 0, err
 	}
 

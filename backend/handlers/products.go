@@ -30,7 +30,7 @@ func NewProductHandler(s *service.ProductService, db *sqlx.DB) *ProductHandler {
 }
 
 func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering ProductHandler.List | URL: %s", r.URL.String())
+	logger.TraceCtx(r.Context(), "Entering ProductHandler.List | URL: %s", r.URL.String())
 	start := time.Now()
 	q := r.URL.Query()
 
@@ -63,9 +63,9 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 		Offset:      offset,
 	}
 
-	resp, err := h.Service.List(params, isAdmin)
+	resp, err := h.Service.List(r.Context(), params, isAdmin)
 	if err != nil {
-		logger.Error("List products failed: %v", err)
+		logger.ErrorCtx(r.Context(), "List products failed: %v", err)
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
@@ -76,12 +76,12 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 
 func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	logger.Trace("Entering ProductHandler.GetByID | ID: %s", id)
+	logger.TraceCtx(r.Context(), "Entering ProductHandler.GetByID | ID: %s", id)
 	isAdmin, _ := r.Context().Value(middleware.IsAdminKey).(bool)
 
-	product, err := h.Service.GetByID(id, isAdmin)
+	product, err := h.Service.GetByID(r.Context(), id, isAdmin)
 	if err != nil {
-		logger.Error("Get product %s failed: %v", id, err)
+		logger.ErrorCtx(r.Context(), "Get product %s failed: %v", id, err)
 		render.Error(w, "Product not found", http.StatusNotFound)
 		return
 	}
@@ -91,9 +91,9 @@ func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 
 func (h *ProductHandler) ListTCGs(w http.ResponseWriter, r *http.Request) {
 	activeOnly := r.URL.Query().Get("active_only") == "true"
-	tcgs, err := h.Service.GetTCGs(activeOnly)
+	tcgs, err := h.Service.GetTCGs(r.Context(), activeOnly)
 	if err != nil {
-		logger.Error("List TCGs failed: %v", err)
+		logger.ErrorCtx(r.Context(), "List TCGs failed: %v", err)
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
@@ -101,10 +101,10 @@ func (h *ProductHandler) ListTCGs(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering ProductHandler.Create")
+	logger.TraceCtx(r.Context(), "Entering ProductHandler.Create")
 	var input models.ProductInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		logger.Error("Failed to decode product input: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to decode product input: %v", err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -116,7 +116,7 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	product, err := h.Service.Create(r.Context(), input)
 	if err != nil {
-		logger.Error("Create product failed: %v", err)
+		logger.ErrorCtx(r.Context(), "Create product failed: %v", err)
 		render.Error(w, "Failed to create product", http.StatusInternalServerError)
 		return
 	}
@@ -127,17 +127,17 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	logger.Trace("Entering ProductHandler.Update | ID: %s", id)
+	logger.TraceCtx(r.Context(), "Entering ProductHandler.Update | ID: %s", id)
 	var input models.ProductInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		logger.Error("Failed to decode update input for %s: %v", id, err)
+		logger.ErrorCtx(r.Context(), "Failed to decode update input for %s: %v", id, err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	product, err := h.Service.Update(r.Context(), id, input)
 	if err != nil {
-		logger.Error("Update product %s failed: %v", id, err)
+		logger.ErrorCtx(r.Context(), "Update product %s failed: %v", id, err)
 		render.Error(w, "Product not found or update failed", http.StatusNotFound)
 		return
 	}
@@ -147,9 +147,9 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	logger.Trace("Entering ProductHandler.Delete | ID: %s", id)
+	logger.TraceCtx(r.Context(), "Entering ProductHandler.Delete | ID: %s", id)
 	if err := h.Service.Delete(r.Context(), id); err != nil {
-		logger.Error("Delete product %s failed: %v", id, err)
+		logger.ErrorCtx(r.Context(), "Delete product %s failed: %v", id, err)
 		render.Error(w, "Delete failed", http.StatusInternalServerError)
 		return
 	}
@@ -157,20 +157,20 @@ func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProductHandler) BulkCreate(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering ProductHandler.BulkCreate")
+	logger.TraceCtx(r.Context(), "Entering ProductHandler.BulkCreate")
 	var req struct {
 		Products    []models.ProductInput `json:"products"`
 		CategoryIDs []string              `json:"category_ids,omitempty"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Error("Failed to decode bulk create input: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to decode bulk create input: %v", err)
 		render.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
 
-	count, err := h.Service.BulkCreate(req.Products, req.CategoryIDs)
+	count, err := h.Service.BulkCreate(r.Context(), req.Products, req.CategoryIDs)
 	if err != nil {
-		logger.Error("BulkCreate failed: %v", err)
+		logger.ErrorCtx(r.Context(), "BulkCreate failed: %v", err)
 		render.Error(w, "Bulk import failed", http.StatusInternalServerError)
 		return
 	}
@@ -182,17 +182,17 @@ func (h *ProductHandler) BulkCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProductHandler) BulkSearch(w http.ResponseWriter, r *http.Request) {
-	logger.Trace("Entering ProductHandler.BulkSearch")
+	logger.TraceCtx(r.Context(), "Entering ProductHandler.BulkSearch")
 	var req models.BulkSearchRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Error("Failed to decode bulk search input: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to decode bulk search input: %v", err)
 		render.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
 
-	results, err := h.Service.BulkSearch(req.List)
+	results, err := h.Service.BulkSearch(r.Context(), req.List)
 	if err != nil {
-		logger.Error("BulkSearch failed: %v", err)
+		logger.ErrorCtx(r.Context(), "BulkSearch failed: %v", err)
 		render.Error(w, "Bulk search failed", http.StatusInternalServerError)
 		return
 	}
@@ -207,9 +207,9 @@ func (h *ProductHandler) GetLowStock(w http.ResponseWriter, r *http.Request) {
 		threshold = t
 	}
 
-	products, err := h.Service.GetLowStock(threshold)
+	products, err := h.Service.GetLowStock(r.Context(), threshold)
 	if err != nil {
-		logger.Error("GetLowStock failed: %v", err)
+		logger.ErrorCtx(r.Context(), "GetLowStock failed: %v", err)
 		render.Error(w, "Query failed", http.StatusInternalServerError)
 		return
 	}
@@ -219,9 +219,9 @@ func (h *ProductHandler) GetLowStock(w http.ResponseWriter, r *http.Request) {
 
 func (h *ProductHandler) GetStorage(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	items, err := h.Service.GetStorage(id)
+	items, err := h.Service.GetStorage(r.Context(), id)
 	if err != nil {
-		logger.Error("GetStorage %s failed: %v", id, err)
+		logger.ErrorCtx(r.Context(), "GetStorage %s failed: %v", id, err)
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
@@ -230,17 +230,17 @@ func (h *ProductHandler) GetStorage(w http.ResponseWriter, r *http.Request) {
 
 func (h *ProductHandler) UpdateStorage(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	logger.Trace("Entering ProductHandler.UpdateStorage | ID: %s", id)
+	logger.TraceCtx(r.Context(), "Entering ProductHandler.UpdateStorage | ID: %s", id)
 	var updates []models.ProductStorage
 	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
-		logger.Error("Failed to decode storage update for %s: %v", id, err)
+		logger.ErrorCtx(r.Context(), "Failed to decode storage update for %s: %v", id, err)
 		render.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
 
-	items, err := h.Service.UpdateStorage(id, updates)
+	items, err := h.Service.UpdateStorage(r.Context(), id, updates)
 	if err != nil {
-		logger.Error("UpdateStorage %s failed: %v", id, err)
+		logger.ErrorCtx(r.Context(), "UpdateStorage %s failed: %v", id, err)
 		render.Error(w, "Update failed", http.StatusInternalServerError)
 		return
 	}

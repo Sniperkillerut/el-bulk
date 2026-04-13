@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/el-bulk/backend/models"
@@ -15,8 +16,8 @@ func NewStorageLocationService(s *store.StorageLocationStore) *StorageLocationSe
 	return &StorageLocationService{Store: s}
 }
 
-func (s *StorageLocationService) List() ([]models.StoredIn, error) {
-	locs, err := s.Store.List()
+func (s *StorageLocationService) List(ctx context.Context) ([]models.StoredIn, error) {
+	locs, err := s.Store.List(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -26,20 +27,20 @@ func (s *StorageLocationService) List() ([]models.StoredIn, error) {
 	return locs, nil
 }
 
-func (s *StorageLocationService) Create(name string) (*models.StoredIn, error) {
+func (s *StorageLocationService) Create(ctx context.Context, name string) (*models.StoredIn, error) {
 	if name == "" {
 		return nil, fmt.Errorf("name is required")
 	}
-	return s.Store.Create(name)
+	return s.Store.Create(ctx, name)
 }
 
-func (s *StorageLocationService) Update(id, name string) error {
+func (s *StorageLocationService) Update(ctx context.Context, id, name string) error {
 	if name == "" {
 		return fmt.Errorf("name is required")
 	}
-	return s.Store.Update(id, name)
+	return s.Store.Update(ctx, id, name)
 }
 
-func (s *StorageLocationService) Delete(id string) error {
-	return s.Store.Delete(id)
+func (s *StorageLocationService) Delete(ctx context.Context, id string) error {
+	return s.Store.Delete(ctx, id)
 }

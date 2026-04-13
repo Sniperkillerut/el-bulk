@@ -25,7 +25,7 @@ func (h *HealthHandler) Ping(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.Service.Ping()
+	err := h.Service.Ping(r.Context())
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"status": "error", "message": err.Error()})
@@ -41,9 +41,9 @@ func (h *HealthHandler) GetStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stats, err := h.Service.GetStats()
+	stats, err := h.Service.GetStats(r.Context())
 	if err != nil {
-		logger.Error("Failed to get stats: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to get stats: %v", err)
 		render.Error(w, "Failed to get stats", http.StatusInternalServerError)
 		return
 	}

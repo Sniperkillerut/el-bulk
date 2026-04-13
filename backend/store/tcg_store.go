@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -19,7 +20,7 @@ func NewTCGStore(db *sqlx.DB) *TCGStore {
 	}
 }
 
-func (s *TCGStore) ListWithCount(activeOnly bool) ([]models.TCG, error) {
+func (s *TCGStore) ListWithCount(ctx context.Context, activeOnly bool) ([]models.TCG, error) {
 	start := time.Now()
 	var tcgs []models.TCG
 	
@@ -37,37 +38,37 @@ func (s *TCGStore) ListWithCount(activeOnly bool) ([]models.TCG, error) {
 		ORDER BY t.name
 	`, where)
 	
-	logger.Trace("[DB] Executing ListWithCount (TCG): %s", query)
-	err := s.DB.Select(&tcgs, query)
+	logger.TraceCtx(ctx, "[DB] Executing ListWithCount (TCG): %s", query)
+	err := s.DB.Unsafe().SelectContext(ctx, &tcgs, query)
 	if err != nil {
-		logger.Error("[DB] ListWithCount (TCG) failed: %v", err)
+		logger.ErrorCtx(ctx, "[DB] ListWithCount (TCG) failed: %v", err)
 		return nil, err
 	}
 	if tcgs == nil {
 		tcgs = []models.TCG{}
 	}
-	logger.Debug("[DB] ListWithCount (TCG) took %v", time.Since(start))
+	logger.DebugCtx(ctx, "[DB] ListWithCount (TCG) took %v", time.Since(start))
 	return tcgs, nil
 }
 
-func (s *TCGStore) Create(input models.TCGInput) (*models.TCG, error) {
+func (s *TCGStore) Create(ctx context.Context, input models.TCGInput) (*models.TCG, error) {
 	var tcg models.TCG
 	query := `
 		INSERT INTO tcg (id, name, is_active)
 		VALUES ($1, $2, $3)
 		RETURNING *
 	`
-	logger.Trace("[DB] Executing CreateTCG: %s | ID: %s", query, input.ID)
-	err := s.DB.QueryRowx(query, input.ID, input.Name, true).StructScan(&tcg)
+	logger.TraceCtx(ctx, "[DB] Executing CreateTCG: %s | ID: %s", query, input.ID)
+	err := s.DB.QueryRowxContext(ctx, query, input.ID, input.Name, true).StructScan(&tcg)
 	if err != nil {
-		logger.Error("[DB] CreateTCG failed for %s: %v", input.ID, err)
+		logger.ErrorCtx(ctx, "[DB] CreateTCG failed for %s: %v", input.ID, err)
 	}
 	return &tcg, err
 }
 
-func (s *TCGStore) Update(id string, input models.TCGInput) (*models.TCG, error) {
+func (s *TCGStore) Update(ctx context.Context, id string, input models.TCGInput) (*models.TCG, error) {
 	var tcg models.TCG
-	err := s.DB.QueryRowx(`
+	err := s.DB.QueryRowxContext(ctx, `
 		UPDATE tcg
 		SET name = $1, is_active = $2
 		WHERE id = $3
@@ -76,15 +77,15 @@ func (s *TCGStore) Update(id string, input models.TCGInput) (*models.TCG, error)
 	return &tcg, err
 }
 
-func (s *TCGStore) GetProductCount(id string) (int, error) {
+func (s *TCGStore) GetProductCount(ctx context.Context, id string) (int, error) {
 	start := time.Now()
 	var count int
 	query := "SELECT COUNT(*) FROM product WHERE tcg = $1"
-	logger.Trace("[DB] Executing GetProductCount (TCG) for %s: %s", id, query)
-	err := s.DB.Get(&count, query, id)
+	logger.TraceCtx(ctx, "[DB] Executing GetProductCount (TCG) for %s: %s", id, query)
+	err := s.DB.GetContext(ctx, &count, query, id)
 	if err != nil {
-		logger.Error("[DB] GetProductCount (TCG) failed for %s: %v", id, err)
+		logger.ErrorCtx(ctx, "[DB] GetProductCount (TCG) failed for %s: %v", id, err)
 	}
-	logger.Debug("[DB] GetProductCount (TCG) for %s took %v", id, time.Since(start))
+	logger.DebugCtx(ctx, "[DB] GetProductCount (TCG) for %s took %v", id, time.Since(start))
 	return count, err
 }

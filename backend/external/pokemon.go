@@ -1,6 +1,7 @@
 package external
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -40,7 +41,7 @@ type pokemonAPIResponse struct {
 // Set IDs follow the API format, e.g. "base1", "swsh12", "sv3pt5".
 // If POKEMON_TCG_API_KEY env var is set it will be sent as X-Api-Key for higher rate limits.
 // The best match is the first result from the API (sorted by set release, newest first by default).
-func LookupPokemonCard(name, setID string) (*CardLookupResult, error) {
+func LookupPokemonCard(ctx context.Context, name, setID string) (*CardLookupResult, error) {
 	if name == "" {
 		return nil, errors.New("card name is required")
 	}
@@ -57,7 +58,7 @@ func LookupPokemonCard(name, setID string) (*CardLookupResult, error) {
 	params.Set("orderBy", "-set.releaseDate") // newest set first
 	reqURL := fmt.Sprintf("%s/cards?%s", PokemonTCGBase, params.Encode())
 
-	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("building pokemon request: %w", err)
 	}

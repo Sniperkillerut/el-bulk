@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"github.com/el-bulk/backend/models"
 	"github.com/jmoiron/sqlx"
 )
@@ -23,17 +24,17 @@ type AccountingRow struct {
 	Notes   string      `db:"notes"`
 }
 
-func (s *AccountingStore) GetInventoryStats() (totalItems int, totalStock int, err error) {
+func (s *AccountingStore) GetInventoryStats(ctx context.Context) (totalItems int, totalStock int, err error) {
 	var stats struct {
 		TotalItems int `db:"total_items"`
 		TotalStock int `db:"total_stock"`
 	}
-	err = s.DB.Get(&stats, "SELECT COUNT(*) as total_items, SUM(stock) as total_stock FROM product WHERE stock > 0")
+	err = s.DB.GetContext(ctx, &stats, "SELECT COUNT(*) as total_items, SUM(stock) as total_stock FROM product WHERE stock > 0")
 	return stats.TotalItems, stats.TotalStock, err
 }
 
-func (s *AccountingStore) GetInventoryValuation(usdRate, eurRate float64) (*models.InventoryValuation, error) {
-	totalItems, totalStock, err := s.GetInventoryStats()
+func (s *AccountingStore) GetInventoryValuation(ctx context.Context, usdRate, eurRate float64) (*models.InventoryValuation, error) {
+	totalItems, totalStock, err := s.GetInventoryStats(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +55,7 @@ func (s *AccountingStore) GetInventoryValuation(usdRate, eurRate float64) (*mode
 		Value float64 `db:"total_value_cop"`
 		Cost  float64 `db:"total_cost_basis_cop"`
 	}
-	err = s.DB.Get(&totals, valQuery, usdRate, eurRate)
+	err = s.DB.GetContext(ctx, &totals, valQuery, usdRate, eurRate)
 	if err != nil {
 		return nil, err
 	}

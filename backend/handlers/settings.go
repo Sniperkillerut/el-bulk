@@ -22,9 +22,9 @@ func NewSettingsHandler(s *service.SettingsService) *SettingsHandler {
 
 // GET /api/admin/settings
 func (h *SettingsHandler) Get(w http.ResponseWriter, r *http.Request) {
-	s, err := h.Service.GetSettings()
+	s, err := h.Service.GetSettings(r.Context())
 	if err != nil {
-		logger.Error("Settings error: %v", err)
+		logger.ErrorCtx(r.Context(), "Settings error: %v", err)
 		render.Error(w, "failed to load settings: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -33,7 +33,7 @@ func (h *SettingsHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 // GET /api/settings (Public)
 func (h *SettingsHandler) PublicGet(w http.ResponseWriter, r *http.Request) {
-	s, err := h.Service.GetSettings()
+	s, err := h.Service.GetSettings(r.Context())
 	if err != nil {
 		// On public API, just return defaults silently or empty
 		render.Success(w, models.Settings{
@@ -69,85 +69,85 @@ func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if input.USDToCOPRate != nil {
-		if err := h.Service.Upsert("usd_to_cop_rate", strconv.FormatFloat(*input.USDToCOPRate, 'f', 4, 64)); err != nil {
-			logger.Error("Failed to update usd_to_cop_rate: %v", err)
+		if err := h.Service.Upsert(r.Context(), "usd_to_cop_rate", strconv.FormatFloat(*input.USDToCOPRate, 'f', 4, 64)); err != nil {
+			logger.ErrorCtx(r.Context(), "Failed to update usd_to_cop_rate: %v", err)
 			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.EURToCOPRate != nil {
-		if err := h.Service.Upsert("eur_to_cop_rate", strconv.FormatFloat(*input.EURToCOPRate, 'f', 4, 64)); err != nil {
-			logger.Error("Failed to update eur_to_cop_rate: %v", err)
+		if err := h.Service.Upsert(r.Context(), "eur_to_cop_rate", strconv.FormatFloat(*input.EURToCOPRate, 'f', 4, 64)); err != nil {
+			logger.ErrorCtx(r.Context(), "Failed to update eur_to_cop_rate: %v", err)
 			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.ContactAddress != nil {
-		if err := h.Service.Upsert("contact_address", *input.ContactAddress); err != nil {
-			logger.Error("Failed to update contact_address: %v", err)
+		if err := h.Service.Upsert(r.Context(), "contact_address", *input.ContactAddress); err != nil {
+			logger.ErrorCtx(r.Context(), "Failed to update contact_address: %v", err)
 			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.ContactPhone != nil {
-		if err := h.Service.Upsert("contact_phone", *input.ContactPhone); err != nil {
-			logger.Error("Failed to update contact_phone: %v", err)
+		if err := h.Service.Upsert(r.Context(), "contact_phone", *input.ContactPhone); err != nil {
+			logger.ErrorCtx(r.Context(), "Failed to update contact_phone: %v", err)
 			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.ContactEmail != nil {
-		if err := h.Service.Upsert("contact_email", *input.ContactEmail); err != nil {
-			logger.Error("Failed to update contact_email: %v", err)
+		if err := h.Service.Upsert(r.Context(), "contact_email", *input.ContactEmail); err != nil {
+			logger.ErrorCtx(r.Context(), "Failed to update contact_email: %v", err)
 			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.ContactInstagram != nil {
-		if err := h.Service.Upsert("contact_instagram", *input.ContactInstagram); err != nil {
-			logger.Error("Failed to update contact_instagram: %v", err)
+		if err := h.Service.Upsert(r.Context(), "contact_instagram", *input.ContactInstagram); err != nil {
+			logger.ErrorCtx(r.Context(), "Failed to update contact_instagram: %v", err)
 			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.ContactHours != nil {
-		if err := h.Service.Upsert("contact_hours", *input.ContactHours); err != nil {
-			logger.Error("Failed to update contact_hours: %v", err)
+		if err := h.Service.Upsert(r.Context(), "contact_hours", *input.ContactHours); err != nil {
+			logger.ErrorCtx(r.Context(), "Failed to update contact_hours: %v", err)
 			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.FlatShippingFeeCOP != nil {
-		if err := h.Service.Upsert("flat_shipping_fee_cop", strconv.FormatFloat(*input.FlatShippingFeeCOP, 'f', 2, 64)); err != nil {
-			logger.Error("Failed to update flat_shipping_fee_cop: %v", err)
+		if err := h.Service.Upsert(r.Context(), "flat_shipping_fee_cop", strconv.FormatFloat(*input.FlatShippingFeeCOP, 'f', 2, 64)); err != nil {
+			logger.ErrorCtx(r.Context(), "Failed to update flat_shipping_fee_cop: %v", err)
 			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.HotSalesThreshold != nil {
-		if err := h.Service.Upsert("hot_sales_threshold", strconv.Itoa(*input.HotSalesThreshold)); err != nil {
-			logger.Error("Failed to update hot_sales_threshold: %v", err)
+		if err := h.Service.Upsert(r.Context(), "hot_sales_threshold", strconv.Itoa(*input.HotSalesThreshold)); err != nil {
+			logger.ErrorCtx(r.Context(), "Failed to update hot_sales_threshold: %v", err)
 			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.HotDaysThreshold != nil {
-		if err := h.Service.Upsert("hot_days_threshold", strconv.Itoa(*input.HotDaysThreshold)); err != nil {
-			logger.Error("Failed to update hot_days_threshold: %v", err)
+		if err := h.Service.Upsert(r.Context(), "hot_days_threshold", strconv.Itoa(*input.HotDaysThreshold)); err != nil {
+			logger.ErrorCtx(r.Context(), "Failed to update hot_days_threshold: %v", err)
 			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.NewDaysThreshold != nil {
-		if err := h.Service.Upsert("new_threshold_days", strconv.Itoa(*input.NewDaysThreshold)); err != nil {
-			logger.Error("Failed to update new_threshold_days: %v", err)
+		if err := h.Service.Upsert(r.Context(), "new_threshold_days", strconv.Itoa(*input.NewDaysThreshold)); err != nil {
+			logger.ErrorCtx(r.Context(), "Failed to update new_threshold_days: %v", err)
 			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.DefaultLocale != nil {
-		if err := h.Service.Upsert("default_locale", *input.DefaultLocale); err != nil {
-			logger.Error("Failed to update default_locale: %v", err)
+		if err := h.Service.Upsert(r.Context(), "default_locale", *input.DefaultLocale); err != nil {
+			logger.ErrorCtx(r.Context(), "Failed to update default_locale: %v", err)
 			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
@@ -157,23 +157,23 @@ func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 		if *input.HideLanguageSelector {
 			val = "true"
 		}
-		if err := h.Service.Upsert("hide_language_selector", val); err != nil {
-			logger.Error("Failed to update hide_language_selector: %v", err)
+		if err := h.Service.Upsert(r.Context(), "hide_language_selector", val); err != nil {
+			logger.ErrorCtx(r.Context(), "Failed to update hide_language_selector: %v", err)
 			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 	if input.DefaultThemeID != nil {
-		if err := h.Service.Upsert("default_theme_id", *input.DefaultThemeID); err != nil {
-			logger.Error("Failed to update default_theme_id: %v", err)
+		if err := h.Service.Upsert(r.Context(), "default_theme_id", *input.DefaultThemeID); err != nil {
+			logger.ErrorCtx(r.Context(), "Failed to update default_theme_id: %v", err)
 			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}
 	}
 
-	s, err := h.Service.GetSettings()
+	s, err := h.Service.GetSettings(r.Context())
 	if err != nil {
-		logger.Error("Failed to load settings after update: %v", err)
+		logger.ErrorCtx(r.Context(), "Failed to load settings after update: %v", err)
 		render.Error(w, "Update succeeded but failed to reload", http.StatusInternalServerError)
 		return
 	}

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -24,7 +25,7 @@ func TestGetAllTranslations(t *testing.T) {
 
 	mock.ExpectQuery("SELECT key, locale, value FROM translation").WillReturnRows(rows)
 
-	translations, err := GetAllTranslations(sqlxDB)
+	translations, err := GetAllTranslations(context.Background(), sqlxDB)
 	assert.NoError(t, err)
 	assert.Len(t, translations, 2)
 	assert.Equal(t, "Welcome", translations["en"]["welcome"])
@@ -42,7 +43,7 @@ func TestGetAllTranslations_Error(t *testing.T) {
 
 	mock.ExpectQuery("SELECT key, locale, value FROM translation").WillReturnError(assert.AnError)
 
-	translations, err := GetAllTranslations(sqlxDB)
+	translations, err := GetAllTranslations(context.Background(), sqlxDB)
 	assert.Error(t, err)
 	assert.Nil(t, translations)
 }
@@ -61,7 +62,7 @@ func TestGetTranslationsByLocale(t *testing.T) {
 
 	mock.ExpectQuery("SELECT key, value FROM translation WHERE locale = \\$1").WithArgs("en").WillReturnRows(rows)
 
-	translations, err := GetTranslationsByLocale(sqlxDB, "en")
+	translations, err := GetTranslationsByLocale(context.Background(), sqlxDB, "en")
 	assert.NoError(t, err)
 	assert.Len(t, translations, 1)
 	assert.Equal(t, "Welcome", translations["welcome"])
@@ -78,7 +79,7 @@ func TestGetTranslationsByLocale_Error(t *testing.T) {
 
 	mock.ExpectQuery("SELECT key, value FROM translation WHERE locale = \\$1").WithArgs("en").WillReturnError(assert.AnError)
 
-	translations, err := GetTranslationsByLocale(sqlxDB, "en")
+	translations, err := GetTranslationsByLocale(context.Background(), sqlxDB, "en")
 	assert.Error(t, err)
 	assert.Nil(t, translations)
 }
@@ -100,7 +101,7 @@ func TestUpsertTranslation(t *testing.T) {
 
 	mock.ExpectExec("INSERT INTO translation").WithArgs(trans.Key, trans.Locale, trans.Value).WillReturnResult(sqlmock.NewResult(1, 1))
 
-	err = UpsertTranslation(sqlxDB, trans)
+	err = UpsertTranslation(context.Background(), sqlxDB, trans)
 	assert.NoError(t, err)
 }
 
@@ -115,7 +116,7 @@ func TestDeleteTranslation(t *testing.T) {
 
 	mock.ExpectExec("DELETE FROM translation").WithArgs("welcome", "en").WillReturnResult(sqlmock.NewResult(1, 1))
 
-	err = DeleteTranslation(sqlxDB, "welcome", "en")
+	err = DeleteTranslation(context.Background(), sqlxDB, "welcome", "en")
 	assert.NoError(t, err)
 }
 
@@ -134,7 +135,7 @@ func TestListAllTranslationKeys(t *testing.T) {
 
 	mock.ExpectQuery("SELECT key, locale, value, updated_at FROM translation").WillReturnRows(rows)
 
-	translations, err := ListAllTranslationKeys(sqlxDB)
+	translations, err := ListAllTranslationKeys(context.Background(), sqlxDB)
 	assert.NoError(t, err)
 	assert.Len(t, translations, 1)
 	assert.Equal(t, "welcome", translations[0].Key)
@@ -152,7 +153,7 @@ func TestListAllTranslationKeys_Error(t *testing.T) {
 
 	mock.ExpectQuery("SELECT key, locale, value, updated_at FROM translation").WillReturnError(assert.AnError)
 
-	translations, err := ListAllTranslationKeys(sqlxDB)
+	translations, err := ListAllTranslationKeys(context.Background(), sqlxDB)
 	assert.Error(t, err)
 	assert.Nil(t, translations)
 }

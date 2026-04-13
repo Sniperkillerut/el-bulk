@@ -31,7 +31,7 @@ func (s *AuditService) LogAction(ctx context.Context, action, resourceType, reso
 	
 	username := "system"
 	if adminID != "" && s.AdminStore != nil {
-		admin, err := s.AdminStore.GetByID(adminID)
+		admin, err := s.AdminStore.GetByID(ctx, adminID)
 		if err == nil && admin != nil {
 			username = admin.Username
 		}
@@ -49,14 +49,14 @@ func (s *AuditService) LogAction(ctx context.Context, action, resourceType, reso
 		log.AdminID = &adminID
 	}
 
-	if err := s.Store.Create(log); err != nil {
-		logger.Error("Failed to record audit log: %v", err)
+	if err := s.Store.Create(ctx, log); err != nil {
+		logger.ErrorCtx(ctx, "Failed to record audit log: %v", err)
 	}
 }
 
-func (s *AuditService) List(page, pageSize int, adminID, action, resourceType string) ([]models.AuditLog, int, error) {
+func (s *AuditService) List(ctx context.Context, page, pageSize int, adminID, action, resourceType string) ([]models.AuditLog, int, error) {
 	if s == nil || s.Store == nil {
 		return nil, 0, nil
 	}
-	return s.Store.List(page, pageSize, adminID, action, resourceType)
+	return s.Store.List(ctx, page, pageSize, adminID, action, resourceType)
 }
