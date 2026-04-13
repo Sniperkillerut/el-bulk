@@ -196,7 +196,7 @@ echo -n "$(openssl rand -base64 32)" | gcloud secrets create ELBULK_JWT_SECRET -
 
 # 3. Deploy everything
 gcloud builds submit --config cloudbuild.yaml \
-    --substitutions=_DB_CONNECTION_NAME="PROJECT:REGION:INSTANCE",_GCS_BUCKET="your-bucket"
+    --substitutions=_DB_CONNECTION_NAME="my-project:us-central1:el-bulk-db",_DB_IAM_USER="my-project-number-compute@developer"
 ```
 
 ---

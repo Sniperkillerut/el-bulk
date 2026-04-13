@@ -212,6 +212,9 @@ func main() {
 		// Admin routes (protected)
 		r.Route("/admin", func(r chi.Router) {
 			r.With(middleware.RateLimit(5, 15*time.Minute)).Post("/login", adminHandler.Login)
+			r.Get("/auth/google", func(w http.ResponseWriter, r *http.Request) {
+				http.Redirect(w, r, r.URL.Path+"/login", http.StatusMovedPermanently)
+			})
 			r.Get("/auth/google/login", adminHandler.GoogleLogin)
 			r.Get("/auth/google/callback", adminHandler.GoogleCallback)
 			r.Post("/logout", adminHandler.Logout)

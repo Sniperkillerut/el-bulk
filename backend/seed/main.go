@@ -35,6 +35,18 @@ func main() {
 			logger.Error("❌ Invalid CLOUD_RUN_TASK_INDEX: %v", err)
 			os.Exit(1)
 		}
+
+		// Optimization: If a job is created with --tasks=1, we run the full monolithic seed
+		// instead of just Phase 1. This reduces startup overhead.
+		if taskID == 0 {
+			logger.Info("🌱 CLOUD_RUN_TASK_INDEX=0 detected. Running monolithic seed...")
+			if err := runSeed(database, *mode, *env, *clear); err != nil {
+				logger.Error("❌ Seeding failed: %v", err)
+				os.Exit(1)
+			}
+			return
+		}
+
 		if err := runTask(database, taskID, *mode, *env, *clear); err != nil {
 			logger.Error("❌ Task %d failed: %v", taskID, err)
 			os.Exit(1)
@@ -56,203 +68,106 @@ func main() {
 func runTask(database *sqlx.DB, index int, mode, env string, clear bool) error {
 	logger.Info("🚀 Running Seeding Task #%d (Mode: %s, Env: %s)", index, mode, env)
 
-	// Dependency mapping & Wait logic
-	if index > 0 {
-		if err := waitForDependencies(database, index); err != nil {
-			return err
-		}
-	}
-
 	switch index {
 	case 0:
+		// --- Phase 1: Core Infrastructure ---
 		if clear {
-			return clearTables(database)
+			if err := clearTables(database); err != nil {
+				return err
+			}
 		}
-		logger.Info("⏩ Task 0: Skipping clearTables (clear=false)")
-		return nil
-	case 1:
-		_, err := seedAdmin(database)
-		return err
-	case 2:
-		return seedTCGs(database)
-	case 3:
-		_, err := seedCategories(database)
-		return err
-	case 4:
-		_, err := seedStorage(database)
-		return err
-	case 5:
+		if _, err := seedAdmin(database); err != nil {
+			return err
+		}
+		if err := seedTCGs(database); err != nil {
+			return err
+		}
+		if _, err := seedCategories(database); err != nil {
+			return err
+		}
+		if _, err := seedStorage(database); err != nil {
+			return err
+		}
 		return seedSettings(database)
-	case 6:
-		return seedThemes(database)
-	case 7:
+
+	case 1:
+		// --- Phase 2: Look & Feel ---
+		if err := seedThemes(database); err != nil {
+			return err
+		}
 		return seedTranslations(database)
-	case 8:
-		return seedNotices(database)
-	case 9:
+
+	case 2:
+		// --- Phase 3: Metadata ---
+		if err := seedNotices(database); err != nil {
+			return err
+		}
 		seedSets(database)
 		return nil
-	case 10:
-		if mode != "minimal" {
-			logger.Info("⏩ Task 10: Skipping Minimal Product (mode != minimal)")
-			return nil
-		}
+
+	case 3:
+		// --- Phase 4: Product Catalog ---
 		cats, stor, _, err := loadSeedResources(database)
 		if err != nil {
 			return err
 		}
-		return seedMinimalProduct(database, cats, stor)
-	case 11:
-		if mode != "full" {
-			logger.Info("⏩ Task 11: Skipping MTG Singles (mode != full)")
-			return nil
+
+		if mode == "minimal" {
+			return seedMinimalProduct(database, cats, stor)
 		}
-		cats, stor, _, err := loadSeedResources(database)
-		if err != nil {
+
+		// Full Mode Products
+		if _, err := seedMTGSingles(database, cats, stor); err != nil {
 			return err
 		}
-		_, err = seedMTGSingles(database, cats, stor)
-		return err
-	case 12:
-		if mode != "full" {
-			logger.Info("⏩ Task 12: Skipping MTG Sealed (mode != full)")
-			return nil
-		}
-		cats, stor, _, err := loadSeedResources(database)
-		if err != nil {
+		if _, err := seedMTGSealed(database, cats, stor); err != nil {
 			return err
 		}
-		_, err = seedMTGSealed(database, cats, stor)
-		return err
-	case 13:
-		if mode != "full" {
-			logger.Info("⏩ Task 13: Skipping Multi-TCG (mode != full)")
-			return nil
-		}
-		cats, stor, _, err := loadSeedResources(database)
-		if err != nil {
+		if _, err := seedMultiTCGProducts(database, cats, stor); err != nil {
 			return err
 		}
-		_, err = seedMultiTCGProducts(database, cats, stor)
-		return err
-	case 14:
-		if mode != "full" {
-			logger.Info("⏩ Task 14: Skipping Accessories (mode != full)")
-			return nil
-		}
-		cats, stor, _, err := loadSeedResources(database)
-		if err != nil {
-			return err
-		}
-		_, err = seedAccessories(database, cats, stor)
-		return err
-	case 15:
-		if mode != "full" {
-			logger.Info("⏩ Task 15: Skipping Store Exclusives (mode != full)")
-			return nil
-		}
-		cats, stor, _, err := loadSeedResources(database)
-		if err != nil {
+		if _, err := seedAccessories(database, cats, stor); err != nil {
 			return err
 		}
 		_, err = seedStoreExclusives(database, cats, stor)
 		return err
-	case 16:
-		if mode != "full" {
-			logger.Info("⏩ Task 16: Skipping Bounties (mode != full)")
+
+	case 4:
+		// --- Phase 5: CRM & Commerce ---
+		if mode == "minimal" {
+			logger.Info("⏩ Task 4: Skipping CRM/Commerce (Mode: minimal)")
 			return nil
 		}
-		_, err := seedBounties(database)
-		return err
-	case 17:
-		if mode != "full" {
-			logger.Info("⏩ Task 17: Skipping Customers (mode != full)")
-			return nil
-		}
-		_, err := seedCustomers(database)
-		return err
-	case 18:
-		if mode != "full" {
-			logger.Info("⏩ Task 18: Skipping Orders (mode != full)")
-			return nil
-		}
-		cats, _, _, err := loadSeedResources(database) // Loading cats to check if available
-		if err != nil {
-			return err
-		}
-		_ = cats
-		// For orders we need both customers and products IDs.
-		// Since we split tasks, we load them from DB.
-		customers, err := loadSeededCustomers(database)
-		if err != nil {
-			return err
-		}
-		productIDs, err := loadSeededProductIDs(database)
-		if err != nil {
-			return err
-		}
-		return seedOrders(database, customers, productIDs)
-	case 19:
-		if mode != "full" {
-			logger.Info("⏩ Task 19: Skipping CRM (mode != full)")
-			return nil
-		}
+
 		_, _, adminID, err := loadSeedResources(database)
 		if err != nil {
 			return err
 		}
-		customers, err := loadSeededCustomers(database)
+
+		bountyIDs, err := seedBounties(database)
 		if err != nil {
 			return err
 		}
-		bountyIDs, err := loadSeededBountyIDs(database)
+
+		customers, err := seedCustomers(database)
 		if err != nil {
 			return err
 		}
+
+		// For orders we need both customers and products IDs.
+		productIDs, err := loadSeededProductIDs(database)
+		if err != nil {
+			return err
+		}
+		if err := seedOrders(database, customers, productIDs); err != nil {
+			return err
+		}
+
 		return seedCRM(database, adminID, customers, bountyIDs)
+
 	default:
 		logger.Warn("⚠️ Unknown Task Index %d — doing nothing", index)
 		return nil
-	}
-}
-
-// waitForDependencies polls the database to ensure previous phases are ready.
-func waitForDependencies(database *sqlx.DB, index int) error {
-	maxWait := 60 * time.Second
-	start := time.Now()
-
-	for {
-		if time.Since(start) > maxWait {
-			return fmt.Errorf("timeout waiting for dependencies for task %d", index)
-		}
-
-		ready := false
-		if index >= 1 && index <= 9 {
-			// Configuration tasks depend on nothing specific other than DB connection
-			ready = true
-		} else if index >= 10 && index <= 15 {
-			// Product tasks need Categories and Storage
-			var catCount, storCount int
-			database.Get(&catCount, "SELECT COUNT(*) FROM custom_category")
-			database.Get(&storCount, "SELECT COUNT(*) FROM storage_location")
-			if catCount >= 5 && storCount >= 5 {
-				ready = true
-			}
-		} else if index >= 16 && index <= 19 {
-			// CRM/Orders need Admin and potentially Products
-			var adminCount int
-			database.Get(&adminCount, "SELECT COUNT(*) FROM admin")
-			if adminCount > 0 {
-				ready = true
-			}
-		}
-
-		if ready {
-			return nil
-		}
-
-		logger.Info("⏳ Task %d: Waiting for prerequisites...", index)
-		time.Sleep(5 * time.Second)
 	}
 }
 

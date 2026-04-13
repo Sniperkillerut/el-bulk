@@ -33,7 +33,7 @@ func getProviderConfig(provider string) *oauth2.Config {
 		return &oauth2.Config{
 			ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 			ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
-			RedirectURL:  os.Getenv("FRONTEND_ORIGIN") + "/api/auth/google/callback",
+			RedirectURL:  os.Getenv("API_URL") + "/api/auth/google/callback",
 			Scopes: []string{
 				"https://www.googleapis.com/auth/userinfo.email",
 				"https://www.googleapis.com/auth/userinfo.profile",
@@ -44,7 +44,7 @@ func getProviderConfig(provider string) *oauth2.Config {
 		return &oauth2.Config{
 			ClientID:     os.Getenv("FACEBOOK_CLIENT_ID"),
 			ClientSecret: os.Getenv("FACEBOOK_CLIENT_SECRET"),
-			RedirectURL:  os.Getenv("FRONTEND_ORIGIN") + "/api/auth/facebook/callback",
+			RedirectURL:  os.Getenv("API_URL") + "/api/auth/facebook/callback",
 			Scopes:       []string{"email", "public_profile"},
 			Endpoint:     facebook.Endpoint,
 		}

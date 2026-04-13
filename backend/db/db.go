@@ -117,6 +117,7 @@ func ConnectResilient() (*sqlx.DB, error) {
 			}
 
 			// For Cloud SQL Postgres, the IAM username must exclude the .gserviceaccount.com suffix.
+			// However, it MUST include the @developer part for default compute service accounts.
 			iamUser = strings.TrimSuffix(iamUser, ".gserviceaccount.com")
 
 			logger.Info("🔐 Cloud SQL: Using IAM-based auth for user: %s", iamUser)

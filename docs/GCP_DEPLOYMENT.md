@@ -397,7 +397,7 @@ Create a **Web Application** client for administrative access. Use these values:
 
 *   **Name**: `El Bulk Admin Panel`
 *   **Authorized JavaScript origins**: `https://elbulk.com`
-*   **Authorized redirect URIs**: `https://elbulk.com/api/admin/auth/google/callback`
+*   **Authorized redirect URIs**: `https://api.elbulk.com/api/admin/auth/google/callback`
 
 ### 7.2 Create Public OAuth Client
 
@@ -405,7 +405,7 @@ Create a second **Web Application** client for storefront users. Use these value
 
 *   **Name**: `El Bulk Storefront`
 *   **Authorized JavaScript origins**: `https://elbulk.com`
-*   **Authorized redirect URIs**: `https://elbulk.com/api/auth/google/callback`
+*   **Authorized redirect URIs**: `https://api.elbulk.com/api/auth/google/callback` and `https://api.elbulk.com/api/auth/facebook/callback`
 
 > [!TIP]
 > **Local Development**: If testing locally, add `http://localhost:3000` to the origins and `http://localhost:3000/api/auth/google/callback` (or `/admin/auth/...`) to the redirect URIs of your development client.
@@ -536,6 +536,7 @@ gcloud builds submit \
     --substitutions=\
 _TAG=$(git rev-parse --short HEAD 2>/dev/null || echo "latest"),\
 _DB_CONNECTION_NAME="my-elbulk-prod:us-central1:el-bulk-db",\
+_DB_IAM_USER="41267920201-compute@developer",\
 _BACKEND_INTERNAL_URL="https://api.elbulk.com"
 ```
 
@@ -661,9 +662,12 @@ BACKEND_URL=$(gcloud run services describe el-bulk-backend \
 gcloud run jobs create el-bulk-seed \
     --image=$REGION-docker.pkg.dev/$PROJECT_ID/el-bulk-repo/backend:latest \
     --region=us-central1 \
+    --tasks=1 \
+    --parallelism=1 \
+    --max-retries=3 \
     --set-cloudsql-instances=my-elbulk-prod:us-central1:el-bulk-db \
     --set-secrets="DATABASE_URL=ELBULK_DB_URL:latest,ENCRYPTION_KEY=ELBULK_ENCRYPTION_KEY:latest,ADMIN_USERNAME=ELBULK_ADMIN_USERNAME:latest,ADMIN_PASSWORD=ELBULK_ADMIN_PASSWORD:latest" \
-    --set-env-vars="INSTANCE_CONNECTION_NAME=my-elbulk-prod:us-central1:el-bulk-db,DB_IAM_AUTH=true" \
+    --set-env-vars="INSTANCE_CONNECTION_NAME=my-elbulk-prod:us-central1:el-bulk-db,DB_IAM_AUTH=true,DB_IAM_USER=41267920201-compute@developer,APP_ENV=production" \
     --command="./el-bulk-seed" \
     --args="--mode=minimal"
 

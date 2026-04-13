@@ -89,7 +89,7 @@ export default function AdminLoginPage() {
         <button
           onClick={() => {
             const base = process.env.NEXT_PUBLIC_API_URL || '';
-            window.location.href = `${base}/api/admin/auth/google`;
+            window.location.href = `${base}/api/admin/auth/google/login`;
           }}
           className="btn-secondary w-full flex items-center justify-center gap-2"
           style={{ background: 'white', color: '#1f2937' }}

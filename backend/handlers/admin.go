@@ -191,7 +191,7 @@ func (h *AdminHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 	config := &oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
-		RedirectURL:  os.Getenv("FRONTEND_ORIGIN") + "/api/admin/auth/google/callback",
+		RedirectURL:  os.Getenv("API_URL") + "/api/admin/auth/google/callback",
 		Scopes: []string{
 			"https://www.googleapis.com/auth/userinfo.email",
 			"https://www.googleapis.com/auth/userinfo.profile",
@@ -225,7 +225,7 @@ func (h *AdminHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	config := &oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
-		RedirectURL:  os.Getenv("FRONTEND_ORIGIN") + "/api/admin/auth/google/callback",
+		RedirectURL:  os.Getenv("API_URL") + "/api/admin/auth/google/callback",
 		Endpoint:     google.Endpoint,
 	}
 
