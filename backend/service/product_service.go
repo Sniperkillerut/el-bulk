@@ -104,10 +104,11 @@ func (s *ProductService) Create(ctx context.Context, input models.ProductInput) 
 	logger.Trace("Entering ProductService.Create | Name: %s", input.Name)
 	product, err := s.Store.CreateProduct(input)
 	if err != nil {
+		logger.Error("Core product creation failed: %v", err)
 		return nil, err
 	}
 
-	// Logging
+	// Logging (Asynchronous/Non-blocking)
 	s.Audit.LogAction(ctx, "CREATE_PRODUCT", "product", product.ID, models.JSONB{"input": input})
 
 	if err := s.Store.SaveCategories(product.ID, input.CategoryIDs); err != nil {
@@ -125,8 +126,10 @@ func (s *ProductService) Create(ctx context.Context, input models.ProductInput) 
 
 	settings, _ := s.Settings.GetSettings()
 	products := []models.Product{*product}
+	
+	// Enrichment is highly recommended but non-terminal for a successful POST
 	if err := s.EnrichProducts(products, settings, true); err != nil {
-		return nil, err
+		logger.Warn("Partial enrichment failure for product %s: %v", product.ID, err)
 	}
 
 	return &products[0], nil
@@ -139,10 +142,11 @@ func (s *ProductService) Update(ctx context.Context, id string, input models.Pro
 	
 	product, err := s.Store.UpdateProduct(id, input)
 	if err != nil {
+		logger.Error("Core product update failed for %s: %v", id, err)
 		return nil, err
 	}
 
-	// Logging
+	// Logging (Asynchronous/Non-blocking)
 	s.Audit.LogAction(ctx, "UPDATE_PRODUCT", "product", id, models.JSONB{
 		"before": oldProduct,
 		"after":  input,
@@ -163,8 +167,10 @@ func (s *ProductService) Update(ctx context.Context, id string, input models.Pro
 
 	settings, _ := s.Settings.GetSettings()
 	products := []models.Product{*product}
+	
+	// Enrichment is highly recommended but non-terminal for a successful PUT
 	if err := s.EnrichProducts(products, settings, true); err != nil {
-		return nil, err
+		logger.Warn("Partial enrichment failure during update for product %s: %v", product.ID, err)
 	}
 
 	return &products[0], nil
@@ -187,14 +193,20 @@ func (s *ProductService) EnrichProducts(products []models.Product, settings mode
 		return nil
 	}
 
+	// 1. Critical Enrichment: Pricing (Impacts all views)
 	if err := s.CalculatePrices(products, settings); err != nil {
-		return err
+		return fmt.Errorf("pricing calculation failed: %w", err)
 	}
+
+	// 2. Secondary Enrichment: Side-data population
+	// We log errors but continue to ensure the basic resource remains accessible
+	
 	if err := s.Store.PopulateStorage(products); err != nil {
-		return err
+		logger.Error("Failed to populate storage info: %v", err)
 	}
+	
 	if err := s.Store.PopulateCategories(products); err != nil {
-		return err
+		logger.Error("Failed to populate category info: %v", err)
 	}
 	
 	if !isAdmin {
@@ -211,10 +223,11 @@ func (s *ProductService) EnrichProducts(products []models.Product, settings mode
 	}
 
 	if err := s.Store.PopulateCartCounts(products); err != nil {
-		return err
+		logger.Error("Failed to populate cart counts: %v", err)
 	}
+	
 	if err := s.IdentifyHotNew(products, settings); err != nil {
-		return err
+		logger.Error("Failed to identify hot/new status: %v", err)
 	}
 
 	return nil

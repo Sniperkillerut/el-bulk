@@ -14,9 +14,10 @@ export default function ThemeSelector() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Hydration safety
-    setMounted(true);
-    fetchThemes().then(res => setThemes(res || [])).catch(console.error);
+    fetchThemes().then(res => {
+      setThemes(res || []);
+      setMounted(true);
+    }).catch(console.error);
   }, []);
 
   if (!mounted) return null;
