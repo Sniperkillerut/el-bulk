@@ -407,18 +407,19 @@ func (s *ProductStore) CreateProduct(input models.ProductInput) (*models.Product
 
 	var product models.Product
 	s.facetCache.Clear()
-	query := `
-		INSERT INTO product (name, tcg, category, set_name, set_code, condition,
-		                      foil_treatment, card_treatment,
-		                      price_reference, price_source, price_cop_override,
-		                      stock, cost_basis_cop, image_url, description, collector_number, promo_type,
-		                      language, color_identity, rarity, cmc, is_legendary, is_historic, is_land, is_basic_land, art_variation,
-		                      oracle_text, artist, type_line, border_color, frame, full_art, textless, scryfall_id)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34)
-		RETURNING *
-	`
-	logger.Trace("[DB] Executing CreateProduct: %s", query)
-	err := s.DB.QueryRowx(query, input.Name, input.TCG, input.Category, input.SetName, input.SetCode, input.Condition,
+	query := `INSERT INTO product (
+		name, tcg, category, set_name, set_code, condition,
+		foil_treatment, card_treatment,
+		price_reference, price_source, price_cop_override,
+		stock, cost_basis_cop, image_url, description, collector_number, promo_type,
+		language, color_identity, rarity, cmc, is_legendary, is_historic, is_land, is_basic_land, art_variation,
+		oracle_text, artist, type_line, border_color, frame, full_art, textless, scryfall_id
+	) VALUES (
+		$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34
+	) RETURNING *`
+
+	err := s.DB.QueryRowx(query,
+		input.Name, input.TCG, input.Category, input.SetName, input.SetCode, input.Condition,
 		input.FoilTreatment, input.CardTreatment,
 		input.PriceReference, input.PriceSource, input.PriceCOPOverride,
 		input.Stock, input.CostBasis, input.ImageURL, input.Description, input.CollectorNumber, input.PromoType,
@@ -426,9 +427,7 @@ func (s *ProductStore) CreateProduct(input models.ProductInput) (*models.Product
 		input.OracleText, input.Artist, input.TypeLine, input.BorderColor, input.Frame, input.FullArt, input.Textless, input.ScryfallID,
 	).StructScan(&product)
 
-	if err != nil {
-		logger.Error("[DB] CreateProduct failed: %v", err)
-	}
+	logger.Debug("[DB] CreateProduct result: %+v | Error: %v", product.ID, err)
 
 	return &product, err
 }
@@ -440,19 +439,17 @@ func (s *ProductStore) UpdateProduct(id string, input models.ProductInput) (*mod
 
 	var product models.Product
 	s.facetCache.Clear()
-	query := `
-		UPDATE product
-		SET name=$1, tcg=$2, category=$3, set_name=$4, set_code=$5, condition=$6,
-		    foil_treatment=$7, card_treatment=$8,
-		    price_reference=$9, price_source=$10, price_cop_override=$11,
-		    stock=$12, cost_basis_cop=$13, image_url=$14, description=$15, collector_number=$16, promo_type=$17,
-		    language=$18, color_identity=$19, rarity=$20, cmc=$21, is_legendary=$22, is_historic=$23, is_land=$24, is_basic_land=$25, art_variation=$26,
-		    oracle_text=$27, artist=$28, type_line=$29, border_color=$30, frame=$31, full_art=$32, textless=$33, scryfall_id=$34
-		WHERE id=$35
-		RETURNING *
-	`
-	logger.Trace("[DB] Executing UpdateProduct for %s: %s", id, query)
-	err := s.DB.QueryRowx(query, input.Name, input.TCG, input.Category, input.SetName, input.SetCode, input.Condition,
+	query := `UPDATE product SET
+		name=$1, tcg=$2, category=$3, set_name=$4, set_code=$5, condition=$6,
+		foil_treatment=$7, card_treatment=$8,
+		price_reference=$9, price_source=$10, price_cop_override=$11,
+		stock=$12, cost_basis_cop=$13, image_url=$14, description=$15, collector_number=$16, promo_type=$17,
+		language=$18, color_identity=$19, rarity=$20, cmc=$21, is_legendary=$22, is_historic=$23, is_land=$24, is_basic_land=$25, art_variation=$26,
+		oracle_text=$27, artist=$28, type_line=$29, border_color=$30, frame=$31, full_art=$32, textless=$33, scryfall_id=$34
+	WHERE id=$35 RETURNING *`
+
+	err := s.DB.QueryRowx(query,
+		input.Name, input.TCG, input.Category, input.SetName, input.SetCode, input.Condition,
 		input.FoilTreatment, input.CardTreatment,
 		input.PriceReference, input.PriceSource, input.PriceCOPOverride,
 		input.Stock, input.CostBasis, input.ImageURL, input.Description, input.CollectorNumber, input.PromoType,
@@ -461,9 +458,7 @@ func (s *ProductStore) UpdateProduct(id string, input models.ProductInput) (*mod
 		id,
 	).StructScan(&product)
 
-	if err != nil {
-		logger.Error("[DB] UpdateProduct failed for product %s: %v", id, err)
-	}
+	logger.Debug("[DB] UpdateProduct result: %+v | Error: %v", product.ID, err)
 	return &product, err
 }
 
@@ -596,7 +591,9 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 		var conds []string
 		for _, v := range vals {
 			placeholder := fmt.Sprintf("$%d", len(args)+1)
-			conds = append(conds, "EXISTS (SELECT 1 FROM product_category pc_col JOIN custom_category c_col ON pc_col.category_id = c_col.id WHERE pc_col.product_id = p.id AND c_col.slug = "+placeholder+")")
+			// Simpler subquery to avoid complex nesting collisions at character 194
+			cond := fmt.Sprintf("p.id IN (SELECT pc_col.product_id FROM product_category pc_col JOIN custom_category c_col ON pc_col.category_id = c_col.id WHERE c_col.slug = %s)", placeholder)
+			conds = append(conds, cond)
 			args = append(args, strings.ToLower(v))
 		}
 		optional = append(optional, "("+strings.Join(conds, opLogic)+")")

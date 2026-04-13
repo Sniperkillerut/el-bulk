@@ -172,6 +172,7 @@ func (l *Logger) log(ctx context.Context, level Level, msg string, args ...inter
 			severity = "ERROR"
 		}
 
+		// Ensure the content is a single line for JSON (Marshal will escape \n)
 		entry := map[string]interface{}{
 			"severity":  severity,
 			"message":   content,
@@ -180,8 +181,13 @@ func (l *Logger) log(ctx context.Context, level Level, msg string, args ...inter
 
 		// Add Trace ID if available in context
 		if ctx != nil {
-			if traceID, ok := ctx.Value(traceKey).(string); ok && traceID != "" && l.ProjectID != "" {
-				entry["logging.googleapis.com/trace"] = fmt.Sprintf("projects/%s/traces/%s", l.ProjectID, traceID)
+			if traceID, ok := ctx.Value(traceKey).(string); ok && traceID != "" {
+				if l.ProjectID != "" {
+					entry["logging.googleapis.com/trace"] = fmt.Sprintf("projects/%s/traces/%s", l.ProjectID, traceID)
+				} else {
+					// Minimal trace without project if unknown
+					entry["logging.googleapis.com/trace"] = traceID
+				}
 			}
 		}
 
@@ -192,6 +198,12 @@ func (l *Logger) log(ctx context.Context, level Level, msg string, args ...inter
 
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
 	levelStr := level.String()
+
+	// If we are on GCP but JSON is off for some reason, we MUST escape newlines
+	// to prevent fracturing.
+	if os.Getenv("K_SERVICE") != "" {
+		content = strings.ReplaceAll(content, "\n", " | ")
+	}
 
 	if l.Color {
 		levelStr = level.Color() + levelStr + "\033[0m"
@@ -298,11 +310,35 @@ func RequestLogger(next http.Handler) http.Handler {
 		
 		// Log detailed info at DEBUG, summary at INFO
 		msg := fmt.Sprintf("%d | %s | %s %s", ww.status, duration.String(), r.Method, r.URL.Path)
-		if ww.status >= 400 {
+		if ww.status >= 500 {
+			ErrorCtx(ctx, "%s", msg)
+		} else if ww.status >= 400 {
 			WarnCtx(ctx, "%s", msg)
 		} else {
 			InfoCtx(ctx, "%s", msg)
 		}
+	})
+}
+
+// Recoverer is a middleware that recovers from panics and logs them through the structured logger.
+func Recoverer(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if rvr := recover(); rvr != nil {
+				if rvr == http.ErrAbortHandler {
+					panic(rvr)
+				}
+				
+				// Standard panic logging with stack trace
+				ErrorCtx(r.Context(), "PANIC RECOVERED: %v", rvr)
+				
+				if r.Header.Get("Connection") != "Upgrade" {
+					w.WriteHeader(http.StatusInternalServerError)
+				}
+			}
+		}()
+
+		next.ServeHTTP(w, r)
 	})
 }
 

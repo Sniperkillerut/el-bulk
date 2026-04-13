@@ -157,7 +157,7 @@ func main() {
 
 	// Global middleware
 	r.Use(logger.RequestLogger)
-	r.Use(chiMiddleware.Recoverer)
+	r.Use(logger.Recoverer)
 	r.Use(chiMiddleware.RequestSize(1 << 20)) // 1MB global body limit
 	r.Use(middleware.CORS)
 	r.Use(middleware.SecurityHeaders)
