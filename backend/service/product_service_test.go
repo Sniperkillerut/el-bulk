@@ -26,6 +26,25 @@ func (m *MockAuditService) List(ctx context.Context, page, pageSize int, adminID
 	return args.Get(0).([]models.AuditLog), args.Int(1), args.Error(2)
 }
 
+// MockSettingsService
+type MockSettingsService struct {
+	mock.Mock
+}
+
+func (m *MockSettingsService) GetSettings(ctx context.Context) (models.Settings, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(models.Settings), args.Error(1)
+}
+
+func (m *MockSettingsService) Upsert(ctx context.Context, key, value string) error {
+	args := m.Called(ctx, key, value)
+	return args.Error(0)
+}
+
+func (m *MockSettingsService) InvalidateCache() {
+	m.Called()
+}
+
 func TestProductService_Create(t *testing.T) {
 	db, sqlMock, err := sqlmock.New()
 	assert.NoError(t, err)
@@ -36,18 +55,22 @@ func TestProductService_Create(t *testing.T) {
 	tcgStore := store.NewTCGStore(sqlxDB)
 	
 	mockAudit := new(MockAuditService)
-	s := NewProductService(productStore, tcgStore, nil, mockAudit)
+	mockSettings := new(MockSettingsService)
+	s := NewProductService(productStore, tcgStore, mockSettings, mockAudit)
 
 	t.Run("Create Product Success", func(t *testing.T) {
-		input := models.Product{
-			ID:    "p-1",
-			Name:  "Test Product",
-			Price: 100,
-		}
+		mockSettings.On("GetSettings", mock.Anything).Return(models.Settings{}, nil)
 
-		// Mock the store insert
+		input := models.ProductInput{
+			Name:  "Test Product",
+		}
+		
+		input.PriceCOPOverride = new(float64)
+		*input.PriceCOPOverride = 100
+
+		// Mock the store insert (assuming the store takes ProductInput)
 		sqlMock.ExpectQuery("INSERT INTO product").
-			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "price"}).AddRow("p-1", "Test Product", 100))
+			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow("p-1", "Test Product"))
 
 		// Expect Audit Log
 		mockAudit.On("LogAction", mock.Anything, "CREATE_PRODUCT", "product", "p-1", mock.Anything).Return()

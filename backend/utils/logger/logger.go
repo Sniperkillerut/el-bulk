@@ -146,6 +146,13 @@ func (l *Logger) AutoDetectGCP() {
 	}
 }
 
+// LevelEnabled returns true if the logger would log at the given level.
+func (l *Logger) LevelEnabled(level Level) bool {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+	return level >= l.level && l.level != OFF
+}
+
 func (l *Logger) log(ctx context.Context, level Level, msg string, args ...interface{}) {
 	l.mu.RLock()
 	currentLevel := l.level

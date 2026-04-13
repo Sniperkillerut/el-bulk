@@ -16,11 +16,11 @@ import (
 type ProductService struct {
 	Store    *store.ProductStore
 	TCGStore *store.TCGStore
-	Settings *SettingsService
-	Audit    *AuditService
+	Settings SettingsProvider
+	Audit    Auditer
 }
 
-func NewProductService(s *store.ProductStore, tcg *store.TCGStore, settings *SettingsService, audit *AuditService) *ProductService {
+func NewProductService(s *store.ProductStore, tcg *store.TCGStore, settings SettingsProvider, audit Auditer) *ProductService {
 	return &ProductService{
 		Store:    s,
 		TCGStore: tcg,

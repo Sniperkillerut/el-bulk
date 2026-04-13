@@ -9,10 +9,17 @@ import (
 	"github.com/el-bulk/backend/utils/logger"
 )
 
+type Auditer interface {
+	LogAction(ctx context.Context, action, resourceType, resourceID string, details models.JSONB)
+	List(ctx context.Context, page, pageSize int, adminID, action, resourceType string) ([]models.AuditLog, int, error)
+}
+
 type AuditService struct {
 	Store      *store.AuditStore
 	AdminStore *store.AdminStore
 }
+
+var _ Auditer = (*AuditService)(nil)
 
 func NewAuditService(s *store.AuditStore, as *store.AdminStore) *AuditService {
 	return &AuditService{

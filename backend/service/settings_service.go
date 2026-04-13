@@ -11,6 +11,12 @@ import (
 	"github.com/el-bulk/backend/utils/logger"
 )
 
+type SettingsProvider interface {
+	GetSettings(ctx context.Context) (models.Settings, error)
+	Upsert(ctx context.Context, key, value string) error
+	InvalidateCache()
+}
+
 type SettingsService struct {
 	Store *store.SettingsStore
 	
