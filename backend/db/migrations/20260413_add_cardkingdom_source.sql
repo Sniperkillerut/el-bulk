@@ -8,7 +8,9 @@ DECLARE
 BEGIN
     SELECT conname INTO constraint_name
     FROM pg_constraint
-    WHERE conrelid = 'product'::regclass AND contype = 'c' AND consrc LIKE '%price_source%';
+    WHERE conrelid = 'product'::regclass 
+      AND contype = 'c' 
+      AND pg_get_constraintdef(oid) LIKE '%price_source%';
 
     IF constraint_name IS NOT NULL THEN
         EXECUTE 'ALTER TABLE product DROP CONSTRAINT ' || constraint_name;
