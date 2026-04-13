@@ -109,6 +109,20 @@ export default function AdminSettingsPage() {
                 <p className="text-[9px] mt-2 text-text-muted italic leading-tight">Multiplier for TCGPlayer Market prices in COP.</p>
               </div>
 
+              <div className="card p-3 bg-white shadow-sm border-l-4 border-amber-600">
+                <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">USD to COP (CardKingdom)</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted font-bold">$</span>
+                  <input 
+                    type="number" 
+                    className="pl-8 py-3 font-bold text-xl w-full bg-ink-surface/10 rounded-sm focus:bg-white transition-all outline-none border border-transparent focus:border-amber-600"
+                    value={editingSettings.ck_to_cop_rate} 
+                    onChange={e => setEditingSettings({ ...editingSettings, ck_to_cop_rate: parseFloat(e.target.value) })} 
+                  />
+                </div>
+                <p className="text-[9px] mt-2 text-text-muted italic leading-tight">Multiplier for CardKingdom USD prices in COP.</p>
+              </div>
+
               <div className="card p-3 bg-white shadow-sm border-l-4 border-indigo-400">
                 <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">EUR to COP (Cardmarket)</label>
                 <div className="relative">

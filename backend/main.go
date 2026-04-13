@@ -261,6 +261,7 @@ func main() {
 				// TCG Management
 				r.Get("/tcgs", tcgHandler.List)
 				r.Post("/tcgs", tcgHandler.Create)
+				r.Post("/tcgs/sync-sets", tcgHandler.SyncSets)
 				r.Put("/tcgs/{id}", tcgHandler.Update)
 				r.Delete("/tcgs/{id}", tcgHandler.Delete)
 				r.Post("/tcgs/{id}/sync-sets", tcgHandler.SyncSets)

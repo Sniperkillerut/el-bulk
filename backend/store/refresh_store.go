@@ -30,12 +30,13 @@ type RefreshRow struct {
 	FoilTreatment   string  `db:"foil_treatment"`
 	CardTreatment   string  `db:"card_treatment"`
 	PriceSource     string  `db:"price_source"`
+	ScryfallID      string  `db:"scryfall_id"`
 }
 
 func (s *RefreshStore) ListRefreshableProducts(ctx context.Context) ([]RefreshRow, error) {
 	var rows []RefreshRow
 	err := s.DB.SelectContext(ctx, &rows, `
-		SELECT id, tcg, name, set_name, set_code, collector_number, foil_treatment, card_treatment, price_source
+		SELECT id, tcg, name, set_name, set_code, collector_number, foil_treatment, card_treatment, price_source, scryfall_id
 		FROM product
 		WHERE price_source IN ('tcgplayer', 'cardmarket', 'cardkingdom')
 	`)

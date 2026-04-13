@@ -530,23 +530,60 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 	// But first we need the full product data (foil, set_code, etc)
 	var rows []store.RefreshRow
 	query, args, err = sqlx.In(`
-		SELECT id, tcg, name, set_name, set_code, collector_number, foil_treatment, card_treatment, price_source
+		SELECT id, tcg, name, set_name, set_code, collector_number, foil_treatment, card_treatment, price_source, scryfall_id
 		FROM product WHERE id IN (?)`, ids)
 	if err == nil {
 		_ = s.Store.DB.SelectContext(ctx, &rows, s.Store.DB.Rebind(query), args...)
 		
 		if len(rows) > 0 {
 			// Resolve external prices
-			var scryPriceMap map[external.PriceKey]external.CardMetadata
-			var ckPriceMap map[string]*float64
-			
-			// For simplicity and safety, we fetch the full maps (they are cached now anyway)
-			scryPriceMap, _ = external.BuildPriceMap(ctx)
-			ckPriceMap, _ = external.BuildCardKingdomPriceMap(ctx)
+			// 1. Collect Scryfall IDs for targeted lookup
+			scryIDs := make([]string, 0, len(rows))
+			for _, row := range rows {
+				if (row.PriceSource == "tcgplayer" || row.PriceSource == "cardmarket") && row.ScryfallID != "" {
+					scryIDs = append(scryIDs, row.ScryfallID)
+				}
+			}
 
-			updates, _ := store.BuildPriceUpdates(rows, scryPriceMap, ckPriceMap)
+			// 2. Fetch targeted Scryfall prices (in batches of 75 if needed)
+			scryBatch, _ := external.BatchLookupMTG(ctx, scryIDs)
+			
+			// 3. SIMPLIFIED APPROACH: Directly map results
+			updates := make([]store.MetadataUpdate, 0, len(rows))
+			for _, row := range rows {
+				var price *float64
+				var scryID string
+				var oracleText string
+				var typeLine string
+				var legalities models.JSONB
+
+				if (row.PriceSource == "tcgplayer" || row.PriceSource == "cardmarket") && row.ScryfallID != "" {
+					if meta, ok := scryBatch[row.ScryfallID]; ok {
+						scryID = meta.ScryfallID
+						oracleText = meta.OracleText
+						typeLine = meta.TypeLine
+						legalities = meta.Legalities
+						if row.PriceSource == "tcgplayer" {
+							price = meta.TCGPlayerUSD
+						} else {
+							price = meta.CardmarketEUR
+						}
+					}
+				}
+
+				if price != nil || scryID != "" {
+					updates = append(updates, store.MetadataUpdate{
+						ID:         row.ID,
+						Price:      price,
+						ScryfallID: scryID,
+						OracleText: oracleText,
+						TypeLine:   typeLine,
+						Legalities: legalities,
+					})
+				}
+			}
+
 			if len(updates) > 0 {
-				// We need RefreshStore for BulkUpdateMetadata
 				rs := store.RefreshStore{DB: s.Store.DB}
 				_, _ = rs.BulkUpdateMetadata(ctx, updates)
 			}

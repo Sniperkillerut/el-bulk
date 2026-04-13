@@ -110,6 +110,9 @@ func (h *TCGHandler) Delete(w http.ResponseWriter, r *http.Request) {
 // POST /api/admin/tcgs/{id}/sync-sets
 func (h *TCGHandler) SyncSets(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	if id == "" {
+		id = "mtg"
+	}
 	count, err := h.Service.SyncSets(r.Context(), id)
 	if err != nil {
 		logger.ErrorCtx(r.Context(), "Error syncing TCG %s: %v", id, err)

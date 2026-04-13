@@ -14,6 +14,7 @@ import (
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/logger"
 	"sync"
+	"bytes"
 )
 
 var ScryfallBase = "https://api.scryfall.com"
@@ -71,6 +72,8 @@ type scryfallCard struct {
 	Finishes      []string `json:"finishes"`
 	FrameEffects  []string `json:"frame_effects"`
 	Legalities    map[string]string `json:"legalities"`
+	CardKingdomID     *string `json:"card_kingdom_id"`
+	CardKingdomFoilID *string `json:"card_kingdom_foil_id"`
 }
 
 type CardIdentifier struct {
@@ -692,4 +695,70 @@ func FetchSets(ctx context.Context) ([]ScryfallSet, error) {
 	}
 
 	return setsResp.Data, nil
+}
+
+// BatchLookupMTG fetches metadata and prices for up to 75 cards from Scryfall.
+func BatchLookupMTG(ctx context.Context, scryfallIDs []string) (map[string]CardMetadata, error) {
+	if len(scryfallIDs) == 0 {
+		return nil, nil
+	}
+
+	// Limit to 75 as per Scryfall API docs
+	if len(scryfallIDs) > 75 {
+		scryfallIDs = scryfallIDs[:75]
+	}
+
+	type identifier struct {
+		ID string `json:"id"`
+	}
+	type collectionReq struct {
+		Identifiers []identifier `json:"identifiers"`
+	}
+
+	ids := make([]identifier, len(scryfallIDs))
+	for i, id := range scryfallIDs {
+		ids[i] = identifier{ID: id}
+	}
+
+	body, _ := json.Marshal(collectionReq{Identifiers: ids})
+	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, ScryfallBase+"/cards/collection", bytes.NewReader(body))
+	req.Header.Set("User-Agent", "ElBulkTCGStore/1.0 (contact@elbulk.com)")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := scryfallClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("scryfall collection status %d", resp.StatusCode)
+	}
+
+	var scryResp struct {
+		Data []scryfallCard `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&scryResp); err != nil {
+		return nil, err
+	}
+
+	results := make(map[string]CardMetadata)
+	for _, c := range scryResp.Data {
+		meta := CardMetadata{
+			ScryfallID:     c.ID,
+			TCGPlayerUSD:   parsePrice(c.Prices.USD),
+			CardmarketEUR:  parsePrice(c.Prices.EUR),
+			OracleText:     c.OracleText,
+			TypeLine:       c.TypeLine,
+			Legalities:     castLegalities(c.Legalities),
+			ImageURL:       c.bestImageURL(),
+		}
+		if c.CardKingdomID != nil {
+			meta.CardKingdomID = *c.CardKingdomID
+		}
+		results[c.ID] = meta
+	}
+
+	return results, nil
 }
