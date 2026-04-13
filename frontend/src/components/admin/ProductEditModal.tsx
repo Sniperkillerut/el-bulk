@@ -411,23 +411,32 @@ export default function ProductEditModal({
       
       // Update form with metadata from the best matching print
       const initialTreatment = getTreatmentType(bestPrint);
-      const initialFoil = resolveFoilTreatment(bestPrint);
 
-      setForm(f => ({
-        ...f, 
-        name: bestPrint?.name || f.name,
-        set_code: bestPrint?.set || f.set_code, 
-        set_name: bestPrint?.set_name || f.set_name,
-        scryfall_id: bestPrint?.id || f.scryfall_id,
-        // Override with Scryfall-determined best-guess (User wants "real" Scryfall data)
-        card_treatment: initialTreatment, 
-        collector_number: bestPrint?.collector_number || f.collector_number,
-        promo_type: bestPrint?.promo_types?.join(',') || 'none',
-        foil_treatment: initialFoil as FoilTreatment,
-        image_url: getScryfallImage(bestPrint) || f.image_url,
-        price_reference: applyPrintPrices(bestPrint, initialFoil as FoilTreatment, f.price_source),
-        ...extractMTGMetadata(bestPrint)
-      }));
+      setForm(f => {
+        const availableFoils = bestPrint?.finishes || [];
+        const currentReq = f.foil_treatment === 'non_foil' ? 'nonfoil' : (f.foil_treatment === 'foil' ? 'foil' : (f.foil_treatment === 'etched_foil' ? 'etched' : f.foil_treatment));
+
+        let foilToSet = resolveFoilTreatment(bestPrint) as FoilTreatment;
+        if (availableFoils.includes(currentReq)) {
+          foilToSet = f.foil_treatment;
+        }
+
+        return {
+          ...f, 
+          name: bestPrint?.name || f.name,
+          set_code: bestPrint?.set || f.set_code, 
+          set_name: bestPrint?.set_name || f.set_name,
+          scryfall_id: bestPrint?.id || f.scryfall_id,
+          // Override with Scryfall-determined best-guess (User wants "real" Scryfall data)
+          card_treatment: initialTreatment, 
+          collector_number: bestPrint?.collector_number || f.collector_number,
+          promo_type: bestPrint?.promo_types?.join(',') || 'none',
+          foil_treatment: foilToSet,
+          image_url: getScryfallImage(bestPrint) || f.image_url,
+          price_reference: applyPrintPrices(bestPrint, foilToSet, f.price_source),
+          ...extractMTGMetadata(bestPrint)
+        };
+      });
 
     } catch (e) {
       setFormError(e instanceof Error ? e.message : String(e));

@@ -39,10 +39,10 @@ export default function PricingTab({
 	const [fetchingPrice, setFetchingPrice] = useState(false);
 
 	const fetchSuggestedPrice = async () => {
-		if (!form.id || form.price_source === 'manual') return;
+		if (!form.name || form.price_source === 'manual') return;
 		setFetchingPrice(true);
 		try {
-			const res = await adminFetchExternalPrice(form.id, form.price_source);
+			const res = await adminFetchExternalPrice(form.name, form.set_code || '', form.collector_number || '', form.foil_treatment || '', form.price_source);
 			onUpdate({ price_reference: res.price });
 		} catch (err) {
 			console.error('Failed to fetch suggested price:', err);

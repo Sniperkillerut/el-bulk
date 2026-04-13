@@ -571,7 +571,7 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 	if params.Search != "" {
 		placeholderIdx := len(args) + 1
 		args = append(args, params.Search)
-		mandatory = append(mandatory, fmt.Sprintf("p.search_vector @@ websearch_to_tsquery('english', $%d)", placeholderIdx))
+		mandatory = append(mandatory, fmt.Sprintf("(p.search_vector @@ websearch_to_tsquery('english', $%d) OR p.name ILIKE '%%' || $%d || '%%')", placeholderIdx, placeholderIdx))
 	}
 
 	opLogic := " OR "
@@ -710,6 +710,8 @@ func (s *ProductStore) buildOrderBy(sortBy, sortDir, search string, argsLen int)
 		col = "COALESCE(p.condition, '')"
 	case "stock":
 		col = "p.stock"
+	case "price":
+		col = "COALESCE(p.price_cop_override, p.price_reference)"
 	case "cmc":
 		col = "COALESCE(p.cmc, 0)"
 	case "rarity":

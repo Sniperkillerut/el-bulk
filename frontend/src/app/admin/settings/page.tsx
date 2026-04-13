@@ -79,7 +79,7 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col p-3 min-h-0 max-w-7xl mx-auto w-full font-sans">
+    <div className="flex-1 flex flex-col p-3 min-h-0 max-w-7xl mx-auto w-full font-sans overflow-y-auto scrollbar-hide md:scrollbar-default">
       <AdminHeader 
         title="GLOBAL SETTINGS" 
         subtitle="System Configuration // Global Overrides"
