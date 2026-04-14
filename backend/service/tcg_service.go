@@ -71,14 +71,20 @@ func (s *TCGService) SyncSets(ctx context.Context, tcgID string) (int, error) {
 	defer tx.Rollback()
 
 	for _, set := range sets {
+		// Basic "best guess" for Card Kingdom names if we don't have one
+		// We'll rely on the existing logic in external.NormalizeCKEdition
+		ckGuess := external.NormalizeCKEdition(set.Name)
+
 		_, err := tx.ExecContext(ctx, `
-			INSERT INTO tcg_set (tcg, code, name, released_at, set_type)
-			VALUES ($1, $2, $3, $4, $5)
+			INSERT INTO tcg_set (tcg, code, name, released_at, set_type, ck_name)
+			VALUES ($1, $2, $3, $4, $5, $6)
 			ON CONFLICT (tcg, code) DO UPDATE SET
 				name = EXCLUDED.name,
 				released_at = EXCLUDED.released_at,
-				set_type = EXCLUDED.set_type
-		`, "mtg", set.Code, set.Name, set.ReleasedAt, set.SetType)
+				set_type = EXCLUDED.set_type,
+				-- Only update ck_name if the existing one is NULL
+				ck_name = COALESCE(tcg_set.ck_name, EXCLUDED.ck_name)
+		`, "mtg", set.Code, set.Name, set.ReleasedAt, set.SetType, ckGuess)
 		if err != nil {
 			logger.ErrorCtx(ctx, "Error syncing set %s: %v", set.Code, err)
 			continue

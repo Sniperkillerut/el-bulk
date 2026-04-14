@@ -532,8 +532,6 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 	count, _ := res.RowsAffected()
 
 	// 2. Trigger price refresh for these specific products
-	// We use the RefreshService directly to ensure they get the latest external prices
-	// But first we need the full product data (foil, set_code, etc)
 	var rows []store.RefreshRow
 	query, args, err = sqlx.In(`
 		SELECT id, tcg, name, set_name, set_code, collector_number, foil_treatment, card_treatment, price_source, scryfall_id
@@ -543,37 +541,55 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 		
 		if len(rows) > 0 {
 			// Resolve external prices
-			// 1. Collect Scryfall IDs for targeted lookup
 			scryIDs := make([]string, 0, len(rows))
+			needsCK := false
 			for _, row := range rows {
 				if (row.PriceSource == "tcgplayer" || row.PriceSource == "cardmarket") && row.ScryfallID != "" {
 					scryIDs = append(scryIDs, row.ScryfallID)
 				}
+				if row.PriceSource == "cardkingdom" {
+					needsCK = true
+				}
 			}
 
-			// 2. Fetch targeted Scryfall prices (in batches of 75 if needed)
+			// Fetch external data
 			scryBatch, _ := external.BatchLookupMTG(ctx, scryIDs)
+			var ckPriceMap map[string]*float64
+			if needsCK {
+				ckPriceMap, _ = external.BuildCardKingdomPriceMap(ctx)
+			}
 			
-			// 3. SIMPLIFIED APPROACH: Directly map results
+			// Map results
+			// For TCGPlayer/Cardmarket we use the scryBatch directly, for CK we use BuildPriceUpdates
 			updates := make([]store.MetadataUpdate, 0, len(rows))
+			
+			// Separated CK rows for specialized matching
+			var ckRows []store.RefreshRow
+			
 			for _, row := range rows {
+				if row.PriceSource == "cardkingdom" {
+					ckRows = append(ckRows, row)
+					continue
+				}
+
+				// TCGPlayer / Cardmarket logic
 				var price *float64
 				var scryID string
 				var oracleText string
 				var typeLine string
+				var imageURL string
 				var legalities models.JSONB
 
-				if (row.PriceSource == "tcgplayer" || row.PriceSource == "cardmarket") && row.ScryfallID != "" {
-					if meta, ok := scryBatch[row.ScryfallID]; ok {
-						scryID = meta.ScryfallID
-						oracleText = meta.OracleText
-						typeLine = meta.TypeLine
-						legalities = meta.Legalities
-						if row.PriceSource == "tcgplayer" {
-							price = meta.TCGPlayerUSD
-						} else {
-							price = meta.CardmarketEUR
-						}
+				if meta, ok := scryBatch[row.ScryfallID]; ok {
+					scryID = meta.ScryfallID
+					oracleText = meta.OracleText
+					typeLine = meta.TypeLine
+					legalities = meta.Legalities
+					imageURL = meta.ImageURL
+					if row.PriceSource == "tcgplayer" {
+						price = meta.TCGPlayerUSD
+					} else {
+						price = meta.CardmarketEUR
 					}
 				}
 
@@ -584,17 +600,25 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 						ScryfallID:  scryID,
 						OracleText:  oracleText,
 						TypeLine:    typeLine,
+						ImageURL:    imageURL,
 						Legalities:  legalities,
 						PriceSource: row.PriceSource,
 					})
 				}
 			}
 
+			// Add CK updates if any
+			if len(ckRows) > 0 && ckPriceMap != nil {
+				// We reuse BuildPriceUpdates for CK matching logic
+				// (Pass empty scry map as we already handled scry-native sources)
+				ckUpdates, _ := store.BuildPriceUpdates(ckRows, nil, ckPriceMap)
+				updates = append(updates, ckUpdates...)
+			}
+
 			if len(updates) > 0 {
 				rs := store.RefreshStore{DB: s.Store.DB}
-				// Bulk refresh - pass current rates
-			settings, _ := s.Settings.GetSettings(ctx)
-			_, _ = rs.BulkUpdateMetadata(ctx, updates, settings.USDToCOPRate, settings.EURToCOPRate, settings.CKToCOPRate)
+				settings, _ := s.Settings.GetSettings(ctx)
+				_, _ = rs.BulkUpdateMetadata(ctx, updates, settings.USDToCOPRate, settings.EURToCOPRate, settings.CKToCOPRate)
 			}
 		}
 	}

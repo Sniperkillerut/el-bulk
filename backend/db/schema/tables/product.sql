@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS product (
   -- Pricing
   price_reference    NUMERIC(12, 4) CHECK (price_reference >= 0),
   price_source       TEXT NOT NULL DEFAULT 'manual'
-                     CHECK (price_source IN ('tcgplayer', 'cardmarket', 'manual')),
+                     CHECK (price_source IN ('tcgplayer', 'cardmarket', 'cardkingdom', 'manual')),
   price_cop_override NUMERIC(12, 2) CHECK (price_cop_override >= 0),
 
   stock             INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),

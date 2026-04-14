@@ -179,10 +179,11 @@ export default function AdminDashboard() {
     }
   };
 
-  // Selection clearing on context change
+  // Selection clearing on context change (filters)
+  // We don't clear on page change anymore to allow multi-page selection
   useEffect(() => {
     setSelectedIds([]);
-  }, [page, search, tcgFilter, categoryFilter, storageFilter, sortKey, sortDir]);
+  }, [search, tcgFilter, categoryFilter, storageFilter, sortKey, sortDir]);
 
   const handleSelectAll = (selected: boolean) => {
     if (selected) {
@@ -288,12 +289,23 @@ export default function AdminDashboard() {
               </button>
             </div>
           </div>
-          <button 
-            onClick={() => setSelectedIds([])}
-            className="text-[10px] font-bold text-hp-color hover:underline"
-          >
-            {t('pages.common.actions.clear_selection', 'Clear Selection')}
-          </button>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setSelectedIds([])}
+              className="text-[10px] font-bold text-hp-color hover:underline mr-2"
+            >
+              {t('pages.common.actions.clear_selection', 'Clear Selection')}
+            </button>
+            {selectedIds.length < total && (
+              <button 
+                onClick={handleSelectGlobal}
+                className="text-[10px] font-bold text-gold hover:underline"
+                disabled={isSelectingGlobal}
+              >
+                {t('pages.admin.inventory.select_all_matching_btn', 'SELECT ALL {total} MATCHING', { total: total.toLocaleString() })}
+              </button>
+            )}
+          </div>
         </div>
       )}
 

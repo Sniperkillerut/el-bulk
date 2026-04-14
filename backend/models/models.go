@@ -268,6 +268,7 @@ type TCGSet struct {
 	Name       string `db:"name"        json:"name"`
 	ReleasedAt string `db:"released_at" json:"released_at"`
 	SetType    string `db:"set_type"    json:"set_type"`
+	CKName     *string `db:"ck_name"     json:"ck_name,omitempty"`
 
 	// Virtual fields
 	IsHot      bool   `json:"is_hot"`

@@ -112,7 +112,7 @@ func BuildCardKingdomPriceMap(ctx context.Context) (map[string]*float64, error) 
 
 func generateCKKey(name, edition, variation string, isFoil bool) string {
 	name = strings.ToLower(strings.TrimSpace(name))
-	edition = strings.ToLower(strings.TrimSpace(edition))
+	edition = NormalizeCKEdition(strings.TrimSpace(edition))
 	variation = strings.ToLower(strings.TrimSpace(variation))
 	
 	foilSuffix := "non_foil"
@@ -123,8 +123,67 @@ func generateCKKey(name, edition, variation string, isFoil bool) string {
 	return fmt.Sprintf("%s|%s|%s|%s", name, edition, variation, foilSuffix)
 }
 
-// MapFoilTreatmentToCKVariation attempts to find the appropriate CK variation string 
-// for a given foil/card treatment.
+// NormalizeCKEdition maps common Scryfall/TCGPlayer set names to CardKingdom's edition names.
+func NormalizeCKEdition(edition string) string {
+	e := strings.ToLower(edition)
+	
+	// Common mappings
+	switch e {
+	case "revised":
+		return "revised edition"
+	case "unlimited":
+		return "unlimited edition"
+	case "antiquities":
+		return "antiquities edition"
+	case "arabian nights":
+		return "arabian nights edition"
+	case "legends":
+		return "legends edition"
+	case "the dark":
+		return "the dark edition"
+	case "fourth edition", "4th edition":
+		return "4th edition"
+	case "fifth edition", "5th edition":
+		return "5th edition"
+	case "sixth edition", "6th edition":
+		return "6th edition"
+	case "seventh edition", "7th edition":
+		return "7th edition"
+	case "eighth edition", "8th edition":
+		return "8th edition"
+	case "ninth edition", "9th edition":
+		return "9th edition"
+	case "tenth edition", "10th edition":
+		return "10th edition"
+	case "classic sixth edition":
+		return "6th edition"
+	case "media promos":
+		return "promotional"
+	case "pro tour promos":
+		return "promotional"
+	case "judge gift cards", "judge gift program":
+		return "promotional"
+	case "magic player rewards":
+		return "promotional"
+	case "modern horizons 1":
+		return "modern horizons"
+	case "modern horizons 2":
+		return "modern horizons 2"
+	case "time spiral remastered":
+		return "time spiral remastered"
+	}
+
+	// General rules: CK often adds " Edition" to early sets if not present
+	earlySets := []string{"unlimited", "antiquities", "arabian nights", "legends", "the dark", "ice age", "homelands"}
+	for _, s := range earlySets {
+		if e == s {
+			return e + " edition"
+		}
+	}
+
+	return e
+}
+
 func MapFoilTreatmentToCKVariation(foil models.FoilTreatment, treatment models.CardTreatment) string {
 	// Most CK variations are things like "Etched", "Extended Art", etc.
 	// They are often combined in the variation field.
@@ -140,6 +199,12 @@ func MapFoilTreatmentToCKVariation(foil models.FoilTreatment, treatment models.C
 		parts = append(parts, "showcase")
 	case models.TreatmentEtched:
 		parts = append(parts, "etched")
+	case models.TreatmentFullArt:
+		parts = append(parts, "full art")
+	case models.TreatmentAlternateArt:
+		parts = append(parts, "alternate art")
+	case models.TreatmentLegacyBorder, "retro": // Retro is common in variations
+		parts = append(parts, "retro")
 	}
 
 	switch foil {
@@ -149,7 +214,8 @@ func MapFoilTreatmentToCKVariation(foil models.FoilTreatment, treatment models.C
 		parts = append(parts, "surge foil")
 	case models.FoilGalaxyFoil:
 		parts = append(parts, "galaxy foil")
-	// Add more mappings as discovered in CK data
+	case models.FoilTexturedFoil:
+		parts = append(parts, "textured")
 	}
 
 	return strings.Join(parts, " ")

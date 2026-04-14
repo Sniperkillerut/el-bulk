@@ -285,15 +285,15 @@ export default function ProductTable({
             {isAllOnPageSelected && total > products.length && (
               <tr>
                 <td colSpan={10} className="p-0">
-                  <div className="bg-gold/5 border-b border-gold/20 py-2 px-4 text-center">
-                    <span className="text-xs text-ink-deep font-medium">
+                  <div className="bg-gold/10 border-b border-gold/20 py-2.5 px-4 text-center animate-in fade-in slide-in-from-top-2 duration-300">
+                    <span className="text-[11px] text-ink-deep font-bold uppercase tracking-wider">
                       {t('pages.admin.inventory.all_on_page_selected', 'All {count} items on this page are selected.', { count: products.length })}
                     </span>
                     <button 
-                      onClick={onSelectGlobal}
-                      className="ml-2 text-xs font-bold text-gold hover:underline"
+                      onClick={(e) => { e.stopPropagation(); onSelectGlobal();}}
+                      className="ml-3 text-[11px] font-black text-gold hover:text-ink-deep underline decoration-2 underline-offset-4 transition-colors"
                     >
-                      {t('pages.admin.inventory.select_all_matching', 'Select all {total} matching results', { total: total.toLocaleString() })}
+                      {t('pages.admin.inventory.select_all_matching', 'SELECT ALL {total} MATCHING RESULTS', { total: total.toLocaleString() })}
                     </button>
                   </div>
                 </td>

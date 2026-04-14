@@ -696,9 +696,9 @@ func (s *ProductStore) buildOrderBy(params ProductFilterParams, argsLen int) str
 	if params.SortBy == "" {
 		if params.Search != "" {
 			placeholderIdx := argsLen 
-			return fmt.Sprintf("ts_rank(p.search_vector, websearch_to_tsquery('english', $%d)) DESC, p.created_at DESC", placeholderIdx)
+			return fmt.Sprintf("ts_rank(p.search_vector, websearch_to_tsquery('english', $%d)) DESC, p.id DESC", placeholderIdx)
 		}
-		return "p.created_at DESC"
+		return "p.id DESC"
 	}
 
 	var col string
@@ -742,9 +742,9 @@ func (s *ProductStore) buildOrderBy(params ProductFilterParams, argsLen int) str
 		col = "p.updated_at"
 	default:
 		if params.Search != "" {
-			return fmt.Sprintf("ts_rank(p.search_vector, websearch_to_tsquery('english', $%d)) DESC, p.created_at DESC", argsLen)
+			return fmt.Sprintf("ts_rank(p.search_vector, websearch_to_tsquery('english', $%d)) DESC, p.id DESC", argsLen)
 		}
-		return "p.created_at DESC"
+		return "p.id DESC"
 	}
-	return col + " " + dir + ", p.created_at DESC"
+	return col + " " + dir + ", p.id DESC"
 }

@@ -31,14 +31,19 @@ type RefreshRow struct {
 	CardTreatment   string  `db:"card_treatment"`
 	PriceSource     string  `db:"price_source"`
 	ScryfallID      string  `db:"scryfall_id"`
+	CKSetName       *string `db:"ck_set_name"`
 }
 
 func (s *RefreshStore) ListRefreshableProducts(ctx context.Context) ([]RefreshRow, error) {
 	var rows []RefreshRow
 	err := s.DB.SelectContext(ctx, &rows, `
-		SELECT id, tcg, name, set_name, set_code, collector_number, foil_treatment, card_treatment, price_source, scryfall_id
-		FROM product
-		WHERE price_source IN ('tcgplayer', 'cardmarket', 'cardkingdom')
+		SELECT 
+			p.id, p.tcg, p.name, p.set_name, p.set_code, p.collector_number, 
+			p.foil_treatment, p.card_treatment, p.price_source, p.scryfall_id,
+			s.ck_name as ck_set_name
+		FROM product p
+		LEFT JOIN tcg_set s ON p.tcg = s.tcg AND p.set_code = s.code
+		WHERE p.price_source IN ('tcgplayer', 'cardmarket', 'cardkingdom')
 	`)
 	return rows, err
 }
@@ -70,10 +75,10 @@ func (s *RefreshStore) BulkUpdateMetadata(ctx context.Context, updates []Metadat
 				price_reference = COALESCE(v.price_reference, p.price_reference),
 				price_source = COALESCE(v.price_source, p.price_source),
 				legalities = COALESCE(v.legalities, p.legalities),
-				oracle_text = COALESCE(v.oracle_text, p.oracle_text),
+				oracle_text = COALESCE(NULLIF(v.oracle_text, ''), p.oracle_text),
 				scryfall_id = COALESCE(v.scryfall_id, p.scryfall_id),
-				type_line = COALESCE(v.type_line, p.type_line),
-				image_url = COALESCE(v.image_url, p.image_url),
+				type_line = COALESCE(NULLIF(v.type_line, ''), p.type_line),
+				image_url = COALESCE(NULLIF(v.image_url, ''), p.image_url),
 				updated_at = now()
 			FROM (VALUES 
 		`
@@ -180,10 +185,17 @@ func BuildPriceUpdates(rows []RefreshRow, scryPriceMap map[external.PriceKey]ext
 				if isFoil {
 					foilSuffix = "|foil"
 				}
-				targetEdition := strings.ToLower(setName)
+				// Use CK name from DB if available, otherwise normalize
+				targetEdition := ""
+				if p.CKSetName != nil && *p.CKSetName != "" {
+					targetEdition = strings.ToLower(*p.CKSetName)
+				} else {
+					targetEdition = external.NormalizeCKEdition(setName)
+				}
 				targetCollector := strings.ToLower(strings.TrimSpace(p.CollectorNumber))
 
 				var bestMatch *float64
+				var bestJunkMatch *float64
 
 				for k, cp := range ckPriceMap {
 					if strings.HasPrefix(k, nameKeyPrefix) && strings.HasSuffix(k, foilSuffix) {
@@ -192,10 +204,11 @@ func BuildPriceUpdates(rows []RefreshRow, scryPriceMap map[external.PriceKey]ext
 							ckEdition := parts[1]
 							ckVariation := parts[2]
 							
-							if strings.Contains(ckVariation, "art card") || strings.Contains(ckVariation, "token") {
-								continue
-							}
-
+							isJunk := strings.Contains(ckVariation, "art card") || 
+									   strings.Contains(ckVariation, "token") ||
+									   strings.Contains(ckVariation, "gold-bordered") ||
+									   strings.Contains(ckVariation, "placeholder")
+							
 							editionMatches := targetEdition != "" && (ckEdition == targetEdition || strings.Contains(ckEdition, targetEdition) || strings.Contains(targetEdition, ckEdition))
 							collectorMatches := targetCollector != "" && (ckVariation == targetCollector || strings.Contains(ckVariation, targetCollector))
 
@@ -204,32 +217,62 @@ func BuildPriceUpdates(rows []RefreshRow, scryPriceMap map[external.PriceKey]ext
 									refPrice = cp
 									break
 								}
-								if bestMatch == nil || (cp != nil && *cp > *bestMatch) {
-									bestMatch = cp
+								// Highest price wins within categories
+								if isJunk {
+									if bestJunkMatch == nil || (cp != nil && *cp > *bestJunkMatch) {
+										bestJunkMatch = cp
+									}
+								} else {
+									if bestMatch == nil || (cp != nil && *cp > *bestMatch) {
+										bestMatch = cp
+									}
 								}
 							} else if collectorMatches {
-								if bestMatch == nil || (cp != nil && *cp > *bestMatch) {
-									bestMatch = cp
+								if isJunk {
+									if bestJunkMatch == nil || (cp != nil && *cp > *bestJunkMatch) {
+										bestJunkMatch = cp
+									}
+								} else {
+									if bestMatch == nil || (cp != nil && *cp > *bestMatch) {
+										bestMatch = cp
+									}
 								}
 							}
 						}
 					}
 				}
 
-				if refPrice == nil && bestMatch != nil {
-					refPrice = bestMatch
+				if refPrice == nil {
+					if bestMatch != nil {
+						refPrice = bestMatch
+					} else {
+						refPrice = bestJunkMatch
+					}
 				}
 				
 				// Final pass: if still no price, take the highest available for the card name
 				if refPrice == nil {
 					for k, cp := range ckPriceMap {
 						if strings.HasPrefix(k, nameKeyPrefix) && strings.HasSuffix(k, foilSuffix) {
-							if bestMatch == nil || (cp != nil && *cp > *bestMatch) {
-								bestMatch = cp
+							parts := strings.Split(k, "|")
+							isJunk := len(parts) >= 3 && (strings.Contains(parts[2], "art card") || strings.Contains(parts[2], "token") || strings.Contains(parts[2], "gold-bordered"))
+							
+							if isJunk {
+								if bestJunkMatch == nil || (cp != nil && *cp > *bestJunkMatch) {
+									bestJunkMatch = cp
+								}
+							} else {
+								if bestMatch == nil || (cp != nil && *cp > *bestMatch) {
+									bestMatch = cp
+								}
 							}
 						}
 					}
-					refPrice = bestMatch
+					if bestMatch != nil {
+						refPrice = bestMatch
+					} else {
+						refPrice = bestJunkMatch
+					}
 				}
 			}
 		}
