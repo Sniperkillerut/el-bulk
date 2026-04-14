@@ -91,25 +91,6 @@ func (s *RefreshService) RunPriceRefresh(ctx context.Context, tcgID string) (upd
 func (s *RefreshService) GetSuggestedPrice(ctx context.Context, name, set, collector, foil, source string) (*float64, error) {
 	foil = strings.ToLower(foil)
 	if source == "tcgplayer" || source == "cardmarket" || source == "cardkingdom" {
-		if source == "cardkingdom" {
-			ckMap, err := external.BuildCardKingdomPriceMap(ctx)
-			if err != nil {
-				return nil, err
-			}
-			// CK Key logic: name|edition|variation|foil
-			// We try to match variations if possible, but standard is the fallback
-			key := fmt.Sprintf("%s|%s||%s", strings.ToLower(name), strings.ToLower(set), func() string {
-				if foil != "non_foil" && foil != "" {
-					return "foil"
-				}
-				return "non_foil"
-			}())
-			if price, ok := ckMap[key]; ok {
-				return price, nil
-			}
-		}
-
-		// Try Scryfall for TCGPlayer/Cardmarket or if CK fails (suggested price)
 		scryMap, err := external.BuildPriceMap(ctx)
 		if err != nil {
 			return nil, err
@@ -122,23 +103,44 @@ func (s *RefreshService) GetSuggestedPrice(ctx context.Context, name, set, colle
 			Foil:      foil,
 		}
 
-		if meta, ok := scryMap[key]; ok {
-			if source == "cardmarket" {
-				return meta.CardmarketEUR, nil
-			}
-			return meta.TCGPlayerUSD, nil
-		}
+		var scryMeta external.CardMetadata
+		var hasScry bool
 		
-		// Fallbacks
-		key.Collector = ""
 		if meta, ok := scryMap[key]; ok {
-			if source == "cardmarket" { return meta.CardmarketEUR, nil }
-			return meta.TCGPlayerUSD, nil
+			scryMeta = meta
+			hasScry = true
+		} else {
+			key.Collector = ""
+			if meta, ok := scryMap[key]; ok {
+				scryMeta = meta
+				hasScry = true
+			} else {
+				key.SetCode = ""
+				if meta, ok := scryMap[key]; ok {
+					scryMeta = meta
+					hasScry = true
+				}
+			}
 		}
-		key.SetCode = ""
-		if meta, ok := scryMap[key]; ok {
-			if source == "cardmarket" { return meta.CardmarketEUR, nil }
-			return meta.TCGPlayerUSD, nil
+
+		if source == "cardkingdom" {
+			ckMap, err := external.BuildCardKingdomPriceMap(ctx)
+			if err != nil {
+				return nil, err
+			}
+			if hasScry && scryMeta.CardKingdomID != "" {
+				if price, ok := ckMap["ckid:"+scryMeta.CardKingdomID]; ok {
+					return price, nil
+				}
+			}
+			return nil, fmt.Errorf("no cardkingdom price found for %s", name)
+		}
+
+		if hasScry {
+			if source == "cardmarket" {
+				return scryMeta.CardmarketEUR, nil
+			}
+			return scryMeta.TCGPlayerUSD, nil
 		}
 	}
 
