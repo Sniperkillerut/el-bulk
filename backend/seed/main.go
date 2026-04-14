@@ -265,6 +265,9 @@ func runSeed(database *sqlx.DB, mode, env string, clear bool) error {
 	}
 
 	seedSets(database) // Sync MTG sets (network required, non-fatal)
+	if err := seedCKMappings(database); err != nil {
+		return fmt.Errorf("seedCKMappings failed: %w", err)
+	}
 
 	if mode == "minimal" {
 		if err := seedMinimalProduct(database, cats, storage); err != nil {

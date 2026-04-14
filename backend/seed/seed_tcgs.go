@@ -4,11 +4,15 @@ import (
 	"context"
 	"fmt"
 	"time"
+	_ "embed"
 
 	"github.com/el-bulk/backend/external"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
 )
+
+//go:embed seed_ck_names.sql
+var ckNamesSQL string
 
 func seedTCGs(db *sqlx.DB) error {
 	logger.Info("🎮 Seeding TCG systems...")
@@ -61,14 +65,19 @@ func seedSets(db *sqlx.DB) error {
 	}
 
 	for _, s := range sets {
+		// Use "best guess" logic for initial CK name
+		ckGuess := external.NormalizeCKEdition(s.Name)
+
 		_, err := tx.Exec(`
-			INSERT INTO tcg_set (tcg, code, name, released_at, set_type)
-			VALUES ($1, $2, $3, $4, $5)
+			INSERT INTO tcg_set (tcg, code, name, released_at, set_type, ck_name)
+			VALUES ($1, $2, $3, $4, $5, $6)
 			ON CONFLICT (tcg, code) DO UPDATE SET
 				name = EXCLUDED.name,
 				released_at = EXCLUDED.released_at,
-				set_type = EXCLUDED.set_type
-		`, "mtg", s.Code, s.Name, s.ReleasedAt, s.SetType)
+				set_type = EXCLUDED.set_type,
+				-- Preserve manual overrides, otherwise use EXCLUDED
+				ck_name = COALESCE(tcg_set.ck_name, EXCLUDED.ck_name)
+		`, "mtg", s.Code, s.Name, s.ReleasedAt, s.SetType, ckGuess)
 		if err != nil {
 			tx.Rollback()
 			return fmt.Errorf("failed to seed set %s: %w", s.Code, err)
@@ -90,5 +99,21 @@ func seedSets(db *sqlx.DB) error {
 	}
 
 	logger.Info("✅ %d MTG sets synchronized", len(sets))
+	return nil
+}
+
+func seedCKMappings(db *sqlx.DB) error {
+	logger.Info("🧹 Applying manual Card Kingdom set name overrides...")
+	if ckNamesSQL == "" {
+		logger.Warn("⚠️ No CK name overrides found in embedded SQL")
+		return nil
+	}
+
+	_, err := db.Exec(ckNamesSQL)
+	if err != nil {
+		return fmt.Errorf("failed to apply CK name overrides: %w", err)
+	}
+
+	logger.Info("✅ Card Kingdom set name mappings applied")
 	return nil
 }
