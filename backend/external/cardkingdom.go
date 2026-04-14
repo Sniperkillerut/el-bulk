@@ -22,7 +22,7 @@ type CardKingdomProduct struct {
 	Name        string `json:"name"`
 	Variation   string `json:"variation"`
 	Edition     string `json:"edition"`
-	IsFoil      bool   `json:"is_foil"`
+	IsFoil      string `json:"is_foil"`
 	PriceRetail string `json:"price_retail"`
 	QtyRetail   int    `json:"qty_retail"`
 }
@@ -96,7 +96,8 @@ func BuildCardKingdomPriceMap(ctx context.Context) (map[string]*float64, error) 
 			continue
 		}
 
-		key := generateCKKey(p.Name, p.Edition, p.Variation, p.IsFoil)
+		isFoilBool := p.IsFoil == "true"
+		key := generateCKKey(p.Name, p.Edition, p.Variation, isFoilBool)
 		priceMap[key] = &price
 		
 		priceMap[fmt.Sprintf("ckid:%d", p.ID)] = &price
