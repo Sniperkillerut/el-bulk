@@ -50,6 +50,7 @@ func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		USDToCOPRate         *float64 `json:"usd_to_cop_rate"`
 		EURToCOPRate         *float64 `json:"eur_to_cop_rate"`
+		CKToCOPRate          *float64 `json:"ck_to_cop_rate"`
 		ContactAddress       *string  `json:"contact_address"`
 		ContactPhone         *string  `json:"contact_phone"`
 		ContactEmail         *string  `json:"contact_email"`
@@ -78,6 +79,13 @@ func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if input.EURToCOPRate != nil {
 		if err := h.Service.Upsert(r.Context(), "eur_to_cop_rate", strconv.FormatFloat(*input.EURToCOPRate, 'f', 4, 64)); err != nil {
 			logger.ErrorCtx(r.Context(), "Failed to update eur_to_cop_rate: %v", err)
+			render.Error(w, "Update failed", http.StatusInternalServerError)
+			return
+		}
+	}
+	if input.CKToCOPRate != nil {
+		if err := h.Service.Upsert(r.Context(), "ck_to_cop_rate", strconv.FormatFloat(*input.CKToCOPRate, 'f', 4, 64)); err != nil {
+			logger.ErrorCtx(r.Context(), "Failed to update ck_to_cop_rate: %v", err)
 			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}

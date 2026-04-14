@@ -12,7 +12,7 @@ export function useAdminProducts() {
   const [tcgFilter, setTcgFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [storageFilter, setStorageFilter] = useState('');
-  const [sortKey, setSortKey] = useState('created_at');
+  const [sortKey, setSortKey] = useState('id');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
   const [queryTime, setQueryTime] = useState(0);

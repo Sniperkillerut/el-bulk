@@ -33,15 +33,21 @@ func NewProductService(s *store.ProductStore, tcg *store.TCGStore, settings Sett
 
 func (s *ProductService) List(ctx context.Context, params store.ProductFilterParams, isAdmin bool) (models.ProductListResponse, error) {
 	logger.TraceCtx(ctx, "Entering ProductService.List | Admin: %v | Params: %+v", isAdmin, params)
+	settings, err := s.Settings.GetSettings(ctx)
+	if err != nil {
+		logger.ErrorCtx(ctx, "Failed to get settings in ProductService.List: %v", err)
+	} else {
+		params.USDRate = settings.USDToCOPRate
+		params.EURRate = settings.EURToCOPRate
+		params.CKRate = settings.CKToCOPRate
+	}
+
 	products, total, err := s.Store.ListWithFilters(ctx, params)
 	if err != nil {
 		return models.ProductListResponse{}, err
 	}
 
-	settings, err := s.Settings.GetSettings(ctx)
-	if err != nil {
-		logger.ErrorCtx(ctx, "Failed to get settings in ProductService.List: %v", err)
-	}
+	// Settings already fetched above for sorting
 
 	if err := s.EnrichProducts(ctx, products, settings, isAdmin); err != nil {
 		return models.ProductListResponse{}, err
@@ -573,12 +579,13 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 
 				if price != nil || scryID != "" {
 					updates = append(updates, store.MetadataUpdate{
-						ID:         row.ID,
-						Price:      price,
-						ScryfallID: scryID,
-						OracleText: oracleText,
-						TypeLine:   typeLine,
-						Legalities: legalities,
+						ID:          row.ID,
+						Price:       price,
+						ScryfallID:  scryID,
+						OracleText:  oracleText,
+						TypeLine:    typeLine,
+						Legalities:  legalities,
+						PriceSource: row.PriceSource,
 					})
 				}
 			}

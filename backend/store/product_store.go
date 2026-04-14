@@ -45,6 +45,11 @@ type ProductFilterParams struct {
 	Page        int
 	PageSize    int
 	Offset      int
+
+	// Exchange rates for on-the-fly price sorting
+	USDRate float64
+	EURRate float64
+	CKRate  float64
 }
 
 func (s *ProductStore) ListWithFilters(ctx context.Context, params ProductFilterParams) ([]models.Product, int, error) {
@@ -59,12 +64,12 @@ func (s *ProductStore) ListWithFilters(ctx context.Context, params ProductFilter
 		return nil, 0, err
 	}
 
-	orderBy := s.buildOrderBy(params.SortBy, params.SortDir, params.Search, len(args))
+	orderBy := s.buildOrderBy(params, len(args))
 
 	// Use enriched view for listing
 	viewFrom, where, args := s.buildFilters(params, "view_product_enriched")
 
-	orderBy = s.buildOrderBy(params.SortBy, params.SortDir, params.Search, len(args))
+	orderBy = s.buildOrderBy(params, len(args))
 
 	listQuery := fmt.Sprintf("SELECT p.* %s %s ORDER BY %s LIMIT $%d OFFSET $%d",
 		viewFrom, where, orderBy, len(args)+1, len(args)+2)
@@ -683,21 +688,21 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 	return fromClause, whereClause, args
 }
 
-func (s *ProductStore) buildOrderBy(sortBy, sortDir, search string, argsLen int) string {
+func (s *ProductStore) buildOrderBy(params ProductFilterParams, argsLen int) string {
 	dir := "DESC"
-	if strings.EqualFold(sortDir, "asc") {
+	if strings.EqualFold(params.SortDir, "asc") {
 		dir = "ASC"
 	}
-	if sortBy == "" {
-		if search != "" {
-			placeholderIdx := argsLen // The search term is usually the last arg before limit/offset
+	if params.SortBy == "" {
+		if params.Search != "" {
+			placeholderIdx := argsLen 
 			return fmt.Sprintf("ts_rank(p.search_vector, websearch_to_tsquery('english', $%d)) DESC, p.created_at DESC", placeholderIdx)
 		}
 		return "p.created_at DESC"
 	}
 
 	var col string
-	switch strings.ToLower(sortBy) {
+	switch strings.ToLower(params.SortBy) {
 	case "name":
 		col = "p.name"
 	case "tcg":
@@ -711,7 +716,13 @@ func (s *ProductStore) buildOrderBy(sortBy, sortDir, search string, argsLen int)
 	case "stock":
 		col = "p.stock"
 	case "price":
-		col = "COALESCE(p.price_cop_override, p.price_reference)"
+		col = fmt.Sprintf(`COALESCE(p.price_cop_override,
+			CASE p.price_source
+				WHEN 'tcgplayer' THEN p.price_reference * %f
+				WHEN 'cardmarket' THEN p.price_reference * %f
+				WHEN 'cardkingdom' THEN p.price_reference * %f
+				ELSE p.price_reference
+			END)`, params.USDRate, params.EURRate, params.CKRate)
 	case "cmc":
 		col = "COALESCE(p.cmc, 0)"
 	case "rarity":
@@ -723,12 +734,14 @@ func (s *ProductStore) buildOrderBy(sortBy, sortDir, search string, argsLen int)
 			WHEN 'common' THEN 2
 			WHEN 'bonus' THEN 1
 			ELSE 0 END`
+	case "id":
+		col = "p.id"
 	case "created_at":
 		col = "p.created_at"
 	case "updated_at":
 		col = "p.updated_at"
 	default:
-		if search != "" {
+		if params.Search != "" {
 			return fmt.Sprintf("ts_rank(p.search_vector, websearch_to_tsquery('english', $%d)) DESC, p.created_at DESC", argsLen)
 		}
 		return "p.created_at DESC"

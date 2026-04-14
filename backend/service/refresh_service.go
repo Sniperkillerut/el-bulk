@@ -56,9 +56,10 @@ func (s *RefreshService) RunPriceRefresh(ctx context.Context, tcgID string) (upd
 	for _, r := range filteredRows {
 		if r.TCG == "mtg" {
 			mtgRows = append(mtgRows, r)
-			if r.PriceSource == "cardkingdom" {
+			switch r.PriceSource {
+			case "cardkingdom":
 				needsCK = true
-			} else if r.PriceSource == "tcgplayer" || r.PriceSource == "cardmarket" {
+			case "tcgplayer", "cardmarket":
 				needsScry = true
 			}
 		}
@@ -162,11 +163,11 @@ func (s *RefreshService) GetSuggestedPrice(ctx context.Context, name, set, setNa
 							return p, nil
 						}
 						// If we haven't found a match yet, or this one is more expensive, take it
-						if bestMatch == nil || (p != nil && bestMatch != nil && *p > *bestMatch) {
+						if bestMatch == nil || (p != nil && *p > *bestMatch) {
 							bestMatch = p
 						}
 					} else if collectorMatches {
-						if bestMatch == nil || (p != nil && bestMatch != nil && *p > *bestMatch) {
+						if bestMatch == nil || (p != nil && *p > *bestMatch) {
 							bestMatch = p
 						}
 					}
@@ -181,7 +182,7 @@ func (s *RefreshService) GetSuggestedPrice(ctx context.Context, name, set, setNa
 		// 3. Absolute Last Fallback: Just return the highest available CK price for this card name + foil
 		for k, p := range ckMap {
 			if strings.HasPrefix(k, nameKeyPrefix) && strings.HasSuffix(k, foilSuffix) {
-				if bestMatch == nil || (p != nil && bestMatch != nil && *p > *bestMatch) {
+				if bestMatch == nil || (p != nil && *p > *bestMatch) {
 					bestMatch = p
 				}
 			}

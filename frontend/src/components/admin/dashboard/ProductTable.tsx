@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Product, TCG_SHORT, FOIL_LABELS, TREATMENT_LABELS, resolveLabel } from '@/lib/types';
 import CardImage from '@/components/CardImage';
 import { useLanguage } from '@/context/LanguageContext';
@@ -196,6 +197,8 @@ interface ProductTableProps {
   onEdit: (p: Product) => void;
   onDelete: (id: string, name: string) => void;
   loading: boolean;
+  total: number;
+  onSelectGlobal: () => void;
 }
 
 export default function ProductTable({
@@ -208,9 +211,22 @@ export default function ProductTable({
   onSort,
   onEdit,
   onDelete,
-  loading
+  loading,
+  total,
+  onSelectGlobal
 }: ProductTableProps) {
   const { t } = useLanguage();
+  const checkboxRef = useRef<HTMLInputElement>(null);
+
+  const isAllOnPageSelected = products.length > 0 && products.every(p => selectedIds.includes(p.id));
+  const isSomeOnPageSelected = products.length > 0 && !isAllOnPageSelected && products.some(p => selectedIds.includes(p.id));
+
+  useEffect(() => {
+    if (checkboxRef.current) {
+      checkboxRef.current.indeterminate = isSomeOnPageSelected;
+    }
+  }, [isSomeOnPageSelected]);
+
   const renderSortIcon = (key: string) => {
     if (sortKey !== key) return <span className="opacity-20 ml-1">⇅</span>;
     return <span className="ml-1 text-gold">{sortDir === 'asc' ? '↑' : '↓'}</span>;
@@ -234,7 +250,8 @@ export default function ProductTable({
                 <div className="flex items-center justify-center">
                   <input
                     type="checkbox"
-                    checked={products.length > 0 && products.every(p => selectedIds.includes(p.id))}
+                    ref={checkboxRef}
+                    checked={isAllOnPageSelected}
                     onChange={(e) => onSelectAll(e.target.checked)}
                     className="w-4 h-4 rounded border-ink-border/30 text-gold focus:ring-gold bg-white cursor-pointer"
                   />
@@ -265,6 +282,23 @@ export default function ProductTable({
             </tr>
           </thead>
           <tbody>
+            {isAllOnPageSelected && total > products.length && (
+              <tr>
+                <td colSpan={10} className="p-0">
+                  <div className="bg-gold/5 border-b border-gold/20 py-2 px-4 text-center">
+                    <span className="text-xs text-ink-deep font-medium">
+                      {t('pages.admin.inventory.all_on_page_selected', 'All {count} items on this page are selected.', { count: products.length })}
+                    </span>
+                    <button 
+                      onClick={onSelectGlobal}
+                      className="ml-2 text-xs font-bold text-gold hover:underline"
+                    >
+                      {t('pages.admin.inventory.select_all_matching', 'Select all {total} matching results', { total: total.toLocaleString() })}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            )}
             {products.map(p => (
               <ProductTableRow 
                 key={p.id} 

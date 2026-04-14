@@ -51,6 +51,7 @@ type MetadataUpdate struct {
 	ScryfallID string
 	TypeLine   string
 	ImageURL   string
+	PriceSource string
 }
 
 func (s *RefreshStore) BulkUpdateMetadata(ctx context.Context, updates []MetadataUpdate, usdRate, eurRate, ckRate float64) (int, int) {
@@ -67,12 +68,7 @@ func (s *RefreshStore) BulkUpdateMetadata(ctx context.Context, updates []Metadat
 		query := `
 			UPDATE product AS p SET 
 				price_reference = COALESCE(v.price_reference, p.price_reference),
-				price = CASE 
-					WHEN p.price_source = 'tcgplayer' THEN COALESCE(v.price_reference, p.price_reference) * $8
-					WHEN p.price_source = 'cardmarket' THEN COALESCE(v.price_reference, p.price_reference) * $9
-					WHEN p.price_source = 'cardkingdom' THEN COALESCE(v.price_reference, p.price_reference) * $10
-					ELSE p.price
-				END,
+				price_source = COALESCE(v.price_source, p.price_source),
 				legalities = COALESCE(v.legalities, p.legalities),
 				oracle_text = COALESCE(v.oracle_text, p.oracle_text),
 				scryfall_id = COALESCE(v.scryfall_id, p.scryfall_id),
@@ -82,12 +78,12 @@ func (s *RefreshStore) BulkUpdateMetadata(ctx context.Context, updates []Metadat
 			FROM (VALUES 
 		`
 		placeholders := make([]string, len(chunk))
-		args := make([]interface{}, len(chunk)*7)
+		args := make([]interface{}, len(chunk)*8)
 
 		for j, u := range chunk {
-			base := j * 7
-			placeholders[j] = fmt.Sprintf("($%d::uuid, $%d::numeric, $%d::jsonb, $%d::text, $%d::uuid, $%d::text, $%d::text)",
-				base+1, base+2, base+3, base+4, base+5, base+6, base+7)
+			base := j * 8
+			placeholders[j] = fmt.Sprintf("($%d::uuid, $%d::numeric, $%d::jsonb, $%d::text, $%d::uuid, $%d::text, $%d::text, $%d::text)",
+				base+1, base+2, base+3, base+4, base+5, base+6, base+7, base+8)
 
 			args[base] = u.ID
 			args[base+1] = u.Price
@@ -100,13 +96,13 @@ func (s *RefreshStore) BulkUpdateMetadata(ctx context.Context, updates []Metadat
 			}
 			args[base+5] = u.TypeLine
 			args[base+6] = u.ImageURL
+			args[base+7] = u.PriceSource
 		}
 
 		query += strings.Join(placeholders, ", ")
-		query += ") AS v(id, price_reference, legalities, oracle_text, scryfall_id, type_line, image_url) WHERE p.id = v.id"
+		query += ") AS v(id, price_reference, legalities, oracle_text, scryfall_id, type_line, image_url, price_source) WHERE p.id = v.id"
 
-		finalArgs := append(args, usdRate, eurRate, ckRate)
-		res, err := s.DB.ExecContext(ctx, query, finalArgs...)
+		res, err := s.DB.ExecContext(ctx, query, args...)
 		if err != nil {
 			logger.ErrorCtx(ctx, "[price-refresh] Bulk DB update failed for chunk %d-%d: %v", i, end, err)
 			totalErrors += len(chunk)
@@ -208,11 +204,11 @@ func BuildPriceUpdates(rows []RefreshRow, scryPriceMap map[external.PriceKey]ext
 									refPrice = cp
 									break
 								}
-								if bestMatch == nil || (cp != nil && bestMatch != nil && *cp > *bestMatch) {
+								if bestMatch == nil || (cp != nil && *cp > *bestMatch) {
 									bestMatch = cp
 								}
 							} else if collectorMatches {
-								if bestMatch == nil || (cp != nil && bestMatch != nil && *cp > *bestMatch) {
+								if bestMatch == nil || (cp != nil && *cp > *bestMatch) {
 									bestMatch = cp
 								}
 							}
@@ -228,7 +224,7 @@ func BuildPriceUpdates(rows []RefreshRow, scryPriceMap map[external.PriceKey]ext
 				if refPrice == nil {
 					for k, cp := range ckPriceMap {
 						if strings.HasPrefix(k, nameKeyPrefix) && strings.HasSuffix(k, foilSuffix) {
-							if bestMatch == nil || (cp != nil && bestMatch != nil && *cp > *bestMatch) {
+							if bestMatch == nil || (cp != nil && *cp > *bestMatch) {
 								bestMatch = cp
 							}
 						}
@@ -245,8 +241,9 @@ func BuildPriceUpdates(rows []RefreshRow, scryPriceMap map[external.PriceKey]ext
 		}
 
 		update := MetadataUpdate{
-			ID:    p.ID,
-			Price: refPrice,
+			ID:          p.ID,
+			Price:       refPrice,
+			PriceSource: p.PriceSource,
 		}
 
 		// Update metadata only if we have Scryfall info

@@ -197,7 +197,7 @@ export default function ProductEditModal({
         if (isMounted && res.price !== undefined) {
           setForm(f => ({ ...f, price_reference: res.price }));
         }
-      } catch (err) {
+      } catch {
         if (isMounted) {
           setForm(f => ({ ...f, price_reference: 0 }));
         }

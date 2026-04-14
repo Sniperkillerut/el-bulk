@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   adminFetchTCGs, adminFetchStorage, adminCreateStorage, adminUpdateStorage, adminDeleteStorage,
   adminFetchCategories, adminCreateCategory, adminUpdateCategory, adminDeleteCategory,
-  adminDeleteProduct, adminSyncSets, adminBulkUpdateSource
+  adminDeleteProduct, adminSyncSets, adminBulkUpdateSource, adminFetchProducts
 } from '@/lib/api';
 import { Product, StoredIn, CustomCategory, TCG } from '@/lib/types';
 import { useAdmin } from '@/hooks/useAdmin';
@@ -44,6 +44,7 @@ export default function AdminDashboard() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isBulkSyncing, setIsBulkSyncing] = useState(false);
+  const [isSelectingGlobal, setIsSelectingGlobal] = useState(false);
 
   const loadStaticData = useCallback(async () => {
     try {
@@ -145,8 +146,43 @@ export default function AdminDashboard() {
   };
 
   const handleSelect = (id: string, selected: boolean) => {
-    setSelectedIds(prev => selected ? [...prev, id] : prev.filter(i => i !== id));
+    setSelectedIds(prev => {
+      if (selected) {
+        if (prev.includes(id)) return prev;
+        return [...prev, id];
+      }
+      return prev.filter(i => i !== id);
+    });
   };
+
+  const handleSelectGlobal = async () => {
+    if (total === 0) return;
+    setIsSelectingGlobal(true);
+    try {
+      // Use the same filters but with a high page_size to get all IDs
+      const data = await adminFetchProducts({
+        search,
+        tcg: tcgFilter,
+        category: categoryFilter,
+        storage_id: storageFilter,
+        sort_by: sortKey,
+        sort_dir: sortDir,
+        page: 1,
+        page_size: Math.min(total, 5000) // Support up to 5k for bulk actions
+      });
+      const allIds = data.products.map((p: Product) => p.id);
+      setSelectedIds(allIds);
+    } catch {
+      alert(t('pages.admin.inventory.global_select_error', 'Failed to select all items.'));
+    } finally {
+      setIsSelectingGlobal(false);
+    }
+  };
+
+  // Selection clearing on context change
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [page, search, tcgFilter, categoryFilter, storageFilter, sortKey, sortDir]);
 
   const handleSelectAll = (selected: boolean) => {
     if (selected) {
@@ -289,6 +325,26 @@ export default function AdminDashboard() {
             </select>
           </div>
           <div className="flex gap-2 items-center justify-end">
+            <button 
+              onClick={() => {
+                setSearch('');
+                setTcgFilter('');
+                setCategoryFilter('');
+                setStorageFilter('');
+                setPage(1);
+              }}
+              title={t('pages.admin.inventory.clear_filters_tooltip', 'Clear All Filters')}
+              className="px-2 h-10 border border-kraft-dark/30 rounded bg-white hover:bg-kraft-light transition-colors flex items-center justify-center text-[10px] font-bold uppercase text-text-muted"
+            >
+              {t('pages.common.actions.clear', 'CLEAR')}
+            </button>
+            <button 
+              onClick={() => refreshProducts()} 
+              title={t('pages.admin.inventory.refresh_tooltip', 'Refresh Data')} 
+              className="w-10 h-10 border border-kraft-dark/30 rounded bg-white hover:bg-kraft-light transition-colors flex items-center justify-center shrink-0"
+            >
+              <span className={loading ? 'animate-spin' : ''}>🔄</span>
+            </button>
             <button onClick={() => setShowStorageModal(true)} title={t('pages.admin.inventory.manage_locations_tooltip', 'Manage Locations')} className="w-10 h-10 border border-kraft-dark/30 rounded bg-white hover:bg-kraft-light transition-colors flex items-center justify-center shrink-0">📦</button>
             <button onClick={() => setShowCategoryModal(true)} title={t('pages.admin.inventory.manage_collections_tooltip', 'Manage Collections')} className="w-10 h-10 border border-kraft-dark/30 rounded bg-white hover:bg-kraft-light transition-colors flex items-center justify-center shrink-0">🔖</button>
           </div>
@@ -308,7 +364,9 @@ export default function AdminDashboard() {
             onSort={handleSort}
             onEdit={(p) => { setEditingProduct(p); setShowEditModal(true); }}
             onDelete={handleDeleteProduct}
-            loading={loading}
+            loading={loading || isSelectingGlobal}
+            total={total}
+            onSelectGlobal={handleSelectGlobal}
           />
         </div>
       </div>
