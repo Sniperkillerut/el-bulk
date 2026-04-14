@@ -155,10 +155,7 @@ func runTask(database *sqlx.DB, index int, mode, env string, clear bool) error {
 		}
 
 		// For orders we need both customers and products IDs.
-		productIDs, err := loadSeededProductIDs(database)
-		if err != nil {
-			return err
-		}
+		productIDs := loadSeededProductIDs(database)
 		if err := seedOrders(database, customers, productIDs); err != nil {
 			return err
 		}
@@ -191,22 +188,13 @@ func loadSeedResources(db *sqlx.DB) (CategoryMap, StorageMap, string, error) {
 
 // Additional helpers for task-based data retrieval ───────────────────────────
 
-func loadSeededCustomers(db *sqlx.DB) ([]CustomerSeeded, error) {
-	var result []CustomerSeeded
-	err := db.Select(&result, "SELECT id, first_name, last_name, email, phone FROM customer")
-	return result, err
-}
-
-func loadSeededProductIDs(db *sqlx.DB) ([]string, error) {
+func loadSeededProductIDs(db *sqlx.DB) []string {
 	var result []string
 	err := db.Select(&result, "SELECT id FROM product")
-	return result, err
-}
-
-func loadSeededBountyIDs(db *sqlx.DB) ([]string, error) {
-	var result []string
-	err := db.Select(&result, "SELECT id FROM bounty")
-	return result, err
+	if err != nil {
+		logger.Error("loadSeededProductIDs: %v", err)
+	}
+	return result
 }
 
 func runSeed(database *sqlx.DB, mode, env string, clear bool) error {
