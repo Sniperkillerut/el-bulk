@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import {
-  adminCreateProduct, adminUpdateProduct, adminUpdateProductStorage,
+  adminCreateProduct, adminUpdateProduct, adminUpdateProductStorage, adminFetchExternalPrice
 } from '@/lib/api';
 import {
   Product, FoilTreatment, CardTreatment, PriceSource,
@@ -177,6 +177,48 @@ export default function ProductEditModal({
     }
     setFormError('');
   }, [editProduct, storageFilter, storageLocations]);
+
+  // Auto-fetch CardKingdom prices when variations or source change seamlessly
+  useEffect(() => {
+    if (form.tcg !== 'mtg' || !form.name || form.price_source !== 'cardkingdom') return;
+
+    let isMounted = true;
+    const fetchCK = async () => {
+      try {
+        const res = await adminFetchExternalPrice(
+          form.name,
+          form.set_code || '',
+          form.set_name || '',
+          form.collector_number || '',
+          form.foil_treatment || '',
+          form.card_treatment || '',
+          form.price_source
+        );
+        if (isMounted && res.price !== undefined) {
+          setForm(f => ({ ...f, price_reference: res.price }));
+        }
+      } catch (err) {
+        if (isMounted) {
+          setForm(f => ({ ...f, price_reference: 0 }));
+        }
+      }
+    };
+
+    const timer = setTimeout(fetchCK, 300); // Debounce typing/selections
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [
+    form.tcg,
+    form.name,
+    form.set_code,
+    form.set_name,
+    form.collector_number,
+    form.foil_treatment,
+    form.card_treatment,
+    form.price_source
+  ]);
 
   // AUTO-SYNC: Trigger Scryfall fetch in background if essential metadata is missing
   useEffect(() => {
