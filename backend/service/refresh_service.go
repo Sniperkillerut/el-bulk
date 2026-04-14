@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/el-bulk/backend/external"
+	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/store"
 	"github.com/el-bulk/backend/utils/logger"
 )
@@ -88,7 +89,7 @@ func (s *RefreshService) RunPriceRefresh(ctx context.Context, tcgID string) (upd
 	return updated, errs
 }
 
-func (s *RefreshService) GetSuggestedPrice(ctx context.Context, name, set, collector, foil, source string) (*float64, error) {
+func (s *RefreshService) GetSuggestedPrice(ctx context.Context, name, set, setName, collector, foil, treatment, source string) (*float64, error) {
 	foil = strings.ToLower(foil)
 	if source == "tcgplayer" || source == "cardmarket" || source == "cardkingdom" {
 		scryMap, err := external.BuildPriceMap(ctx)
@@ -128,11 +129,33 @@ func (s *RefreshService) GetSuggestedPrice(ctx context.Context, name, set, colle
 			if err != nil {
 				return nil, err
 			}
+			
+			// 1. Try Scryfall CK ID (if Scryfall starts providing it again or we have it cached)
 			if hasScry && scryMeta.CardKingdomID != "" {
 				if price, ok := ckMap["ckid:"+scryMeta.CardKingdomID]; ok {
 					return price, nil
 				}
 			}
+
+			// 2. Fallback to Name + Edition + Variation matching
+			variation := external.MapFoilTreatmentToCKVariation(models.FoilTreatment(foil), models.CardTreatment(treatment))
+			isFoil := foil != "non_foil"
+
+			ckKey := fmt.Sprintf("%s|%s|%s|%s",
+				strings.ToLower(name),
+				strings.ToLower(setName),
+				strings.ToLower(variation),
+				func() string {
+					if isFoil {
+						return "foil"
+					}
+					return "non_foil"
+				}())
+
+			if price, ok := ckMap[ckKey]; ok {
+				return price, nil
+			}
+
 			return nil, fmt.Errorf("no cardkingdom price found for %s", name)
 		}
 

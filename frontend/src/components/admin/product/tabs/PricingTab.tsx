@@ -42,7 +42,7 @@ export default function PricingTab({
 		if (!form.name || form.price_source === 'manual') return;
 		setFetchingPrice(true);
 		try {
-			const res = await adminFetchExternalPrice(form.name, form.set_code || '', form.collector_number || '', form.foil_treatment || '', form.price_source);
+			const res = await adminFetchExternalPrice(form.name, form.set_code || '', form.set_name || '', form.collector_number || '', form.foil_treatment || '', form.card_treatment || '', form.price_source);
 			onUpdate({ price_reference: res.price });
 		} catch (err) {
 			console.error('Failed to fetch suggested price:', err);

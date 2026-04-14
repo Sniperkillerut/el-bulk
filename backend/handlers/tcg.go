@@ -147,8 +147,10 @@ func (h *TCGHandler) SyncPrices(w http.ResponseWriter, r *http.Request) {
 func (h *TCGHandler) GetExternalPrice(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	set := r.URL.Query().Get("set")
+	setName := r.URL.Query().Get("set_name")
 	collector := r.URL.Query().Get("collector")
 	foil := r.URL.Query().Get("foil")
+	treatment := r.URL.Query().Get("treatment")
 	source := r.URL.Query().Get("source")
 
 	if name == "" || source == "" {
@@ -156,7 +158,7 @@ func (h *TCGHandler) GetExternalPrice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	price, err := h.Service.RefreshService.GetSuggestedPrice(r.Context(), name, set, collector, foil, source)
+	price, err := h.Service.RefreshService.GetSuggestedPrice(r.Context(), name, set, setName, collector, foil, treatment, source)
 	if err != nil {
 		render.Error(w, err.Error(), http.StatusNotFound)
 		return

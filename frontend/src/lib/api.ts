@@ -311,9 +311,9 @@ export interface CardLookupResult {
   scryfall_id?: string;
 }
 
-export async function adminFetchExternalPrice(name: string, set: string, cn: string, foil: string, source: import('./types').PriceSource): Promise<{ price: number; currency: string }> {
+export async function adminFetchExternalPrice(name: string, set: string, setName: string, cn: string, foil: string, treatment: string, source: import('./types').PriceSource): Promise<{ price: number; currency: string }> {
   return apiFetch<{ price: number; currency: string }>('/api/admin/lookup/external/prices', {
-    params: { name, set, collector: cn, foil, source },
+    params: { name, set, set_name: setName, collector: cn, foil, treatment, source },
   });
 }
 
