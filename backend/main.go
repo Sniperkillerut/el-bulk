@@ -83,7 +83,7 @@ func main() {
 	productService := service.NewProductService(productStore, tcgStore, settingsService, auditService)
 	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, auditService)
 	categoryService := service.NewCategoryService(categoryStore)
-	refreshService := service.NewRefreshService(refreshStore)
+	refreshService := service.NewRefreshService(refreshStore, settingsService)
 	tcgService := service.NewTCGService(tcgStore, refreshService)
 	noticeService := service.NewNoticeService(noticeStore)
 	themeService := service.NewThemeService(themeStore)

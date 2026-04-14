@@ -149,7 +149,13 @@ export default function AdminDashboard() {
   };
 
   const handleSelectAll = (selected: boolean) => {
-    setSelectedIds(selected ? products.map(p => p.id) : []);
+    if (selected) {
+      const pageIds = products.map(p => p.id);
+      setSelectedIds(prev => Array.from(new Set([...prev, ...pageIds])));
+    } else {
+      const pageIds = new Set(products.map(p => p.id));
+      setSelectedIds(prev => prev.filter(id => !pageIds.has(id)));
+    }
   };
 
   return (

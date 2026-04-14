@@ -53,7 +53,7 @@ type MetadataUpdate struct {
 	ImageURL   string
 }
 
-func (s *RefreshStore) BulkUpdateMetadata(ctx context.Context, updates []MetadataUpdate) (int, int) {
+func (s *RefreshStore) BulkUpdateMetadata(ctx context.Context, updates []MetadataUpdate, usdRate, eurRate, ckRate float64) (int, int) {
 	var totalUpdated, totalErrors int
 
 	chunkSize := 1000
@@ -67,6 +67,12 @@ func (s *RefreshStore) BulkUpdateMetadata(ctx context.Context, updates []Metadat
 		query := `
 			UPDATE product AS p SET 
 				price_reference = COALESCE(v.price_reference, p.price_reference),
+				price = CASE 
+					WHEN p.price_source = 'tcgplayer' THEN COALESCE(v.price_reference, p.price_reference) * $8
+					WHEN p.price_source = 'cardmarket' THEN COALESCE(v.price_reference, p.price_reference) * $9
+					WHEN p.price_source = 'cardkingdom' THEN COALESCE(v.price_reference, p.price_reference) * $10
+					ELSE p.price
+				END,
 				legalities = COALESCE(v.legalities, p.legalities),
 				oracle_text = COALESCE(v.oracle_text, p.oracle_text),
 				scryfall_id = COALESCE(v.scryfall_id, p.scryfall_id),
@@ -99,7 +105,8 @@ func (s *RefreshStore) BulkUpdateMetadata(ctx context.Context, updates []Metadat
 		query += strings.Join(placeholders, ", ")
 		query += ") AS v(id, price_reference, legalities, oracle_text, scryfall_id, type_line, image_url) WHERE p.id = v.id"
 
-		res, err := s.DB.ExecContext(ctx, query, args...)
+		finalArgs := append(args, usdRate, eurRate, ckRate)
+		res, err := s.DB.ExecContext(ctx, query, finalArgs...)
 		if err != nil {
 			logger.ErrorCtx(ctx, "[price-refresh] Bulk DB update failed for chunk %d-%d: %v", i, end, err)
 			totalErrors += len(chunk)
@@ -188,6 +195,10 @@ func BuildPriceUpdates(rows []RefreshRow, scryPriceMap map[external.PriceKey]ext
 						if len(parts) >= 3 {
 							ckEdition := parts[1]
 							ckVariation := parts[2]
+							
+							if strings.Contains(ckVariation, "art card") || strings.Contains(ckVariation, "token") {
+								continue
+							}
 
 							editionMatches := targetEdition != "" && (ckEdition == targetEdition || strings.Contains(ckEdition, targetEdition) || strings.Contains(targetEdition, ckEdition))
 							collectorMatches := targetCollector != "" && (ckVariation == targetCollector || strings.Contains(ckVariation, targetCollector))
@@ -197,11 +208,11 @@ func BuildPriceUpdates(rows []RefreshRow, scryPriceMap map[external.PriceKey]ext
 									refPrice = cp
 									break
 								}
-								if bestMatch == nil {
+								if bestMatch == nil || (cp != nil && bestMatch != nil && *cp > *bestMatch) {
 									bestMatch = cp
 								}
 							} else if collectorMatches {
-								if bestMatch == nil {
+								if bestMatch == nil || (cp != nil && bestMatch != nil && *cp > *bestMatch) {
 									bestMatch = cp
 								}
 							}
@@ -210,6 +221,18 @@ func BuildPriceUpdates(rows []RefreshRow, scryPriceMap map[external.PriceKey]ext
 				}
 
 				if refPrice == nil && bestMatch != nil {
+					refPrice = bestMatch
+				}
+				
+				// Final pass: if still no price, take the highest available for the card name
+				if refPrice == nil {
+					for k, cp := range ckPriceMap {
+						if strings.HasPrefix(k, nameKeyPrefix) && strings.HasSuffix(k, foilSuffix) {
+							if bestMatch == nil || (cp != nil && bestMatch != nil && *cp > *bestMatch) {
+								bestMatch = cp
+							}
+						}
+					}
 					refPrice = bestMatch
 				}
 			}

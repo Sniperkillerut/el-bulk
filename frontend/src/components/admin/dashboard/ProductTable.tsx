@@ -234,7 +234,7 @@ export default function ProductTable({
                 <div className="flex items-center justify-center">
                   <input
                     type="checkbox"
-                    checked={products.length > 0 && selectedIds.length === products.length}
+                    checked={products.length > 0 && products.every(p => selectedIds.includes(p.id))}
                     onChange={(e) => onSelectAll(e.target.checked)}
                     className="w-4 h-4 rounded border-ink-border/30 text-gold focus:ring-gold bg-white cursor-pointer"
                   />

@@ -20,5 +20,5 @@ func (s *AccountingService) GetInventoryValuation(ctx context.Context) (*models.
 	if err != nil {
 		return nil, err
 	}
-	return s.Store.GetInventoryValuation(ctx, settings.USDToCOPRate, settings.EURToCOPRate)
+	return s.Store.GetInventoryValuation(ctx, settings.USDToCOPRate, settings.EURToCOPRate, settings.CKToCOPRate)
 }

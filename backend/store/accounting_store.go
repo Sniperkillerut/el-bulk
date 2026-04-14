@@ -33,7 +33,7 @@ func (s *AccountingStore) GetInventoryStats(ctx context.Context) (totalItems int
 	return stats.TotalItems, stats.TotalStock, err
 }
 
-func (s *AccountingStore) GetInventoryValuation(ctx context.Context, usdRate, eurRate float64) (*models.InventoryValuation, error) {
+func (s *AccountingStore) GetInventoryValuation(ctx context.Context, usdRate, eurRate, ckRate float64) (*models.InventoryValuation, error) {
 	totalItems, totalStock, err := s.GetInventoryStats(ctx)
 	if err != nil {
 		return nil, err
@@ -45,6 +45,7 @@ func (s *AccountingStore) GetInventoryValuation(ctx context.Context, usdRate, eu
 				CASE price_source
 					WHEN 'tcgplayer' THEN price_reference * $1
 					WHEN 'cardmarket' THEN price_reference * $2
+					WHEN 'cardkingdom' THEN price_reference * $3
 					ELSE 0
 				END, 0)) as total_value_cop,
 			SUM(stock * cost_basis_cop) as total_cost_basis_cop
@@ -55,7 +56,7 @@ func (s *AccountingStore) GetInventoryValuation(ctx context.Context, usdRate, eu
 		Value float64 `db:"total_value_cop"`
 		Cost  float64 `db:"total_cost_basis_cop"`
 	}
-	err = s.DB.GetContext(ctx, &totals, valQuery, usdRate, eurRate)
+	err = s.DB.GetContext(ctx, &totals, valQuery, usdRate, eurRate, ckRate)
 	if err != nil {
 		return nil, err
 	}

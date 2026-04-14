@@ -585,7 +585,9 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 
 			if len(updates) > 0 {
 				rs := store.RefreshStore{DB: s.Store.DB}
-				_, _ = rs.BulkUpdateMetadata(ctx, updates)
+				// Bulk refresh - pass current rates
+			settings, _ := s.Settings.GetSettings(ctx)
+			_, _ = rs.BulkUpdateMetadata(ctx, updates, settings.USDToCOPRate, settings.EURToCOPRate, settings.CKToCOPRate)
 			}
 		}
 	}

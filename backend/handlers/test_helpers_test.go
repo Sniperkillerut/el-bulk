@@ -43,7 +43,7 @@ func testHealthHandler(db *sqlx.DB) *HealthHandler {
 
 // testRefreshService creates a RefreshService for testing.
 func testRefreshService(db *sqlx.DB) *service.RefreshService {
-	return service.NewRefreshService(store.NewRefreshStore(db))
+	return service.NewRefreshService(store.NewRefreshStore(db), service.NewSettingsService(store.NewSettingsStore(db)))
 }
 
 // testRefreshHandler creates a RefreshHandler wired through Store→Service for testing.

@@ -12,11 +12,12 @@ import (
 )
 
 type RefreshService struct {
-	Store *store.RefreshStore
+	Store    *store.RefreshStore
+	Settings *SettingsService
 }
 
-func NewRefreshService(s *store.RefreshStore) *RefreshService {
-	return &RefreshService{Store: s}
+func NewRefreshService(s *store.RefreshStore, settings *SettingsService) *RefreshService {
+	return &RefreshService{Store: s, Settings: settings}
 }
 
 func (s *RefreshService) RunPriceRefresh(ctx context.Context, tcgID string) (updated int, errs int) {
@@ -88,7 +89,13 @@ func (s *RefreshService) RunPriceRefresh(ctx context.Context, tcgID string) (upd
 	updates, resolveErrs := store.BuildPriceUpdates(mtgRows, scryPriceMap, ckPriceMap)
 	errs += resolveErrs
 
-	updated, updateErrs := s.Store.BulkUpdateMetadata(ctx, updates)
+	settings, err := s.Settings.GetSettings(ctx)
+	if err != nil {
+		logger.ErrorCtx(ctx, "[price-refresh] failed to fetch settings for rates: %v", err)
+		return 0, len(mtgRows)
+	}
+
+	updated, updateErrs := s.Store.BulkUpdateMetadata(ctx, updates, settings.USDToCOPRate, settings.EURToCOPRate, settings.CKToCOPRate)
 	errs += updateErrs
 
 	logger.InfoCtx(ctx, "[price-refresh] complete: %d updated, %d errors", updated, errs)
@@ -141,18 +148,25 @@ func (s *RefreshService) GetSuggestedPrice(ctx context.Context, name, set, setNa
 					ckEdition := parts[1]
 					ckVariation := parts[2]
 					
+					// Skip non-standard cards that often fluctuate valuation incorrectly
+					if strings.Contains(ckVariation, "art card") || strings.Contains(ckVariation, "token") {
+						continue
+					}
+
 					editionMatches := targetEdition != "" && (ckEdition == targetEdition || strings.Contains(ckEdition, targetEdition) || strings.Contains(targetEdition, ckEdition))
 					collectorMatches := targetCollector != "" && (ckVariation == targetCollector || strings.Contains(ckVariation, targetCollector))
 					
 					if editionMatches {
 						if collectorMatches {
+							// Found exact variation in correct set - can't get better than this
 							return p, nil
 						}
-						if bestMatch == nil {
+						// If we haven't found a match yet, or this one is more expensive, take it
+						if bestMatch == nil || (p != nil && bestMatch != nil && *p > *bestMatch) {
 							bestMatch = p
 						}
 					} else if collectorMatches {
-						if bestMatch == nil {
+						if bestMatch == nil || (p != nil && bestMatch != nil && *p > *bestMatch) {
 							bestMatch = p
 						}
 					}
@@ -164,11 +178,17 @@ func (s *RefreshService) GetSuggestedPrice(ctx context.Context, name, set, setNa
 			return bestMatch, nil
 		}
 
-		// 3. Absolute Last Fallback: Just return the first available CK price for this card name + foil
+		// 3. Absolute Last Fallback: Just return the highest available CK price for this card name + foil
 		for k, p := range ckMap {
 			if strings.HasPrefix(k, nameKeyPrefix) && strings.HasSuffix(k, foilSuffix) {
-				return p, nil
+				if bestMatch == nil || (p != nil && bestMatch != nil && *p > *bestMatch) {
+					bestMatch = p
+				}
 			}
+		}
+
+		if bestMatch != nil {
+			return bestMatch, nil
 		}
 
 		return nil, fmt.Errorf("no cardkingdom price found for %s", name)
