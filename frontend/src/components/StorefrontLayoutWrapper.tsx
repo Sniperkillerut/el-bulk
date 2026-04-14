@@ -39,8 +39,18 @@ export default function StorefrontLayoutWrapper({ children }: { children: React.
           <p className="text-xs text-center text-text-muted">
             {t('pages.layout.footer.slogan', 'We buy bulk. We sell singles. We love cardboard.')}
           </p>
-          <p className="text-xs text-text-muted font-mono">
-            © {new Date().getFullYear()} El Bulk • <Link href="/terms" className="hover:text-accent-main transition-colors underline decoration-border-main underline-offset-4">{t('pages.terms.title', 'Terms')}</Link> • <Link href="/privacy" className="hover:text-accent-main transition-colors underline decoration-border-main underline-offset-4">{t('pages.privacy.title', 'Privacy')}</Link>
+          <p className="text-xs text-text-muted font-mono flex flex-wrap justify-center gap-x-3 gap-y-1">
+            <span>© {new Date().getFullYear()} El Bulk</span>
+            <span className="opacity-30">•</span>
+            <Link href="/about" className="hover:text-gold transition-colors underline decoration-border-main underline-offset-4">{t('pages.about.title_short', 'About')}</Link>
+            <span className="opacity-30">•</span>
+            <Link href="/shipping" className="hover:text-gold transition-colors underline decoration-border-main underline-offset-4">{t('pages.shipping.title_short', 'Shipping')}</Link>
+            <span className="opacity-30">•</span>
+            <Link href="/refunds" className="hover:text-gold transition-colors underline decoration-border-main underline-offset-4">{t('pages.refunds.title_short', 'Refunds')}</Link>
+            <span className="opacity-30">•</span>
+            <Link href="/terms" className="hover:text-gold transition-colors underline decoration-border-main underline-offset-4">{t('pages.terms.title_short', 'Terms')}</Link>
+            <span className="opacity-30">•</span>
+            <Link href="/privacy" className="hover:text-gold transition-colors underline decoration-border-main underline-offset-4">{t('pages.privacy.title_short', 'Privacy')}</Link>
           </p>
         </div>
       </footer>

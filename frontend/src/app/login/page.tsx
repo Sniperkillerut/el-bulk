@@ -49,7 +49,7 @@ function LoginContent() {
           
           <div className="text-center mb-10 relative">
             <div className="inline-block px-3 py-1 bg-accent-primary/10 rounded-full mb-4">
-              <span className="font-mono text-[10px] text-accent-primary font-bold tracking-[0.2em] uppercase">{t('pages.login.security_v', 'Security Protocol v2.5')}</span>
+              <span className="font-mono text-[10px] text-accent-primary font-bold tracking-[0.2em] uppercase">{t('pages.login.security_v', 'SECURE MEMBER ACCESS')}</span>
             </div>
             <h1 className="font-display text-4xl sm:text-5xl tracking-tighter mb-2 text-text-main">
               {t('pages.login.title', 'WELCOME BACK').split(' ').map((word, index) => (
@@ -59,7 +59,7 @@ function LoginContent() {
               ))}
             </h1>
             <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-text-muted opacity-60">
-              {t('pages.login.subtitle', 'Access the El Bulk Collective')}
+              {t('pages.login.subtitle', 'SIGN IN TO YOUR ACCOUNT')}
             </p>
           </div>
 
@@ -116,7 +116,7 @@ function SuspenseFallback() {
   const { t } = useLanguage();
   return (
     <div className="min-h-screen bg-kraft-paper flex items-center justify-center p-12 text-gold font-mono-stack animate-pulse uppercase tracking-widest font-bold">
-      {t('pages.login.loading', 'Initializing Auth Matrix...')}
+      {t('pages.login.loading', 'SECURELY LOADING LOGIN OPTIONS...')}
     </div>
   );
 }

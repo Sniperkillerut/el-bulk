@@ -33,14 +33,15 @@ func SecurityHeaders(next http.Handler) http.Handler {
 		// - self: our own domain
 		// - fonts.googleapis.com, fonts.gstatic.com: for Google Fonts
 		// - www.googletagmanager.com: if you use analytics
+		// - connect.facebook.net, t.contentsquare.net: Third party marketing scripts
 		// - images from our own domain + any external card images (standardized later)
 		csp := []string{
 			"default-src 'self'",
-			"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com", // unsafe-inline often needed for Next.js/GTM
+			"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://connect.facebook.net https://t.contentsquare.net", 
 			"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
 			"font-src 'self' https://fonts.gstatic.com data:",
 			fmt.Sprintf("img-src 'self' data: https: %s", origin),
-			"connect-src 'self' " + origin,
+			"connect-src 'self' https://www.facebook.com https://connect.facebook.net https://t.contentsquare.net " + origin,
 			"frame-ancestors 'none'",
 		}
 		w.Header().Set("Content-Security-Policy", strings.Join(csp, "; "))

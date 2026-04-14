@@ -33,8 +33,42 @@ declare global {
 
 export const metadata: Metadata = {
   title: 'El Bulk — TCG Store',
-  description: 'Your local Magic: The Gathering, Pokémon, Lorcana and One Piece card shop. Buy singles, sealed product, and sell us your bulk.',
-  keywords: ['MTG', 'Magic the Gathering', 'Pokemon', 'Lorcana', 'TCG', 'card store', 'singles', 'sealed', 'bulk'],
+  description: 'Your local Magic: The Gathering, Pokémon, Lorcana and One Piece card shop in Bogotá. Buy singles, sealed product, and sell us your bulk with secure evaluation.',
+  keywords: ['MTG', 'Magic the Gathering', 'Pokemon', 'Lorcana', 'TCG', 'card store', 'singles', 'sealed', 'bulk', 'Bogota', 'Colombia'],
+  authors: [{ name: 'El Bulk Collective' }],
+  openGraph: {
+    title: 'El Bulk — TCG Store',
+    description: 'Premier destination for TCG enthusiasts. Secure buying, selling, and trading in Bogotá.',
+    url: 'https://elbulk.com',
+    siteName: 'El Bulk',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'El Bulk Storefront',
+      },
+    ],
+    locale: 'es_CO',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'El Bulk — TCG Store',
+    description: 'Premier destination for TCG enthusiasts. Secure buying, selling, and trading in Bogotá.',
+    images: ['/og-image.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 };
 
 import { LanguageProvider } from '@/context/LanguageContext';
