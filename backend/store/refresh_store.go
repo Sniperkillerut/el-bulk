@@ -170,22 +170,47 @@ func BuildPriceUpdates(rows []RefreshRow, scryPriceMap map[external.PriceKey]ext
 				if p.SetName != nil {
 					setName = *p.SetName
 				}
-				variation := external.MapFoilTreatmentToCKVariation(models.FoilTreatment(p.FoilTreatment), models.CardTreatment(p.CardTreatment))
 				isFoil := p.FoilTreatment != "non_foil"
 
-				key := fmt.Sprintf("%s|%s|%s|%s",
-					strings.ToLower(p.Name),
-					strings.ToLower(setName),
-					strings.ToLower(variation),
-					func() string {
-						if isFoil {
-							return "foil"
-						}
-						return "non_foil"
-					}())
+				nameKeyPrefix := strings.ToLower(p.Name) + "|"
+				foilSuffix := "|non_foil"
+				if isFoil {
+					foilSuffix = "|foil"
+				}
+				targetEdition := strings.ToLower(setName)
+				targetCollector := strings.ToLower(strings.TrimSpace(p.CollectorNumber))
 
-				if cp, ok := ckPriceMap[key]; ok {
-					refPrice = cp
+				var bestMatch *float64
+
+				for k, cp := range ckPriceMap {
+					if strings.HasPrefix(k, nameKeyPrefix) && strings.HasSuffix(k, foilSuffix) {
+						parts := strings.Split(k, "|")
+						if len(parts) >= 3 {
+							ckEdition := parts[1]
+							ckVariation := parts[2]
+
+							editionMatches := targetEdition != "" && (ckEdition == targetEdition || strings.Contains(ckEdition, targetEdition) || strings.Contains(targetEdition, ckEdition))
+							collectorMatches := targetCollector != "" && (ckVariation == targetCollector || strings.Contains(ckVariation, targetCollector))
+
+							if editionMatches {
+								if collectorMatches {
+									refPrice = cp
+									break
+								}
+								if bestMatch == nil {
+									bestMatch = cp
+								}
+							} else if collectorMatches {
+								if bestMatch == nil {
+									bestMatch = cp
+								}
+							}
+						}
+					}
+				}
+
+				if refPrice == nil && bestMatch != nil {
+					refPrice = bestMatch
 				}
 			}
 		}

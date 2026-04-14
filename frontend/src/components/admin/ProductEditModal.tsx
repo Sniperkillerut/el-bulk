@@ -24,7 +24,7 @@ export const EMPTY_FORM: FormState = {
   name: '', tcg: 'mtg', category: 'singles',
   set_name: '', set_code: '', condition: 'NM',
   foil_treatment: 'non_foil', card_treatment: 'normal',
-  price: 0, price_source: 'tcgplayer', price_reference: '', price_cop_override: '', cost_basis_cop: '',
+  price: 0, price_source: 'cardkingdom', price_reference: '', price_cop_override: '', cost_basis_cop: '',
   stock: 0, description: '', category_ids: [], image_url: '',
   collector_number: '', promo_type: '', scryfall_id: '',
   language: 'en', color_identity: '', rarity: 'common', cmc: '',

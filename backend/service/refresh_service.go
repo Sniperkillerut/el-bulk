@@ -50,12 +50,15 @@ func (s *RefreshService) RunPriceRefresh(ctx context.Context, tcgID string) (upd
 
 	// Separate MTG products (use Scryfall) from non-MTG (not yet supported)
 	var mtgRows []store.RefreshRow
+	needsScry := false
 	needsCK := false
 	for _, r := range filteredRows {
 		if r.TCG == "mtg" {
 			mtgRows = append(mtgRows, r)
 			if r.PriceSource == "cardkingdom" {
 				needsCK = true
+			} else if r.PriceSource == "tcgplayer" || r.PriceSource == "cardmarket" {
+				needsScry = true
 			}
 		}
 	}
@@ -64,10 +67,13 @@ func (s *RefreshService) RunPriceRefresh(ctx context.Context, tcgID string) (upd
 	var ckPriceMap map[string]*float64
 	if len(mtgRows) > 0 {
 		var err error
-		scryPriceMap, err = external.BuildPriceMap(ctx)
-		if err != nil {
-			logger.ErrorCtx(ctx, "[price-refresh] scryfall bulk download failed: %v", err)
-			return 0, len(mtgRows)
+
+		if needsScry {
+			scryPriceMap, err = external.BuildPriceMap(ctx)
+			if err != nil {
+				logger.ErrorCtx(ctx, "[price-refresh] scryfall bulk download failed: %v", err)
+				return 0, len(mtgRows)
+			}
 		}
 
 		if needsCK {
@@ -117,12 +123,48 @@ func (s *RefreshService) GetSuggestedPrice(ctx context.Context, name, set, setNa
 			return price, nil
 		}
 
-		// 2. Last Fallback: Just return the first available CK price for this card name + foil
+		// 2. Fuzzy Edition Fallback
 		nameKeyPrefix := strings.ToLower(name) + "|"
 		foilSuffix := "|non_foil"
 		if isFoil {
 			foilSuffix = "|foil"
 		}
+		targetEdition := strings.ToLower(setName)
+		targetCollector := strings.ToLower(collector)
+		
+		var bestMatch *float64
+
+		for k, p := range ckMap {
+			if strings.HasPrefix(k, nameKeyPrefix) && strings.HasSuffix(k, foilSuffix) {
+				parts := strings.Split(k, "|")
+				if len(parts) >= 3 {
+					ckEdition := parts[1]
+					ckVariation := parts[2]
+					
+					editionMatches := targetEdition != "" && (ckEdition == targetEdition || strings.Contains(ckEdition, targetEdition) || strings.Contains(targetEdition, ckEdition))
+					collectorMatches := targetCollector != "" && (ckVariation == targetCollector || strings.Contains(ckVariation, targetCollector))
+					
+					if editionMatches {
+						if collectorMatches {
+							return p, nil
+						}
+						if bestMatch == nil {
+							bestMatch = p
+						}
+					} else if collectorMatches {
+						if bestMatch == nil {
+							bestMatch = p
+						}
+					}
+				}
+			}
+		}
+
+		if bestMatch != nil {
+			return bestMatch, nil
+		}
+
+		// 3. Absolute Last Fallback: Just return the first available CK price for this card name + foil
 		for k, p := range ckMap {
 			if strings.HasPrefix(k, nameKeyPrefix) && strings.HasSuffix(k, foilSuffix) {
 				return p, nil
