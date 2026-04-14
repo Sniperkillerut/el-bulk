@@ -77,6 +77,10 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	logger.TraceCtx(r.Context(), "Entering ProductHandler.GetByID | ID: %s", id)
+	if id == "" {
+		render.Error(w, "Product ID is required", http.StatusBadRequest)
+		return
+	}
 	isAdmin, _ := r.Context().Value(middleware.IsAdminKey).(bool)
 
 	product, err := h.Service.GetByID(r.Context(), id, isAdmin)
@@ -128,6 +132,10 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	logger.TraceCtx(r.Context(), "Entering ProductHandler.Update | ID: %s", id)
+	if id == "" {
+		render.Error(w, "Product ID is required", http.StatusBadRequest)
+		return
+	}
 	var input models.ProductInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		logger.ErrorCtx(r.Context(), "Failed to decode update input for %s: %v", id, err)
@@ -148,6 +156,10 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	logger.TraceCtx(r.Context(), "Entering ProductHandler.Delete | ID: %s", id)
+	if id == "" {
+		render.Error(w, "Product ID is required", http.StatusBadRequest)
+		return
+	}
 	if err := h.Service.Delete(r.Context(), id); err != nil {
 		logger.ErrorCtx(r.Context(), "Delete product %s failed: %v", id, err)
 		render.Error(w, "Delete failed", http.StatusInternalServerError)

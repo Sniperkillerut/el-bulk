@@ -499,6 +499,9 @@ func (s *ProductStore) UpdateProduct(ctx context.Context, id string, input model
 }
 
 func (s *ProductStore) GetEnrichedByID(ctx context.Context, id string) (*models.Product, error) {
+	if id == "" {
+		return nil, fmt.Errorf("GetEnrichedByID: id must not be empty")
+	}
 	var jsonResult []byte
 	query := "SELECT fn_get_product_detail($1)"
 	logger.TraceCtx(ctx, "[DB] Executing GetEnrichedByID for %s: %s", id, query)

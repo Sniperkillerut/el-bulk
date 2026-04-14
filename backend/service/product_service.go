@@ -623,7 +623,7 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 		}
 	}
 
-	s.Audit.LogAction(ctx, "BULK_UPDATE_SOURCE", "product", "", models.JSONB{
+	s.Audit.LogAction(ctx, "BULK_UPDATE_SOURCE", "product", "batch", models.JSONB{
 		"ids":    ids,
 		"source": source,
 		"count":  count,
@@ -657,10 +657,13 @@ func (s *ProductService) EnrichCardLookupResults(ctx context.Context, results []
 	}
 
 	// Load Set Mappings for ck_name
-	sets, err := s.TCGStore.ListSets(ctx, "mtg")
-	if err != nil {
-		logger.WarnCtx(ctx, "Failed to load MTG sets for CK enrichment: %v", err)
-		// We can still try to match by default names
+	var sets []models.TCGSet
+	if s.TCGStore != nil {
+		sets, err = s.TCGStore.ListSets(ctx, "mtg")
+		if err != nil {
+			logger.WarnCtx(ctx, "Failed to load MTG sets for CK enrichment: %v", err)
+			// We can still try to match by default names
+		}
 	}
 
 	ckNameMap := make(map[string]string)
