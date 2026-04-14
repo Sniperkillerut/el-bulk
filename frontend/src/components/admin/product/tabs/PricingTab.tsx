@@ -46,6 +46,8 @@ export default function PricingTab({
 			onUpdate({ price_reference: res.price });
 		} catch (err) {
 			console.error('Failed to fetch suggested price:', err);
+			alert(`Failed to fetch ${form.price_source} price. The edition name might not match perfectly. Check console for details.`);
+			onUpdate({ price_reference: 0 });
 		} finally {
 			setFetchingPrice(false);
 		}

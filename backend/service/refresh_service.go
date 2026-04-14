@@ -156,6 +156,18 @@ func (s *RefreshService) GetSuggestedPrice(ctx context.Context, name, set, setNa
 				return price, nil
 			}
 
+			// 3. Last Fallback: Just return the first available CK price for this card name + foil
+			nameKeyPrefix := strings.ToLower(name) + "|"
+			foilSuffix := "|non_foil"
+			if isFoil {
+				foilSuffix = "|foil"
+			}
+			for k, p := range ckMap {
+				if strings.HasPrefix(k, nameKeyPrefix) && strings.HasSuffix(k, foilSuffix) {
+					return p, nil
+				}
+			}
+
 			return nil, fmt.Errorf("no cardkingdom price found for %s", name)
 		}
 
