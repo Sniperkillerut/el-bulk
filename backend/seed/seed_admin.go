@@ -12,11 +12,15 @@ import (
 func seedAdmin(db *sqlx.DB) (string, error) {
 	user := os.Getenv("ADMIN_USERNAME")
 	pass := os.Getenv("ADMIN_PASSWORD")
+	email := os.Getenv("ADMIN_EMAIL")
 	if user == "" {
 		user = "admin"
 	}
 	if pass == "" {
 		pass = "elbulk2024!"
+	}
+	if email == "" {
+		email = "admin@elbulk.com"
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
@@ -26,11 +30,13 @@ func seedAdmin(db *sqlx.DB) (string, error) {
 
 	var id string
 	err = db.QueryRow(`
-		INSERT INTO admin (username, password_hash)
-		VALUES ($1, $2)
-		ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash
+		INSERT INTO admin (username, email, password_hash)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (username) DO UPDATE SET 
+			email = EXCLUDED.email,
+			password_hash = EXCLUDED.password_hash
 		RETURNING id
-	`, user, string(hash)).Scan(&id)
+	`, user, email, string(hash)).Scan(&id)
 	if err != nil {
 		return "", fmt.Errorf("failed to upsert admin user: %w", err)
 	}
