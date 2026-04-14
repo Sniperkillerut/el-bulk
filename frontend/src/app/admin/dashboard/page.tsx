@@ -299,32 +299,35 @@ export default function AdminDashboard() {
 
       {/* High-Density Filter Bar Area */}
       <div className="mb-2 flex-shrink-0 card p-1.5 bg-white/40 backdrop-blur shadow-sm border-ink-border/10">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-1">
-            <label className="text-[10px] font-mono-stack hidden sm:block uppercase font-bold text-text-muted shrink-0 mr-1">{t('pages.admin.inventory.tcg_filter_label', 'TCG')}</label>
-            <select value={tcgFilter} onChange={e => { setTcgFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30 w-full px-2 text-xs min-h-[38px] h-auto !py-1 !leading-none">
-              <option value="">{t('pages.common.labels.all_tcgs', 'ALL TCGS')}</option>
-              {tcgs.map(t_item => <option key={t_item.id} value={t_item.id}>{t_item.name}</option>)}
-            </select>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <div className="flex items-center gap-1">
+              <label className="text-[10px] font-mono-stack uppercase font-bold text-text-muted shrink-0 mr-1">{t('pages.admin.inventory.tcg_filter_label', 'TCG')}</label>
+              <select value={tcgFilter} onChange={e => { setTcgFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30 min-w-[120px] text-xs min-h-[34px] h-auto !py-1 !leading-none">
+                <option value="">{t('pages.common.labels.all_tcgs', 'ALL TCGS')}</option>
+                {tcgs.map(t_item => <option key={t_item.id} value={t_item.id}>{t_item.name}</option>)}
+              </select>
+            </div>
+            <div className="flex items-center gap-1">
+              <label className="text-[10px] font-mono-stack uppercase font-bold text-text-muted shrink-0 mr-1">{t('pages.admin.inventory.category_label', 'CAT')}</label>
+              <select value={categoryFilter} onChange={e => { setCategoryFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30 min-w-[120px] text-xs min-h-[34px] h-auto !py-1 !leading-none">
+                <option value="">{t('pages.common.labels.all_categories', 'ALL CATEGORIES')}</option>
+                <option value="singles">{t('pages.common.categories.singles', 'SINGLES')}</option>
+                <option value="sealed">{t('pages.common.categories.sealed', 'SEALED')}</option>
+                <option value="accessories">{t('pages.common.categories.accessories', 'ACCESSORIES')}</option>
+                <option value="store_exclusives">{t('pages.common.categories.store_exclusives', 'STORE EXCLUSIVES')}</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-1">
+              <label className="text-[10px] font-mono-stack uppercase font-bold text-text-muted shrink-0 mr-1">{t('pages.admin.inventory.storage_label', 'LOC')}</label>
+              <select value={storageFilter} onChange={e => { setStorageFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30 min-w-[120px] text-xs min-h-[34px] h-auto !py-1 !leading-none">
+                <option value="">{t('pages.common.labels.all_locations', 'ALL LOCATIONS')}</option>
+                {storageLocations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+              </select>
+            </div>
           </div>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-1">
-            <label className="text-[10px] font-mono-stack hidden sm:block uppercase font-bold text-text-muted shrink-0 mr-1">{t('pages.admin.inventory.category_label', 'CAT')}</label>
-            <select value={categoryFilter} onChange={e => { setCategoryFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30 w-full px-2 text-xs min-h-[38px] h-auto !py-1 !leading-none">
-              <option value="">{t('pages.common.labels.all_categories', 'ALL CATEGORIES')}</option>
-              <option value="singles">{t('pages.common.categories.singles', 'SINGLES')}</option>
-              <option value="sealed">{t('pages.common.categories.sealed', 'SEALED')}</option>
-              <option value="accessories">{t('pages.common.categories.accessories', 'ACCESSORIES')}</option>
-              <option value="store_exclusives">{t('pages.common.categories.store_exclusives', 'STORE EXCLUSIVES')}</option>
-            </select>
-          </div>
-          <div className="col-span-1 md:col-span-1 flex flex-col sm:flex-row sm:items-center gap-1">
-            <label className="text-[10px] font-mono-stack hidden sm:block uppercase font-bold text-text-muted shrink-0 mr-1">{t('pages.admin.inventory.storage_label', 'LOC')}</label>
-            <select value={storageFilter} onChange={e => { setStorageFilter(e.target.value); setPage(1); }} className="bg-white border-kraft-dark/30 w-full px-2 text-xs min-h-[38px] h-auto !py-1 !leading-none">
-              <option value="">{t('pages.common.labels.all_locations', 'ALL LOCATIONS')}</option>
-              {storageLocations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-            </select>
-          </div>
-          <div className="flex gap-2 items-center justify-end">
+          
+          <div className="flex gap-2 items-center justify-end border-t md:border-t-0 border-ink-border/5 pt-2 md:pt-0">
             <button 
               onClick={() => {
                 setSearch('');
