@@ -1,10 +1,19 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
+import { fetchPublicSettings } from '@/lib/api';
 
 export default function ShippingPage() {
   const { t } = useLanguage();
+  const [shippingFee, setShippingFee] = useState<string>('$15,000 COP');
+
+  useEffect(() => {
+    fetchPublicSettings().then(settings => {
+      const formatted = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(settings.flat_shipping_fee_cop);
+      setShippingFee(`${formatted} COP`);
+    }).catch(console.error);
+  }, []);
 
   return (
     <div className="min-h-screen bg-bg-page pt-24 pb-16 px-4 sm:px-6 lg:px-8">
@@ -65,7 +74,10 @@ export default function ShippingPage() {
               <div className="p-6 bg-surface border-t-4 border-accent-primary rounded shadow-sm">
                 <h3 className="font-display text-lg mb-2 uppercase">{t('pages.shipping.rates.nat.title', 'NATIONAL SHIPPING')}</h3>
                 <p className="text-xs text-text-muted mb-4">{t('pages.shipping.rates.nat.desc', 'Standard delivery across Colombia via certified carriers.')}</p>
-                <p className="font-bold text-lg text-accent-primary">{t('pages.shipping.rates.nat.price', 'FLAT RATE: $15,000 COP')}</p>
+                <p className="font-bold text-lg text-accent-primary flex items-center gap-2">
+                  <span>{t('pages.shipping.rates.nat.price_label', 'FLAT RATE:')}</span>
+                  <span>{shippingFee}</span>
+                </p>
               </div>
               <div className="p-6 bg-surface border-t-4 border-ink-deep rounded shadow-sm">
                 <h3 className="font-display text-lg mb-2 uppercase">{t('pages.shipping.rates.intl.title', 'INTERNATIONAL')}</h3>
