@@ -208,11 +208,16 @@ func runSeed(database *sqlx.DB, mode, env string, clear bool) error {
 
 	// ── Clear existing data ───────────────────────────────────────────────────
 	if clear {
+		if env == "production" {
+			logger.Error("🛑 FATAL: You are trying to CLEAR database tables in a PRODUCTION environment.")
+			logger.Error("   This operation is forbidden for safety. Seeding aborted.")
+			os.Exit(1)
+		}
 		if err := clearTables(database); err != nil {
 			return fmt.Errorf("failed to clear tables: %w", err)
 		}
 	} else {
-		logger.Info("⏩  Skipping table clearing (run with --clear=true to wipe data)")
+		logger.Info("⏩  Skipping table clearing (run with --clear=true to wipe data if in dev/staging)")
 	}
 
 	// ── Configuration seed (runs in ALL modes) ───────────────────────────────
@@ -370,10 +375,19 @@ func clearTables(db *sqlx.DB) error {
 
 // seedMinimalProduct inserts one reference product for production/minimal mode.
 func seedMinimalProduct(database *sqlx.DB, cats CategoryMap, storage StorageMap) error {
-	logger.Info("🌱 Inserting reference product (Black Lotus)...")
+	logger.Info("🌱 Ensuring reference product (Black Lotus) exists...")
+
+	// 1. Check if it already exists to avoid duplicates in production
+	var existingID string
+	err := database.Get(&existingID, "SELECT id FROM product WHERE name = 'Black Lotus' AND set_code = 'lea' LIMIT 1")
+	if err == nil && existingID != "" {
+		logger.Info("   ✅ Reference product already exists (ID: %s). Skipping insert.", existingID)
+		return nil
+	}
+
 	var pID string
 	legalities := `{"commander":"banned","legacy":"banned","vintage":"restricted","oldschool":"restricted"}`
-	err := database.QueryRow(`
+	err = database.QueryRow(`
 		INSERT INTO product (
 			name, tcg, category, set_name, set_code,
 			price_source, price_cop_override, stock,
