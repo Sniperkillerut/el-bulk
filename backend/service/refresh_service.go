@@ -91,7 +91,48 @@ func (s *RefreshService) RunPriceRefresh(ctx context.Context, tcgID string) (upd
 
 func (s *RefreshService) GetSuggestedPrice(ctx context.Context, name, set, setName, collector, foil, treatment, source string) (*float64, error) {
 	foil = strings.ToLower(foil)
-	if source == "tcgplayer" || source == "cardmarket" || source == "cardkingdom" {
+	
+	if source == "cardkingdom" {
+		ckMap, err := external.BuildCardKingdomPriceMap(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		// 1. Fallback to Name + Edition + Variation matching
+		variation := external.MapFoilTreatmentToCKVariation(models.FoilTreatment(foil), models.CardTreatment(treatment))
+		isFoil := foil != "non_foil"
+
+		ckKey := fmt.Sprintf("%s|%s|%s|%s",
+			strings.ToLower(name),
+			strings.ToLower(setName),
+			strings.ToLower(variation),
+			func() string {
+				if isFoil {
+					return "foil"
+				}
+				return "non_foil"
+			}())
+
+		if price, ok := ckMap[ckKey]; ok {
+			return price, nil
+		}
+
+		// 2. Last Fallback: Just return the first available CK price for this card name + foil
+		nameKeyPrefix := strings.ToLower(name) + "|"
+		foilSuffix := "|non_foil"
+		if isFoil {
+			foilSuffix = "|foil"
+		}
+		for k, p := range ckMap {
+			if strings.HasPrefix(k, nameKeyPrefix) && strings.HasSuffix(k, foilSuffix) {
+				return p, nil
+			}
+		}
+
+		return nil, fmt.Errorf("no cardkingdom price found for %s", name)
+	}
+
+	if source == "tcgplayer" || source == "cardmarket" {
 		scryMap, err := external.BuildPriceMap(ctx)
 		if err != nil {
 			return nil, err
@@ -123,54 +164,6 @@ func (s *RefreshService) GetSuggestedPrice(ctx context.Context, name, set, setNa
 				}
 			}
 		}
-
-		if source == "cardkingdom" {
-			ckMap, err := external.BuildCardKingdomPriceMap(ctx)
-			if err != nil {
-				return nil, err
-			}
-			
-			// 1. Try Scryfall CK ID (if Scryfall starts providing it again or we have it cached)
-			if hasScry && scryMeta.CardKingdomID != "" {
-				if price, ok := ckMap["ckid:"+scryMeta.CardKingdomID]; ok {
-					return price, nil
-				}
-			}
-
-			// 2. Fallback to Name + Edition + Variation matching
-			variation := external.MapFoilTreatmentToCKVariation(models.FoilTreatment(foil), models.CardTreatment(treatment))
-			isFoil := foil != "non_foil"
-
-			ckKey := fmt.Sprintf("%s|%s|%s|%s",
-				strings.ToLower(name),
-				strings.ToLower(setName),
-				strings.ToLower(variation),
-				func() string {
-					if isFoil {
-						return "foil"
-					}
-					return "non_foil"
-				}())
-
-			if price, ok := ckMap[ckKey]; ok {
-				return price, nil
-			}
-
-			// 3. Last Fallback: Just return the first available CK price for this card name + foil
-			nameKeyPrefix := strings.ToLower(name) + "|"
-			foilSuffix := "|non_foil"
-			if isFoil {
-				foilSuffix = "|foil"
-			}
-			for k, p := range ckMap {
-				if strings.HasPrefix(k, nameKeyPrefix) && strings.HasSuffix(k, foilSuffix) {
-					return p, nil
-				}
-			}
-
-			return nil, fmt.Errorf("no cardkingdom price found for %s", name)
-		}
-
 		if hasScry {
 			if source == "cardmarket" {
 				return scryMeta.CardmarketEUR, nil
