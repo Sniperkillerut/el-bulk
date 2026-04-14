@@ -223,17 +223,17 @@ export function getTreatmentType(card: ScryfallCard): CardTreatment {
   return resolveCardTreatment(card);
 }
 
-export function applyPrintPrices(card: ScryfallCard | undefined, foil: FoilTreatment, source: PriceSource): number {
+export function applyPrintPrices(card: ScryfallCard | undefined, foil: FoilTreatment, source: PriceSource, currentPriceReference?: number | string): number {
   if (!card) return 0;
   const p = card.prices || {};
-  if (source === 'tcgplayer' || source === 'cardkingdom') {
+  if (source === 'tcgplayer') {
     if (foil === 'foil') return parseFloat(p.usd_foil || '0');
     if (foil === 'etched_foil') return parseFloat(p.usd_etched || '0');
     return parseFloat(p.usd || '0');
   } else if (source === 'cardmarket') {
     return parseFloat(p.eur || '0');
   }
-  return 0;
+  return currentPriceReference !== undefined ? Number(currentPriceReference) : 0;
 }
 
 export function extractMTGMetadata(card: ScryfallCard | undefined) {

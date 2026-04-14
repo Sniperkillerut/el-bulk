@@ -433,7 +433,7 @@ export default function ProductEditModal({
           promo_type: bestPrint?.promo_types?.join(',') || 'none',
           foil_treatment: foilToSet,
           image_url: getScryfallImage(bestPrint) || f.image_url,
-          price_reference: applyPrintPrices(bestPrint, foilToSet, f.price_source),
+          price_reference: applyPrintPrices(bestPrint, foilToSet, f.price_source, f.price_reference),
           ...extractMTGMetadata(bestPrint)
         };
       });
@@ -452,7 +452,7 @@ export default function ProductEditModal({
       foil_treatment: resolveFoilTreatment(bestPrint) as FoilTreatment,
       scryfall_id: bestPrint?.id || f.scryfall_id,
       image_url: getScryfallImage(bestPrint) || f.image_url,
-      price_reference: applyPrintPrices(bestPrint, f.foil_treatment, f.price_source),
+      price_reference: applyPrintPrices(bestPrint, f.foil_treatment, f.price_source, f.price_reference),
       ...extractMTGMetadata(bestPrint)
     }));
   };
@@ -464,7 +464,7 @@ export default function ProductEditModal({
       foil_treatment: resolveFoilTreatment(bestPrint) as FoilTreatment,
       scryfall_id: bestPrint?.id || f.scryfall_id,
       image_url: getScryfallImage(bestPrint) || f.image_url,
-      price_reference: applyPrintPrices(bestPrint, f.foil_treatment, f.price_source),
+      price_reference: applyPrintPrices(bestPrint, f.foil_treatment, f.price_source, f.price_reference),
       ...extractMTGMetadata(bestPrint)
     }));
   };
@@ -476,7 +476,7 @@ export default function ProductEditModal({
       foil_treatment: resolveFoilTreatment(bestPrint) as FoilTreatment,
       scryfall_id: bestPrint?.id || f.scryfall_id,
       image_url: getScryfallImage(bestPrint) || f.image_url,
-      price_reference: applyPrintPrices(bestPrint, f.foil_treatment, f.price_source),
+      price_reference: applyPrintPrices(bestPrint, f.foil_treatment, f.price_source, f.price_reference),
       ...extractMTGMetadata(bestPrint)
     }));
   };
@@ -488,7 +488,7 @@ export default function ProductEditModal({
       foil_treatment: resolveFoilTreatment(bestPrint) as FoilTreatment,
       scryfall_id: bestPrint?.id || f.scryfall_id,
       image_url: getScryfallImage(bestPrint) || f.image_url,
-      price_reference: applyPrintPrices(bestPrint, f.foil_treatment, f.price_source),
+      price_reference: applyPrintPrices(bestPrint, f.foil_treatment, f.price_source, f.price_reference),
       ...extractMTGMetadata(bestPrint)
     }));
   };
@@ -499,7 +499,7 @@ export default function ProductEditModal({
       ...f, foil_treatment: newFoil,
       scryfall_id: bestPrint?.id || f.scryfall_id,
       image_url: getScryfallImage(bestPrint) || f.image_url,
-      price_reference: applyPrintPrices(bestPrint, newFoil, f.price_source),
+      price_reference: applyPrintPrices(bestPrint, newFoil, f.price_source, f.price_reference),
       ...extractMTGMetadata(bestPrint)
     }));
   };
@@ -519,7 +519,7 @@ export default function ProductEditModal({
       foil_treatment: foil as FoilTreatment,
       scryfall_id: p.id,
       image_url: getScryfallImage(p) || f.image_url,
-      price_reference: applyPrintPrices(p, foil as FoilTreatment, f.price_source),
+      price_reference: applyPrintPrices(p, foil as FoilTreatment, f.price_source, f.price_reference),
       ...extractMTGMetadata(p)
     }));
   };
@@ -528,7 +528,7 @@ export default function ProductEditModal({
     const bestPrint = findMatchingPrint(scryfallPrints, form.set_code, form.card_treatment, form.collector_number, form.promo_type, form.foil_treatment);
     setForm(f => ({
       ...f, price_source: src,
-      price_reference: applyPrintPrices(bestPrint, f.foil_treatment, src)
+      price_reference: applyPrintPrices(bestPrint, f.foil_treatment, src, f.price_reference)
     }));
   };
 
