@@ -100,7 +100,7 @@ func main() {
 	productHandler := handlers.NewProductHandler(productService, database)
 	adminHandler := handlers.NewAdminHandler(adminService, auditService)
 	categoriesHandler := handlers.NewCategoriesHandler(categoryService)
-	lookupHandler := handlers.NewLookupHandler()
+	lookupHandler := handlers.NewLookupHandler(productService)
 	settingsHandler := handlers.NewSettingsHandler(settingsService)
 	refreshHandler := handlers.NewRefreshHandler(refreshService)
 	orderHandler := handlers.NewOrderHandler(orderService)

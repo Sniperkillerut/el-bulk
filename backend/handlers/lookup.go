@@ -5,15 +5,20 @@ import (
 	"net/http"
 
 	"github.com/el-bulk/backend/external"
+	"github.com/el-bulk/backend/service"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/el-bulk/backend/utils/render"
 )
 
 // LookupHandler handles card image/metadata lookups from external APIs.
-type LookupHandler struct{}
+type LookupHandler struct {
+	ProductService *service.ProductService
+}
 
-func NewLookupHandler() *LookupHandler {
-	return &LookupHandler{}
+func NewLookupHandler(ps *service.ProductService) *LookupHandler {
+	return &LookupHandler{
+		ProductService: ps,
+	}
 }
 
 // GET /api/admin/lookup/mtg?name=<name>&set=<setCode>&foil=<foilTreatment>
@@ -41,6 +46,9 @@ func (h *LookupHandler) MTG(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Enrich with Card Kingdom prices
+	_ = h.ProductService.EnrichCardLookupResults(r.Context(), []*external.CardLookupResult{result})
+
 	render.Success(w, result)
 }
 
@@ -62,6 +70,13 @@ func (h *LookupHandler) BatchMTG(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, "scryfall batch lookup failed: "+err.Error(), http.StatusBadGateway)
 		return
 	}
+
+	// Enrich with Card Kingdom prices
+	ptrResults := make([]*external.CardLookupResult, len(results))
+	for i := range results {
+		ptrResults[i] = &results[i]
+	}
+	_ = h.ProductService.EnrichCardLookupResults(r.Context(), ptrResults)
 
 	render.Success(w, results)
 }

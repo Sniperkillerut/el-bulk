@@ -283,8 +283,9 @@ export interface CardLookupResult {
   set_name: string;
   set_code: string;
   collector_number?: string;
-  price_tcgplayer?: number;  // USD
-  price_cardmarket?: number; // EUR
+	price_tcgplayer?: number;  // USD
+	price_cardmarket?: number; // EUR
+	price_cardkingdom?: number; // USD (CK Sell Price)
 
   // MTG Metadata
   language: string;

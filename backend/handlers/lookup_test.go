@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/el-bulk/backend/external"
+	"github.com/el-bulk/backend/service"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -40,7 +41,7 @@ func TestLookupHandler_MTG(t *testing.T) {
 	external.ScryfallBase = server.URL
 	defer func() { external.ScryfallBase = oldBase }()
 
-	h := NewLookupHandler()
+	h := NewLookupHandler(&service.ProductService{})
 
 	t.Run("Success", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/api/admin/lookup/mtg?name=Black+Lotus", nil)
@@ -83,7 +84,7 @@ func TestLookupHandler_BatchMTG(t *testing.T) {
 	external.ScryfallBase = server.URL
 	defer func() { external.ScryfallBase = oldBase }()
 
-	h := NewLookupHandler()
+	h := NewLookupHandler(&service.ProductService{})
 
 	t.Run("Success", func(t *testing.T) {
 		input := struct {
@@ -111,7 +112,7 @@ func TestLookupHandler_BatchMTG(t *testing.T) {
 }
 
 func TestLookupHandler_Pokemon_Error(t *testing.T) {
-	h := NewLookupHandler()
+	h := NewLookupHandler(&service.ProductService{})
 	t.Run("Missing Name", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/api/admin/lookup/pokemon", nil)
 		rr := httptest.NewRecorder()
@@ -164,7 +165,7 @@ func TestLookupHandler_Pokemon(t *testing.T) {
 	external.PokemonTCGBase = server.URL
 	defer func() { external.PokemonTCGBase = oldBase }()
 
-	h := NewLookupHandler()
+	h := NewLookupHandler(&service.ProductService{})
 
 	t.Run("Success", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/api/admin/lookup/pokemon?name=Charizard", nil)

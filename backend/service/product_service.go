@@ -631,3 +631,90 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 
 	return int(count), nil
 }
+
+func (s *ProductService) EnrichCardLookupResults(ctx context.Context, results []*external.CardLookupResult) error {
+	if len(results) == 0 {
+		return nil
+	}
+
+	// 1. Resolve CK mapping if any MTG cards are present
+	var mtgResults []*external.CardLookupResult
+	for _, r := range results {
+		if r.MTGMetadata.SetCode != nil {
+			mtgResults = append(mtgResults, r)
+		}
+	}
+
+	if len(mtgResults) == 0 {
+		return nil
+	}
+
+	// Load CK Price Map
+	ckPriceMap, err := external.BuildCardKingdomPriceMap(ctx)
+	if err != nil {
+		logger.WarnCtx(ctx, "Failed to load CK price map for enrichment: %v", err)
+		return nil // Non-fatal, just no CK prices
+	}
+
+	// Load Set Mappings for ck_name
+	sets, err := s.TCGStore.ListSets(ctx, "mtg")
+	if err != nil {
+		logger.WarnCtx(ctx, "Failed to load MTG sets for CK enrichment: %v", err)
+		// We can still try to match by default names
+	}
+
+	ckNameMap := make(map[string]string)
+	for _, set := range sets {
+		if set.CKName != nil && *set.CKName != "" && set.Code != "" {
+			ckNameMap[strings.ToLower(set.Code)] = *set.CKName
+		}
+	}
+
+	// Match results
+	for _, r := range mtgResults {
+		setCode := strings.ToLower(*r.MTGMetadata.SetCode)
+		ckEdition := r.MTGMetadata.SetName // Fallback to Scryfall name
+		if mapped, ok := ckNameMap[setCode]; ok {
+			ckEdition = &mapped
+		}
+
+		// Resolve variation/foil
+		isFoil := r.MTGMetadata.FoilTreatment != models.FoilNonFoil
+		variation := external.MapFoilTreatmentToCKVariation(r.MTGMetadata.FoilTreatment, r.MTGMetadata.CardTreatment)
+
+		// Create keys for matching
+		// Matching logic follows refreshing_store.go pattern
+		key := fmt.Sprintf("%s|%s|%s|%s",
+			strings.ToLower(strings.TrimSpace(r.Name)),
+			external.NormalizeCKEdition(strings.ToLower(strings.TrimSpace(*ckEdition))),
+			strings.ToLower(strings.TrimSpace(variation)),
+			func() string {
+				if isFoil {
+					return "foil"
+				}
+				return "non_foil"
+			}(),
+		)
+
+		if price, ok := ckPriceMap[key]; ok {
+			r.PriceCardKingdom = price
+		} else {
+			// Try without variation if it failed
+			keyNoVar := fmt.Sprintf("%s|%s||%s",
+				strings.ToLower(strings.TrimSpace(r.Name)),
+				external.NormalizeCKEdition(strings.ToLower(strings.TrimSpace(*ckEdition))),
+				func() string {
+					if isFoil {
+						return "foil"
+					}
+					return "non_foil"
+				}(),
+			)
+			if price, ok := ckPriceMap[keyNoVar]; ok {
+				r.PriceCardKingdom = price
+			}
+		}
+	}
+
+	return nil
+}

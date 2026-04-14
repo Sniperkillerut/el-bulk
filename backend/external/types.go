@@ -10,6 +10,7 @@ type CardLookupResult struct {
 	ImageURL        string   `json:"image_url"`
 	PriceTCGPlayer  *float64 `json:"price_tcgplayer,omitempty"`  // USD
 	PriceCardmarket *float64 `json:"price_cardmarket,omitempty"` // EUR
+	PriceCardKingdom *float64 `json:"price_cardkingdom,omitempty"` // USD (CK Sell Price)
 
 	models.MTGMetadata
 }
