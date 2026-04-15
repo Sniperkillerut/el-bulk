@@ -152,13 +152,14 @@ func (h *TCGHandler) GetExternalPrice(w http.ResponseWriter, r *http.Request) {
 	foil := r.URL.Query().Get("foil")
 	treatment := r.URL.Query().Get("treatment")
 	source := r.URL.Query().Get("source")
+	scryfallID := r.URL.Query().Get("scryfall_id")
 
 	if name == "" || source == "" {
 		render.Error(w, "name and source are required", http.StatusBadRequest)
 		return
 	}
 
-	price, err := h.Service.RefreshService.GetSuggestedPrice(r.Context(), name, set, setName, collector, foil, treatment, source)
+	price, err := h.Service.RefreshService.GetSuggestedPrice(r.Context(), scryfallID, name, set, setName, collector, foil, treatment, source)
 	if err != nil {
 		render.Error(w, err.Error(), http.StatusNotFound)
 		return

@@ -165,36 +165,25 @@ func BuildPriceUpdates(rows []RefreshRow, scryPriceMap map[external.PriceKey]ext
 		case "cardmarket":
 			refPrice = scryMeta.CardmarketEUR
 		case "cardkingdom":
-			// 1. Try matching by CardKingdom ID if we have Scryfall metadata
-			if hasScry && scryMeta.CardKingdomID != "" {
-				if cp, ok := ckPriceMap["ckid:"+scryMeta.CardKingdomID]; ok {
-					refPrice = cp
-				}
+			setName := ""
+			if p.SetName != nil {
+				setName = *p.SetName
 			}
-
-			// 2. Fallback to Name + Edition + Variation matching via the shared CK matcher
-			if refPrice == nil {
-				setName := ""
-				if p.SetName != nil {
-					setName = *p.SetName
-				}
-				isFoil := p.FoilTreatment != "non_foil"
-
-				// Prefer the curated ck_name from DB; fall back to normalized Scryfall set name
-				ckEdition := ""
-				if p.CKSetName != nil && *p.CKSetName != "" {
-					ckEdition = *p.CKSetName
-				} else {
-					ckEdition = external.NormalizeCKEdition(setName)
-				}
-
-				variation := external.MapFoilTreatmentToCKVariation(
-					models.FoilTreatment(p.FoilTreatment),
-					models.CardTreatment(p.CardTreatment),
-				)
-
-				refPrice = external.LookupCKPrice(p.ScryfallID, p.Name, ckEdition, variation, isFoil, ckPriceMap)
+			isFoil := p.FoilTreatment != "non_foil"
+			// Prefer the curated ck_name from DB; fall back to normalized Scryfall set name
+			ckEdition := ""
+			if p.CKSetName != nil && *p.CKSetName != "" {
+				ckEdition = *p.CKSetName
+			} else {
+				ckEdition = external.NormalizeCKEdition(setName)
 			}
+			variation := external.MapFoilTreatmentToCKVariation(
+				models.FoilTreatment(p.FoilTreatment),
+				models.CardTreatment(p.CardTreatment),
+			)
+			// LookupCKPrice tries "scry:{scryfallID}:{foil}" first, then name fallback.
+			// p.ScryfallID comes from the DB — same as what the CK pricelist indexes on.
+			refPrice = external.LookupCKPrice(p.ScryfallID, p.Name, ckEdition, variation, isFoil, ckPriceMap)
 		}
 
 		if refPrice == nil {

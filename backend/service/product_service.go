@@ -545,16 +545,17 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 		_ = s.Store.DB.SelectContext(ctx, &rows, s.Store.DB.Rebind(query), args...)
 		
 		if len(rows) > 0 {
-			// Resolve external prices
-			// Collect scryfall IDs for ALL sources — CK rows need them for the CK ID fast-path
+			// Resolve external prices.
+			// Collect scryfall IDs for TCGPlayer/Cardmarket rows (for batch Scryfall fetch).
+			// CK rows use LookupCKPrice(row.ScryfallID) directly — no Scryfall batch needed.
 			scryIDs := make([]string, 0, len(rows))
 			needsCK := false
 			for _, row := range rows {
-				if row.ScryfallID != "" {
-					scryIDs = append(scryIDs, row.ScryfallID)
-				}
 				if row.PriceSource == "cardkingdom" {
 					needsCK = true
+				} else if row.ScryfallID != "" {
+					// TCGPlayer/Cardmarket: need Scryfall batch for prices + metadata
+					scryIDs = append(scryIDs, row.ScryfallID)
 				}
 			}
 
@@ -576,40 +577,25 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 					}
 
 					isFoil := row.FoilTreatment != "non_foil"
-					var refPrice *float64
-
-					// 1. CK ID fast-path — use foil ID for foil cards, non-foil ID otherwise.
-					//    Mirrors exactly what BuildPriceUpdates does in RunPriceRefresh.
-					if meta, ok := scryBatch[row.ScryfallID]; ok {
-						ckID := meta.CardKingdomID
-						if isFoil && meta.CardKingdomFoilID != "" {
-							ckID = meta.CardKingdomFoilID
-						}
-						if ckID != "" {
-							if cp, ok := ckPriceMap["ckid:"+ckID]; ok {
-								refPrice = cp
-							}
-						}
+					setName := ""
+					if row.SetName != nil {
+						setName = *row.SetName
 					}
-
-					// 2. Fallback: scored name + edition + variation matching
-					if refPrice == nil {
-						setName := ""
-						if row.SetName != nil {
-							setName = *row.SetName
-						}
-						ckEdition := ""
-						if row.CKSetName != nil && *row.CKSetName != "" {
-							ckEdition = *row.CKSetName
-						} else {
-							ckEdition = external.NormalizeCKEdition(setName)
-						}
-						variation := external.MapFoilTreatmentToCKVariation(
-							models.FoilTreatment(row.FoilTreatment),
-							models.CardTreatment(row.CardTreatment),
-						)
-						refPrice = external.LookupCKPrice(row.ScryfallID, row.Name, ckEdition, variation, isFoil, ckPriceMap)
+					ckEdition := ""
+					if row.CKSetName != nil && *row.CKSetName != "" {
+						ckEdition = *row.CKSetName
+					} else {
+						ckEdition = external.NormalizeCKEdition(setName)
 					}
+					variation := external.MapFoilTreatmentToCKVariation(
+						models.FoilTreatment(row.FoilTreatment),
+						models.CardTreatment(row.CardTreatment),
+					)
+					// LookupCKPrice tries "scry:{scryfallID}:{foil}" first (O(1), covers ~98%
+					// of cards), then falls back to scored name+edition+variation matching.
+					// row.ScryfallID is taken directly from the DB — no secondary Scryfall
+					// API call needed, and no stale card_kingdom_id dependency.
+					refPrice := external.LookupCKPrice(row.ScryfallID, row.Name, ckEdition, variation, isFoil, ckPriceMap)
 
 					if refPrice != nil {
 						updates = append(updates, store.MetadataUpdate{

@@ -103,7 +103,7 @@ func (s *RefreshService) RunPriceRefresh(ctx context.Context, tcgID string) (upd
 	return updated, errs
 }
 
-func (s *RefreshService) GetSuggestedPrice(ctx context.Context, name, set, setName, collector, foil, treatment, source string) (*float64, error) {
+func (s *RefreshService) GetSuggestedPrice(ctx context.Context, scryfallID, name, set, setName, collector, foil, treatment, source string) (*float64, error) {
 	foil = strings.ToLower(foil)
 	
 	if source == "cardkingdom" {
@@ -115,11 +115,11 @@ func (s *RefreshService) GetSuggestedPrice(ctx context.Context, name, set, setNa
 		variation := external.MapFoilTreatmentToCKVariation(models.FoilTreatment(foil), models.CardTreatment(treatment))
 		isFoil := foil != "non_foil"
 
-		// setName here is expected to be the CK edition name (from ck_name column if available,
-		// or already normalized by the caller). NormalizeCKEdition is idempotent for already-clean names.
+		// Prefer curated ck_name (setName from DB); fall back to normalized Scryfall name.
 		ckEdition := external.NormalizeCKEdition(setName)
 
-		price := external.LookupCKPrice("", name, ckEdition, variation, isFoil, ckMap)
+		// LookupCKPrice uses scryfallID for direct O(1) match when available.
+		price := external.LookupCKPrice(scryfallID, name, ckEdition, variation, isFoil, ckMap)
 		if price != nil {
 			return price, nil
 		}
