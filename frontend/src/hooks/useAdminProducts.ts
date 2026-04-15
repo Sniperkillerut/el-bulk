@@ -13,7 +13,7 @@ export function useAdminProducts() {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [storageFilter, setStorageFilter] = useState('');
   const [onlyDuplicates, setOnlyDuplicates] = useState(false);
-  const [sortKey, setSortKey] = useState('id');
+  const [sortKey, setSortKey] = useState('created_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
   const [queryTime, setQueryTime] = useState(0);
