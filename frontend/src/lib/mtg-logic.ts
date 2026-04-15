@@ -306,12 +306,23 @@ export function findMatchingPrint(prints: ScryfallCard[], set: string, treatment
   return match || prints.find(p => p.set?.toLowerCase() === set.toLowerCase()) || prints[0];
 }
 
-export function getSuggestedPrice(card: ScryfallCard | undefined, foil: FoilTreatment, source: PriceSource, settings?: { usd_to_cop_rate: number, eur_to_cop_rate: number }): number | undefined {
+export function getSuggestedPrice(card: ScryfallCard | undefined, foil: FoilTreatment, source: PriceSource, settings?: { usd_to_cop_rate: number, eur_to_cop_rate: number, ck_to_cop_rate?: number }): number | undefined {
   if (!card || !settings) return undefined;
   const ref = applyPrintPrices(card, foil, source);
   if (!ref) return 0;
-  
-  const rate = (source === 'tcgplayer' || source === 'cardkingdom') ? settings.usd_to_cop_rate : settings.eur_to_cop_rate;
+
+  let rate: number;
+  switch (source) {
+    case 'tcgplayer':
+      rate = settings.usd_to_cop_rate;
+      break;
+    case 'cardkingdom':
+      // CK has its own rate; fall back to usd_to_cop_rate if not set for backwards compat
+      rate = settings.ck_to_cop_rate ?? settings.usd_to_cop_rate;
+      break;
+    default:
+      rate = settings.eur_to_cop_rate;
+  }
   if (!rate) return 0;
 
   // Round to nearest 100 COP as a standard

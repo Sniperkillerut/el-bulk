@@ -363,7 +363,8 @@ export default function BountyEditModal({
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-xs font-mono-stack uppercase text-text-muted tracking-widest m-0">{t('components.admin.bounty_modal.pricing_title', 'PRICING')}</h3>
                 <div className="text-xs font-mono-stack px-2 py-1 rounded bg-ink-surface text-gold shadow-sm">
-                  {(form.price_source === 'tcgplayer' || form.price_source === 'cardkingdom') && `(x ${settings?.usd_to_cop_rate || 0} COP)`}
+                  {form.price_source === 'tcgplayer' && `(x ${settings?.usd_to_cop_rate || 0} COP)`}
+                  {form.price_source === 'cardkingdom' && `(x ${settings?.ck_to_cop_rate || settings?.usd_to_cop_rate || 0} COP)`}
                   {form.price_source === 'cardmarket' && `(x ${settings?.eur_to_cop_rate || 0} COP)`}
                   {form.price_source !== 'manual' && (
                     <span className="ml-2 font-bold text-sm">
@@ -394,7 +395,9 @@ export default function BountyEditModal({
                       value={form.price_reference || ''} 
                       onChange={e => {
                         const val = parseFloat(e.target.value) || 0;
-                        const rate = (form.price_source === 'tcgplayer' || form.price_source === 'cardkingdom') ? (settings?.usd_to_cop_rate || 0) : (settings?.eur_to_cop_rate || 0);
+                        const rate = form.price_source === 'tcgplayer' ? (settings?.usd_to_cop_rate || 0)
+                          : form.price_source === 'cardkingdom' ? (settings?.ck_to_cop_rate || settings?.usd_to_cop_rate || 0)
+                          : (settings?.eur_to_cop_rate || 0);
                         setForm(f => ({ ...f, price_reference: val, target_price: Math.round(val * rate) }));
                       }} 
                     />
