@@ -112,84 +112,16 @@ func (s *RefreshService) GetSuggestedPrice(ctx context.Context, name, set, setNa
 			return nil, err
 		}
 
-		// 1. Fallback to Name + Edition + Variation matching
 		variation := external.MapFoilTreatmentToCKVariation(models.FoilTreatment(foil), models.CardTreatment(treatment))
 		isFoil := foil != "non_foil"
 
-		ckKey := fmt.Sprintf("%s|%s|%s|%s",
-			strings.ToLower(name),
-			strings.ToLower(setName),
-			strings.ToLower(variation),
-			func() string {
-				if isFoil {
-					return "foil"
-				}
-				return "non_foil"
-			}())
+		// setName here is expected to be the CK edition name (from ck_name column if available,
+		// or already normalized by the caller). NormalizeCKEdition is idempotent for already-clean names.
+		ckEdition := external.NormalizeCKEdition(setName)
 
-		if price, ok := ckMap[ckKey]; ok {
+		price := external.LookupCKPrice(name, ckEdition, variation, isFoil, ckMap)
+		if price != nil {
 			return price, nil
-		}
-
-		// 2. Fuzzy Edition Fallback
-		nameKeyPrefix := strings.ToLower(name) + "|"
-		foilSuffix := "|non_foil"
-		if isFoil {
-			foilSuffix = "|foil"
-		}
-		targetEdition := strings.ToLower(setName)
-		targetCollector := strings.ToLower(collector)
-		
-		var bestMatch *float64
-
-		for k, p := range ckMap {
-			if strings.HasPrefix(k, nameKeyPrefix) && strings.HasSuffix(k, foilSuffix) {
-				parts := strings.Split(k, "|")
-				if len(parts) >= 3 {
-					ckEdition := parts[1]
-					ckVariation := parts[2]
-					
-					// Skip non-standard cards that often fluctuate valuation incorrectly
-					if strings.Contains(ckVariation, "art card") || strings.Contains(ckVariation, "token") {
-						continue
-					}
-
-					editionMatches := targetEdition != "" && (ckEdition == targetEdition || strings.Contains(ckEdition, targetEdition) || strings.Contains(targetEdition, ckEdition))
-					collectorMatches := targetCollector != "" && (ckVariation == targetCollector || strings.Contains(ckVariation, targetCollector))
-					
-					if editionMatches {
-						if collectorMatches {
-							// Found exact variation in correct set - can't get better than this
-							return p, nil
-						}
-						// If we haven't found a match yet, or this one is more expensive, take it
-						if bestMatch == nil || (p != nil && *p > *bestMatch) {
-							bestMatch = p
-						}
-					} else if collectorMatches {
-						if bestMatch == nil || (p != nil && *p > *bestMatch) {
-							bestMatch = p
-						}
-					}
-				}
-			}
-		}
-
-		if bestMatch != nil {
-			return bestMatch, nil
-		}
-
-		// 3. Absolute Last Fallback: Just return the highest available CK price for this card name + foil
-		for k, p := range ckMap {
-			if strings.HasPrefix(k, nameKeyPrefix) && strings.HasSuffix(k, foilSuffix) {
-				if bestMatch == nil || (p != nil && *p > *bestMatch) {
-					bestMatch = p
-				}
-			}
-		}
-
-		if bestMatch != nil {
-			return bestMatch, nil
 		}
 
 		return nil, fmt.Errorf("no cardkingdom price found for %s", name)

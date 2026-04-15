@@ -681,47 +681,19 @@ func (s *ProductService) EnrichCardLookupResults(ctx context.Context, results []
 	// Match results
 	for _, r := range mtgResults {
 		setCode := strings.ToLower(*r.MTGMetadata.SetCode)
-		ckEdition := r.MTGMetadata.SetName // Fallback to Scryfall name
+
+		// Prefer curated ck_name from DB; fall back to Scryfall set name
+		ckEdition := ""
 		if mapped, ok := ckNameMap[setCode]; ok {
-			ckEdition = &mapped
+			ckEdition = mapped
+		} else if r.MTGMetadata.SetName != nil {
+			ckEdition = external.NormalizeCKEdition(*r.MTGMetadata.SetName)
 		}
 
-		// Resolve variation/foil
 		isFoil := r.MTGMetadata.FoilTreatment != models.FoilNonFoil
 		variation := external.MapFoilTreatmentToCKVariation(r.MTGMetadata.FoilTreatment, r.MTGMetadata.CardTreatment)
 
-		// Create keys for matching
-		// Matching logic follows refreshing_store.go pattern
-		key := fmt.Sprintf("%s|%s|%s|%s",
-			strings.ToLower(strings.TrimSpace(r.Name)),
-			external.NormalizeCKEdition(strings.ToLower(strings.TrimSpace(*ckEdition))),
-			strings.ToLower(strings.TrimSpace(variation)),
-			func() string {
-				if isFoil {
-					return "foil"
-				}
-				return "non_foil"
-			}(),
-		)
-
-		if price, ok := ckPriceMap[key]; ok {
-			r.PriceCardKingdom = price
-		} else {
-			// Try without variation if it failed
-			keyNoVar := fmt.Sprintf("%s|%s||%s",
-				strings.ToLower(strings.TrimSpace(r.Name)),
-				external.NormalizeCKEdition(strings.ToLower(strings.TrimSpace(*ckEdition))),
-				func() string {
-					if isFoil {
-						return "foil"
-					}
-					return "non_foil"
-				}(),
-			)
-			if price, ok := ckPriceMap[keyNoVar]; ok {
-				r.PriceCardKingdom = price
-			}
-		}
+		r.PriceCardKingdom = external.LookupCKPrice(r.Name, ckEdition, variation, isFoil, ckPriceMap)
 	}
 
 	return nil

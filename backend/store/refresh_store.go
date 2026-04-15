@@ -172,7 +172,7 @@ func BuildPriceUpdates(rows []RefreshRow, scryPriceMap map[external.PriceKey]ext
 				}
 			}
 
-			// 2. Fallback to Name + Edition + Variation matching
+			// 2. Fallback to Name + Edition + Variation matching via the shared CK matcher
 			if refPrice == nil {
 				setName := ""
 				if p.SetName != nil {
@@ -180,85 +180,20 @@ func BuildPriceUpdates(rows []RefreshRow, scryPriceMap map[external.PriceKey]ext
 				}
 				isFoil := p.FoilTreatment != "non_foil"
 
-				nameKeyPrefix := strings.ToLower(p.Name) + "|"
-				foilSuffix := "|non_foil"
-				if isFoil {
-					foilSuffix = "|foil"
-				}
-				// Use ck_name from DB if available, otherwise normalize the Scryfall set name
-				targetEdition := ""
+				// Prefer the curated ck_name from DB; fall back to normalized Scryfall set name
+				ckEdition := ""
 				if p.CKSetName != nil && *p.CKSetName != "" {
-					targetEdition = strings.ToLower(*p.CKSetName)
+					ckEdition = *p.CKSetName
 				} else {
-					targetEdition = external.NormalizeCKEdition(setName)
+					ckEdition = external.NormalizeCKEdition(setName)
 				}
 
-				// Derive the expected CK variation string for this card's treatment
-				targetVariation := strings.ToLower(strings.TrimSpace(
-					external.MapFoilTreatmentToCKVariation(
-						models.FoilTreatment(p.FoilTreatment),
-						models.CardTreatment(p.CardTreatment),
-					),
-				))
+				variation := external.MapFoilTreatmentToCKVariation(
+					models.FoilTreatment(p.FoilTreatment),
+					models.CardTreatment(p.CardTreatment),
+				)
 
-				// Scored matching — best score wins:
-				// 3 = exact edition + exact variation match
-				// 2 = exact edition + base/empty variation (the standard print)
-				// 1 = exact edition, wrong variation (e.g. showcase vs normal)
-				// 0 = wrong/unknown edition (cross-set last resort)
-				bestScore := -1
-				var bestPrice *float64
-
-				for k, cp := range ckPriceMap {
-					if cp == nil {
-						continue
-					}
-					if !strings.HasPrefix(k, nameKeyPrefix) || !strings.HasSuffix(k, foilSuffix) {
-						continue
-					}
-					parts := strings.Split(k, "|")
-					if len(parts) < 4 {
-						continue
-					}
-					ckEdition := parts[1]
-					ckVariation := parts[2]
-
-					// Skip junk entries (tokens, art cards, etc.)
-					isJunk := strings.Contains(ckVariation, "art card") ||
-						strings.Contains(ckVariation, "token") ||
-						strings.Contains(ckVariation, "gold-bordered") ||
-						strings.Contains(ckVariation, "placeholder")
-					if isJunk {
-						continue
-					}
-
-					// Exact edition match — no fuzzy contains to prevent cross-set leakage
-					// (e.g. "Ravnica" must not match "Ravnica Remastered")
-					editionMatches := targetEdition != "" && ckEdition == targetEdition
-
-					var score int
-					if editionMatches {
-						switch {
-						case ckVariation == targetVariation:
-							score = 3 // exact edition + exact variation
-						case ckVariation == "" || ckVariation == "standard":
-							score = 2 // exact edition + base/normal print
-						default:
-							score = 1 // exact edition, mismatched variation
-						}
-					} else {
-						score = 0 // cross-set fallback
-					}
-
-					if score > bestScore {
-						bestScore = score
-						bestPrice = cp
-					}
-				}
-
-				if bestPrice != nil {
-					refPrice = bestPrice
-				}
+				refPrice = external.LookupCKPrice(p.Name, ckEdition, variation, isFoil, ckPriceMap)
 			}
 		}
 
