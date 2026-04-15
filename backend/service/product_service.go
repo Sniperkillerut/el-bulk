@@ -546,10 +546,11 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 		
 		if len(rows) > 0 {
 			// Resolve external prices
+			// Collect scryfall IDs for ALL sources — CK rows need them for the CK ID fast-path
 			scryIDs := make([]string, 0, len(rows))
 			needsCK := false
 			for _, row := range rows {
-				if (row.PriceSource == "tcgplayer" || row.PriceSource == "cardmarket") && row.ScryfallID != "" {
+				if row.ScryfallID != "" {
 					scryIDs = append(scryIDs, row.ScryfallID)
 				}
 				if row.PriceSource == "cardkingdom" {
@@ -563,61 +564,80 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 			if needsCK {
 				ckPriceMap, _ = external.BuildCardKingdomPriceMap(ctx)
 			}
-			
-			// Map results
-			// For TCGPlayer/Cardmarket we use the scryBatch directly, for CK we use BuildPriceUpdates
+
 			updates := make([]store.MetadataUpdate, 0, len(rows))
-			
-			// Separated CK rows for specialized matching
-			var ckRows []store.RefreshRow
-			
+
 			for _, row := range rows {
-				if row.PriceSource == "cardkingdom" {
-					ckRows = append(ckRows, row)
-					continue
-				}
+				switch row.PriceSource {
 
-				// TCGPlayer / Cardmarket logic
-				var price *float64
-				var scryID string
-				var oracleText string
-				var typeLine string
-				var imageURL string
-				var legalities models.JSONB
+				case "cardkingdom":
+					if ckPriceMap == nil {
+						continue
+					}
 
-				if meta, ok := scryBatch[row.ScryfallID]; ok {
-					scryID = meta.ScryfallID
-					oracleText = meta.OracleText
-					typeLine = meta.TypeLine
-					legalities = meta.Legalities
-					imageURL = meta.ImageURL
+					var refPrice *float64
+
+					// 1. CK ID fast-path — mirrors exactly what BuildPriceUpdates does in RunPriceRefresh.
+					//    BatchLookupMTG (keyed by scryfall ID) gives us CardKingdomID without
+					//    downloading all of Scryfall.
+					if meta, ok := scryBatch[row.ScryfallID]; ok && meta.CardKingdomID != "" {
+						if cp, ok := ckPriceMap["ckid:"+meta.CardKingdomID]; ok {
+							refPrice = cp
+						}
+					}
+
+					// 2. Fallback: scored name + edition + variation matching
+					if refPrice == nil {
+						setName := ""
+						if row.SetName != nil {
+							setName = *row.SetName
+						}
+						ckEdition := ""
+						if row.CKSetName != nil && *row.CKSetName != "" {
+							ckEdition = *row.CKSetName
+						} else {
+							ckEdition = external.NormalizeCKEdition(setName)
+						}
+						isFoil := row.FoilTreatment != "non_foil"
+						variation := external.MapFoilTreatmentToCKVariation(
+							models.FoilTreatment(row.FoilTreatment),
+							models.CardTreatment(row.CardTreatment),
+						)
+						refPrice = external.LookupCKPrice(row.Name, ckEdition, variation, isFoil, ckPriceMap)
+					}
+
+					if refPrice != nil {
+						updates = append(updates, store.MetadataUpdate{
+							ID:          row.ID,
+							Price:       refPrice,
+							PriceSource: row.PriceSource,
+						})
+					}
+
+				case "tcgplayer", "cardmarket":
+					meta, ok := scryBatch[row.ScryfallID]
+					if !ok {
+						continue
+					}
+					var price *float64
 					if row.PriceSource == "tcgplayer" {
 						price = meta.TCGPlayerUSD
 					} else {
 						price = meta.CardmarketEUR
 					}
+					if price != nil || meta.ScryfallID != "" {
+						updates = append(updates, store.MetadataUpdate{
+							ID:          row.ID,
+							Price:       price,
+							ScryfallID:  meta.ScryfallID,
+							OracleText:  meta.OracleText,
+							TypeLine:    meta.TypeLine,
+							ImageURL:    meta.ImageURL,
+							Legalities:  meta.Legalities,
+							PriceSource: row.PriceSource,
+						})
+					}
 				}
-
-				if price != nil || scryID != "" {
-					updates = append(updates, store.MetadataUpdate{
-						ID:          row.ID,
-						Price:       price,
-						ScryfallID:  scryID,
-						OracleText:  oracleText,
-						TypeLine:    typeLine,
-						ImageURL:    imageURL,
-						Legalities:  legalities,
-						PriceSource: row.PriceSource,
-					})
-				}
-			}
-
-			// Add CK updates — BuildPriceUpdates handles edition+variation matching using
-			// the ck_set_name joined from tcg_set. Pass nil for the scry price map since
-			// the scryBatch type (keyed by Scryfall ID) differs from the PriceKey map it expects.
-			if len(ckRows) > 0 && ckPriceMap != nil {
-				ckUpdates, _ := store.BuildPriceUpdates(ckRows, nil, ckPriceMap)
-				updates = append(updates, ckUpdates...)
 			}
 
 			if len(updates) > 0 {
