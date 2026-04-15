@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS tcg_set (
     name        TEXT NOT NULL,
     released_at DATE,
     set_type    TEXT,
+    ck_name     TEXT,
     PRIMARY KEY (tcg, code)
 );
 

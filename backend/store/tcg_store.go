@@ -93,7 +93,7 @@ func (s *TCGStore) GetProductCount(ctx context.Context, id string) (int, error) 
 func (s *TCGStore) ListSets(ctx context.Context, tcgID string) ([]models.TCGSet, error) {
 	start := time.Now()
 	var sets []models.TCGSet
-	query := "SELECT * FROM tcg_set WHERE tcg_id = $1 ORDER BY released_at DESC"
+	query := "SELECT tcg, code, name, released_at, set_type, ck_name FROM tcg_set WHERE tcg = $1 ORDER BY released_at DESC"
 	logger.TraceCtx(ctx, "[DB] Executing ListSets for %s: %s", tcgID, query)
 	err := s.DB.SelectContext(ctx, &sets, query, tcgID)
 	if err != nil {
