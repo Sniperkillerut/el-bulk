@@ -1,14 +1,37 @@
 -- Bulk Upsert Product
 -- Handles product creation/update, category mapping, and storage assignment in one call.
+-- Updated to support "Attribute Matching" for CSV imports:
+-- If no ID is provided, it attempts to find an existing variant to increment stock instead of creating duplicates.
 CREATE OR REPLACE FUNCTION fn_bulk_upsert_product(data jsonb)
 RETURNS TABLE(upserted_id UUID) AS $$
 DECLARE
     item jsonb;
     p_id UUID;
+    is_import BOOLEAN;
 BEGIN
     FOR item IN SELECT * FROM jsonb_array_elements(data)
     LOOP
-        -- Upsert product
+        is_import := (item->>'id' IS NULL);
+        p_id := (item->>'id')::uuid;
+
+        -- 1. Variant Matching for Imports
+        -- If no ID is provided, try to find an exact variant match to avoid duplicates.
+        IF is_import THEN
+            SELECT id INTO p_id FROM product
+            WHERE name = item->>'name'
+              AND tcg = item->>'tcg'
+              AND category = item->>'category'
+              AND COALESCE(set_code, '') = COALESCE(item->>'set_code', '')
+              AND COALESCE(collector_number, '') = COALESCE(item->>'collector_number', '')
+              AND condition = item->>'condition'
+              AND foil_treatment = COALESCE(item->>'foil_treatment', 'non_foil')
+              AND card_treatment = COALESCE(item->>'card_treatment', 'normal')
+              AND language = COALESCE(item->>'language', 'en')
+            LIMIT 1;
+        END IF;
+
+        -- 2. Upsert Product Metadata
+        -- Use the found p_id or generate a new one if it's still NULL.
         INSERT INTO product (
             id, name, tcg, category, set_name, set_code, collector_number, condition,
             foil_treatment, card_treatment, promo_type,
@@ -19,7 +42,7 @@ BEGIN
             scryfall_id, legalities, updated_at
         )
         VALUES (
-            COALESCE((item->>'id')::uuid, gen_random_uuid()),
+            COALESCE(p_id, gen_random_uuid()),
             item->>'name',
             item->>'tcg',
             item->>'category',
@@ -92,8 +115,13 @@ BEGIN
             updated_at = now()
         RETURNING id INTO p_id;
 
-        -- Categories
-        DELETE FROM product_category WHERE product_id = p_id;
+        -- 3. Categories Tracking
+        -- For manual edits (ID provided), we replace categories. 
+        -- For imports (No ID provided), we just append new ones.
+        IF NOT is_import THEN
+            DELETE FROM product_category WHERE product_id = p_id;
+        END IF;
+
         IF item ? 'category_ids' THEN
             INSERT INTO product_category (product_id, category_id)
             SELECT p_id, (cat::text)::uuid
@@ -101,17 +129,31 @@ BEGIN
             ON CONFLICT DO NOTHING;
         END IF;
 
-        -- Storage
-        DELETE FROM product_storage WHERE product_id = p_id;
-        IF item ? 'storage_items' THEN
-            INSERT INTO product_storage (product_id, storage_id, quantity)
-            SELECT p_id, (si->>'stored_in_id')::uuid, (si->>'quantity')::int
-            FROM jsonb_array_elements(item->'storage_items') AS si
-            WHERE (si->>'quantity')::int > 0
-            ON CONFLICT DO NOTHING;
+        -- 4. Storage & Stock Tracking
+        -- For manual edits (ID provided), we replace the full storage manifest.
+        -- For imports (No ID provided), we ADD the new quantities to existing locations.
+        IF NOT is_import THEN
+            DELETE FROM product_storage WHERE product_id = p_id;
+            
+            IF item ? 'storage_items' THEN
+                INSERT INTO product_storage (product_id, storage_id, quantity)
+                SELECT p_id, (si->>'stored_in_id')::uuid, (si->>'quantity')::int
+                FROM jsonb_array_elements(item->'storage_items') AS si
+                WHERE (si->>'quantity')::int > 0
+                ON CONFLICT (product_id, storage_id) DO UPDATE SET quantity = EXCLUDED.quantity;
+            END IF;
+        ELSE
+            IF item ? 'storage_items' THEN
+                INSERT INTO product_storage (product_id, storage_id, quantity)
+                SELECT p_id, (si->>'stored_in_id')::uuid, (si->>'quantity')::int
+                FROM jsonb_array_elements(item->'storage_items') AS si
+                WHERE (si->>'quantity')::int > 0
+                ON CONFLICT (product_id, storage_id) DO UPDATE SET quantity = product_storage.quantity + EXCLUDED.quantity;
+            END IF;
         END IF;
 
-        -- Deck Cards
+        -- 5. Deck Cards (Usually only for store_exclusives)
+        -- Always replace manifest for deck cards as it's an architectural definition.
         DELETE FROM deck_card WHERE product_id = p_id;
         IF item ? 'deck_cards' THEN
             INSERT INTO deck_card (
