@@ -185,94 +185,79 @@ func BuildPriceUpdates(rows []RefreshRow, scryPriceMap map[external.PriceKey]ext
 				if isFoil {
 					foilSuffix = "|foil"
 				}
-				// Use CK name from DB if available, otherwise normalize
+				// Use ck_name from DB if available, otherwise normalize the Scryfall set name
 				targetEdition := ""
 				if p.CKSetName != nil && *p.CKSetName != "" {
 					targetEdition = strings.ToLower(*p.CKSetName)
 				} else {
 					targetEdition = external.NormalizeCKEdition(setName)
 				}
-				targetCollector := strings.ToLower(strings.TrimSpace(p.CollectorNumber))
 
-				var bestMatch *float64
-				var bestJunkMatch *float64
+				// Derive the expected CK variation string for this card's treatment
+				targetVariation := strings.ToLower(strings.TrimSpace(
+					external.MapFoilTreatmentToCKVariation(
+						models.FoilTreatment(p.FoilTreatment),
+						models.CardTreatment(p.CardTreatment),
+					),
+				))
+
+				// Scored matching — best score wins:
+				// 3 = exact edition + exact variation match
+				// 2 = exact edition + base/empty variation (the standard print)
+				// 1 = exact edition, wrong variation (e.g. showcase vs normal)
+				// 0 = wrong/unknown edition (cross-set last resort)
+				bestScore := -1
+				var bestPrice *float64
 
 				for k, cp := range ckPriceMap {
-					if strings.HasPrefix(k, nameKeyPrefix) && strings.HasSuffix(k, foilSuffix) {
-						parts := strings.Split(k, "|")
-						if len(parts) >= 3 {
-							ckEdition := parts[1]
-							ckVariation := parts[2]
-							
-							isJunk := strings.Contains(ckVariation, "art card") || 
-									   strings.Contains(ckVariation, "token") ||
-									   strings.Contains(ckVariation, "gold-bordered") ||
-									   strings.Contains(ckVariation, "placeholder")
-							
-							editionMatches := targetEdition != "" && (ckEdition == targetEdition || strings.Contains(ckEdition, targetEdition) || strings.Contains(targetEdition, ckEdition))
-							collectorMatches := targetCollector != "" && (ckVariation == targetCollector || strings.Contains(ckVariation, targetCollector))
+					if cp == nil {
+						continue
+					}
+					if !strings.HasPrefix(k, nameKeyPrefix) || !strings.HasSuffix(k, foilSuffix) {
+						continue
+					}
+					parts := strings.Split(k, "|")
+					if len(parts) < 4 {
+						continue
+					}
+					ckEdition := parts[1]
+					ckVariation := parts[2]
 
-							if editionMatches {
-								if collectorMatches {
-									refPrice = cp
-									break
-								}
-								// Highest price wins within categories
-								if isJunk {
-									if bestJunkMatch == nil || (cp != nil && *cp > *bestJunkMatch) {
-										bestJunkMatch = cp
-									}
-								} else {
-									if bestMatch == nil || (cp != nil && *cp > *bestMatch) {
-										bestMatch = cp
-									}
-								}
-							} else if collectorMatches {
-								if isJunk {
-									if bestJunkMatch == nil || (cp != nil && *cp > *bestJunkMatch) {
-										bestJunkMatch = cp
-									}
-								} else {
-									if bestMatch == nil || (cp != nil && *cp > *bestMatch) {
-										bestMatch = cp
-									}
-								}
-							}
+					// Skip junk entries (tokens, art cards, etc.)
+					isJunk := strings.Contains(ckVariation, "art card") ||
+						strings.Contains(ckVariation, "token") ||
+						strings.Contains(ckVariation, "gold-bordered") ||
+						strings.Contains(ckVariation, "placeholder")
+					if isJunk {
+						continue
+					}
+
+					// Exact edition match — no fuzzy contains to prevent cross-set leakage
+					// (e.g. "Ravnica" must not match "Ravnica Remastered")
+					editionMatches := targetEdition != "" && ckEdition == targetEdition
+
+					var score int
+					if editionMatches {
+						switch {
+						case ckVariation == targetVariation:
+							score = 3 // exact edition + exact variation
+						case ckVariation == "" || ckVariation == "standard":
+							score = 2 // exact edition + base/normal print
+						default:
+							score = 1 // exact edition, mismatched variation
 						}
+					} else {
+						score = 0 // cross-set fallback
+					}
+
+					if score > bestScore {
+						bestScore = score
+						bestPrice = cp
 					}
 				}
 
-				if refPrice == nil {
-					if bestMatch != nil {
-						refPrice = bestMatch
-					} else {
-						refPrice = bestJunkMatch
-					}
-				}
-				
-				// Final pass: if still no price, take the highest available for the card name
-				if refPrice == nil {
-					for k, cp := range ckPriceMap {
-						if strings.HasPrefix(k, nameKeyPrefix) && strings.HasSuffix(k, foilSuffix) {
-							parts := strings.Split(k, "|")
-							isJunk := len(parts) >= 3 && (strings.Contains(parts[2], "art card") || strings.Contains(parts[2], "token") || strings.Contains(parts[2], "gold-bordered"))
-							
-							if isJunk {
-								if bestJunkMatch == nil || (cp != nil && *cp > *bestJunkMatch) {
-									bestJunkMatch = cp
-								}
-							} else {
-								if bestMatch == nil || (cp != nil && *cp > *bestMatch) {
-									bestMatch = cp
-								}
-							}
-						}
-					}
-					if bestMatch != nil {
-						refPrice = bestMatch
-					} else {
-						refPrice = bestJunkMatch
-					}
+				if bestPrice != nil {
+					refPrice = bestPrice
 				}
 			}
 		}
