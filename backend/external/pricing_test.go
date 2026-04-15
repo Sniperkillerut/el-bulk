@@ -78,6 +78,42 @@ func TestResolveMTGPrice(t *testing.T) {
 			t.Errorf("Expected Ripple Foil price 5.99, got %v", res.CardKingdomUSD)
 		}
 	})
+
+	t.Run("Variation match beats ID match", func(t *testing.T) {
+		// Scenario: Scryfall ID has two entries in CK. 
+		// One is generic (4.49), one is specific variation (5.99).
+		id := "special_id"
+		genericPrice := 4.49
+		specificPrice := 5.99
+		
+		ckMap := make(map[string]*float64)
+		ckMap["scry:"+id+":foil"] = &genericPrice
+		// Key must be lowercase to match engine behavior
+		ckMap["sol ring|modern horizons 3 commander|ripple foil|foil"] = &specificPrice
+		
+		idMap := make(map[string]CardMetadata)
+		idMap[id] = CardMetadata{ScryfallID: id}
+		
+		// If we provide the variation, it should pick 5.99 (Priority)
+		res := ResolveMTGPrice(id, "Sol Ring", "m3c", "305", "ripple_foil", "", "Modern Horizons 3 Commander", "ripple foil", nil, idMap, ckMap)
+		if res.CardKingdomUSD == nil || *res.CardKingdomUSD != 5.99 {
+			val := 0.0
+			if res.CardKingdomUSD != nil {
+				val = *res.CardKingdomUSD
+			}
+			t.Errorf("Expected specialized price 5.99, got %v", val)
+		}
+		
+		// If we don't provide the variation, it should fallback to the ID match (4.49)
+		res2 := ResolveMTGPrice(id, "Sol Ring", "m3c", "305", "foil", "", "Modern Horizons 3 Commander", "", nil, idMap, ckMap)
+		if res2.CardKingdomUSD == nil || *res2.CardKingdomUSD != 4.49 {
+			val := 0.0
+			if res2.CardKingdomUSD != nil {
+				val = *res2.CardKingdomUSD
+			}
+			t.Errorf("Expected fallback ID price 4.49, got %v", val)
+		}
+	})
 }
 
 func ptr(f float64) *float64 { return &f }

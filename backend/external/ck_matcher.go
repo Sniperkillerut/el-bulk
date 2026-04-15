@@ -27,14 +27,7 @@ func LookupCKPrice(scryfallID, name, ckEdition, variation string, isFoil bool, c
 		foilSuffix = "foil"
 	}
 
-	// ── Step 1: direct scryfall_id lookup ──────────────────────────────────────
-	if scryfallID != "" {
-		if cp, ok := ckPriceMap["scry:"+scryfallID+":"+foilSuffix]; ok && cp != nil {
-			return cp
-		}
-	}
-
-	// ── Step 2: scored name + edition + variation fallback ─────────────────────
+	// ── Step 1: scored name + edition + variation fallback ─────────────────────
 	name = strings.ToLower(strings.TrimSpace(name))
 	ckEdition = strings.ToLower(strings.TrimSpace(ckEdition))
 	variation = strings.ToLower(strings.TrimSpace(variation))
@@ -61,8 +54,8 @@ func LookupCKPrice(scryfallID, name, ckEdition, variation string, isFoil bool, c
 		if len(parts) < 4 {
 			continue
 		}
-		ckEditionEntry := parts[1]
-		ckVariation := parts[2]
+		ckEditionEntry := strings.ToLower(parts[1])
+		ckVariation := strings.ToLower(parts[2])
 
 		// Skip junk entries that are often mispriced relative to the actual card
 		if strings.Contains(ckVariation, "art card") ||
@@ -73,7 +66,6 @@ func LookupCKPrice(scryfallID, name, ckEdition, variation string, isFoil bool, c
 		}
 
 		// Exact edition match — NO fuzzy/substring matching to prevent cross-set leakage
-		// (e.g. "ravnica" must not match "ravnica remastered").
 		editionMatches := ckEdition != "" && ckEditionEntry == ckEdition
 
 		var score int
@@ -94,6 +86,19 @@ func LookupCKPrice(scryfallID, name, ckEdition, variation string, isFoil bool, c
 		if score > bestScore || (score == bestScore && *cp < *bestPrice) {
 			bestScore = score
 			bestPrice = cp
+		}
+	}
+
+	// ── Step 2: direct scryfall_id lookup ──────────────────────────────────────
+	// If we found a 'Perfect' match (Score 3 - specific variation), trust it above all else.
+	// Otherwise, use the Scryfall ID match as the primary fallback.
+	if bestScore == 3 {
+		return bestPrice
+	}
+
+	if scryfallID != "" {
+		if cp, ok := ckPriceMap["scry:"+scryfallID+":"+foilSuffix]; ok && cp != nil {
+			return cp
 		}
 	}
 

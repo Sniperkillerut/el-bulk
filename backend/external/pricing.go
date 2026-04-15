@@ -68,22 +68,10 @@ func ResolveMTGPrice(
 		result.Metadata = &meta
 	}
 
-	// ── Card Kingdom Resolution ───────────────────────────────────────────────
-	// Case 1: ID-based match (Preferred)
-	if sid != "" {
-		foilSuffix := "non_foil"
-		if isFoil {
-			foilSuffix = "foil"
-		}
-		scryKey := "scry:" + sid + ":" + foilSuffix
-		if cp, ok := ckMap[scryKey]; ok && cp != nil {
-			result.CardKingdomUSD = cp
-		}
-	}
-
-	// Case 2: Name | Edition | Variation Fallback
-	if result.CardKingdomUSD == nil && name != "" {
-		// Use the existing robust CK matcher logic
+	// ── CardKingdom Resolution ───────────────────────────────────────────────
+	if name != "" {
+		// Delegate ALL CK resolution to LookupCKPrice to ensure consistent hierarchy
+		// (Perfect matches > ID matches > Heuristic matches).
 		result.CardKingdomUSD = LookupCKPrice(sid, name, ckEdition, ckVariation, isFoil, ckMap)
 	}
 
