@@ -125,15 +125,18 @@ func (s *RefreshService) GetSuggestedPrice(ctx context.Context, scryfallID, name
 		ckMap, _ = external.BuildCardKingdomPriceMap(ctx)
 	}
 
-	// 3. Resolve curated metadata
+	// 3. Resolve curated metadata and use 'ground truth' textures from Scryfall
+	groundFoil := string(res.FoilTreatment)
+	groundTreatment := string(res.CardTreatment)
+
 	if ckEdition == "" {
 		ckEdition = external.NormalizeCKEdition(setName)
 	}
-	variation := external.MapFoilTreatmentToCKVariation(models.FoilTreatment(foil), models.CardTreatment(treatment))
+	variation := external.MapFoilTreatmentToCKVariation(models.FoilTreatment(groundFoil), models.CardTreatment(groundTreatment))
 
 	// 4. Unified Resolve (Single Source of Truth)
 	pResult := external.ResolveMTGPrice(
-		scryfallID, name, set, collector, foil, treatment, 
+		scryfallID, name, set, collector, groundFoil, groundTreatment, 
 		ckEdition, variation,
 		nil, scryBatch, ckMap,
 	)
