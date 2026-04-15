@@ -632,6 +632,17 @@ func BuildPriceMap(ctx context.Context) (map[PriceKey]CardMetadata, error) {
 		for _, v := range variants {
 			tcg := parsePrice(v.usd)
 			cm := parsePrice(v.eur)
+
+			// Fallback: if variant-specific price is missing, use the non-foil price.
+			// Scryfall often returns null for specialties (e.g. ripple foil) when 
+			// the market only tracks one price.
+			if tcg == nil && v.foil != "non_foil" {
+				tcg = parsePrice(card.Prices.USD)
+			}
+			if cm == nil && v.foil != "non_foil" {
+				cm = parsePrice(card.Prices.EUR)
+			}
+
 			if tcg == nil && cm == nil {
 				continue
 			}
@@ -759,12 +770,25 @@ func BatchLookupMTG(ctx context.Context, scryfallIDs []string) (map[string]CardM
 		resp.Body.Close()
 
 		for _, c := range scryResp.Data {
+			usd := parsePrice(c.Prices.USD)
+			eur := parsePrice(c.Prices.EUR)
+			usdFoil := parsePrice(c.Prices.USDFoil)
+			eurFoil := parsePrice(c.Prices.EURFoil)
+
+			// Fallback: If foil price is missing, use non-foil as default.
+			if usdFoil == nil {
+				usdFoil = usd
+			}
+			if eurFoil == nil {
+				eurFoil = eur
+			}
+
 			meta := CardMetadata{
 				ScryfallID:        c.ID,
-				TCGPlayerUSD:      parsePrice(c.Prices.USD),
-				CardmarketEUR:     parsePrice(c.Prices.EUR),
-				TCGPlayerUSDFoil:  parsePrice(c.Prices.USDFoil),
-				CardmarketEURFoil: parsePrice(c.Prices.EURFoil),
+				TCGPlayerUSD:      usd,
+				CardmarketEUR:     eur,
+				TCGPlayerUSDFoil:  usdFoil,
+				CardmarketEURFoil: eurFoil,
 				OracleText:        c.OracleText,
 				TypeLine:          c.TypeLine,
 				Legalities:        castLegalities(c.Legalities),

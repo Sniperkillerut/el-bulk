@@ -615,12 +615,18 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 					if row.PriceSource == "tcgplayer" {
 						if isFoil {
 							price = meta.TCGPlayerUSDFoil
+							if price == nil {
+								price = meta.TCGPlayerUSD
+							}
 						} else {
 							price = meta.TCGPlayerUSD
 						}
 					} else { // cardmarket
 						if isFoil {
 							price = meta.CardmarketEURFoil
+							if price == nil {
+								price = meta.CardmarketEUR
+							}
 						} else {
 							price = meta.CardmarketEUR
 						}
