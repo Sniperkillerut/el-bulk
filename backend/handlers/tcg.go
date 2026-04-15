@@ -121,8 +121,8 @@ func (h *TCGHandler) SyncSets(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(w, map[string]interface{}{
-		"message":    "Sync completed",
-		"sets_count": count,
+		"message": "Sync completed",
+		"count":   count,
 	})
 }
 
@@ -138,7 +138,7 @@ func (h *TCGHandler) SyncPrices(w http.ResponseWriter, r *http.Request) {
 
 	render.Success(w, map[string]interface{}{
 		"message": "Sync completed",
-		"updated": updated,
+		"count":   updated,
 		"errors":  errs,
 	})
 }
