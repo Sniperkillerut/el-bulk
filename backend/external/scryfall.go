@@ -178,7 +178,13 @@ func LookupMTGCard(ctx context.Context, scryfallID, name, setCode, collectorNumb
 	if scryfallID != "" {
 		res, err := scryfallGet(ctx, fmt.Sprintf("%s/cards/%s", ScryfallBase, url.PathEscape(scryfallID)), foilTreatment)
 		if err == nil {
-			return res, nil
+			// VALIDATION: Ensure the card found by ID actually matches the required foliage.
+			// This fixes "polluted" IDs in the database where a non-foil ID was saved for a foil product.
+			if string(res.FoilTreatment) == strings.ToLower(foilTreatment) {
+				return res, nil
+			}
+			logger.WarnCtx(ctx, "Self-Healing: Scryfall ID %s finish mismatch (%s vs %s). Forcing resolution by name.", 
+				scryfallID, res.FoilTreatment, foilTreatment)
 		}
 	}
 
