@@ -79,6 +79,7 @@ function LoginContent() {
               <span className="opacity-0 group-hover/btn:opacity-100 transition-all ml-auto translate-x-[-10px] group-hover:translate-x-0">→</span>
             </button>
 
+            {/* TODO: Facebook login hidden until OAuth is functional
             <button 
               onClick={() => handleLogin('facebook')}
               className="w-full flex items-center justify-center gap-4 bg-[#1877F2] border border-[#1877F2] py-4 px-6 rounded-lg text-sm font-bold text-white hover:bg-[#166FE5] hover:shadow-[0_0_20px_rgba(24,119,242,0.3)] transition-all group/btn"
@@ -89,6 +90,7 @@ function LoginContent() {
               {t('pages.login.facebook', 'SIGN IN WITH FACEBOOK')}
               <span className="opacity-0 group-hover/btn:opacity-100 transition-all ml-auto translate-x-[-10px] group-hover:translate-x-0">→</span>
             </button>
+            */}
           </div>
 
           <div className="mt-12 pt-8 border-t border-border-main/30 text-center">

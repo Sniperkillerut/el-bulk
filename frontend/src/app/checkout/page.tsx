@@ -12,7 +12,7 @@ import { useLanguage } from '@/context/LanguageContext';
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, removedItems, totalPrice, updateQty, removeItem, restoreItem, permanentRemove, clearCart } = useCart();
-  const { user, loading, loginWithGoogle, loginWithFacebook } = useUser();
+  const { user, loading, loginWithGoogle } = useUser();
   const { t } = useLanguage();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -103,12 +103,14 @@ export default function CheckoutPage() {
           >
              {t('pages.auth.login.google', 'Login with Google')}
           </button>
+          {/* TODO: Facebook login hidden until OAuth is functional
           <button 
             onClick={loginWithFacebook} 
             className="flex-1 py-4 bg-[#1877F2]/10 hover:bg-[#1877F2]/20 text-[#1877F2] border border-[#1877F2]/30 font-bold rounded-lg transition-all active:scale-95"
           >
              {t('pages.auth.login.facebook', 'Login with Facebook')}
           </button>
+          */}
         </div>
         <button 
           onClick={() => router.push('/')} 
