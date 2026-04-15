@@ -228,9 +228,8 @@ func BatchLookupMTGCard(ctx context.Context, identifiers []CardIdentifier) ([]Ca
 
 	results := make([]CardLookupResult, len(batchResp.Data))
 	for i, card := range batchResp.Data {
-		// Note: foil_treatment is tricky in batch, as it's per card.
-		// For now, we return all metadata and the caller can pick prices later.
-		results[i] = *mapScryfallToResult(&card, "non_foil")
+		// Do not force "non_foil" in batch; allow the resolver to pick the dominant finish
+		results[i] = *mapScryfallToResult(&card, "")
 	}
 
 	return results, nil
@@ -405,8 +404,8 @@ func resolveFoilTreatment(card *scryfallCard, requestedFoil string) models.FoilT
 		}
 	}
 
-	// 1. Check for specialized finishes in promo_types if the card supports foil
-	if hasFoil {
+	// 1. Prioritize specialized finishes in promo_types if the card supports foil
+	if hasFoil || hasEtched {
 		for _, pt := range card.PromoTypes {
 			switch pt {
 			case "ripplefoil":
@@ -425,6 +424,8 @@ func resolveFoilTreatment(card *scryfallCard, requestedFoil string) models.FoilT
 				return models.FoilNeonInk
 			case "galaxyfoil":
 				return models.FoilGalaxyFoil
+			case "doublerainbow":
+				return models.FoilDoubleRainbow
 			}
 		}
 	}
@@ -454,11 +455,11 @@ func resolveFoilTreatment(card *scryfallCard, requestedFoil string) models.FoilT
 		return models.FoilGalaxyFoil
 	}
 
-	if hasNonFoil {
-		return models.FoilNonFoil
-	}
 	if hasFoil {
 		return models.FoilFoil
+	}
+	if hasNonFoil {
+		return models.FoilNonFoil
 	}
 
 	return models.FoilNonFoil

@@ -238,6 +238,12 @@ func MapFoilTreatmentToCKVariation(foil models.FoilTreatment, treatment models.C
 		parts = append(parts, "surge foil")
 	case models.FoilGalaxyFoil:
 		parts = append(parts, "galaxy foil")
+	case models.FoilRippleFoil:
+		parts = append(parts, "ripple foil")
+	case models.FoilConfettiFoil:
+		parts = append(parts, "confetti foil")
+	case models.FoilDoubleRainbow:
+		parts = append(parts, "double rainbow foil")
 	case models.FoilTexturedFoil:
 		parts = append(parts, "textured")
 	}

@@ -62,6 +62,22 @@ func TestResolveMTGPrice(t *testing.T) {
 			t.Errorf("Expected premium CK price by ID+Foil, got %v", res.CardKingdomUSD)
 		}
 	})
+
+	t.Run("Ripple Foil Specialty Match", func(t *testing.T) {
+		// Mock CK map with ripple foil variation
+		ripplePrice := 5.99
+		ckMap["Sol Ring|Modern Horizons 3 Commander|ripple foil|foil"] = &ripplePrice
+		ckMap["scry:ripple_id:foil"] = &ripplePrice
+
+		idMap["ripple_id"] = CardMetadata{
+			ScryfallID: "ripple_id",
+		}
+
+		res := ResolveMTGPrice("ripple_id", "Sol Ring", "m3c", "305", "ripple_foil", "", "Modern Horizons 3 Commander", "ripple foil", scryMap, idMap, ckMap)
+		if res.CardKingdomUSD == nil || *res.CardKingdomUSD != 5.99 {
+			t.Errorf("Expected Ripple Foil price 5.99, got %v", res.CardKingdomUSD)
+		}
+	})
 }
 
 func ptr(f float64) *float64 { return &f }
