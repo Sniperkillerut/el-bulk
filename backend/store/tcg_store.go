@@ -106,3 +106,16 @@ func (s *TCGStore) ListSets(ctx context.Context, tcgID string) ([]models.TCGSet,
 	logger.DebugCtx(ctx, "[DB] ListSets for %s took %v", tcgID, time.Since(start))
 	return sets, nil
 }
+
+func (s *TCGStore) GetSetByCode(ctx context.Context, tcgID, code string) (*models.TCGSet, error) {
+	start := time.Now()
+	var tSet models.TCGSet
+	query := "SELECT tcg, code, name, released_at, set_type, ck_name FROM tcg_set WHERE tcg = $1 AND code = $2"
+	logger.TraceCtx(ctx, "[DB] Executing GetSetByCode for %s/%s: %s", tcgID, code, query)
+	err := s.DB.GetContext(ctx, &tSet, query, tcgID, code)
+	if err != nil {
+		return nil, err
+	}
+	logger.DebugCtx(ctx, "[DB] GetSetByCode for %s/%s took %v", tcgID, code, time.Since(start))
+	return &tSet, nil
+}

@@ -106,55 +106,53 @@ func (s *RefreshService) RunPriceRefresh(ctx context.Context, tcgID string) (upd
 	return 0, 0
 }
 
-func (s *RefreshService) GetSuggestedPrice(ctx context.Context, scryfallID, name, set, setName, collector, foil, treatment, source string) (*float64, error) {
+func (s *RefreshService) GetSuggestedPrice(ctx context.Context, scryfallID, name, set, setName, collector, foil, treatment, source, ckEdition string) (*float64, error) {
 	foil = strings.ToLower(foil)
 	
-	if source == "cardkingdom" {
-		ckMap, err := external.BuildCardKingdomPriceMap(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		variation := external.MapFoilTreatmentToCKVariation(models.FoilTreatment(foil), models.CardTreatment(treatment))
-		isFoil := foil != "non_foil"
-
-		// Prefer curated ck_name (setName from DB); fall back to normalized Scryfall name.
-		ckEdition := external.NormalizeCKEdition(setName)
-
-		// LookupCKPrice uses scryfallID for direct O(1) match when available.
-		price := external.LookupCKPrice(scryfallID, name, ckEdition, variation, isFoil, ckMap)
-		if price != nil {
-			return price, nil
-		}
-
-		return nil, fmt.Errorf("no cardkingdom price found for %s", name)
+	// 1. Fetch real-time Scryfall metadata (Fast-Path)
+	res, err := external.LookupMTGCard(ctx, scryfallID, name, set, collector, foil)
+	if err != nil {
+		return nil, err
 	}
 
-	if source == "tcgplayer" || source == "cardmarket" {
-		// FAST-PATH: Use targeted API lookup instead of 600MB bulk file for single product refreshes
-		res, err := external.LookupMTGCard(ctx, scryfallID, name, set, collector, foil)
-		if err != nil {
-			return nil, err
+	// 2. Prepare resolution maps
+	scryBatch := map[string]external.CardMetadata{
+		*res.MTGMetadata.ScryfallID: res.ToCardMetadata(),
+	}
+
+	var ckMap map[string]*float64
+	if source == "cardkingdom" {
+		ckMap, _ = external.BuildCardKingdomPriceMap(ctx)
+	}
+
+	// 3. Resolve curated metadata
+	if ckEdition == "" {
+		ckEdition = external.NormalizeCKEdition(setName)
+	}
+	variation := external.MapFoilTreatmentToCKVariation(models.FoilTreatment(foil), models.CardTreatment(treatment))
+
+	// 4. Unified Resolve (Single Source of Truth)
+	pResult := external.ResolveMTGPrice(
+		scryfallID, name, set, collector, foil, treatment, 
+		ckEdition, variation,
+		nil, scryBatch, ckMap,
+	)
+
+	// 5. Select requested price
+	switch source {
+	case "cardkingdom":
+		if pResult.CardKingdomUSD != nil {
+			return pResult.CardKingdomUSD, nil
 		}
-
-		// Convert result to the format ResolveMTGPrice expects
-		scryBatch := map[string]external.CardMetadata{
-			*res.MTGMetadata.ScryfallID: res.ToCardMetadata(),
-		}
-
-		// Unified Resolve: implements ID > Set|CN > Set|Foil hierarchy
-		pResult := external.ResolveMTGPrice(
-			scryfallID, name, set, collector, foil, treatment, "", "",
-			nil, scryBatch, nil,
-		)
-
+	case "cardmarket":
 		if pResult.Metadata != nil {
-			if source == "cardmarket" {
-				return pResult.Metadata.CardmarketEUR, nil
-			}
+			return pResult.Metadata.CardmarketEUR, nil
+		}
+	case "tcgplayer":
+		if pResult.Metadata != nil {
 			return pResult.Metadata.TCGPlayerUSD, nil
 		}
 	}
 
-	return nil, fmt.Errorf("no price found for %s", source)
+	return nil, fmt.Errorf("no %s price found for %s", source, name)
 }

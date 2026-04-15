@@ -159,7 +159,17 @@ func (h *TCGHandler) GetExternalPrice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	price, err := h.Service.RefreshService.GetSuggestedPrice(r.Context(), scryfallID, name, set, setName, collector, foil, treatment, source)
+	// Fetch curated ck_name from DB if available
+	ckEdition := ""
+	if set != "" {
+		if tSet, err := h.Service.Store.GetSetByCode(r.Context(), "mtg", set); err == nil && tSet.CKName != nil {
+			ckEdition = *tSet.CKName
+		}
+	}
+
+	price, err := h.Service.RefreshService.GetSuggestedPrice(
+		r.Context(), scryfallID, name, set, setName, collector, foil, treatment, source, ckEdition,
+	)
 	if err != nil {
 		render.Error(w, err.Error(), http.StatusNotFound)
 		return
