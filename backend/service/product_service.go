@@ -120,26 +120,33 @@ func (s *ProductService) Create(ctx context.Context, input models.ProductInput) 
 		}
 	}
 
-	product, err := s.Store.CreateProduct(ctx, input)
+	// Refactored to leverage BulkUpsert for "Smart Matching" (Duplicate prevention)
+	jsonData, err := json.Marshal([]models.ProductInput{input})
 	if err != nil {
-		logger.ErrorCtx(ctx, "Core product creation failed: %v", err)
+		logger.ErrorCtx(ctx, "Failed to marshal product input for smart matching: %v", err)
 		return nil, err
 	}
 
-	// Logging (Asynchronous/Non-blocking)
-	s.Audit.LogAction(ctx, "CREATE_PRODUCT", "product", product.ID, models.JSONB{"input": input})
+	ids, err := s.Store.BulkUpsert(ctx, string(jsonData))
+	if err != nil {
+		logger.ErrorCtx(ctx, "Smart product creation failed: %v", err)
+		return nil, err
+	}
 
-	if err := s.Store.SaveCategories(ctx, product.ID, input.CategoryIDs); err != nil {
-		logger.ErrorCtx(ctx, "Failed to save categories for product %s: %v", product.ID, err)
+	if len(ids) == 0 {
+		return nil, fmt.Errorf("creation failed: no ID returned from database")
 	}
-	if err := s.Store.SaveStorage(ctx, product.ID, input.StorageItems); err != nil {
-		logger.ErrorCtx(ctx, "Failed to save storage for product %s: %v", product.ID, err)
-	}
-	if input.Category == "store_exclusives" {
-		if err := s.Store.SaveDeckCards(ctx, product.ID, input.DeckCards); err != nil {
-			logger.ErrorCtx(ctx, "Failed to save deck cards for product %s: %v", product.ID, err)
-		}
-		product.DeckCards = input.DeckCards
+
+	resID := ids[0]
+
+	// Logging
+	s.Audit.LogAction(ctx, "CREATE_PRODUCT", "product", resID, models.JSONB{"input": input})
+
+	// Fetch enriched product to return
+	product, err := s.GetByID(ctx, resID, true)
+	if err != nil {
+		logger.ErrorCtx(ctx, "Failed to fetch created/matched product %s: %v", resID, err)
+		return nil, err
 	}
 
 	settings, _ := s.Settings.GetSettings(ctx)
