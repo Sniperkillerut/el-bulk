@@ -2,36 +2,45 @@ package external
 
 import "strings"
 
-// LookupCKPrice finds the best CardKingdom price for a card using a scored matching
-// strategy. It is the single source of truth for CK price resolution across the codebase.
+// LookupCKPrice finds the best CardKingdom price for a card.
+// It is the single source of truth for CK price resolution across the codebase.
 //
-// Parameters:
-//   - name:       card name (case-insensitive; will be lowercased internally)
-//   - ckEdition:  the CK set/edition name, already resolved — prefer the value from the
-//                 ck_name DB column; fall back to NormalizeCKEdition(scryfall_set_name)
-//   - variation:  CK variation string from MapFoilTreatmentToCKVariation (may be "")
-//   - isFoil:     true if the card is any foil treatment
-//   - ckPriceMap: the full CK price map from BuildCardKingdomPriceMap
+// Lookup order (first hit wins):
 //
-// Scoring (higher = better match, first highest score wins):
+//  1. Direct scryfall_id match  — "scry:{scryfallID}:{foil|non_foil}"
+//     Covers ~98% of CK entries. Completely bypasses name/edition/variation logic.
 //
-//	3 — exact edition + exact variation
-//	2 — exact edition + empty/"standard" variation  (the base/normal print)
-//	1 — exact edition, wrong variation (e.g. showcase vs normal; last resort within set)
-//	0 — wrong/unknown edition (cross-set fallback, only when edition is empty or unresolved)
+//  2. Scored name + edition + variation fallback — for the ~2% of CK entries that
+//     lack a scryfall_id, or when scryfallID is unknown to the caller.
+//     Scoring:
+//     3 — exact edition + exact variation
+//     2 — exact edition + empty/"standard" variation (base/normal print)
+//     1 — exact edition, wrong variation
+//     0 — wrong/unknown edition (cross-set fallback, only when ckEdition is empty)
 //
-// Junk entries (art cards, tokens, gold-bordered, placeholders) are always skipped.
-// Returns nil if no match is found at any score level.
-func LookupCKPrice(name, ckEdition, variation string, isFoil bool, ckPriceMap map[string]*float64) *float64 {
+// Junk entries (art cards, tokens, gold-bordered, placeholders) are always skipped
+// in the scored fallback.
+// Returns nil if no match is found at any level.
+func LookupCKPrice(scryfallID, name, ckEdition, variation string, isFoil bool, ckPriceMap map[string]*float64) *float64 {
+	foilSuffix := "non_foil"
+	if isFoil {
+		foilSuffix = "foil"
+	}
+
+	// ── Step 1: direct scryfall_id lookup ──────────────────────────────────────
+	if scryfallID != "" {
+		if cp, ok := ckPriceMap["scry:"+scryfallID+":"+foilSuffix]; ok && cp != nil {
+			return cp
+		}
+	}
+
+	// ── Step 2: scored name + edition + variation fallback ─────────────────────
 	name = strings.ToLower(strings.TrimSpace(name))
 	ckEdition = strings.ToLower(strings.TrimSpace(ckEdition))
 	variation = strings.ToLower(strings.TrimSpace(variation))
 
 	nameKeyPrefix := name + "|"
-	foilSuffix := "|non_foil"
-	if isFoil {
-		foilSuffix = "|foil"
-	}
+	foilKeySuffix := "|" + foilSuffix
 
 	bestScore := -1
 	var bestPrice *float64
@@ -40,7 +49,11 @@ func LookupCKPrice(name, ckEdition, variation string, isFoil bool, ckPriceMap ma
 		if cp == nil {
 			continue
 		}
-		if !strings.HasPrefix(k, nameKeyPrefix) || !strings.HasSuffix(k, foilSuffix) {
+		// Skip non-name keys (scry:, ckid: prefixes)
+		if strings.HasPrefix(k, "scry:") || strings.HasPrefix(k, "ckid:") {
+			continue
+		}
+		if !strings.HasPrefix(k, nameKeyPrefix) || !strings.HasSuffix(k, foilKeySuffix) {
 			continue
 		}
 
@@ -77,7 +90,8 @@ func LookupCKPrice(name, ckEdition, variation string, isFoil bool, ckPriceMap ma
 			score = 0 // cross-set fallback (only fires when ckEdition is empty/unknown)
 		}
 
-		if score > bestScore {
+		// Update best: prefer higher score; break ties by lowest price.
+		if score > bestScore || (score == bestScore && *cp < *bestPrice) {
 			bestScore = score
 			bestPrice = cp
 		}

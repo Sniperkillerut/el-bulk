@@ -193,7 +193,7 @@ func BuildPriceUpdates(rows []RefreshRow, scryPriceMap map[external.PriceKey]ext
 					models.CardTreatment(p.CardTreatment),
 				)
 
-				refPrice = external.LookupCKPrice(p.Name, ckEdition, variation, isFoil, ckPriceMap)
+				refPrice = external.LookupCKPrice(p.ScryfallID, p.Name, ckEdition, variation, isFoil, ckPriceMap)
 			}
 		}
 

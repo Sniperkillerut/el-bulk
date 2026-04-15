@@ -19,6 +19,7 @@ const CardKingdomPricelistURL = "https://api.cardkingdom.com/api/v2/pricelist"
 type CardKingdomProduct struct {
 	ID          int    `json:"id"`
 	SKU         string `json:"sku"`
+	ScryfallID  string `json:"scryfall_id"`
 	Name        string `json:"name"`
 	Variation   string `json:"variation"`
 	Edition     string `json:"edition"`
@@ -89,18 +90,40 @@ func BuildCardKingdomPriceMap(ctx context.Context) (map[string]*float64, error) 
 		return nil, fmt.Errorf("failed to decode CardKingdom response: %w", err)
 	}
 
-	priceMap := make(map[string]*float64, len(ckResp.Data))
+	priceMap := make(map[string]*float64, len(ckResp.Data)*3)
 	for _, p := range ckResp.Data {
 		price, err := strconv.ParseFloat(p.PriceRetail, 64)
 		if err != nil {
 			continue
 		}
+		priceCopy := price // avoid loop-variable capture
 
 		isFoilBool := p.IsFoil == "true"
+
+		// Primary index: scryfall_id + foil — direct O(1) match, no name/edition needed.
+		// ~98% of CK entries have a scryfall_id; this is the preferred lookup path.
+		if p.ScryfallID != "" {
+			foilSuffix := "non_foil"
+			if isFoilBool {
+				foilSuffix = "foil"
+			}
+			scryKey := "scry:" + p.ScryfallID + ":" + foilSuffix
+			// When multiple CK entries share a scryfall_id+foil (e.g. alt-art variants
+			// with the same Scryfall ID), keep the lowest price — consistent with
+			// the tie-breaking rule used in LookupCKPrice.
+			if existing, ok := priceMap[scryKey]; !ok || priceCopy < *existing {
+				priceMap[scryKey] = &priceCopy
+			}
+		}
+
+		// Secondary index: CK integer ID — used by the Scryfall bulk-data fast-path
+		// (card_kingdom_id / card_kingdom_foil_id fields on Scryfall cards).
+		priceMap[fmt.Sprintf("ckid:%d", p.ID)] = &priceCopy
+
+		// Fallback index: name|edition|variation|foil — covers the ~2% of entries
+		// with no scryfall_id and cards that fall through the above paths.
 		key := generateCKKey(p.Name, p.Edition, p.Variation, isFoilBool)
-		priceMap[key] = &price
-		
-		priceMap[fmt.Sprintf("ckid:%d", p.ID)] = &price
+		priceMap[key] = &priceCopy
 	}
 
 	ckCache = priceMap
@@ -112,9 +135,12 @@ func BuildCardKingdomPriceMap(ctx context.Context) (map[string]*float64, error) 
 
 func generateCKKey(name, edition, variation string, isFoil bool) string {
 	name = strings.ToLower(strings.TrimSpace(name))
-	edition = NormalizeCKEdition(strings.TrimSpace(edition))
+	// Do NOT apply NormalizeCKEdition here — that function translates Scryfall
+	// set names to CK names. Applying it to CK's own edition names corrupts
+	// them (e.g. "Ice Age" → "ice age edition"). Just lowercase as-is.
+	edition = strings.ToLower(strings.TrimSpace(edition))
 	variation = strings.ToLower(strings.TrimSpace(variation))
-	
+
 	foilSuffix := "non_foil"
 	if isFoil {
 		foilSuffix = "foil"
@@ -124,10 +150,11 @@ func generateCKKey(name, edition, variation string, isFoil bool) string {
 }
 
 // NormalizeCKEdition maps common Scryfall/TCGPlayer set names to CardKingdom's edition names.
+// Used as a fallback when ck_name is not seeded in the DB.
 func NormalizeCKEdition(edition string) string {
 	e := strings.ToLower(edition)
-	
-	// Common mappings
+
+	// Common mappings (Scryfall name → CK name)
 	switch e {
 	case "revised":
 		return "revised edition"
@@ -141,6 +168,10 @@ func NormalizeCKEdition(edition string) string {
 		return "legends edition"
 	case "the dark":
 		return "the dark edition"
+	case "ice age":
+		return "ice age"
+	case "homelands":
+		return "homelands"
 	case "fourth edition", "4th edition":
 		return "4th edition"
 	case "fifth edition", "5th edition":
@@ -173,16 +204,9 @@ func NormalizeCKEdition(edition string) string {
 		return "time spiral remastered"
 	}
 
-	// General rules: CK often adds " Edition" to early sets if not present
-	earlySets := []string{"unlimited", "antiquities", "arabian nights", "legends", "the dark", "ice age", "homelands"}
-	for _, s := range earlySets {
-		if e == s {
-			return e + " edition"
-		}
-	}
-
 	return e
 }
+
 
 func MapFoilTreatmentToCKVariation(foil models.FoilTreatment, treatment models.CardTreatment) string {
 	// Most CK variations are things like "Etched", "Extended Art", etc.

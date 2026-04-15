@@ -119,7 +119,7 @@ func (s *RefreshService) GetSuggestedPrice(ctx context.Context, name, set, setNa
 		// or already normalized by the caller). NormalizeCKEdition is idempotent for already-clean names.
 		ckEdition := external.NormalizeCKEdition(setName)
 
-		price := external.LookupCKPrice(name, ckEdition, variation, isFoil, ckMap)
+		price := external.LookupCKPrice("", name, ckEdition, variation, isFoil, ckMap)
 		if price != nil {
 			return price, nil
 		}

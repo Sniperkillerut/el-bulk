@@ -575,14 +575,20 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 						continue
 					}
 
+					isFoil := row.FoilTreatment != "non_foil"
 					var refPrice *float64
 
-					// 1. CK ID fast-path — mirrors exactly what BuildPriceUpdates does in RunPriceRefresh.
-					//    BatchLookupMTG (keyed by scryfall ID) gives us CardKingdomID without
-					//    downloading all of Scryfall.
-					if meta, ok := scryBatch[row.ScryfallID]; ok && meta.CardKingdomID != "" {
-						if cp, ok := ckPriceMap["ckid:"+meta.CardKingdomID]; ok {
-							refPrice = cp
+					// 1. CK ID fast-path — use foil ID for foil cards, non-foil ID otherwise.
+					//    Mirrors exactly what BuildPriceUpdates does in RunPriceRefresh.
+					if meta, ok := scryBatch[row.ScryfallID]; ok {
+						ckID := meta.CardKingdomID
+						if isFoil && meta.CardKingdomFoilID != "" {
+							ckID = meta.CardKingdomFoilID
+						}
+						if ckID != "" {
+							if cp, ok := ckPriceMap["ckid:"+ckID]; ok {
+								refPrice = cp
+							}
 						}
 					}
 
@@ -598,12 +604,11 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 						} else {
 							ckEdition = external.NormalizeCKEdition(setName)
 						}
-						isFoil := row.FoilTreatment != "non_foil"
 						variation := external.MapFoilTreatmentToCKVariation(
 							models.FoilTreatment(row.FoilTreatment),
 							models.CardTreatment(row.CardTreatment),
 						)
-						refPrice = external.LookupCKPrice(row.Name, ckEdition, variation, isFoil, ckPriceMap)
+						refPrice = external.LookupCKPrice(row.ScryfallID, row.Name, ckEdition, variation, isFoil, ckPriceMap)
 					}
 
 					if refPrice != nil {
@@ -619,11 +624,20 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 					if !ok {
 						continue
 					}
+					isFoil := row.FoilTreatment != "non_foil"
 					var price *float64
 					if row.PriceSource == "tcgplayer" {
-						price = meta.TCGPlayerUSD
-					} else {
-						price = meta.CardmarketEUR
+						if isFoil {
+							price = meta.TCGPlayerUSDFoil
+						} else {
+							price = meta.TCGPlayerUSD
+						}
+					} else { // cardmarket
+						if isFoil {
+							price = meta.CardmarketEURFoil
+						} else {
+							price = meta.CardmarketEUR
+						}
 					}
 					if price != nil || meta.ScryfallID != "" {
 						updates = append(updates, store.MetadataUpdate{
@@ -713,7 +727,12 @@ func (s *ProductService) EnrichCardLookupResults(ctx context.Context, results []
 		isFoil := r.MTGMetadata.FoilTreatment != models.FoilNonFoil
 		variation := external.MapFoilTreatmentToCKVariation(r.MTGMetadata.FoilTreatment, r.MTGMetadata.CardTreatment)
 
-		r.PriceCardKingdom = external.LookupCKPrice(r.Name, ckEdition, variation, isFoil, ckPriceMap)
+
+		scryfallID := ""
+		if r.MTGMetadata.ScryfallID != nil {
+			scryfallID = *r.MTGMetadata.ScryfallID
+		}
+		r.PriceCardKingdom = external.LookupCKPrice(scryfallID, r.Name, ckEdition, variation, isFoil, ckPriceMap)
 	}
 
 	return nil
