@@ -382,6 +382,7 @@ export default function AdminDashboard() {
             loading={loading || isSelectingGlobal}
             total={total}
             onSelectGlobal={handleSelectGlobal}
+            settings={settings || undefined}
           />
         </div>
       </div>

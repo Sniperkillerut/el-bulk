@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Product, TCG_SHORT, FOIL_LABELS, TREATMENT_LABELS, resolveLabel } from '@/lib/types';
+import { Product, TCG_SHORT, FOIL_LABELS, TREATMENT_LABELS, resolveLabel, Settings } from '@/lib/types';
 import CardImage from '@/components/CardImage';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -9,9 +9,10 @@ interface ProductTableRowProps {
   onSelect: (id: string, selected: boolean) => void;
   onEdit: (p: Product) => void;
   onDelete: (id: string, name: string) => void;
+  settings?: Settings; // Add settings to props
 }
 
-export function ProductTableRow({ product: p, selected, onSelect, onEdit, onDelete }: ProductTableRowProps) {
+export function ProductTableRow({ product: p, selected, onSelect, onEdit, onDelete, settings }: ProductTableRowProps) {
   const { t, locale } = useLanguage();
   const tcgName = p.tcg.length <= 4 ? p.tcg.toUpperCase() : (TCG_SHORT[p.tcg] || p.tcg.substring(0, 3).toUpperCase());
 
@@ -142,8 +143,13 @@ export function ProductTableRow({ product: p, selected, onSelect, onEdit, onDele
           <span className="font-mono-stack font-bold text-ink-deep group-hover:text-gold transition-colors">
             {p.price ? `$${p.price.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : t('pages.common.labels.na', 'N/A')}
           </span>
-          <span className="text-[9px] font-mono-stack text-text-muted opacity-50 uppercase tracking-tighter">
-            {p.price_source === 'manual' ? t('components.admin.bounty_modal.source_manual', 'MANUAL') : (p.price_source === 'tcgplayer' ? 'TCGP' : 'MCK')}
+          <span className="text-[9px] font-mono-stack text-text-muted opacity-50 uppercase tracking-tighter flex flex-col items-end">
+            <span>{p.price_source === 'manual' ? t('components.admin.bounty_modal.source_manual', 'MANUAL') : (p.price_source === 'tcgplayer' ? 'TCGP' : 'MCK')}</span>
+            {p.price_source !== 'manual' && p.price_reference !== undefined && settings && (
+              <span className="mt-0.5 font-bold text-gold/60">
+                {p.price_reference} x {p.price_source === 'tcgplayer' ? settings.usd_to_cop_rate : p.price_source === 'cardkingdom' ? settings.ck_to_cop_rate : settings.eur_to_cop_rate}
+              </span>
+            )}
           </span>
         </div>
       </td>
@@ -199,6 +205,7 @@ interface ProductTableProps {
   loading: boolean;
   total: number;
   onSelectGlobal: () => void;
+  settings?: Settings; // Add settings to props
 }
 
 export default function ProductTable({
@@ -213,7 +220,8 @@ export default function ProductTable({
   onDelete,
   loading,
   total,
-  onSelectGlobal
+  onSelectGlobal,
+  settings // Destructure settings
 }: ProductTableProps) {
   const { t } = useLanguage();
   const checkboxRef = useRef<HTMLInputElement>(null);
@@ -307,6 +315,7 @@ export default function ProductTable({
                 onSelect={onSelect}
                 onEdit={onEdit} 
                 onDelete={onDelete} 
+                settings={settings}
               />
             ))}
             {!loading && products.length === 0 && (
