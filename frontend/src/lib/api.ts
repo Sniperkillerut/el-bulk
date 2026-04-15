@@ -89,6 +89,7 @@ export interface ProductFilters {
   color?: string;
   sort_by?: string;
   sort_dir?: string;
+  only_duplicates?: boolean;
 }
 
 export async function fetchProducts(filters: ProductFilters = {}): Promise<ProductListResponse> {

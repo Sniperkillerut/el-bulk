@@ -41,10 +41,11 @@ type ProductFilterParams struct {
 	InStock     bool
 	SortBy      string
 	SortDir     string
-	FilterLogic string
-	Page        int
-	PageSize    int
-	Offset      int
+	OnlyDuplicates bool
+	FilterLogic    string
+	Page           int
+	PageSize       int
+	Offset         int
 
 	// Exchange rates for on-the-fly price sorting
 	USDRate float64
@@ -576,6 +577,10 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 	if params.InStock {
 		mandatory = append(mandatory, "p.stock > 0")
 	}
+	if params.OnlyDuplicates {
+		mandatory = append(mandatory, "p.name IN (SELECT name FROM product GROUP BY name HAVING COUNT(*) > 1)")
+	}
+
 	if params.Search != "" {
 		placeholderIdx := len(args) + 1
 		args = append(args, params.Search)

@@ -30,7 +30,9 @@ export default function AdminDashboard() {
     products, loading, total, page, pageSize,
     search, setSearch, tcgFilter, setTcgFilter,
     categoryFilter, setCategoryFilter,
-    storageFilter, setStorageFilter, sortKey, sortDir,
+    storageFilter, setStorageFilter, 
+    onlyDuplicates, setOnlyDuplicates,
+    sortKey, sortDir,
     queryTime,
     setPage, handleSort, refresh: refreshProducts
   } = useAdminProducts();
@@ -341,11 +343,23 @@ export default function AdminDashboard() {
           
           <div className="flex gap-2 items-center justify-end border-t md:border-t-0 border-ink-border/5 pt-2 md:pt-0">
             <button 
+              onClick={() => { setOnlyDuplicates(!onlyDuplicates); setPage(1); }}
+              title={t('pages.admin.inventory.show_duplicates_tooltip', 'Show Duplicate Names Only')}
+              className={`px-2 h-10 border rounded transition-colors flex items-center justify-center text-[10px] font-bold uppercase ${
+                onlyDuplicates 
+                  ? 'bg-gold border-gold text-white' 
+                  : 'bg-white border-kraft-dark/30 hover:bg-kraft-light text-text-muted'
+              }`}
+            >
+              {onlyDuplicates ? '✨ ' : ''}{t('pages.admin.inventory.duplicates_btn', 'DUPLICATES')}
+            </button>
+            <button 
               onClick={() => {
                 setSearch('');
                 setTcgFilter('');
                 setCategoryFilter('');
                 setStorageFilter('');
+                setOnlyDuplicates(false);
                 setPage(1);
               }}
               title={t('pages.admin.inventory.clear_filters_tooltip', 'Clear All Filters')}
