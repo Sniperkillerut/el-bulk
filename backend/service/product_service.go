@@ -534,8 +534,13 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 	// 2. Trigger price refresh for these specific products
 	var rows []store.RefreshRow
 	query, args, err = sqlx.In(`
-		SELECT id, tcg, name, set_name, set_code, collector_number, foil_treatment, card_treatment, price_source, scryfall_id
-		FROM product WHERE id IN (?)`, ids)
+		SELECT 
+			p.id, p.tcg, p.name, p.set_name, p.set_code, p.collector_number,
+			p.foil_treatment, p.card_treatment, p.price_source, p.scryfall_id,
+			s.ck_name as ck_set_name
+		FROM product p
+		LEFT JOIN tcg_set s ON p.tcg = s.tcg AND p.set_code = s.code
+		WHERE p.id IN (?)`, ids)
 	if err == nil {
 		_ = s.Store.DB.SelectContext(ctx, &rows, s.Store.DB.Rebind(query), args...)
 		
@@ -607,10 +612,10 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 				}
 			}
 
-			// Add CK updates if any
+			// Add CK updates — BuildPriceUpdates handles edition+variation matching using
+			// the ck_set_name joined from tcg_set. Pass nil for the scry price map since
+			// the scryBatch type (keyed by Scryfall ID) differs from the PriceKey map it expects.
 			if len(ckRows) > 0 && ckPriceMap != nil {
-				// We reuse BuildPriceUpdates for CK matching logic
-				// (Pass empty scry map as we already handled scry-native sources)
 				ckUpdates, _ := store.BuildPriceUpdates(ckRows, nil, ckPriceMap)
 				updates = append(updates, ckUpdates...)
 			}
