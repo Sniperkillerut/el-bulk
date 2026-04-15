@@ -127,16 +127,21 @@ export function ProductTableRow({ product: p, selected, onSelect, onEdit, onDele
         </div>
       </td>
       <td className="hidden xl:table-cell text-center">
-        {p.rarity ? (
-          <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
-            p.rarity === 'mythic' ? 'bg-hp-color/10 text-hp-color border border-hp-color/20' :
-            p.rarity === 'rare' ? 'bg-gold/10 text-gold border border-gold/20' :
-            p.rarity === 'uncommon' ? 'bg-ink-deep/10 text-ink-deep border border-ink-deep/20' :
-            'bg-text-muted/10 text-text-muted border border-text-muted/20'
-          }`}>
-            {p.rarity}
-          </span>
-        ) : <span className="text-[10px] text-text-muted opacity-30">—</span>}
+        <div className="flex flex-wrap justify-center gap-1 max-w-[120px] mx-auto">
+          {p.categories && p.categories.length > 0 ? p.categories.map(cat => (
+            <span 
+              key={cat.id}
+              className="text-[8px] px-1.5 py-0.5 rounded font-bold uppercase shadow-sm border border-black/5"
+              style={{ 
+                backgroundColor: cat.bg_color || 'var(--ink-surface)', 
+                color: cat.text_color || 'var(--text-muted)' 
+              }}
+              title={cat.name}
+            >
+              {cat.name}
+            </span>
+          )) : <span className="text-[10px] text-text-muted opacity-30">—</span>}
+        </div>
       </td>
       <td className="text-right whitespace-nowrap">
         <div className="flex flex-col items-end">
@@ -274,8 +279,8 @@ export default function ProductTable({
               <th className="hidden lg:table-cell min-w-[130px]">
                 <div className="flex items-center">{t('pages.admin.inventory.table.variant', 'VARIANT')}</div>
               </th>
-              <th onClick={() => onSort('rarity')} className="hidden xl:table-cell w-24 text-center cursor-pointer hover:bg-ink-surface transition-colors">
-                <div className="flex items-center justify-center">{t('pages.admin.inventory.table.rarity', 'RARITY')} {renderSortIcon('rarity')}</div>
+              <th className="hidden xl:table-cell w-28 text-center uppercase tracking-tighter">
+                <div className="flex items-center justify-center font-bold text-text-muted text-[10px]">{t('pages.admin.inventory.table.tags', 'TAGS')}</div>
               </th>
               <th onClick={() => onSort('price')} className="w-24 sm:w-32 text-right cursor-pointer hover:bg-ink-surface transition-colors">
                 <div className="flex items-center justify-end">{t('pages.admin.inventory.table.price', 'PRICE')} {renderSortIcon('price')}</div>
