@@ -526,26 +526,28 @@ type CardMetadata struct {
 
 var (
 	scryCache      map[PriceKey]CardMetadata
+	idCache        map[string]CardMetadata // NEW: Fast ID lookup
 	scryCacheMutex sync.RWMutex
 	scryCacheTime  time.Time
 )
 
 // BuildPriceMap downloads Scryfall's "default_cards" bulk file and
 // builds a lookup map. Uses an in-memory cache valid for 1 hour.
-func BuildPriceMap(ctx context.Context) (map[PriceKey]CardMetadata, error) {
+func BuildPriceMap(ctx context.Context) (map[PriceKey]CardMetadata, map[string]CardMetadata, error) {
 	scryCacheMutex.RLock()
-	if scryCache != nil && time.Since(scryCacheTime) < 1*time.Hour {
+	if scryCache != nil && idCache != nil && time.Since(scryCacheTime) < 1*time.Hour {
 		cache := scryCache
+		iCache := idCache
 		scryCacheMutex.RUnlock()
-		return cache, nil
+		return cache, iCache, nil
 	}
 	scryCacheMutex.RUnlock()
 
 	scryCacheMutex.Lock()
 	defer scryCacheMutex.Unlock()
 
-	if scryCache != nil && time.Since(scryCacheTime) < 1*time.Hour {
-		return scryCache, nil
+	if scryCache != nil && idCache != nil && time.Since(scryCacheTime) < 1*time.Hour {
+		return scryCache, idCache, nil
 	}
 
 	logger.InfoCtx(ctx, "Downloading Scryfall bulk data (cache empty or expired)...")
@@ -558,13 +560,13 @@ func BuildPriceMap(ctx context.Context) (map[PriceKey]CardMetadata, error) {
 
 	metaResp, err := client.Do(metaReq)
 	if err != nil {
-		return nil, fmt.Errorf("fetching bulk-data index: %w", err)
+		return nil, nil, fmt.Errorf("fetching bulk-data index: %w", err)
 	}
 	defer metaResp.Body.Close()
 
 	var meta ScryfallBulkMeta
 	if err := json.NewDecoder(metaResp.Body).Decode(&meta); err != nil {
-		return nil, fmt.Errorf("decoding bulk-data index: %w", err)
+		return nil, nil, fmt.Errorf("decoding bulk-data index: %w", err)
 	}
 
 	downloadURL := ""
@@ -575,7 +577,7 @@ func BuildPriceMap(ctx context.Context) (map[PriceKey]CardMetadata, error) {
 		}
 	}
 	if downloadURL == "" {
-		return nil, fmt.Errorf("default_cards bulk file not found in scryfall response")
+		return nil, nil, fmt.Errorf("default_cards bulk file not found in scryfall response")
 	}
 
 	// Step 2: stream the bulk card JSON array
@@ -584,17 +586,18 @@ func BuildPriceMap(ctx context.Context) (map[PriceKey]CardMetadata, error) {
 
 	dlResp, err := client.Do(dlReq)
 	if err != nil {
-		return nil, fmt.Errorf("downloading bulk data: %w", err)
+		return nil, nil, fmt.Errorf("downloading bulk data: %w", err)
 	}
 	defer dlResp.Body.Close()
 
 	// Step 3: stream-decode the JSON array without loading 600MB into memory at once
 	priceMap := make(map[PriceKey]CardMetadata, 300_000)
+	localIdCache := make(map[string]CardMetadata, 300_000) // NEW: temporary local map
 	decoder := json.NewDecoder(dlResp.Body)
 
 	// Read opening '['
 	if _, err := decoder.Token(); err != nil {
-		return nil, fmt.Errorf("reading bulk JSON opening token: %w", err)
+		return nil, nil, fmt.Errorf("reading bulk JSON opening token: %w", err)
 	}
 
 	for decoder.More() {
@@ -659,20 +662,36 @@ func BuildPriceMap(ctx context.Context) (map[PriceKey]CardMetadata, error) {
 				entry.CardKingdomID = *card.CardKingdomFoilID
 			}
 
-			// Index by specific set + collector number
-			priceMap[PriceKey{Name: name, SetCode: set, Collector: card.CollectorNumber, Foil: v.foil}] = entry
+			// Index by specific ID (highest priority)
+			if card.ID != "" {
+				localIdCache[card.ID] = entry
+			}
+
+			// Index by specific set + collector number (normalized)
+			cn := strings.TrimSpace(card.CollectorNumber)
+			priceMap[PriceKey{Name: name, SetCode: set, Collector: cn, Foil: v.foil}] = entry
 			
 			// Maintain previous set-only/name-only fallbacks
-			priceMap[PriceKey{Name: name, SetCode: set, Collector: "", Foil: v.foil}] = entry
-			priceMap[PriceKey{Name: name, SetCode: "", Collector: "", Foil: v.foil}] = entry
+			// NO POLLUTION: Only set global fallbacks if they don't already exist.
+			// This ensures that the first (usually "standard") edition encountered wins.
+			setKey := PriceKey{Name: name, SetCode: set, Collector: "", Foil: v.foil}
+			if _, exists := priceMap[setKey]; !exists {
+				priceMap[setKey] = entry
+			}
+
+			globalKey := PriceKey{Name: name, SetCode: "", Collector: "", Foil: v.foil}
+			if _, exists := priceMap[globalKey]; !exists {
+				priceMap[globalKey] = entry
+			}
 		}
 	}
 
 	scryCache = priceMap
+	idCache = localIdCache // NEW: switch to the populated local map
 	scryCacheTime = time.Now()
 
 	logger.InfoCtx(ctx, "Parsed and cached %d Scryfall cards in price map", len(priceMap))
-	return priceMap, nil
+	return scryCache, idCache, nil
 }
 // ─── Scryfall sets data structures ──────────────────────────────────────────
 

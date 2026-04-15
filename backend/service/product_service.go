@@ -549,100 +549,79 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 			// Collect scryfall IDs for TCGPlayer/Cardmarket rows (for batch Scryfall fetch).
 			// CK rows use LookupCKPrice(row.ScryfallID) directly — no Scryfall batch needed.
 			scryIDs := make([]string, 0, len(rows))
-			needsCK := false
 			for _, row := range rows {
-				if row.PriceSource == "cardkingdom" {
-					needsCK = true
-				} else if row.ScryfallID != "" {
+				if row.ScryfallID != "" {
 					// TCGPlayer/Cardmarket: need Scryfall batch for prices + metadata
 					scryIDs = append(scryIDs, row.ScryfallID)
 				}
 			}
 
-			// Fetch external data
+			// Fetch bulk pricing data for fallbacks and unified resolution
+			scryPriceMap, _, _ := external.BuildPriceMap(ctx)
+			ckPriceMap, _ := external.BuildCardKingdomPriceMap(ctx)
+
+			// Fetch real-time scryfall batch for IDs (highest priority)
 			scryBatch, _ := external.BatchLookupMTG(ctx, scryIDs)
-			var ckPriceMap map[string]*float64
-			if needsCK {
-				ckPriceMap, _ = external.BuildCardKingdomPriceMap(ctx)
-			}
 
 			updates := make([]store.MetadataUpdate, 0, len(rows))
 
 			for _, row := range rows {
+				// ── 1. Resolve MTG Hierarchy ──────────────────────────────────
+				// Extract CK-specific metadata for the matcher
+				setName := ""
+				if row.SetName != nil {
+					setName = *row.SetName
+				}
+				ckEdition := ""
+				if row.CKSetName != nil && *row.CKSetName != "" {
+					ckEdition = *row.CKSetName
+				} else {
+					ckEdition = external.NormalizeCKEdition(setName)
+				}
+				variation := external.MapFoilTreatmentToCKVariation(
+					models.FoilTreatment(row.FoilTreatment),
+					models.CardTreatment(row.CardTreatment),
+				)
+
+				setCode := ""
+				if row.SetCode != nil {
+					setCode = *row.SetCode
+				}
+				cn := row.CollectorNumber
+
+				// Unified Resolve: tries scryBatch (IDs) first, then scryPriceMap (Name/Set)
+				pResult := external.ResolveMTGPrice(
+					row.ScryfallID, row.Name, setCode, cn, row.FoilTreatment,
+					row.CardTreatment, ckEdition, variation,
+					scryPriceMap, scryBatch, ckPriceMap,
+				)
+
+				// ── 2. Select price based on requested source ────────────────
+				var price *float64
 				switch row.PriceSource {
-
+				case "tcgplayer":
+					price = pResult.TCGPlayerUSD
+				case "cardmarket":
+					price = pResult.CardmarketEUR
 				case "cardkingdom":
-					if ckPriceMap == nil {
-						continue
-					}
+					price = pResult.CardKingdomUSD
+				}
 
-					isFoil := row.FoilTreatment != "non_foil"
-					setName := ""
-					if row.SetName != nil {
-						setName = *row.SetName
+				if price != nil || (pResult.Metadata != nil && pResult.Metadata.ScryfallID != "") {
+					update := store.MetadataUpdate{
+						ID:          row.ID,
+						Price:       price,
+						PriceSource: row.PriceSource,
 					}
-					ckEdition := ""
-					if row.CKSetName != nil && *row.CKSetName != "" {
-						ckEdition = *row.CKSetName
-					} else {
-						ckEdition = external.NormalizeCKEdition(setName)
+					// If we have metadata, enrich the product record
+					if pResult.Metadata != nil {
+						update.ScryfallID = pResult.Metadata.ScryfallID
+						update.OracleText = pResult.Metadata.OracleText
+						update.TypeLine    = pResult.Metadata.TypeLine
+						update.ImageURL    = pResult.Metadata.ImageURL
+						update.Legalities  = pResult.Metadata.Legalities
 					}
-					variation := external.MapFoilTreatmentToCKVariation(
-						models.FoilTreatment(row.FoilTreatment),
-						models.CardTreatment(row.CardTreatment),
-					)
-					// LookupCKPrice tries "scry:{scryfallID}:{foil}" first (O(1), covers ~98%
-					// of cards), then falls back to scored name+edition+variation matching.
-					// row.ScryfallID is taken directly from the DB — no secondary Scryfall
-					// API call needed, and no stale card_kingdom_id dependency.
-					refPrice := external.LookupCKPrice(row.ScryfallID, row.Name, ckEdition, variation, isFoil, ckPriceMap)
-
-					if refPrice != nil {
-						updates = append(updates, store.MetadataUpdate{
-							ID:          row.ID,
-							Price:       refPrice,
-							PriceSource: row.PriceSource,
-						})
-					}
-
-				case "tcgplayer", "cardmarket":
-					meta, ok := scryBatch[row.ScryfallID]
-					if !ok {
-						continue
-					}
-					isFoil := row.FoilTreatment != "non_foil"
-					var price *float64
-					if row.PriceSource == "tcgplayer" {
-						if isFoil {
-							price = meta.TCGPlayerUSDFoil
-							if price == nil {
-								price = meta.TCGPlayerUSD
-							}
-						} else {
-							price = meta.TCGPlayerUSD
-						}
-					} else { // cardmarket
-						if isFoil {
-							price = meta.CardmarketEURFoil
-							if price == nil {
-								price = meta.CardmarketEUR
-							}
-						} else {
-							price = meta.CardmarketEUR
-						}
-					}
-					if price != nil || meta.ScryfallID != "" {
-						updates = append(updates, store.MetadataUpdate{
-							ID:          row.ID,
-							Price:       price,
-							ScryfallID:  meta.ScryfallID,
-							OracleText:  meta.OracleText,
-							TypeLine:    meta.TypeLine,
-							ImageURL:    meta.ImageURL,
-							Legalities:  meta.Legalities,
-							PriceSource: row.PriceSource,
-						})
-					}
+					updates = append(updates, update)
 				}
 			}
 
@@ -716,15 +695,30 @@ func (s *ProductService) EnrichCardLookupResults(ctx context.Context, results []
 			ckEdition = external.NormalizeCKEdition(*r.MTGMetadata.SetName)
 		}
 
-		isFoil := r.MTGMetadata.FoilTreatment != models.FoilNonFoil
 		variation := external.MapFoilTreatmentToCKVariation(r.MTGMetadata.FoilTreatment, r.MTGMetadata.CardTreatment)
-
 
 		scryfallID := ""
 		if r.MTGMetadata.ScryfallID != nil {
 			scryfallID = *r.MTGMetadata.ScryfallID
 		}
-		r.PriceCardKingdom = external.LookupCKPrice(scryfallID, r.Name, ckEdition, variation, isFoil, ckPriceMap)
+
+		mtgSetCode := ""
+		if r.MTGMetadata.SetCode != nil {
+			mtgSetCode = *r.MTGMetadata.SetCode
+		}
+		mtgCN := ""
+		if r.MTGMetadata.CollectorNumber != nil {
+			mtgCN = *r.MTGMetadata.CollectorNumber
+		}
+
+		// Use the unified matcher for consistent enrichment
+		// Note: we pass dummy maps for Scryfall here since r ALREADY has Scryfall info
+		pResult := external.ResolveMTGPrice(
+			scryfallID, r.Name, mtgSetCode, mtgCN, string(r.MTGMetadata.FoilTreatment),
+			string(r.MTGMetadata.CardTreatment), ckEdition, variation,
+			nil, nil, ckPriceMap,
+		)
+		r.PriceCardKingdom = pResult.CardKingdomUSD
 	}
 
 	return nil

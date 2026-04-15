@@ -70,8 +70,9 @@ func (s *RefreshService) RunPriceRefresh(ctx context.Context, tcgID string) (upd
 	if len(mtgRows) > 0 {
 		var err error
 
+		var idMap map[string]external.CardMetadata
 		if needsScry {
-			scryPriceMap, err = external.BuildPriceMap(ctx)
+			scryPriceMap, idMap, err = external.BuildPriceMap(ctx)
 			if err != nil {
 				logger.ErrorCtx(ctx, "[price-refresh] scryfall bulk download failed: %v", err)
 				return 0, len(mtgRows)
@@ -85,22 +86,24 @@ func (s *RefreshService) RunPriceRefresh(ctx context.Context, tcgID string) (upd
 				errs += len(mtgRows) // Consider them all errors if we can't get the source
 			}
 		}
+
+		updates, resolveErrs := store.BuildPriceUpdates(mtgRows, scryPriceMap, idMap, ckPriceMap)
+		errs += resolveErrs
+
+		settings, err := s.Settings.GetSettings(ctx)
+		if err != nil {
+			logger.ErrorCtx(ctx, "[price-refresh] failed to fetch settings for rates: %v", err)
+			return 0, len(mtgRows)
+		}
+
+		updated, updateErrs := s.Store.BulkUpdateMetadata(ctx, updates, settings.USDToCOPRate, settings.EURToCOPRate, settings.CKToCOPRate)
+		errs += updateErrs
+
+		logger.InfoCtx(ctx, "[price-refresh] complete: %d updated, %d errors", updated, errs)
+		return updated, errs
 	}
 
-	updates, resolveErrs := store.BuildPriceUpdates(mtgRows, scryPriceMap, ckPriceMap)
-	errs += resolveErrs
-
-	settings, err := s.Settings.GetSettings(ctx)
-	if err != nil {
-		logger.ErrorCtx(ctx, "[price-refresh] failed to fetch settings for rates: %v", err)
-		return 0, len(mtgRows)
-	}
-
-	updated, updateErrs := s.Store.BulkUpdateMetadata(ctx, updates, settings.USDToCOPRate, settings.EURToCOPRate, settings.CKToCOPRate)
-	errs += updateErrs
-
-	logger.InfoCtx(ctx, "[price-refresh] complete: %d updated, %d errors", updated, errs)
-	return updated, errs
+	return 0, 0
 }
 
 func (s *RefreshService) GetSuggestedPrice(ctx context.Context, scryfallID, name, set, setName, collector, foil, treatment, source string) (*float64, error) {
@@ -128,42 +131,22 @@ func (s *RefreshService) GetSuggestedPrice(ctx context.Context, scryfallID, name
 	}
 
 	if source == "tcgplayer" || source == "cardmarket" {
-		scryMap, err := external.BuildPriceMap(ctx)
+		scryMap, _, err := external.BuildPriceMap(ctx)
 		if err != nil {
 			return nil, err
 		}
 
-		key := external.PriceKey{
-			Name:      strings.ToLower(name),
-			SetCode:   strings.ToLower(set),
-			Collector: strings.TrimSpace(collector),
-			Foil:      foil,
-		}
+		// Unified Resolve: implements ID > Set|CN > Set|Foil hierarchy
+		pResult := external.ResolveMTGPrice(
+			scryfallID, name, set, collector, foil, treatment, "", "",
+			scryMap, nil, nil,
+		)
 
-		var scryMeta external.CardMetadata
-		var hasScry bool
-		
-		if meta, ok := scryMap[key]; ok {
-			scryMeta = meta
-			hasScry = true
-		} else {
-			key.Collector = ""
-			if meta, ok := scryMap[key]; ok {
-				scryMeta = meta
-				hasScry = true
-			} else {
-				key.SetCode = ""
-				if meta, ok := scryMap[key]; ok {
-					scryMeta = meta
-					hasScry = true
-				}
-			}
-		}
-		if hasScry {
+		if pResult.Metadata != nil {
 			if source == "cardmarket" {
-				return scryMeta.CardmarketEUR, nil
+				return pResult.Metadata.CardmarketEUR, nil
 			}
-			return scryMeta.TCGPlayerUSD, nil
+			return pResult.Metadata.TCGPlayerUSD, nil
 		}
 	}
 
