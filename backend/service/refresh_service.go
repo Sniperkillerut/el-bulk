@@ -131,15 +131,21 @@ func (s *RefreshService) GetSuggestedPrice(ctx context.Context, scryfallID, name
 	}
 
 	if source == "tcgplayer" || source == "cardmarket" {
-		scryMap, _, err := external.BuildPriceMap(ctx)
+		// FAST-PATH: Use targeted API lookup instead of 600MB bulk file for single product refreshes
+		res, err := external.LookupMTGCard(ctx, scryfallID, name, set, collector, foil)
 		if err != nil {
 			return nil, err
+		}
+
+		// Convert result to the format ResolveMTGPrice expects
+		scryBatch := map[string]external.CardMetadata{
+			*res.MTGMetadata.ScryfallID: res.ToCardMetadata(),
 		}
 
 		// Unified Resolve: implements ID > Set|CN > Set|Foil hierarchy
 		pResult := external.ResolveMTGPrice(
 			scryfallID, name, set, collector, foil, treatment, "", "",
-			scryMap, nil, nil,
+			nil, scryBatch, nil,
 		)
 
 		if pResult.Metadata != nil {

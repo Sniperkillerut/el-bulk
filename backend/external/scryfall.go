@@ -108,6 +108,32 @@ func (c *scryfallCard) bestImageURL() string {
 	return ""
 }
 
+// ToCardMetadata converts a lookup result to the pricing metadata format.
+func (r *CardLookupResult) ToCardMetadata() CardMetadata {
+	sid := ""
+	if r.MTGMetadata.ScryfallID != nil {
+		sid = *r.MTGMetadata.ScryfallID
+	}
+	oracle := ""
+	if r.MTGMetadata.OracleText != nil {
+		oracle = *r.MTGMetadata.OracleText
+	}
+	typeLine := ""
+	if r.MTGMetadata.TypeLine != nil {
+		typeLine = *r.MTGMetadata.TypeLine
+	}
+
+	return CardMetadata{
+		TCGPlayerUSD:  r.PriceTCGPlayer,
+		CardmarketEUR: r.PriceCardmarket,
+		Legalities:     r.MTGMetadata.Legalities,
+		OracleText:     oracle,
+		ScryfallID:     sid,
+		TypeLine:       typeLine,
+		ImageURL:       r.ImageURL,
+	}
+}
+
 // parsePrice converts a nullable Scryfall price string to *float64.
 func parsePrice(s *string) *float64 {
 	if s == nil || *s == "" {
