@@ -37,7 +37,8 @@ export default function HeroSection() {
           </div>
 
           {/* Main Slogan - High Impact & Shielded for Readability */}
-          <div className="mb-8">
+          <div className="mb-8 relative inline-block">
+            <span className="beta-pop absolute -top-4 -right-4 md:-top-6 md:-right-8 z-50">BETA!</span>
             <h1 className="font-display text-fluid-h1 leading-[0.82] drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]" style={{ color: '#FFD700' }}>
               {t('pages.home.hero.title_refined', 'EL BULK / THE CARDS THEY OVERLOOKED.')}
             </h1>

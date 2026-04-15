@@ -40,8 +40,9 @@ export default function Navbar() {
       <nav
         id="main-navbar"
         data-theme-area="header"
-        className="sticky top-0 z-[var(--z-sticky)] bg-bg-header border-b border-border-main"
+        className="sticky top-0 z-[var(--z-sticky)] bg-bg-header border-b border-border-main overflow-hidden"
       >
+        <div className="beta-stripe">BETA!</div>
         <div
           className="w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16 max-w-[var(--content-max-width)] mx-auto"
         >
