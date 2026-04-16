@@ -212,10 +212,18 @@ func (h *AdminHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 		clientSecret = os.Getenv("GOOGLE_CLIENT_SECRET")
 	}
 
+	apiURL := os.Getenv("API_URL")
+	if apiURL == "" {
+		apiURL = os.Getenv("SITE_URL")
+	}
+	if apiURL == "" {
+		apiURL = "http://localhost:3000"
+	}
+
 	config := &oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
-		RedirectURL:  os.Getenv("API_URL") + "/api/admin/auth/google/callback",
+		RedirectURL:  apiURL + "/api/admin/auth/google/callback",
 		Scopes: []string{
 			"https://www.googleapis.com/auth/userinfo.email",
 			"https://www.googleapis.com/auth/userinfo.profile",
@@ -246,10 +254,18 @@ func (h *AdminHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	code := r.FormValue("code")
+	apiURL := os.Getenv("API_URL")
+	if apiURL == "" {
+		apiURL = os.Getenv("SITE_URL")
+	}
+	if apiURL == "" {
+		apiURL = "http://localhost:3000"
+	}
+
 	config := &oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
-		RedirectURL:  os.Getenv("API_URL") + "/api/admin/auth/google/callback",
+		RedirectURL:  apiURL + "/api/admin/auth/google/callback",
 		Endpoint:     google.Endpoint,
 	}
 

@@ -8,6 +8,7 @@ import (
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/store"
 	"github.com/el-bulk/backend/utils/logger"
+	"strings"
 )
 
 type RevertService struct {
@@ -43,23 +44,22 @@ func (s *RevertService) Undo(ctx context.Context, logID string) error {
 	}
 
 	logger.InfoCtx(ctx, "Undoing action: %s on %s (%s)", log.Action, log.ResourceType, log.ResourceID)
-
 	var revertErr error
-	var undoAction string
+
+	// Handle recursive UNDO_ prefixes
+	baseAction := strings.TrimPrefix(log.Action, "UNDO_")
+	// If it was already an UNDO, we are essentially doing a REDO
+	isRedo := strings.HasPrefix(log.Action, "UNDO_")
 
 	switch log.ResourceType {
 	case "product":
-		revertErr = s.undoProductAction(ctx, log)
-		undoAction = "UNDO_" + log.Action
+		revertErr = s.undoProductAction(ctx, log, baseAction, isRedo)
 	case "category":
-		revertErr = s.undoCategoryAction(ctx, log)
-		undoAction = "UNDO_" + log.Action
+		revertErr = s.undoCategoryAction(ctx, log, baseAction, isRedo)
 	case "storage":
-		revertErr = s.undoStorageAction(ctx, log)
-		undoAction = "UNDO_" + log.Action
+		revertErr = s.undoStorageAction(ctx, log, baseAction, isRedo)
 	case "setting":
-		revertErr = s.undoSettingAction(ctx, log)
-		undoAction = "UNDO_" + log.Action
+		revertErr = s.undoSettingAction(ctx, log, baseAction, isRedo)
 	default:
 		return fmt.Errorf("undo not supported for resource type: %s", log.ResourceType)
 	}
@@ -68,38 +68,62 @@ func (s *RevertService) Undo(ctx context.Context, logID string) error {
 		return fmt.Errorf("failed to revert action: %w", revertErr)
 	}
 
-	// Log the successful undo as a separate revertible action
-	s.Audit.LogAction(ctx, undoAction, log.ResourceType, log.ResourceID, models.JSONB{
+	// Calculate details for the NEW audit log entry to allow it to be undone (Redo)
+	undoDetails := models.JSONB{
 		"undone_log_id":   log.ID,
 		"original_action": log.Action,
-	})
+	}
+
+	// Flip "before" and "after" if they exist to allow perfect recursion
+	if before, ok := log.Details["before"]; ok {
+		undoDetails["after"] = before
+	}
+	if after, ok := log.Details["after"]; ok {
+		undoDetails["before"] = after
+	}
+	// For deletes, the reverse of "deleted" is "created" (and vice versa)
+	if deleted, ok := log.Details["deleted"]; ok {
+		undoDetails["before"] = nil
+		undoDetails["after"] = deleted
+	}
+
+	undoAction := "UNDO_" + log.Action
+	s.Audit.LogAction(ctx, undoAction, log.ResourceType, log.ResourceID, undoDetails)
 
 	return nil
 }
 
-func (s *RevertService) undoProductAction(ctx context.Context, log *models.AuditLog) error {
+func (s *RevertService) undoProductAction(ctx context.Context, log *models.AuditLog, baseAction string, isRedo bool) error {
 	details := log.Details
 
-	switch log.Action {
+	switch baseAction {
 	case "CREATE_PRODUCT":
-		// Undo CREATE -> DELETE
+		if isRedo {
+			// Redo of Create (after undo deleted it) -> Restore state
+			targetState := details["after"]
+			if targetState == nil {
+				return fmt.Errorf("missing 'after' state for redo create")
+			}
+			itemMap, err := s.mapProductToRawMap(targetState, log.ResourceID)
+			if err != nil {
+				return err
+			}
+			msg, _ := json.Marshal([]interface{}{itemMap})
+			_, err = s.ProductStore.BulkUpsert(ctx, string(msg))
+			return err
+		}
+		// Standard Undo CREATE -> DELETE
 		return s.ProductService.Delete(ctx, log.ResourceID)
 
 	case "UPDATE_PRODUCT", "DELETE_PRODUCT":
 		// Both involve restoring a state
-		var targetState interface{}
-		if log.Action == "UPDATE_PRODUCT" {
-			targetState = details["before"]
-		} else {
-			targetState = details["deleted"]
-		}
-
+		// If it's an UNDO log, we restore "before" (which was the target state before the revert)
+		targetState := details["before"]
 		if targetState == nil {
 			return fmt.Errorf("missing previous state in audit log")
 		}
 
 		// Convert historical snapshot to something BulkUpsert understands
-		// We explicitly include the ID from the log
 		itemMap, err := s.mapProductToRawMap(targetState, log.ResourceID)
 		if err != nil {
 			return err
@@ -110,15 +134,18 @@ func (s *RevertService) undoProductAction(ctx context.Context, log *models.Audit
 		return err
 	}
 
-	return fmt.Errorf("undo not implemented for product action: %s", log.Action)
+	return fmt.Errorf("undo not implemented for product action: %s", baseAction)
 }
 
-func (s *RevertService) undoCategoryAction(ctx context.Context, log *models.AuditLog) error {
+func (s *RevertService) undoCategoryAction(ctx context.Context, log *models.AuditLog, baseAction string, isRedo bool) error {
 	details := log.Details
 
-	switch log.Action {
+	switch baseAction {
 	case "CREATE_CATEGORY":
-		return s.CategoryService.Delete(ctx, log.ResourceID)
+		if !isRedo {
+			return s.CategoryService.Delete(ctx, log.ResourceID)
+		}
+		fallthrough // Redo of create restored from target state
 	case "UPDATE_CATEGORY":
 		before, ok := details["before"].(map[string]interface{})
 		if !ok {
@@ -127,19 +154,28 @@ func (s *RevertService) undoCategoryAction(ctx context.Context, log *models.Audi
 		_, err := s.CategoryService.Update(ctx, log.ResourceID, before)
 		return err
 	case "DELETE_CATEGORY":
-		deleted, ok := details["deleted"].(map[string]interface{})
-		if !ok {
-			return fmt.Errorf("invalid 'deleted' state")
+		// Logic same for Undo-Delete or Redo-Create
+		// We use "before" if this is an UNDO log, or "deleted" if it's the original DELETE log
+		stateKey := "deleted"
+		if isRedo {
+			stateKey = "after" // Redo of create restored from the "after" state of the original revert
+		} else if _, ok := details["before"]; ok {
+			stateKey = "before"
 		}
 		
-		isActive := deleted["is_active"].(bool)
-		showBadge := deleted["show_badge"].(bool)
-		searchable := deleted["searchable"].(bool)
+		state, ok := details[stateKey].(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("invalid state in key: %s", stateKey)
+		}
+		
+		isActive := state["is_active"].(bool)
+		showBadge := state["show_badge"].(bool)
+		searchable := state["searchable"].(bool)
 
 		input := models.CustomCategoryInput{
 			ID:         &log.ResourceID, // Preserve original ID
-			Name:       fmt.Sprintf("%v", deleted["name"]),
-			Slug:       fmt.Sprintf("%v", deleted["slug"]),
+			Name:       fmt.Sprintf("%v", state["name"]),
+			Slug:       fmt.Sprintf("%v", state["slug"]),
 			IsActive:   &isActive,
 			ShowBadge:  &showBadge,
 			Searchable: &searchable,
@@ -152,7 +188,9 @@ func (s *RevertService) undoCategoryAction(ctx context.Context, log *models.Audi
 		}
 
 		// Restoration Part 2: Deep Undo (Relationships)
-		if mappings, ok := details["product_mappings"].([]interface{}); ok && len(mappings) > 0 {
+		// We should also check for product_mappings in whatever state we are restoring
+		mappingsKey := "product_mappings"
+		if mappings, ok := details[mappingsKey].([]interface{}); ok && len(mappings) > 0 {
 			productIDs := make([]string, 0, len(mappings))
 			for _, m := range mappings {
 				productIDs = append(productIDs, fmt.Sprintf("%v", m))
@@ -164,11 +202,14 @@ func (s *RevertService) undoCategoryAction(ctx context.Context, log *models.Audi
 	return nil
 }
 
-func (s *RevertService) undoStorageAction(ctx context.Context, log *models.AuditLog) error {
+func (s *RevertService) undoStorageAction(ctx context.Context, log *models.AuditLog, baseAction string, isRedo bool) error {
 	details := log.Details
-	switch log.Action {
+	switch baseAction {
 	case "CREATE_STORAGE":
-		return s.StorageLocationService.Delete(ctx, log.ResourceID)
+		if !isRedo {
+			return s.StorageLocationService.Delete(ctx, log.ResourceID)
+		}
+		fallthrough
 	case "UPDATE_STORAGE":
 		before, ok := details["before"].(map[string]interface{})
 		if !ok {
@@ -176,20 +217,26 @@ func (s *RevertService) undoStorageAction(ctx context.Context, log *models.Audit
 		}
 		return s.StorageLocationService.Update(ctx, log.ResourceID, fmt.Sprintf("%v", before["name"]))
 	case "DELETE_STORAGE":
-		deleted, ok := details["deleted"].(map[string]interface{})
+		stateKey := "deleted"
+		if isRedo {
+			stateKey = "after"
+		} else if _, ok := details["before"]; ok {
+			stateKey = "before"
+		}
+
+		state, ok := details[stateKey].(map[string]interface{})
 		if !ok {
-			return fmt.Errorf("invalid 'deleted' state")
+			return fmt.Errorf("invalid state for storage restoration")
 		}
 		
 		// Restoration Part 1: Entity
-		_, err := s.StorageLocationService.Create(ctx, fmt.Sprintf("%v", deleted["name"]), &log.ResourceID)
+		_, err := s.StorageLocationService.Create(ctx, fmt.Sprintf("%v", state["name"]), &log.ResourceID)
 		if err != nil {
 			return err
 		}
 
 		// Restoration Part 2: Deep Undo (Inventory)
 		if rawMappings, ok := details["stock_mappings"].([]interface{}); ok && len(rawMappings) > 0 {
-			// Unmarshal into typed models for safety
 			data, _ := json.Marshal(rawMappings)
 			var mappings []models.ProductStorage
 			if err := json.Unmarshal(data, &mappings); err == nil {
@@ -201,8 +248,9 @@ func (s *RevertService) undoStorageAction(ctx context.Context, log *models.Audit
 	return nil
 }
 
-func (s *RevertService) undoSettingAction(ctx context.Context, log *models.AuditLog) error {
+func (s *RevertService) undoSettingAction(ctx context.Context, log *models.AuditLog, baseAction string, isRedo bool) error {
 	details := log.Details
+	// UNDO or REDO of setting is always just restoring "before"
 	before, ok := details["before"].(string)
 	if !ok {
 		return fmt.Errorf("undo failed: 'before' value not captured for this setting")

@@ -28,12 +28,21 @@ func NewUserAuthHandler(s *service.AuthService) *UserAuthHandler {
 }
 
 func getProviderConfig(provider string) *oauth2.Config {
+	apiURL := os.Getenv("API_URL")
+	if apiURL == "" {
+		// Resilience: Fallback to SITE_URL if API_URL is missing
+		apiURL = os.Getenv("SITE_URL")
+	}
+	if apiURL == "" {
+		apiURL = "http://localhost:3000"
+	}
+
 	switch provider {
 	case "google":
 		return &oauth2.Config{
 			ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 			ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
-			RedirectURL:  os.Getenv("API_URL") + "/api/auth/google/callback",
+			RedirectURL:  apiURL + "/api/auth/google/callback",
 			Scopes: []string{
 				"https://www.googleapis.com/auth/userinfo.email",
 				"https://www.googleapis.com/auth/userinfo.profile",
@@ -44,7 +53,7 @@ func getProviderConfig(provider string) *oauth2.Config {
 		return &oauth2.Config{
 			ClientID:     os.Getenv("FACEBOOK_CLIENT_ID"),
 			ClientSecret: os.Getenv("FACEBOOK_CLIENT_SECRET"),
-			RedirectURL:  os.Getenv("API_URL") + "/api/auth/facebook/callback",
+			RedirectURL:  apiURL + "/api/auth/facebook/callback",
 			Scopes:       []string{"email", "public_profile"},
 			Endpoint:     facebook.Endpoint,
 		}
