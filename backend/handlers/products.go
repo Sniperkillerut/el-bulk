@@ -55,6 +55,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 		Color:       q.Get("color"),
 		SetName:     q.Get("set_name"),
 		InStock:     q.Get("in_stock") == "true",
+		SortBy:         q.Get("sort_by"),
 		SortDir:        q.Get("sort_dir"),
 		OnlyDuplicates: q.Get("only_duplicates") == "true",
 		FilterLogic:    q.Get("logic"),
