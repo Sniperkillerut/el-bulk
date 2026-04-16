@@ -41,7 +41,7 @@ func (s *CategoryService) Create(ctx context.Context, input models.CustomCategor
 func (s *CategoryService) Update(ctx context.Context, id string, updates map[string]interface{}) (*models.CustomCategory, error) {
 	logger.TraceCtx(ctx, "Entering CategoryService.Update | ID: %s", id)
 	before, _ := s.Store.GetByID(ctx, id)
-	cat, err := s.Store.BaseStore.Update(ctx, id, updates)
+	cat, err := s.Store.Update(ctx, id, updates)
 	if err == nil {
 		s.Audit.LogAction(ctx, "UPDATE_CATEGORY", "category", id, models.JSONB{"before": before, "after": updates})
 	}
@@ -51,9 +51,16 @@ func (s *CategoryService) Update(ctx context.Context, id string, updates map[str
 func (s *CategoryService) Delete(ctx context.Context, id string) error {
 	logger.TraceCtx(ctx, "Entering CategoryService.Delete | ID: %s", id)
 	before, _ := s.Store.GetByID(ctx, id)
-	err := s.Store.BaseStore.Delete(ctx, id)
+	
+	// Deep Capture: Get all product mappings before they are cascaded away
+	mappings, _ := s.Store.GetProductMappings(ctx, id)
+	
+	err := s.Store.Delete(ctx, id)
 	if err == nil {
-		s.Audit.LogAction(ctx, "DELETE_CATEGORY", "category", id, models.JSONB{"deleted": before})
+		s.Audit.LogAction(ctx, "DELETE_CATEGORY", "category", id, models.JSONB{
+			"deleted": before,
+			"product_mappings": mappings,
+		})
 	}
 	return err
 }

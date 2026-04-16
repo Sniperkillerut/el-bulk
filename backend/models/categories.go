@@ -21,11 +21,12 @@ type CustomCategory struct {
 
 // CustomCategoryInput is used for creating/updating custom categories.
 type CustomCategoryInput struct {
-	Name       string `json:"name"`
-	Slug       string `json:"slug"`
-	IsActive   *bool  `json:"is_active"`
-	ShowBadge  *bool  `json:"show_badge"`
-	Searchable *bool  `json:"searchable"`
+	ID         *string `json:"id,omitempty"`
+	Name       string  `json:"name"`
+	Slug       string  `json:"slug"`
+	IsActive   *bool   `json:"is_active"`
+	ShowBadge  *bool   `json:"show_badge"`
+	Searchable *bool   `json:"searchable"`
 	BgColor    *string `json:"bg_color"`
 	TextColor  *string `json:"text_color"`
 	Icon       *string `json:"icon"`

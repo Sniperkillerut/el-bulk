@@ -40,7 +40,7 @@ func (h *StorageHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	loc, err := h.Service.Create(r.Context(), input.Name)
+	loc, err := h.Service.Create(r.Context(), input.Name, nil)
 	if err != nil {
 		render.Error(w, err.Error(), http.StatusBadRequest)
 		return

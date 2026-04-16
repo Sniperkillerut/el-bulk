@@ -16,18 +16,22 @@ type RevertService struct {
 	ProductStore           *store.ProductStore
 	ProductService        *ProductService
 	CategoryService       *CategoryService
+	CategoryStore         *store.CategoryStore
 	StorageLocationService *StorageLocationService
+	StorageStore          *store.StorageLocationStore
 	SettingsService       *SettingsService
 }
 
-func NewRevertService(as *store.AuditStore, a Auditer, ps *store.ProductStore, p *ProductService, c *CategoryService, sl *StorageLocationService, s *SettingsService) *RevertService {
+func NewRevertService(as *store.AuditStore, a Auditer, ps *store.ProductStore, p *ProductService, c *CategoryService, cs *store.CategoryStore, sl *StorageLocationService, ss *store.StorageLocationStore, s *SettingsService) *RevertService {
 	return &RevertService{
 		AuditStore:             as,
 		Audit:                  a,
 		ProductStore:           ps,
 		ProductService:        p,
 		CategoryService:       c,
+		CategoryStore:         cs,
 		StorageLocationService: sl,
+		StorageStore:          ss,
 		SettingsService:       s,
 	}
 }
@@ -133,14 +137,29 @@ func (s *RevertService) undoCategoryAction(ctx context.Context, log *models.Audi
 		searchable := deleted["searchable"].(bool)
 
 		input := models.CustomCategoryInput{
+			ID:         &log.ResourceID, // Preserve original ID
 			Name:       fmt.Sprintf("%v", deleted["name"]),
 			Slug:       fmt.Sprintf("%v", deleted["slug"]),
 			IsActive:   &isActive,
 			ShowBadge:  &showBadge,
 			Searchable: &searchable,
 		}
+		
+		// Restoration Part 1: Entity
 		_, err := s.CategoryService.Create(ctx, input)
-		return err
+		if err != nil {
+			return err
+		}
+
+		// Restoration Part 2: Deep Undo (Relationships)
+		if mappings, ok := details["product_mappings"].([]interface{}); ok && len(mappings) > 0 {
+			productIDs := make([]string, 0, len(mappings))
+			for _, m := range mappings {
+				productIDs = append(productIDs, fmt.Sprintf("%v", m))
+			}
+			return s.CategoryStore.BatchAddProducts(ctx, log.ResourceID, productIDs)
+		}
+		return nil
 	}
 	return nil
 }
@@ -161,8 +180,23 @@ func (s *RevertService) undoStorageAction(ctx context.Context, log *models.Audit
 		if !ok {
 			return fmt.Errorf("invalid 'deleted' state")
 		}
-		_, err := s.StorageLocationService.Create(ctx, fmt.Sprintf("%v", deleted["name"]))
-		return err
+		
+		// Restoration Part 1: Entity
+		_, err := s.StorageLocationService.Create(ctx, fmt.Sprintf("%v", deleted["name"]), &log.ResourceID)
+		if err != nil {
+			return err
+		}
+
+		// Restoration Part 2: Deep Undo (Inventory)
+		if rawMappings, ok := details["stock_mappings"].([]interface{}); ok && len(rawMappings) > 0 {
+			// Unmarshal into typed models for safety
+			data, _ := json.Marshal(rawMappings)
+			var mappings []models.ProductStorage
+			if err := json.Unmarshal(data, &mappings); err == nil {
+				return s.StorageStore.BatchRestoreStock(ctx, log.ResourceID, mappings)
+			}
+		}
+		return nil
 	}
 	return nil
 }

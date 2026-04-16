@@ -38,13 +38,13 @@ func (s *CategoryStore) Create(ctx context.Context, input models.CustomCategoryI
 	}
 
 	query := `
-		INSERT INTO custom_category (name, slug, is_active, show_badge, searchable, bg_color, text_color, icon) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+		INSERT INTO custom_category (id, name, slug, is_active, show_badge, searchable, bg_color, text_color, icon) 
+		VALUES (COALESCE($1, gen_random_uuid()), $2, $3, $4, $5, $6, $7, $8, $9) 
 		RETURNING *`
 	
 	logger.TraceCtx(ctx, "[DB] Executing CreateCategory: %s", query)
 	err := s.DB.QueryRowxContext(ctx, query, 
-		input.Name, input.Slug, isActive, showBadge, searchable, input.BgColor, input.TextColor, input.Icon,
+		input.ID, input.Name, input.Slug, isActive, showBadge, searchable, input.BgColor, input.TextColor, input.Icon,
 	).StructScan(&cat)
 	
 	if err != nil {
@@ -80,4 +80,39 @@ func (s *CategoryStore) ListWithCount(ctx context.Context, isAdmin bool) ([]mode
 	}
 	logger.DebugCtx(ctx, "[DB] ListWithCount took %v", time.Since(start))
 	return categories, err
+}
+
+func (s *CategoryStore) GetProductMappings(ctx context.Context, categoryID string) ([]string, error) {
+	var ids []string
+	query := "SELECT product_id FROM product_category WHERE category_id = $1"
+	err := s.DB.SelectContext(ctx, &ids, query, categoryID)
+	return ids, err
+}
+
+func (s *CategoryStore) BatchAddProducts(ctx context.Context, categoryID string, productIDs []string) error {
+	if len(productIDs) == 0 {
+		return nil
+	}
+	
+	// Use a transaction for safety
+	tx, err := s.DB.Beginx()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	query := "INSERT INTO product_category (product_id, category_id) VALUES ($1, $2) ON CONFLICT DO NOTHING"
+	stmt, err := tx.PreparexContext(ctx, query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for _, pid := range productIDs {
+		if _, err := stmt.ExecContext(ctx, pid, categoryID); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
 }

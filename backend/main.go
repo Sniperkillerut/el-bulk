@@ -96,7 +96,7 @@ func main() {
 	// refreshService already initialized above
 	accountingService := service.NewAccountingService(accountingStore, settingsService)
 
-	revertService := service.NewRevertService(auditStore, auditService, productStore, productService, categoryService, storageLocationService, settingsService)
+	revertService := service.NewRevertService(auditStore, auditService, productStore, productService, categoryService, categoryStore, storageLocationService, storageLocationStore, settingsService)
 	
 	// Initialize Handlers
 	productHandler := handlers.NewProductHandler(productService, database)
