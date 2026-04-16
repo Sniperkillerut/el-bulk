@@ -22,9 +22,10 @@ import (
 )
 
 func main() {
-	// Load environment variables from .env file if it exists
+	// Load environment variables. .env.local takes precedence over .env
+	_ = godotenv.Load(".env.local")
 	if err := godotenv.Load(); err != nil {
-		logger.Warn("No .env file found or error loading it: %v. Relying on system environment variables.", err)
+		logger.Trace("No .env file found (using system env)")
 	}
 
 	// Initialize logger level and format

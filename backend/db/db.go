@@ -27,6 +27,12 @@ func init() {
 	// via docker-compose environment instead.
 	dir, _ := os.Getwd()
 	for {
+		localCandidate := filepath.Join(dir, ".env.local")
+		if _, err := os.Stat(localCandidate); err == nil {
+			_ = godotenv.Load(localCandidate)
+			// We don't break here, we might still want to load base .env for defaults
+		}
+
 		candidate := filepath.Join(dir, ".env")
 		if _, err := os.Stat(candidate); err == nil {
 			_ = godotenv.Load(candidate)
