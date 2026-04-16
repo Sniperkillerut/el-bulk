@@ -43,7 +43,10 @@ func (s *CategoryService) Update(ctx context.Context, id string, updates map[str
 	before, _ := s.Store.GetByID(ctx, id)
 	cat, err := s.Store.Update(ctx, id, updates)
 	if err == nil {
-		s.Audit.LogAction(ctx, "UPDATE_CATEGORY", "category", id, models.JSONB{"before": before, "after": updates})
+		s.Audit.LogAction(ctx, "UPDATE_CATEGORY", "category", id, models.JSONB{
+			"before": before,
+			"after":  cat, // Captured full updated category snapshot
+		})
 	}
 	return cat, err
 }

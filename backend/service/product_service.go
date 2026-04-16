@@ -174,7 +174,7 @@ func (s *ProductService) Update(ctx context.Context, id string, input models.Pro
 	// Logging (Asynchronous/Non-blocking)
 	s.Audit.LogAction(ctx, "UPDATE_PRODUCT", "product", id, models.JSONB{
 		"before": oldProduct,
-		"after":  input,
+		"after":  product, // Now logging the full enriched product snapshot
 	})
 
 	if err := s.Store.SaveCategories(ctx, product.ID, input.CategoryIDs); err != nil {

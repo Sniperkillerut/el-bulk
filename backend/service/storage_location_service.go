@@ -46,7 +46,11 @@ func (s *StorageLocationService) Update(ctx context.Context, id, name string) er
 	before, _ := s.Store.GetByID(ctx, id)
 	err := s.Store.Update(ctx, id, name)
 	if err == nil {
-		s.Audit.LogAction(ctx, "UPDATE_STORAGE", "storage", id, models.JSONB{"before": before, "after": name})
+		after, _ := s.Store.GetByID(ctx, id)
+		s.Audit.LogAction(ctx, "UPDATE_STORAGE", "storage", id, models.JSONB{
+			"before": before,
+			"after":  after, // Captured full updated storage snapshot
+		})
 	}
 	return err
 }
