@@ -166,7 +166,8 @@ export default function AuditLogsPage() {
                   </tr>
                 ) : (
                   logs.map((log) => {
-                    const isUndoAction = log.action.toUpperCase().startsWith('UNDO');
+                    const isUndoAction = log.action.toUpperCase().startsWith('UNDO_');
+                    const isRedoAction = log.action.toUpperCase().startsWith('UNDO_UNDO_');
                     return (
                       <tr key={log.id} className="hover:bg-gold/5 transition-colors text-xs font-mono-stack">
                         <td className="px-4 py-3 whitespace-nowrap text-text-muted">
@@ -194,7 +195,7 @@ export default function AuditLogsPage() {
                           </div>
                         </td>
                         <td className="px-4 py-3 text-right">
-                          {isReversible(log.action) && (
+                          {isReversible(log.action) && !isRedoAction && (
                             <button
                               onClick={() => handleUndo(log.id, isUndoAction)}
                               disabled={undoingLogId !== null}

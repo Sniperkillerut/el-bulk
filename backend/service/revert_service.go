@@ -43,6 +43,11 @@ func (s *RevertService) Undo(ctx context.Context, logID string) error {
 		return fmt.Errorf("audit log not found: %w", err)
 	}
 
+	// Protect against deep nested undos (only allow 1 level of UNDO_ for Redo)
+	if strings.HasPrefix(log.Action, "UNDO_UNDO_") {
+		return fmt.Errorf("cannot undo a Redo operation (maximum recursion depth reached)")
+	}
+
 	logger.InfoCtx(ctx, "Undoing action: %s on %s (%s)", log.Action, log.ResourceType, log.ResourceID)
 
 	// 1. Capture REAL CURRENT state before revert (High Fidelity Snapshot)
@@ -50,9 +55,8 @@ func (s *RevertService) Undo(ctx context.Context, logID string) error {
 
 	var revertErr error
 
-	// Handle recursive UNDO_ prefixes
+	// Handle Redo logic by stripping the prefix for the handler
 	baseAction := strings.TrimPrefix(log.Action, "UNDO_")
-	// If it was already an UNDO, we are essentially doing a REDO
 	isRedo := strings.HasPrefix(log.Action, "UNDO_")
 
 	switch log.ResourceType {
