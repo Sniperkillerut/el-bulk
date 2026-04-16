@@ -49,18 +49,20 @@ export default function AuditLogsPage() {
     setPage(1);
   };
 
-  const handleUndo = async (logId: string) => {
-    if (!window.confirm('Are you sure you want to REVERT this administrative action? This will perform an inverse operation (e.g., Delete -> Recreate).')) {
+  const handleUndo = async (logId: string, isRedo: boolean) => {
+    const actionLabel = isRedo ? 'RE-REVERT' : 'REVERT';
+    if (!window.confirm(`Are you sure you want to ${actionLabel} this administrative action? This will perform an inverse operations.`)) {
       return;
     }
 
     setUndoingLogId(logId);
     try {
       await adminUndoAuditLog(logId);
-      // Success feedback could be improved but for now just refresh
+      // Refresh to see the new UNDO log entry
       fetchLogs();
-    } catch (err: any) {
-      alert(`UNDO FAILED: ${err.message || 'Unknown error'}`);
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert(`UNDO FAILED: ${error.message || 'Unknown error'}`);
     } finally {
       setUndoingLogId(null);
     }
@@ -68,7 +70,8 @@ export default function AuditLogsPage() {
 
   const isReversible = (action: string) => {
     const a = action.toUpperCase();
-    return a.includes('CREATE') || a.includes('UPDATE') || a.includes('DELETE');
+    // We allow undoing standard actions and even undoing an undo (Redo)
+    return a.includes('CREATE') || a.includes('UPDATE') || a.includes('DELETE') || a.includes('UNDO');
   };
 
   const getActionColor = (action: string) => {
@@ -162,49 +165,56 @@ export default function AuditLogsPage() {
                     </td>
                   </tr>
                 ) : (
-                  logs.map((log) => (
-                    <tr key={log.id} className="hover:bg-gold/5 transition-colors text-xs font-mono-stack">
-                      <td className="px-4 py-3 whitespace-nowrap text-text-muted">
-                        {format(new Date(log.created_at), 'yyyy-MM-dd HH:mm:ss')}
-                      </td>
-                      <td className="px-4 py-3 font-bold text-ink-navy">
-                        {log.admin_username}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 rounded-sm border text-[10px] uppercase font-bold ${getActionColor(log.action)}`}>
-                          {log.action}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-text-muted uppercase text-[10px]">{log.resource_type}</span>
-                        <div className="text-[10px] opacity-60 font-medium">ID: {log.resource_id?.substring(0, 8) || 'N/A'}...</div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap opacity-70 cursor-help group relative" 
-                             onClick={() => alert(JSON.stringify(log.details, null, 2))}>
-                          {JSON.stringify(log.details)}
-                          <div className="absolute hidden group-hover:block bg-ink-navy text-white p-2 rounded shadow-xl z-50 text-[10px] whitespace-pre max-w-sm max-h-40 overflow-auto bottom-full left-0 mb-2 border border-gold/20">
-                            {JSON.stringify(log.details, null, 2)}
+                  logs.map((log) => {
+                    const isUndoAction = log.action.toUpperCase().startsWith('UNDO');
+                    return (
+                      <tr key={log.id} className="hover:bg-gold/5 transition-colors text-xs font-mono-stack">
+                        <td className="px-4 py-3 whitespace-nowrap text-text-muted">
+                          {format(new Date(log.created_at), 'yyyy-MM-dd HH:mm:ss')}
+                        </td>
+                        <td className="px-4 py-3 font-bold text-ink-navy">
+                          {log.admin_username}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-0.5 rounded-sm border text-[10px] uppercase font-bold ${getActionColor(log.action)}`}>
+                            {log.action}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-text-muted uppercase text-[10px]">{log.resource_type}</span>
+                          <div className="text-[10px] opacity-60 font-medium">ID: {log.resource_id?.substring(0, 8) || 'N/A'}...</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap opacity-70 cursor-help group relative" 
+                               onClick={() => alert(JSON.stringify(log.details, null, 2))}>
+                            {JSON.stringify(log.details)}
+                            <div className="absolute hidden group-hover:block bg-ink-navy text-white p-2 rounded shadow-xl z-50 text-[10px] whitespace-pre max-w-sm max-h-40 overflow-auto bottom-full left-0 mb-2 border border-gold/20">
+                              {JSON.stringify(log.details, null, 2)}
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        {isReversible(log.action) && (
-                          <button
-                            onClick={() => handleUndo(log.id)}
-                            disabled={undoingLogId !== null}
-                            className={`px-3 py-1 text-[9px] uppercase font-bold tracking-tighter rounded transition-all
-                              ${undoingLogId === log.id 
-                                ? 'bg-text-muted text-white cursor-wait' 
-                                : 'bg-gold/10 text-gold hover:bg-gold hover:text-white border border-gold/30'
-                              }`}
-                          >
-                            {undoingLogId === log.id ? 'Undoing...' : 'Undo'}
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {isReversible(log.action) && (
+                            <button
+                              onClick={() => handleUndo(log.id, isUndoAction)}
+                              disabled={undoingLogId !== null}
+                              className={`px-3 py-1 text-[9px] uppercase font-bold tracking-tighter rounded transition-all
+                                ${undoingLogId === log.id 
+                                  ? 'bg-text-muted text-white cursor-wait' 
+                                  : isUndoAction
+                                    ? 'bg-indigo-50/50 text-indigo-600 hover:bg-indigo-600 hover:text-white border border-indigo-200'
+                                    : 'bg-gold/10 text-gold hover:bg-gold hover:text-white border border-gold/30'
+                                }`}
+                            >
+                              {undoingLogId === log.id 
+                                ? 'Undoing...' 
+                                : isUndoAction ? 'Redo' : 'Undo'}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

@@ -23,7 +23,16 @@ func testBountyHandler(db *sqlx.DB) *BountyHandler {
 
 // testAdminHandler creates an AdminHandler wired through Store→Service for testing.
 func testAdminHandler(db *sqlx.DB) *AdminHandler {
-	return NewAdminHandler(service.NewAdminService(store.NewAdminStore(db)), &NopAuditer{}, nil)
+	as := store.NewAuditStore(db)
+	aud := &NopAuditer{}
+	ps := store.NewProductStore(db)
+	pSvc := service.NewProductService(ps, store.NewTCGStore(db), nil, aud)
+	cSvc := service.NewCategoryService(store.NewCategoryStore(db), aud)
+	slSvc := service.NewStorageLocationService(store.NewStorageLocationStore(db), aud)
+	sSvc := service.NewSettingsService(store.NewSettingsStore(db), aud)
+	
+	rs := service.NewRevertService(as, aud, ps, pSvc, cSvc, store.NewCategoryStore(db), slSvc, store.NewStorageLocationStore(db), sSvc)
+	return NewAdminHandler(service.NewAdminService(store.NewAdminStore(db)), aud, rs)
 }
 
 // testNewsletterHandler creates a NewsletterHandler wired through Store→Service for testing.

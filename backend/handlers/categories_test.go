@@ -27,7 +27,7 @@ func TestCategoriesHandler_List(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &CategoriesHandler{Service: service.NewCategoryService(store.NewCategoryStore(sqlxDB), nil)}
+	h := &CategoriesHandler{Service: service.NewCategoryService(store.NewCategoryStore(sqlxDB), &NopAuditer{})}
 
 	t.Run("Admin List", func(t *testing.T) {
 		now := time.Now()
@@ -68,14 +68,14 @@ func TestCategoriesHandler_Create(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &CategoriesHandler{Service: service.NewCategoryService(store.NewCategoryStore(sqlxDB), nil)}
+	h := &CategoriesHandler{Service: service.NewCategoryService(store.NewCategoryStore(sqlxDB), &NopAuditer{})}
 
 	t.Run("Success", func(t *testing.T) {
 		input := models.CustomCategoryInput{Name: "New Category"}
 		body, _ := json.Marshal(input)
 
 		mock.ExpectQuery("INSERT INTO custom_category").
-			WithArgs("New Category", "new-category", true, true, true, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WithArgs(nil, "New Category", "new-category", true, true, true, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "slug", "is_active", "show_badge", "searchable", "bg_color", "text_color", "icon", "created_at"}).
 				AddRow("c2", "New Category", "new-category", true, true, true, nil, nil, nil, time.Now()))
 
@@ -104,7 +104,7 @@ func TestCategoriesHandler_Update(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &CategoriesHandler{Service: service.NewCategoryService(store.NewCategoryStore(sqlxDB), nil)}
+	h := &CategoriesHandler{Service: service.NewCategoryService(store.NewCategoryStore(sqlxDB), &NopAuditer{})}
 
 	t.Run("Success", func(t *testing.T) {
 		input := models.CustomCategoryInput{Name: "Updated Cat"}
@@ -143,7 +143,7 @@ func TestCategoriesHandler_Delete(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &CategoriesHandler{Service: service.NewCategoryService(store.NewCategoryStore(sqlxDB), nil)}
+	h := &CategoriesHandler{Service: service.NewCategoryService(store.NewCategoryStore(sqlxDB), &NopAuditer{})}
 
 	t.Run("Success", func(t *testing.T) {
 		mock.ExpectExec("DELETE FROM custom_category").
