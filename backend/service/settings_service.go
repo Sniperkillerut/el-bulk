@@ -19,6 +19,7 @@ type SettingsProvider interface {
 
 type SettingsService struct {
 	Store *store.SettingsStore
+	Audit Auditer
 	
 	cache         models.Settings
 	cacheTime     time.Time
@@ -26,9 +27,10 @@ type SettingsService struct {
 	mu            sync.RWMutex
 }
 
-func NewSettingsService(s *store.SettingsStore) *SettingsService {
+func NewSettingsService(s *store.SettingsStore, a Auditer) *SettingsService {
 	return &SettingsService{
 		Store:         s,
+		Audit:         a,
 		cacheDuration: 60 * time.Second,
 	}
 }
@@ -137,6 +139,15 @@ func (s *SettingsService) Upsert(ctx context.Context, key, value string) error {
 	if err != nil {
 		logger.ErrorCtx(ctx, "Failed to upsert setting %s: %v", key, err)
 		return err
+	}
+	
+	if s.Audit != nil {
+		// Try to get before value for better undos
+		before := ""
+		if current, err := s.Store.GetAll(ctx); err == nil {
+			before = current[key]
+		}
+		s.Audit.LogAction(ctx, "UPDATE_SETTING", "setting", key, models.JSONB{"before": before, "after": value})
 	}
 	
 	s.mu.Lock()

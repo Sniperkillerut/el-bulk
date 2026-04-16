@@ -27,7 +27,7 @@ func TestCategoriesHandler_List(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &CategoriesHandler{Service: service.NewCategoryService(store.NewCategoryStore(sqlxDB))}
+	h := &CategoriesHandler{Service: service.NewCategoryService(store.NewCategoryStore(sqlxDB), nil)}
 
 	t.Run("Admin List", func(t *testing.T) {
 		now := time.Now()
@@ -68,7 +68,7 @@ func TestCategoriesHandler_Create(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &CategoriesHandler{Service: service.NewCategoryService(store.NewCategoryStore(sqlxDB))}
+	h := &CategoriesHandler{Service: service.NewCategoryService(store.NewCategoryStore(sqlxDB), nil)}
 
 	t.Run("Success", func(t *testing.T) {
 		input := models.CustomCategoryInput{Name: "New Category"}
@@ -104,7 +104,7 @@ func TestCategoriesHandler_Update(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &CategoriesHandler{Service: service.NewCategoryService(store.NewCategoryStore(sqlxDB))}
+	h := &CategoriesHandler{Service: service.NewCategoryService(store.NewCategoryStore(sqlxDB), nil)}
 
 	t.Run("Success", func(t *testing.T) {
 		input := models.CustomCategoryInput{Name: "Updated Cat"}
@@ -143,7 +143,7 @@ func TestCategoriesHandler_Delete(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	h := &CategoriesHandler{Service: service.NewCategoryService(store.NewCategoryStore(sqlxDB))}
+	h := &CategoriesHandler{Service: service.NewCategoryService(store.NewCategoryStore(sqlxDB), nil)}
 
 	t.Run("Success", func(t *testing.T) {
 		mock.ExpectExec("DELETE FROM custom_category").

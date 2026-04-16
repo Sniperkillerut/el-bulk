@@ -26,6 +26,12 @@ func (s *AuditStore) Create(ctx context.Context, log models.AuditLog) error {
 	return err
 }
 
+func (s *AuditStore) GetByID(ctx context.Context, id string) (*models.AuditLog, error) {
+	var log models.AuditLog
+	err := s.DB.GetContext(ctx, &log, "SELECT * FROM admin_audit_log WHERE id = $1", id)
+	return &log, err
+}
+
 func (s *AuditStore) List(ctx context.Context, page, pageSize int, adminID, action, resourceType string) ([]models.AuditLog, int, error) {
 	var logs []models.AuditLog
 	var total int

@@ -27,7 +27,7 @@ func TestOrderHandler_Create(t *testing.T) {
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	settingsStore := store.NewSettingsStore(sqlxDB)
-	settingsService := service.NewSettingsService(settingsStore)
+	settingsService := service.NewSettingsService(settingsStore, nil)
 	orderStore := store.NewOrderStore(sqlxDB)
 	customerStore := store.NewCustomerStore(sqlxDB)
 	productStore := store.NewProductStore(sqlxDB)
@@ -141,7 +141,7 @@ func TestOrderHandler_List(t *testing.T) {
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	settingsStore := store.NewSettingsStore(sqlxDB)
-	settingsService := service.NewSettingsService(settingsStore)
+	settingsService := service.NewSettingsService(settingsStore, nil)
 	orderStore := store.NewOrderStore(sqlxDB)
 	customerStore := store.NewCustomerStore(sqlxDB)
 	productStore := store.NewProductStore(sqlxDB)
@@ -172,7 +172,7 @@ func TestOrderHandler_GetDetail(t *testing.T) {
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	settingsStore := store.NewSettingsStore(sqlxDB)
-	settingsService := service.NewSettingsService(settingsStore)
+	settingsService := service.NewSettingsService(settingsStore, nil)
 	orderStore := store.NewOrderStore(sqlxDB)
 	customerStore := store.NewCustomerStore(sqlxDB)
 	productStore := store.NewProductStore(sqlxDB)
@@ -221,7 +221,7 @@ func TestOrderHandler_Update(t *testing.T) {
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	settingsStore := store.NewSettingsStore(sqlxDB)
-	settingsService := service.NewSettingsService(settingsStore)
+	settingsService := service.NewSettingsService(settingsStore, nil)
 	orderStore := store.NewOrderStore(sqlxDB)
 	customerStore := store.NewCustomerStore(sqlxDB)
 	productStore := store.NewProductStore(sqlxDB)
@@ -415,7 +415,7 @@ func TestOrderHandler_Confirm(t *testing.T) {
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	settingsStore := store.NewSettingsStore(sqlxDB)
-	settingsService := service.NewSettingsService(settingsStore)
+	settingsService := service.NewSettingsService(settingsStore, nil)
 	orderStore := store.NewOrderStore(sqlxDB)
 	customerStore := store.NewCustomerStore(sqlxDB)
 	productStore := store.NewProductStore(sqlxDB)
@@ -491,7 +491,7 @@ func TestOrderHandler_RestoreStock(t *testing.T) {
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	settingsStore := store.NewSettingsStore(sqlxDB)
-	settingsService := service.NewSettingsService(settingsStore)
+	settingsService := service.NewSettingsService(settingsStore, nil)
 	orderStore := store.NewOrderStore(sqlxDB)
 	customerStore := store.NewCustomerStore(sqlxDB)
 	productStore := store.NewProductStore(sqlxDB)
@@ -545,7 +545,7 @@ func TestOrderHandler_CancelMe(t *testing.T) {
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	settingsStore := store.NewSettingsStore(sqlxDB)
-	settingsService := service.NewSettingsService(settingsStore)
+	settingsService := service.NewSettingsService(settingsStore, nil)
 	orderStore := store.NewOrderStore(sqlxDB)
 	customerStore := store.NewCustomerStore(sqlxDB)
 	productStore := store.NewProductStore(sqlxDB)

@@ -21,7 +21,7 @@ func TestProductHandler_List_FiltersInactiveTCG(t *testing.T) {
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	settingsStore := store.NewSettingsStore(sqlxDB)
-	settingsService := service.NewSettingsService(settingsStore)
+	settingsService := service.NewSettingsService(settingsStore, nil)
 	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, nil)
 	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
@@ -67,7 +67,7 @@ func TestProductHandler_GetByID_Public_FiltersInactiveTCG(t *testing.T) {
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	settingsStore := store.NewSettingsStore(sqlxDB)
-	settingsService := service.NewSettingsService(settingsStore)
+	settingsService := service.NewSettingsService(settingsStore, nil)
 	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, nil)
 	h := &ProductHandler{Service: ps, DB: sqlxDB}
 

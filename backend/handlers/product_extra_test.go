@@ -25,7 +25,7 @@ func TestProductHandler_BulkCreate_Errors(t *testing.T) {
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	settingsStore := store.NewSettingsStore(sqlxDB)
-	settingsService := service.NewSettingsService(settingsStore)
+	settingsService := service.NewSettingsService(settingsStore, nil)
 	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, &NopAuditer{})
 	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
@@ -51,7 +51,7 @@ func TestProductHandler_UpdateStorage_Errors(t *testing.T) {
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	settingsStore := store.NewSettingsStore(sqlxDB)
-	settingsService := service.NewSettingsService(settingsStore)
+	settingsService := service.NewSettingsService(settingsStore, nil)
 	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, &NopAuditer{})
 	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
@@ -91,7 +91,7 @@ func TestProductHandler_Delete_Errors(t *testing.T) {
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	settingsStore := store.NewSettingsStore(sqlxDB)
-	settingsService := service.NewSettingsService(settingsStore)
+	settingsService := service.NewSettingsService(settingsStore, nil)
 	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, &NopAuditer{})
 	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
@@ -113,7 +113,7 @@ func TestProductHandler_ListTCGs(t *testing.T) {
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	settingsStore := store.NewSettingsStore(sqlxDB)
-	settingsService := service.NewSettingsService(settingsStore)
+	settingsService := service.NewSettingsService(settingsStore, nil)
 	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, &NopAuditer{})
 	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
@@ -144,7 +144,7 @@ func TestProductHandler_BulkCreate_Extra(t *testing.T) {
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	settingsStore := store.NewSettingsStore(sqlxDB)
-	settingsService := service.NewSettingsService(settingsStore)
+	settingsService := service.NewSettingsService(settingsStore, nil)
 	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, &NopAuditer{})
 	h := &ProductHandler{Service: ps, DB: sqlxDB}
 

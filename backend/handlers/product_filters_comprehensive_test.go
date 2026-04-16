@@ -21,7 +21,7 @@ func TestProductHandler_BuildFilters_Comprehensive(t *testing.T) {
 			defer db.Close()
 			sqlxDB := sqlx.NewDb(db, "postgres")
 			settingsStore := store.NewSettingsStore(sqlxDB)
-	settingsService := service.NewSettingsService(settingsStore)
+	settingsService := service.NewSettingsService(settingsStore, nil)
 	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, nil)
 			h := &ProductHandler{Service: ps, DB: sqlxDB}
 			settingsService.ResetCache()
@@ -75,7 +75,7 @@ func TestProductHandler_AdminVsPublic(t *testing.T) {
 		defer db.Close()
 		sqlxDB := sqlx.NewDb(db, "postgres")
 		settingsStore := store.NewSettingsStore(sqlxDB)
-	settingsService := service.NewSettingsService(settingsStore)
+	settingsService := service.NewSettingsService(settingsStore, nil)
 	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, nil)
 		h := &ProductHandler{Service: ps, DB: sqlxDB}
 		settingsService.ResetCache()
@@ -110,7 +110,7 @@ func TestProductHandler_AdminVsPublic(t *testing.T) {
 		defer db.Close()
 		sqlxDB := sqlx.NewDb(db, "postgres")
 		settingsStore := store.NewSettingsStore(sqlxDB)
-	settingsService := service.NewSettingsService(settingsStore)
+	settingsService := service.NewSettingsService(settingsStore, nil)
 	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, nil)
 		h := &ProductHandler{Service: ps, DB: sqlxDB}
 		settingsService.ResetCache()

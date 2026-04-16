@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { adminFetchAuditLogs } from '@/lib/api';
+import { adminFetchAuditLogs, adminUndoAuditLog } from '@/lib/api';
 import { AuditLog } from '@/lib/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAdmin } from '@/hooks/useAdmin';
@@ -13,6 +13,7 @@ export default function AuditLogsPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [undoingLogId, setUndoingLogId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const pageSize = 20;
 
@@ -48,6 +49,38 @@ export default function AuditLogsPage() {
     setPage(1);
   };
 
+  const handleUndo = async (logId: string) => {
+    if (!window.confirm('Are you sure you want to REVERT this administrative action? This will perform an inverse operation (e.g., Delete -> Recreate).')) {
+      return;
+    }
+
+    setUndoingLogId(logId);
+    try {
+      await adminUndoAuditLog(logId);
+      // Success feedback could be improved but for now just refresh
+      fetchLogs();
+    } catch (err: any) {
+      alert(`UNDO FAILED: ${err.message || 'Unknown error'}`);
+    } finally {
+      setUndoingLogId(null);
+    }
+  };
+
+  const isReversible = (action: string) => {
+    const a = action.toUpperCase();
+    return a.includes('CREATE') || a.includes('UPDATE') || a.includes('DELETE');
+  };
+
+  const getActionColor = (action: string) => {
+    const a = action.toUpperCase();
+    if (a.includes('UNDO')) return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+    if (a.includes('CREATE')) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    if (a.includes('DELETE')) return 'bg-rose-50 text-rose-700 border-rose-200';
+    if (a.includes('UPDATE')) return 'bg-amber-50 text-amber-700 border-amber-200';
+    if (a.includes('LOGIN')) return 'bg-blue-50 text-blue-700 border-blue-200';
+    return 'bg-ink-surface text-text-muted border-ink-border';
+  };
+
   const totalPages = Math.ceil(total / pageSize);
 
   return (
@@ -70,10 +103,11 @@ export default function AuditLogsPage() {
             className="input-sm text-xs"
           >
             <option value="">{t('pages.admin.audit.filter.all_actions', 'All Actions')}</option>
-            <option value="create">CREATE</option>
-            <option value="delete">DELETE</option>
-            <option value="login">LOGIN</option>
-            <option value="update">UPDATE</option>
+            <option value="CREATE">CREATE</option>
+            <option value="DELETE">DELETE</option>
+            <option value="UPDATE">UPDATE</option>
+            <option value="UNDO">UNDO</option>
+            <option value="LOGIN">LOGIN</option>
           </select>
 
           <select 
@@ -85,6 +119,9 @@ export default function AuditLogsPage() {
             <option value="admin">ADMIN</option>
             <option value="order">ORDER</option>
             <option value="product">PRODUCT</option>
+            <option value="category">CATEGORY</option>
+            <option value="storage">STORAGE</option>
+            <option value="setting">SETTING</option>
           </select>
 
           <button 
@@ -108,18 +145,19 @@ export default function AuditLogsPage() {
                   <th className="px-4 py-3">{t('pages.admin.audit.table.action', 'ACTION')}</th>
                   <th className="px-4 py-3">{t('pages.admin.audit.table.target', 'TARGET')}</th>
                   <th className="px-4 py-3">{t('pages.admin.audit.table.details', 'DETAILS')}</th>
+                  <th className="px-4 py-3 text-right">{t('pages.admin.audit.table.undo', 'REVERSION')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink-border/10">
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-sm italic text-text-muted animate-pulse">
+                    <td colSpan={6} className="px-4 py-8 text-center text-sm italic text-text-muted animate-pulse">
                       {t('pages.admin.audit.loading', 'Synchronizing ledger...')}
                     </td>
                   </tr>
                 ) : logs.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-sm text-text-muted italic">
+                    <td colSpan={6} className="px-4 py-8 text-center text-sm text-text-muted italic">
                       {t('pages.admin.audit.empty', 'No administrative actions recorded.')}
                     </td>
                   </tr>
@@ -133,27 +171,37 @@ export default function AuditLogsPage() {
                         {log.admin_username}
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 rounded-sm border text-[10px] uppercase font-bold ${
-                          log.action === 'create' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                          log.action === 'delete' ? 'bg-hp-color/10 text-hp-color border-hp-color/20' :
-                          log.action === 'update' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                          'bg-ink-surface text-text-muted border-ink-border'
-                        }`}>
+                        <span className={`px-2 py-0.5 rounded-sm border text-[10px] uppercase font-bold ${getActionColor(log.action)}`}>
                           {log.action}
                         </span>
                       </td>
                       <td className="px-4 py-3">
                         <span className="text-text-muted uppercase text-[10px]">{log.resource_type}</span>
-                        <div className="text-[10px] opacity-60">ID: {log.resource_id?.substring(0, 8) || 'N/A'}...</div>
+                        <div className="text-[10px] opacity-60 font-medium">ID: {log.resource_id?.substring(0, 8) || 'N/A'}...</div>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap opacity-70 cursor-help group relative" 
+                        <div className="max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap opacity-70 cursor-help group relative" 
                              onClick={() => alert(JSON.stringify(log.details, null, 2))}>
                           {JSON.stringify(log.details)}
                           <div className="absolute hidden group-hover:block bg-ink-navy text-white p-2 rounded shadow-xl z-50 text-[10px] whitespace-pre max-w-sm max-h-40 overflow-auto bottom-full left-0 mb-2 border border-gold/20">
                             {JSON.stringify(log.details, null, 2)}
                           </div>
                         </div>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {isReversible(log.action) && (
+                          <button
+                            onClick={() => handleUndo(log.id)}
+                            disabled={undoingLogId !== null}
+                            className={`px-3 py-1 text-[9px] uppercase font-bold tracking-tighter rounded transition-all
+                              ${undoingLogId === log.id 
+                                ? 'bg-text-muted text-white cursor-wait' 
+                                : 'bg-gold/10 text-gold hover:bg-gold hover:text-white border border-gold/30'
+                              }`}
+                          >
+                            {undoingLogId === log.id ? 'Undoing...' : 'Undo'}
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))

@@ -23,7 +23,7 @@ func testBountyHandler(db *sqlx.DB) *BountyHandler {
 
 // testAdminHandler creates an AdminHandler wired through Store→Service for testing.
 func testAdminHandler(db *sqlx.DB) *AdminHandler {
-	return NewAdminHandler(service.NewAdminService(store.NewAdminStore(db)), &NopAuditer{})
+	return NewAdminHandler(service.NewAdminService(store.NewAdminStore(db)), &NopAuditer{}, nil)
 }
 
 // testNewsletterHandler creates a NewsletterHandler wired through Store→Service for testing.
@@ -33,7 +33,7 @@ func testNewsletterHandler(db *sqlx.DB) *NewsletterHandler {
 
 // testStorageHandler creates a StorageHandler wired through Store→Service for testing.
 func testStorageHandler(db *sqlx.DB) *StorageHandler {
-	return NewStorageHandler(service.NewStorageLocationService(store.NewStorageLocationStore(db)))
+	return NewStorageHandler(service.NewStorageLocationService(store.NewStorageLocationStore(db), &NopAuditer{}))
 }
 
 // testHealthHandler creates a HealthHandler wired through Store→Service for testing.
@@ -43,7 +43,7 @@ func testHealthHandler(db *sqlx.DB) *HealthHandler {
 
 // testRefreshService creates a RefreshService for testing.
 func testRefreshService(db *sqlx.DB) *service.RefreshService {
-	return service.NewRefreshService(store.NewRefreshStore(db), service.NewSettingsService(store.NewSettingsStore(db)))
+	return service.NewRefreshService(store.NewRefreshStore(db), service.NewSettingsService(store.NewSettingsStore(db), &NopAuditer{}))
 }
 
 // testRefreshHandler creates a RefreshHandler wired through Store→Service for testing.

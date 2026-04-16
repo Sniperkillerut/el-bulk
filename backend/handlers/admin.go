@@ -19,17 +19,20 @@ import (
 	"github.com/el-bulk/backend/utils/authutil"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+	"github.com/go-chi/chi/v5"
 )
 
 type AdminHandler struct {
-	Service      *service.AdminService
-	AuditService service.Auditer
+	Service       *service.AdminService
+	AuditService  service.Auditer
+	RevertService *service.RevertService
 }
 
-func NewAdminHandler(s *service.AdminService, audit service.Auditer) *AdminHandler {
+func NewAdminHandler(s *service.AdminService, audit service.Auditer, rs *service.RevertService) *AdminHandler {
 	return &AdminHandler{
-		Service:      s,
-		AuditService: audit,
+		Service:       s,
+		AuditService:  audit,
+		RevertService: rs,
 	}
 }
 
@@ -179,6 +182,23 @@ func (h *AdminHandler) ListAuditLogs(w http.ResponseWriter, r *http.Request) {
 		"page":      page,
 		"page_size": pageSize,
 	})
+}
+
+// POST /api/admin/audit-logs/{id}/undo
+func (h *AdminHandler) UndoAuditAction(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		render.Error(w, "Audit log ID is required", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.RevertService.Undo(r.Context(), id); err != nil {
+		logger.ErrorCtx(r.Context(), "Undo failed for log %s: %v", id, err)
+		render.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	render.Success(w, map[string]string{"message": "Action undone successfully"})
 }
 
 // GET /api/admin/auth/google/login

@@ -10,10 +10,11 @@ import (
 
 type StorageLocationService struct {
 	Store *store.StorageLocationStore
+	Audit Auditer
 }
 
-func NewStorageLocationService(s *store.StorageLocationStore) *StorageLocationService {
-	return &StorageLocationService{Store: s}
+func NewStorageLocationService(s *store.StorageLocationStore, a Auditer) *StorageLocationService {
+	return &StorageLocationService{Store: s, Audit: a}
 }
 
 func (s *StorageLocationService) List(ctx context.Context) ([]models.StoredIn, error) {
@@ -31,16 +32,30 @@ func (s *StorageLocationService) Create(ctx context.Context, name string) (*mode
 	if name == "" {
 		return nil, fmt.Errorf("name is required")
 	}
-	return s.Store.Create(ctx, name)
+	loc, err := s.Store.Create(ctx, name)
+	if err == nil {
+		s.Audit.LogAction(ctx, "CREATE_STORAGE", "storage", loc.ID, models.JSONB{"name": name})
+	}
+	return loc, err
 }
 
 func (s *StorageLocationService) Update(ctx context.Context, id, name string) error {
 	if name == "" {
 		return fmt.Errorf("name is required")
 	}
-	return s.Store.Update(ctx, id, name)
+	before, _ := s.Store.GetByID(ctx, id)
+	err := s.Store.Update(ctx, id, name)
+	if err == nil {
+		s.Audit.LogAction(ctx, "UPDATE_STORAGE", "storage", id, models.JSONB{"before": before, "after": name})
+	}
+	return err
 }
 
 func (s *StorageLocationService) Delete(ctx context.Context, id string) error {
-	return s.Store.Delete(ctx, id)
+	before, _ := s.Store.GetByID(ctx, id)
+	err := s.Store.Delete(ctx, id)
+	if err == nil {
+		s.Audit.LogAction(ctx, "DELETE_STORAGE", "storage", id, models.JSONB{"deleted": before})
+	}
+	return err
 }

@@ -29,6 +29,15 @@ func (s *StorageLocationStore) List(ctx context.Context) ([]models.StoredIn, err
 	return locations, err
 }
 
+func (s *StorageLocationStore) GetByID(ctx context.Context, id string) (*models.StoredIn, error) {
+	var loc models.StoredIn
+	err := s.DB.GetContext(ctx, &loc, "SELECT id, name FROM storage_location WHERE id = $1", id)
+	if err != nil {
+		return nil, err
+	}
+	return &loc, nil
+}
+
 func (s *StorageLocationStore) Create(ctx context.Context, name string) (*models.StoredIn, error) {
 	var loc models.StoredIn
 	loc.Name = name

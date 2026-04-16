@@ -79,10 +79,10 @@ func main() {
 	auditService := service.NewAuditService(auditStore, adminStore)
 
 	// Initialize Services
-	settingsService := service.NewSettingsService(settingsStore)
+	settingsService := service.NewSettingsService(settingsStore, auditService)
 	productService := service.NewProductService(productStore, tcgStore, settingsService, auditService)
 	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, auditService)
-	categoryService := service.NewCategoryService(categoryStore)
+	categoryService := service.NewCategoryService(categoryStore, auditService)
 	refreshService := service.NewRefreshService(refreshStore, settingsService)
 	tcgService := service.NewTCGService(tcgStore, refreshService)
 	noticeService := service.NewNoticeService(noticeStore)
@@ -90,15 +90,17 @@ func main() {
 	bountyService := service.NewBountyService(bountyStore)
 	adminService := service.NewAdminService(adminStore)
 	newsletterService := service.NewNewsletterService(newsletterStore)
-	storageLocationService := service.NewStorageLocationService(storageLocationStore)
+	storageLocationService := service.NewStorageLocationService(storageLocationStore, auditService)
 	authService := service.NewAuthService(authStore)
 	healthService := service.NewHealthService(healthStore)
 	// refreshService already initialized above
 	accountingService := service.NewAccountingService(accountingStore, settingsService)
 
+	revertService := service.NewRevertService(auditStore, auditService, productStore, productService, categoryService, storageLocationService, settingsService)
+	
 	// Initialize Handlers
 	productHandler := handlers.NewProductHandler(productService, database)
-	adminHandler := handlers.NewAdminHandler(adminService, auditService)
+	adminHandler := handlers.NewAdminHandler(adminService, auditService, revertService)
 	categoriesHandler := handlers.NewCategoriesHandler(categoryService)
 	lookupHandler := handlers.NewLookupHandler(productService)
 	settingsHandler := handlers.NewSettingsHandler(settingsService)
@@ -328,6 +330,7 @@ func main() {
 
 				// Audit Logs
 				r.Get("/audit-logs", adminHandler.ListAuditLogs)
+				r.Post("/audit-logs/{id}/undo", adminHandler.UndoAuditAction)
 			})
 		})
 

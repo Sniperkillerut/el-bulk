@@ -12,14 +12,14 @@ import (
 func TestConstructors(t *testing.T) {
 	db := &sqlx.DB{}
 	settingsStore := store.NewSettingsStore(db)
-	settingsService := service.NewSettingsService(settingsStore)
+	settingsService := service.NewSettingsService(settingsStore, nil)
 
 	orderStore := store.NewOrderStore(db)
 	customerStore := store.NewCustomerStore(db)
 	orderService := service.NewOrderService(orderStore, store.NewProductStore(db), customerStore, settingsService, nil)
 
 	assert.NotNil(t, testAdminHandler(db))
-	assert.NotNil(t, NewCategoriesHandler(service.NewCategoryService(store.NewCategoryStore(db))))
+	assert.NotNil(t, NewCategoriesHandler(service.NewCategoryService(store.NewCategoryStore(db), nil)))
 	assert.NotNil(t, NewOrderHandler(orderService))
 
 	ps := service.NewProductService(store.NewProductStore(db), store.NewTCGStore(db), settingsService, nil)

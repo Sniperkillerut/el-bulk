@@ -274,6 +274,12 @@ export async function adminFetchAuditLogs(filters: { action?: string; resource_t
   return apiFetch<import('./types').AuditLogListResponse>('/api/admin/audit-logs', { params: filters, cache: 'no-store' });
 }
 
+export async function adminUndoAuditLog(id: string): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>(`/api/admin/audit-logs/${id}/undo`, {
+    method: 'POST'
+  });
+}
+
 // ---------------------------------------------------------------------------
 // External card lookup (Scryfall for MTG, Pokémon TCG API for Pokémon)
 // ---------------------------------------------------------------------------

@@ -12,10 +12,11 @@ import (
 
 type CategoryService struct {
 	Store *store.CategoryStore
+	Audit Auditer
 }
 
-func NewCategoryService(s *store.CategoryStore) *CategoryService {
-	return &CategoryService{Store: s}
+func NewCategoryService(s *store.CategoryStore, a Auditer) *CategoryService {
+	return &CategoryService{Store: s, Audit: a}
 }
 
 func (s *CategoryService) List(ctx context.Context, isAdmin bool) ([]models.CustomCategory, error) {
@@ -30,17 +31,31 @@ func (s *CategoryService) List(ctx context.Context, isAdmin bool) ([]models.Cust
 
 func (s *CategoryService) Create(ctx context.Context, input models.CustomCategoryInput) (*models.CustomCategory, error) {
 	logger.TraceCtx(ctx, "Entering CategoryService.Create | Name: %s", input.Name)
-	return s.Store.Create(ctx, input)
+	cat, err := s.Store.Create(ctx, input)
+	if err == nil {
+		s.Audit.LogAction(ctx, "CREATE_CATEGORY", "category", cat.ID, models.JSONB{"input": input})
+	}
+	return cat, err
 }
 
 func (s *CategoryService) Update(ctx context.Context, id string, updates map[string]interface{}) (*models.CustomCategory, error) {
 	logger.TraceCtx(ctx, "Entering CategoryService.Update | ID: %s", id)
-	return s.Store.BaseStore.Update(ctx, id, updates)
+	before, _ := s.Store.GetByID(ctx, id)
+	cat, err := s.Store.BaseStore.Update(ctx, id, updates)
+	if err == nil {
+		s.Audit.LogAction(ctx, "UPDATE_CATEGORY", "category", id, models.JSONB{"before": before, "after": updates})
+	}
+	return cat, err
 }
 
 func (s *CategoryService) Delete(ctx context.Context, id string) error {
 	logger.TraceCtx(ctx, "Entering CategoryService.Delete | ID: %s", id)
-	return s.Store.BaseStore.Delete(ctx, id)
+	before, _ := s.Store.GetByID(ctx, id)
+	err := s.Store.BaseStore.Delete(ctx, id)
+	if err == nil {
+		s.Audit.LogAction(ctx, "DELETE_CATEGORY", "category", id, models.JSONB{"deleted": before})
+	}
+	return err
 }
 
 func (s *CategoryService) populateHotNew(ctx context.Context, categories []models.CustomCategory) {
