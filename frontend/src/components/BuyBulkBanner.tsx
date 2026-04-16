@@ -10,7 +10,7 @@ export default function BuyBulkBanner() {
     <section style={{
       background: 'var(--kraft-base)',
       border: '2px solid var(--kraft-shadow)',
-      margin: '2rem 1rem 4rem',
+      margin: '2rem auto 4rem',
       borderRadius: 4,
       padding: '2rem 1rem 3rem',
       position: 'relative',
