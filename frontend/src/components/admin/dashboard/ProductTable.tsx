@@ -289,7 +289,7 @@ export default function ProductTable({
                 <div className="flex items-center justify-center">{t('pages.admin.inventory.table.stock', 'STOCK')} {renderSortIcon('stock')}</div>
               </th>
               <th onClick={() => onSort('updated_at')} className="hidden sm:table-cell w-24 sm:w-32 text-center cursor-pointer hover:bg-ink-surface transition-colors">
-                <div className="flex items-center justify-center">{t('pages.admin.inventory.table.updated', 'UPDATED')} {renderSortIcon(sortKey === 'created_at' || sortKey === 'updated_at' ? sortKey : 'updated_at')}</div>
+                <div className="flex items-center justify-center">{t('pages.admin.inventory.table.updated', 'UPDATED')} {renderSortIcon('updated_at')}</div>
               </th>
               <th className="hidden md:table-cell w-16 text-center">{t('pages.admin.inventory.table.cmd', 'CMD')}</th>
             </tr>
