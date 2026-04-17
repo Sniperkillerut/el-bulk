@@ -24,7 +24,7 @@ func TestHealthHandler_Ping(t *testing.T) {
 		h.Ping(rr, req)
 
 		assert.Equal(t, http.StatusOK, rr.Code)
-		var resp map[string]string
+		var resp map[string]interface{}
 		json.NewDecoder(rr.Body).Decode(&resp)
 		assert.Equal(t, "ok", resp["status"])
 	})
@@ -36,13 +36,13 @@ func TestHealthHandler_Ping(t *testing.T) {
 		h.Ping(rr, req)
 
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)
-		var resp map[string]string
+		var resp map[string]interface{}
 		json.NewDecoder(rr.Body).Decode(&resp)
 		assert.Equal(t, "error", resp["status"])
 	})
 
 	t.Run("No DB", func(t *testing.T) {
-		hNoDB := NewHealthHandler(&service.HealthService{})
+		hNoDB := NewHealthHandler(service.NewHealthService(nil), "test-version")
 		req := httptest.NewRequest("GET", "/health/ping", nil)
 		rr := httptest.NewRecorder()
 		hNoDB.Ping(rr, req)
@@ -82,13 +82,13 @@ func TestHealthHandler_GetStats(t *testing.T) {
 	})
 
 	t.Run("No DB", func(t *testing.T) {
-		hNoDB := NewHealthHandler(&service.HealthService{})
+		hNoDB := NewHealthHandler(service.NewHealthService(nil), "test-version")
 		req := httptest.NewRequest("GET", "/health/stats", nil)
 		rr := httptest.NewRecorder()
 		hNoDB.GetStats(rr, req)
 
 		assert.Equal(t, http.StatusOK, rr.Code)
-		var resp map[string]string
+		var resp map[string]interface{}
 		json.NewDecoder(rr.Body).Decode(&resp)
 		assert.Equal(t, "degraded", resp["status"])
 	})

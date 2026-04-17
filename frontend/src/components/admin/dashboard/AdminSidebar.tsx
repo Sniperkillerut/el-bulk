@@ -9,6 +9,7 @@ import { AdminStats } from '@/lib/types';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useLanguage } from '@/context/LanguageContext';
 import { useUI } from '@/context/UIContext';
+import VersionDisplay from '@/components/VersionDisplay';
 
 export default function AdminSidebar() {
   const pathname = usePathname();
@@ -220,7 +221,7 @@ export default function AdminSidebar() {
               <div className="w-1.5 h-1.5 rounded-full bg-lp-color animate-pulse"></div>
               <span className="font-mono-stack text-[8px] text-text-on-header/30 uppercase font-bold tracking-tighter">{t('components.admin.sidebar.status.secure', 'Secure Link Active')}</span>
             </div>
-            <span className="text-[8px] font-mono-stack text-text-on-header/30 opacity-30">V1.4.2</span>
+            <VersionDisplay className="!text-[8px] !gap-2" />
           </div>
         )}
       </div>

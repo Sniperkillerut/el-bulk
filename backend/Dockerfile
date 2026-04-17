@@ -25,7 +25,8 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /el-bulk-api .
+ARG APP_VERSION=0.0.0-dev
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w -X main.Version=${APP_VERSION}" -o /el-bulk-api .
 
 # Build seed binary separately so it can be run via Cloud Run Jobs
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /el-bulk-seed ./seed/

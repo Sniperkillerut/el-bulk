@@ -36,16 +36,18 @@ steps:
   # ------------------------------------------------------------------
   - name: 'gcr.io/cloud-builders/docker'
     id: 'build-backend'
-    waitFor: ['-'] # Start immediately (parallel with API enable)
+    waitFor: ['-'] 
+    entrypoint: 'sh'
     args:
-      - 'build'
-      - '--cache-from'
-      - '${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/backend:latest'
-      - '-t'
-      - '${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/backend:${_TAG}'
-      - '-t'
-      - '${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/backend:latest'
-      - './backend'
+      - '-c'
+      - |
+        export BACKEND_VERSION=$(grep BACKEND_VERSION .versions | cut -d'=' -f2)
+        docker build \
+          --cache-from ${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/backend:latest \
+          -t ${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/backend:${_TAG} \
+          -t ${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/backend:latest \
+          --build-arg APP_VERSION=$$BACKEND_VERSION \
+          './backend'
 
   # ------------------------------------------------------------------
   # 2. Build Frontend Image (with build-time args from Secret Manager)
@@ -57,6 +59,12 @@ steps:
     args:
       - '-c'
       - |
+        # Extract versions from root manifest
+        export FRONTEND_VERSION=$(grep FRONTEND_VERSION .versions | cut -d'=' -f2)
+        export BACKEND_VERSION=$(grep BACKEND_VERSION .versions | cut -d'=' -f2)
+        
+        echo "Building Frontend v$$FRONTEND_VERSION and Backend v$$BACKEND_VERSION"
+        
         docker build \
           --cache-from ${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/frontend:latest \
           -t ${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/frontend:${_TAG} \
@@ -66,6 +74,7 @@ steps:
           --build-arg NEXT_PUBLIC_META_PIXEL_ID=$$META_PIXEL_ID \
           --build-arg NEXT_PUBLIC_GOOGLE_ADS_ID=$$GOOGLE_ADS_ID \
           --build-arg NEXT_PUBLIC_HOTJAR_ID=$$HOTJAR_ID \
+          --build-arg NEXT_PUBLIC_APP_VERSION=$$FRONTEND_VERSION \
           --build-arg INTERNAL_API_URL=${_BACKEND_INTERNAL_URL} \
           ./frontend
     secretEnv: ['API_URL', 'GA_ID', 'META_PIXEL_ID', 'GOOGLE_ADS_ID', 'HOTJAR_ID']

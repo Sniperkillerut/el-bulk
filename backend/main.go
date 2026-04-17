@@ -21,11 +21,20 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// Version is the current semantic version of the backend.
+// It is injected at build time using the -ldflags="-X main.Version=..." flag.
+var Version = "0.0.0-dev"
+
 func main() {
 	// Load environment variables. .env.local takes precedence over .env
 	_ = godotenv.Load(".env.local")
 	if err := godotenv.Load(); err != nil {
 		logger.Trace("No .env file found (using system env)")
+	}
+
+	// Fallback to APP_VERSION env var if Version was not injected during build
+	if Version == "0.0.0-dev" && os.Getenv("APP_VERSION") != "" {
+		Version = os.Getenv("APP_VERSION")
 	}
 
 	// Initialize logger level and format
@@ -47,6 +56,7 @@ func main() {
 	logger.Info("Logger initialized | Level: %s | Format: %s", 
 		logger.Default.GetLevel().String(), 
 		func() string { if os.Getenv("LOG_FORMAT") == "json" || os.Getenv("K_SERVICE") != "" { return "JSON" }; return "TEXT" }())
+	logger.Info("Backend Version: %s", Version)
 
 	database, err := db.ConnectResilient()
 	if err != nil {
@@ -109,7 +119,7 @@ func main() {
 	orderHandler := handlers.NewOrderHandler(orderService)
 	tcgHandler := handlers.NewTCGHandler(tcgService)
 	bountyHandler := handlers.NewBountyHandler(bountyService)
-	healthHandler := handlers.NewHealthHandler(healthService)
+	healthHandler := handlers.NewHealthHandler(healthService, Version)
 	accountingHandler := handlers.NewAccountingHandler(database, accountingService)
 	translationHandler := handlers.NewTranslationHandler(translationService)
 	themeHandler := handlers.NewThemeHandler(themeService)
@@ -359,7 +369,7 @@ func main() {
 	defer stop()
 
 	go func() {
-		logger.Info("🚀 El Bulk API running on :%s", port)
+		logger.Info("🚀 El Bulk API %s running on :%s", Version, port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Error("Server failed: %v", err)
 			os.Exit(1)

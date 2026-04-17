@@ -11,27 +11,28 @@ import (
 
 type HealthHandler struct {
 	Service *service.HealthService
+	Version string
 }
 
-func NewHealthHandler(s *service.HealthService) *HealthHandler {
-	return &HealthHandler{Service: s}
+func NewHealthHandler(s *service.HealthService, version string) *HealthHandler {
+	return &HealthHandler{Service: s, Version: version}
 }
 
 func (h *HealthHandler) Ping(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if !h.Service.IsAvailable() {
 		w.WriteHeader(http.StatusServiceUnavailable)
-		json.NewEncoder(w).Encode(map[string]string{"status": "degraded", "message": "database connection unavailable"})
+		json.NewEncoder(w).Encode(map[string]interface{}{"status": "degraded", "message": "database connection unavailable", "version": h.Version})
 		return
 	}
 
 	err := h.Service.Ping(r.Context())
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"status": "error", "message": err.Error()})
+		json.NewEncoder(w).Encode(map[string]interface{}{"status": "error", "message": err.Error(), "version": h.Version})
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	json.NewEncoder(w).Encode(map[string]interface{}{"status": "ok", "version": h.Version})
 }
 
 func (h *HealthHandler) GetStats(w http.ResponseWriter, r *http.Request) {

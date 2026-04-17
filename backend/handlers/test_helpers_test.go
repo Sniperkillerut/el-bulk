@@ -45,9 +45,8 @@ func testStorageHandler(db *sqlx.DB) *StorageHandler {
 	return NewStorageHandler(service.NewStorageLocationService(store.NewStorageLocationStore(db), &NopAuditer{}))
 }
 
-// testHealthHandler creates a HealthHandler wired through Store→Service for testing.
 func testHealthHandler(db *sqlx.DB) *HealthHandler {
-	return NewHealthHandler(service.NewHealthService(store.NewHealthStore(db)))
+	return NewHealthHandler(service.NewHealthService(store.NewHealthStore(db)), "test-version")
 }
 
 // testRefreshService creates a RefreshService for testing.
