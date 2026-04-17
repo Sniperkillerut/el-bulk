@@ -109,6 +109,8 @@ func main() {
 
 	revertService := service.NewRevertService(auditStore, auditService, productStore, productService, categoryService, categoryStore, storageLocationService, storageLocationStore, settingsService)
 	
+	seoService := service.NewSeoService(productStore, noticeStore, tcgStore, categoryStore)
+	
 	// Initialize Handlers
 	productHandler := handlers.NewProductHandler(productService, database)
 	adminHandler := handlers.NewAdminHandler(adminService, auditService, revertService)
@@ -127,6 +129,7 @@ func main() {
 	userAuthHandler := handlers.NewUserAuthHandler(authService)
 	newsletterHandler := handlers.NewNewsletterHandler(newsletterService)
 	storageLocationHandler := handlers.NewStorageHandler(storageLocationService)
+	seoHandler := handlers.NewSeoHandler(seoService)
 
 	// Initialize Storage Backend
 	var storageDriver storage.StorageDriver
@@ -203,6 +206,9 @@ func main() {
 		
 		// Newsletter
 		r.With(middleware.RateLimit(3, 30*time.Minute)).Post("/newsletter/subscribe", newsletterHandler.Subscribe)
+
+		// SEO
+		r.Get("/seo/sitemap-data", seoHandler.GetSitemapData)
 
 		// Public order creation (with optional user context)
 		r.With(middleware.RequireUserAuth).Post("/orders", orderHandler.Create)
