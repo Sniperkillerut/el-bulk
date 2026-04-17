@@ -23,8 +23,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       next: { revalidate: 3600 }, // Cache sitemap data for 1 hour
     });
     if (res.ok) {
-        const json = await res.json();
-        dynamicData = json.data;
+        const rawData = await res.json();
+        // The backend render.Success writes data directly, not wrapped in a "data" field
+        if (rawData) {
+            dynamicData = {
+                products: rawData.products || [],
+                notices: rawData.notices || [],
+                tcgs: rawData.tcgs || [],
+                collections: rawData.collections || [],
+            };
+        }
     }
   } catch (error) {
     console.error('Failed to fetch sitemap data:', error);
