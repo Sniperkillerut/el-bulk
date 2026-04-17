@@ -108,7 +108,7 @@ func (h *OrderHandler) GetDetail(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	logger.TraceCtx(r.Context(), "Entering OrderHandler.GetDetail | ID: %s", id)
 
-	detail, err := h.Service.GetOrderDetail(r.Context(), id)
+	detail, err := h.Service.GetOrderDetail(r.Context(), id, true)
 	if err != nil {
 		logger.ErrorCtx(r.Context(), "GetOrderDetail failed for %s: %v", id, err)
 		render.Error(w, "Order not found or database error", http.StatusNotFound)
@@ -225,8 +225,7 @@ func (h *OrderHandler) GetMeDetail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := chi.URLParam(r, "id")
-
-	detail, err := h.Service.GetOrderDetail(r.Context(), id)
+	detail, err := h.Service.GetOrderDetail(r.Context(), id, false)
 	if err != nil {
 		render.Error(w, "Order not found or database error", http.StatusNotFound)
 		return

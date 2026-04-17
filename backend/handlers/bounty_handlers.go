@@ -26,7 +26,8 @@ func NewBountyHandler(s *service.BountyService) *BountyHandler {
 func (h *BountyHandler) List(w http.ResponseWriter, r *http.Request) {
 	logger.TraceCtx(r.Context(), "Entering BountyHandler.List | URL: %s", r.URL.String())
 	activeParam := r.URL.Query().Get("active")
-	bounties, err := h.Service.ListBounties(r.Context(), activeParam)
+	isAdmin := middleware.IsAdmin(r.Context())
+	bounties, err := h.Service.ListBounties(r.Context(), activeParam, isAdmin)
 	if err != nil {
 		logger.ErrorCtx(r.Context(), "Failed to list bounties: %v", err)
 		render.Error(w, "Failed to fetch bounties", http.StatusInternalServerError)

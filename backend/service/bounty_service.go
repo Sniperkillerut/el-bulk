@@ -18,7 +18,7 @@ func NewBountyService(s *store.BountyStore) *BountyService {
 	return &BountyService{Store: s}
 }
 
-func (s *BountyService) ListBounties(ctx context.Context, activeParam string) ([]models.Bounty, error) {
+func (s *BountyService) ListBounties(ctx context.Context, activeParam string, isAdmin bool) ([]models.Bounty, error) {
 	bounties, err := s.Store.ListBounties(ctx, activeParam)
 	if err != nil {
 		return nil, err
@@ -26,6 +26,11 @@ func (s *BountyService) ListBounties(ctx context.Context, activeParam string) ([
 	if bounties == nil {
 		bounties = []models.Bounty{}
 	}
+
+	for i := range bounties {
+		bounties[i].Redact(isAdmin)
+	}
+
 	return bounties, nil
 }
 
@@ -110,6 +115,14 @@ func (s *BountyService) ListMeOffers(ctx context.Context, userID string) ([]mode
 	if offers == nil {
 		offers = []models.BountyOffer{}
 	}
+	// Sanitize: user shouldn't see AdminNotes on their own offers unless intended
+	// In this system, AdminNotes are internal.
+	for i := range offers {
+		offers[i].AdminNotes = nil
+		// CustomerContact is already their own, but let's be consistent.
+		// It's encrypted in DB, likely already decrypted or raw here.
+		// ListMeOffers from store seems to return it.
+	}
 	return offers, nil
 }
 
@@ -162,7 +175,13 @@ func (s *BountyService) SubmitRequest(ctx context.Context, input models.ClientRe
 }
 
 func (s *BountyService) UpdateRequestStatus(ctx context.Context, id, status string) (*models.ClientRequest, error) {
-	return s.Store.UpdateRequestStatus(ctx, id, status)
+	req, err := s.Store.UpdateRequestStatus(ctx, id, status)
+	if err != nil {
+		return nil, err
+	}
+	// Decrypt sensitive contact info for admin view
+	req.CustomerContact = *crypto.DecryptSafe(&req.CustomerContact)
+	return req, nil
 }
 
 func (s *BountyService) ListMeRequests(ctx context.Context, userID string) ([]models.ClientRequest, error) {
@@ -173,6 +192,8 @@ func (s *BountyService) ListMeRequests(ctx context.Context, userID string) ([]mo
 	if requests == nil {
 		requests = []models.ClientRequest{}
 	}
+	// Sanitize: CreatedAt is already a pointer now, ensure it's handled if we want to hide it
+	// For "Me" endpoints, timestamps are usually fine, but we'll be consistent if needed.
 	return requests, nil
 }
 

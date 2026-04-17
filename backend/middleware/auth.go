@@ -78,3 +78,66 @@ func AdminAuth(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
+
+// OptionalAdminAuth checks for a valid admin token but does not reject the request if it's missing or invalid.
+func OptionalAdminAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		tokenStr := ""
+		cookie, err := r.Cookie("admin_token")
+		if err == nil {
+			tokenStr = cookie.Value
+		} else {
+			authHeader := r.Header.Get("Authorization")
+			if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
+				tokenStr = strings.TrimPrefix(authHeader, "Bearer ")
+			}
+		}
+
+		if tokenStr == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		secret := os.Getenv("JWT_SECRET")
+		if secret == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, jwt.ErrSignatureInvalid
+			}
+			return []byte(secret), nil
+		})
+
+		if err != nil || !token.Valid {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		adminID, ok := claims["sub"].(string)
+		if !ok {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), AdminContextKey, adminID)
+		ctx = context.WithValue(ctx, IsAdminKey, true)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// IsAdmin helper checks if the context has the IsAdmin flag set.
+func IsAdmin(ctx context.Context) bool {
+	if val, ok := ctx.Value(IsAdminKey).(bool); ok {
+		return val
+	}
+	return false
+}

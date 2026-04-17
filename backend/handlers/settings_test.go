@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/el-bulk/backend/middleware"
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/service"
 	"github.com/el-bulk/backend/store"
@@ -110,6 +112,31 @@ func TestSettingsHandler_PublicGet(t *testing.T) {
 		assert.False(t, hasHotDays, "algorithm thresholds must not leak publicly")
 		assert.False(t, hasNewDays, "algorithm thresholds must not leak publicly")
 		assert.False(t, hasLastSync, "operational data must not leak publicly")
+	})
+
+	t.Run("Returns full settings for admin", func(t *testing.T) {
+		svc.ResetCache()
+		rows := sqlmock.NewRows([]string{"key", "value"}).
+			AddRow("usd_to_cop_rate", "5000.0").
+			AddRow("contact_email", "admin@example.com")
+
+		mock.ExpectQuery("SELECT key, value FROM setting").WillReturnRows(rows)
+
+		req, _ := http.NewRequest("GET", "/api/settings", nil)
+		// Simulate admin context
+		ctx := context.WithValue(req.Context(), middleware.IsAdminKey, true)
+		req = req.WithContext(ctx)
+
+		rr := httptest.NewRecorder()
+		h.PublicGet(rr, req)
+
+		assert.Equal(t, http.StatusOK, rr.Code)
+
+		var data map[string]interface{}
+		json.NewDecoder(rr.Body).Decode(&data)
+
+		assert.Equal(t, "admin@example.com", data["contact_email"])
+		assert.EqualValues(t, 5000, data["usd_to_cop_rate"], "admin must see exchange rates even on public route")
 	})
 
 	t.Run("Returns empty public settings on DB error", func(t *testing.T) {

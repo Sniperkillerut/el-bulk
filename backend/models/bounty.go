@@ -19,11 +19,24 @@ type Bounty struct {
 	HidePrice      bool          `db:"hide_price"       json:"hide_price"`
 	QuantityNeeded int           `db:"quantity_needed"  json:"quantity_needed"`
 	ImageURL       *string       `db:"image_url"        json:"image_url,omitempty"`
-	PriceSource    string        `db:"price_source"     json:"price_source"`
+	PriceSource    string        `db:"price_source"     json:"price_source,omitempty"`
 	PriceReference *float64      `db:"price_reference"  json:"price_reference,omitempty"`
 	IsActive       bool          `db:"is_active"        json:"is_active"`
-	CreatedAt      time.Time     `db:"created_at"       json:"created_at"`
-	UpdatedAt      time.Time     `db:"updated_at"       json:"updated_at"`
+	CreatedAt      *time.Time    `db:"created_at"       json:"created_at,omitempty"`
+	UpdatedAt      *time.Time    `db:"updated_at"       json:"updated_at,omitempty"`
+}
+
+// Redact strips sensitive or internal fields for non-admin users.
+func (b *Bounty) Redact(isAdmin bool) {
+	if !isAdmin {
+		b.PriceSource = ""
+		b.PriceReference = nil
+		b.CreatedAt = nil
+		b.UpdatedAt = nil
+		if b.HidePrice {
+			b.TargetPrice = nil
+		}
+	}
 }
 
 type BountyInput struct {

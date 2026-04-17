@@ -34,6 +34,32 @@ func TestBountyHandler_List(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, rr.Code)
 	})
+
+	t.Run("Sanitization", func(t *testing.T) {
+		now := time.Now()
+		targetPrice := 100.0
+		priceReference := 90.0
+		rows := sqlmock.NewRows([]string{"id", "name", "tcg", "target_price", "hide_price", "price_source", "price_reference", "is_active", "created_at", "updated_at"}).
+			AddRow("b1", "Black Lotus", "mtg", &targetPrice, true, "source", &priceReference, true, &now, &now)
+		mock.ExpectQuery("SELECT .* FROM bounty").WillReturnRows(rows)
+
+		req, _ := http.NewRequest("GET", "/api/bounties", nil)
+		rr := httptest.NewRecorder()
+		h.List(rr, req)
+
+		assert.Equal(t, http.StatusOK, rr.Code)
+		var resp []map[string]interface{}
+		err := json.Unmarshal(rr.Body.Bytes(), &resp)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, resp)
+
+		b := resp[0]
+		assert.NotContains(t, b, "price_source")
+		assert.NotContains(t, b, "price_reference")
+		assert.NotContains(t, b, "created_at")
+		assert.NotContains(t, b, "updated_at")
+		assert.NotContains(t, b, "target_price") // Since hide_price is true
+	})
 }
 
 func TestBountyHandler_Create(t *testing.T) {

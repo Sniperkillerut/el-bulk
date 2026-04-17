@@ -230,26 +230,12 @@ func (s *ProductService) EnrichProducts(ctx context.Context, products []models.P
 		logger.ErrorCtx(ctx, "Failed to populate cart counts for %d products: %v", len(products), err)
 	}
 
-	if !isAdmin {
-		// Strip internal pricing and storage data from public responses.
-		for i := range products {
-			products[i].PriceReference = nil
-			products[i].PriceCOPOverride = nil
-			products[i].PriceSource = ""
-			products[i].StoredIn = nil
-
-			// Phase 2 Metadata Stripping
-			products[i].CreatedAt = nil
-			products[i].UpdatedAt = nil
-
-			// Clean up nested categories
-			for j := range products[i].Categories {
-				products[i].Categories[j].CreatedAt = nil
-				products[i].Categories[j].ItemCount = 0
-				products[i].Categories[j].IsHot = false
-				products[i].Categories[j].IsNew = false
-			}
-		}
+	if err := s.Store.PopulateCartCounts(ctx, products); err != nil {
+		logger.ErrorCtx(ctx, "Failed to populate cart counts for %d products: %v", len(products), err)
+	}
+	
+	for i := range products {
+		products[i].Redact(isAdmin)
 	}
 	
 	if err := s.IdentifyHotNew(ctx, products, settings); err != nil {

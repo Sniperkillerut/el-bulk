@@ -19,6 +19,16 @@ type CustomCategory struct {
 	IsNew      bool       `json:"is_new,omitempty"`
 }
 
+// Redact strips sensitive or internal fields for non-admin users.
+func (c *CustomCategory) Redact(isAdmin bool) {
+	if !isAdmin {
+		c.CreatedAt = nil
+		c.ItemCount = 0
+		c.IsHot = false
+		c.IsNew = false
+	}
+}
+
 // CustomCategoryInput is used for creating/updating custom categories.
 type CustomCategoryInput struct {
 	ID         *string `json:"id,omitempty"`

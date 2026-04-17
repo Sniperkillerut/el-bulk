@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/el-bulk/backend/middleware"
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/service"
 	"github.com/el-bulk/backend/utils/logger"
@@ -39,6 +40,13 @@ func (h *SettingsHandler) PublicGet(w http.ResponseWriter, r *http.Request) {
 		render.Success(w, models.PublicSettings{})
 		return
 	}
+
+	isAdmin, _ := r.Context().Value(middleware.IsAdminKey).(bool)
+	if isAdmin {
+		render.Success(w, s)
+		return
+	}
+
 	render.Success(w, s.ToPublic())
 }
 

@@ -184,18 +184,18 @@ func main() {
 
 	// Public API
 	r.Route("/api", func(r chi.Router) {
-		r.Get("/products", productHandler.List)
+		r.With(middleware.OptionalAdminAuth).Get("/products", productHandler.List)
 		r.Post("/products/search-deck", productHandler.BulkSearch)
-		r.Get("/products/{id}", productHandler.GetByID)
+		r.With(middleware.OptionalAdminAuth).Get("/products/{id}", productHandler.GetByID)
 		r.Get("/tcgs", productHandler.ListTCGs)
-		r.Get("/categories", categoriesHandler.List)
-		r.Get("/settings", settingsHandler.PublicGet)
+		r.With(middleware.OptionalAdminAuth).Get("/categories", categoriesHandler.List)
+		r.With(middleware.OptionalAdminAuth).Get("/settings", settingsHandler.PublicGet)
 		
 		r.Get("/themes", themeHandler.List)
 		
 		r.Get("/translations", translationHandler.List)
 
-		r.Get("/bounties", bountyHandler.List)
+		r.With(middleware.OptionalAdminAuth).Get("/bounties", bountyHandler.List)
 		r.With(middleware.RequireUserAuth).Post("/bounties/offers", bountyHandler.SubmitOffer)
 		r.With(middleware.RequireUserAuth).Get("/bounties/offers/me", bountyHandler.ListMeOffers)
 		r.With(middleware.RequireUserAuth).Delete("/bounties/offers/me/{id}", bountyHandler.CancelMeOffer)

@@ -146,6 +146,22 @@ type Product struct {
 	SearchVector    interface{}       `db:"search_vector"      json:"-"`
 }
 
+// Redact strips sensitive or internal fields for non-admin users.
+func (p *Product) Redact(isAdmin bool) {
+	if !isAdmin {
+		p.PriceReference = nil
+		p.PriceSource = ""
+		p.PriceCOPOverride = nil
+		p.StoredIn = nil
+		p.CreatedAt = nil
+		p.UpdatedAt = nil
+		// Categories within product should also be redacted
+		for i := range p.Categories {
+			p.Categories[i].Redact(isAdmin)
+		}
+	}
+}
+
 type DeckCard struct {
 	ID              string        `db:"id"               json:"id"`
 	ProductID       string        `db:"product_id"       json:"product_id"`
@@ -457,11 +473,28 @@ type OrderDetail struct {
 	WhatsAppURL string            `json:"whatsapp_url"`
 }
 
+// Redact strips internal fulfilment data for non-admin users.
+func (d *OrderDetail) Redact(isAdmin bool) {
+	if !isAdmin {
+		for i := range d.Items {
+			d.Items[i].Redact(isAdmin)
+		}
+	}
+}
+
 type OrderItemDetail struct {
 	OrderItem
 	ImageURL  *string           `json:"image_url,omitempty"`
 	Stock     int               `json:"stock"`
 	StoredIn  []StorageLocation `json:"stored_in"`
+}
+
+// Redact strips internal fulfilment data for non-admin users.
+func (i *OrderItemDetail) Redact(isAdmin bool) {
+	if !isAdmin {
+		i.Stock = 0
+		i.StoredIn = nil
+	}
 }
 
 type CreateOrderInput struct {
@@ -581,9 +614,9 @@ type ClientRequest struct {
 	CustomerContact string    `db:"customer_contact" json:"customer_contact"`
 	CardName        string    `db:"card_name" json:"card_name"`
 	SetName         *string   `db:"set_name" json:"set_name,omitempty"`
-	Details         *string   `db:"details" json:"details,omitempty"`
-	Status          string    `db:"status" json:"status"`
-	CreatedAt       time.Time `db:"created_at" json:"created_at"`
+	Details         *string    `db:"details" json:"details,omitempty"`
+	Status          string     `db:"status" json:"status"`
+	CreatedAt       *time.Time `db:"created_at" json:"created_at,omitempty"`
 }
 
 type BountyOffer struct {
@@ -594,13 +627,13 @@ type BountyOffer struct {
 	Condition  *string   `db:"condition" json:"condition,omitempty"`
 	Status     string    `db:"status" json:"status"`
 	Notes      *string   `db:"notes" json:"notes,omitempty"`
-	AdminNotes *string   `db:"admin_notes" json:"admin_notes,omitempty"`
-	CreatedAt  time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt  time.Time `db:"updated_at" json:"updated_at"`
+	AdminNotes *string    `db:"admin_notes" json:"admin_notes,omitempty"`
+	CreatedAt  *time.Time `db:"created_at" json:"created_at,omitempty"`
+	UpdatedAt  *time.Time `db:"updated_at" json:"updated_at,omitempty"`
 	// Join fields
 	BountyName      *string `db:"bounty_name" json:"bounty_name,omitempty"`
 	CustomerName    string  `db:"customer_name" json:"customer_name"`
-	CustomerContact string  `db:"customer_contact" json:"customer_contact"`
+	CustomerContact string  `db:"customer_contact" json:"customer_contact,omitempty"`
 }
 
 type ClientRequestInput struct {

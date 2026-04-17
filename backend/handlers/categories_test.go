@@ -59,6 +59,11 @@ func TestCategoriesHandler_List(t *testing.T) {
 		h.List(rr, req)
 
 		assert.Equal(t, http.StatusOK, rr.Code)
+		var res []map[string]interface{}
+		json.NewDecoder(rr.Body).Decode(&res)
+		assert.NotEmpty(t, res)
+		_, hasCreatedAt := res[0]["created_at"]
+		assert.False(t, hasCreatedAt, "created_at must be hidden in public category list")
 	})
 }
 

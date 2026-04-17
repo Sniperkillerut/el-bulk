@@ -26,6 +26,11 @@ func (s *CategoryService) List(ctx context.Context, isAdmin bool) ([]models.Cust
 		return nil, err
 	}
 	s.populateHotNew(ctx, categories)
+
+	for i := range categories {
+		categories[i].Redact(isAdmin)
+	}
+
 	return categories, nil
 }
 

@@ -162,7 +162,7 @@ func (s *OrderService) CreateOrder(ctx context.Context, input models.CreateOrder
 	return orderID, orderNumber, totalCOP, err
 }
 
-func (s *OrderService) GetOrderDetail(ctx context.Context, orderID string) (*models.OrderDetail, error) {
+func (s *OrderService) GetOrderDetail(ctx context.Context, orderID string, isAdmin bool) (*models.OrderDetail, error) {
 	logger.TraceCtx(ctx, "Entering OrderService.GetOrderDetail | OrderID: %s", orderID)
 	order, err := s.Store.GetByID(ctx, orderID)
 	if err != nil {
@@ -186,12 +186,15 @@ func (s *OrderService) GetOrderDetail(ctx context.Context, orderID string) (*mod
 
 	whatsappURL := s.GenerateWhatsAppURL(*order, *customer)
 
-	return &models.OrderDetail{
+	res := &models.OrderDetail{
 		Order:       *order,
 		Customer:    *customer,
 		Items:       items,
 		WhatsAppURL: whatsappURL,
-	}, nil
+	}
+	res.Redact(isAdmin)
+
+	return res, nil
 }
 
 func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input models.UpdateOrderInput) error {
