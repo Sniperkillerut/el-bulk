@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
@@ -221,5 +223,42 @@ func TestAutoDetectGCP(t *testing.T) {
 	}
 	if l.ProjectID != "my-project" {
 		t.Errorf("expected ProjectID 'my-project', got %q", l.ProjectID)
+	}
+}
+
+func TestRequestLogger(t *testing.T) {
+	var buf bytes.Buffer
+	oldOutput := Default.Output
+	Default.Output = &buf
+	oldLevel := Default.GetLevel()
+	Default.SetLevel(DEBUG)
+	Default.Color = false
+	defer func() {
+		Default.Output = oldOutput
+		Default.SetLevel(oldLevel)
+	}()
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
+
+	loggerHandler := RequestLogger(handler)
+
+	req := httptest.NewRequest("GET", "/test-path", nil)
+	rr := httptest.NewRecorder()
+
+	loggerHandler.ServeHTTP(rr, req)
+
+	output := buf.String()
+
+	// Should contain INFO summary
+	if !strings.Contains(output, "[INFO] GET /test-path | 200") {
+		t.Errorf("expected INFO summary log, got %q", output)
+	}
+
+	// Should contain DEBUG detailed info
+	if !strings.Contains(output, "[DEBUG] 200 |") || !strings.Contains(output, "GET /test-path") {
+		t.Errorf("expected DEBUG detailed log, got %q", output)
 	}
 }

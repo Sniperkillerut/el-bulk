@@ -131,7 +131,7 @@ func (l *Logger) SetJSON(enabled bool) {
 func (l *Logger) AutoDetectGCP() {
 	// Detect project ID from environment
 	projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
-	
+
 	// Detect Cloud Run or App Engine environment
 	if os.Getenv("K_SERVICE") != "" || projectID != "" {
 		l.mu.Lock()
@@ -288,7 +288,7 @@ func ErrorCtx(ctx context.Context, msg string, args ...interface{}) { Default.Er
 func RequestLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		
+
 		ctx := r.Context()
 		// Extract GCP Trace ID from header: X-Cloud-Trace-Context: TRACE_ID/SPAN_ID;o=TRACE_TRUE
 		traceHeader := r.Header.Get("X-Cloud-Trace-Context")
@@ -301,21 +301,24 @@ func RequestLogger(next http.Handler) http.Handler {
 
 		// Create a custom response writer to capture the status code
 		ww := &statusResponseWriter{ResponseWriter: w, status: http.StatusOK}
-		
+
 		TraceCtx(ctx, "Request started: %s %s from %s", r.Method, r.URL.Path, r.RemoteAddr)
-		
+
 		next.ServeHTTP(ww, r.WithContext(ctx))
-		
+
 		duration := time.Since(start)
-		
+
 		// Log detailed info at DEBUG, summary at INFO
-		msg := fmt.Sprintf("%d | %s | %s %s", ww.status, duration.String(), r.Method, r.URL.Path)
+		detailedMsg := fmt.Sprintf("%d | %s | %s %s", ww.status, duration.String(), r.Method, r.URL.Path)
+		summaryMsg := fmt.Sprintf("%s %s | %d", r.Method, r.URL.Path, ww.status)
+
 		if ww.status >= 500 {
-			ErrorCtx(ctx, "%s", msg)
+			ErrorCtx(ctx, "%s", detailedMsg)
 		} else if ww.status >= 400 {
-			WarnCtx(ctx, "%s", msg)
+			WarnCtx(ctx, "%s", detailedMsg)
 		} else {
-			InfoCtx(ctx, "%s", msg)
+			InfoCtx(ctx, "%s", summaryMsg)
+			DebugCtx(ctx, "%s", detailedMsg)
 		}
 	})
 }
@@ -328,10 +331,10 @@ func Recoverer(next http.Handler) http.Handler {
 				if rvr == http.ErrAbortHandler {
 					panic(rvr)
 				}
-				
+
 				// Standard panic logging with stack trace
 				ErrorCtx(r.Context(), "PANIC RECOVERED: %v", rvr)
-				
+
 				if r.Header.Get("Connection") != "Upgrade" {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
