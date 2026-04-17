@@ -81,3 +81,79 @@ func TestProductService_Create(t *testing.T) {
 		mockAudit.AssertExpectations(t)
 	})
 }
+
+func TestProductService_EnrichProducts_Sanitization(t *testing.T) {
+	db, _, _ := sqlmock.New()
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	
+	productStore := store.NewProductStore(sqlxDB)
+	tcgStore := store.NewTCGStore(sqlxDB)
+	mockAudit := new(MockAuditService)
+	mockSettings := new(MockSettingsService)
+	
+	s := NewProductService(productStore, tcgStore, mockSettings, mockAudit)
+	
+	t.Run("Sanitizes fields for non-admin", func(t *testing.T) {
+		ref := 10.5
+		override := 45000.0
+		products := []models.Product{
+			{
+				ID:               "p-1",
+				PriceReference:   &ref,
+				PriceCOPOverride: &override,
+				PriceSource:      "tcgplayer",
+				StoredIn:         []models.StorageLocation{{StorageID: "s1", Name: "Shelf A", Quantity: 5}},
+				CartCount:        3,
+				Categories: []models.CustomCategory{
+					{Name: "ShowMe", ShowBadge: true},
+					{Name: "HideMe", ShowBadge: false},
+				},
+			},
+		}
+
+		// CalculatePrices is called inside EnrichProducts
+		// IdentifyHotNew is also called
+		mockSettings.On("GetSettings", mock.Anything).Return(models.Settings{}, nil)
+
+		// Note: we don't mock Translate or PopulateCartCounts queries here because 
+		// they will just fail silently or return empty, which is fine for this unit test 
+		// that focuses on the sanitization loop at the end.
+		
+		err := s.EnrichProducts(context.Background(), products, models.Settings{}, false)
+		assert.NoError(t, err)
+
+		p := products[0]
+		assert.Nil(t, p.PriceReference, "PriceReference should be sanitized")
+		assert.Nil(t, p.PriceCOPOverride, "PriceCOPOverride should be sanitized")
+		assert.Equal(t, models.PriceSource(""), p.PriceSource, "PriceSource should be empty")
+		assert.Nil(t, p.StoredIn, "StoredIn should be nil")
+		assert.Equal(t, 3, p.CartCount, "CartCount should be preserved")
+		
+		assert.Len(t, p.Categories, 1)
+		assert.Equal(t, "ShowMe", p.Categories[0].Name)
+	})
+
+	t.Run("Preserves fields for admin", func(t *testing.T) {
+		ref := 10.5
+		products := []models.Product{
+			{
+				ID:             "p-1",
+				PriceReference: &ref,
+				StoredIn:       []models.StorageLocation{{StorageID: "s1", Quantity: 5}},
+				Categories:     []models.CustomCategory{{Name: "Both", ShowBadge: false}},
+			},
+		}
+
+		mockSettings.On("GetSettings", mock.Anything).Return(models.Settings{}, nil)
+
+		err := s.EnrichProducts(context.Background(), products, models.Settings{}, true)
+		assert.NoError(t, err)
+
+		p := products[0]
+		assert.NotNil(t, p.PriceReference)
+		assert.NotNil(t, p.StoredIn)
+		assert.Len(t, p.Categories, 1) // Admin sees all regardless of ShowBadge? 
+		// Wait, the logic only FILTERS for !isAdmin.
+	})
+}
+

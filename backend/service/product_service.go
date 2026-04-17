@@ -80,29 +80,8 @@ func (s *ProductService) GetByID(ctx context.Context, id string, isAdmin bool) (
 	}
 
 	products := []models.Product{*product}
-	if err := s.CalculatePrices(products, settings); err != nil {
+	if err := s.EnrichProducts(ctx, products, settings, isAdmin); err != nil {
 		return nil, err
-	}
-	if err := s.Store.PopulateCartCounts(ctx, products); err != nil {
-		return nil, err
-	}
-	
-	if isAdmin {
-		if err := s.Store.PopulateStorage(ctx, products); err != nil {
-			return nil, err
-		}
-	} else {
-		// Filter categories for public view
-		if err := s.Store.PopulateCategories(ctx, products); err != nil {
-			return nil, err
-		}
-		filtered := []models.CustomCategory{}
-		for _, c := range products[0].Categories {
-			if c.ShowBadge {
-				filtered = append(filtered, c)
-			}
-		}
-		products[0].Categories = filtered
 	}
 
 	return &products[0], nil

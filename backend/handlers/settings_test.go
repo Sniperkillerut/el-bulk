@@ -22,7 +22,7 @@ func TestSettingsHandler_Get(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	svc := service.NewSettingsService(store.NewSettingsStore(sqlxDB), &NopAuditer{})
+	svc := service.NewSettingsService(store.NewSettingsStore(sqlxDB), nil)
 	h := NewSettingsHandler(svc)
 
 	t.Run("Success", func(t *testing.T) {
@@ -62,7 +62,7 @@ func TestSettingsHandler_PublicGet(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	svc := service.NewSettingsService(store.NewSettingsStore(sqlxDB), &NopAuditer{})
+	svc := service.NewSettingsService(store.NewSettingsStore(sqlxDB), nil)
 	h := NewSettingsHandler(svc)
 
 	t.Run("Returns only public fields", func(t *testing.T) {
@@ -136,7 +136,7 @@ func TestSettingsHandler_Update(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
-	svc := service.NewSettingsService(store.NewSettingsStore(sqlxDB), &NopAuditer{})
+	svc := service.NewSettingsService(store.NewSettingsStore(sqlxDB), nil)
 	h := NewSettingsHandler(svc)
 
 	t.Run("Success", func(t *testing.T) {
