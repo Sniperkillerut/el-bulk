@@ -129,8 +129,17 @@ func TestProductService_EnrichProducts_Sanitization(t *testing.T) {
 		assert.Nil(t, p.StoredIn, "StoredIn should be nil")
 		assert.Equal(t, 3, p.CartCount, "CartCount should be preserved")
 		
+		// Phase 2 Metadata Check
+		assert.Nil(t, p.CreatedAt, "CreatedAt should be sanitized")
+		assert.Nil(t, p.UpdatedAt, "UpdatedAt should be sanitized")
+
 		assert.Len(t, p.Categories, 1)
-		assert.Equal(t, "ShowMe", p.Categories[0].Name)
+		cat := p.Categories[0]
+		assert.Equal(t, "ShowMe", cat.Name)
+		assert.Nil(t, cat.CreatedAt, "Category CreatedAt should be sanitized")
+		assert.Equal(t, 0, cat.ItemCount, "Category ItemCount should be 0")
+		assert.False(t, cat.IsHot, "Category IsHot should be false")
+		assert.False(t, cat.IsNew, "Category IsNew should be false")
 	})
 
 	t.Run("Preserves fields for admin", func(t *testing.T) {

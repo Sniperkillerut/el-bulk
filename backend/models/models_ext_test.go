@@ -19,7 +19,7 @@ func TestCustomCategory_JSON(t *testing.T) {
 		ShowBadge:  true,
 		Searchable: true,
 		BgColor:    &bgColor,
-		CreatedAt:  now,
+		CreatedAt:  &now,
 		ItemCount:  10,
 	}
 
@@ -33,7 +33,7 @@ func TestCustomCategory_JSON(t *testing.T) {
 	assert.Equal(t, cat.Name, cat2.Name)
 	assert.Equal(t, *cat.BgColor, *cat2.BgColor)
 	// Time comparison can be tricky with JSON marshaling due to precision
-	assert.WithinDuration(t, cat.CreatedAt, cat2.CreatedAt, time.Second)
+	assert.WithinDuration(t, *cat.CreatedAt, *cat2.CreatedAt, time.Second)
 }
 
 func TestBounty_JSON(t *testing.T) {

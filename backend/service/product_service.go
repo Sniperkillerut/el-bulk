@@ -232,12 +232,23 @@ func (s *ProductService) EnrichProducts(ctx context.Context, products []models.P
 
 	if !isAdmin {
 		// Strip internal pricing and storage data from public responses.
-		// cart_count is intentionally retained for social proof ("X users have this in cart").
 		for i := range products {
 			products[i].PriceReference = nil
 			products[i].PriceCOPOverride = nil
 			products[i].PriceSource = ""
 			products[i].StoredIn = nil
+
+			// Phase 2 Metadata Stripping
+			products[i].CreatedAt = nil
+			products[i].UpdatedAt = nil
+
+			// Clean up nested categories
+			for j := range products[i].Categories {
+				products[i].Categories[j].CreatedAt = nil
+				products[i].Categories[j].ItemCount = 0
+				products[i].Categories[j].IsHot = false
+				products[i].Categories[j].IsNew = false
+			}
 		}
 	}
 	
@@ -267,7 +278,7 @@ func (s *ProductService) IdentifyHotNew(ctx context.Context, products []models.P
 	newThreshold := time.Now().AddDate(0, 0, -newDays)
 
 	for i := range products {
-		if products[i].CreatedAt.After(newThreshold) {
+		if products[i].CreatedAt != nil && products[i].CreatedAt.After(newThreshold) {
 			products[i].IsNew = true
 		}
 	}

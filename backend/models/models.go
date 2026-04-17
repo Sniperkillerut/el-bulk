@@ -117,7 +117,7 @@ type Product struct {
 
 	// Pricing fields
 	PriceReference   *float64 `db:"price_reference"    json:"price_reference,omitempty"`
-	PriceSource      PriceSource `db:"price_source"       json:"price_source"`
+	PriceSource      PriceSource `db:"price_source"       json:"price_source,omitempty"`
 	PriceCOPOverride *float64 `db:"price_cop_override" json:"price_cop_override,omitempty"`
 	// Price is the computed COP value injected by the handler (not a DB column)
 	Price            float64  `db:"-"                  json:"price"`
@@ -129,8 +129,8 @@ type Product struct {
 	ImageURL        *string           `db:"image_url"          json:"image_url,omitempty"`
 	Description     *string           `db:"description"        json:"description,omitempty"`
 	
-	CreatedAt       time.Time         `db:"created_at"         json:"created_at"`
-	UpdatedAt       time.Time         `db:"updated_at"         json:"updated_at"`
+	CreatedAt       *time.Time         `db:"created_at"         json:"created_at,omitempty"`
+	UpdatedAt       *time.Time         `db:"updated_at"         json:"updated_at,omitempty"`
 	
 	// Virtual fields
 	IsHot           bool              `json:"is_hot"`

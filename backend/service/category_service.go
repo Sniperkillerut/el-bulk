@@ -76,7 +76,7 @@ func (s *CategoryService) populateHotNew(ctx context.Context, categories []model
 	
 	ids := make([]string, 0, len(categories))
 	for i := range categories {
-		if categories[i].CreatedAt.After(tenDaysAgo) {
+		if categories[i].CreatedAt != nil && categories[i].CreatedAt.After(tenDaysAgo) {
 			categories[i].IsNew = true
 		}
 		ids = append(ids, categories[i].ID)
