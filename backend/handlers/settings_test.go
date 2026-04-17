@@ -56,6 +56,80 @@ func TestSettingsHandler_Get(t *testing.T) {
 	})
 }
 
+func TestSettingsHandler_PublicGet(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	svc := service.NewSettingsService(store.NewSettingsStore(sqlxDB), &NopAuditer{})
+	h := NewSettingsHandler(svc)
+
+	t.Run("Returns only public fields", func(t *testing.T) {
+		svc.ResetCache()
+		rows := sqlmock.NewRows([]string{"key", "value"}).
+			AddRow("usd_to_cop_rate", "4800.0").
+			AddRow("eur_to_cop_rate", "5200.0").
+			AddRow("ck_to_cop_rate", "4900.0").
+			AddRow("contact_email", "tienda@example.com").
+			AddRow("contact_phone", "3001234567").
+			AddRow("flat_shipping_fee_cop", "10000").
+			AddRow("hot_sales_threshold", "5").
+			AddRow("hot_days_threshold", "7").
+			AddRow("new_threshold_days", "14")
+
+		mock.ExpectQuery("SELECT key, value FROM setting").WillReturnRows(rows)
+
+		req, _ := http.NewRequest("GET", "/api/settings", nil)
+		rr := httptest.NewRecorder()
+		h.PublicGet(rr, req)
+
+		assert.Equal(t, http.StatusOK, rr.Code)
+
+		// Decode into a raw map to assert exactly which keys are present in the JSON
+		var data map[string]interface{}
+		json.NewDecoder(rr.Body).Decode(&data)
+
+		// Public fields should be present with correct values
+		assert.Equal(t, "tienda@example.com", data["contact_email"])
+		assert.Equal(t, "3001234567", data["contact_phone"])
+		assert.EqualValues(t, 10000, data["flat_shipping_fee_cop"])
+
+		// Sensitive fields must NOT appear in the JSON response
+		_, hasUSD := data["usd_to_cop_rate"]
+		_, hasEUR := data["eur_to_cop_rate"]
+		_, hasCK := data["ck_to_cop_rate"]
+		_, hasHotSales := data["hot_sales_threshold"]
+		_, hasHotDays := data["hot_days_threshold"]
+		_, hasNewDays := data["new_days_threshold"]
+		_, hasLastSync := data["last_set_sync"]
+		assert.False(t, hasUSD, "exchange rates must not leak publicly")
+		assert.False(t, hasEUR, "exchange rates must not leak publicly")
+		assert.False(t, hasCK, "exchange rates must not leak publicly")
+		assert.False(t, hasHotSales, "algorithm thresholds must not leak publicly")
+		assert.False(t, hasHotDays, "algorithm thresholds must not leak publicly")
+		assert.False(t, hasNewDays, "algorithm thresholds must not leak publicly")
+		assert.False(t, hasLastSync, "operational data must not leak publicly")
+	})
+
+	t.Run("Returns empty public settings on DB error", func(t *testing.T) {
+		svc.ResetCache()
+		mock.ExpectQuery("SELECT key, value FROM setting").WillReturnError(assert.AnError)
+
+		req, _ := http.NewRequest("GET", "/api/settings", nil)
+		rr := httptest.NewRecorder()
+		h.PublicGet(rr, req)
+
+		// Should still return 200 with an empty (but safe) public settings object
+		assert.Equal(t, http.StatusOK, rr.Code)
+
+		var data map[string]interface{}
+		json.NewDecoder(rr.Body).Decode(&data)
+		_, hasUSD := data["usd_to_cop_rate"]
+		assert.False(t, hasUSD, "no exchange rates even in error fallback")
+	})
+}
+
 func TestSettingsHandler_Update(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)

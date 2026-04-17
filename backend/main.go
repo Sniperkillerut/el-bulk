@@ -189,11 +189,10 @@ func main() {
 		r.Get("/products/{id}", productHandler.GetByID)
 		r.Get("/tcgs", productHandler.ListTCGs)
 		r.Get("/categories", categoriesHandler.List)
-		r.Get("/settings", settingsHandler.Get)
+		r.Get("/settings", settingsHandler.PublicGet)
 		
 		r.Get("/themes", themeHandler.List)
 		
-		r.Get("/settings/public", settingsHandler.PublicGet)
 		r.Get("/translations", translationHandler.List)
 
 		r.Get("/bounties", bountyHandler.List)

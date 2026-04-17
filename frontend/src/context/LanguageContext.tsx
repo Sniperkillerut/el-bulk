@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { fetchTranslations, fetchSettings } from '@/lib/api';
-import { Settings } from '@/lib/types';
+import { PublicSettings } from '@/lib/types';
 
 type Locale = string;
 
@@ -22,7 +22,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [allTranslations, setAllTranslations] = useState<Record<Locale, Record<string, string>>>({});
   const [isLoading, setIsLoading] = useState(true);
-  const [settings, setSettings] = useState<Settings | null>(null);
+  const [settings, setSettings] = useState<PublicSettings | null>(null);
 
   const availableLocales = Object.keys(allTranslations).length > 0 ? Object.keys(allTranslations) : ['en', 'es'];
 

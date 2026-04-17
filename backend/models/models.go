@@ -253,6 +253,35 @@ type Settings struct {
 	HideLanguageSelector bool   `json:"hide_language_selector"`
 }
 
+// PublicSettings is the safe subset of Settings returned by the public /api/settings endpoint.
+// It excludes exchange rates, algorithm thresholds, and operational data like last_set_sync.
+type PublicSettings struct {
+	ContactAddress       string  `json:"contact_address"`
+	ContactPhone         string  `json:"contact_phone"`
+	ContactEmail         string  `json:"contact_email"`
+	ContactInstagram     string  `json:"contact_instagram"`
+	ContactHours         string  `json:"contact_hours"`
+	FlatShippingFeeCOP   float64 `json:"flat_shipping_fee_cop"`
+	DefaultThemeID       string  `json:"default_theme_id"`
+	DefaultLocale        string  `json:"default_locale"`
+	HideLanguageSelector bool    `json:"hide_language_selector"`
+}
+
+// ToPublic returns the public-safe subset of Settings.
+func (s Settings) ToPublic() PublicSettings {
+	return PublicSettings{
+		ContactAddress:       s.ContactAddress,
+		ContactPhone:         s.ContactPhone,
+		ContactEmail:         s.ContactEmail,
+		ContactInstagram:     s.ContactInstagram,
+		ContactHours:         s.ContactHours,
+		FlatShippingFeeCOP:   s.FlatShippingFeeCOP,
+		DefaultThemeID:       s.DefaultThemeID,
+		DefaultLocale:        s.DefaultLocale,
+		HideLanguageSelector: s.HideLanguageSelector,
+	}
+}
+
 type TCG struct {
 	ID        string    `db:"id"         json:"id"`
 	Name      string    `db:"name"       json:"name"`

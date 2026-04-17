@@ -75,24 +75,29 @@ export interface Product {
   cart_count?: number;
 }
 
-/** Admin-configurable exchange rates. */
-export interface Settings {
-  usd_to_cop_rate: number; // TCGPlayer prices
-  eur_to_cop_rate: number; // Cardmarket prices
-  ck_to_cop_rate: number;  // CardKingdom prices
+/** Public-safe subset of settings returned by GET /api/settings.
+ *  Does NOT include exchange rates, algorithm thresholds, or operational data. */
+export interface PublicSettings {
   contact_address: string;
   contact_phone: string;
   contact_email: string;
   contact_instagram: string;
   contact_hours: string;
   flat_shipping_fee_cop: number;
-  last_set_sync?: string;
   default_theme_id?: string;
+  default_locale?: string;
+  hide_language_selector?: boolean;
+}
+
+/** Full settings — only available to the admin panel via GET /api/admin/settings. */
+export interface Settings extends PublicSettings {
+  usd_to_cop_rate: number; // TCGPlayer prices
+  eur_to_cop_rate: number; // Cardmarket prices
+  ck_to_cop_rate: number;  // CardKingdom prices
+  last_set_sync?: string;
   hot_sales_threshold: number;
   hot_days_threshold: number;
   new_days_threshold: number;
-  default_locale?: string;
-  hide_language_selector?: boolean;
 }
 
 export interface FacetItem {

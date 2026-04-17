@@ -250,6 +250,17 @@ func (s *ProductService) EnrichProducts(ctx context.Context, products []models.P
 	if err := s.Store.PopulateCartCounts(ctx, products); err != nil {
 		logger.ErrorCtx(ctx, "Failed to populate cart counts for %d products: %v", len(products), err)
 	}
+
+	if !isAdmin {
+		// Strip internal pricing and storage data from public responses.
+		// cart_count is intentionally retained for social proof ("X users have this in cart").
+		for i := range products {
+			products[i].PriceReference = nil
+			products[i].PriceCOPOverride = nil
+			products[i].PriceSource = ""
+			products[i].StoredIn = nil
+		}
+	}
 	
 	if err := s.IdentifyHotNew(ctx, products, settings); err != nil {
 		logger.ErrorCtx(ctx, "Failed to identify hot/new status for %d products: %v", len(products), err)

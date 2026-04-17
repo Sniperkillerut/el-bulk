@@ -103,8 +103,8 @@ export async function bulkSearchDeck(list: string): Promise<import('./types').Bu
   });
 }
 
-export async function fetchSettings(): Promise<import('./types').Settings> {
-  return apiFetch<import('./types').Settings>('/api/settings', { cache: 'no-store' });
+export async function fetchSettings(): Promise<import('./types').PublicSettings> {
+  return apiFetch<import('./types').PublicSettings>('/api/settings', { cache: 'no-store' });
 }
 
 export async function fetchProduct(id: string): Promise<Product> {
@@ -160,11 +160,11 @@ export async function fetchTCGs(activeOnly: boolean = true, options: FetchOption
   }
 }
 
-export async function fetchPublicSettings(options: FetchOptions = {}): Promise<import('./types').Settings> {
-  const cached = getCached<import('./types').Settings>('settings');
+export async function fetchPublicSettings(options: FetchOptions = {}): Promise<import('./types').PublicSettings> {
+  const cached = getCached<import('./types').PublicSettings>('settings');
   if (cached) return cached;
 
-  const data = await apiFetch<import('./types').Settings>('/api/settings', { 
+  const data = await apiFetch<import('./types').PublicSettings>('/api/settings', { 
     ...options,
     cache: options.cache || 'default' 
   });

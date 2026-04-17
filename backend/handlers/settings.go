@@ -35,14 +35,11 @@ func (h *SettingsHandler) Get(w http.ResponseWriter, r *http.Request) {
 func (h *SettingsHandler) PublicGet(w http.ResponseWriter, r *http.Request) {
 	s, err := h.Service.GetSettings(r.Context())
 	if err != nil {
-		// On public API, just return defaults silently or empty
-		render.Success(w, models.Settings{
-			USDToCOPRate: 4000,
-			EURToCOPRate: 4400,
-		})
+		// On error return empty public settings — no sensitive defaults leak
+		render.Success(w, models.PublicSettings{})
 		return
 	}
-	render.Success(w, s)
+	render.Success(w, s.ToPublic())
 }
 
 // PUT /api/admin/settings
