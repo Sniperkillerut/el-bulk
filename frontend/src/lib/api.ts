@@ -252,11 +252,67 @@ export async function adminBulkCreateProducts(req: import('./types').BulkCreateR
   });
 }
 
-export async function adminBulkUpdateSource(ids: string[], source: import('./types').PriceSource): Promise<{ count: number }> {
-  return apiFetch<{ count: number }>('/api/admin/products/bulk-source', {
-    method: 'PUT',
-    body: JSON.stringify({ ids, source }),
-  });
+export async function adminBulkUpdateSource(
+  ids: string[], 
+  source: import('./types').PriceSource,
+  onProgress?: (current: number, total: number) => void
+): Promise<{ count: number }> {
+  try {
+    const base = API_BASE || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
+    const response = await fetch(`${base}/api/admin/products/bulk-source`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: JSON.stringify({ ids, source }),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to update price products');
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error('Response body is null');
+    }
+
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let finalCount = 0;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try {
+          const part = JSON.parse(line);
+          if (part.type === 'progress' && onProgress) {
+            onProgress(part.current, part.total);
+          } else if (part.type === 'complete') {
+            finalCount = part.count;
+          } else if (part.type === 'error') {
+            throw new Error(part.error);
+          }
+        } catch (e) {
+          console.warn('Failed to parse NDJSON line:', line, e);
+        }
+      }
+    }
+
+    return { count: finalCount || ids.length };
+  } catch (err) {
+    remoteLogger.error('Bulk sync failed', { error: String(err) });
+    throw err;
+  }
 }
 
 export async function adminFetchLogLevel(): Promise<{ level: string }> {

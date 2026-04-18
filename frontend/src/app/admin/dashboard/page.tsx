@@ -14,6 +14,7 @@ import ProductEditModal from '@/components/admin/ProductEditModal';
 import CSVImportModal from '@/components/admin/CSVImportModal';
 import StorageManagerModal from '@/components/admin/modals/StorageManagerModal';
 import CategoryManagerModal from '@/components/admin/modals/CategoryManagerModal';
+import BulkSyncProgressModal from '@/components/admin/modals/BulkSyncProgressModal';
 import ProductTable from '@/components/admin/dashboard/ProductTable';
 import { useAdminProducts } from '@/hooks/useAdminProducts';
 import { useLanguage } from '@/context/LanguageContext';
@@ -47,6 +48,12 @@ export default function AdminDashboard() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isBulkSyncing, setIsBulkSyncing] = useState(false);
   const [isSelectingGlobal, setIsSelectingGlobal] = useState(false);
+
+  // Bulk Sync Modal State
+  const [bulkSyncStatus, setBulkSyncStatus] = useState<'syncing' | 'success' | 'error'>('syncing');
+  const [bulkSyncProgress, setBulkSyncProgress] = useState({ current: 0, total: 0 });
+  const [bulkSyncSource, setBulkSyncSource] = useState('');
+  const [bulkSyncError, setBulkSyncError] = useState('');
 
   const loadStaticData = useCallback(async () => {
     try {
@@ -134,16 +141,23 @@ export default function AdminDashboard() {
 
   const handleBulkUpdateSource = async (source: 'tcgplayer' | 'cardkingdom') => {
     if (selectedIds.length === 0) return;
+    
+    setBulkSyncSource(source);
+    setBulkSyncProgress({ current: 0, total: selectedIds.length });
+    setBulkSyncStatus('syncing');
+    setBulkSyncError('');
     setIsBulkSyncing(true);
+
     try {
-      const res = await adminBulkUpdateSource(selectedIds, source);
-      alert(t('pages.admin.inventory.bulk_sync_success', 'Updated {count} products and triggered price refresh.', { count: res.count }));
+      await adminBulkUpdateSource(selectedIds, source, (current, total) => {
+        setBulkSyncProgress({ current, total });
+      });
+      setBulkSyncStatus('success');
       setSelectedIds([]);
       refreshProducts();
-    } catch {
-      alert(t('pages.admin.inventory.bulk_sync_error', 'Failed to update price source.'));
-    } finally {
-      setIsBulkSyncing(false);
+    } catch (err) {
+      setBulkSyncStatus('error');
+      setBulkSyncError(err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -463,6 +477,17 @@ export default function AdminDashboard() {
           onUpdate={handleUpdateCategory}
           onDelete={handleDeleteCategory}
           onClose={() => setShowCategoryModal(false)}
+        />
+      )}
+
+      {isBulkSyncing && (
+        <BulkSyncProgressModal
+          current={bulkSyncProgress.current}
+          total={bulkSyncProgress.total}
+          source={bulkSyncSource}
+          status={bulkSyncStatus}
+          error={bulkSyncError}
+          onClose={() => setIsBulkSyncing(false)}
         />
       )}
     </div>

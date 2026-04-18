@@ -278,7 +278,50 @@ func (h *ProductHandler) BulkUpdateSource(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	count, err := h.Service.BulkUpdateSource(r.Context(), req.IDs, req.Source)
+	// Check if flusher is supported for real-time progress
+	flusher, canFlush := w.(http.Flusher)
+	if canFlush {
+		w.Header().Set("Content-Type", "application/x-ndjson")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.WriteHeader(http.StatusOK)
+
+		onProgress := func(current, total int) {
+			progress := map[string]interface{}{
+				"type":    "progress",
+				"current": current,
+				"total":   total,
+			}
+			data, _ := json.Marshal(progress)
+			fmt.Fprintf(w, "%s\n", data)
+			flusher.Flush()
+		}
+
+		count, err := h.Service.BulkUpdateSource(r.Context(), req.IDs, req.Source, onProgress)
+		if err != nil {
+			logger.ErrorCtx(r.Context(), "BulkUpdateSource streaming failed: %v", err)
+			progress := map[string]interface{}{
+				"type":  "error",
+				"error": err.Error(),
+			}
+			data, _ := json.Marshal(progress)
+			fmt.Fprintf(w, "%s\n", data)
+			return
+		}
+
+		final := map[string]interface{}{
+			"type":    "complete",
+			"count":   count,
+			"message": fmt.Sprintf("Successfully updated %d products", count),
+		}
+		data, _ := json.Marshal(final)
+		fmt.Fprintf(w, "%s\n", data)
+		return
+	}
+
+	// Fallback for non-streaming clients
+	count, err := h.Service.BulkUpdateSource(r.Context(), req.IDs, req.Source, nil)
 	if err != nil {
 		logger.ErrorCtx(r.Context(), "BulkUpdateSource failed: %v", err)
 		render.Error(w, "Bulk update failed", http.StatusInternalServerError)

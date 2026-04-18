@@ -508,7 +508,7 @@ func (h *ProductService) UpdateStorage(ctx context.Context, id string, updates [
 	
 	return h.GetStorage(ctx, id)
 }
-func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, source models.PriceSource) (int, error) {
+func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, source models.PriceSource, onProgress func(current, total int)) (int, error) {
 	logger.TraceCtx(ctx, "Entering ProductService.BulkUpdateSource | Count: %d | Source: %s", len(ids), source)
 	if len(ids) == 0 {
 		return 0, nil
@@ -524,6 +524,10 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 		return 0, err
 	}
 	count, _ := res.RowsAffected()
+	
+	if onProgress != nil {
+		onProgress(0, len(ids))
+	}
 
 	// 2. Trigger price refresh for these specific products
 	var rows []store.RefreshRow
@@ -605,7 +609,10 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 
 			updates := make([]store.MetadataUpdate, 0, len(rows))
 
-			for _, row := range rows {
+			for i, row := range rows {
+				if i%5 == 0 && onProgress != nil {
+					onProgress(i, len(rows))
+				}
 				// ── 1. Resolve MTG Hierarchy ──────────────────────────────────
 				// Extract CK-specific metadata for the matcher
 				setName := ""
@@ -669,6 +676,10 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 				rs := store.RefreshStore{DB: s.Store.DB}
 				settings, _ := s.Settings.GetSettings(ctx)
 				_, _ = rs.BulkUpdateMetadata(ctx, updates, settings.USDToCOPRate, settings.EURToCOPRate, settings.CKToCOPRate)
+				
+				if onProgress != nil {
+					onProgress(len(rows), len(rows))
+				}
 			}
 		}
 	}
