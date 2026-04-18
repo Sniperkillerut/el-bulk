@@ -177,7 +177,7 @@ export default function AdminThemesPage() {
   const { t } = useLanguage();
   const { token } = useAdmin();
   const [themes, setThemes] = useState<Theme[]>([]);
-  const [settings, setSettings] = useState<Settings | null>(null);
+  const [settings, setSettings] = useState<Settings | undefined>();
   const [loading, setLoading] = useState(true);
   const [editingTheme, setEditingTheme] = useState<Theme | null>(null);
   const [form, setForm] = useState<ThemeInput>(CARDBOARD_DEFAULT);

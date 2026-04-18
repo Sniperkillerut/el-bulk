@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/lib/CartContext';
 import { useUser } from '@/context/UserContext';
 import { createOrder, fetchPublicSettings } from '@/lib/api';
-import { PAYMENT_METHODS, FOIL_LABELS, TREATMENT_LABELS, Settings } from '@/lib/types';
+import { PAYMENT_METHODS, FOIL_LABELS, TREATMENT_LABELS, PublicSettings } from '@/lib/types';
 import CardImage from '@/components/CardImage';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -29,7 +29,7 @@ export default function CheckoutPage() {
     notes: '',
   });
 
-  const [settings, setSettings] = useState<Settings | null>(null);
+  const [settings, setSettings] = useState<PublicSettings | undefined>();
 
   useEffect(() => {
     fetchPublicSettings().then(setSettings).catch(console.error);

@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchPublicSettings } from '@/lib/api';
-import { Settings } from '@/lib/types';
+import { PublicSettings } from '@/lib/types';
 import { useLanguage } from '@/context/LanguageContext';
 
 export default function ContactPage() {
-  const [settings, setSettings] = useState<Settings | null>(null);
+  const [settings, setSettings] = useState<PublicSettings | undefined>(undefined);
   const { t } = useLanguage();
 
   useEffect(() => {

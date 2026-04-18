@@ -19,7 +19,7 @@ export default function AdminTranslationsPage() {
   const [activeSlug, setActiveSlug] = useState<string>('home');
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [extraLocales, setExtraLocales] = useState<string[]>([]);
-  const [settings, setSettings] = useState<Settings | null>(null);
+  const [settings, setSettings] = useState<Settings | undefined>();
   const [updatingSettings, setUpdatingSettings] = useState(false);
   
   const loadSettingsAndTranslations = useCallback(async () => {
@@ -185,7 +185,7 @@ export default function AdminTranslationsPage() {
       setExtraLocales(prev => prev.filter(l => l !== locale));
       if (settings?.default_locale === locale) {
         await updateAdminSettings({ default_locale: 'en' });
-        setSettings(prev => prev ? { ...prev, default_locale: 'en' } : null);
+        setSettings(prev => prev ? { ...prev, default_locale: 'en' } : undefined);
       }
     } catch {
       alert('Failed to delete language');
@@ -196,7 +196,7 @@ export default function AdminTranslationsPage() {
     setUpdatingSettings(true);
     try {
       await updateAdminSettings({ default_locale: locale });
-      setSettings(prev => prev ? { ...prev, default_locale: locale } : null);
+      setSettings(prev => prev ? { ...prev, default_locale: locale } : undefined);
     } catch {
       alert('Failed to update default language');
     } finally {
@@ -208,7 +208,7 @@ export default function AdminTranslationsPage() {
     setUpdatingSettings(true);
     try {
       await updateAdminSettings({ hide_language_selector: val });
-      setSettings(prev => prev ? { ...prev, hide_language_selector: val } : null);
+      setSettings(prev => prev ? { ...prev, hide_language_selector: val } : undefined);
     } catch {
       alert('Failed to update visibility settings');
     } finally {

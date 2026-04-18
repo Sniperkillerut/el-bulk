@@ -11,7 +11,7 @@ import { useLanguage } from '@/context/LanguageContext';
 export default function AdminSettingsPage() {
   const { t } = useLanguage();
   const { token, settings, refreshSettings, loading, logout } = useAdmin();
-  const [editingSettings, setEditingSettings] = useState<Settings | null>(null);
+  const [editingSettings, setEditingSettings] = useState<Settings | undefined>();
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [backendLogLevel, setBackendLogLevel] = useState<string>('INFO');
