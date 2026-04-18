@@ -9,6 +9,7 @@ import {
   FoilTreatment,
   CardTreatment,
   Condition,
+  PriceSource,
   FOIL_LABELS,
   TREATMENT_LABELS,
   TCG_LABELS,
@@ -29,10 +30,32 @@ const PROMO_LABELS: Record<string, string> = {
   'planeswalkerdeck': 'PW Deck',
   'bringafriend': 'Bring-a-Friend',
 };
+
+const LANGUAGE_OPTIONS = [
+  { code: 'en', label: 'English' },
+  { code: 'es', label: 'Spanish' },
+  { code: 'ja', label: 'Japanese' },
+  { code: 'it', label: 'Italian' },
+  { code: 'pt', label: 'Portuguese' },
+  { code: 'de', label: 'German' },
+  { code: 'fr', label: 'French' },
+  { code: 'ko', label: 'Korean' },
+  { code: 'zt', label: 'Traditional Chinese' },
+  { code: 'zh', label: 'Simplified Chinese' },
+];
+
+const PRICE_SOURCE_OPTIONS = [
+  { code: 'cardkingdom', label: 'Card Kingdom' },
+  { code: 'tcgplayer', label: 'TCGPlayer (USD)' },
+  { code: 'cardmarket', label: 'Cardmarket (EUR)' },
+  { code: 'manual', label: 'Manual COP' },
+];
+
 import {
   lookupMTGCard,
   adminBulkCreateProducts,
-  adminBatchLookupMTG
+  adminBatchLookupMTG,
+  CardLookupResult,
 } from '@/lib/api';
 import { identifyFoilFromString } from '@/lib/mtg-logic';
 import CardImage from '@/components/CardImage';
@@ -77,6 +100,8 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
   const [importDestination, setImportDestination] = useState<'singles' | 'deck'>('singles');
   const [deckName, setDeckName] = useState('');
   const [tcgType, setTcgType] = useState('mtg');
+  const [defaultLanguage, setDefaultLanguage] = useState('en');
+  const [defaultPriceSource, setDefaultPriceSource] = useState<PriceSource>('cardkingdom');
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -130,6 +155,8 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
         condition: (row[mapping['condition']] || 'NM').toUpperCase() as Condition,
         foil_treatment: identifyFoilFromString(row[mapping['foil_treatment']]),
         stock: parseInt(row[mapping['stock']]) || 1,
+        language: defaultLanguage,
+        price_source: defaultPriceSource,
         category_ids: [...bulkCategoryIds], // Pre-populate with current global selection
         storage_items: defaultStorage ? [{ stored_in_id: defaultStorage, name: '', quantity: parseInt(row[mapping['stock']]) || 1 }] : []
       };
@@ -138,6 +165,28 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
 
     setPreviewData(data);
     setStep('preview');
+  };
+
+  const enrichPricing = (item: PreviewItem, res: CardLookupResult) => {
+    // Determine target source: prioritize current item selection if it's a valid external source
+    const currentSource = item.price_source;
+    const isManual = !currentSource || currentSource === 'manual';
+    
+    // If manual or unset, pick a sensible default for the TCG
+    const source = isManual 
+      ? (item.tcg === 'mtg' ? 'cardkingdom' : 'tcgplayer')
+      : currentSource;
+
+    let ref = item.price_reference;
+    if (source === 'cardkingdom' && res.price_cardkingdom !== undefined) {
+      ref = res.price_cardkingdom;
+    } else if (source === 'tcgplayer' && res.price_tcgplayer !== undefined) {
+      ref = res.price_tcgplayer;
+    } else if (source === 'cardmarket' && res.price_cardmarket !== undefined) {
+      ref = res.price_cardmarket;
+    }
+
+    return { price_reference: ref, price_source: source as PriceSource };
   };
 
   const handleEnrich = async () => {
@@ -187,6 +236,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
             if (matchingIndexInChunk !== -1) {
               const dataIndex = i + matchingIndexInChunk;
               const item = newData[dataIndex];
+              const pricingData = enrichPricing(item, res);
               newData[dataIndex] = {
                 ...item,
                 name: res.name || item.name,
@@ -194,8 +244,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                 set_name: res.set_name,
                 collector_number: res.collector_number || item.collector_number,
                 image_url: res.image_url,
-                price_reference: item.tcg === 'mtg' && res.price_cardkingdom !== undefined ? res.price_cardkingdom : ((item.foil_treatment === 'non_foil' ? res.price_tcgplayer : res.price_cardmarket) || item.price_reference),
-                price_source: item.tcg === 'mtg' ? 'cardkingdom' : (item.foil_treatment === 'non_foil' ? 'tcgplayer' : 'cardmarket'),
+                ...pricingData,
                 rarity: res.rarity,
                 cmc: res.cmc,
                 color_identity: res.color_identity,
@@ -217,16 +266,6 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                 promo_type: res.promo_type || item.promo_type,
                 scryfall_id: res.scryfall_id || item.scryfall_id,
               };
-
-              if (item.tcg === 'mtg') {
-                newData[dataIndex].price_source = 'cardkingdom';
-              } else if (item.foil_treatment === 'non_foil' && res.price_tcgplayer) {
-                newData[dataIndex].price_reference = res.price_tcgplayer;
-                newData[dataIndex].price_source = 'tcgplayer';
-              } else if (item.foil_treatment !== 'non_foil' && res.price_cardmarket) {
-                newData[dataIndex].price_reference = res.price_cardmarket;
-                newData[dataIndex].price_source = 'cardmarket';
-              }
             }
           });
 
@@ -243,6 +282,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
         if (!item.image_url && (item.name || item.scryfall_id)) {
           try {
             const res = await lookupMTGCard(item.name!, item.set_code, item.collector_number, item.foil_treatment, item.scryfall_id);
+            const pricingData = enrichPricing(item, res);
             newData[i] = {
               ...item,
               name: res.name || item.name,
@@ -250,8 +290,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
               set_name: res.set_name,
               collector_number: res.collector_number || item.collector_number,
               image_url: res.image_url,
-              price_reference: item.tcg === 'mtg' && res.price_cardkingdom !== undefined ? res.price_cardkingdom : ((item.foil_treatment === 'non_foil' ? res.price_tcgplayer : res.price_cardmarket) || item.price_reference),
-              price_source: item.tcg === 'mtg' ? 'cardkingdom' : (item.foil_treatment === 'non_foil' ? 'tcgplayer' : 'cardmarket'),
+              ...pricingData,
               rarity: res.rarity,
               cmc: res.cmc,
               color_identity: res.color_identity,
@@ -300,6 +339,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
 
     try {
       const res = await lookupMTGCard(item.name!, item.set_code, item.collector_number, item.foil_treatment, item.scryfall_id);
+      const pricingData = enrichPricing(item, res);
       setPreviewData(prev => {
         const next = [...prev];
         next[index] = {
@@ -309,8 +349,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
           set_name: res.set_name,
           collector_number: res.collector_number || next[index].collector_number,
           image_url: res.image_url,
-          price_reference: item.tcg === 'mtg' && res.price_cardkingdom !== undefined ? res.price_cardkingdom : ((item.foil_treatment === 'non_foil' ? res.price_tcgplayer : res.price_cardmarket) || item.price_reference),
-          price_source: item.tcg === 'mtg' ? 'cardkingdom' : (item.foil_treatment === 'non_foil' ? 'tcgplayer' : 'cardmarket'),
+          ...pricingData,
           rarity: res.rarity,
           cmc: res.cmc,
           color_identity: res.color_identity,
@@ -527,6 +566,33 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                       </div>
                     </div>
 
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">Main Language</label>
+                        <select
+                          value={defaultLanguage}
+                          onChange={(e) => setDefaultLanguage(e.target.value)}
+                          className="w-full bg-bg-page border-2 border-border-main p-3 text-text-main font-bold text-xs focus:border-accent-primary outline-none transition-all"
+                        >
+                          {LANGUAGE_OPTIONS.map(opt => (
+                            <option key={opt.code} value={opt.code}>{opt.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">Default Price Source</label>
+                        <select
+                          value={defaultPriceSource}
+                          onChange={(e) => setDefaultPriceSource(e.target.value as PriceSource)}
+                          className="w-full bg-bg-page border-2 border-border-main p-3 text-text-main font-bold text-xs focus:border-accent-primary outline-none transition-all"
+                        >
+                          {PRICE_SOURCE_OPTIONS.map(opt => (
+                            <option key={opt.code} value={opt.code}>{opt.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
                     <div>
                       <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">Metadata Tagging (Bulk)</label>
                       <div className="flex flex-wrap gap-2 p-4 bg-bg-page/50 border-2 border-border-main/50 rounded shadow-inner">
@@ -632,11 +698,12 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                     <tr>
                       <th className="p-4 border-r border-border-main/20 w-20">Art</th>
                       <th className="p-4 border-r border-border-main/20 w-[280px]">Product Info</th>
+                      <th className="p-4 border-r border-border-main/20 w-16 text-center">Lang</th>
                       <th className="p-4 border-r border-border-main/20 w-16 text-center">Cond</th>
                       <th className="p-4 border-r border-border-main/20 w-36">Treatment</th>
                       <th className="p-4 border-r border-border-main/20 w-32">Vault</th>
                       <th className="p-4 border-r border-border-main/20 w-48">Collections</th>
-                      <th className="p-4 border-r border-border-main/20 w-24">Reference</th>
+                      <th className="p-4 border-r border-border-main/20 w-32">Reference</th>
                       <th className="p-4 w-24 text-center">Qty</th>
                     </tr>
                   </thead>
@@ -706,6 +773,15 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                         </td>
                         <td className="p-4 border-r border-border-main/10 w-16 text-center">
                           <select
+                            value={item.language || 'en'}
+                            onChange={(e) => updatePreviewItem(idx, { language: e.target.value })}
+                            className="bg-bg-card text-text-main text-[11px] font-black uppercase border-2 border-border-main shadow-sm outline-none w-full text-center py-2 hover:border-accent-primary transition-colors cursor-pointer rounded"
+                          >
+                            {LANGUAGE_OPTIONS.map(ln => <option key={ln.code} value={ln.code}>{ln.code.toUpperCase()}</option>)}
+                          </select>
+                        </td>
+                        <td className="p-4 border-r border-border-main/10 w-16 text-center">
+                          <select
                             value={item.condition || 'NM'}
                             onChange={(e) => updatePreviewItem(idx, { condition: e.target.value as Condition })}
                             className="bg-bg-card text-accent-primary text-[11px] font-black uppercase border-2 border-border-main shadow-sm outline-none w-full text-center py-2 hover:border-accent-primary transition-colors cursor-pointer rounded"
@@ -761,18 +837,24 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                             ))}
                           </div>
                         </td>
-                        <td className="p-4 border-r border-border-main/10">
-                          <div className="text-[10px] text-text-muted font-black uppercase mb-1 tracking-widest text-center">
-                            {(item.price_source === 'tcgplayer' || item.price_source === 'cardkingdom') ? 'REF (USD)' : 'REF (EUR)'}
-                          </div>
-                          <input
-                            type="number"
-                            value={item.price_reference || ''}
-                            onChange={(e) => updatePreviewItem(idx, { price_reference: parseFloat(e.target.value) || 0 })}
-                            className="bg-bg-page text-text-main font-mono font-bold w-full border-2 border-border-main/50 p-2 text-xs focus:border-accent-primary outline-none text-center rounded placeholder:italic"
-                            step="0.01"
-                          />
-                        </td>
+                        <td className="p-4 border-r border-border-main/10 w-32">
+                           <div className="flex flex-col gap-1">
+                             <select
+                               value={item.price_source || 'manual'}
+                               onChange={(e) => updatePreviewItem(idx, { price_source: e.target.value as PriceSource })}
+                               className="bg-bg-card text-[9px] font-black uppercase border border-border-main/50 outline-none w-full p-1 focus:border-accent-primary rounded"
+                             >
+                               {PRICE_SOURCE_OPTIONS.map(opt => <option key={opt.code} value={opt.code}>{opt.label.split(' ')[0]}</option>)}
+                             </select>
+                             <input
+                               type="number"
+                               value={item.price_reference || ''}
+                               onChange={(e) => updatePreviewItem(idx, { price_reference: parseFloat(e.target.value) || 0 })}
+                               className="bg-bg-page text-text-main font-mono font-bold w-full border-2 border-border-main/50 p-2 text-xs focus:border-accent-primary outline-none text-center rounded placeholder:italic"
+                               step="0.01"
+                             />
+                           </div>
+                         </td>
                         <td className="p-4">
                           <input
                             type="number"
