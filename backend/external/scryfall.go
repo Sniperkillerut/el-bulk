@@ -81,6 +81,7 @@ type CardIdentifier struct {
 	Name            string `json:"name,omitempty"`
 	Set             string `json:"set,omitempty"`
 	CollectorNumber string `json:"collector_number,omitempty"`
+	Foil            string `json:"foil,omitempty"`
 }
 
 type scryfallCollectionRequest struct {
@@ -270,8 +271,16 @@ func BatchLookupMTGCard(ctx context.Context, identifiers []CardIdentifier) ([]Ca
 		}
 
 		for _, card := range batchResp.Data {
-			// Do not force "non_foil" in batch; allow the resolver to pick the dominant finish
-			results = append(results, *mapScryfallToResult(&card, ""))
+			// Match back to original identifier to get the requested foil treatment
+			requestedFoil := ""
+			for _, id := range chunk {
+				if (id.ScryfallID != "" && id.ScryfallID == card.ID) ||
+					(id.Set != "" && strings.EqualFold(id.Set, card.Set) && id.CollectorNumber != "" && id.CollectorNumber == card.CollectorNumber) {
+					requestedFoil = id.Foil
+					break
+				}
+			}
+			results = append(results, *mapScryfallToResult(&card, requestedFoil))
 		}
 
 		// Brief sleep to respect Scryfall rate limits during multiple chunks
@@ -452,7 +461,28 @@ func resolveFoilTreatment(card *scryfallCard, requestedFoil string) models.FoilT
 		}
 	}
 
-	// 1. Prioritize specialized finishes in promo_types if the card supports foil
+	// 1. Double-check requested foil from caller (highest priority)
+	if requestedFoil != "" {
+		rf := models.FoilTreatment(requestedFoil)
+		// Specialty foils often come as "foil" finish with specific promo_types
+		if hasFoil && (rf == models.FoilRippleFoil || rf == models.FoilSurgeFoil ||
+			rf == models.FoilConfettiFoil || rf == models.FoilGalaxyFoil ||
+			rf == models.FoilTexturedFoil || rf == models.FoilStepAndCompleat ||
+			rf == models.FoilOilSlick || rf == models.FoilNeonInk || 
+			rf == models.FoilDoubleRainbow || rf == models.FoilPlatinumFoil) {
+			return rf
+		}
+		if (rf == models.FoilFoil && hasFoil) || (rf == models.FoilNonFoil && hasNonFoil) || (rf == models.FoilEtchedFoil && hasEtched) {
+			return rf
+		}
+	}
+
+	// 2. Default to Non-Foil if supported (Store preference)
+	if hasNonFoil {
+		return models.FoilNonFoil
+	}
+
+	// 3. If only foil is supported, resolve specialized finish if tags exist
 	if hasFoil || hasEtched {
 		for _, pt := range card.PromoTypes {
 			switch pt {
@@ -466,7 +496,7 @@ func resolveFoilTreatment(card *scryfallCard, requestedFoil string) models.FoilT
 				return models.FoilTexturedFoil
 			case "stepandcompleat":
 				return models.FoilStepAndCompleat
-			case "oilSlick":
+			case "oilslick":
 				return models.FoilOilSlick
 			case "neonink":
 				return models.FoilNeonInk
@@ -474,24 +504,9 @@ func resolveFoilTreatment(card *scryfallCard, requestedFoil string) models.FoilT
 				return models.FoilGalaxyFoil
 			case "doublerainbow":
 				return models.FoilDoubleRainbow
+			case "platinumfoil":
+				return models.FoilPlatinumFoil
 			}
-		}
-	}
-
-	// Double-check requested foil from caller (e.g. from CSV parser)
-	if requestedFoil != "" {
-		rf := models.FoilTreatment(requestedFoil)
-		// If they explicitly asked for a specialized foil that matches our system,
-		// and the card has the base finish (usually "foil"), return it.
-		if hasFoil && (rf == models.FoilRippleFoil || rf == models.FoilSurgeFoil ||
-			rf == models.FoilConfettiFoil || rf == models.FoilGalaxyFoil ||
-			rf == models.FoilTexturedFoil || rf == models.FoilStepAndCompleat ||
-			rf == models.FoilOilSlick || rf == models.FoilNeonInk) {
-			return rf
-		}
-
-		if (rf == models.FoilFoil && hasFoil) || (rf == models.FoilNonFoil && hasNonFoil) {
-			return rf
 		}
 	}
 
@@ -500,14 +515,10 @@ func resolveFoilTreatment(card *scryfallCard, requestedFoil string) models.FoilT
 		return models.FoilEtchedFoil
 	}
 	if hasGlossy {
-		return models.FoilGalaxyFoil
+		return models.FoilGalaxyFoil // Map glossy to galaxy as a fallback
 	}
-
 	if hasFoil {
 		return models.FoilFoil
-	}
-	if hasNonFoil {
-		return models.FoilNonFoil
 	}
 
 	return models.FoilNonFoil

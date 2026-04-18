@@ -209,6 +209,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
           name: item.name,
           set: item.set_code,
           cn: item.collector_number,
+          foil: item.foil_treatment,
           scryfall_id: item.scryfall_id
         }));
 
@@ -221,6 +222,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
               const dataIndex = i + idx;
               if (newData[dataIndex].image_url) return false;
 
+              if (item.scryfall_id && res.scryfall_id && item.scryfall_id === res.scryfall_id) return true;
               if (item.set_code && item.collector_number && res.set_code && res.collector_number) {
                 return item.set_code.toLowerCase() === res.set_code.toLowerCase() &&
                   item.collector_number.toLowerCase() === res.collector_number.toLowerCase();
@@ -228,7 +230,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
               if (item.name && res.name) {
                 const n1 = item.name.toLowerCase().replace(/[^a-z0-9]/g, '');
                 const n2 = res.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-                return n1 === n2 || n2.includes(n1) || n1.includes(n2);
+                return n1 === n2;
               }
               return false;
             });

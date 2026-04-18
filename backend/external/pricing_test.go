@@ -89,7 +89,14 @@ func TestResolveMTGPrice(t *testing.T) {
 		ckMap := make(map[string]*float64)
 		ckMap["scry:"+id+":foil"] = &genericPrice
 		// Key must be lowercase to match engine behavior
-		ckMap["sol ring|modern horizons 3 commander|ripple foil|foil"] = &specificPrice
+		vKey := "sol ring|modern horizons 3 commander|ripple foil|foil"
+		ckMap[vKey] = &specificPrice
+
+		// Populate index for this test
+		ckCacheMutex.Lock()
+		ckNameIndex = make(map[string][]string)
+		ckNameIndex["sol ring"] = []string{vKey}
+		ckCacheMutex.Unlock()
 		
 		idMap := make(map[string]CardMetadata)
 		idMap[id] = CardMetadata{ScryfallID: id}

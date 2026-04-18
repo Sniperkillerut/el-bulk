@@ -47,6 +47,12 @@ export function resolveFoilTreatment(card: ScryfallCard | undefined): FoilTreatm
   if (!card) return 'non_foil';
   const pt = card.promo_types || [];
 
+  const finishes = card.finishes || [];
+  
+  // If the print supports non-foil, that is ALWAYS the preferred default resolution
+  // unless the print has NO non-foil option and carries a specialized tag.
+  if (finishes.includes('nonfoil')) return 'non_foil';
+
   if (pt.includes('oilslick')) return 'oil_slick';
   if (pt.includes('stepandcompleat')) return 'step_and_compleat';
   if (pt.includes('galaxyfoil')) return 'galaxy_foil';
@@ -59,7 +65,6 @@ export function resolveFoilTreatment(card: ScryfallCard | undefined): FoilTreatm
   if (pt.includes('ripplefoil')) return 'ripple_foil';
   if (pt.includes('platinumfoil')) return 'platinum_foil';
 
-  const finishes = card.finishes || [];
   if (finishes.includes('etched')) return 'etched_foil';
   if (finishes.includes('foil')) return 'foil';
   return 'non_foil';
@@ -72,16 +77,15 @@ export function resolveFoilTreatment(card: ScryfallCard | undefined): FoilTreatm
 export function getInitialFoilTreatment(card: ScryfallCard | undefined): FoilTreatment {
   if (!card) return 'non_foil';
   
-  // If we can resolve a specific treatment from metadata (promo types, etc), use it
+  const finishes = card.finishes || [];
+  if (finishes.includes('nonfoil')) return 'non_foil';
+  
   const resolved = resolveFoilTreatment(card);
   if (resolved !== 'non_foil') return resolved;
   
-  // Otherwise check finishes
-  const finishes = card.finishes || [];
   if (finishes.length === 1 && finishes.includes('foil')) return 'foil';
   if (finishes.length === 1 && finishes.includes('etched')) return 'etched_foil';
   
-  // Default to non_foil if both are available or only nonfoil is
   return 'non_foil';
 }
 
@@ -90,7 +94,7 @@ export function getInitialFoilTreatment(card: ScryfallCard | undefined): FoilTre
  */
 export function identifyFoilFromString(str: string | undefined): FoilTreatment {
   if (!str) return 'non_foil';
-  const s = str.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const s = str.toLowerCase().trim();
   
   if (s.includes('ripple')) return 'ripple_foil';
   if (s.includes('platinum')) return 'platinum_foil';

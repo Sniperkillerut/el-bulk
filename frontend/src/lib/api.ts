@@ -394,7 +394,7 @@ export async function lookupMTGCard(
 }
 
 export async function adminBatchLookupMTG(
-  identifiers: { name?: string; set?: string; cn?: string; scryfall_id?: string }[]
+  identifiers: { name?: string; set?: string; cn?: string; foil?: string; scryfall_id?: string }[]
 ): Promise<CardLookupResult[]> {
   return apiFetch<CardLookupResult[]>('/api/admin/lookup/mtg/batch', {
     method: 'POST',
