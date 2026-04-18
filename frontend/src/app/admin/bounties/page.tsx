@@ -6,9 +6,9 @@ import { useSearchParams } from 'next/navigation';
 import { 
   adminUpdateBounty, adminDeleteBounty, fetchBounties,
   adminFetchClientRequests, adminUpdateClientRequestStatus, adminFetchTCGs,
-  adminFetchBountyOffers, adminUpdateBountyOfferStatus, fetchPublicSettings
+  adminFetchBountyOffers, adminUpdateBountyOfferStatus
 } from '@/lib/api';
-import { Bounty, BountyInput, ClientRequest, TCG, BountyOffer, Settings } from '@/lib/types';
+import { Bounty, BountyInput, ClientRequest, TCG, BountyOffer } from '@/lib/types';
 import { useAdmin } from '@/hooks/useAdmin';
 import AdminHeader from '@/components/admin/AdminHeader';
 import BountyEditModal from '@/components/admin/BountyEditModal';
@@ -19,7 +19,7 @@ import SmartContactLink from '@/components/admin/SmartContactLink';
 import { useLanguage } from '@/context/LanguageContext';
 
 export default function AdminBountiesPage() {
-  const { token, logout } = useAdmin();
+  const { token, settings, logout } = useAdmin();
   const { t } = useLanguage();
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get('tab') as 'bounties' | 'requests' | 'offers') || 'bounties';
@@ -31,7 +31,6 @@ export default function AdminBountiesPage() {
   const [requests, setRequests] = useState<ClientRequest[]>([]);
   const [offers, setOffers] = useState<BountyOffer[]>([]);
   const [tcgs, setTCGs] = useState<TCG[]>([]);
-  const [settings, setSettings] = useState<Settings | undefined>();
   
   const [loading, setLoading] = useState(true);
   const [editingBounty, setEditingBounty] = useState<Bounty | null>(null);
@@ -67,18 +66,16 @@ export default function AdminBountiesPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [bData, rData, tData, oData, sData] = await Promise.all([
+      const [bData, rData, tData, oData] = await Promise.all([
         fetchBounties(),
         adminFetchClientRequests(),
         adminFetchTCGs(),
-        adminFetchBountyOffers(),
-        fetchPublicSettings()
+        adminFetchBountyOffers()
       ]);
       setBounties(bData || []);
       setRequests(rData || []);
       setTCGs(tData || []);
       setOffers(oData || []);
-      setSettings(sData);
     } catch (err: unknown) {
       console.error('Failed to load bounties data', err);
       if (err instanceof Error && err.message?.includes('401')) logout();

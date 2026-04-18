@@ -7,7 +7,7 @@ import { Settings } from '@/lib/types';
 
 interface AdminContextType {
   token: string | null;
-  settings: Settings | null;
+  settings: Settings | undefined;
   loading: boolean;
   logout: () => void;
   refreshSettings: () => Promise<void>;
@@ -17,7 +17,7 @@ const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 export function AdminProvider({ children }: { children: React.ReactNode }): React.ReactNode {
   const [token, setToken] = useState<string | null>(null);
-  const [settings, setSettings] = useState<Settings | null>(null);
+  const [settings, setSettings] = useState<Settings | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -31,7 +31,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }): Reac
       // Try to get admin settings. If this fails on a protected route, 
       // the middleware would have already caught it, but we handle it here for the login page too.
       const data = await getAdminSettings().catch(() => fetchPublicSettings());
-      setSettings(data);
+      setSettings(data as Settings);
       setToken("session_active"); // Marker for existing logic that expects a truthy token
     } catch (err) {
       console.error('Failed to load session settings', err);
