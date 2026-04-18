@@ -1,6 +1,7 @@
 package external
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -37,6 +38,19 @@ func TestLookupCKPrice(t *testing.T) {
 		"shock|ravnica||non_foil":                      fptr(0.10),
 		"shock|ravnica remastered||non_foil":           fptr(0.15),
 	}
+
+	// Populate the global index for the matcher (since it now uses O(1) lookups)
+	ckCacheMutex.Lock()
+	ckNameIndex = make(map[string][]string)
+	for k := range ckMap {
+		if !strings.Contains(k, "|") {
+			continue
+		}
+		parts := strings.Split(k, "|")
+		nameKey := strings.ToLower(strings.TrimSpace(parts[0]))
+		ckNameIndex[nameKey] = append(ckNameIndex[nameKey], k)
+	}
+	ckCacheMutex.Unlock()
 
 	tests := []struct {
 		name       string

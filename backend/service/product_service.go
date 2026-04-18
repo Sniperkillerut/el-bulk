@@ -539,53 +539,59 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 		_ = s.Store.DB.SelectContext(ctx, &rows, s.Store.DB.Rebind(query), args...)
 		
 		if len(rows) > 0 {
-			// Resolve external prices.
-			// Fast-Path: Try to resolve everything via Scryfall API (IDs and Search)
-			// to avoid the 600MB bulk file for small batches.
-			var scryIDs []string
-			var missingSIDRows []*store.RefreshRow
+			// 1. Prepare batch identifiers for ALL products.
+			// This avoids the 600MB bulk file by resolving exactly what we need via API.
+			idents := make([]external.CardIdentifier, 0, len(rows))
 			for _, row := range rows {
 				if row.ScryfallID != "" {
-					scryIDs = append(scryIDs, row.ScryfallID)
+					idents = append(idents, external.CardIdentifier{ScryfallID: row.ScryfallID})
 				} else {
-					missingSIDRows = append(missingSIDRows, &row)
-				}
-			}
-
-			// 1. Fetch real-time scryfall batch for IDs (Fast-Path)
-			scryIdents := make([]external.CardIdentifier, len(scryIDs))
-			for i, sid := range scryIDs {
-				scryIdents[i] = external.CardIdentifier{ScryfallID: sid}
-			}
-			batchRes, _ := external.BatchLookupMTGCard(ctx, scryIdents)
-			scryBatch := make(map[string]external.CardMetadata)
-			for _, r := range batchRes {
-				if r.MTGMetadata.ScryfallID != nil {
-					scryBatch[*r.MTGMetadata.ScryfallID] = r.ToCardMetadata()
-				}
-			}
-
-			// 2. For items without scryfall_id, do targeted API lookups (Fast-Path for small batches)
-			// This avoids loading the 600MB bulk file for 1-product updates.
-			if len(missingSIDRows) > 0 && len(missingSIDRows) <= 5 {
-				for _, row := range missingSIDRows {
 					setCode := ""
 					if row.SetCode != nil {
 						setCode = *row.SetCode
 					}
-					// Targeted search
-					res, err := external.LookupMTGCard(ctx, "", row.Name, setCode, row.CollectorNumber, row.FoilTreatment)
-					if err == nil && res != nil && res.MTGMetadata.ScryfallID != nil {
-						scryBatch[*res.MTGMetadata.ScryfallID] = res.ToCardMetadata()
-					}
+					idents = append(idents, external.CardIdentifier{
+						Name:            row.Name,
+						Set:             setCode,
+						CollectorNumber: row.CollectorNumber,
+					})
 				}
 			}
 
-			// 3. Lazy-Load bulky maps only if needed
-			var scryPriceMap map[external.PriceKey]external.CardMetadata
-			var ckPriceMap map[string]*float64
+			// 2. Fetch real-time scryfall batch (Fast-Path)
+			// BatchLookupMTGCard now handles chunking (75 per request) automatically.
+			batchRes, _ := external.BatchLookupMTGCard(ctx, idents)
+			
+			// 3. Populate local caches for the resolver
+			scryIdBatch := make(map[string]external.CardMetadata)
+			scryNameBatch := make(map[external.PriceKey]external.CardMetadata)
+			
+			for _, r := range batchRes {
+				meta := r.ToCardMetadata()
+				if meta.ScryfallID != "" {
+					scryIdBatch[meta.ScryfallID] = meta
+					
+					// Also index by Name/Set/CN for items that were missing IDs in our DB
+					pSetCode := ""
+					if r.MTGMetadata.SetCode != nil {
+						pSetCode = *r.MTGMetadata.SetCode
+					}
+					pCN := ""
+					if r.MTGMetadata.CollectorNumber != nil {
+						pCN = *r.MTGMetadata.CollectorNumber
+					}
+					pk := external.PriceKey{
+						Name:      strings.ToLower(r.Name),
+						SetCode:   strings.ToLower(pSetCode),
+						Collector: pCN,
+						Foil:      strings.ToLower(string(r.MTGMetadata.FoilTreatment)),
+					}
+					scryNameBatch[pk] = meta
+				}
+			}
 
-			// Only load CK pricelist if any card requires it
+			// 4. Lazy-Load CK pricelist only if needed
+			var ckPriceMap map[string]*float64
 			needsCK := false
 			for _, row := range rows {
 				if row.PriceSource == "cardkingdom" {
@@ -595,11 +601,6 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 			}
 			if needsCK {
 				ckPriceMap, _ = external.BuildCardKingdomPriceMap(ctx)
-			}
-
-			// Only load 600MB Scryfall Bulk if we have many missing IDs and it's a large batch
-			if len(missingSIDRows) > 5 && len(rows) > 20 {
-				scryPriceMap, _, _ = external.BuildPriceMap(ctx)
 			}
 
 			updates := make([]store.MetadataUpdate, 0, len(rows))
@@ -632,7 +633,7 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 				pResult := external.ResolveMTGPrice(
 					row.ScryfallID, row.Name, setCode, cn, row.FoilTreatment,
 					row.CardTreatment, ckEdition, variation,
-					scryPriceMap, scryBatch, ckPriceMap,
+					scryNameBatch, scryIdBatch, ckPriceMap,
 				)
 
 				// ── 2. Select price based on requested source ────────────────

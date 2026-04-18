@@ -32,21 +32,23 @@ func LookupCKPrice(scryfallID, name, ckEdition, variation string, isFoil bool, c
 	ckEdition = strings.ToLower(strings.TrimSpace(ckEdition))
 	variation = strings.ToLower(strings.TrimSpace(variation))
 
-	nameKeyPrefix := name + "|"
 	foilKeySuffix := "|" + foilSuffix
 
 	bestScore := -1
 	var bestPrice *float64
 
-	for k, cp := range ckPriceMap {
+	// Acquire shared lock for index access
+	ckCacheMutex.RLock()
+	potentialKeys := ckNameIndex[name]
+	ckCacheMutex.RUnlock()
+
+	for _, k := range potentialKeys {
+		cp := ckPriceMap[k]
 		if cp == nil {
 			continue
 		}
-		// Skip non-name keys (scry:, ckid: prefixes)
-		if strings.HasPrefix(k, "scry:") || strings.HasPrefix(k, "ckid:") {
-			continue
-		}
-		if !strings.HasPrefix(k, nameKeyPrefix) || !strings.HasSuffix(k, foilKeySuffix) {
+		
+		if !strings.HasSuffix(k, foilKeySuffix) {
 			continue
 		}
 

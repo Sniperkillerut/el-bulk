@@ -229,39 +229,55 @@ func LookupMTGCard(ctx context.Context, scryfallID, name, setCode, collectorNumb
 }
 
 // BatchLookupMTGCard fetches multiple cards from Scryfall using the collection endpoint.
+// It transparently handles Scryfall's limit of 75 identifiers per request.
 func BatchLookupMTGCard(ctx context.Context, identifiers []CardIdentifier) ([]CardLookupResult, error) {
 	if len(identifiers) == 0 {
 		return nil, nil
 	}
 
-	reqBody, _ := json.Marshal(scryfallCollectionRequest{Identifiers: identifiers})
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, ScryfallBase+"/cards/collection", strings.NewReader(string(reqBody)))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("User-Agent", "ElBulkTCGStore/1.0 (contact@elbulk.com)")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
+	const scryfallBatchLimit = 75
+	results := make([]CardLookupResult, 0, len(identifiers))
 
-	resp, err := scryfallClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
+	for i := 0; i < len(identifiers); i += scryfallBatchLimit {
+		end := i + scryfallBatchLimit
+		if end > len(identifiers) {
+			end = len(identifiers)
+		}
+		chunk := identifiers[i:end]
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("scryfall batch status %d", resp.StatusCode)
-	}
+		reqBody, _ := json.Marshal(scryfallCollectionRequest{Identifiers: chunk})
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, ScryfallBase+"/cards/collection", strings.NewReader(string(reqBody)))
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("User-Agent", "ElBulkTCGStore/1.0 (contact@elbulk.com)")
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Accept", "application/json")
 
-	var batchResp scryfallCollectionResponse
-	if err := json.NewDecoder(resp.Body).Decode(&batchResp); err != nil {
-		return nil, err
-	}
+		resp, err := scryfallClient.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
 
-	results := make([]CardLookupResult, len(batchResp.Data))
-	for i, card := range batchResp.Data {
-		// Do not force "non_foil" in batch; allow the resolver to pick the dominant finish
-		results[i] = *mapScryfallToResult(&card, "")
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("scryfall batch status %d", resp.StatusCode)
+		}
+
+		var batchResp scryfallCollectionResponse
+		if err := json.NewDecoder(resp.Body).Decode(&batchResp); err != nil {
+			return nil, err
+		}
+
+		for _, card := range batchResp.Data {
+			// Do not force "non_foil" in batch; allow the resolver to pick the dominant finish
+			results = append(results, *mapScryfallToResult(&card, ""))
+		}
+
+		// Brief sleep to respect Scryfall rate limits during multiple chunks
+		if end < len(identifiers) {
+			time.Sleep(100 * time.Millisecond)
+		}
 	}
 
 	return results, nil

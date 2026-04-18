@@ -40,6 +40,7 @@ var ckClient = &http.Client{Timeout: 60 * time.Second}
 
 var (
 	ckCache      map[string]*float64
+	ckNameIndex  map[string][]string // name -> list of composite keys
 	ckCacheMutex sync.RWMutex
 	ckCacheTime  time.Time
 )
@@ -53,7 +54,7 @@ func BuildCardKingdomPriceMap(ctx context.Context) (map[string]*float64, error) 
 	ckCacheMutex.RLock()
 	if ckCache != nil && time.Since(ckCacheTime) < CacheDuration {
 		logger.DebugCtx(ctx, "Using cached CardKingdom pricelist (downloaded %s ago)", time.Since(ckCacheTime).Round(time.Minute))
-		cacheCopy := ckCache // Reference copy is enough for read-only use
+		cacheCopy := ckCache 
 		ckCacheMutex.RUnlock()
 		return cacheCopy, nil
 	}
@@ -91,6 +92,7 @@ func BuildCardKingdomPriceMap(ctx context.Context) (map[string]*float64, error) 
 	}
 
 	priceMap := make(map[string]*float64, len(ckResp.Data)*3)
+	nameIndex := make(map[string][]string, len(ckResp.Data))
 	for _, p := range ckResp.Data {
 		price, err := strconv.ParseFloat(p.PriceRetail, 64)
 		if err != nil {
@@ -124,9 +126,14 @@ func BuildCardKingdomPriceMap(ctx context.Context) (map[string]*float64, error) 
 		// with no scryfall_id and cards that fall through the above paths.
 		key := generateCKKey(p.Name, p.Edition, p.Variation, isFoilBool)
 		priceMap[key] = &priceCopy
+
+		// Populate NameIndex for O(1) jump in LookupCKPrice
+		nameKey := strings.ToLower(strings.TrimSpace(p.Name))
+		nameIndex[nameKey] = append(nameIndex[nameKey], key)
 	}
 
 	ckCache = priceMap
+	ckNameIndex = nameIndex
 	ckCacheTime = time.Now()
 
 	logger.InfoCtx(ctx, "Parsed and cached %d CardKingdom products", len(ckResp.Data))
