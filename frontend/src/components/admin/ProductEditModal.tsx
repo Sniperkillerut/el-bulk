@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import {
-  adminCreateProduct, adminUpdateProduct, adminUpdateProductStorage, adminFetchExternalPrice
+  adminCreateProduct, adminUpdateProduct, adminFetchExternalPrice
 } from '@/lib/api';
 import {
   Product, FoilTreatment, CardTreatment, PriceSource,
@@ -254,7 +254,7 @@ export default function ProductEditModal({
     setSaving(true); 
     setFormError('');
     try {
-      const payload: Partial<Product> & { category_ids?: string[] } = {
+      const payload: Partial<Product> & { category_ids?: string[], storage_items?: { stored_in_id: string; quantity: number }[] } = {
         name: form.name, 
         tcg: form.tcg, 
         category: form.category,
@@ -291,17 +291,19 @@ export default function ProductEditModal({
         textless: form.textless,
         scryfall_id: form.scryfall_id || undefined,
         deck_cards: form.deck_cards,
+        storage_items: productStorage.map(s => ({ 
+          stored_in_id: s.stored_in_id, 
+          quantity: s.quantity 
+        })),
       };
       
       if (payload.price_source === 'manual') payload.price_reference = undefined;
       else payload.price_cop_override = undefined;
 
       if (editProduct) {
-        const updated = await adminUpdateProduct(editProduct.id, payload);
-        await adminUpdateProductStorage(updated.id, productStorage.map(s => ({ stored_in_id: s.stored_in_id, quantity: s.quantity })));
+        await adminUpdateProduct(editProduct.id, payload);
       } else {
-        const newP = await adminCreateProduct(payload);
-        await adminUpdateProductStorage(newP.id, productStorage.map(s => ({ stored_in_id: s.stored_in_id, quantity: s.quantity })));
+        await adminCreateProduct(payload);
       }
 
       if (andNew && onSaveAndNew) {

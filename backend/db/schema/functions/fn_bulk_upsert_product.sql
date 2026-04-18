@@ -16,17 +16,18 @@ BEGIN
 
         -- 1. Variant Matching for Imports
         -- If no ID is provided, try to find an exact variant match to avoid duplicates.
+        -- Harden matching using NULLIF to handle empty strings as NULLs for optional attributes.
         IF is_import THEN
             SELECT id INTO p_id FROM product
             WHERE name = item->>'name'
               AND tcg = item->>'tcg'
               AND category = item->>'category'
-              AND COALESCE(set_code, '') = COALESCE(item->>'set_code', '')
-              AND COALESCE(collector_number, '') = COALESCE(item->>'collector_number', '')
+              AND COALESCE(set_code, '') = COALESCE(NULLIF(item->>'set_code', ''), '')
+              AND COALESCE(collector_number, '') = COALESCE(NULLIF(item->>'collector_number', ''), '')
               AND condition = item->>'condition'
-              AND foil_treatment = COALESCE(item->>'foil_treatment', 'non_foil')
-              AND card_treatment = COALESCE(item->>'card_treatment', 'normal')
-              AND language = COALESCE(item->>'language', 'en')
+              AND foil_treatment = COALESCE(NULLIF(item->>'foil_treatment', ''), 'non_foil')
+              AND card_treatment = COALESCE(NULLIF(item->>'card_treatment', ''), 'normal')
+              AND language = COALESCE(NULLIF(item->>'language', ''), 'en')
             LIMIT 1;
         END IF;
 
@@ -39,7 +40,7 @@ BEGIN
             image_url, description, language, color_identity, rarity, cmc,
             is_legendary, is_historic, is_land, is_basic_land, art_variation,
             oracle_text, artist, type_line, border_color, frame, full_art, textless,
-            scryfall_id, legalities, updated_at
+            scryfall_id, legalities, cost_basis_cop, updated_at
         )
         VALUES (
             COALESCE(p_id, gen_random_uuid()),
@@ -50,15 +51,15 @@ BEGIN
             item->>'set_code',
             item->>'collector_number',
             item->>'condition',
-            COALESCE(item->>'foil_treatment', 'non_foil'),
-            COALESCE(item->>'card_treatment', 'normal'),
+            COALESCE(NULLIF(item->>'foil_treatment', ''), 'non_foil'),
+            COALESCE(NULLIF(item->>'card_treatment', ''), 'normal'),
             item->>'promo_type',
             (item->>'price_reference')::numeric,
-            COALESCE(item->>'price_source', 'manual'),
+            COALESCE(NULLIF(item->>'price_source', ''), 'manual'),
             (item->>'price_cop_override')::numeric,
             item->>'image_url',
             item->>'description',
-            COALESCE(item->>'language', 'en'),
+            COALESCE(NULLIF(item->>'language', ''), 'en'),
             item->>'color_identity',
             item->>'rarity',
             (item->>'cmc')::numeric,
@@ -76,6 +77,7 @@ BEGIN
             COALESCE((item->>'textless')::boolean, false),
             (item->>'scryfall_id')::uuid,
             item->'legalities',
+            COALESCE((COALESCE(item->>'cost_basis_cop', item->>'cost_basis'))::numeric, 0),
             now()
         )
         ON CONFLICT (id) DO UPDATE SET
@@ -112,6 +114,7 @@ BEGIN
             textless = EXCLUDED.textless,
             scryfall_id = EXCLUDED.scryfall_id,
             legalities = EXCLUDED.legalities,
+            cost_basis_cop = CASE WHEN is_import THEN product.cost_basis_cop + EXCLUDED.cost_basis_cop ELSE EXCLUDED.cost_basis_cop END,
             updated_at = now()
         RETURNING id INTO p_id;
 
@@ -130,24 +133,37 @@ BEGIN
         END IF;
 
         -- 4. Storage & Stock Tracking
+        -- Handles both 'storage_items' array and top-level 'stored_in_id' + 'stock' fallback.
         -- For manual edits (ID provided), we replace the full storage manifest.
         -- For imports (No ID provided), we ADD the new quantities to existing locations.
         IF NOT is_import THEN
             DELETE FROM product_storage WHERE product_id = p_id;
             
+            -- Priority 1: storage_items array
             IF item ? 'storage_items' THEN
                 INSERT INTO product_storage (product_id, storage_id, quantity)
                 SELECT p_id, (si->>'stored_in_id')::uuid, (si->>'quantity')::int
                 FROM jsonb_array_elements(item->'storage_items') AS si
                 WHERE (si->>'quantity')::int > 0
                 ON CONFLICT (product_id, storage_id) DO UPDATE SET quantity = EXCLUDED.quantity;
+            -- Priority 2: top-level stored_in_id + stock/quantity
+            ELSIF item ? 'stored_in_id' THEN
+                INSERT INTO product_storage (product_id, storage_id, quantity)
+                VALUES (p_id, (item->>'stored_in_id')::uuid, COALESCE((item->>'stock')::int, (item->>'quantity')::int, 0))
+                ON CONFLICT (product_id, storage_id) DO UPDATE SET quantity = EXCLUDED.quantity;
             END IF;
         ELSE
+            -- Priority 1: storage_items array
             IF item ? 'storage_items' THEN
                 INSERT INTO product_storage (product_id, storage_id, quantity)
                 SELECT p_id, (si->>'stored_in_id')::uuid, (si->>'quantity')::int
                 FROM jsonb_array_elements(item->'storage_items') AS si
                 WHERE (si->>'quantity')::int > 0
+                ON CONFLICT (product_id, storage_id) DO UPDATE SET quantity = product_storage.quantity + EXCLUDED.quantity;
+            -- Priority 2: top-level stored_in_id + stock/quantity
+            ELSIF item ? 'stored_in_id' THEN
+                INSERT INTO product_storage (product_id, storage_id, quantity)
+                VALUES (p_id, (item->>'stored_in_id')::uuid, COALESCE((item->>'stock')::int, (item->>'quantity')::int, 0))
                 ON CONFLICT (product_id, storage_id) DO UPDATE SET quantity = product_storage.quantity + EXCLUDED.quantity;
             END IF;
         END IF;
