@@ -46,13 +46,9 @@ export function resolveArtVariation(card: ScryfallCard): string {
 export function resolveFoilTreatment(card: ScryfallCard | undefined): FoilTreatment {
   if (!card) return 'non_foil';
   const pt = card.promo_types || [];
-
   const finishes = card.finishes || [];
   
-  // If the print supports non-foil, that is ALWAYS the preferred default resolution
-  // unless the print has NO non-foil option and carries a specialized tag.
-  if (finishes.includes('nonfoil')) return 'non_foil';
-
+  // 1. Check specialized foil tags FIRST (these are specifically about the print's UNIQUE foil)
   if (pt.includes('oilslick')) return 'oil_slick';
   if (pt.includes('stepandcompleat')) return 'step_and_compleat';
   if (pt.includes('galaxyfoil')) return 'galaxy_foil';
@@ -65,8 +61,11 @@ export function resolveFoilTreatment(card: ScryfallCard | undefined): FoilTreatm
   if (pt.includes('ripplefoil')) return 'ripple_foil';
   if (pt.includes('platinumfoil')) return 'platinum_foil';
 
+  // 2. Check finishes
   if (finishes.includes('etched')) return 'etched_foil';
   if (finishes.includes('foil')) return 'foil';
+  
+  // 3. Fallback to non-foil (covers both explicit 'nonfoil' and cases where no finish is specified)
   return 'non_foil';
 }
 
@@ -244,10 +243,21 @@ export function getFoilOptions(prints: ScryfallCard[], set: string, treatment: C
   });
 
   finalMatches.forEach(p => {
-    if (p.finishes?.includes('nonfoil')) options.add('non_foil');
+    const finishes = p.finishes || [];
+    if (finishes.includes('nonfoil')) options.add('non_foil');
+    if (finishes.includes('foil')) options.add('foil');
+    if (finishes.includes('etched')) options.add('etched_foil');
+    
+    // Also resolve via tags for specialized foils
     const r = resolveFoilTreatment(p);
-    if (r !== 'non_foil') options.add(r as FoilTreatment);
+    if (r !== 'non_foil' && r !== 'foil' && r !== 'etched_foil') {
+      options.add(r as FoilTreatment);
+    }
   });
+
+  // Ensure non_foil is ALWAYS an option if the set of prints suggests it might be available,
+  // or as a basic fallback if no finishes are explicitly listed.
+  if (options.size === 0) options.add('non_foil');
 
   return Array.from(options);
 }

@@ -447,81 +447,87 @@ func resolveFoilTreatment(card *scryfallCard, requestedFoil string) models.FoilT
 	hasNonFoil := false
 	hasEtched := false
 	hasGlossy := false
-
 	for _, f := range card.Finishes {
-		switch f {
-		case "foil":
+		if f == "foil" {
 			hasFoil = true
-		case "nonfoil":
+		} else if f == "nonfoil" {
 			hasNonFoil = true
-		case "etched":
+		} else if f == "etched" {
 			hasEtched = true
-		case "glossy":
+		} else if f == "glossy" {
 			hasGlossy = true
 		}
 	}
 
-	// 1. Double-check requested foil from caller (highest priority)
-	if requestedFoil != "" {
-		rf := models.FoilTreatment(requestedFoil)
-		// Specialty foils often come as "foil" finish with specific promo_types
-		if hasFoil && (rf == models.FoilRippleFoil || rf == models.FoilSurgeFoil ||
-			rf == models.FoilConfettiFoil || rf == models.FoilGalaxyFoil ||
-			rf == models.FoilTexturedFoil || rf == models.FoilStepAndCompleat ||
-			rf == models.FoilOilSlick || rf == models.FoilNeonInk || 
-			rf == models.FoilDoubleRainbow || rf == models.FoilPlatinumFoil) {
-			return rf
-		}
-		if (rf == models.FoilFoil && hasFoil) || (rf == models.FoilNonFoil && hasNonFoil) || (rf == models.FoilEtchedFoil && hasEtched) {
-			return rf
-		}
-	}
-
-	// 2. Default to Non-Foil if supported (Store preference)
-	if hasNonFoil {
-		return models.FoilNonFoil
-	}
-
-	// 3. If only foil is supported, resolve specialized finish if tags exist
+	// 1. Identify the print's specific foil treatment if it has any foil finishes
+	specificFoil := models.FoilNonFoil
 	if hasFoil || hasEtched {
+		// Start with standard fallbacks
+		if hasEtched {
+			specificFoil = models.FoilEtchedFoil
+		} else if hasFoil {
+			specificFoil = models.FoilFoil
+		} else if hasGlossy {
+			specificFoil = models.FoilGalaxyFoil
+		}
+
+		// Check for specialized tags which take precedence over standard "foil" finish
 		for _, pt := range card.PromoTypes {
 			switch pt {
 			case "ripplefoil":
-				return models.FoilRippleFoil
+				specificFoil = models.FoilRippleFoil
 			case "surgefoil":
-				return models.FoilSurgeFoil
+				specificFoil = models.FoilSurgeFoil
 			case "confettifoil":
-				return models.FoilConfettiFoil
+				specificFoil = models.FoilConfettiFoil
 			case "textured":
-				return models.FoilTexturedFoil
+				specificFoil = models.FoilTexturedFoil
 			case "stepandcompleat":
-				return models.FoilStepAndCompleat
+				specificFoil = models.FoilStepAndCompleat
 			case "oilslick":
-				return models.FoilOilSlick
+				specificFoil = models.FoilOilSlick
 			case "neonink":
-				return models.FoilNeonInk
+				specificFoil = models.FoilNeonInk
 			case "galaxyfoil":
-				return models.FoilGalaxyFoil
+				specificFoil = models.FoilGalaxyFoil
 			case "doublerainbow":
-				return models.FoilDoubleRainbow
+				specificFoil = models.FoilDoubleRainbow
 			case "platinumfoil":
-				return models.FoilPlatinumFoil
+				specificFoil = models.FoilPlatinumFoil
 			}
 		}
 	}
 
-	// Standard fallbacks
-	if hasEtched {
-		return models.FoilEtchedFoil
-	}
-	if hasGlossy {
-		return models.FoilGalaxyFoil // Map glossy to galaxy as a fallback
-	}
-	if hasFoil {
-		return models.FoilFoil
+	// 2. If caller requested a specific treatment, respect it if the print supports it
+	if requestedFoil != "" {
+		rf := models.FoilTreatment(requestedFoil)
+		// If they asked for the specific specialized foil we found, excellent
+		if rf == specificFoil && specificFoil != models.FoilNonFoil {
+			return rf
+		}
+		// If they asked for generic "foil" but we found a more specific one, give them the specific one
+		if rf == models.FoilFoil && (specificFoil != models.FoilNonFoil && specificFoil != models.FoilEtchedFoil) {
+			return specificFoil
+		}
+		// Basic finish matches
+		if rf == models.FoilFoil && hasFoil {
+			return models.FoilFoil
+		}
+		if rf == models.FoilEtchedFoil && hasEtched {
+			return models.FoilEtchedFoil
+		}
+		if rf == models.FoilNonFoil && hasNonFoil {
+			return models.FoilNonFoil
+		}
 	}
 
-	return models.FoilNonFoil
+	// 3. Default to Non-Foil if supported (Store preference for general lookups)
+	if hasNonFoil {
+		return models.FoilNonFoil
+	}
+
+	// 4. Final fallback to whatever specific foil we identified
+	return specificFoil
 }
 
 // ─── Scryfall bulk data structures ──────────────────────────────────────────
