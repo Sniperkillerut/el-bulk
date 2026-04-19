@@ -1,4 +1,4 @@
-import { FoilTreatment, CardTreatment, ScryfallCard, PriceSource, DeckCard } from './types';
+import { FoilTreatment, CardTreatment, ScryfallCard, PriceSource, DeckCard, Condition } from './types';
 
 /**
  * Extracts the best image URL from a Scryfall card object,
@@ -112,6 +112,38 @@ export function identifyFoilFromString(str: string | undefined): FoilTreatment {
   
   if (s.includes('foil')) return 'foil';
   return 'non_foil';
+}
+
+/**
+ * Normalizes a condition string (e.g. from CSV) to the standard TCG codes.
+ */
+export function normalizeCondition(str: string | undefined): Condition {
+  if (!str) return 'NM';
+  const s = str.toLowerCase().trim();
+
+  // NM: Near Mint, Mint, M, NM
+  if (s === 'nm' || s === 'near mint' || s === 'mint' || s === 'm' || s === 'nearmint') return 'NM';
+
+  // LP: Lightly Played, Excellent, EX, LP, PLD, Pld
+  if (s === 'lp' || s === 'lightly played' || s === 'excellent' || s === 'ex' || s === 'pld' || s === 'lightlyplayed') return 'LP';
+
+  // MP: Moderately Played, Good, GD, MP
+  if (s === 'mp' || s === 'moderately played' || s === 'good' || s === 'gd' || s === 'moderatelyplayed') return 'MP';
+
+  // HP: Heavily Played, Poor, PR, HP
+  if (s === 'hp' || s === 'heavily played' || s === 'poor' || s === 'pr' || s === 'heavilyplayed') return 'HP';
+
+  // DMG: Damaged, DMG
+  if (s === 'dmg' || s === 'damaged') return 'DMG';
+
+  // Catch-all fallbacks for common substrings if exact matches fail
+  if (s.includes('damage')) return 'DMG';
+  if (s.includes('heavily')) return 'HP';
+  if (s.includes('moderate')) return 'MP';
+  if (s.includes('lightly') || s.includes('ex')) return 'LP';
+  if (s.includes('mint')) return 'NM';
+
+  return 'NM'; // Default to NM
 }
 
 /**

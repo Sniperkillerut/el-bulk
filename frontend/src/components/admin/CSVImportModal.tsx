@@ -57,7 +57,7 @@ import {
   adminBatchLookupMTG,
   CardLookupResult,
 } from '@/lib/api';
-import { identifyFoilFromString } from '@/lib/mtg-logic';
+import { identifyFoilFromString, normalizeCondition } from '@/lib/mtg-logic';
 import CardImage from '@/components/CardImage';
 
 interface Props {
@@ -152,7 +152,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
         scryfall_id: row[mapping['scryfall_id']] || '',
         set_code: row[mapping['set_code']] || '',
         collector_number: row[mapping['collector_number']] || '',
-        condition: (row[mapping['condition']] || 'NM').toUpperCase() as Condition,
+        condition: normalizeCondition(row[mapping['condition']]),
         foil_treatment: identifyFoilFromString(row[mapping['foil_treatment']]),
         stock: parseInt(row[mapping['stock']]) || 1,
         language: defaultLanguage,

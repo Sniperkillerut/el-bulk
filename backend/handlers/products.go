@@ -114,8 +114,8 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if input.Name == "" || input.TCG == "" || input.Category == "" {
-		render.Error(w, "name, tcg, and category are required", http.StatusBadRequest)
+	if err := input.Validate(); err != nil {
+		render.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -179,6 +179,14 @@ func (h *ProductHandler) BulkCreate(w http.ResponseWriter, r *http.Request) {
 		logger.ErrorCtx(r.Context(), "Failed to decode bulk create input: %v", err)
 		render.Error(w, "Invalid input", http.StatusBadRequest)
 		return
+	}
+
+	for i, p := range req.Products {
+		if err := p.Validate(); err != nil {
+			logger.ErrorCtx(r.Context(), "Validation failed for product at index %d: %v", i, err)
+			render.Error(w, fmt.Sprintf("Validation failed at index %d: %v", i, err), http.StatusBadRequest)
+			return
+		}
 	}
 
 	count, err := h.Service.BulkCreate(r.Context(), req.Products, req.CategoryIDs)

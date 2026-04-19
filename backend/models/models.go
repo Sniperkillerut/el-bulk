@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -216,6 +217,34 @@ type ProductInput struct {
 	Description     *string           `json:"description,omitempty"`
 
 	DeckCards    []DeckCard `json:"deck_cards,omitempty"`
+}
+
+var ValidConditions = map[string]bool{
+	"NM":  true,
+	"LP":  true,
+	"MP":  true,
+	"HP":  true,
+	"DMG": true,
+}
+
+func (p *ProductInput) Validate() error {
+	if p.Name == "" {
+		return errors.New("name is required")
+	}
+	if p.TCG == "" {
+		return errors.New("tcg is required")
+	}
+	if p.Category == "" {
+		return errors.New("category is required")
+	}
+
+	if p.Condition != nil && *p.Condition != "" {
+		if !ValidConditions[*p.Condition] {
+			return fmt.Errorf("invalid condition: %s. Must be one of NM, LP, MP, HP, DMG", *p.Condition)
+		}
+	}
+
+	return nil
 }
 
 type BulkSearchRequest struct {
