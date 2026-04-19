@@ -24,7 +24,7 @@ export default function proxy(request: NextRequest) {
   }
 
   // 2. User Protection
-  const protectedUserRoutes = ['/checkout', '/collection', '/orders'];
+  const protectedUserRoutes = ['/checkout', '/orders'];
   const isProtectedRoute = protectedUserRoutes.some(route => pathname.startsWith(route));
 
   if (isProtectedRoute && !userToken) {
@@ -39,5 +39,5 @@ export default function proxy(request: NextRequest) {
 
 // Ensure middleware only runs on relevant routes to save performance
 export const config = {
-  matcher: ['/admin/:path*', '/checkout/:path*', '/collection/:path*', '/orders/:path*'],
+  matcher: ['/admin/:path*', '/checkout/:path*', '/orders/:path*'],
 };
