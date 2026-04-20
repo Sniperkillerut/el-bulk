@@ -67,7 +67,7 @@ func TestOrderHandler_Create(t *testing.T) {
 		mock.ExpectQuery("SELECT order_id, order_number FROM fn_place_order").
 			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnRows(sqlmock.NewRows([]string{"order_id", "order_number"}).
-				AddRow("o1", "EB-20260325-1234"))
+				AddRow("o1", "EB-20260325-ABCDEF1234567890"))
 
 		req, _ := http.NewRequest("POST", "/api/orders", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
@@ -76,7 +76,7 @@ func TestOrderHandler_Create(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, rr.Code)
 		var res map[string]interface{}
 		json.NewDecoder(rr.Body).Decode(&res)
-		assert.Equal(t, "EB-20260325-1234", res["order_number"])
+		assert.Equal(t, "EB-20260325-ABCDEF1234567890", res["order_number"])
 	})
 
 	t.Run("Validation Failure", func(t *testing.T) {
@@ -354,7 +354,7 @@ func TestOrderHandler_Update(t *testing.T) {
 		mock.ExpectQuery("SELECT status FROM \"order\" WHERE id = \\$1").
 			WithArgs("o1").
 			WillReturnRows(sqlmock.NewRows([]string{"status"}).AddRow("pending"))
-		
+
 		// Order info update
 		mock.ExpectExec("(?i)UPDATE \"order\" SET status = COALESCE").
 			WithArgs("cancelled", sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), "o1").
@@ -363,7 +363,7 @@ func TestOrderHandler_Update(t *testing.T) {
 		// Pending storage ID query
 		mock.ExpectQuery("SELECT id FROM storage_location WHERE name = 'pending'").
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("pending_loc_id"))
-		
+
 		// Pending storage quantity cleanup
 		mock.ExpectExec("(?i)UPDATE product_storage ps SET quantity = GREATEST").
 			WithArgs("o1", "pending_loc_id").
@@ -563,7 +563,7 @@ func TestOrderHandler_CancelMe(t *testing.T) {
 
 		mock.ExpectQuery("SELECT id FROM storage_location WHERE name = 'pending'").
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("pending_loc_id"))
-		
+
 		mock.ExpectExec("(?i)UPDATE product_storage ps SET quantity = GREATEST").
 			WithArgs(orderID, "pending_loc_id").
 			WillReturnResult(sqlmock.NewResult(0, 1))
