@@ -281,50 +281,75 @@ func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input mo
 	}
 
 	// 2. Update existing item quantities
-	for _, item := range input.Items {
-		qty := item.Quantity
-		if qty < 0 {
-			qty = 0
+	if len(input.Items) > 0 {
+		itemIDs := make([]string, 0, len(input.Items))
+		for _, item := range input.Items {
+			itemIDs = append(itemIDs, item.ID)
 		}
 
-		var current struct {
+		query, args, err := sqlx.In(`
+			SELECT oi.id, oi.quantity, oi.product_id, p.stock
+			FROM order_item oi 
+			JOIN product p ON p.id = oi.product_id 
+			WHERE oi.order_id = ? AND oi.id IN (?)
+		`, orderID, itemIDs)
+		if err != nil {
+			return fmt.Errorf("failed to build query for existing items: %w", err)
+		}
+
+		type CurrentItem struct {
+			ID        string `db:"id"`
 			Quantity  int    `db:"quantity"`
 			ProductID string `db:"product_id"`
 			Stock     int    `db:"stock"`
 		}
-		err = tx.GetContext(ctx, &current, `
-			SELECT oi.quantity, oi.product_id, p.stock 
-			FROM order_item oi 
-			JOIN product p ON p.id = oi.product_id 
-			WHERE oi.id = $1 AND oi.order_id = $2
-		`, item.ID, orderID)
+
+		var currentItems []CurrentItem
+		err = tx.SelectContext(ctx, &currentItems, s.Store.DB.Rebind(query), args...)
 		if err != nil {
-			continue // skip invalid items
+			return fmt.Errorf("failed to fetch existing items: %w", err)
 		}
 
-		delta := qty - current.Quantity
-		if delta == 0 {
-			continue
+		currentMap := make(map[string]CurrentItem)
+		for _, item := range currentItems {
+			currentMap[item.ID] = item
 		}
 
-		if delta > 0 && delta > current.Stock {
-			return fmt.Errorf("cannot increase order by %d; only %d in stock", delta, current.Stock)
-		}
+		for _, item := range input.Items {
+			qty := item.Quantity
+			if qty < 0 {
+				qty = 0
+			}
 
-		_, err = tx.ExecContext(ctx, `UPDATE order_item SET quantity = $1 WHERE id = $2 AND order_id = $3`,
-			qty, item.ID, orderID)
-		if err != nil {
-			return fmt.Errorf("failed to update item quantity: %w", err)
-		}
+			current, ok := currentMap[item.ID]
+			if !ok {
+				continue // skip invalid items
+			}
 
-		_, err = tx.ExecContext(ctx, `
-			UPDATE product_storage 
-			SET quantity = quantity + $1 
-			WHERE product_id = $2 
-			  AND storage_id = (SELECT id FROM storage_location WHERE name = 'pending' LIMIT 1)
-		`, delta, current.ProductID)
-		if err != nil {
-			return fmt.Errorf("failed to update pending storage holding: %w", err)
+			delta := qty - current.Quantity
+			if delta == 0 {
+				continue
+			}
+
+			if delta > 0 && delta > current.Stock {
+				return fmt.Errorf("cannot increase order by %d; only %d in stock", delta, current.Stock)
+			}
+
+			_, err = tx.ExecContext(ctx, `UPDATE order_item SET quantity = $1 WHERE id = $2 AND order_id = $3`,
+				qty, item.ID, orderID)
+			if err != nil {
+				return fmt.Errorf("failed to update item quantity: %w", err)
+			}
+
+			_, err = tx.ExecContext(ctx, `
+				UPDATE product_storage
+				SET quantity = quantity + $1
+				WHERE product_id = $2
+				  AND storage_id = (SELECT id FROM storage_location WHERE name = 'pending' LIMIT 1)
+			`, delta, current.ProductID)
+			if err != nil {
+				return fmt.Errorf("failed to update pending storage holding: %w", err)
+			}
 		}
 	}
 
