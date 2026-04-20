@@ -533,9 +533,12 @@ func (s *OrderService) CancelMe(ctx context.Context, orderID, userID string) err
 // Helpers
 func (s *OrderService) GenerateOrderNumber() string {
 	now := time.Now()
-	b := make([]byte, 2)
-	rand.Read(b)
-	return fmt.Sprintf("EB-%s-%04X", now.Format("20060102"), int(b[0])<<8|int(b[1]))
+	b := make([]byte, 8)
+	if _, err := rand.Read(b); err != nil {
+		// This should never happen with crypto/rand
+		logger.Error("Failed to generate random bytes for order number: %v", err)
+	}
+	return fmt.Sprintf("EB-%s-%016X", now.Format("20060102"), b)
 }
 
 func (s *OrderService) GenerateWhatsAppURL(order models.Order, customer models.Customer) string {
