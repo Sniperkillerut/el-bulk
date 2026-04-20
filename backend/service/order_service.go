@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"context"
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/store"
 	"github.com/el-bulk/backend/utils/crypto"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
-	"context"
 )
 
 type OrderService struct {
@@ -199,9 +199,9 @@ func (s *OrderService) GetOrderDetail(ctx context.Context, orderID string, isAdm
 
 func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input models.UpdateOrderInput) error {
 	logger.TraceCtx(ctx, "Entering OrderService.UpdateOrder | OrderID: %s | NewStatus: %v", orderID, input.Status)
-	
+
 	oldOrder, _ := s.Store.GetByID(ctx, orderID)
-	
+
 	tx, err := s.Store.DB.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
@@ -354,12 +354,16 @@ func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input mo
 	}
 
 	// 3. Add new items
-	for _, item := range input.AddedItems {
-		if item.Quantity <= 0 {
-			continue
+	if len(input.AddedItems) > 0 {
+		var productIDs []string
+		for _, item := range input.AddedItems {
+			if item.Quantity > 0 {
+				productIDs = append(productIDs, item.ProductID)
+			}
 		}
 
-		var product struct {
+		type ProductDetails struct {
+			ID            string  `db:"id"`
 			Name          string  `db:"name"`
 			SetName       *string `db:"set_name"`
 			FoilTreatment string  `db:"foil_treatment"`
@@ -367,30 +371,56 @@ func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input mo
 			Condition     *string `db:"condition"`
 			Stock         int     `db:"stock"`
 		}
-		err = tx.GetContext(ctx, &product, `SELECT name, set_name, foil_treatment, card_treatment, condition, stock FROM product WHERE id = $1`, item.ProductID)
-		if err != nil {
-			return fmt.Errorf("product not found while adding to order: %w", err)
+		productMap := make(map[string]ProductDetails)
+
+		if len(productIDs) > 0 {
+			query, args, err := sqlx.In(`SELECT id, name, set_name, foil_treatment, card_treatment, condition, stock FROM product WHERE id IN (?)`, productIDs)
+			if err != nil {
+				return fmt.Errorf("failed to build product query: %w", err)
+			}
+			query = tx.Rebind(query)
+
+			var products []ProductDetails
+			err = tx.SelectContext(ctx, &products, query, args...)
+			if err != nil {
+				return fmt.Errorf("failed to fetch products for new items: %w", err)
+			}
+
+			for _, p := range products {
+				productMap[p.ID] = p
+			}
 		}
 
-		if item.Quantity > product.Stock {
-			return fmt.Errorf("added quantity %d exceeds available stock %d", item.Quantity, product.Stock)
-		}
+		for _, item := range input.AddedItems {
+			if item.Quantity <= 0 {
+				continue
+			}
 
-		_, err = tx.ExecContext(ctx, `
+			product, ok := productMap[item.ProductID]
+			if !ok {
+				return fmt.Errorf("product not found while adding to order: product %s", item.ProductID)
+			}
+
+			if item.Quantity > product.Stock {
+				return fmt.Errorf("added quantity %d exceeds available stock %d", item.Quantity, product.Stock)
+			}
+
+			_, err = tx.ExecContext(ctx, `
 			INSERT INTO order_item (order_id, product_id, product_name, product_set, foil_treatment, card_treatment, condition, quantity, unit_price_cop)
 			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		`, orderID, item.ProductID, product.Name, product.SetName, product.FoilTreatment, product.CardTreatment, product.Condition, item.Quantity, item.UnitPriceCOP)
-		if err != nil {
-			return fmt.Errorf("failed to add new item to order: %w", err)
-		}
+			if err != nil {
+				return fmt.Errorf("failed to add new item to order: %w", err)
+			}
 
-		_, err = tx.ExecContext(ctx, `
-			INSERT INTO product_storage (product_id, storage_id, quantity)
-			VALUES ($1, (SELECT id FROM storage_location WHERE name = 'pending' LIMIT 1), $2)
-			ON CONFLICT (product_id, storage_id) DO UPDATE SET quantity = product_storage.quantity + EXCLUDED.quantity
-		`, item.ProductID, item.Quantity)
-		if err != nil {
-			return fmt.Errorf("failed to update pending storage for added item: %w", err)
+			_, err = tx.ExecContext(ctx, `
+				INSERT INTO product_storage (product_id, storage_id, quantity)
+				VALUES ($1, (SELECT id FROM storage_location WHERE name = 'pending' LIMIT 1), $2)
+				ON CONFLICT (product_id, storage_id) DO UPDATE SET quantity = product_storage.quantity + EXCLUDED.quantity
+			`, item.ProductID, item.Quantity)
+			if err != nil {
+				return fmt.Errorf("failed to update pending storage for added item: %w", err)
+			}
 		}
 	}
 
@@ -434,10 +464,10 @@ func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input mo
 			COALESCE(tax_cop, 0) as tax
 		FROM "order" WHERE id = $1
 	`, orderID)
-	
+
 	if err == nil {
 		newTotal := summary.Subtotal + summary.Shipping + summary.Tax
-		_, err = tx.ExecContext(ctx, `UPDATE "order" SET subtotal_cop = $1, total_cop = $2 WHERE id = $3`, 
+		_, err = tx.ExecContext(ctx, `UPDATE "order" SET subtotal_cop = $1, total_cop = $2 WHERE id = $3`,
 			summary.Subtotal, newTotal, orderID)
 		if err != nil {
 			return fmt.Errorf("failed to update order totals: %w", err)
@@ -448,12 +478,12 @@ func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input mo
 	if err := tx.Commit(); err != nil {
 		return err
 	}
-	
+
 	s.Audit.LogAction(ctx, "UPDATE_ORDER", "order", orderID, models.JSONB{
 		"before": oldOrder,
 		"after":  input,
 	})
-	
+
 	logger.InfoCtx(ctx, "Order %s updated successfully", orderID)
 	return nil
 }
