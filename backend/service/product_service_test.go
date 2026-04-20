@@ -69,14 +69,21 @@ func TestProductService_Create(t *testing.T) {
 		*input.PriceCOPOverride = 100
 
 		// Mock the store insert (assuming the store takes ProductInput)
-		sqlMock.ExpectQuery("INSERT INTO product").
-			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow("p-1", "Test Product"))
+		sqlMock.ExpectQuery(`SELECT fn_bulk_upsert_product`).
+			WillReturnRows(sqlmock.NewRows([]string{"fn_bulk_upsert_product"}).AddRow("p-1"))
+
+		// Mock GetByID querying product
+		sqlMock.ExpectQuery(`SELECT \* FROM view_product_detail`).
+			WithArgs("p-1").
+			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "stock", "cart_count", "categories"}).AddRow("p-1", "Test Product", 0, 0, "[]"))
 
 		// Expect Audit Log
 		mockAudit.On("LogAction", mock.Anything, "CREATE_PRODUCT", "product", "p-1", mock.Anything).Return()
 
 		prod, err := s.Create(context.Background(), input)
-		assert.NoError(t, err)
+		if !assert.NoError(t, err) {
+			t.FailNow()
+		}
 		assert.Equal(t, "p-1", prod.ID)
 		mockAudit.AssertExpectations(t)
 	})

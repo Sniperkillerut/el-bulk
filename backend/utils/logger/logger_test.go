@@ -39,8 +39,9 @@ func TestLogger_ParseLevel(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		if got := tt.level.Color(); got != tt.want {
-			t.Errorf("Level(%d).Color() = %q, want %q", tt.level, got, tt.want)
+		got := ParseLevel(tt.input)
+		if got != tt.expected {
+			t.Errorf("ParseLevel(%q) = %d, want %d", tt.input, got, tt.expected)
 		}
 	}
 }

@@ -391,6 +391,16 @@ func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input mo
 			}
 		}
 
+		var orderItemArgs []interface{}
+		var orderItemVals []string
+		
+		var storageArgs []interface{}
+		var storageVals []string
+		
+		valIdxOI := 1
+		valIdxPS := 1
+		hasAdded := false
+
 		for _, item := range input.AddedItems {
 			if item.Quantity <= 0 {
 				continue
@@ -405,21 +415,35 @@ func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input mo
 				return fmt.Errorf("added quantity %d exceeds available stock %d", item.Quantity, product.Stock)
 			}
 
-			_, err = tx.ExecContext(ctx, `
+			orderItemVals = append(orderItemVals, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
+				valIdxOI, valIdxOI+1, valIdxOI+2, valIdxOI+3, valIdxOI+4, valIdxOI+5, valIdxOI+6, valIdxOI+7, valIdxOI+8))
+			orderItemArgs = append(orderItemArgs, orderID, item.ProductID, product.Name, product.SetName, product.FoilTreatment, product.CardTreatment, product.Condition, item.Quantity, item.UnitPriceCOP)
+			valIdxOI += 9
+
+			storageVals = append(storageVals, fmt.Sprintf("($%d, (SELECT id FROM storage_location WHERE name = 'pending' LIMIT 1), $%d)", valIdxPS, valIdxPS+1))
+			storageArgs = append(storageArgs, item.ProductID, item.Quantity)
+			valIdxPS += 2
+			hasAdded = true
+		}
+
+		if hasAdded {
+			orderItemQ := fmt.Sprintf(`
 			INSERT INTO order_item (order_id, product_id, product_name, product_set, foil_treatment, card_treatment, condition, quantity, unit_price_cop)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-		`, orderID, item.ProductID, product.Name, product.SetName, product.FoilTreatment, product.CardTreatment, product.Condition, item.Quantity, item.UnitPriceCOP)
+			VALUES %s
+			`, strings.Join(orderItemVals, ","))
+			_, err = tx.ExecContext(ctx, orderItemQ, orderItemArgs...)
 			if err != nil {
-				return fmt.Errorf("failed to add new item to order: %w", err)
+				return fmt.Errorf("failed to bulk add new items to order: %w", err)
 			}
 
-			_, err = tx.ExecContext(ctx, `
+			storageQ := fmt.Sprintf(`
 				INSERT INTO product_storage (product_id, storage_id, quantity)
-				VALUES ($1, (SELECT id FROM storage_location WHERE name = 'pending' LIMIT 1), $2)
+				VALUES %s
 				ON CONFLICT (product_id, storage_id) DO UPDATE SET quantity = product_storage.quantity + EXCLUDED.quantity
-			`, item.ProductID, item.Quantity)
+			`, strings.Join(storageVals, ","))
+			_, err = tx.ExecContext(ctx, storageQ, storageArgs...)
 			if err != nil {
-				return fmt.Errorf("failed to update pending storage for added item: %w", err)
+				return fmt.Errorf("failed to bulk update pending storage for added items: %w", err)
 			}
 		}
 	}

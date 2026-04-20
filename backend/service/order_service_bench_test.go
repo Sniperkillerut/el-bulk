@@ -67,15 +67,20 @@ func BenchmarkUpdateOrder_AddedItems(b *testing.B) {
 			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "set_name", "foil_treatment", "card_treatment", "condition", "stock"}).
 				AddRow("test-product-id", "Test Product", nil, "Normal", "Normal", nil, 1000))
 
+		var orderItemArgs []driver.Value
+		var storageArgs []driver.Value
 		for j := 0; j < 100; j++ {
-			mock.ExpectExec(`INSERT INTO order_item`).
-				WithArgs(orderID, "test-product-id", "Test Product", nil, "Normal", "Normal", nil, 1, 1000.0).
-				WillReturnResult(sqlmock.NewResult(1, 1))
-
-			mock.ExpectExec(`INSERT INTO product_storage`).
-				WithArgs("test-product-id", 1).
-				WillReturnResult(sqlmock.NewResult(1, 1))
+			orderItemArgs = append(orderItemArgs, orderID, "test-product-id", "Test Product", nil, "Normal", "Normal", nil, 1, 1000.0)
+			storageArgs = append(storageArgs, "test-product-id", 1)
 		}
+
+		mock.ExpectExec(`INSERT INTO order_item \(order_id, product_id, product_name, product_set, foil_treatment, card_treatment, condition, quantity, unit_price_cop\) VALUES `).
+			WithArgs(orderItemArgs...).
+			WillReturnResult(sqlmock.NewResult(1, 100))
+
+		mock.ExpectExec(`INSERT INTO product_storage \(product_id, storage_id, quantity\) VALUES .* ON CONFLICT`).
+			WithArgs(storageArgs...).
+			WillReturnResult(sqlmock.NewResult(1, 100))
 
 		mock.ExpectQuery(`SELECT.*COALESCE\(.*`).
 			WithArgs(orderID).
