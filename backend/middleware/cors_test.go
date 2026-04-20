@@ -74,6 +74,22 @@ func TestCORS(t *testing.T) {
 			expectedOrigin: "https://b.com",
 			expectedStatus: http.StatusOK,
 		},
+		{
+			name:           "Malicious localhost prefix",
+			frontendOrigin: "https://example.com",
+			requestOrigin:  "http://localhost:3000.evil.com",
+			requestMethod:  "GET",
+			expectedOrigin: "",
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "Malicious localhost subdomain",
+			frontendOrigin: "https://example.com",
+			requestOrigin:  "http://localhost.evil.com",
+			requestMethod:  "GET",
+			expectedOrigin: "",
+			expectedStatus: http.StatusOK,
+		},
 	}
 
 	for _, tt := range tests {
