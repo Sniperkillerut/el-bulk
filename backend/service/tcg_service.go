@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/el-bulk/backend/external"
@@ -51,6 +52,15 @@ func (s *TCGService) Delete(ctx context.Context, id string) error {
 	return s.Store.BaseStore.Delete(ctx, id)
 }
 
+type syncSetDBParams struct {
+	TCG        string `db:"tcg"`
+	Code       string `db:"code"`
+	Name       string `db:"name"`
+	ReleasedAt string `db:"released_at"`
+	SetType    string `db:"set_type"`
+	CKName     string `db:"ck_name"`
+}
+
 func (s *TCGService) SyncSets(ctx context.Context, tcgID string) (int, error) {
 	logger.TraceCtx(ctx, "Entering TCGService.SyncSets | TCG: %s", tcgID)
 	if tcgID != "mtg" {
@@ -70,24 +80,52 @@ func (s *TCGService) SyncSets(ctx context.Context, tcgID string) (int, error) {
 	}
 	defer tx.Rollback()
 
+	// Map and chunk the sets
+	batchSize := 1000
+	var dbSets []syncSetDBParams
 	for _, set := range sets {
-		// Basic "best guess" for Card Kingdom names if we don't have one
-		// We'll rely on the existing logic in external.NormalizeCKEdition
 		ckGuess := external.NormalizeCKEdition(set.Name)
+		dbSets = append(dbSets, syncSetDBParams{
+			TCG:        "mtg",
+			Code:       set.Code,
+			Name:       set.Name,
+			ReleasedAt: set.ReleasedAt,
+			SetType:    set.SetType,
+			CKName:     ckGuess,
+		})
+	}
 
-		_, err := tx.ExecContext(ctx, `
+	for i := 0; i < len(dbSets); i += batchSize {
+		end := i + batchSize
+		if end > len(dbSets) {
+			end = len(dbSets)
+		}
+		chunk := dbSets[i:end]
+
+		var placeholders []string
+		var args []interface{}
+
+		for j, set := range chunk {
+			offset := j * 6
+			placeholders = append(placeholders, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d)", offset+1, offset+2, offset+3, offset+4, offset+5, offset+6))
+			args = append(args, set.TCG, set.Code, set.Name, set.ReleasedAt, set.SetType, set.CKName)
+		}
+
+		query := fmt.Sprintf(`
 			INSERT INTO tcg_set (tcg, code, name, released_at, set_type, ck_name)
-			VALUES ($1, $2, $3, $4, $5, $6)
+			VALUES %s
 			ON CONFLICT (tcg, code) DO UPDATE SET
 				name = EXCLUDED.name,
 				released_at = EXCLUDED.released_at,
 				set_type = EXCLUDED.set_type,
 				-- Only update ck_name if the existing one is NULL
 				ck_name = COALESCE(tcg_set.ck_name, EXCLUDED.ck_name)
-		`, "mtg", set.Code, set.Name, set.ReleasedAt, set.SetType, ckGuess)
+		`, strings.Join(placeholders, ","))
+
+		_, err := tx.ExecContext(ctx, query, args...)
 		if err != nil {
-			logger.ErrorCtx(ctx, "Error syncing set %s: %v", set.Code, err)
-			continue
+			logger.ErrorCtx(ctx, "Error syncing chunk of sets: %v", err)
+			return 0, fmt.Errorf("failed to insert sets: %w", err)
 		}
 	}
 
