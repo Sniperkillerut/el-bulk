@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 )
@@ -28,11 +29,10 @@ func CORS(next http.Handler) http.Handler {
 			// Fallback for dev: allow 127.0.0.1 and localhost variations if not strictly matched
 			// Only apply this in non-production environments for better security
 			if !allowed && os.Getenv("APP_ENV") != "production" {
-				if requestOrigin == "http://localhost" ||
-					requestOrigin == "http://127.0.0.1" ||
-					strings.HasPrefix(requestOrigin, "http://localhost:") ||
-					strings.HasPrefix(requestOrigin, "http://127.0.0.1:") {
-					allowed = true
+				if u, err := url.Parse(requestOrigin); err == nil {
+					if (u.Scheme == "http" || u.Scheme == "https") && (u.Hostname() == "localhost" || u.Hostname() == "127.0.0.1") {
+						allowed = true
+					}
 				}
 			}
 		}
