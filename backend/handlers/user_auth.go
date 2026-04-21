@@ -9,9 +9,9 @@ import (
 
 	"github.com/el-bulk/backend/middleware"
 	"github.com/el-bulk/backend/service"
+	"github.com/el-bulk/backend/utils/authutil"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/el-bulk/backend/utils/render"
-	"github.com/el-bulk/backend/utils/authutil"
 	"github.com/go-chi/chi/v5"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/oauth2"
@@ -25,6 +25,10 @@ type UserAuthHandler struct {
 
 func NewUserAuthHandler(s *service.AuthService) *UserAuthHandler {
 	return &UserAuthHandler{Service: s}
+}
+
+func redirectWithError(w http.ResponseWriter, r *http.Request, path, errorCode string) {
+	http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+path+"?error="+errorCode, http.StatusTemporaryRedirect)
 }
 
 func getProviderConfig(provider string) *oauth2.Config {
@@ -88,7 +92,7 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	logger.TraceCtx(r.Context(), "Entering UserAuthHandler.Callback | Provider: %s", provider)
 	state := r.FormValue("state")
 	if !strings.HasPrefix(state, "elbulk-oauth-state|"+provider+"|") {
-		http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=invalid_state", http.StatusTemporaryRedirect)
+		redirectWithError(w, r, "/", "invalid_state")
 		return
 	}
 
@@ -100,14 +104,14 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	code := r.FormValue("code")
 	config := getProviderConfig(provider)
 	if config == nil {
-		http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=unsupported_provider", http.StatusTemporaryRedirect)
+		redirectWithError(w, r, "/", "unsupported_provider")
 		return
 	}
 
 	token, err := config.Exchange(r.Context(), code)
 	if err != nil {
 		logger.ErrorCtx(r.Context(), "OAuth exchange failed: %v", err)
-		http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=exchange_failed", http.StatusTemporaryRedirect)
+		redirectWithError(w, r, "/", "exchange_failed")
 		return
 	}
 
@@ -120,7 +124,7 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
 		if err != nil {
 			logger.ErrorCtx(r.Context(), "Failed to get Google user info: %v", err)
-			http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=userinfo_failed", http.StatusTemporaryRedirect)
+			redirectWithError(w, r, "/", "userinfo_failed")
 			return
 		}
 		defer resp.Body.Close()
@@ -134,7 +138,7 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		}
 		if err := json.NewDecoder(resp.Body).Decode(&gInfo); err != nil {
 			logger.ErrorCtx(r.Context(), "Failed to parse Google user info: %v", err)
-			http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=parse_failed", http.StatusTemporaryRedirect)
+			redirectWithError(w, r, "/", "parse_failed")
 			return
 		}
 		finalID = gInfo.ID
@@ -147,7 +151,7 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		resp, err := client.Get("https://graph.facebook.com/me?fields=id,name,first_name,last_name,email,picture.type(large)")
 		if err != nil {
 			logger.ErrorCtx(r.Context(), "Failed to get Facebook user info: %v", err)
-			http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=userinfo_failed", http.StatusTemporaryRedirect)
+			redirectWithError(w, r, "/", "userinfo_failed")
 			return
 		}
 		defer resp.Body.Close()
@@ -165,7 +169,7 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		}
 		if err := json.NewDecoder(resp.Body).Decode(&fbInfo); err != nil {
 			logger.ErrorCtx(r.Context(), "Failed to parse Facebook user info: %v", err)
-			http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=parse_failed", http.StatusTemporaryRedirect)
+			redirectWithError(w, r, "/", "parse_failed")
 			return
 		}
 		finalID = fbInfo.ID
@@ -175,7 +179,7 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		finalAvatar = fbInfo.Picture.Data.URL
 
 	default:
-		http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=unsupported_provider", http.StatusTemporaryRedirect)
+		redirectWithError(w, r, "/", "unsupported_provider")
 		return
 	}
 
@@ -198,13 +202,13 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 				http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+redirectURL, http.StatusFound)
 				return
 			}
-			http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/profile?error=already_linked", http.StatusTemporaryRedirect)
+			redirectWithError(w, r, "/profile", "already_linked")
 			return
 		}
 
 		if err := h.Service.LinkProvider(r.Context(), currentUserID, provider, finalID); err != nil {
 			logger.ErrorCtx(r.Context(), "Failed to link account: %v", err)
-			http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/profile?error=link_failed", http.StatusTemporaryRedirect)
+			redirectWithError(w, r, "/profile", "link_failed")
 			return
 		}
 
@@ -233,7 +237,7 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 			customer, err = h.Service.CreateCustomerWithAuth(r.Context(), finalFirstName, finalLastName, finalEmail, finalAvatar, provider, finalID)
 			if err != nil {
 				logger.ErrorCtx(r.Context(), "Failed to create user: %v", err)
-				http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=db_error", http.StatusTemporaryRedirect)
+				redirectWithError(w, r, "/", "db_error")
 				return
 			}
 			customerID = customer.ID
@@ -258,7 +262,7 @@ func (h *UserAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	signed, err := jwtToken.SignedString([]byte(secret))
 	if err != nil {
 		logger.ErrorCtx(r.Context(), "Failed to sign user token: %v", err)
-		http.Redirect(w, r, os.Getenv("FRONTEND_ORIGIN")+"/?error=token_failed", http.StatusTemporaryRedirect)
+		redirectWithError(w, r, "/", "token_failed")
 		return
 	}
 
