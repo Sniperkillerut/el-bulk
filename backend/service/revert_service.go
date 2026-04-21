@@ -274,7 +274,7 @@ func (s *RevertService) undoStorageAction(ctx context.Context, log *models.Audit
 	return nil
 }
 
-func (s *RevertService) undoSettingAction(ctx context.Context, log *models.AuditLog, baseAction string, isRedo bool) error {
+func (s *RevertService) undoSettingAction(ctx context.Context, log *models.AuditLog, _ string, _ bool) error {
 	details := log.Details
 	// UNDO or REDO of setting is always just restoring "before"
 	before, ok := details["before"].(string)
