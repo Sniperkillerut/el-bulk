@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/el-bulk/backend/models"
@@ -81,11 +82,24 @@ func TestAdminHandler_Login(t *testing.T) {
 			mockSetup:      func() {},
 			expectedStatus: http.StatusBadRequest,
 		},
+		{
+			name: "Rate Limit Exceeded",
+			reqBody: models.LoginRequest{
+				Username: "lockeduser",
+				Password: password,
+			},
+			mockSetup: func() {
+				AdminFailedLogins.Set("lockeduser", 5, 15*time.Minute)
+			},
+			expectedStatus: http.StatusTooManyRequests,
+		},
 	}
 
 	secret := "test-secret"
 	os.Setenv("JWT_SECRET", secret)
 	defer os.Unsetenv("JWT_SECRET")
+
+	defer AdminFailedLogins.Clear()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

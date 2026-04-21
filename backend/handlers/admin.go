@@ -14,6 +14,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/el-bulk/backend/service"
+	"github.com/el-bulk/backend/utils/cache"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/authutil"
@@ -21,6 +22,8 @@ import (
 	"golang.org/x/oauth2/google"
 	"github.com/go-chi/chi/v5"
 )
+
+var AdminFailedLogins = cache.NewTTLMap[int](15 * time.Minute)
 
 type AdminHandler struct {
 	Service       *service.AdminService
@@ -49,6 +52,12 @@ func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if attempts, ok := AdminFailedLogins.Get(req.Username); ok && attempts >= 5 {
+		logger.WarnCtx(r.Context(), "Account locked due to too many failed logins: '%s'", req.Username)
+		render.Error(w, "Too many failed login attempts", http.StatusTooManyRequests)
+		return
+	}
+
 	admin, err := h.Service.GetByUsername(r.Context(), req.Username)
 	if err != nil {
 		// Differentiate between user not found and other errors (like DB connection)
@@ -57,19 +66,27 @@ func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
 		} else {
 			logger.ErrorCtx(r.Context(), "Database error during login for '%s': %v", req.Username, err)
 		}
+		attempts, _ := AdminFailedLogins.Get(req.Username)
+		AdminFailedLogins.Set(req.Username, attempts+1, 15*time.Minute)
 		render.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
 
 	if admin.PasswordHash == nil {
+		attempts, _ := AdminFailedLogins.Get(req.Username)
+		AdminFailedLogins.Set(req.Username, attempts+1, 15*time.Minute)
 		render.Error(w, "Authentication method not supported for this account", http.StatusUnauthorized)
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(*admin.PasswordHash), []byte(req.Password)); err != nil {
+		attempts, _ := AdminFailedLogins.Get(req.Username)
+		AdminFailedLogins.Set(req.Username, attempts+1, 15*time.Minute)
 		render.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
+
+	AdminFailedLogins.Delete(req.Username)
 
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
