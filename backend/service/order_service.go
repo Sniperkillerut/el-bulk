@@ -20,11 +20,11 @@ type OrderService struct {
 	Store         *store.OrderStore
 	ProductStore  *store.ProductStore
 	CustomerStore *store.CustomerStore
-	Settings      *SettingsService
-	Audit         *AuditService
+	Settings      SettingsProvider
+	Audit         Auditer
 }
 
-func NewOrderService(s *store.OrderStore, ps *store.ProductStore, cs *store.CustomerStore, settings *SettingsService, audit *AuditService) *OrderService {
+func NewOrderService(s *store.OrderStore, ps *store.ProductStore, cs *store.CustomerStore, settings SettingsProvider, audit Auditer) *OrderService {
 	return &OrderService{
 		Store:         s,
 		ProductStore:  ps,
@@ -518,7 +518,7 @@ func (s *OrderService) ConfirmOrder(ctx context.Context, orderID string, decreme
 		return err
 	}
 	err = s.Store.ConfirmOrder(ctx, orderID, string(jsonData))
-	if err == nil {
+	if err == nil && s.Audit != nil {
 		s.Audit.LogAction(ctx, "CONFIRM_ORDER", "order", orderID, models.JSONB{"decrements": decrements})
 	}
 	return err
@@ -530,7 +530,7 @@ func (s *OrderService) RestoreStock(ctx context.Context, orderID string, increme
 		return err
 	}
 	err = s.Store.RestoreStock(ctx, orderID, string(jsonData))
-	if err == nil {
+	if err == nil && s.Audit != nil {
 		s.Audit.LogAction(ctx, "RESTORE_STOCK", "order", orderID, models.JSONB{"increments": increments})
 	}
 	return err

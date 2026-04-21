@@ -229,10 +229,6 @@ func (s *ProductService) EnrichProducts(ctx context.Context, products []models.P
 	if err := s.Store.PopulateCartCounts(ctx, products); err != nil {
 		logger.ErrorCtx(ctx, "Failed to populate cart counts for %d products: %v", len(products), err)
 	}
-
-	if err := s.Store.PopulateCartCounts(ctx, products); err != nil {
-		logger.ErrorCtx(ctx, "Failed to populate cart counts for %d products: %v", len(products), err)
-	}
 	
 	for i := range products {
 		products[i].Redact(isAdmin)
