@@ -35,7 +35,7 @@ export default function AdminDashboard() {
     onlyDuplicates, setOnlyDuplicates,
     sortKey, sortDir,
     queryTime,
-    setPage, handleSort, refresh: refreshProducts
+    setPage, setPageSize, handleSort, refresh: refreshProducts
   } = useAdminProducts();
 
   // Modal States
@@ -417,12 +417,26 @@ export default function AdminDashboard() {
 
       {/* Pagination Footer - Fixed at Bottom */}
       <footer className="flex flex-col sm:flex-row justify-between items-center mt-1.5 mb-1 gap-1 px-0 flex-shrink-0">
-        <div className="text-[9px] sm:text-xs font-mono-stack text-text-muted font-bold order-2 sm:order-1 opacity-80">
-          {t('pages.common.pagination.showing', 'SHOWING {start} - {end} OF {total} ENTRIES', {
-            start: ((page - 1) * pageSize) + 1,
-            end: Math.min(page * pageSize, total),
-            total: total
-          })}
+        <div className="flex items-center gap-2 text-[9px] sm:text-xs font-mono-stack text-text-muted font-bold order-2 sm:order-1 opacity-80">
+          <span className="uppercase">{t('pages.common.labels.show', 'SHOW')}</span>
+          <select 
+            value={pageSize} 
+            onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
+            className="bg-ink-surface/30 border-none py-0.5 px-1 rounded font-bold focus:ring-0 cursor-pointer hover:text-gold transition-colors text-[10px] sm:text-xs"
+          >
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="250">250</option>
+            <option value="500">500</option>
+          </select>
+          <span>
+            {t('pages.common.pagination.showing', 'SHOWING {start} - {end} OF {total} ENTRIES', {
+              start: ((page - 1) * pageSize) + 1,
+              end: Math.min(page * pageSize, total),
+              total: total
+            })}
+          </span>
         </div>
         <div className="flex gap-1.5 order-1 sm:order-2 w-full sm:w-auto justify-center">
           <button disabled={page === 1} onClick={() => setPage(page - 1)} className="btn-secondary !py-1 !px-2 sm:!px-4 !text-[10px] sm:!text-xs font-bold disabled:opacity-30 flex items-center gap-1 min-h-[32px]">

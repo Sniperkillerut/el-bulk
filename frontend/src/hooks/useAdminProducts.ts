@@ -7,7 +7,7 @@ export function useAdminProducts() {
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(25);
+  const [pageSize, setPageSize] = useState(25);
   const [search, setSearch] = useState('');
   const [tcgFilter, setTcgFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -60,6 +60,6 @@ export function useAdminProducts() {
     onlyDuplicates, setOnlyDuplicates,
     sortKey, sortDir,
     queryTime,
-    setPage, handleSort, refresh: fetchProducts
+    setPage, setPageSize, handleSort, refresh: fetchProducts
   };
 }
