@@ -18,7 +18,7 @@ import BulkSyncProgressModal from '@/components/admin/modals/BulkSyncProgressMod
 import ProductTable from '@/components/admin/dashboard/ProductTable';
 import { useAdminProducts } from '@/hooks/useAdminProducts';
 import { useLanguage } from '@/context/LanguageContext';
-import Papa from 'papaparse';
+// Papa parse loaded dynamically
 
 export default function AdminDashboard() {
   const { t } = useLanguage();
@@ -185,6 +185,7 @@ export default function AdminDashboard() {
         quantity: p.stock
       }));
 
+      const Papa = (await import('papaparse')).default;
       const csv = Papa.unparse(csvData);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');

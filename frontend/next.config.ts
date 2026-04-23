@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
   compress: isProd,
   turbopack: {},
   images: {
+    unoptimized: true,
     remotePatterns: [
       { protocol: 'https', hostname: 'cards.scryfall.io' },
       { protocol: 'https', hostname: 'assets.pokemon.com' },

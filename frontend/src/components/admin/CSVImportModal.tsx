@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Papa from 'papaparse';
+// Papa parse loaded dynamically
 import {
   BulkProductInput,
   StoredIn,
@@ -103,9 +103,11 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
   const [defaultLanguage, setDefaultLanguage] = useState('en');
   const [defaultPriceSource, setDefaultPriceSource] = useState<PriceSource>('cardkingdom');
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const Papa = (await import('papaparse')).default;
 
     Papa.parse(file, {
       header: true,
