@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, Bebas_Neue, Space_Mono, Cinzel, Playfair_Display, Outfit, Roboto, Montserrat } from 'next/font/google';
+import { Inter, Bebas_Neue, Space_Mono } from 'next/font/google';
 import './globals.css';
 import StorefrontLayoutWrapper from '@/components/StorefrontLayoutWrapper';
 import { CartProvider } from '@/lib/CartContext';
@@ -13,11 +13,6 @@ import './foil-effects.css';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const bebas = Bebas_Neue({ weight: '400', subsets: ['latin'], variable: '--font-bebas' });
 const spaceMono = Space_Mono({ weight: ['400', '700'], subsets: ['latin'], variable: '--font-mono' });
-const cinzel = Cinzel({ subsets: ['latin'], variable: '--font-cinzel' });
-const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' });
-const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' });
-const roboto = Roboto({ weight: ['400', '700'], subsets: ['latin'], variable: '--font-roboto' });
-const montserrat = Montserrat({ subsets: ['latin'], variable: '--font-montserrat' });
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { fetchPublicSettings } from '@/lib/api';
 import { fetchThemes } from '@/lib/api_themes';
@@ -115,7 +110,7 @@ async function RootProviders({ children }: { children: React.ReactNode }) {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${bebas.variable} ${spaceMono.variable} ${cinzel.variable} ${playfair.variable} ${outfit.variable} ${roboto.variable} ${montserrat.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${bebas.variable} ${spaceMono.variable}`} suppressHydrationWarning>
       <body suppressHydrationWarning>
         <RemoteLogManager />
         

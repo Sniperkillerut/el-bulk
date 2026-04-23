@@ -33,11 +33,6 @@ const AVAILABLE_FONTS = [
   { name: 'Inter (Sans)', value: 'Inter, sans-serif' },
   { name: 'Bebas Neue (Display)', value: 'Bebas Neue, sans-serif' },
   { name: 'Space Mono (Mono)', value: 'Space Mono, monospace' },
-  { name: 'Cinzel (Classical)', value: 'Cinzel, serif' },
-  { name: 'Playfair Display (Elegant)', value: 'Playfair Display, serif' },
-  { name: 'Outfit (Modern)', value: 'Outfit, sans-serif' },
-  { name: 'Roboto (Standard)', value: 'Roboto, sans-serif' },
-  { name: 'Montserrat (Bold)', value: 'Montserrat, sans-serif' },
 ];
 
 function FontSelector({ label, value, onChange, helperText }: { label: string, value: string, onChange: (val: string) => void, helperText?: string }) {
