@@ -5,16 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
+	"bytes"
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/logger"
 	"sync"
-	"bytes"
 )
 
 var ScryfallBase = "https://api.scryfall.com"
@@ -36,11 +37,11 @@ type scryfallCard struct {
 	} `json:"image_uris"`
 	// Two-faced cards store images per face
 	CardFaces []struct {
-		Name      string `json:"name"`
-		TypeLine  string `json:"type_line"`
+		Name       string `json:"name"`
+		TypeLine   string `json:"type_line"`
 		OracleText string `json:"oracle_text"`
 		Artist     string `json:"artist"`
-		ImageURIs struct {
+		ImageURIs  struct {
 			Normal string `json:"normal"`
 			Large  string `json:"large"`
 			PNG    string `json:"png"`
@@ -54,26 +55,26 @@ type scryfallCard struct {
 		EUR       *string `json:"eur"`        // Cardmarket non-foil EUR
 		EURFoil   *string `json:"eur_foil"`   // Cardmarket foil EUR
 	} `json:"prices"`
-	
+
 	// MTG Metadata
-	Lang          string   `json:"lang"`
-	ColorIdentity []string `json:"color_identity"`
-	Rarity        string   `json:"rarity"`
-	CMC           float64  `json:"cmc"`
-	TypeLine      string   `json:"type_line"`
-	OracleText    string   `json:"oracle_text"`
-	Artist        string   `json:"artist"`
-	Variation     bool     `json:"variation"`
-	BorderColor   string   `json:"border_color"`
-	Frame         string   `json:"frame"`
-	FullArt       bool     `json:"full_art"`
-	Textless      bool     `json:"textless"`
-	PromoTypes    []string `json:"promo_types"`
-	Finishes      []string `json:"finishes"`
-	FrameEffects  []string `json:"frame_effects"`
-	Legalities    map[string]string `json:"legalities"`
-	CardKingdomID     *string `json:"card_kingdom_id"`
-	CardKingdomFoilID *string `json:"card_kingdom_foil_id"`
+	Lang              string            `json:"lang"`
+	ColorIdentity     []string          `json:"color_identity"`
+	Rarity            string            `json:"rarity"`
+	CMC               float64           `json:"cmc"`
+	TypeLine          string            `json:"type_line"`
+	OracleText        string            `json:"oracle_text"`
+	Artist            string            `json:"artist"`
+	Variation         bool              `json:"variation"`
+	BorderColor       string            `json:"border_color"`
+	Frame             string            `json:"frame"`
+	FullArt           bool              `json:"full_art"`
+	Textless          bool              `json:"textless"`
+	PromoTypes        []string          `json:"promo_types"`
+	Finishes          []string          `json:"finishes"`
+	FrameEffects      []string          `json:"frame_effects"`
+	Legalities        map[string]string `json:"legalities"`
+	CardKingdomID     *string           `json:"card_kingdom_id"`
+	CardKingdomFoilID *string           `json:"card_kingdom_foil_id"`
 }
 
 type CardIdentifier struct {
@@ -127,11 +128,11 @@ func (r *CardLookupResult) ToCardMetadata() CardMetadata {
 	return CardMetadata{
 		TCGPlayerUSD:  r.PriceTCGPlayer,
 		CardmarketEUR: r.PriceCardmarket,
-		Legalities:     r.MTGMetadata.Legalities,
-		OracleText:     oracle,
-		ScryfallID:     sid,
-		TypeLine:       typeLine,
-		ImageURL:       r.ImageURL,
+		Legalities:    r.MTGMetadata.Legalities,
+		OracleText:    oracle,
+		ScryfallID:    sid,
+		TypeLine:      typeLine,
+		ImageURL:      r.ImageURL,
 	}
 }
 
@@ -184,7 +185,7 @@ func LookupMTGCard(ctx context.Context, scryfallID, name, setCode, collectorNumb
 			if string(res.FoilTreatment) == strings.ToLower(foilTreatment) {
 				return res, nil
 			}
-			logger.WarnCtx(ctx, "Self-Healing: Scryfall ID %s finish mismatch (%s vs %s). Forcing resolution by name.", 
+			logger.WarnCtx(ctx, "Self-Healing: Scryfall ID %s finish mismatch (%s vs %s). Forcing resolution by name.",
 				scryfallID, res.FoilTreatment, foilTreatment)
 		}
 	}
@@ -339,7 +340,7 @@ func mapScryfallToResult(card *scryfallCard, foilTreatment string) *CardLookupRe
 	lowerType := strings.ToLower(card.TypeLine)
 	isLegendary := strings.Contains(lowerType, "legendary")
 	isHistoric := isLegendary || strings.Contains(lowerType, "artifact") || strings.Contains(lowerType, "saga")
-	
+
 	var artVar *string
 	if card.Variation {
 		v := "Variation"
@@ -543,14 +544,14 @@ type ScryfallBulkMeta struct {
 
 // ScryfallBulkCard is the price-relevant subset of each card in the bulk file.
 type ScryfallBulkCard struct {
-	ID         string            `json:"id"`
-	Name       string            `json:"name"`
+	ID              string            `json:"id"`
+	Name            string            `json:"name"`
 	Set             string            `json:"set"` // set code, e.g. "m11"
 	CollectorNumber string            `json:"collector_number"`
 	TypeLine        string            `json:"type_line"`
-	OracleText string            `json:"oracle_text"`
-	Legalities map[string]string `json:"legalities"`
-	ImageURIs  struct {
+	OracleText      string            `json:"oracle_text"`
+	Legalities      map[string]string `json:"legalities"`
+	ImageURIs       struct {
 		Normal string `json:"normal"`
 	} `json:"image_uris"`
 	Prices struct {
@@ -580,12 +581,12 @@ type CardMetadata struct {
 	// Foil prices — populated by BatchLookupMTG; callers should pick based on FoilTreatment
 	TCGPlayerUSDFoil  *float64
 	CardmarketEURFoil *float64
-	Legalities     models.JSONB
-	OracleText     string
-	ScryfallID     string
-	TypeLine       string
-	ImageURL       string
-	CardKingdomID  string
+	Legalities        models.JSONB
+	OracleText        string
+	ScryfallID        string
+	TypeLine          string
+	ImageURL          string
+	CardKingdomID     string
 	// Foil CK ID (card_kingdom_foil_id from Scryfall)
 	CardKingdomFoilID string
 }
@@ -617,49 +618,74 @@ func BuildPriceMap(ctx context.Context) (map[PriceKey]CardMetadata, map[string]C
 	}
 
 	logger.InfoCtx(ctx, "Downloading Scryfall bulk data (cache empty or expired)...")
-	client := &http.Client{Timeout: 5 * time.Minute} 
+	client := &http.Client{Timeout: 5 * time.Minute}
 
 	// Step 1: discover today's bulk-data download URL
+	downloadURL, err := fetchBulkDataURL(ctx, client)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Step 2: stream the bulk card JSON array
+	dlBody, err := downloadBulkData(ctx, client, downloadURL)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer dlBody.Close()
+
+	// Step 3: stream-decode the JSON array without loading 600MB into memory at once
+	priceMap, localIdCache, err := parseBulkData(dlBody)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	scryCache = priceMap
+	idCache = localIdCache // NEW: switch to the populated local map
+	scryCacheTime = time.Now()
+
+	logger.InfoCtx(ctx, "Parsed and cached %d Scryfall cards in price map", len(priceMap))
+	return scryCache, idCache, nil
+}
+
+func fetchBulkDataURL(ctx context.Context, client *http.Client) (string, error) {
 	metaReq, _ := http.NewRequestWithContext(ctx, http.MethodGet, ScryfallBase+"/bulk-data", nil)
 	metaReq.Header.Set("User-Agent", "ElBulkTCGStore/1.0 (contact@elbulk.com)")
 	metaReq.Header.Set("Accept", "application/json")
 
 	metaResp, err := client.Do(metaReq)
 	if err != nil {
-		return nil, nil, fmt.Errorf("fetching bulk-data index: %w", err)
+		return "", fmt.Errorf("fetching bulk-data index: %w", err)
 	}
 	defer metaResp.Body.Close()
 
 	var meta ScryfallBulkMeta
 	if err := json.NewDecoder(metaResp.Body).Decode(&meta); err != nil {
-		return nil, nil, fmt.Errorf("decoding bulk-data index: %w", err)
+		return "", fmt.Errorf("decoding bulk-data index: %w", err)
 	}
 
-	downloadURL := ""
 	for _, item := range meta.Data {
 		if item.Type == "default_cards" {
-			downloadURL = item.DownloadURI
-			break
+			return item.DownloadURI, nil
 		}
 	}
-	if downloadURL == "" {
-		return nil, nil, fmt.Errorf("default_cards bulk file not found in scryfall response")
-	}
+	return "", fmt.Errorf("default_cards bulk file not found in scryfall response")
+}
 
-	// Step 2: stream the bulk card JSON array
+func downloadBulkData(ctx context.Context, client *http.Client, downloadURL string) (io.ReadCloser, error) {
 	dlReq, _ := http.NewRequestWithContext(ctx, http.MethodGet, downloadURL, nil)
 	dlReq.Header.Set("User-Agent", "ElBulkTCGStore/1.0 (contact@elbulk.com)")
 
 	dlResp, err := client.Do(dlReq)
 	if err != nil {
-		return nil, nil, fmt.Errorf("downloading bulk data: %w", err)
+		return nil, fmt.Errorf("downloading bulk data: %w", err)
 	}
-	defer dlResp.Body.Close()
+	return dlResp.Body, nil
+}
 
-	// Step 3: stream-decode the JSON array without loading 600MB into memory at once
+func parseBulkData(r io.Reader) (map[PriceKey]CardMetadata, map[string]CardMetadata, error) {
 	priceMap := make(map[PriceKey]CardMetadata, 300_000)
 	localIdCache := make(map[string]CardMetadata, 300_000) // NEW: temporary local map
-	decoder := json.NewDecoder(dlResp.Body)
+	decoder := json.NewDecoder(r)
 
 	// Read opening '['
 	if _, err := decoder.Token(); err != nil {
@@ -676,11 +702,11 @@ func BuildPriceMap(ctx context.Context) (map[PriceKey]CardMetadata, map[string]C
 		name := strings.ToLower(card.Name)
 		set := strings.ToLower(card.Set)
 		meta := CardMetadata{
-			Legalities:  castLegalities(card.Legalities),
-			OracleText:  card.OracleText,
-			ScryfallID:  card.ID,
-			TypeLine:    card.TypeLine,
-			ImageURL:    card.ImageURIs.Normal,
+			Legalities: castLegalities(card.Legalities),
+			OracleText: card.OracleText,
+			ScryfallID: card.ID,
+			TypeLine:   card.TypeLine,
+			ImageURL:   card.ImageURIs.Normal,
 		}
 
 		// Register entries for each foil variant this print has prices for
@@ -703,7 +729,7 @@ func BuildPriceMap(ctx context.Context) (map[PriceKey]CardMetadata, map[string]C
 			cm := parsePrice(v.eur)
 
 			// Fallback: if variant-specific price is missing, use the non-foil price.
-			// Scryfall often returns null for specialties (e.g. ripple foil) when 
+			// Scryfall often returns null for specialties (e.g. ripple foil) when
 			// the market only tracks one price.
 			if tcg == nil && v.foil != "non_foil" {
 				tcg = parsePrice(card.Prices.USD)
@@ -736,7 +762,7 @@ func BuildPriceMap(ctx context.Context) (map[PriceKey]CardMetadata, map[string]C
 			// Index by specific set + collector number (normalized)
 			cn := strings.TrimSpace(card.CollectorNumber)
 			priceMap[PriceKey{Name: name, SetCode: set, Collector: cn, Foil: v.foil}] = entry
-			
+
 			// Maintain previous set-only/name-only fallbacks
 			// NO POLLUTION: Only set global fallbacks if they don't already exist.
 			// This ensures that the first (usually "standard") edition encountered wins.
@@ -752,13 +778,9 @@ func BuildPriceMap(ctx context.Context) (map[PriceKey]CardMetadata, map[string]C
 		}
 	}
 
-	scryCache = priceMap
-	idCache = localIdCache // NEW: switch to the populated local map
-	scryCacheTime = time.Now()
-
-	logger.InfoCtx(ctx, "Parsed and cached %d Scryfall cards in price map", len(priceMap))
-	return scryCache, idCache, nil
+	return priceMap, localIdCache, nil
 }
+
 // ─── Scryfall sets data structures ──────────────────────────────────────────
 
 type ScryfallSet struct {
