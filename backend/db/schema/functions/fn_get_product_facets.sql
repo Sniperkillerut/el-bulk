@@ -39,7 +39,7 @@ BEGIN
     v_collection_arr := CASE WHEN p_collection = '' THEN NULL ELSE string_to_array(LOWER(p_collection), ',') END;
     v_set_name_arr := CASE WHEN p_set_name = '' THEN NULL ELSE string_to_array(p_set_name, ',') END;
 
-    WITH base_products AS (
+    WITH base_products AS MATERIALIZED (
         SELECT p.*
         FROM product p
         LEFT JOIN tcg t ON p.tcg = t.id
@@ -54,7 +54,7 @@ BEGIN
             AND (NOT p_in_stock OR p.stock > 0)
             AND (p_is_admin OR (t.is_active IS NULL OR t.is_active = true))
     ),
-    all_filtered AS (
+    all_filtered AS MATERIALIZED (
         -- Standard filtering applies to all facets except their own dimension
         SELECT *,
                (v_foil_arr IS NULL OR LOWER(foil_treatment) = ANY(v_foil_arr)) as match_foil,

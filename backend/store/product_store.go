@@ -154,7 +154,7 @@ func (s *ProductStore) PopulateStorage(ctx context.Context, products []models.Pr
 	if len(products) == 0 {
 		return nil
 	}
-	var pids []string
+	pids := make([]string, 0, len(products))
 	for _, p := range products {
 		if p.ID != "" {
 			pids = append(pids, p.ID)
@@ -195,11 +195,12 @@ func (s *ProductStore) PopulateStorage(ctx context.Context, products []models.Pr
 		})
 	}
 
+	var emptyLocs []models.StorageLocation
 	for i := range products {
 		if locs, ok := storageMap[products[i].ID]; ok {
 			products[i].StoredIn = locs
 		} else {
-			products[i].StoredIn = []models.StorageLocation{}
+			products[i].StoredIn = emptyLocs
 		}
 	}
 	return nil
@@ -209,7 +210,7 @@ func (s *ProductStore) PopulateCategories(ctx context.Context, products []models
 	if len(products) == 0 {
 		return nil
 	}
-	var pids []string
+	pids := make([]string, 0, len(products))
 	for _, p := range products {
 		if p.ID != "" {
 			pids = append(pids, p.ID)
@@ -265,11 +266,12 @@ func (s *ProductStore) PopulateCategories(ctx context.Context, products []models
 		})
 	}
 
+	var emptyCats []models.CustomCategory
 	for i := range products {
 		if cats, ok := catMap[products[i].ID]; ok {
 			products[i].Categories = cats
 		} else {
-			products[i].Categories = []models.CustomCategory{}
+			products[i].Categories = emptyCats
 		}
 	}
 	return nil
@@ -279,7 +281,7 @@ func (s *ProductStore) PopulateCartCounts(ctx context.Context, products []models
 	if len(products) == 0 {
 		return nil
 	}
-	var pids []string
+	pids := make([]string, 0, len(products))
 	for _, p := range products {
 		if p.ID != "" {
 			pids = append(pids, p.ID)
@@ -327,7 +329,7 @@ func (s *ProductStore) GetHotProductIDs(ctx context.Context, hotDays, hotSales i
 	}
 
 	// Filter out empty IDs to prevent syntax errors
-	validIDs := []string{}
+	validIDs := make([]string, 0, len(candidateIDs))
 	for _, id := range candidateIDs {
 		if id != "" {
 			validIDs = append(validIDs, id)
