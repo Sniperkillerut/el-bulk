@@ -77,6 +77,14 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp.QueryTimeMS = time.Since(start).Milliseconds()
+
+	if !isAdmin {
+		// Public catalog caching: 60s at the edge to absorb traffic spikes, but keep stock/prices relatively fresh
+		w.Header().Set("Cache-Control", "public, s-maxage=60, stale-while-revalidate=120")
+	} else {
+		w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate")
+	}
+
 	render.Success(w, resp)
 }
 
@@ -96,6 +104,13 @@ func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !isAdmin {
+		// Product detail caching: 60s at the edge
+		w.Header().Set("Cache-Control", "public, s-maxage=60, stale-while-revalidate=120")
+	} else {
+		w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate")
+	}
+
 	render.Success(w, product)
 }
 
@@ -107,6 +122,8 @@ func (h *ProductHandler) ListTCGs(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
+	// TCGs rarely change, safe to cache for an hour at the edge
+	w.Header().Set("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=7200")
 	render.Success(w, map[string]interface{}{"tcgs": tcgs})
 }
 
