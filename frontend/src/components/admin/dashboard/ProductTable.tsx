@@ -10,15 +10,15 @@ interface ProductTableRowProps {
   onEdit: (p: Product) => void;
   onDelete: (id: string, name: string) => void;
   settings?: Settings; // Add settings to props
-  now: Date; // Pass 'now' to prevent redundant Date instantiations per row
 }
 
-export function ProductTableRow({ product: p, selected, onSelect, onEdit, onDelete, settings, now }: ProductTableRowProps) {
+export function ProductTableRow({ product: p, selected, onSelect, onEdit, onDelete, settings }: ProductTableRowProps) {
   const { t, locale } = useLanguage();
   const tcgName = p.tcg.length <= 4 ? p.tcg.toUpperCase() : (TCG_SHORT[p.tcg] || p.tcg.substring(0, 3).toUpperCase());
 
   const formatUpdated = (dateStr: string) => {
     const d = new Date(dateStr);
+    const now = new Date();
     const diffMs = now.getTime() - d.getTime();
     const diffHrs = diffMs / (1000 * 60 * 60);
 
@@ -230,9 +230,6 @@ export default function ProductTable({
 }: ProductTableProps) {
   const { t } = useLanguage();
   const checkboxRef = useRef<HTMLInputElement>(null);
-  
-  // Calculate 'now' once per table render to prevent massive GC thrashing in rows
-  const now = new Date();
 
   const isAllOnPageSelected = products.length > 0 && products.every(p => selectedIds.includes(p.id));
   const isSomeOnPageSelected = products.length > 0 && !isAllOnPageSelected && products.some(p => selectedIds.includes(p.id));
@@ -324,7 +321,6 @@ export default function ProductTable({
                 onEdit={onEdit} 
                 onDelete={onDelete} 
                 settings={settings}
-                now={now}
               />
             ))}
             {!loading && products.length === 0 && (
