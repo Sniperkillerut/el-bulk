@@ -47,6 +47,8 @@ type ProductFilterParams struct {
 	PageSize       int
 	Offset         int
 
+	IDs            []string
+
 	// Exchange rates for on-the-fly price sorting
 	USDRate float64
 	EURRate float64
@@ -579,6 +581,15 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 	}
 	if params.OnlyDuplicates {
 		mandatory = append(mandatory, "p.name IN (SELECT name FROM product GROUP BY name HAVING COUNT(*) > 1)")
+	}
+
+	if len(params.IDs) > 0 {
+		var idPlaceholders []string
+		for _, id := range params.IDs {
+			idPlaceholders = append(idPlaceholders, fmt.Sprintf("$%d", len(args)+1))
+			args = append(args, id)
+		}
+		mandatory = append(mandatory, fmt.Sprintf("p.id IN (%s)", strings.Join(idPlaceholders, ", ")))
 	}
 
 	if params.Search != "" {

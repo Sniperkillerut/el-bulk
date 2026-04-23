@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/el-bulk/backend/utils/render"
@@ -62,6 +63,10 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 		Page:        page,
 		PageSize:    pageSize,
 		Offset:      offset,
+	}
+
+	if q.Get("ids") != "" {
+		params.IDs = strings.Split(q.Get("ids"), ",")
 	}
 
 	resp, err := h.Service.List(r.Context(), params, isAdmin)

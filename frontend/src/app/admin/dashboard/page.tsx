@@ -18,6 +18,7 @@ import BulkSyncProgressModal from '@/components/admin/modals/BulkSyncProgressMod
 import ProductTable from '@/components/admin/dashboard/ProductTable';
 import { useAdminProducts } from '@/hooks/useAdminProducts';
 import { useLanguage } from '@/context/LanguageContext';
+import Papa from 'papaparse';
 
 export default function AdminDashboard() {
   const { t } = useLanguage();
@@ -48,6 +49,7 @@ export default function AdminDashboard() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isBulkSyncing, setIsBulkSyncing] = useState(false);
   const [isSelectingGlobal, setIsSelectingGlobal] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Bulk Sync Modal State
   const [bulkSyncStatus, setBulkSyncStatus] = useState<'syncing' | 'success' | 'error'>('syncing');
@@ -158,6 +160,46 @@ export default function AdminDashboard() {
     } catch (err) {
       setBulkSyncStatus('error');
       setBulkSyncError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  const handleDownloadCSV = async () => {
+    if (selectedIds.length === 0) return;
+    setIsExporting(true);
+    try {
+      // Fetch all selected products with high page size using our new IDs filter
+      const data = await adminFetchProducts({ 
+        ids: selectedIds.join(','),
+        page_size: selectedIds.length 
+      });
+      
+      const productsToExport = data.products || [];
+      
+      const csvData = productsToExport.map(p => ({
+        Scryfall_id: p.scryfall_id || '',
+        'set code': p.set_code || '',
+        collector: p.collector_number || '',
+        name: p.name,
+        treatment: p.card_treatment || 'normal',
+        foil: p.foil_treatment || 'non_foil',
+        quantity: p.stock
+      }));
+
+      const csv = Papa.unparse(csvData);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `el_bulk_export_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Export failed:', err);
+      alert(t('pages.admin.inventory.error_export', 'Failed to export CSV. Please try again.'));
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -306,6 +348,14 @@ export default function AdminDashboard() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <button 
+              onClick={handleDownloadCSV}
+              disabled={isExporting}
+              className="btn-secondary !py-1 !px-3 !text-[10px] bg-lp-color/10 border-lp-color/20 text-lp-color hover:bg-lp-color hover:text-white transition-all flex items-center gap-1"
+            >
+              {isExporting ? <div className="w-3 h-3 border-2 border-current border-t-transparent animate-spin rounded-full" /> : <span>⬇</span>}
+              CSV EXPORT
+            </button>
             <button 
               onClick={() => setSelectedIds([])}
               className="text-[10px] font-bold text-hp-color hover:underline mr-2"

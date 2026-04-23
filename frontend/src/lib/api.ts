@@ -90,6 +90,7 @@ export interface ProductFilters {
   sort_by?: string;
   sort_dir?: string;
   only_duplicates?: boolean;
+  ids?: string;
 }
 
 export async function fetchProducts(filters: ProductFilters = {}): Promise<ProductListResponse> {
