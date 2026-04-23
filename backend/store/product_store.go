@@ -116,9 +116,11 @@ func (s *ProductStore) GetFacets(ctx context.Context, params ProductFilterParams
 		params.TCG, params.Category, params.Search, params.StorageID, params.Foil, params.Treatment, params.Condition,
 		params.Rarity, params.Language, params.Color, params.Collection, params.SetName, params.InStock, params.FilterLogic, isAdmin)
 
-	if cached, ok := s.facetCache.Get(cacheKey); ok {
-		logger.TraceCtx(ctx, "[CACHE] Facet hit for key: %s", cacheKey)
-		return cached, nil
+	if !isAdmin {
+		if cached, ok := s.facetCache.Get(cacheKey); ok {
+			logger.TraceCtx(ctx, "[CACHE] Facet hit for key: %s", cacheKey)
+			return cached, nil
+		}
 	}
 
 	var result []byte
@@ -140,8 +142,10 @@ func (s *ProductStore) GetFacets(ctx context.Context, params ProductFilterParams
 		return models.Facets{}, err
 	}
 
-	// Cache the result for 2 minutes
-	s.facetCache.Set(cacheKey, facets, 2*time.Minute)
+	// Cache the result for 2 minutes (public users only)
+	if !isAdmin {
+		s.facetCache.Set(cacheKey, facets, 2*time.Minute)
+	}
 
 	return facets, nil
 }
@@ -354,7 +358,7 @@ func (s *ProductStore) GetHotProductIDs(ctx context.Context, hotDays, hotSales i
 }
 
 func (s *ProductStore) SaveCategories(ctx context.Context, productID string, categoryIDs []string) error {
-	s.facetCache.Clear()
+	// s.facetCache.Clear() - cache expires naturally via TTL
 	_, err := s.DB.ExecContext(ctx, "DELETE FROM product_category WHERE product_id = $1", productID)
 	if err != nil {
 		return err
@@ -369,7 +373,7 @@ func (s *ProductStore) SaveCategories(ctx context.Context, productID string, cat
 }
 
 func (s *ProductStore) SaveDeckCards(ctx context.Context, productID string, cards []models.DeckCard) error {
-	s.facetCache.Clear()
+	// s.facetCache.Clear() - cache expires naturally via TTL
 	_, err := s.DB.ExecContext(ctx, "DELETE FROM deck_card WHERE product_id = $1", productID)
 	if err != nil {
 		return err
@@ -398,7 +402,7 @@ func (s *ProductStore) SaveDeckCards(ctx context.Context, productID string, card
 }
 
 func (s *ProductStore) SaveStorage(ctx context.Context, productID string, items []models.StorageLocation) error {
-	s.facetCache.Clear()
+	// s.facetCache.Clear() - cache expires naturally via TTL
 	_, err := s.DB.ExecContext(ctx, "DELETE FROM product_storage WHERE product_id = $1", productID)
 	if err != nil {
 		return err
@@ -445,7 +449,7 @@ func (s *ProductStore) CreateProduct(ctx context.Context, input models.ProductIn
 	}
 
 	var product models.Product
-	s.facetCache.Clear()
+	// s.facetCache.Clear() - cache expires naturally via TTL
 	query := `INSERT INTO product (
 		name, tcg, category, set_name, set_code, condition,
 		foil_treatment, card_treatment,
@@ -477,7 +481,7 @@ func (s *ProductStore) UpdateProduct(ctx context.Context, id string, input model
 	}
 
 	var product models.Product
-	s.facetCache.Clear()
+	// s.facetCache.Clear() - cache expires naturally via TTL
 	query := `UPDATE product SET
 		name=$1, tcg=$2, category=$3, set_name=$4, set_code=$5, condition=$6,
 		foil_treatment=$7, card_treatment=$8,
@@ -525,7 +529,7 @@ func (s *ProductStore) BulkUpsert(ctx context.Context, jsonData string) ([]strin
 	var ids []struct {
 		ID string `db:"upserted_id"`
 	}
-	s.facetCache.Clear()
+	// s.facetCache.Clear() - cache expires naturally via TTL
 	query := "SELECT upserted_id FROM fn_bulk_upsert_product($1)"
 	logger.TraceCtx(ctx, "[DB] Executing BulkUpsert: %s | DataLen: %d", query, len(jsonData))
 	err := s.DB.SelectContext(ctx, &ids, query, jsonData)
