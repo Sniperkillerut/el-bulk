@@ -43,7 +43,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [saving, setSaving] = useState(false);
   const [itemEdits, setItemEdits] = useState<Record<string, number>>({});
-  const [detailsCache, setDetailsCache] = useState<Record<string, OrderDetail>>({});
+
   const [paymentMethodEdit, setPaymentMethodEdit] = useState<string>('');
   const [shippingCopEdit, setShippingCopEdit] = useState<number>(0);
 
@@ -58,6 +58,8 @@ export default function OrdersPanel({ initialOrderId }: Props) {
   const [confirmError, setConfirmError] = useState('');
   const [mobileShowDetail, setMobileShowDetail] = useState(false);
   const handledInitialId = useRef<string | null>(null);
+  const cacheRef = useRef<Record<string, OrderDetail>>({});
+
 
   // Restore modal state (for cancelled orders)
   const [showRestoreModal, setShowRestoreModal] = useState(false);
@@ -94,31 +96,48 @@ export default function OrdersPanel({ initialOrderId }: Props) {
   }, [loadOrders]);
 
   const selectOrder = useCallback(async (id: string) => {
-    // No longer setting state synchronously here to avoid cascaded renders when called from effect
-    if (detailsCache[id]) {
-      setDetail(detailsCache[id]);
+    if (cacheRef.current[id]) {
+      console.log(`[AdminOrders] Loading order ${id} from cache`);
+      const cached = cacheRef.current[id];
+      setDetail(cached);
       const edits: Record<string, number> = {};
-      detailsCache[id].items.forEach(i => { edits[i.id] = i.quantity; });
+      cached.items.forEach(i => { edits[i.id] = i.quantity; });
       setItemEdits(edits);
-      setPaymentMethodEdit(detailsCache[id].order.payment_method);
-      setShippingCopEdit(detailsCache[id].order.shipping_cop);
+      setPaymentMethodEdit(cached.order.payment_method);
+      setShippingCopEdit(cached.order.shipping_cop);
       setLoadingDetail(false);
       return;
     }
 
     setLoadingDetail(true);
     try {
+      console.info(`[AdminOrders] Fetching detail for order: ${id}`);
       const d = await adminFetchOrderDetail(id);
+      
+      if (!d || !d.order) {
+        console.error('[AdminOrders] Received invalid detail response:', d);
+        throw new Error('Invalid order detail response');
+      }
+
+      console.log(`[AdminOrders] Successfully fetched order ${id}`, d);
       setDetail(d);
-      setDetailsCache(prev => ({ ...prev, [id]: d }));
-      // Init item edits
+      cacheRef.current[id] = d;
+      
+      // Init item edits from current quantities
       const edits: Record<string, number> = {};
+      d.items.forEach(i => { edits[i.id] = i.quantity; });
       setItemEdits(edits);
       setPaymentMethodEdit(d.order.payment_method);
       setShippingCopEdit(d.order.shipping_cop);
-    } catch { }
-    setLoadingDetail(false);
-  }, [detailsCache]);
+    } catch (err) {
+      console.error('[AdminOrders] Failed to fetch order detail:', err);
+      // Reset detail to show selection prompt if fetch fails
+      setDetail(null);
+    } finally {
+      setLoadingDetail(false);
+    }
+  }, []);
+
 
   useEffect(() => {
     if (initialOrderId && handledInitialId.current !== initialOrderId) {
@@ -195,7 +214,8 @@ export default function OrdersPanel({ initialOrderId }: Props) {
       setDetail(updated);
       setStagedItems([]);
       setDeletedIds([]);
-      setDetailsCache(prev => ({ ...prev, [updated.order.id]: updated }));
+      cacheRef.current[updated.order.id] = updated;
+
       // Update list in-place
       setOrders(prev => prev.map(o => o.id === updated.order.id ? { 
         ...o, 
@@ -223,9 +243,10 @@ export default function OrdersPanel({ initialOrderId }: Props) {
     try {
       const updated = await adminUpdateOrder(detail.order.id, { status, ...trackingInfo });
       setDetail(updated);
-      setDetailsCache(prev => ({ ...prev, [updated.order.id]: updated }));
+      cacheRef.current[updated.order.id] = updated;
       // Update list in-place
       setOrders(prev => prev.map(o => o.id === updated.order.id ? { ...o, status: updated.order.status } : o));
+
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : 'Failed to update status');
     }
@@ -297,8 +318,10 @@ export default function OrdersPanel({ initialOrderId }: Props) {
     try {
       const updated = await adminConfirmOrder(detail.order.id, decArr);
       setDetail(updated);
+      cacheRef.current[updated.order.id] = updated;
       setShowConfirmModal(false);
       setOrders(prev => prev.map(o => o.id === updated.order.id ? { ...o, status: updated.order.status } : o));
+
     } catch (e: unknown) {
       setConfirmError(e instanceof Error ? e.message : 'Error al confirmar orden');
     }
@@ -342,7 +365,8 @@ export default function OrdersPanel({ initialOrderId }: Props) {
       const updated = await adminRestoreOrderStock(detail.order.id, incArr);
       setDetail(updated);
       setShowRestoreModal(false);
-      setDetailsCache(prev => ({ ...prev, [updated.order.id]: updated }));
+      cacheRef.current[updated.order.id] = updated;
+
       alert('Inventario restaurado exitosamente');
     } catch (e: unknown) {
       setRestoreError(e instanceof Error ? e.message : 'Error al restaurar inventario');
