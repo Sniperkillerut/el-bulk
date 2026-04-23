@@ -90,6 +90,7 @@ const CardImage = memo(function CardImage({
           sizes="(max-width: 768px) 33vw, (max-width: 1200px) 20vw, 15vw"
           onClick={handleClick}
           onError={() => setImgError(true)}
+          unoptimized={imageUrl?.includes('scryfall.io')}
           style={{
             objectFit: 'contain',
             objectPosition: 'center',
@@ -217,6 +218,7 @@ function HoverPortal({ imageUrl, name, startRect, foilTreatment }: { imageUrl: s
           fill
           sizes="800px"
           priority
+          unoptimized={imageUrl?.includes('scryfall.io')}
           className="hover-expand-image" 
           style={{ objectFit: 'cover' }} 
         />
