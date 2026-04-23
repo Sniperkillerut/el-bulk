@@ -30,9 +30,9 @@ export default function NewsletterForm({ compact = false }: NewsletterFormProps)
       setStatus('success');
       setMessage(t('pages.common.forms.newsletter.success', 'THX! CHECK YOUR INBOX SOON.'));
       if (!user) setEmail(''); // Clear only if not logged in
-    } catch (err: any) {
+    } catch (err: unknown) {
       setStatus('error');
-      setMessage(err.message || t('pages.common.forms.newsletter.error', 'SOMETHING WENT WRONG.'));
+      setMessage(err instanceof Error && err.message ? err.message : t('pages.common.forms.newsletter.error', 'SOMETHING WENT WRONG.'));
     }
   };
 

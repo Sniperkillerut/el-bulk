@@ -43,8 +43,8 @@ export function useForm<T extends ContactForm>(initialState: T) {
     try {
       await onSubmit(form);
       setSuccess(true);
-    } catch (err: any) {
-      setError(err.message || 'An error occurred. Please try again.');
+    } catch (err: unknown) {
+      setError(err instanceof Error && err.message ? err.message : 'An error occurred. Please try again.');
     } finally {
       setSubmitting(false);
     }
