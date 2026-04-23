@@ -46,6 +46,8 @@ export default function OrdersPanel({ initialOrderId }: Props) {
 
   const [paymentMethodEdit, setPaymentMethodEdit] = useState<string>('');
   const [shippingCopEdit, setShippingCopEdit] = useState<number>(0);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
 
   const canEditMetadata = detail?.order.status === 'pending' || detail?.order.status === 'confirmed';
   const canEditInventory = detail?.order.status === 'pending';
@@ -110,6 +112,8 @@ export default function OrdersPanel({ initialOrderId }: Props) {
     }
 
     setLoadingDetail(true);
+    setFetchError(null);
+
     try {
       console.info(`[AdminOrders] Fetching detail for order: ${id}`);
       const d = await adminFetchOrderDetail(id);
@@ -131,9 +135,10 @@ export default function OrdersPanel({ initialOrderId }: Props) {
       setShippingCopEdit(d.order.shipping_cop);
     } catch (err) {
       console.error('[AdminOrders] Failed to fetch order detail:', err);
-      // Reset detail to show selection prompt if fetch fails
+      setFetchError(err instanceof Error ? err.message : 'Error desconocido al cargar la orden');
       setDetail(null);
     } finally {
+
       setLoadingDetail(false);
     }
   }, []);
@@ -528,7 +533,22 @@ export default function OrdersPanel({ initialOrderId }: Props) {
             </div>
           )}
 
+          {fetchError && !loadingDetail && (
+            <div className="flex flex-col items-center justify-center h-full text-hp-color p-8 text-center">
+              <div className="text-5xl mb-4">⚠️</div>
+              <p className="font-display text-xl mb-2">Error al cargar la orden</p>
+              <p className="text-sm font-mono-stack opacity-70 mb-6">{fetchError}</p>
+              <button 
+                onClick={() => { setFetchError(null); }}
+                className="btn-secondary text-xs"
+              >
+                CERRAR
+              </button>
+            </div>
+          )}
+
           {loadingDetail && (
+
             <div className="flex items-center justify-center h-full" style={{ color: 'var(--text-muted)' }}>Cargando...</div>
           )}
 

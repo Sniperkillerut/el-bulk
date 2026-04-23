@@ -3,7 +3,7 @@
 CREATE OR REPLACE VIEW view_order_item_enriched AS
 SELECT oi.*, 
        p.image_url, 
-       p.stock,
+       COALESCE(p.stock, 0) as stock,
        COALESCE((
            SELECT jsonb_agg(jsonb_build_object(
                'stored_in_id', ps.storage_id,

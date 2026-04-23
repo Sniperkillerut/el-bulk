@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -111,7 +112,7 @@ func (h *OrderHandler) GetDetail(w http.ResponseWriter, r *http.Request) {
 	detail, err := h.Service.GetOrderDetail(r.Context(), id, true)
 	if err != nil {
 		logger.ErrorCtx(r.Context(), "GetOrderDetail failed for %s: %v", id, err)
-		render.Error(w, "Order not found or database error", http.StatusNotFound)
+		render.Error(w, fmt.Sprintf("Order detail error: %v", err), http.StatusInternalServerError)
 		return
 	}
 
