@@ -3,13 +3,21 @@
 import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
 import { useLanguage } from '@/context/LanguageContext';
+import { ProductListResponse, CustomCategory, Product } from '@/lib/types';
+
+interface CollectionClientProps {
+  params: { slug: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+  category?: CustomCategory;
+  products: ProductListResponse;
+}
 
 export default function CollectionClient({ 
   params, 
   searchParams, 
   category, 
   products 
-}: any) {
+}: CollectionClientProps) {
   const { t } = useLanguage();
   const page = parseInt((searchParams.page as string) || '1', 10);
   const totalPages = Math.ceil(products.total / 20);
@@ -59,7 +67,7 @@ export default function CollectionClient({
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {products.products.map((p: any) => (
+          {products.products.map((p: Product) => (
             <ProductCard key={p.id} product={p} />
           ))}
         </div>
