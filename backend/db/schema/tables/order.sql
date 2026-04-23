@@ -20,3 +20,7 @@ CREATE TABLE IF NOT EXISTS "order" (
   completed_at   TIMESTAMPTZ
 );
 -- Note: 'order' is a reserved word, quoting locally to be safe, though many drivers handle it.
+
+-- Indices
+CREATE INDEX IF NOT EXISTS idx_order_customer_id ON "order"(customer_id);
+CREATE INDEX IF NOT EXISTS idx_order_pending ON "order"(created_at DESC) WHERE status = 'pending';

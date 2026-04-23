@@ -12,3 +12,7 @@ CREATE TABLE IF NOT EXISTS order_item (
   quantity       INTEGER NOT NULL,
   stored_in_snapshot JSONB
 );
+
+-- Indices
+CREATE INDEX IF NOT EXISTS idx_order_item_order_id ON order_item(order_id);
+CREATE INDEX IF NOT EXISTS idx_order_item_product_id ON order_item(product_id);
