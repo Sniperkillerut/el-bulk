@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import HomeSearchBar from '@/components/HomeSearchBar';
 import { useLanguage } from '@/context/LanguageContext';
+import DeliveryBadge from '@/components/DeliveryBadge';
 
 export default function HeroSection() {
   const { t } = useLanguage();
@@ -31,9 +32,12 @@ export default function HeroSection() {
 
       <div className="centered-container relative z-30 h-full flex flex-col justify-center items-center lg:items-start px-6 py-10 md:py-16">
         <div className="max-w-3xl animate-fade-up flex flex-col items-center lg:items-start text-center lg:text-left">
-          {/* Brand Tag */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-ink-deep text-[#FFD700] font-mono-stack text-[11px] font-bold tracking-widest mb-8 rotate-[-1deg] shadow-xl border border-gold">
-            {t('pages.home.hero.subtitle', 'YOUR LOCAL TCG SHOP')} • EST. 2024
+          {/* Brand Tag & Delivery Status */}
+          <div className="flex flex-col lg:items-start items-center gap-4 mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-ink-deep text-[#FFD700] font-mono-stack text-[11px] font-bold tracking-widest rotate-[-1deg] shadow-xl border border-gold">
+              {t('pages.home.hero.subtitle', 'YOUR LOCAL TCG SHOP')} • EST. 2024
+            </div>
+            <DeliveryBadge />
           </div>
 
           {/* Main Slogan - High Impact & Shielded for Readability */}

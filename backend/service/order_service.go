@@ -122,7 +122,15 @@ func (s *OrderService) CreateOrder(ctx context.Context, input models.CreateOrder
 
 	shippingCOP := 0.0
 	if !input.IsLocalPickup {
-		shippingCOP = settings.FlatShippingFeeCOP
+		if input.IsPriority {
+			shippingCOP = settings.PriorityShippingFeeCOP
+			if shippingCOP == 0 {
+				// Fallback if not set specifically, e.g. 1.5x standard
+				shippingCOP = settings.FlatShippingFeeCOP * 1.5
+			}
+		} else {
+			shippingCOP = settings.FlatShippingFeeCOP
+		}
 	}
 	totalCOP := subtotalCOP + shippingCOP
 

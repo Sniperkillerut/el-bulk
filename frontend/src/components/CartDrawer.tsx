@@ -4,6 +4,7 @@ import { useCart } from '@/lib/CartContext';
 import Link from 'next/link';
 import CardImage from './CardImage';
 import { useLanguage } from '@/context/LanguageContext';
+import SynergyScout from './SynergyScout';
 
 export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { items, removedItems, totalItems, totalPrice, removeItem, restoreItem, permanentRemove, updateQty, clearCart } = useCart();
@@ -190,6 +191,13 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Synergy Scout Recommendations */}
+          {items.length > 0 && (
+            <div className="px-4 pb-6">
+              <SynergyScout />
             </div>
           )}
         </div>

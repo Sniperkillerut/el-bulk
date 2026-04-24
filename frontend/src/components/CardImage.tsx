@@ -1,7 +1,7 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import { useState, useRef, useEffect, memo } from 'react';
-import Image from 'next/image';
 import { createPortal } from 'react-dom';
 import { useUI } from '@/context/UIContext';
 import ImageModal from './ImageModal';
@@ -83,20 +83,14 @@ const CardImage = memo(function CardImage({
       }}
     >
       {showImage ? (
-        <Image
+        <img
           src={imageUrl}
           alt={name}
-          fill
-          sizes="(max-width: 768px) 33vw, (max-width: 1200px) 20vw, 15vw"
+          loading="lazy"
           onClick={handleClick}
           onError={() => setImgError(true)}
-          style={{
-            objectFit: 'contain',
-            objectPosition: 'center',
-            transition: 'transform 0.1s ease',
-          }}
           className="card-image-static active:scale-95"
-          priority={false}
+          suppressHydrationWarning
         />
       ) : (
         /* Placeholder — shown when no image or image fails to load */
@@ -211,14 +205,11 @@ function HoverPortal({ imageUrl, name, startRect, foilTreatment }: { imageUrl: s
       })
     }}>
       <div style={{ position: 'relative', width: '100%', height: '100%', borderRadius: 'inherit', overflow: 'hidden' }}>
-        <Image 
+        <img 
           src={imageUrl} 
           alt={name} 
-          fill
-          sizes="800px"
-          priority
-          className="hover-expand-image" 
-          style={{ objectFit: 'cover' }} 
+          className="hover-expand-image"
+          suppressHydrationWarning
         />
         {foilEffectsEnabled && foilTreatment && foilTreatment !== 'non_foil' && (
           <FoilOverlay treatment={foilTreatment} />

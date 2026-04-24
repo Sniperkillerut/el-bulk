@@ -69,6 +69,9 @@ func (s *SettingsService) GetSettings(ctx context.Context) (models.Settings, err
 		NewDaysThreshold:   10,
 		DefaultLocale:      "en",
 		HideLanguageSelector: false,
+		DeliveryPriorityEnabled: true,
+		PriorityShippingFeeCOP:  30000,
+		SynergyMaxPriceCOP:      2000,
 	}
 
 	raw, err := s.Store.GetAll(ctx)
@@ -124,6 +127,16 @@ func (s *SettingsService) GetSettings(ctx context.Context) (models.Settings, err
 			settings.DefaultLocale = val
 		case "hide_language_selector":
 			settings.HideLanguageSelector = val == "true"
+		case "delivery_priority_enabled":
+			settings.DeliveryPriorityEnabled = val == "true"
+		case "synergy_max_price_cop":
+			if f, err := strconv.ParseFloat(val, 64); err == nil {
+				settings.SynergyMaxPriceCOP = f
+			}
+		case "priority_shipping_fee_cop":
+			if f, err := strconv.ParseFloat(val, 64); err == nil {
+				settings.PriorityShippingFeeCOP = f
+			}
 		}
 	}
 

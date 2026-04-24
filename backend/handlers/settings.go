@@ -68,6 +68,9 @@ func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 		DefaultLocale        *string  `json:"default_locale"`
 		HideLanguageSelector *bool    `json:"hide_language_selector"`
 		DefaultThemeID       *string  `json:"default_theme_id"`
+		DeliveryPriorityEnabled *bool   `json:"delivery_priority_enabled"`
+		PriorityShippingFeeCOP  *float64 `json:"priority_shipping_fee_cop"`
+		SynergyMaxPriceCOP      *float64 `json:"synergy_max_price_cop"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		render.Error(w, "invalid request body", http.StatusBadRequest)
@@ -179,6 +182,31 @@ func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if input.DefaultThemeID != nil {
 		if err := h.Service.Upsert(r.Context(), "default_theme_id", *input.DefaultThemeID); err != nil {
 			logger.ErrorCtx(r.Context(), "Failed to update default_theme_id: %v", err)
+			render.Error(w, "Update failed", http.StatusInternalServerError)
+			return
+		}
+	}
+	if input.DeliveryPriorityEnabled != nil {
+		val := "false"
+		if *input.DeliveryPriorityEnabled {
+			val = "true"
+		}
+		if err := h.Service.Upsert(r.Context(), "delivery_priority_enabled", val); err != nil {
+			logger.ErrorCtx(r.Context(), "Failed to update delivery_priority_enabled: %v", err)
+			render.Error(w, "Update failed", http.StatusInternalServerError)
+			return
+		}
+	}
+	if input.SynergyMaxPriceCOP != nil {
+		if err := h.Service.Upsert(r.Context(), "synergy_max_price_cop", strconv.FormatFloat(*input.SynergyMaxPriceCOP, 'f', 2, 64)); err != nil {
+			logger.ErrorCtx(r.Context(), "Failed to update synergy_max_price_cop: %v", err)
+			render.Error(w, "Update failed", http.StatusInternalServerError)
+			return
+		}
+	}
+	if input.PriorityShippingFeeCOP != nil {
+		if err := h.Service.Upsert(r.Context(), "priority_shipping_fee_cop", strconv.FormatFloat(*input.PriorityShippingFeeCOP, 'f', 2, 64)); err != nil {
+			logger.ErrorCtx(r.Context(), "Failed to update priority_shipping_fee_cop: %v", err)
 			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}

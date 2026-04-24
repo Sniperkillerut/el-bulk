@@ -51,7 +51,7 @@ BEGIN
     INSERT INTO "order" (
         order_number, customer_id, status, payment_method, 
         subtotal_cop, shipping_cop, tax_cop, total_cop, 
-        is_local_pickup, notes
+        is_local_pickup, is_priority, notes
     )
     VALUES (
         order_meta->>'order_number',
@@ -63,6 +63,7 @@ BEGIN
         (order_meta->>'tax_cop')::numeric,
         (order_meta->>'total_cop')::numeric,
         (order_meta->>'is_local_pickup')::boolean,
+        (order_meta->>'is_priority')::boolean,
         order_meta->>'notes'
     )
     RETURNING id, "order".order_number INTO v_order_id, v_order_num;

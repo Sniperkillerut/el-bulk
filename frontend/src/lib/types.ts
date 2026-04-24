@@ -87,6 +87,9 @@ export interface PublicSettings {
   default_theme_id?: string;
   default_locale?: string;
   hide_language_selector?: boolean;
+  delivery_priority_enabled?: boolean;
+  priority_shipping_fee_cop?: number;
+  synergy_max_price_cop?: number;
 }
 
 /** Full settings — only available to the admin panel via GET /api/admin/settings. */

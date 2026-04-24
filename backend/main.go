@@ -185,6 +185,7 @@ func main() {
 	// Public API
 	r.Route("/api", func(r chi.Router) {
 		r.With(middleware.OptionalAdminAuth).Get("/products", productHandler.List)
+		r.Get("/products/recommendations", productHandler.GetRecommendations)
 		r.Post("/products/search-deck", productHandler.BulkSearch)
 		r.With(middleware.OptionalAdminAuth).Get("/products/{id}", productHandler.GetByID)
 		r.Get("/tcgs", productHandler.ListTCGs)

@@ -97,6 +97,15 @@ export async function fetchProducts(filters: ProductFilters = {}): Promise<Produ
   return apiFetch<ProductListResponse>('/api/products', { params: filters, cache: 'no-store' });
 }
 
+export async function fetchRecommendations(ids: string[]): Promise<Product[]> {
+  if (ids.length === 0) return [];
+  const res = await apiFetch<Product[]>('/api/products/recommendations', { 
+    params: { ids: ids.join(',') },
+    cache: 'no-store'
+  });
+  return res || [];
+}
+
 export async function bulkSearchDeck(list: string): Promise<import('./types').BulkSearchResponse> {
   return apiFetch<import('./types').BulkSearchResponse>('/api/products/search-deck', {
     method: 'POST',
@@ -126,6 +135,15 @@ function getCached<T>(key: string): T | null {
 function setCached(key: string, data: unknown) {
   if (isServer) return;
   metadataCache.set(key, { data, timestamp: Date.now() });
+}
+
+export function clearCached(key?: string) {
+  if (isServer) return;
+  if (key) {
+    metadataCache.delete(key);
+  } else {
+    metadataCache.clear();
+  }
 }
 
 export async function fetchCategories(): Promise<import('./types').CustomCategory[]> {
@@ -161,13 +179,16 @@ export async function fetchTCGs(activeOnly: boolean = true, options: FetchOption
   }
 }
 
-export async function fetchPublicSettings(options: FetchOptions = {}): Promise<import('./types').PublicSettings> {
-  const cached = getCached<import('./types').PublicSettings>('settings');
-  if (cached) return cached;
+export async function fetchPublicSettings(options: FetchOptions & { forceRefresh?: boolean } = {}): Promise<import('./types').PublicSettings> {
+  const { forceRefresh, ...rest } = options;
+  if (!forceRefresh) {
+    const cached = getCached<import('./types').PublicSettings>('settings');
+    if (cached) return cached;
+  }
 
   const data = await apiFetch<import('./types').PublicSettings>('/api/settings', { 
-    ...options,
-    cache: options.cache || 'default' 
+    ...rest,
+    cache: rest.cache || 'no-store' 
   });
   setCached('settings', data);
   return data;
@@ -416,11 +437,17 @@ export async function lookupPokemonCard(
 // Admin: exchange rate settings
 // ---------------------------------------------------------------------------
 
-export async function getAdminSettings(): Promise<import('./types').Settings> {
-  const cached = getCached<import('./types').Settings>('admin_settings');
-  if (cached) return cached;
+export async function getAdminSettings(options: FetchOptions & { forceRefresh?: boolean } = {}): Promise<import('./types').Settings> {
+  const { forceRefresh, ...rest } = options;
+  if (!forceRefresh) {
+    const cached = getCached<import('./types').Settings>('admin_settings');
+    if (cached) return cached;
+  }
 
-  const data = await apiFetch<import('./types').Settings>('/api/admin/settings', { cache: 'default' });
+  const data = await apiFetch<import('./types').Settings>('/api/admin/settings', { 
+    ...rest,
+    cache: rest.cache || 'no-store' 
+  });
   setCached('admin_settings', data);
   return data;
 }
@@ -428,10 +455,16 @@ export async function getAdminSettings(): Promise<import('./types').Settings> {
 export async function updateAdminSettings(
   settings: Partial<import('./types').Settings>,
 ): Promise<import('./types').Settings> {
-  return apiFetch<import('./types').Settings>('/api/admin/settings', {
+  const result = await apiFetch<import('./types').Settings>('/api/admin/settings', {
     method: 'PUT',
     body: JSON.stringify(settings),
   });
+  
+  // Invalidate settings caches
+  clearCached('settings');
+  clearCached('admin_settings');
+  
+  return result;
 }
 
 // ---------------------------------------------------------------------------

@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/lib/CartContext';
 import { useUser } from '@/context/UserContext';
 import { createOrder, fetchPublicSettings } from '@/lib/api';
-import { PAYMENT_METHODS, FOIL_LABELS, TREATMENT_LABELS, PublicSettings, CartItem } from '@/lib/types';
+import { PAYMENT_METHODS, FOIL_LABELS, TREATMENT_LABELS, PublicSettings, CartItem, UserProfile } from '@/lib/types';
 import CardImage from '@/components/CardImage';
+import SynergyScout from '@/components/SynergyScout';
 import { useLanguage } from '@/context/LanguageContext';
 
 const validateOrder = (
@@ -57,58 +58,15 @@ const processOrder = async (
     setSubmitting(false);
   }
 };
-
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, removedItems, totalPrice, updateQty, removeItem, restoreItem, permanentRemove, clearCart } = useCart();
   const { user, loading, loginWithGoogle } = useUser();
   const { t } = useLanguage();
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-
-  const [form, setForm] = useState({
-    first_name: '',
-    last_name: '',
-    phone: '',
-    email: '',
-    id_number: '',
-    address: '',
-    payment_method: 'cash',
-    is_local_pickup: false,
-    notes: '',
-  });
-
   const [settings, setSettings] = useState<PublicSettings | undefined>();
 
   useEffect(() => {
     fetchPublicSettings().then(setSettings).catch(console.error);
   }, []);
-
-  useEffect(() => {
-    if (user) {
-      setForm(f => ({
-        ...f,
-        first_name: f.first_name || user.first_name || '',
-        last_name: f.last_name || user.last_name || '',
-        email: f.email || user.email || '',
-        phone: f.phone || user.phone || '',
-        id_number: f.id_number || user.id_number || '',
-        address: f.address || user.address || '',
-      }));
-    }
-  }, [user]);
-
-  const set = (key: string, val: string) => setForm(f => ({ ...f, [key]: val }));
-
-  const handleSubmit = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-
-    if (!validateOrder(items, t, setError)) {
-      return;
-    }
-
-    await processOrder(form, items, router, clearCart, t, setSubmitting, setError);
-  };
 
   if (loading) {
     return (
@@ -132,11 +90,11 @@ export default function CheckoutPage() {
           {t('pages.checkout.auth_required.desc', 'For your security and to track your orders, you must be logged in to finalize your purchase.')}
         </p>
         <div className="flex flex-col sm:flex-row gap-4 w-full">
-          <button 
-            onClick={loginWithGoogle} 
+          <button
+            onClick={loginWithGoogle}
             className="flex-1 py-4 bg-accent-primary hover:bg-accent-primary-hover text-text-on-accent font-bold rounded-lg transition-all shadow-xl shadow-accent-primary/20 active:scale-95"
           >
-             {t('pages.auth.login.google', 'Login with Google')}
+            {t('pages.auth.login.google', 'Login with Google')}
           </button>
           {/* TODO: Facebook login hidden until OAuth is functional
           <button 
@@ -147,8 +105,8 @@ export default function CheckoutPage() {
           </button>
           */}
         </div>
-        <button 
-          onClick={() => router.push('/')} 
+        <button
+          onClick={() => router.push('/')}
           className="mt-12 text-[10px] font-mono text-text-muted hover:text-accent-primary uppercase tracking-[0.2em] transition-all border-b border-transparent hover:border-accent-primary pb-1"
         >
           {t('pages.checkout.buttons.cancel_back', '← Return to Armory')}
@@ -157,19 +115,37 @@ export default function CheckoutPage() {
     );
   }
 
-  if (items.length === 0) {
-    return (
-      <div className="centered-container px-4 py-16 text-center">
-        <h1 className="font-display text-5xl mb-4">{t('pages.checkout.page.title_short', 'CHECKOUT')}</h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>
-          {t('pages.checkout.error.empty', 'Your cart is empty. Add products before continuing.')}
-        </p>
-        <button onClick={() => router.push('/')} className="btn-primary mt-6">
-          {t('pages.checkout.buttons.back', '← BACK TO STORE')}
-        </button>
-      </div>
-    );
-  }
+  return <CheckoutFormInner user={user} settings={settings} />;
+}
+
+function CheckoutFormInner({ user, settings }: { user: UserProfile, settings?: PublicSettings }) {
+  const router = useRouter();
+  const { items, removedItems, totalPrice, updateQty, removeItem, restoreItem, permanentRemove, clearCart } = useCart();
+  const { t } = useLanguage();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const [form, setForm] = useState({
+    first_name: user.first_name || '',
+    last_name: user.last_name || '',
+    phone: user.phone || '',
+    email: user.email || '',
+    id_number: user.id_number || '',
+    address: user.address || '',
+    payment_method: 'cash',
+    is_local_pickup: false,
+    is_priority: false,
+    notes: '',
+  });
+
+  const set = (key: string, val: string | boolean) => setForm(f => ({ ...f, [key]: val }));
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!validateOrder(items, t, setError)) return;
+    await processOrder(form as CheckoutForm, items, router, clearCart, t, setSubmitting, setError);
+  };
+
 
   return (
     <div className="centered-container px-4 py-8">
@@ -213,30 +189,47 @@ export default function CheckoutPage() {
             <div className="divider" />
 
             <h3 className="font-display text-xl mb-3">{t('pages.checkout.section.delivery', 'DELIVERY METHOD')}</h3>
-            <div className="flex gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row gap-3 mb-6">
               <button
                 type="button"
-                onClick={() => setForm(f => ({ ...f, is_local_pickup: false }))}
-                className={`flex-1 p-4 rounded-lg border-2 transition-all text-left ${!form.is_local_pickup ? 'border-accent-primary bg-accent-primary/5' : 'border-ink-border bg-ink-surface'}`}
+                onClick={() => { set('is_local_pickup', false); set('is_priority', false); }}
+                className={`flex-1 p-4 rounded-lg border-2 transition-all text-left ${(!form.is_local_pickup && !form.is_priority) ? 'border-accent-primary bg-accent-primary/5' : 'border-ink-border bg-ink-surface'}`}
               >
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">🚚</span>
                   <div>
-                    <p className="font-bold text-sm">{t('pages.checkout.delivery.shipping', 'SHIPPING')}</p>
-                    <p className="text-[10px] text-text-muted">{t('pages.checkout.delivery.shipping_desc', 'Reliable delivery to your address')}</p>
+                    <p className="font-bold text-[11px] leading-none mb-1">{t('pages.checkout.delivery.shipping', 'SHIPPING')}</p>
+                    <p className="text-[9px] text-text-muted leading-tight">{t('pages.checkout.delivery.shipping_desc', 'Standard delivery')}</p>
                   </div>
                 </div>
               </button>
+
+              {settings?.delivery_priority_enabled && (
+                <button
+                  type="button"
+                  onClick={() => { set('is_local_pickup', false); set('is_priority', true); }}
+                  className={`flex-1 p-4 rounded-lg border-2 transition-all text-left ${form.is_priority ? 'border-accent-primary bg-accent-primary/5' : 'border-ink-border bg-ink-surface'}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">⚡</span>
+                    <div>
+                      <p className="font-bold text-[11px] leading-none mb-1">{t('pages.checkout.delivery.express', 'EXPRESS')}</p>
+                      <p className="text-[9px] text-text-muted leading-tight">{t('pages.checkout.delivery.express_desc', 'Priority delivery in Bogotá')}</p>
+                    </div>
+                  </div>
+                </button>
+              )}
+
               <button
                 type="button"
-                onClick={() => setForm(f => ({ ...f, is_local_pickup: true }))}
+                onClick={() => { set('is_local_pickup', true); set('is_priority', false); }}
                 className={`flex-1 p-4 rounded-lg border-2 transition-all text-left ${form.is_local_pickup ? 'border-accent-primary bg-accent-primary/5' : 'border-ink-border bg-ink-surface'}`}
               >
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">⚓</span>
                   <div>
-                    <p className="font-bold text-sm">{t('pages.checkout.delivery.pickup', 'LOCAL PICKUP')}</p>
-                    <p className="text-[10px] text-text-muted">{t('pages.checkout.delivery.pickup_desc', 'Pick up at our store in Bogotá')}</p>
+                    <p className="font-bold text-[11px] leading-none mb-1">{t('pages.checkout.delivery.pickup', 'PICKUP')}</p>
+                    <p className="text-[9px] text-text-muted leading-tight">{t('pages.checkout.delivery.pickup_desc', 'In-store Bogotá')}</p>
                   </div>
                 </div>
               </button>
@@ -294,8 +287,8 @@ export default function CheckoutPage() {
               </button>
             </div>
             <p className="text-xs font-mono-stack mb-4" style={{ color: 'var(--text-muted)' }}>
-              {items.reduce((s, i) => s + i.quantity, 0)} {items.reduce((s, i) => s + i.quantity, 0) === 1 
-                ? t('pages.checkout.summary.item', 'ITEM') 
+              {items.reduce((s, i) => s + i.quantity, 0)} {items.reduce((s, i) => s + i.quantity, 0) === 1
+                ? t('pages.checkout.summary.item', 'ITEM')
                 : t('pages.checkout.summary.items', 'ITEMS')}
             </p>
 
@@ -317,9 +310,9 @@ export default function CheckoutPage() {
                       {p.set_name && <p className="text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>{p.set_name}</p>}
                       {(p.cart_count ?? 0) > 0 && (
                         <p className="text-[9px] font-mono mt-0.5 opacity-60" style={{ color: 'var(--gold)' }}>
-                          ● {(p.cart_count ?? 0) === 1 
-                              ? t('pages.product.cart_users_has', '{count} OTHER USER HAS THIS IN THEIR CART', { count: (p.cart_count ?? 0) })
-                              : t('pages.product.cart_users_have', '{count} OTHER USERS HAVE THIS IN THEIR CART', { count: (p.cart_count ?? 0) })}
+                          ● {(p.cart_count ?? 0) === 1
+                            ? t('pages.product.cart_users_has', '{count} OTHER USER HAS THIS IN THEIR CART', { count: (p.cart_count ?? 0) })
+                            : t('pages.product.cart_users_have', '{count} OTHER USERS HAVE THIS IN THEIR CART', { count: (p.cart_count ?? 0) })}
                         </p>
                       )}
                       {badges.length > 0 && (
@@ -371,7 +364,11 @@ export default function CheckoutPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-text-muted">{t('pages.checkout.summary.shipping', 'SHIPPING')}</span>
-                <span>{form.is_local_pickup ? t('pages.checkout.summary.free', 'FREE') : `$${(settings?.flat_shipping_fee_cop || 0).toLocaleString()}`}</span>
+                <span>
+                  {form.is_local_pickup
+                    ? t('pages.checkout.summary.free', 'FREE')
+                    : `$${(form.is_priority ? (settings?.priority_shipping_fee_cop || 30000) : (settings?.flat_shipping_fee_cop || 20000)).toLocaleString()}`}
+                </span>
               </div>
             </div>
 
@@ -380,7 +377,10 @@ export default function CheckoutPage() {
             <div className="flex justify-between items-center mb-4">
               <span className="font-display text-xl">{t('pages.checkout.total', 'TOTAL')}</span>
               <span className="price text-2xl">
-                ${(totalPrice + (form.is_local_pickup ? 0 : (settings?.flat_shipping_fee_cop || 0))).toLocaleString('en-US', { maximumFractionDigits: 0 })} COP
+                {(() => {
+                  const shipping = form.is_local_pickup ? 0 : (form.is_priority ? (settings?.priority_shipping_fee_cop || 30000) : (settings?.flat_shipping_fee_cop || 20000));
+                  return (totalPrice + shipping).toLocaleString('en-US', { maximumFractionDigits: 0 });
+                })()} COP
               </span>
             </div>
 
@@ -392,8 +392,8 @@ export default function CheckoutPage() {
               className="btn-primary w-full py-3 text-lg"
               style={{ opacity: submitting ? 0.7 : 1 }}
             >
-              {submitting 
-                ? t('pages.checkout.buttons.processing', 'PROCESSING...') 
+              {submitting
+                ? t('pages.checkout.buttons.processing', 'PROCESSING...')
                 : t('pages.checkout.buttons.confirm', 'CONFIRM ORDER →')}
             </button>
 
@@ -416,9 +416,9 @@ export default function CheckoutPage() {
                         <p className="text-[10px] text-muted truncate">{item.product.set_name}</p>
                         {(item.product.cart_count ?? 0) > 0 && (
                           <p className="text-[9px] font-mono mt-0.5 opacity-60" style={{ color: 'var(--gold)' }}>
-                            ● {(item.product.cart_count ?? 0) === 1 
-                                ? t('pages.product.cart_users_has', '{count} OTHER USER HAS THIS IN THEIR CART', { count: (item.product.cart_count ?? 0) })
-                                : t('pages.product.cart_users_have', '{count} OTHER USERS HAVE THIS IN THEIR CART', { count: (item.product.cart_count ?? 0) })}
+                            ● {(item.product.cart_count ?? 0) === 1
+                              ? t('pages.product.cart_users_has', '{count} OTHER USER HAS THIS IN THEIR CART', { count: (item.product.cart_count ?? 0) })
+                              : t('pages.product.cart_users_have', '{count} OTHER USERS HAVE THIS IN THEIR CART', { count: (item.product.cart_count ?? 0) })}
                           </p>
                         )}
                       </div>
@@ -447,6 +447,8 @@ export default function CheckoutPage() {
                 </div>
               </div>
             )}
+            {/* Synergy Scout Recommendations */}
+            <SynergyScout />
           </div>
         </div>
       </form>

@@ -773,3 +773,93 @@ func (s *ProductStore) buildOrderBy(params ProductFilterParams, argsLen int) str
 	}
 	return col + " " + dir + ", p.id DESC"
 }
+
+func (s *ProductStore) GetRecommendations(ctx context.Context, cartIDs []string, settings models.Settings) ([]models.Product, error) {
+	if len(cartIDs) == 0 {
+		return []models.Product{}, nil
+	}
+
+	// We use a named query for better readability and to use "variables" instead of positional parameters.
+	query := `
+		WITH cart_metadata AS (
+			SELECT 
+				array_agg(DISTINCT c) FILTER (WHERE c IS NOT NULL) as colors,
+				array_agg(DISTINCT set_code) FILTER (WHERE set_code IS NOT NULL) as sets
+			FROM product, UNNEST(STRING_TO_ARRAY(color_identity, ',')) as c
+			WHERE id = ANY(:cart_ids)
+		)
+		SELECT p.*
+		FROM view_product_enriched p, cart_metadata cm
+		WHERE p.id != ALL(:cart_ids)
+		  AND p.stock >= 1
+		  AND (
+		  	-- Check price using source-specific rate from variables
+		  	COALESCE(p.price_cop_override, 
+		  	  CASE p.price_source
+		  	    WHEN 'cardkingdom' THEN p.price_reference * :ck_rate
+		  	    WHEN 'tcgplayer'   THEN p.price_reference * :usd_rate
+		  	    WHEN 'cardmarket'   THEN p.price_reference * :eur_rate
+		  	    ELSE p.price_reference
+		  	  END
+		  	) <= :max_price
+		  )
+		  AND (
+		      -- Match color identity overlap (at least one shared color)
+		      (p.color_identity IS NOT NULL AND cm.colors IS NOT NULL AND STRING_TO_ARRAY(p.color_identity, ',') && cm.colors)
+		      OR
+		      -- Match set
+		      (p.set_code IS NOT NULL AND cm.sets IS NOT NULL AND p.set_code = ANY(cm.sets))
+		      OR
+		      -- If cart has colorless/no-set cards, fallback to top-stock singles
+		      (cm.colors IS NULL AND cm.sets IS NULL)
+		  )
+		ORDER BY p.stock DESC, random()
+		LIMIT 10
+	`
+
+	argMap := map[string]interface{}{
+		"cart_ids":  cartIDs,
+		"usd_rate":  settings.USDToCOPRate,
+		"eur_rate":  settings.EURToCOPRate,
+		"ck_rate":   settings.CKToCOPRate,
+		"max_price": settings.SynergyMaxPriceCOP,
+	}
+
+	logger.TraceCtx(ctx, "[DB] GetRecommendations params: ids=%v, usd=%.2f, eur=%.2f, ck=%.2f, max=%.2f",
+		cartIDs, settings.USDToCOPRate, settings.EURToCOPRate, settings.CKToCOPRate, settings.SynergyMaxPriceCOP)
+
+	nQuery, nArgs, err := sqlx.Named(query, argMap)
+	if err != nil {
+		logger.ErrorCtx(ctx, "[DB] GetRecommendations Named bind failed: %v", err)
+		return nil, fmt.Errorf("failed to bind named query: %w", err)
+	}
+	nQuery = s.DB.Rebind(nQuery)
+
+	var rows []struct {
+		models.Product
+		StoredInJSON   []byte `db:"stored_in_json"`
+		CategoriesJSON []byte `db:"categories_json"`
+		DeckCardsJSON  []byte `db:"deck_cards_json"`
+	}
+
+	if err := s.DB.Unsafe().SelectContext(ctx, &rows, nQuery, nArgs...); err != nil {
+		logger.ErrorCtx(ctx, "[DB] GetRecommendations query failed: %v", err)
+		return nil, err
+	}
+
+	products := make([]models.Product, len(rows))
+	for i, r := range rows {
+		products[i] = r.Product
+		if r.StoredInJSON != nil {
+			json.Unmarshal(r.StoredInJSON, &products[i].StoredIn)
+		}
+		if r.CategoriesJSON != nil {
+			json.Unmarshal(r.CategoriesJSON, &products[i].Categories)
+		}
+		if r.DeckCardsJSON != nil {
+			json.Unmarshal(r.DeckCardsJSON, &products[i].DeckCards)
+		}
+	}
+
+	return products, nil
+}

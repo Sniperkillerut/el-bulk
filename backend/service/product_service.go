@@ -1,12 +1,12 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
-	"context"
 
 	"github.com/el-bulk/backend/external"
 	"github.com/el-bulk/backend/models"
@@ -130,7 +130,7 @@ func (s *ProductService) Create(ctx context.Context, input models.ProductInput) 
 
 	settings, _ := s.Settings.GetSettings(ctx)
 	products := []models.Product{*product}
-	
+
 	// Enrichment is highly recommended but non-terminal for a successful POST
 	if err := s.EnrichProducts(ctx, products, settings, true); err != nil {
 		logger.WarnCtx(ctx, "Partial enrichment failure for product %s: %v", product.ID, err)
@@ -141,9 +141,9 @@ func (s *ProductService) Create(ctx context.Context, input models.ProductInput) 
 
 func (s *ProductService) Update(ctx context.Context, id string, input models.ProductInput) (*models.Product, error) {
 	logger.TraceCtx(ctx, "Entering ProductService.Update | ID: %s", id)
-	
+
 	oldProduct, _ := s.Store.GetEnrichedByID(ctx, id)
-	
+
 	product, err := s.Store.UpdateProduct(ctx, id, input)
 	if err != nil {
 		logger.ErrorCtx(ctx, "Core product update failed for %s: %v", id, err)
@@ -171,7 +171,7 @@ func (s *ProductService) Update(ctx context.Context, id string, input models.Pro
 
 	settings, _ := s.Settings.GetSettings(ctx)
 	products := []models.Product{*product}
-	
+
 	// Enrichment is highly recommended but non-terminal for a successful PUT
 	if err := s.EnrichProducts(ctx, products, settings, true); err != nil {
 		logger.WarnCtx(ctx, "Partial enrichment failure during update for product %s: %v", product.ID, err)
@@ -182,9 +182,9 @@ func (s *ProductService) Update(ctx context.Context, id string, input models.Pro
 
 func (s *ProductService) Delete(ctx context.Context, id string) error {
 	logger.TraceCtx(ctx, "Entering ProductService.Delete | ID: %s", id)
-	
+
 	oldProduct, _ := s.Store.GetEnrichedByID(ctx, id)
-	
+
 	err := s.Store.Delete(ctx, id)
 	if err == nil {
 		s.Audit.LogAction(ctx, "DELETE_PRODUCT", "product", id, models.JSONB{"deleted": oldProduct})
@@ -204,15 +204,15 @@ func (s *ProductService) EnrichProducts(ctx context.Context, products []models.P
 
 	// 2. Secondary Enrichment: Side-data population
 	// We log errors but continue to ensure the basic resource remains accessible
-	
+
 	if err := s.Store.PopulateStorage(ctx, products); err != nil {
 		logger.ErrorCtx(ctx, "Failed to populate storage info for %d products: %v", len(products), err)
 	}
-	
+
 	if err := s.Store.PopulateCategories(ctx, products); err != nil {
 		logger.ErrorCtx(ctx, "Failed to populate category info for %d products: %v", len(products), err)
 	}
-	
+
 	if !isAdmin {
 		// Filter categories that shouldn't be shown to public
 		for i := range products {
@@ -229,11 +229,11 @@ func (s *ProductService) EnrichProducts(ctx context.Context, products []models.P
 	if err := s.Store.PopulateCartCounts(ctx, products); err != nil {
 		logger.ErrorCtx(ctx, "Failed to populate cart counts for %d products: %v", len(products), err)
 	}
-	
+
 	for i := range products {
 		products[i].Redact(isAdmin)
 	}
-	
+
 	if err := s.IdentifyHotNew(ctx, products, settings); err != nil {
 		logger.ErrorCtx(ctx, "Failed to identify hot/new status for %d products: %v", len(products), err)
 	}
@@ -501,7 +501,7 @@ func (h *ProductService) UpdateStorage(ctx context.Context, id string, updates [
 	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
-	
+
 	return h.GetStorage(ctx, id)
 }
 func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, source models.PriceSource, onProgress func(current, total int)) (int, error) {
@@ -520,7 +520,7 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 		return 0, err
 	}
 	count, _ := res.RowsAffected()
-	
+
 	if onProgress != nil {
 		onProgress(0, len(ids))
 	}
@@ -537,7 +537,7 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 		WHERE p.id IN (?)`, ids)
 	if err == nil {
 		_ = s.Store.DB.SelectContext(ctx, &rows, s.Store.DB.Rebind(query), args...)
-		
+
 		if len(rows) > 0 {
 			// 1. Prepare batch identifiers for ALL products.
 			// This avoids the 600MB bulk file by resolving exactly what we need via API.
@@ -561,16 +561,16 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 			// 2. Fetch real-time scryfall batch (Fast-Path)
 			// BatchLookupMTGCard now handles chunking (75 per request) automatically.
 			batchRes, _ := external.BatchLookupMTGCard(ctx, idents)
-			
+
 			// 3. Populate local caches for the resolver
 			scryIdBatch := make(map[string]external.CardMetadata)
 			scryNameBatch := make(map[external.PriceKey]external.CardMetadata)
-			
+
 			for _, r := range batchRes {
 				meta := r.ToCardMetadata()
 				if meta.ScryfallID != "" {
 					scryIdBatch[meta.ScryfallID] = meta
-					
+
 					// Also index by Name/Set/CN for items that were missing IDs in our DB
 					pSetCode := ""
 					if r.MTGMetadata.SetCode != nil {
@@ -660,9 +660,9 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 					if pResult.Metadata != nil {
 						update.ScryfallID = pResult.Metadata.ScryfallID
 						update.OracleText = pResult.Metadata.OracleText
-						update.TypeLine    = pResult.Metadata.TypeLine
-						update.ImageURL    = pResult.Metadata.ImageURL
-						update.Legalities  = pResult.Metadata.Legalities
+						update.TypeLine = pResult.Metadata.TypeLine
+						update.ImageURL = pResult.Metadata.ImageURL
+						update.Legalities = pResult.Metadata.Legalities
 					}
 					updates = append(updates, update)
 				}
@@ -672,7 +672,7 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 				rs := store.RefreshStore{DB: s.Store.DB}
 				settings, _ := s.Settings.GetSettings(ctx)
 				_, _ = rs.BulkUpdateMetadata(ctx, updates, settings.USDToCOPRate, settings.EURToCOPRate, settings.CKToCOPRate)
-				
+
 				if onProgress != nil {
 					onProgress(len(rows), len(rows))
 				}
@@ -769,4 +769,20 @@ func (s *ProductService) EnrichCardLookupResults(ctx context.Context, results []
 	}
 
 	return nil
+}
+
+func (s *ProductService) GetRecommendations(ctx context.Context, ids []string) ([]models.Product, error) {
+	logger.TraceCtx(ctx, "Entering ProductService.GetRecommendations | Count: %d", len(ids))
+
+	settings, _ := s.Settings.GetSettings(ctx)
+	products, err := s.Store.GetRecommendations(ctx, ids, settings)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.EnrichProducts(ctx, products, settings, false); err != nil {
+		return nil, err
+	}
+
+	return products, nil
 }

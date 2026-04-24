@@ -296,6 +296,11 @@ type Settings struct {
 	// Internationalization
 	DefaultLocale        string `json:"default_locale"`
 	HideLanguageSelector bool   `json:"hide_language_selector"`
+
+	// Bogotá Express & Synergy Scout
+	DeliveryPriorityEnabled bool    `json:"delivery_priority_enabled"`
+	PriorityShippingFeeCOP  float64 `json:"priority_shipping_fee_cop"`
+	SynergyMaxPriceCOP      float64 `json:"synergy_max_price_cop"`
 }
 
 // PublicSettings is the safe subset of Settings returned by the public /api/settings endpoint.
@@ -310,6 +315,8 @@ type PublicSettings struct {
 	DefaultThemeID       string  `json:"default_theme_id"`
 	DefaultLocale        string  `json:"default_locale"`
 	HideLanguageSelector bool    `json:"hide_language_selector"`
+	DeliveryPriorityEnabled bool    `json:"delivery_priority_enabled"`
+	PriorityShippingFeeCOP float64 `json:"priority_shipping_fee_cop"`
 }
 
 // ToPublic returns the public-safe subset of Settings.
@@ -324,6 +331,8 @@ func (s Settings) ToPublic() PublicSettings {
 		DefaultThemeID:       s.DefaultThemeID,
 		DefaultLocale:        s.DefaultLocale,
 		HideLanguageSelector: s.HideLanguageSelector,
+		DeliveryPriorityEnabled: s.DeliveryPriorityEnabled,
+		PriorityShippingFeeCOP: s.PriorityShippingFeeCOP,
 	}
 }
 
@@ -473,6 +482,7 @@ type Order struct {
 	TrackingNumber  *string    `db:"tracking_number" json:"tracking_number,omitempty"`
 	TrackingURL     *string    `db:"tracking_url"    json:"tracking_url,omitempty"`
 	IsLocalPickup   bool       `db:"is_local_pickup" json:"is_local_pickup"`
+	IsPriority      bool       `db:"is_priority"      json:"is_priority"`
 	InventoryRestored bool     `db:"inventory_restored" json:"inventory_restored"`
 	Notes           *string    `db:"notes"          json:"notes,omitempty"`
 	CreatedAt       time.Time  `db:"created_at"     json:"created_at"`
@@ -535,6 +545,7 @@ type CreateOrderInput struct {
 	Address       string             `json:"address"`
 	PaymentMethod string             `json:"payment_method"`
 	IsLocalPickup bool               `json:"is_local_pickup"`
+	IsPriority    bool               `json:"is_priority"`
 	Notes         string             `json:"notes"`
 	Items         []CreateOrderItem  `json:"items"`
 }

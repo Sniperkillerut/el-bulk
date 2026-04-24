@@ -256,6 +256,44 @@ export default function AdminSettingsPage() {
               <p className="text-[9px] mt-2 text-text-muted italic leading-tight">Products created within this window will display the 🆕 NEW badge.</p>
             </div>
 
+            {/* Bogotá Express Delivery */}
+            <div className="card p-3 bg-white shadow-sm border-l-4 border-green-500">
+              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">Bogotá Express Delivery</label>
+              <div className="flex items-center gap-3 py-2">
+                <button
+                  onClick={() => setEditingSettings({ ...editingSettings, delivery_priority_enabled: !editingSettings.delivery_priority_enabled })}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ring-offset-2 focus:ring-2 ring-green-500 ${
+                    editingSettings.delivery_priority_enabled ? 'bg-green-500' : 'bg-ink-surface/20'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      editingSettings.delivery_priority_enabled ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+                <span className={`text-xs font-bold font-mono-stack ${editingSettings.delivery_priority_enabled ? 'text-green-600' : 'text-text-muted'}`}>
+                  {editingSettings.delivery_priority_enabled ? 'MASTER SWITCH: ON' : 'MASTER SWITCH: OFF'}
+                </span>
+              </div>
+              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">When OFF, the delivery badge will show as OFFLINE regardless of hours.</p>
+            </div>
+
+            {/* Synergy Scout Price Limit */}
+            <div className="card p-3 bg-white shadow-sm border-l-4 border-indigo-400">
+              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">Synergy Scout Price Limit (COP)</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted font-bold">$</span>
+                <input 
+                  type="number" 
+                  className="pl-8 py-2 font-bold text-lg w-full bg-ink-surface/10 rounded-sm focus:bg-white transition-all outline-none border border-transparent focus:border-indigo-400"
+                  value={editingSettings.synergy_max_price_cop} 
+                  onChange={e => setEditingSettings({ ...editingSettings, synergy_max_price_cop: parseFloat(e.target.value) || 0 })} 
+                />
+              </div>
+              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">Max price for cards suggested in the Synergy Scout widget.</p>
+            </div>
+
             {/* Shipping Fee */}
             <div className="card p-3 bg-white shadow-sm border-l-4 border-ink-deep">
               <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">Flat Shipping Fee (COP)</label>
@@ -269,6 +307,21 @@ export default function AdminSettingsPage() {
                 />
               </div>
               <p className="text-[9px] mt-2 text-text-muted italic leading-tight">Standard fee applied to all shipping orders (ignored for local pickup).</p>
+            </div>
+
+            {/* Priority Shipping Fee */}
+            <div className="card p-3 bg-white shadow-sm border-l-4 border-gold">
+              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">Priority Shipping Fee (COP)</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted font-bold">$</span>
+                <input 
+                  type="number" 
+                  className="pl-8 py-2 font-bold text-lg w-full bg-ink-surface/10 rounded-sm focus:bg-white transition-all outline-none border border-transparent focus:border-gold"
+                  value={editingSettings.priority_shipping_fee_cop} 
+                  onChange={e => setEditingSettings({ ...editingSettings, priority_shipping_fee_cop: parseFloat(e.target.value) || 0 })} 
+                />
+              </div>
+              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">Fee for Express/Priority delivery in Bogotá. Only applied if Express is selected.</p>
             </div>
           </div>
         </section>

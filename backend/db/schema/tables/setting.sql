@@ -15,5 +15,7 @@ INSERT INTO setting (key, value) VALUES
   ('contact_instagram', 'el-bulk'),
   ('contact_hours', 'Mon - Sat: 11:00 AM - 7:00 PM'),
   ('default_theme_id', '00000000-0000-0000-0000-000000000001'),
-  ('flat_shipping_fee_cop', '15000')
+  ('flat_shipping_fee_cop', '20000'),
+  ('delivery_priority_enabled', 'true'),
+  ('synergy_max_price_cop', '2000')
 ON CONFLICT (key) DO NOTHING;
