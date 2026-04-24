@@ -44,7 +44,7 @@ describe('AuditLogsPage', () => {
 
   it('renders correctly and fetches logs', async () => {
     render(<AuditLogsPage />)
-    
+
     expect(screen.getByText(/ACTION LOG/i)).toBeInTheDocument()
     expect(screen.getByText('Synchronizing ledger...')).toBeInTheDocument()
 
@@ -61,17 +61,13 @@ describe('AuditLogsPage', () => {
 
   it('filters logs when action selection changes', async () => {
     render(<AuditLogsPage />)
-    
-    // Since there are two selects, let's be more specific if possible or just use the first one
+
     const selects = screen.getAllByRole('combobox')
-    
     // First select is Action
     vi.mocked(api.adminFetchAuditLogs).mockClear()
-    
     // Trigger change
     const actionSelectElement = selects[0] as HTMLSelectElement
     vi.mocked(api.adminFetchAuditLogs).mockResolvedValue(mockLogs)
-    
     // Change value
     actionSelectElement.value = 'CREATE'
     const event = new Event('change', { bubbles: true })
