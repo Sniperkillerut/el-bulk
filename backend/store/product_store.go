@@ -609,7 +609,12 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 	if params.Search != "" {
 		placeholderIdx := len(args) + 1
 		args = append(args, params.Search)
-		mandatory = append(mandatory, fmt.Sprintf("(p.search_vector @@ websearch_to_tsquery('english', $%d) OR p.name ILIKE '%%' || $%d || '%%')", placeholderIdx, placeholderIdx))
+		cond := fmt.Sprintf("(p.search_vector @@ websearch_to_tsquery('english', $%d) OR p.name ILIKE '%%' || $%d || '%%')", placeholderIdx, placeholderIdx)
+		if strings.ToLower(params.FilterLogic) == "and" {
+			mandatory = append(mandatory, cond)
+		} else {
+			optional = append(optional, cond)
+		}
 	}
 
 	opLogic := " OR "
