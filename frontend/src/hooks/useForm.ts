@@ -36,15 +36,19 @@ export function useForm<T extends ContactForm>(initialState: T) {
 
   const handleSubmit = async (onSubmit: (data: T) => Promise<void>) => {
     if (!validate()) return;
-    
+
     setSubmitting(true);
     setError('');
-    
+
     try {
       await onSubmit(form);
       setSuccess(true);
     } catch (err: unknown) {
-      setError(err instanceof Error && err.message ? err.message : 'An error occurred. Please try again.');
+      if (err instanceof Error && err.message) {
+        setError(err.message);
+      } else {
+        setError('An error occurred. Please try again.');
+      }
     } finally {
       setSubmitting(false);
     }
