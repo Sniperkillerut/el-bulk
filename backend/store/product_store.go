@@ -657,26 +657,25 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 	}
 
 	// MTG Metadata Filters
-	if params.IsLegendary != "" {
-		if params.IsLegendary == "true" {
-			mandatory = append(mandatory, "p.is_legendary = true")
-		} else if params.IsLegendary == "false" {
-			mandatory = append(mandatory, "p.is_legendary = false")
-		}
+	switch params.IsLegendary {
+	case "true":
+		mandatory = append(mandatory, "p.is_legendary = true")
+	case "false":
+		mandatory = append(mandatory, "p.is_legendary = false")
 	}
-	if params.IsLand != "" {
-		if params.IsLand == "true" {
-			mandatory = append(mandatory, "p.is_land = true")
-		} else if params.IsLand == "false" {
-			mandatory = append(mandatory, "p.is_land = false")
-		}
+
+	switch params.IsLand {
+	case "true":
+		mandatory = append(mandatory, "p.is_land = true")
+	case "false":
+		mandatory = append(mandatory, "p.is_land = false")
 	}
-	if params.IsHistoric != "" {
-		if params.IsHistoric == "true" {
-			mandatory = append(mandatory, "p.is_historic = true")
-		} else if params.IsHistoric == "false" {
-			mandatory = append(mandatory, "p.is_historic = false")
-		}
+
+	switch params.IsHistoric {
+	case "true":
+		mandatory = append(mandatory, "p.is_historic = true")
+	case "false":
+		mandatory = append(mandatory, "p.is_historic = false")
 	}
 	if params.Format != "" {
 		vals := strings.Split(params.Format, ",")

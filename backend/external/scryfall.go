@@ -449,13 +449,14 @@ func resolveFoilTreatment(card *scryfallCard, requestedFoil string) models.FoilT
 	hasEtched := false
 	hasGlossy := false
 	for _, f := range card.Finishes {
-		if f == "foil" {
+		switch f {
+		case "foil":
 			hasFoil = true
-		} else if f == "nonfoil" {
+		case "nonfoil":
 			hasNonFoil = true
-		} else if f == "etched" {
+		case "etched":
 			hasEtched = true
-		} else if f == "glossy" {
+		case "glossy":
 			hasGlossy = true
 		}
 	}
