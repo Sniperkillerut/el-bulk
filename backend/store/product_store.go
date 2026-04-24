@@ -863,3 +863,90 @@ func (s *ProductStore) GetRecommendations(ctx context.Context, cartIDs []string,
 
 	return products, nil
 }
+
+func (s *ProductStore) GetByNames(ctx context.Context, names []string) ([]models.Product, error) {
+	if len(names) == 0 {
+		return []models.Product{}, nil
+	}
+
+	query, args, err := sqlx.In(`
+		SELECT p.* 
+		FROM view_product_enriched p
+		WHERE p.name IN (?) AND p.stock >= 1
+		LIMIT 20
+	`, names)
+	if err != nil {
+		return nil, err
+	}
+	query = s.DB.Rebind(query)
+
+	var rows []struct {
+		models.Product
+		StoredInJSON   []byte `db:"stored_in_json"`
+		CategoriesJSON []byte `db:"categories_json"`
+		DeckCardsJSON  []byte `db:"deck_cards_json"`
+	}
+
+	if err := s.DB.Unsafe().SelectContext(ctx, &rows, query, args...); err != nil {
+		return nil, err
+	}
+
+	products := make([]models.Product, len(rows))
+	for i, r := range rows {
+		products[i] = r.Product
+		if r.StoredInJSON != nil {
+			json.Unmarshal(r.StoredInJSON, &products[i].StoredIn)
+		}
+		if r.CategoriesJSON != nil {
+			json.Unmarshal(r.CategoriesJSON, &products[i].Categories)
+		}
+		if r.DeckCardsJSON != nil {
+			json.Unmarshal(r.DeckCardsJSON, &products[i].DeckCards)
+		}
+	}
+
+	return products, nil
+}
+
+func (s *ProductStore) GetByIDs(ctx context.Context, ids []string) ([]models.Product, error) {
+	if len(ids) == 0 {
+		return []models.Product{}, nil
+	}
+
+	query, args, err := sqlx.In(`
+		SELECT p.* 
+		FROM view_product_enriched p
+		WHERE p.id IN (?)
+	`, ids)
+	if err != nil {
+		return nil, err
+	}
+	query = s.DB.Rebind(query)
+
+	var rows []struct {
+		models.Product
+		StoredInJSON   []byte `db:"stored_in_json"`
+		CategoriesJSON []byte `db:"categories_json"`
+		DeckCardsJSON  []byte `db:"deck_cards_json"`
+	}
+
+	if err := s.DB.Unsafe().SelectContext(ctx, &rows, query, args...); err != nil {
+		return nil, err
+	}
+
+	products := make([]models.Product, len(rows))
+	for i, r := range rows {
+		products[i] = r.Product
+		if r.StoredInJSON != nil {
+			json.Unmarshal(r.StoredInJSON, &products[i].StoredIn)
+		}
+		if r.CategoriesJSON != nil {
+			json.Unmarshal(r.CategoriesJSON, &products[i].Categories)
+		}
+		if r.DeckCardsJSON != nil {
+			json.Unmarshal(r.DeckCardsJSON, &products[i].DeckCards)
+		}
+	}
+
+	return products, nil
+}

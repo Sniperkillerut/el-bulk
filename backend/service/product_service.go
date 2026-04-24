@@ -775,13 +775,74 @@ func (s *ProductService) GetRecommendations(ctx context.Context, ids []string) (
 	logger.TraceCtx(ctx, "Entering ProductService.GetRecommendations | Count: %d", len(ids))
 
 	settings, _ := s.Settings.GetSettings(ctx)
+	
+	// 1. Fetch products currently in cart to check for commanders
+	cartProducts, err := s.Store.GetByIDs(ctx, ids)
+	if err != nil {
+		logger.WarnCtx(ctx, "Failed to fetch cart products for EDHREC check: %v", err)
+	}
+
+	var edhrecRecommendations []string
+	for _, p := range cartProducts {
+		// Heuristic: If it's a legendary creature, it might be a commander
+		if p.TypeLine != nil && strings.Contains(strings.ToLower(*p.TypeLine), "legendary") && strings.Contains(strings.ToLower(*p.TypeLine), "creature") {
+			recs, err := external.FetchEDHRECRecommendations(ctx, p.Name)
+			if err == nil && len(recs) > 0 {
+				edhrecRecommendations = append(edhrecRecommendations, recs...)
+			}
+		}
+	}
+
+	// 2. Get standard recommendations (color/set based)
 	products, err := s.Store.GetRecommendations(ctx, ids, settings)
 	if err != nil {
 		return nil, err
 	}
 
+	// 3. If we have EDHREC recommendations, try to fetch some of them from our stock
+	if len(edhrecRecommendations) > 0 {
+		// Limit to unique names to avoid redundant queries
+		uniqueRecs := make(map[string]bool)
+		for _, name := range edhrecRecommendations {
+			uniqueRecs[name] = true
+		}
+		
+		names := make([]string, 0, len(uniqueRecs))
+		for name := range uniqueRecs {
+			names = append(names, name)
+		}
+
+		edhProducts, err := s.Store.GetByNames(ctx, names)
+		if err == nil && len(edhProducts) > 0 {
+			// Mix them in! We prepend them because they are higher quality
+			// Filter out items already in standard recommendations
+			existingIds := make(map[string]bool)
+			for _, p := range products {
+				existingIds[p.ID] = true
+			}
+			
+			var uniqueEdh []models.Product
+			for _, p := range edhProducts {
+				if !existingIds[p.ID] {
+					uniqueEdh = append(uniqueEdh, p)
+				}
+			}
+			
+			// Prepend EDHREC suggestions (limit to 3)
+			if len(uniqueEdh) > 3 {
+				uniqueEdh = uniqueEdh[:3]
+			}
+			products = append(uniqueEdh, products...)
+		}
+	}
+
+	// 4. Enrich and limit
 	if err := s.EnrichProducts(ctx, products, settings, false); err != nil {
 		return nil, err
+	}
+
+	if len(products) > 10 {
+		products = products[:10]
 	}
 
 	return products, nil
