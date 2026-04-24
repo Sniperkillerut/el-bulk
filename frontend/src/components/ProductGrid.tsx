@@ -208,7 +208,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
 
         {/* Sidebar / Mobile Drawer */}
         <aside className={`
-          fixed sm:sticky sm:top-20 top-0 left-0 h-full sm:h-[calc(100vh-100px)] w-[85vw] sm:w-48 md:w-64 z-50 sm:z-auto bg-bg-surface sm:bg-transparent shadow-2xl sm:shadow-none transform transition-transform duration-300 ease-in-out shrink-0 overflow-y-auto custom-scrollbar p-3 sm:p-0 sm:pr-8
+          fixed sm:sticky sm:top-20 top-0 left-0 h-full sm:h-[calc(100vh-100px)] w-[85vw] sm:w-48 md:w-64 z-50 sm:z-auto bg-bg-surface sm:bg-bg-surface/40 sm:backdrop-blur-md sm:border-r sm:border-border-main/30 sm:shadow-[inset_-1px_0_0_0_rgba(255,255,255,0.05),-10px_0_30px_rgba(0,0,0,0.1)] transform transition-transform duration-300 ease-in-out shrink-0 overflow-y-auto custom-scrollbar p-5 sm:p-6 sm:mr-6
           ${isMobileFiltersOpen ? 'translate-x-0' : '-translate-x-full sm:translate-x-0'}
         `}>
           {/* Mobile Drawer Header */}
@@ -223,21 +223,21 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
             {/* Logic Toggle */}
             <div className="flex flex-col gap-2">
               <p className="text-[10px] font-bold text-text-muted uppercase font-mono-stack">{t('pages.inventory.grid.filters.strategy.title', 'Search Strategy')}</p>
-              <div className="flex p-1 bg-bg-page/30 rounded-md border border-border-main/20">
+              <div className="flex p-1 bg-black/10 rounded-md border border-border-main/10 shadow-inner">
                 <button
                   onClick={() => { setLogic('or'); setPage(1); }}
-                  className={`flex-1 py-1.5 px-2 text-[10px] font-bold rounded transition-all font-mono-stack ${logic === 'or'
-                    ? 'bg-emerald-600 text-white shadow-sm'
-                    : 'text-text-muted hover:text-emerald-600'
+                  className={`flex-1 py-2 px-2 text-[10px] font-bold rounded transition-all font-mono-stack ${logic === 'or'
+                    ? 'bg-emerald-600 text-white shadow-md'
+                    : 'text-text-muted hover:text-emerald-500'
                     }`}
                 >
                   {t('pages.inventory.grid.filters.strategy.broad', 'BROAD (OR)')}
                 </button>
                 <button
                   onClick={() => { setLogic('and'); setPage(1); }}
-                  className={`flex-1 py-1.5 px-2 text-[10px] font-bold rounded transition-all font-mono-stack ${logic === 'and'
-                    ? 'bg-orange-600 text-white shadow-sm'
-                    : 'text-text-muted hover:text-orange-600'
+                  className={`flex-1 py-2 px-2 text-[10px] font-bold rounded transition-all font-mono-stack ${logic === 'and'
+                    ? 'bg-orange-600 text-white shadow-md'
+                    : 'text-text-muted hover:text-orange-500'
                     }`}
                 >
                   {t('pages.inventory.grid.filters.strategy.narrow', 'NARROW (AND)')}
@@ -532,7 +532,7 @@ function FilterSection({
   if (visibleItems.length === 0) return null;
 
   return (
-    <div className="border-b border-border-main/20 py-2 px-2">
+    <div className="border-b border-border-main/10 py-3 px-3 mb-2 bg-black/5 rounded-lg shadow-inner">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex justify-between items-center group mb-1"

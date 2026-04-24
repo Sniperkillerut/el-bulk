@@ -77,14 +77,14 @@ export default function HomeSearchBar({ placeholder }: HomeSearchBarProps) {
       </div>
 
       {showResults && query.trim() && (
-        <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-surface border-2 border-kraft-dark shadow-2xl rounded-sm animate-in fade-in slide-in-from-top-2 duration-200" style={{ width: 'min(640px, 95vw)', left: '0' }}>
+        <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-surface border-2 border-kraft-dark shadow-2xl rounded-sm animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="max-h-[500px] overflow-y-auto">
             {results && results.length > 0 ? (
               <div className="divide-y divide-kraft-light">
                 {results.map((product) => (
                   <div
                     key={product.id}
-                    className="p-4 flex items-center gap-5 hover:bg-kraft-light/30 transition-colors group cursor-pointer"
+                    className="p-4 flex items-center gap-5 hover:bg-kraft-light/50 hover:pl-6 transition-all group cursor-pointer"
                     style={{ overflow: 'visible' }}
                     onClick={() => {
                       openProductModal(product);

@@ -50,7 +50,7 @@ export default function HeroSection() {
           </p>
 
           {/* Functional Search Bar Area */}
-          <div className="mb-12 max-w-xl">
+          <div className="mb-12 w-full max-w-2xl lg:max-w-3xl">
             <div className="p-1 bg-white/10 backdrop-blur-md rounded-md shadow-2xl border border-white/20">
               <HomeSearchBar placeholder={t('pages.home.hero.search_placeholder', 'Find the cards everyone else missed...')} />
             </div>
