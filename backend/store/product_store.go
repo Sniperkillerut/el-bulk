@@ -26,28 +26,28 @@ func NewProductStore(db *sqlx.DB) *ProductStore {
 }
 
 type ProductFilterParams struct {
-	TCG         string
-	Category    string
-	Search      string
-	StorageID   string
-	Foil        string
-	Treatment   string
-	Condition   string
-	Collection  string
-	Rarity      string
-	Language    string
-	Color       string
-	SetName     string
-	InStock     bool
-	SortBy      string
-	SortDir     string
+	TCG            string
+	Category       string
+	Search         string
+	StorageID      string
+	Foil           string
+	Treatment      string
+	Condition      string
+	Collection     string
+	Rarity         string
+	Language       string
+	Color          string
+	SetName        string
+	InStock        bool
+	SortBy         string
+	SortDir        string
 	OnlyDuplicates bool
 	FilterLogic    string
 	Page           int
 	PageSize       int
 	Offset         int
 
-	IDs            []string
+	IDs []string
 
 	// Exchange rates for on-the-fly price sorting
 	USDRate float64
@@ -720,7 +720,7 @@ func (s *ProductStore) buildOrderBy(params ProductFilterParams, argsLen int) str
 	}
 	if params.SortBy == "" {
 		if params.Search != "" {
-			placeholderIdx := argsLen 
+			placeholderIdx := argsLen
 			return fmt.Sprintf("ts_rank(p.search_vector, websearch_to_tsquery('english', $%d)) DESC, p.id DESC", placeholderIdx)
 		}
 		return "p.id DESC"

@@ -862,8 +862,8 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                               setDeletedIds(prev => [...prev, item.id]);
                             }
                           }}
-                          disabled={detail.order.status === 'completed'}
-                          className={`p-1 rounded transition-colors ${isDeleted ? 'text-status-nm hover:text-status-nm/80' : 'text-hp-color/40 hover:text-hp-color'}`}
+                          disabled={!canEditInventory}
+                          className={`p-1 rounded transition-colors ${!canEditInventory ? 'opacity-30 cursor-not-allowed' : ''} ${isDeleted ? 'text-status-nm hover:text-status-nm/80' : 'text-hp-color/40 hover:text-hp-color'}`}
                           title={isDeleted ? 'Restaurar' : 'Eliminar de la orden'}
                         >
                           {isDeleted ? (
@@ -965,7 +965,11 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                              className="w-12 text-xs p-1 text-center font-mono-stack outline-none border border-kraft-dark/20 rounded"
                           />
                         </div>
-                        <button onClick={() => removeStagedItem(si.product.id)} className="text-hp-color transition-colors self-center p-1">
+                        <button 
+                           onClick={() => removeStagedItem(si.product.id)} 
+                           disabled={!canEditInventory}
+                           className={`text-hp-color transition-colors self-center p-1 ${!canEditInventory ? 'opacity-30 cursor-not-allowed' : ''}`}
+                        >
                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                         </button>
                      </div>

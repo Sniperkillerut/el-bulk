@@ -100,6 +100,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
   const products = res?.products || [];
   const total = res?.total || 0;
   const facets = res?.facets || null;
+  const isRefetching = !!(loadingResult && res); // New data is being fetched but we have old data
   const loading = loadingResult && !res; // Only show main loading on first fetch
 
   useEffect(() => {
@@ -218,7 +219,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
             </button>
           </div>
 
-          <div className="flex flex-col gap-3 sm:pr-2 pb-8">
+          <div className={`flex flex-col gap-3 sm:pr-2 pb-8 transition-opacity duration-300 ${isRefetching ? 'opacity-40' : 'opacity-100'}`}>
             {/* Logic Toggle */}
             <div className="flex flex-col gap-2">
               <p className="text-[10px] font-bold text-text-muted uppercase font-mono-stack">{t('pages.inventory.grid.filters.strategy.title', 'Search Strategy')}</p>
@@ -299,6 +300,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                   selected={filters.condition}
                   onToggle={(val) => toggleFilter('condition', val)}
                   counts={facets?.condition}
+                  isRefetching={isRefetching}
                 />
 
                 <FilterSection
@@ -307,6 +309,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                   selected={filters.foil}
                   onToggle={(val) => toggleFilter('foil', val)}
                   counts={facets?.foil}
+                  isRefetching={isRefetching}
                 />
 
                 <FilterSection
@@ -315,6 +318,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                   selected={filters.treatment}
                   onToggle={(val) => toggleFilter('treatment', val)}
                   counts={facets?.treatment}
+                  isRefetching={isRefetching}
                 />
 
                 {tcg?.toLowerCase() === 'mtg' && (
@@ -332,6 +336,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                     selected={filters.rarity}
                     onToggle={(val) => toggleFilter('rarity', val)}
                     counts={facets?.rarity}
+                    isRefetching={isRefetching}
                   />
                 )}
 
@@ -341,6 +346,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                   selected={filters.setName}
                   onToggle={(val) => toggleFilter('setName', val)}
                   counts={setNameCounts}
+                  isRefetching={isRefetching}
                 />
 
                 {tcg?.toLowerCase() === 'mtg' && (
@@ -358,6 +364,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                     selected={filters.color}
                     onToggle={(val) => toggleFilter('color', val)}
                     counts={facets?.color}
+                    isRefetching={isRefetching}
                   />
                 )}
 
@@ -380,6 +387,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                     selected={filters.language}
                     onToggle={(val) => toggleFilter('language', val)}
                     counts={facets?.language}
+                    isRefetching={isRefetching}
                   />
                 )}
 
@@ -389,6 +397,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                   selected={filters.collection}
                   onToggle={(val) => toggleFilter('collection', val)}
                   counts={facets?.collection}
+                  isRefetching={isRefetching}
                 />
 
                 {(filters.search || filters.foil.length > 0 || filters.treatment.length > 0 || filters.condition.length > 0 || filters.collection.length > 0 || filters.rarity.length > 0 || filters.language.length > 0 || filters.color.length > 0 || filters.setName.length > 0) && (
@@ -413,6 +422,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
               {loading ? '...' : `${total} ${total === 1 
                                   ? t('pages.inventory.grid.status.result', 'result') 
                                   : t('pages.inventory.grid.status.results', 'results')}`}
+              {isRefetching && <span className="ml-2 animate-pulse">↻</span>}
             </p>
             <div className="flex items-center gap-2">
               <label className="text-[10px] font-mono-stack font-bold uppercase" style={{ color: 'var(--text-muted)' }}>{t('pages.inventory.grid.sort.label', 'Sort')}</label>
@@ -496,14 +506,16 @@ function FilterSection({
   selected,
   onToggle,
   counts,
-  initialOpen = true
+  initialOpen = true,
+  isRefetching = false
 }: {
   title: string,
   items: { id: string, label: string, color?: string, iconClass?: string }[],
   selected: string[],
   onToggle: (id: string) => void,
   counts?: Record<string, number>,
-  initialOpen?: boolean
+  initialOpen?: boolean,
+  isRefetching?: boolean
 }) {
   const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(initialOpen);
@@ -555,7 +567,7 @@ function FilterSection({
                 </span>
               </div>
               {counts && (
-                <span className="text-[10px] font-bold text-gold opacity-80 shrink-0 ml-2">
+                <span className={`text-[10px] font-bold text-gold shrink-0 ml-2 ${isRefetching ? 'animate-pulse opacity-40' : 'opacity-80'}`}>
                   ({counts[item.id] ?? counts[item.id.toLowerCase()] ?? counts[item.id.toUpperCase()] ?? 0})
                 </span>
               )}
