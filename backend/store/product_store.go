@@ -659,35 +659,34 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 	// MTG Metadata Filters
 	switch params.IsLegendary {
 	case "true":
-		mandatory = append(mandatory, "p.is_legendary = true")
+		optional = append(optional, "p.is_legendary = true")
 	case "false":
-		mandatory = append(mandatory, "p.is_legendary = false")
+		optional = append(optional, "p.is_legendary = false")
 	}
 
 	switch params.IsLand {
 	case "true":
-		mandatory = append(mandatory, "p.is_land = true")
+		optional = append(optional, "p.is_land = true")
 	case "false":
-		mandatory = append(mandatory, "p.is_land = false")
+		optional = append(optional, "p.is_land = false")
 	}
 
 	switch params.IsHistoric {
 	case "true":
-		mandatory = append(mandatory, "p.is_historic = true")
+		optional = append(optional, "p.is_historic = true")
 	case "false":
-		mandatory = append(mandatory, "p.is_historic = false")
+		optional = append(optional, "p.is_historic = false")
 	}
+
 	if params.Format != "" {
 		vals := strings.Split(params.Format, ",")
 		var conds []string
 		for _, v := range vals {
-			// Check if legal in this format (JSONB)
-			// legalities -> 'commander' = 'legal'
 			placeholder := fmt.Sprintf("$%d", len(args)+1)
 			args = append(args, v)
 			conds = append(conds, fmt.Sprintf("p.legalities->>%s = 'legal'", placeholder))
 		}
-		mandatory = append(mandatory, "("+strings.Join(conds, " OR ")+")")
+		optional = append(optional, "("+strings.Join(conds, opLogic)+")")
 	}
 	if params.Collection != "" {
 		vals := strings.Split(params.Collection, ",")
