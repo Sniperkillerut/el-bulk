@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { fetchProducts, fetchCategories } from '@/lib/api';
+import { ProductListResponse } from '@/lib/types';
 import CollectionClient from './CollectionClient';
 
 export async function generateMetadata({ params: rawParams }: any): Promise<Metadata> {
@@ -20,7 +21,23 @@ export default async function CollectionPage({ params: rawParams, searchParams: 
   
   const page = parseInt((searchParams.page as string) || '1', 10);
   let categories: any[] = [];
-  let products = { products: [] as any[], total: 0, page: 1, page_size: 20 };
+  let products: ProductListResponse = { 
+    products: [], 
+    total: 0, 
+    page: 1, 
+    page_size: 20,
+    facets: {
+      condition: {},
+      foil: {},
+      treatment: {},
+      rarity: {},
+      language: {},
+      color: {},
+      collection: {},
+      set_name: []
+    },
+    query_time_ms: 0
+  };
   
   try {
     categories = await fetchCategories();
