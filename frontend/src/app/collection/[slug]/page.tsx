@@ -1,12 +1,15 @@
 import { Metadata } from 'next';
 import { fetchProducts, fetchCategories } from '@/lib/api';
-import { ProductListResponse } from '@/lib/types';
+import { ProductListResponse, CustomCategory } from '@/lib/types';
 import CollectionClient from './CollectionClient';
 
-export async function generateMetadata({ params: rawParams }: any): Promise<Metadata> {
+type PageParams = Promise<{ slug: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export async function generateMetadata({ params: rawParams }: { params: PageParams }): Promise<Metadata> {
   const params = await rawParams;
   try {
-    const category = (await fetchCategories()).find((c: any) => c.slug === params.slug);
+    const category = (await fetchCategories()).find((c: CustomCategory) => c.slug === params.slug);
     return {
       title: category ? `${category.name} - El Bulk` : 'Collection - El Bulk',
     };
@@ -15,12 +18,12 @@ export async function generateMetadata({ params: rawParams }: any): Promise<Meta
   }
 }
 
-export default async function CollectionPage({ params: rawParams, searchParams: rawSearchParams }: any) {
+export default async function CollectionPage({ params: rawParams, searchParams: rawSearchParams }: { params: PageParams, searchParams: SearchParams }) {
   const params = await rawParams;
   const searchParams = await rawSearchParams;
   
   const page = parseInt((searchParams.page as string) || '1', 10);
-  let categories: any[] = [];
+  let categories: CustomCategory[] = [];
   let products: ProductListResponse = { 
     products: [], 
     total: 0, 
@@ -44,7 +47,7 @@ export default async function CollectionPage({ params: rawParams, searchParams: 
     products = await fetchProducts({ page, page_size: 20, collection: params.slug });
   } catch { }
 
-  const category = categories.find((c: any) => c.slug === params.slug);
+  const category = categories.find((c: CustomCategory) => c.slug === params.slug);
 
   return (
     <CollectionClient 
