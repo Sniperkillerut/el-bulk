@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from './renderWithProviders'
+import { render, screen, waitFor, fireEvent } from './renderWithProviders'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import AuditLogsPage from '../app/admin/audit-logs/page'
 import * as api from '@/lib/api'
@@ -25,6 +25,7 @@ const mockLogs = {
   logs: [
     {
       id: '1',
+      admin_id: 'admin-id-1',
       admin_username: 'admin1',
       action: 'create',
       resource_type: 'product',
@@ -34,6 +35,8 @@ const mockLogs = {
     },
   ],
   total: 1,
+  page: 1,
+  page_size: 20,
 }
 
 describe('AuditLogsPage', () => {
@@ -62,16 +65,15 @@ describe('AuditLogsPage', () => {
   it('filters logs when action selection changes', async () => {
     render(<AuditLogsPage />)
 
+    // Since there are two selects, let's be more specific if possible or just use the first one
     const selects = screen.getAllByRole('combobox')
     // First select is Action
     vi.mocked(api.adminFetchAuditLogs).mockClear()
     // Trigger change
     const actionSelectElement = selects[0] as HTMLSelectElement
     vi.mocked(api.adminFetchAuditLogs).mockResolvedValue(mockLogs)
-    // Change value
-    actionSelectElement.value = 'CREATE'
-    const event = new Event('change', { bubbles: true })
-    actionSelectElement.dispatchEvent(event)
+
+    fireEvent.change(actionSelectElement, { target: { value: 'CREATE' } })
 
     await waitFor(() => {
       expect(api.adminFetchAuditLogs).toHaveBeenCalledWith(expect.objectContaining({

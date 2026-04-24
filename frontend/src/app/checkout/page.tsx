@@ -5,9 +5,58 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/lib/CartContext';
 import { useUser } from '@/context/UserContext';
 import { createOrder, fetchPublicSettings } from '@/lib/api';
-import { PAYMENT_METHODS, FOIL_LABELS, TREATMENT_LABELS, PublicSettings } from '@/lib/types';
+import { PAYMENT_METHODS, FOIL_LABELS, TREATMENT_LABELS, PublicSettings, CartItem } from '@/lib/types';
 import CardImage from '@/components/CardImage';
 import { useLanguage } from '@/context/LanguageContext';
+
+const validateOrder = (
+  items: CartItem[],
+  t: (key: string, defaultMessage: string) => string,
+  setError: (msg: string) => void
+): boolean => {
+  if (items.length === 0) {
+    setError(t('pages.checkout.summary.empty_cart', 'Your cart is empty.'));
+    return false;
+  }
+  return true;
+};
+
+type CheckoutForm = {
+  first_name: string;
+  last_name: string;
+  phone: string;
+  email: string;
+  id_number: string;
+  address: string;
+  payment_method: string;
+  is_local_pickup: boolean;
+  notes: string;
+};
+
+const processOrder = async (
+  form: CheckoutForm,
+  items: CartItem[],
+  router: ReturnType<typeof useRouter>,
+  clearCart: () => void,
+  t: (key: string, defaultMessage: string) => string,
+  setSubmitting: (val: boolean) => void,
+  setError: (msg: string) => void
+) => {
+  setSubmitting(true);
+  setError('');
+  try {
+    const result = await createOrder({
+      ...form,
+      items: items.map((i: CartItem) => ({ product_id: i.product.id, quantity: i.quantity })),
+    });
+    clearCart();
+    router.push(`/order/${result.order_number}`);
+  } catch (e: unknown) {
+    setError(e instanceof Error ? e.message : t('pages.checkout.error.create_failed', 'Error creating the order.'));
+  } finally {
+    setSubmitting(false);
+  }
+};
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -54,25 +103,11 @@ export default function CheckoutPage() {
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
-    if (items.length === 0) {
-      setError(t('pages.checkout.summary.empty_cart', 'Your cart is empty.'));
+    if (!validateOrder(items, t, setError)) {
       return;
     }
 
-    setSubmitting(true);
-    setError('');
-    try {
-      const result = await createOrder({
-        ...form,
-        items: items.map(i => ({ product_id: i.product.id, quantity: i.quantity })),
-      });
-      clearCart();
-      router.push(`/order/${result.order_number}`);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : t('pages.checkout.error.create_failed', 'Error creating the order.'));
-    } finally {
-      setSubmitting(false);
-    }
+    await processOrder(form, items, router, clearCart, t, setSubmitting, setError);
   };
 
   if (loading) {
