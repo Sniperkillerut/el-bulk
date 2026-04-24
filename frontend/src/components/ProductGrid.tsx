@@ -18,6 +18,10 @@ interface FiltersState {
   color: string[];
   setName: string[];
   inStock: boolean;
+  isLegendary: string;
+  isLand: string;
+  isHistoric: string;
+  format: string[];
 }
 
 interface ProductGridProps {
@@ -44,7 +48,11 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
     language: [],
     color: [],
     setName: [],
-    inStock: true
+    inStock: true,
+    isLegendary: '',
+    isLand: '',
+    isHistoric: '',
+    format: []
   });
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
@@ -86,6 +94,10 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
     sort_by: sortBy || undefined,
     sort_dir: sortDir || undefined,
     logic: logic !== 'or' ? logic : undefined,
+    is_legendary: filters.isLegendary || undefined,
+    is_land: filters.isLand || undefined,
+    is_historic: filters.isHistoric || undefined,
+    format: filters.format.join(',') || undefined,
   }), [tcg, category, page, debouncedSearch, filters, sortBy, sortDir, logic]);
 
   const { data: res, isLoading: loadingResult } = useSWR(
@@ -133,6 +145,9 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
     setFilters(prev => {
       if (key === 'search') return { ...prev, search: value as string };
       if (key === 'inStock') return { ...prev, inStock: value as boolean };
+      if (key === 'isLegendary' || key === 'isLand' || key === 'isHistoric') {
+        return { ...prev, [key]: prev[key as keyof FiltersState] === value ? '' : value as string };
+      }
       const current = prev[key] as string[];
       const next = current.includes(value as string)
         ? current.filter(v => v !== value)
@@ -391,6 +406,64 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                   />
                 )}
 
+                {tcg?.toLowerCase() === 'mtg' && (
+                  <FilterSection
+                    title="Type"
+                    initialOpen={false}
+                    items={[
+                      { id: 'true', label: t('grid.filters.legendary', 'Legendary') },
+                      { id: 'historic', label: t('grid.filters.historic', 'Historic') }
+                    ]}
+                    selected={[
+                      filters.isLegendary === 'true' ? 'true' : '',
+                      filters.isHistoric === 'true' ? 'historic' : ''
+                    ].filter(Boolean)}
+                    onToggle={(id) => {
+                      if (id === 'true') toggleFilter('isLegendary', 'true');
+                      if (id === 'historic') toggleFilter('isHistoric', 'true');
+                    }}
+                    counts={{
+                      'true': facets?.is_legendary?.['true'] || 0,
+                      'historic': facets?.is_historic?.['true'] || 0
+                    }}
+                    isRefetching={isRefetching}
+                  />
+                )}
+
+                {tcg?.toLowerCase() === 'mtg' && (
+                  <FilterSection
+                    title="Structure"
+                    initialOpen={false}
+                    items={[
+                      { id: 'true', label: t('grid.filters.land', 'Land Only') }
+                    ]}
+                    selected={filters.isLand === 'true' ? ['true'] : []}
+                    onToggle={() => toggleFilter('isLand', 'true')}
+                    counts={facets?.is_land}
+                    isRefetching={isRefetching}
+                  />
+                )}
+
+                {tcg?.toLowerCase() === 'mtg' && (
+                  <FilterSection
+                    title="Legality"
+                    initialOpen={false}
+                    items={[
+                      { id: 'commander', label: 'Commander' },
+                      { id: 'modern', label: 'Modern' },
+                      { id: 'standard', label: 'Standard' },
+                      { id: 'legacy', label: 'Legacy' },
+                      { id: 'vintage', label: 'Vintage' },
+                      { id: 'pauper', label: 'Pauper' },
+                      { id: 'pioneer', label: 'Pioneer' }
+                    ]}
+                    selected={filters.format}
+                    onToggle={(val) => toggleFilter('format', val)}
+                    counts={facets?.format}
+                    isRefetching={isRefetching}
+                  />
+                )}
+
                 <FilterSection
                   title="Collections"
                   items={availableCollections.map(c => ({ id: c.slug, label: c.name }))}
@@ -400,9 +473,9 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                   isRefetching={isRefetching}
                 />
 
-                {(filters.search || filters.foil.length > 0 || filters.treatment.length > 0 || filters.condition.length > 0 || filters.collection.length > 0 || filters.rarity.length > 0 || filters.language.length > 0 || filters.color.length > 0 || filters.setName.length > 0) && (
+                {(filters.search || filters.foil.length > 0 || filters.treatment.length > 0 || filters.condition.length > 0 || filters.collection.length > 0 || filters.rarity.length > 0 || filters.language.length > 0 || filters.color.length > 0 || filters.setName.length > 0 || filters.isLegendary || filters.isLand || filters.isHistoric || filters.format.length > 0) && (
                   <button
-                    onClick={() => { setFilters({ search: '', foil: [], treatment: [], condition: [], collection: [], rarity: [], language: [], color: [], setName: [], inStock: true }); setPage(1); }}
+                    onClick={() => { setFilters({ search: '', foil: [], treatment: [], condition: [], collection: [], rarity: [], language: [], color: [], setName: [], inStock: true, isLegendary: '', isLand: '', isHistoric: '', format: [] }); setPage(1); }}
                     className="btn-secondary w-full mt-4"
                     style={{ fontSize: '0.85rem', padding: '0.4rem' }}
                   >

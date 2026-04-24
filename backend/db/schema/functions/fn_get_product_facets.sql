@@ -16,7 +16,11 @@ CREATE OR REPLACE FUNCTION fn_get_product_facets(
     p_set_name TEXT DEFAULT '',
     p_in_stock BOOLEAN DEFAULT true,
     p_filter_logic TEXT DEFAULT 'or',
-    p_is_admin BOOLEAN DEFAULT false
+    p_is_admin BOOLEAN DEFAULT false,
+    p_is_legendary TEXT DEFAULT '',
+    p_is_land TEXT DEFAULT '',
+    p_is_historic TEXT DEFAULT '',
+    p_format TEXT DEFAULT ''
 ) RETURNS JSONB AS $$
 DECLARE
     result JSONB;
@@ -28,6 +32,7 @@ DECLARE
     v_color_arr TEXT[];
     v_collection_arr TEXT[];
     v_set_name_arr TEXT[];
+    v_format_arr TEXT[];
 BEGIN
     -- Pre-parse filters into arrays for faster matching
     v_foil_arr := CASE WHEN p_foil = '' THEN NULL ELSE string_to_array(LOWER(p_foil), ',') END;
@@ -38,6 +43,7 @@ BEGIN
     v_color_arr := CASE WHEN p_color = '' THEN NULL ELSE string_to_array(UPPER(p_color), ',') END;
     v_collection_arr := CASE WHEN p_collection = '' THEN NULL ELSE string_to_array(LOWER(p_collection), ',') END;
     v_set_name_arr := CASE WHEN p_set_name = '' THEN NULL ELSE string_to_array(p_set_name, ',') END;
+    v_format_arr := CASE WHEN p_format = '' THEN NULL ELSE string_to_array(LOWER(p_format), ',') END;
 
     WITH base_products AS MATERIALIZED (
         SELECT p.*
@@ -74,27 +80,31 @@ BEGIN
                    ELSE EXISTS (SELECT 1 FROM product_category pc JOIN custom_category cc ON pc.category_id = cc.id WHERE pc.product_id = base_products.id AND cc.slug = ANY(v_collection_arr))
                    END
                )) as match_collection,
-               (v_set_name_arr IS NULL OR set_name = ANY(v_set_name_arr)) as match_set
+               (v_set_name_arr IS NULL OR set_name = ANY(v_set_name_arr)) as match_set,
+               (p_is_legendary = '' OR (p_is_legendary = 'true' AND is_legendary = true) OR (p_is_legendary = 'false' AND is_legendary = false)) as match_legendary,
+               (p_is_land = '' OR (p_is_land = 'true' AND is_land = true) OR (p_is_land = 'false' AND is_land = false)) as match_land,
+               (p_is_historic = '' OR (p_is_historic = 'true' AND is_historic = true) OR (p_is_historic = 'false' AND is_historic = false)) as match_historic,
+               (v_format_arr IS NULL OR EXISTS (SELECT 1 FROM unnest(v_format_arr) f WHERE legalities->>f = 'legal')) as match_format
         FROM base_products
     ),
     f_condition AS (
         SELECT COALESCE(condition, 'unknown') as val, COUNT(*) as c FROM all_filtered
-        WHERE (p_filter_logic = 'or' OR match_condition) AND match_foil AND match_treatment AND match_rarity AND match_language AND match_color AND match_collection AND match_set
+        WHERE (p_filter_logic = 'or' OR match_condition) AND match_foil AND match_treatment AND match_rarity AND match_language AND match_color AND match_collection AND match_set AND match_legendary AND match_land AND match_historic AND match_format
         GROUP BY val
     ),
     f_foil AS (
         SELECT COALESCE(LOWER(foil_treatment), 'non_foil') as val, COUNT(*) as c FROM all_filtered
-        WHERE (p_filter_logic = 'or' OR match_foil) AND match_condition AND match_treatment AND match_rarity AND match_language AND match_color AND match_collection AND match_set
+        WHERE (p_filter_logic = 'or' OR match_foil) AND match_condition AND match_treatment AND match_rarity AND match_language AND match_color AND match_collection AND match_set AND match_legendary AND match_land AND match_historic AND match_format
         GROUP BY val
     ),
     f_rarity AS (
         SELECT COALESCE(LOWER(rarity), 'unknown') as val, COUNT(*) as c FROM all_filtered
-        WHERE (p_filter_logic = 'or' OR match_rarity) AND match_condition AND match_foil AND match_treatment AND match_language AND match_color AND match_collection AND match_set
+        WHERE (p_filter_logic = 'or' OR match_rarity) AND match_condition AND match_foil AND match_treatment AND match_language AND match_color AND match_collection AND match_set AND match_legendary AND match_land AND match_historic AND match_format
         GROUP BY val
     ),
     f_language AS (
         SELECT COALESCE(LOWER(language), 'en') as val, COUNT(*) as c FROM all_filtered
-        WHERE (p_filter_logic = 'or' OR match_language) AND match_condition AND match_foil AND match_treatment AND match_rarity AND match_color AND match_collection AND match_set
+        WHERE (p_filter_logic = 'or' OR match_language) AND match_condition AND match_foil AND match_treatment AND match_rarity AND match_color AND match_collection AND match_set AND match_legendary AND match_land AND match_historic AND match_format
         GROUP BY val
     ),
     f_color AS (
@@ -106,19 +116,19 @@ BEGIN
             COUNT(*) FILTER (WHERE color_identity ILIKE '%G%') as g,
             COUNT(*) FILTER (WHERE color_identity ILIKE '%C%') as c
         FROM all_filtered
-        WHERE (p_filter_logic = 'or' OR match_color) AND match_condition AND match_foil AND match_treatment AND match_rarity AND match_language AND match_collection AND match_set
+        WHERE (p_filter_logic = 'or' OR match_color) AND match_condition AND match_foil AND match_treatment AND match_rarity AND match_language AND match_collection AND match_set AND match_legendary AND match_land AND match_historic AND match_format
     ),
     f_treatment AS (
         SELECT val, SUM(c) as c FROM (
             SELECT COALESCE(LOWER(card_treatment), 'normal') as val, COUNT(*) as c FROM all_filtered
-            WHERE (p_filter_logic = 'or' OR match_treatment) AND match_condition AND match_foil AND match_rarity AND match_language AND match_color AND match_collection AND match_set
+            WHERE (p_filter_logic = 'or' OR match_treatment) AND match_condition AND match_foil AND match_rarity AND match_language AND match_color AND match_collection AND match_set AND match_legendary AND match_land AND match_historic AND match_format
             GROUP BY val
             UNION ALL
             SELECT 'full_art' as val, COUNT(*) as c FROM all_filtered
-            WHERE full_art = true AND (p_filter_logic = 'or' OR match_treatment) AND match_condition AND match_foil AND match_rarity AND match_language AND match_color AND match_collection AND match_set
+            WHERE full_art = true AND (p_filter_logic = 'or' OR match_treatment) AND match_condition AND match_foil AND match_rarity AND match_language AND match_color AND match_collection AND match_set AND match_legendary AND match_land AND match_historic AND match_format
             UNION ALL
             SELECT 'textless' as val, COUNT(*) as c FROM all_filtered
-            WHERE textless = true AND (p_filter_logic = 'or' OR match_treatment) AND match_condition AND match_foil AND match_rarity AND match_language AND match_color AND match_collection AND match_set
+            WHERE textless = true AND (p_filter_logic = 'or' OR match_treatment) AND match_condition AND match_foil AND match_rarity AND match_language AND match_color AND match_collection AND match_set AND match_legendary AND match_land AND match_historic AND match_format
         ) t GROUP BY val
     ),
     f_collection AS (
@@ -126,7 +136,7 @@ BEGIN
         FROM all_filtered
         JOIN product_category pc ON all_filtered.id = pc.product_id
         JOIN custom_category cc ON pc.category_id = cc.id
-        WHERE (p_filter_logic = 'or' OR match_collection) AND match_condition AND match_foil AND match_treatment AND match_rarity AND match_language AND match_color AND match_set
+        WHERE (p_filter_logic = 'or' OR match_collection) AND match_condition AND match_foil AND match_treatment AND match_rarity AND match_language AND match_color AND match_set AND match_legendary AND match_land AND match_historic AND match_format
         GROUP BY val
     ),
     f_set_name AS (
@@ -136,11 +146,25 @@ BEGIN
             MAX(s.released_at) as release_date
         FROM all_filtered p
         LEFT JOIN tcg_set s ON (LOWER(p.set_name) = LOWER(s.name) AND p.tcg = s.tcg) OR (LOWER(p.set_code) = LOWER(s.code) AND p.tcg = s.tcg)
-        WHERE (p_filter_logic = 'or' OR match_set) AND match_condition AND match_foil AND match_treatment AND match_rarity AND match_language AND match_color AND match_collection
+        WHERE (p_filter_logic = 'or' OR match_set) AND match_condition AND match_foil AND match_treatment AND match_rarity AND match_language AND match_color AND match_collection AND match_legendary AND match_land AND match_historic AND match_format
         GROUP BY val
         HAVING COUNT(*) > 0
         ORDER BY release_date DESC NULLS LAST, val ASC
         LIMIT 50
+    ),
+    f_legendary AS (
+        SELECT 'true' as val, COUNT(*) as c FROM all_filtered WHERE is_legendary = true AND match_condition AND match_foil AND match_treatment AND match_rarity AND match_language AND match_color AND match_collection AND match_set AND match_land AND match_historic AND match_format
+    ),
+    f_land AS (
+        SELECT 'true' as val, COUNT(*) as c FROM all_filtered WHERE is_land = true AND match_condition AND match_foil AND match_treatment AND match_rarity AND match_language AND match_color AND match_collection AND match_set AND match_legendary AND match_historic AND match_format
+    ),
+    f_historic AS (
+        SELECT 'true' as val, COUNT(*) as c FROM all_filtered WHERE is_historic = true AND match_condition AND match_foil AND match_treatment AND match_rarity AND match_language AND match_color AND match_collection AND match_set AND match_legendary AND match_land AND match_format
+    ),
+    f_format AS (
+        SELECT f as val, COUNT(*) as c FROM all_filtered, unnest(ARRAY['commander', 'modern', 'standard', 'legacy', 'vintage', 'pauper', 'pioneer']) f
+        WHERE legalities->>f = 'legal' AND (p_filter_logic = 'or' OR match_format) AND match_condition AND match_foil AND match_treatment AND match_rarity AND match_language AND match_color AND match_collection AND match_set AND match_legendary AND match_land AND match_historic
+        GROUP BY val
     )
     SELECT jsonb_build_object(
         'condition', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_condition),
@@ -150,7 +174,11 @@ BEGIN
         'color', (SELECT jsonb_build_object('W', w, 'U', u, 'B', b, 'R', r, 'G', g, 'C', c) FROM f_color),
         'treatment', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_treatment),
         'collection', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_collection),
-        'set_name', (SELECT COALESCE(jsonb_agg(jsonb_build_object('id', val, 'label', val, 'count', c)), '[]'::jsonb) FROM f_set_name)
+        'set_name', (SELECT COALESCE(jsonb_agg(jsonb_build_object('id', val, 'label', val, 'count', c)), '[]'::jsonb) FROM f_set_name),
+        'is_legendary', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_legendary),
+        'is_land', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_land),
+        'is_historic', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_historic),
+        'format', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_format)
     ) INTO result;
 
     RETURN result;

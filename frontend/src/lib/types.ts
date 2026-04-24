@@ -119,6 +119,10 @@ export interface Facets {
   collection: Record<string, number>;
   set_name?: FacetItem[];
   in_stock?: number;
+  is_legendary?: Record<string, number>;
+  is_historic?: Record<string, number>;
+  is_land?: Record<string, number>;
+  format?: Record<string, number>;
 }
 
 export interface ProductListResponse {

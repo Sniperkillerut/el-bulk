@@ -380,14 +380,18 @@ type FacetItem struct {
 }
 
 type Facets struct {
-	Condition  map[string]int `json:"condition"`
-	Foil       map[string]int `json:"foil"`
-	Treatment  map[string]int `json:"treatment"`
-	Rarity     map[string]int `json:"rarity"`
-	Language   map[string]int `json:"language"`
-	Color      map[string]int `json:"color"`
-	Collection map[string]int `json:"collection"`
-	SetName    []FacetItem    `json:"set_name"`
+	Condition   map[string]int `json:"condition"`
+	Foil        map[string]int `json:"foil"`
+	Treatment   map[string]int `json:"treatment"`
+	Rarity      map[string]int `json:"rarity"`
+	Language    map[string]int `json:"language"`
+	Color       map[string]int `json:"color"`
+	Collection  map[string]int `json:"collection"`
+	SetName     []FacetItem    `json:"set_name"`
+	IsLegendary map[string]int `json:"is_legendary"`
+	IsLand      map[string]int `json:"is_land"`
+	IsHistoric  map[string]int `json:"is_historic"`
+	Format      map[string]int `json:"format"`
 }
 
 type Admin struct {

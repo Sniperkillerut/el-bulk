@@ -48,6 +48,12 @@ type ProductFilterParams struct {
 	Offset         int
 
 	IDs []string
+	
+	// MTG Metadata Filters
+	IsLegendary string
+	IsLand      string
+	IsHistoric  string
+	Format      string
 
 	// Exchange rates for on-the-fly price sorting
 	USDRate float64
@@ -112,9 +118,10 @@ func (s *ProductStore) ListWithFilters(ctx context.Context, params ProductFilter
 
 func (s *ProductStore) GetFacets(ctx context.Context, params ProductFilterParams, isAdmin bool) (models.Facets, error) {
 	// Generate cache key from params
-	cacheKey := fmt.Sprintf("facets:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v",
+	cacheKey := fmt.Sprintf("facets:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v",
 		params.TCG, params.Category, params.Search, params.StorageID, params.Foil, params.Treatment, params.Condition,
-		params.Rarity, params.Language, params.Color, params.Collection, params.SetName, params.InStock, params.FilterLogic, isAdmin)
+		params.Rarity, params.Language, params.Color, params.Collection, params.SetName, params.InStock, params.FilterLogic, isAdmin,
+		params.IsLegendary, params.IsLand, params.IsHistoric, params.Format)
 
 	if !isAdmin {
 		if cached, ok := s.facetCache.Get(cacheKey); ok {
@@ -125,11 +132,12 @@ func (s *ProductStore) GetFacets(ctx context.Context, params ProductFilterParams
 
 	var result []byte
 	start := time.Now()
-	query := "SELECT fn_get_product_facets($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)"
+	query := "SELECT fn_get_product_facets($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)"
 	logger.TraceCtx(ctx, "[DB] Executing GetFacets: %s", query)
 	err := s.DB.GetContext(ctx, &result, query,
 		params.TCG, params.Category, params.Search, params.StorageID, params.Foil, params.Treatment, params.Condition,
-		params.Rarity, params.Language, params.Color, params.Collection, params.SetName, params.InStock, params.FilterLogic, isAdmin)
+		params.Rarity, params.Language, params.Color, params.Collection, params.SetName, params.InStock, params.FilterLogic, isAdmin,
+		params.IsLegendary, params.IsLand, params.IsHistoric, params.Format)
 
 	if err != nil {
 		logger.ErrorCtx(ctx, "[DB] GetFacets failed: %v", err)
@@ -646,6 +654,41 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 			args = append(args, strings.ToUpper(v))
 		}
 		optional = append(optional, "("+strings.Join(conds, opLogic)+")")
+	}
+
+	// MTG Metadata Filters
+	if params.IsLegendary != "" {
+		if params.IsLegendary == "true" {
+			mandatory = append(mandatory, "p.is_legendary = true")
+		} else if params.IsLegendary == "false" {
+			mandatory = append(mandatory, "p.is_legendary = false")
+		}
+	}
+	if params.IsLand != "" {
+		if params.IsLand == "true" {
+			mandatory = append(mandatory, "p.is_land = true")
+		} else if params.IsLand == "false" {
+			mandatory = append(mandatory, "p.is_land = false")
+		}
+	}
+	if params.IsHistoric != "" {
+		if params.IsHistoric == "true" {
+			mandatory = append(mandatory, "p.is_historic = true")
+		} else if params.IsHistoric == "false" {
+			mandatory = append(mandatory, "p.is_historic = false")
+		}
+	}
+	if params.Format != "" {
+		vals := strings.Split(params.Format, ",")
+		var conds []string
+		for _, v := range vals {
+			// Check if legal in this format (JSONB)
+			// legalities -> 'commander' = 'legal'
+			placeholder := fmt.Sprintf("$%d", len(args)+1)
+			args = append(args, v)
+			conds = append(conds, fmt.Sprintf("p.legalities->>%s = 'legal'", placeholder))
+		}
+		mandatory = append(mandatory, "("+strings.Join(conds, " OR ")+")")
 	}
 	if params.Collection != "" {
 		vals := strings.Split(params.Collection, ",")
