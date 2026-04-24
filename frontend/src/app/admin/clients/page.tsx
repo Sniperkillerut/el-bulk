@@ -52,7 +52,14 @@ export default function AdminClientsPage() {
     if (typeof valA === 'string' && typeof valB === 'string') {
       return valA.localeCompare(valB) * modifier;
     }
-    return ((valA as any) < (valB as any) ? -1 : 1) * modifier;
+    if (typeof valA === 'number' && typeof valB === 'number') {
+      return (valA - valB) * modifier;
+    }
+    if (typeof valA === 'boolean' && typeof valB === 'boolean') {
+      return (Number(valA) - Number(valB)) * modifier;
+    }
+
+    return String(valA).localeCompare(String(valB)) * modifier;
   });
 
   const totalPages = Math.ceil(sortedClients.length / pageSize) || 1;

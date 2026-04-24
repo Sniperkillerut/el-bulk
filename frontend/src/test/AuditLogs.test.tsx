@@ -62,7 +62,6 @@ describe('AuditLogsPage', () => {
   it('filters logs when action selection changes', async () => {
     render(<AuditLogsPage />)
     
-    const actionSelect = screen.getByRole('combobox', { name: '' }) // There are multiple, we'll find by value or first
     // Since there are two selects, let's be more specific if possible or just use the first one
     const selects = screen.getAllByRole('combobox')
     
@@ -74,13 +73,13 @@ describe('AuditLogsPage', () => {
     vi.mocked(api.adminFetchAuditLogs).mockResolvedValue(mockLogs)
     
     // Change value
-    actionSelectElement.value = 'create'
+    actionSelectElement.value = 'CREATE'
     const event = new Event('change', { bubbles: true })
     actionSelectElement.dispatchEvent(event)
 
     await waitFor(() => {
       expect(api.adminFetchAuditLogs).toHaveBeenCalledWith(expect.objectContaining({
-        action: 'create'
+        action: 'CREATE'
       }))
     })
   })
