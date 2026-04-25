@@ -159,9 +159,16 @@ func (s *BountyService) SubmitRequest(ctx context.Context, input models.ClientRe
 		return nil, fmt.Errorf("customer_name, customer_contact, and card_name are required")
 	}
 
+	if input.Quantity <= 0 {
+		input.Quantity = 1
+	}
+	if input.TCG == "" {
+		input.TCG = "mtg"
+	}
+
 	result, err := s.Store.SubmitRequest(
 		ctx, input.CustomerName, input.CustomerContact, input.CardName,
-		input.SetName, input.Details, userID,
+		input.SetName, input.Details, input.Quantity, input.TCG, userID,
 	)
 	if err != nil {
 		return nil, err
@@ -172,6 +179,23 @@ func (s *BountyService) SubmitRequest(ctx context.Context, input models.ClientRe
 		return nil, fmt.Errorf("failed to unmarshal client request: %w", err)
 	}
 	return &req, nil
+}
+
+func (s *BountyService) SubmitRequestsBatch(ctx context.Context, input models.ClientRequestBatchInput, userID *string) (*models.ClientRequestBatchResponse, error) {
+	if input.CustomerName == "" || input.CustomerContact == "" || len(input.Cards) == 0 {
+		return nil, fmt.Errorf("customer_name, customer_contact, and at least one card are required")
+	}
+
+	result, err := s.Store.SubmitRequestsBatch(ctx, input, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp models.ClientRequestBatchResponse
+	if err := json.Unmarshal(result, &resp); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal batch response: %w", err)
+	}
+	return &resp, nil
 }
 
 func (s *BountyService) UpdateRequestStatus(ctx context.Context, id, status string) (*models.ClientRequest, error) {

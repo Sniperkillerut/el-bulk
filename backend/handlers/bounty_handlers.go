@@ -200,6 +200,31 @@ func (h *BountyHandler) CreateRequest(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, req)
 }
 
+func (h *BountyHandler) CreateRequestsBatch(w http.ResponseWriter, r *http.Request) {
+	logger.TraceCtx(r.Context(), "Entering BountyHandler.CreateRequestsBatch")
+	var input models.ClientRequestBatchInput
+	if err := decodeJSON(r, &input); err != nil {
+		logger.ErrorCtx(r.Context(), "Failed to decode batch request input: %v", err)
+		render.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	var userID *string
+	if val, ok := r.Context().Value(middleware.UserIDKey).(string); ok {
+		userID = &val
+	}
+
+	resp, err := h.Service.SubmitRequestsBatch(r.Context(), input, userID)
+	if err != nil {
+		logger.ErrorCtx(r.Context(), "Failed to submit batch request: %v", err)
+		render.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	render.Success(w, resp)
+}
+
 func (h *BountyHandler) UpdateRequestStatus(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	logger.TraceCtx(r.Context(), "Entering BountyHandler.UpdateRequestStatus | ID: %s", id)

@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/el-bulk/backend/models"
 	"github.com/jmoiron/sqlx"
 )
@@ -163,7 +164,7 @@ func (s *BountyStore) CancelMeOffer(ctx context.Context, id, userID string) (int
 func (s *BountyStore) ListRequests(ctx context.Context) ([]models.ClientRequest, error) {
 	requests := []models.ClientRequest{}
 	query := `
-		SELECT id, customer_id, customer_name, customer_contact, card_name, set_name, details, status, created_at
+		SELECT id, customer_id, customer_name, customer_contact, card_name, set_name, details, quantity, tcg, status, created_at
 		FROM client_request
 		ORDER BY created_at DESC
 	`
@@ -171,10 +172,21 @@ func (s *BountyStore) ListRequests(ctx context.Context) ([]models.ClientRequest,
 	return requests, err
 }
 
-func (s *BountyStore) SubmitRequest(ctx context.Context, customerName, customerContact, cardName string, setName, details *string, userID *string) ([]byte, error) {
+func (s *BountyStore) SubmitRequest(ctx context.Context, customerName, customerContact, cardName string, setName, details *string, quantity int, tcg string, userID *string) ([]byte, error) {
 	var result []byte
-	err := s.DB.GetContext(ctx, &result, "SELECT fn_submit_client_request($1, $2, $3, $4, $5, $6)",
-		customerName, customerContact, cardName, setName, details, userID)
+	err := s.DB.GetContext(ctx, &result, "SELECT fn_submit_client_request($1, $2, $3, $4, $5, $6, $7, $8)",
+		customerName, customerContact, cardName, setName, details, quantity, tcg, userID)
+	return result, err
+}
+
+func (s *BountyStore) SubmitRequestsBatch(ctx context.Context, input models.ClientRequestBatchInput, userID *string) ([]byte, error) {
+	cardsJSON, err := json.Marshal(input.Cards)
+	if err != nil {
+		return nil, err
+	}
+	var result []byte
+	err = s.DB.GetContext(ctx, &result, "SELECT fn_submit_client_requests_batch($1, $2, $3, $4)",
+		input.CustomerName, input.CustomerContact, cardsJSON, userID)
 	return result, err
 }
 
@@ -183,7 +195,7 @@ func (s *BountyStore) UpdateRequestStatus(ctx context.Context, id, status string
 		UPDATE client_request
 		SET status = $1
 		WHERE id = $2
-		RETURNING id, customer_name, customer_contact, card_name, set_name, details, status, created_at
+		RETURNING id, customer_id, customer_name, customer_contact, card_name, set_name, details, quantity, tcg, status, created_at
 	`
 	var req models.ClientRequest
 	err := s.DB.QueryRowxContext(ctx, query, status, id).StructScan(&req)
@@ -196,7 +208,7 @@ func (s *BountyStore) UpdateRequestStatus(ctx context.Context, id, status string
 func (s *BountyStore) ListMeRequests(ctx context.Context, userID string) ([]models.ClientRequest, error) {
 	requests := []models.ClientRequest{}
 	query := `
-		SELECT id, customer_id, customer_name, customer_contact, card_name, set_name, details, status, created_at
+		SELECT id, customer_id, customer_name, customer_contact, card_name, set_name, details, quantity, tcg, status, created_at
 		FROM client_request
 		WHERE customer_id = $1
 		ORDER BY created_at DESC
