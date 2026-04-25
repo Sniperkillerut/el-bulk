@@ -485,7 +485,11 @@ export default function AdminBountiesPage() {
                 }`}>
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-1">
-                      <h3 className={`font-bold text-lg m-0 font-mono-stack ${req.status === 'solved' ? 'text-indigo-900' : 'text-ink-deep'}`}>{req.card_name}</h3>
+                      <div className="flex items-center gap-2">
+                        {req.quantity > 1 && <span className="bg-gold/20 text-gold-dark px-1.5 py-0.5 rounded text-sm font-bold font-mono-stack">{req.quantity}x</span>}
+                        <h3 className={`font-bold text-lg m-0 font-mono-stack ${req.status === 'solved' ? 'text-indigo-900' : 'text-ink-deep'}`}>{req.card_name}</h3>
+                      </div>
+                      <span className="badge bg-gold/10 text-gold text-[8px] font-mono-stack px-1.5 py-0.5 rounded border border-gold/20">{req.tcg.toUpperCase()}</span>
                       <span className={`badge ${
                         req.status === 'pending' ? 'bg-gold text-ink-deep font-bold' : 
                         req.status === 'accepted' ? 'bg-emerald-100 text-emerald-700' : 

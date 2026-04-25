@@ -243,10 +243,14 @@ export default function AdminClientDetailPage() {
                         <Link href={`/admin/bounties?tab=requests&scrollToId=${req.id}`} key={req.id} className="block p-3 bg-hp-color/5 border border-hp-color/30 rounded-sm hover:-translate-y-0.5 hover:shadow-sm transition-all">
                           <div className="flex justify-between items-start mb-1">
                             <span className="font-bold text-xs uppercase text-hp-color flex items-center gap-1">
+                              {req.quantity > 1 && <span className="bg-hp-color/10 px-1 rounded">{req.quantity}x</span>}
                               {req.card_name}
                               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-50"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
                             </span>
-                            <span className="text-[8px] font-mono-stack px-1 bg-hp-color text-white rounded-sm">{t(`pages.common.status.${req.status}`, req.status)}</span>
+                            <div className="flex flex-col items-end gap-1">
+                              <span className="text-[8px] font-mono-stack px-1 bg-hp-color text-white rounded-sm">{t(`pages.common.status.${req.status}`, req.status)}</span>
+                              <span className="text-[7px] font-mono-stack px-1 bg-gold/20 text-gold-dark rounded border border-gold/30">{req.tcg.toUpperCase()}</span>
+                            </div>
                           </div>
                           {req.set_name && <p className="text-[9px] font-mono-stack opacity-60">{t('pages.common.labels.set', 'SET')}: {req.set_name}</p>}
                           {req.details && <p className="text-[9px] font-mono-stack mt-1 italic">&quot;{req.details}&quot;</p>}
@@ -264,10 +268,14 @@ export default function AdminClientDetailPage() {
                         <Link href={`/admin/bounties?tab=requests&scrollToId=${req.id}`} key={req.id} className="block p-3 bg-kraft-light/30 border border-kraft-dark/20 rounded-sm opacity-60 hover:opacity-100 hover:bg-white transition-all">
                           <div className="flex justify-between items-start mb-1">
                             <span className="font-bold text-xs uppercase text-ink-deep flex items-center gap-1">
+                              {req.quantity > 1 && <span className="bg-ink-deep/10 px-1 rounded">{req.quantity}x</span>}
                               {req.card_name}
                               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-50"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
                             </span>
-                            <span className="text-[8px] font-mono-stack px-1 bg-kraft-dark text-white rounded-sm">{t(`pages.common.status.${req.status}`, req.status)}</span>
+                            <div className="flex flex-col items-end gap-1">
+                              <span className="text-[8px] font-mono-stack px-1 bg-kraft-dark text-white rounded-sm">{t(`pages.common.status.${req.status}`, req.status)}</span>
+                              <span className="text-[7px] font-mono-stack px-1 bg-gold/10 text-gold-dark rounded border border-gold/20">{req.tcg.toUpperCase()}</span>
+                            </div>
                           </div>
                           {req.set_name && <p className="text-[9px] font-mono-stack opacity-60">{t('pages.common.labels.set', 'SET')}: {req.set_name}</p>}
                         </Link>
