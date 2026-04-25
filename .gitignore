@@ -69,4 +69,5 @@ frontend/.yarn/*
 # --- Docker & DB ---
 # Ignore any local data directories if you mount volumes
 # backend/data/
-# postgres-data/ or similar
+# --- Worktrees ---
+.worktrees/
