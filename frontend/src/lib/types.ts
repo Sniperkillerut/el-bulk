@@ -521,6 +521,8 @@ export interface ClientRequest {
   card_name: string;
   set_name?: string;
   details?: string;
+  quantity: number;
+  tcg: string;
   status: 'pending' | 'accepted' | 'rejected' | 'solved' | 'cancelled';
   created_at: string;
 }
@@ -532,6 +534,25 @@ export interface ClientRequestInput {
   card_name: string;
   set_name?: string;
   details?: string;
+  quantity: number;
+  tcg: string;
+}
+
+export interface ClientRequestBatchInput {
+  customer_name: string;
+  customer_contact: string;
+  cards: {
+    card_name: string;
+    set_name?: string;
+    details?: string;
+    quantity: number;
+    tcg: string;
+  }[];
+}
+
+export interface ClientRequestBatchResponse {
+  count: number;
+  customer_id: string;
 }
 
 export interface BountyOffer {

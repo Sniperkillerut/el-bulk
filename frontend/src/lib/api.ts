@@ -763,6 +763,13 @@ export async function createClientRequest(data: import('./types').ClientRequestI
   });
 }
 
+export async function createClientRequestsBatch(data: import('./types').ClientRequestBatchInput): Promise<import('./types').ClientRequestBatchResponse> {
+  return apiFetch<import('./types').ClientRequestBatchResponse>('/api/client-requests/batch', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
 export async function userFetchClientRequests(): Promise<import('./types').ClientRequest[]> {
   return apiFetch<import('./types').ClientRequest[]>('/api/client-requests/me');
 }
