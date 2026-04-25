@@ -211,7 +211,7 @@ func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-
+	
 	s, err := h.Service.GetSettings(r.Context())
 	if err != nil {
 		logger.ErrorCtx(r.Context(), "Failed to load settings after update: %v", err)

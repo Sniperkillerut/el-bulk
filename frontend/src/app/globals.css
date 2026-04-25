@@ -118,7 +118,31 @@
   --ink-navy: var(--bg-header);
   --ink-border: var(--border-main);
   --ink-surface: var(--bg-surface);
-  --ink-deep: var(--text-main);
+  /* Clean Craft Palette */
+  --bg-kraft: #F4EDE4;
+  --ink-plum: #5D3A4E;
+  --ink-lavender: #938BB5;
+  --accent-rose: #B78494;
+  --border-plum: rgba(93, 58, 78, 0.2);
+
+  /* Brand Overrides */
+  --accent-primary: var(--ink-plum);
+  --text-main: var(--ink-plum);
+  --bg-page: var(--bg-kraft);
+}
+
+.paper-texture {
+  position: relative;
+}
+
+.paper-texture::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  z-index: 1;
 }
 
 /* Theme Area Scoping - Ensures accents move with their backgrounds */

@@ -148,7 +148,7 @@ func main() {
 			} else {
 				storageDriver = driver
 				logger.Info("✅ Cloud Storage: Google Cloud Storage initialized (Bucket: %s)", bucket)
-				
+
 				// Ensure driver is closed on shutdown
 				if closer, ok := storageDriver.(interface{ Close() error }); ok {
 					defer func() {
@@ -175,7 +175,8 @@ func main() {
 	// Global middleware
 	r.Use(logger.RequestLogger)
 	r.Use(logger.Recoverer)
-	r.Use(chiMiddleware.RequestSize(1 << 20)) // 1MB global body limit
+	r.Use(chiMiddleware.RequestSize(10 << 20)) // 10MB global body limit
+	logger.Info("📡 Global Request Size Limit set to 10MB")
 	r.Use(middleware.CORS)
 	r.Use(middleware.SecurityHeaders)
 
@@ -256,7 +257,7 @@ func main() {
 				// Products CRUD
 				r.Get("/products", productHandler.List)
 				r.Post("/products", productHandler.Create)
-				r.With(chiMiddleware.RequestSize(10 << 20)).Post("/products/bulk", productHandler.BulkCreate)
+				r.Post("/products/bulk", productHandler.BulkCreate)
 				r.Put("/products/{id}", productHandler.Update)
 				r.Delete("/products/{id}", productHandler.Delete)
 				r.Get("/products/low-stock", productHandler.GetLowStock)

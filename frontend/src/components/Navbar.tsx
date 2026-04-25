@@ -7,16 +7,26 @@ import { useCart } from '@/lib/CartContext';
 import { useUser } from '@/context/UserContext';
 import { TCG } from '@/lib/types';
 import { fetchTCGs } from '@/lib/api';
-import { useUI } from '@/context/UIContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { LineIcons } from './ui/LineIcons';
 import CartDrawer from './CartDrawer';
 import Dropdown from './ui/Dropdown';
 import ThemeSelector from './ui/ThemeSelector';
 
+const NavLink = ({ href, icon: Icon, label, colorClass = "", onClick }: { href: string, icon: React.ComponentType<React.SVGProps<SVGSVGElement>>, label: string, colorClass?: string, onClick?: () => void }) => (
+  <Link href={href} onClick={onClick} className={`flex flex-col items-center gap-1 no-underline group transition-all text-ink-plum`}>
+    <div className={`p-1 rounded-md group-hover:bg-ink-plum/5 transition-colors ${colorClass}`}>
+      <Icon className="w-5 h-5 stroke-[1.5]" />
+    </div>
+    <span className="text-[10px] font-bold uppercase tracking-tighter opacity-70 group-hover:opacity-100 transition-opacity">
+      {label}
+    </span>
+  </Link>
+);
+
 export default function Navbar() {
   const { totalItems, openCart, isOpen, closeCart } = useCart();
   const { user, loading: userLoading, logout } = useUser();
-  const { foilEffectsEnabled, toggleFoilEffects } = useUI();
   const { locale, setLocale, t, availableLocales, hideSelector } = useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [tcgs, setTcgs] = useState<TCG[]>([]);
@@ -39,91 +49,89 @@ export default function Navbar() {
     <>
       <nav
         id="main-navbar"
-        data-theme-area="header"
-        className="sticky top-0 z-[var(--z-sticky)] bg-bg-header border-b border-border-main"
+        className="sticky top-0 z-[var(--z-sticky)] bg-bg-kraft/80 backdrop-blur-md border-b border-border-plum"
       >
-        <div className="beta-stripe">BETA!</div>
-        <div
-          className="w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16 max-w-[var(--content-max-width)] mx-auto"
-        >
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-1 sm:gap-2 no-underline shrink-0">
-            <div className="bg-accent-primary rounded-[4px] px-1.5 py-0.5 sm:px-2 sm:py-1">
-              <span className="font-display text-xl sm:text-2xl text-text-on-accent leading-none">
-                EL BULK
-              </span>
-            </div>
-            <span className="hidden xs:block text-text-muted text-[10px] sm:text-[11px] font-mono whitespace-nowrap">
-              {t('pages.nav.main.tcg_store', 'TCG STORE')}
+        <div className="w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14 max-w-[var(--content-max-width)] mx-auto">
+          {/* Logo Section */}
+          <Link href="/" className="flex flex-col no-underline shrink-0 group">
+            <span className="font-display text-2xl text-ink-plum leading-none tracking-tight group-hover:opacity-80 transition-opacity">
+              EL BULK
+            </span>
+            <span className="text-[9px] font-bold uppercase tracking-[0.2em] opacity-60 text-ink-plum">
+              Grow your collection
             </span>
           </Link>
 
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-6" data-theme-area="nav-links">
-            <Dropdown
-              label={<Link href="/singles" className="no-underline text-sm font-medium text-text-on-header/80 hover:text-accent-primary transition-colors">{t('pages.nav.main.singles', 'Singles')}</Link>}
-              items={singlesItems}
-            />
+          {/* Unified Desktop Nav */}
+          <div className="hidden lg:flex items-center gap-4 xl:gap-6">
+            <div className="flex items-center gap-4 pr-4 border-r border-border-plum/30">
+              <Dropdown
+                trigger={<button className="flex flex-col items-center gap-1 bg-transparent border-none cursor-pointer group text-ink-plum">
+                  <div className="p-1 rounded-md group-hover:bg-ink-plum/5 transition-colors">
+                    <LineIcons.Singles />
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-tighter opacity-70 group-hover:opacity-100">{t('pages.nav.main.singles', 'Singles')}</span>
+                </button>}
+                items={singlesItems}
+              />
+              <Dropdown
+                trigger={<button className="flex flex-col items-center gap-1 bg-transparent border-none cursor-pointer group text-ink-plum">
+                  <div className="p-1 rounded-md group-hover:bg-ink-plum/5 transition-colors">
+                    <LineIcons.Sealed />
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-tighter opacity-70 group-hover:opacity-100">{t('pages.nav.main.sealed', 'Sealed')}</span>
+                </button>}
+                items={sealedItems}
+              />
+              <NavLink href="/accessories" icon={LineIcons.Accessories} label={t('pages.nav.main.accessories', 'Accessories')} />
+            </div>
 
-            <Dropdown
-              label={<Link href="/sealed" className="no-underline text-sm font-medium text-text-on-header/80 hover:text-accent-primary transition-colors">{t('pages.nav.main.sealed', 'Sealed')}</Link>}
-              items={sealedItems}
-            />
+            <div className="flex items-center gap-4 px-4 border-r border-border-plum/30">
+              <NavLink href="/store-exclusives" icon={LineIcons.Exclusives} label={t('pages.nav.main.store_exclusives', 'Exclusives')} />
+              <NavLink href="/notices" icon={LineIcons.News} label={t('pages.nav.main.notices', 'News')} />
+              <NavLink href="/contact" icon={LineIcons.Contact} label={t('pages.nav.main.contact', 'Contact')} />
+            </div>
 
-            <Link href="/accessories" className="no-underline text-sm font-medium text-text-on-header/80 hover:text-accent-header transition-colors">
-              {t('pages.nav.main.accessories', 'Accessories')}
-            </Link>
-            <Link href="/store-exclusives" className="no-underline text-sm font-medium text-accent-header hover:text-text-on-header transition-colors">
-              {t('pages.nav.main.store_exclusives', 'Store Exclusives')}
-            </Link>
-            <Link href="/notices" className="no-underline text-sm font-medium text-text-on-header/80 hover:text-accent-primary transition-colors">
-              {t('pages.nav.main.notices', 'Notices')}
-            </Link>
-            <Link href="/contact" className="no-underline text-sm font-medium text-text-on-header/80 hover:text-accent-primary transition-colors">
-              {t('pages.nav.main.contact', 'Contact')}
-            </Link>
-            <Link href="/bounties" className="no-underline text-sm font-medium text-status-hp-header hover:opacity-80 transition-colors">
-              🎯 {t('pages.nav.main.wanted', 'Wanted Cards')}
-            </Link>
-            <Link href="/bulk" className="no-underline text-sm font-medium text-accent-header hover:opacity-80 transition-colors">
-              💰 {t('pages.nav.main.bulk', 'Sell Your Bulk')}
-            </Link>
+            <div className="flex items-center gap-4 pl-4">
+              <NavLink href="/bounties" icon={LineIcons.Bounties} label={t('pages.nav.main.wanted', 'Bounties')} colorClass="text-accent-rose" />
+            </div>
           </div>
 
-          {/* Cart + Mobile + User */}
-          <div className="flex items-center gap-3">
-            {/* User Auth */}
+          {/* Utilities */}
+          <div className="flex items-center gap-2 sm:gap-4">
             {!userLoading && (
               user ? (
                 <Dropdown
                   align="end"
                   trigger={
-                    <div className="w-8 h-8 relative rounded-full border border-border-main overflow-hidden cursor-pointer shadow-md hover:border-accent-primary transition-colors">
-                      <Image
-                        src={user.avatar_url || 'https://www.gravatar.com/avatar/?d=mp'}
-                        alt={user.first_name || 'User'}
-                        fill
-                        className="object-cover"
-                        referrerPolicy="no-referrer"
-                        sizes="32px"
-                      />
+                    <div className="flex items-center gap-2 cursor-pointer group">
+                      <div className="w-8 h-8 relative rounded-full border border-border-plum overflow-hidden shadow-sm group-hover:border-ink-plum transition-colors">
+                        <Image
+                          src={user.avatar_url || 'https://www.gravatar.com/avatar/?d=mp'}
+                          alt={user.first_name || 'User'}
+                          fill
+                          className="object-cover"
+                          referrerPolicy="no-referrer"
+                          sizes="32px"
+                        />
+                      </div>
                     </div>
                   }
                 >
-                  <div className="p-2 w-48">
-                    <div className="mb-2 px-2 py-1 border-b border-border-main/30">
-                      <p className="text-[9px] font-mono text-text-muted uppercase tracking-widest">{user.first_name} {user.last_name}</p>
-                      <p className="text-[10px] text-accent-primary truncate font-medium">{user.email}</p>
+                  <div className="p-2 w-48 bg-bg-kraft border border-border-plum rounded-sm shadow-xl">
+                    <div className="mb-2 px-2 py-1 border-b border-border-plum/30">
+                      <p className="text-[9px] font-mono text-ink-plum uppercase tracking-widest">{user.first_name} {user.last_name}</p>
+                      <p className="text-[10px] text-ink-lavender truncate font-medium">{user.email}</p>
                     </div>
                     <Link
                       href="/profile"
-                      className="block w-full text-left text-sm text-text-main hover:text-accent-primary hover:bg-accent-primary/5 rounded px-2 py-2 transition-colors no-underline mb-1"
+                      className="block w-full text-left text-sm text-ink-plum hover:bg-ink-plum/5 rounded px-2 py-2 transition-colors no-underline mb-1"
                     >
                       {t('pages.nav.user.profile', 'My Profile')}
                     </Link>
                     <button
                       onClick={logout}
-                      className="w-full text-left text-sm text-text-secondary hover:text-red-400 hover:bg-red-400/5 rounded px-2 py-2 transition-colors bg-transparent border-none cursor-pointer"
+                      className="w-full text-left text-sm text-ink-plum/70 hover:text-accent-rose hover:bg-accent-rose/5 rounded px-2 py-2 transition-colors bg-transparent border-none cursor-pointer"
                     >
                       {t('pages.nav.user.logout', 'Logout')}
                     </button>
@@ -132,48 +140,34 @@ export default function Navbar() {
               ) : (
                 <Link
                   href="/login"
-                  className="text-sm font-medium text-text-on-header/80 transition-colors hover:text-accent-primary flex items-center gap-1 no-underline"
+                  className="flex flex-col items-center gap-1 no-underline group text-ink-plum"
                 >
-                  {t('pages.nav.user.login', 'Login')}
+                  <div className="p-1 rounded-md group-hover:bg-ink-plum/5 transition-colors">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </div>
+                  <span className="text-[9px] font-bold uppercase opacity-70">{t('pages.nav.user.login', 'Login')}</span>
                 </Link>
               )
             )}
-
-            {/* Foil Toggle */}
-            <button
-              onClick={toggleFoilEffects}
-              className="p-2 rounded-lg transition-all flex items-center justify-center bg-bg-surface border border-border-main cursor-pointer"
-              style={{
-                color: foilEffectsEnabled ? 'var(--accent-primary)' : 'var(--text-muted)',
-                opacity: foilEffectsEnabled ? 1 : 0.6,
-                transform: foilEffectsEnabled ? 'scale(1.1)' : 'scale(1)',
-              }}
-              aria-label={t('pages.nav.tooltips.foil_toggle', 'Toggle foil effects')}
-              title={foilEffectsEnabled
-                ? t('pages.nav.tooltips.foil_disable', 'Disable foil effects')
-                : t('pages.nav.tooltips.foil_enable', 'Enable foil effects')}
-            >
-              <span className="text-[1.1rem]">✨</span>
-            </button>
 
             {!hideSelector && (
               <Dropdown
                 align="end"
                 trigger={
                   <button
-                    className="p-2 rounded-lg transition-all flex items-center justify-center bg-bg-surface border border-border-main cursor-pointer text-text-main"
+                    className="p-1.5 rounded-md transition-all flex flex-col items-center justify-center bg-transparent border border-border-plum/30 cursor-pointer text-ink-plum group hover:border-ink-plum"
                     title={t('pages.nav.tooltips.change_lang', 'Change language')}
                   >
-                    <span className="text-xs font-bold uppercase">{locale}</span>
+                    <span className="text-[10px] font-bold uppercase">{locale}</span>
                   </button>
                 }
               >
-                <div className="p-1 w-32">
+                <div className="p-1 w-32 bg-bg-kraft border border-border-plum rounded-sm shadow-xl">
                   {availableLocales.map(loc => (
                     <button
                       key={loc}
                       onClick={() => setLocale(loc)}
-                      className={`block w-full text-left text-xs px-3 py-2 rounded transition-colors bg-transparent border-none cursor-pointer ${locale === loc ? 'text-accent-primary font-bold bg-accent-primary/10' : 'text-text-main hover:bg-bg-page'
+                      className={`block w-full text-left text-xs px-3 py-2 rounded transition-colors bg-transparent border-none cursor-pointer ${locale === loc ? 'text-ink-plum font-bold bg-ink-plum/10' : 'text-ink-plum hover:bg-ink-plum/5'
                         }`}
                     >
                       {loc === 'en' ? '🇺🇸 English' : loc === 'es' ? '🇪🇸 Español' : loc.toUpperCase()}
@@ -188,23 +182,24 @@ export default function Navbar() {
             <button
               id="cart-toggle"
               onClick={isOpen ? closeCart : openCart}
-              className="relative p-2 rounded-lg transition-colors bg-bg-surface border border-border-main cursor-pointer text-text-main"
+              className="relative p-2 rounded-md transition-colors bg-transparent border border-border-plum/30 cursor-pointer text-ink-plum hover:border-ink-plum group"
               aria-label={isOpen ? t('pages.cart.drawer.close', 'Close cart') : t('pages.cart.drawer.title', 'Open cart')}
-              title={isOpen ? t('pages.cart.drawer.close', 'Close cart') : t('pages.cart.drawer.title', 'Open cart')}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
                 <line x1="3" y1="6" x2="21" y2="6" />
                 <path d="M16 10a4 4 0 01-8 0" />
               </svg>
               {totalItems > 0 && (
-                <span className="cart-badge">{totalItems}</span>
+                <span className="absolute -top-1.5 -right-1.5 bg-accent-rose text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full shadow-sm">
+                  {totalItems}
+                </span>
               )}
             </button>
 
             {/* Mobile hamburger */}
             <button
-              className="md:hidden p-2 rounded bg-transparent border-none text-text-on-header cursor-pointer"
+              className="lg:hidden p-2 rounded bg-transparent border-none text-ink-plum cursor-pointer"
               onClick={() => setMobileOpen(o => !o)}
               aria-label={t('pages.nav.mobile.toggle_menu', 'Toggle menu')}
             >
@@ -220,53 +215,15 @@ export default function Navbar() {
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <div className="md:hidden px-4 py-4 max-h-[calc(100vh-64px)] overflow-y-auto bg-bg-surface border-t border-border-main" data-theme-area="mobile-nav">
-            <div className="mb-4">
-              <p className="font-mono text-[10px] text-status-hp font-bold mb-2 uppercase tracking-widest">{t('pages.nav.mobile.inventory_title', 'Singles Inventory')}</p>
-              <div className="grid grid-cols-2 gap-2">
-                {tcgs.map(tcg => (
-                  <Link key={`s-${tcg.id}`} href={`/${tcg.id}/singles`} onClick={() => setMobileOpen(false)}
-                    className="block py-2 px-3 text-xs bg-bg-page/30 rounded-sm border border-border-main/20 text-text-secondary no-underline">
-                    {tcg.name} {t('pages.nav.main.singles', 'Singles')}
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <p className="font-mono text-[10px] text-status-hp font-bold mb-2 uppercase tracking-widest">{t('pages.nav.mobile.sealed_title', 'Sealed Product')}</p>
-              <div className="grid grid-cols-2 gap-2">
-                {tcgs.map(tcg => (
-                  <Link key={`se-${tcg.id}`} href={`/${tcg.id}/sealed`} onClick={() => setMobileOpen(false)}
-                    className="block py-2 px-3 text-xs bg-bg-page/30 rounded-sm border border-border-main/20 text-text-secondary no-underline">
-                    {tcg.name} {t('pages.nav.main.sealed', 'Sealed')}
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            <hr className="border-border-main my-4" />
-            <div className="flex flex-col gap-2">
-              <Link href="/accessories" onClick={() => setMobileOpen(false)}
-                className="block py-2 text-sm font-medium text-text-secondary hover:text-accent-header transition-colors no-underline">
-                {t('pages.nav.main.accessories', 'Accessories')}
-              </Link>
-              <Link href="/store-exclusives" onClick={() => setMobileOpen(false)}
-                className="block py-2 text-sm font-medium text-accent-header hover:text-accent-header transition-colors no-underline">
-                {t('pages.nav.main.store_exclusives', 'Store Exclusives')}
-              </Link>
-              <Link href="/contact" onClick={() => setMobileOpen(false)}
-                className="block py-2 text-sm font-medium text-text-secondary hover:text-accent-header transition-colors no-underline">
-                {t('pages.nav.main.contact', 'Contact')}
-              </Link>
-              <Link href="/bounties" onClick={() => setMobileOpen(false)}
-                className="block py-3 text-center border-2 border-status-hp-header rounded-sm mt-4 font-bold text-status-hp-header no-underline">
-                🎯 {t('pages.nav.main.wanted', 'WANTED CARDS')}
-              </Link>
-              <Link href="/bulk" onClick={() => setMobileOpen(false)}
-                className="block py-3 text-center border-2 border-accent-header rounded-sm mt-2 font-bold text-accent-header no-underline">
-                💰 {t('pages.nav.main.bulk', 'SELL YOUR BULK')}
-              </Link>
+          <div className="lg:hidden px-4 py-4 max-h-[calc(100vh-64px)] overflow-y-auto bg-bg-kraft border-t border-border-plum" data-theme-area="mobile-nav">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <NavLink href="/singles" icon={LineIcons.Singles} label={t('pages.nav.main.singles', 'Singles')} onClick={() => setMobileOpen(false)} />
+              <NavLink href="/sealed" icon={LineIcons.Sealed} label={t('pages.nav.main.sealed', 'Sealed')} onClick={() => setMobileOpen(false)} />
+              <NavLink href="/accessories" icon={LineIcons.Accessories} label={t('pages.nav.main.accessories', 'Accessories')} onClick={() => setMobileOpen(false)} />
+              <NavLink href="/store-exclusives" icon={LineIcons.Exclusives} label={t('pages.nav.main.store_exclusives', 'Exclusives')} onClick={() => setMobileOpen(false)} />
+              <NavLink href="/notices" icon={LineIcons.News} label={t('pages.nav.main.notices', 'News')} onClick={() => setMobileOpen(false)} />
+              <NavLink href="/contact" icon={LineIcons.Contact} label={t('pages.nav.main.contact', 'Contact')} onClick={() => setMobileOpen(false)} />
+              <NavLink href="/bounties" icon={LineIcons.Bounties} label={t('pages.nav.main.wanted', 'Bounties')} colorClass="text-accent-rose" onClick={() => setMobileOpen(false)} />
             </div>
           </div>
         )}

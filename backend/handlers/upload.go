@@ -18,16 +18,17 @@ type UploadHandler struct {
 
 // Upload receives a multipart file and saves it using the configured cloud driver.
 func (h *UploadHandler) Upload(w http.ResponseWriter, r *http.Request) {
-	logger.TraceCtx(r.Context(), "Entering UploadHandler.Upload")
+	logger.InfoCtx(r.Context(), "Entering UploadHandler.Upload - Content-Length: %d", r.ContentLength)
 	if h.Storage == nil {
+		logger.ErrorCtx(r.Context(), "Upload failed: Storage driver is not initialized. Check STORAGE_TYPE and credentials.")
 		http.Error(w, "Storage not configured", http.StatusInternalServerError)
 		return
 	}
 
-	// Limit upload size to 5MB
-	r.Body = http.MaxBytesReader(w, r.Body, 5<<20)
-	if err := r.ParseMultipartForm(5 << 20); err != nil {
-		http.Error(w, "Upload too large or invalid (Max 5MB)", http.StatusBadRequest)
+	// Limit upload size to 10MB
+	r.Body = http.MaxBytesReader(w, r.Body, 10<<20)
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		http.Error(w, "Upload too large or invalid (Max 10MB)", http.StatusBadRequest)
 		return
 	}
 
@@ -57,6 +58,7 @@ func (h *UploadHandler) Upload(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	url, err := h.Storage.Upload(ctx, newFileName, contentType, file)
 	if err != nil {
+		logger.ErrorCtx(ctx, "Failed to upload file %s: %v", newFileName, err)
 		http.Error(w, fmt.Sprintf("Failed to upload: %v", err), http.StatusInternalServerError)
 		return
 	}
