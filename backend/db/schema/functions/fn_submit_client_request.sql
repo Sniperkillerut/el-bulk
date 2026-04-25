@@ -6,6 +6,8 @@ CREATE OR REPLACE FUNCTION fn_submit_client_request(
     p_card_name TEXT,
     p_set_name TEXT DEFAULT NULL,
     p_details TEXT DEFAULT NULL,
+    p_quantity INTEGER DEFAULT 1,
+    p_tcg TEXT DEFAULT 'mtg',
     p_customer_id UUID DEFAULT NULL
 ) RETURNS JSONB AS $$
 DECLARE
@@ -47,8 +49,8 @@ BEGIN
     END IF;
 
     -- Insert the request (customer_id will be NULL if no match found, which is fine for anonymous requests)
-    INSERT INTO client_request (customer_id, customer_name, customer_contact, card_name, set_name, details, status)
-    VALUES (v_customer_id, p_customer_name, p_customer_contact, p_card_name, p_set_name, p_details, 'pending')
+    INSERT INTO client_request (customer_id, customer_name, customer_contact, card_name, set_name, details, quantity, tcg, status)
+    VALUES (v_customer_id, p_customer_name, p_customer_contact, p_card_name, p_set_name, p_details, p_quantity, p_tcg, 'pending')
     RETURNING id, created_at INTO v_request_id, v_created_at;
     
     RETURN jsonb_build_object(
@@ -59,6 +61,8 @@ BEGIN
         'card_name', p_card_name,
         'set_name', p_set_name,
         'details', p_details,
+        'quantity', p_quantity,
+        'tcg', p_tcg,
         'status', 'pending',
         'created_at', v_created_at
     );
