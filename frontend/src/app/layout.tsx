@@ -108,11 +108,14 @@ async function RootProviders({ children }: { children: React.ReactNode }) {
   );
 }
 
+import { Toaster } from 'react-hot-toast';
+ 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${bebas.variable} ${spaceMono.variable}`} suppressHydrationWarning>
       <body suppressHydrationWarning>
         <RemoteLogManager />
+        <Toaster position="bottom-right" reverseOrder={false} />
         
         <Suspense fallback={<div className="min-h-screen bg-bg-page animate-pulse" />}>
           <RootProviders>

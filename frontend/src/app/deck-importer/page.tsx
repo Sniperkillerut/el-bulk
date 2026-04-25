@@ -1,6 +1,7 @@
 'use client';
  
 import { useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { bulkSearchDeck, createClientRequestsBatch } from '@/lib/api';
 import { DeckMatch, ClientRequestBatchInput } from '@/lib/types';
 import { useCart } from '@/lib/CartContext';
@@ -65,7 +66,7 @@ export default function DeckImporterPage() {
         count++;
       }
     });
-    alert(t('pages.deck_importer.messages.added_count', 'Added products from {count} cards to your cart.', { count }));
+    toast.success(t('pages.deck_importer.messages.added_count', 'Added products from {count} cards to your cart.', { count }));
   };
 
   const toggleWanted = (match: DeckMatch, quantity: number, isRemainder: boolean) => {
@@ -123,11 +124,11 @@ export default function DeckImporterPage() {
 
     try {
       await createClientRequestsBatch(batch);
-      alert(t('pages.deck_importer.messages.request_success', 'We have received your acquisition mission! We will contact you once we find the cards.'));
+      toast.success(t('pages.deck_importer.messages.request_success', 'We have received your acquisition mission! We will contact you once we find the cards.'));
       setWanted({});
       setShowRequestModal(false);
     } catch (err) {
-      alert(t('pages.deck_importer.errors.request_failed', 'Failed to submit requests. Please try again.'));
+      toast.error(t('pages.deck_importer.errors.request_failed', 'Failed to submit requests. Please try again.'));
     }
   };
 
