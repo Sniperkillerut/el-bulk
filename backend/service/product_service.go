@@ -368,9 +368,18 @@ func (s *ProductService) BulkSearch(ctx context.Context, list string) ([]models.
 			cleanName = strings.TrimSpace(name[:idx])
 			endIdx := strings.Index(name, ")")
 			if endIdx > idx {
-				setHint = strings.TrimSpace(name[idx+1 : endIdx])
+				fullHint := strings.TrimSpace(name[idx+1 : endIdx])
+				// Handle both (SET) and (SET CN) formats
+				hintParts := strings.Fields(fullHint)
+				if len(hintParts) > 1 {
+					setHint = hintParts[0]
+					cnHint = strings.Join(hintParts[1:], " ")
+				} else {
+					setHint = fullHint
+				}
+				
 				after := strings.TrimSpace(name[endIdx+1:])
-				if after != "" {
+				if after != "" && cnHint == "" {
 					cnHint = after
 				}
 			}

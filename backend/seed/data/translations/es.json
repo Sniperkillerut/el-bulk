@@ -2885,7 +2885,7 @@
   },
   {
     "key": "pages.deck_importer.subtitle",
-    "value": "Pega tu lista de cartas abajo (ej. \"4 Birds of Paradise\") y la compararemos con nuestro stock actual."
+    "value": "Pega tu lista de cartas abajo (funciona con Moxfield, Archideckt, MTGGoldfish y más) y la compararemos con nuestro stock actual. ¡Si no tenemos suficientes, puedes pedirlas todas a la vez!"
   },
   {
     "key": "pages.deck_importer.list_label",

@@ -1,8 +1,8 @@
 'use client';
- 
+
 import { useState } from 'react';
-import { toast } from 'react-hot-toast';
 import { bulkSearchDeck, createClientRequestsBatch } from '@/lib/api';
+import { useToast } from '@/context/ToastContext';
 import { DeckMatch, ClientRequestBatchInput } from '@/lib/types';
 import { useCart } from '@/lib/CartContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -25,6 +25,7 @@ interface WantedItem {
 }
 
 export default function DeckImporterPage() {
+  const { toast } = useToast();
   const { t } = useLanguage();
   const { addItem } = useCart();
   const { user } = useUser();
@@ -32,7 +33,10 @@ export default function DeckImporterPage() {
   const [results, setResults] = useState<DeckMatch[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
+  const foundCount = results ? results.filter(r => r.is_matched).length : 0;
+  const totalCount = results ? results.length : 0;
+
   // Wanted list state
   const [wanted, setWanted] = useState<Record<string, WantedItem>>({});
   const [showRequestModal, setShowRequestModal] = useState(false);
@@ -81,7 +85,7 @@ export default function DeckImporterPage() {
       let cardName = match.raw_line.trim();
       const matchQty = cardName.match(/^(\d+)\s+(.*)/);
       if (matchQty) cardName = matchQty[2];
-      
+
       setWanted(prev => ({
         ...prev,
         [key]: {
@@ -127,7 +131,7 @@ export default function DeckImporterPage() {
       toast.success(t('pages.deck_importer.messages.request_success', 'We have received your acquisition mission! We will contact you once we find the cards.'));
       setWanted({});
       setShowRequestModal(false);
-    } catch (err) {
+    } catch {
       toast.error(t('pages.deck_importer.errors.request_failed', 'Failed to submit requests. Please try again.'));
     }
   };
@@ -137,7 +141,7 @@ export default function DeckImporterPage() {
       <div className="mb-8 text-center">
         <h1 className="font-display text-5xl mb-4">{t('pages.deck_importer.title', 'DECK IMPORTER')}</h1>
         <p className="text-text-secondary max-w-2xl mx-auto">
-          {t('pages.deck_importer.subtitle', 'Paste your card list below and we\'ll match it against our current stock. If we don\'t have enough, you can request them in one go!')}
+          {t('pages.deck_importer.subtitle', 'Paste your card list below (works with Moxfield, Archideckt, MTGGoldfish, and more) and we\'ll match it against our current stock. If we don\'t have enough, you can request them in one go!')}
         </p>
         <div className="gold-line mt-6" />
       </div>
@@ -152,7 +156,7 @@ export default function DeckImporterPage() {
             <textarea
               value={list}
               onChange={(e) => setList(e.target.value)}
-              placeholder="4 Birds of Paradise&#10;2 Lightning Bolt (M10)&#10;1 Sheoldred, the Apocalypse"
+              placeholder={"1 Sheoldred, the Apocalypse (DMU) 107\n4 Birds of Paradise\n2 Lightning Bolt (M10)"}
               className="w-full h-80 font-mono text-sm p-4 bg-ink-surface border-ink-border focus:border-accent-primary transition-all rounded-md resize-none"
             />
             {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
@@ -171,9 +175,16 @@ export default function DeckImporterPage() {
         <div className="flex-1 lg:max-w-[600px] flex flex-col gap-4">
           <div className="card p-6 min-h-[400px] flex flex-col flex-1">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="font-display text-2xl">{t('pages.deck_importer.results_title', 'MATCHES')}</h2>
+              <h2 className="font-display text-2xl flex items-center gap-3">
+                {t('pages.deck_importer.results_title', 'MATCHES')}
+                {totalCount > 0 && (
+                  <span className="text-xs font-sans font-normal text-text-muted bg-ink-border/30 px-2 py-0.5 rounded-full">
+                    {t('pages.deck_importer.found_count', '{found} OF {total} FOUND', { found: foundCount, total: totalCount })}
+                  </span>
+                )}
+              </h2>
               <div className="flex gap-2">
-                 {results && (
+                {results && (
                   <button
                     onClick={handleAddAll}
                     className="btn-secondary text-xs py-1 px-3"
@@ -196,36 +207,42 @@ export default function DeckImporterPage() {
                   const bestMatch = match.matches?.[0];
                   const inStock = bestMatch?.stock || 0;
                   const hasPartial = match.is_matched && inStock > 0 && inStock < match.quantity;
+                   const isDifferentVersion = !!(match.requested_set && match.is_matched && bestMatch && (
+                    (bestMatch.set_code?.toLowerCase().trim() !== match.requested_set.toLowerCase().trim() &&
+                      bestMatch.set_name?.toLowerCase().trim() !== match.requested_set.toLowerCase().trim()) ||
+                    (match.requested_cn && String(bestMatch.collector_number).toLowerCase().trim() !== String(match.requested_cn).toLowerCase().trim())
+                  ));
 
                   return (
                     <div key={idx} className={`p-4 rounded-lg border transition-all ${match.is_matched ? 'bg-ink-surface/50 border-ink-border' : 'bg-hp-color/5 border-hp-color/20 opacity-90'}`}>
-                       <div className="flex justify-between items-start mb-2">
-                          <span className="text-xs font-mono-stack text-text-muted">{match.raw_line}</span>
-                          <div className="flex gap-2">
-                             {match.requested_set && match.is_matched && bestMatch && (
-                               (bestMatch.set_code?.toLowerCase() !== match.requested_set.toLowerCase() && 
-                                bestMatch.set_name?.toLowerCase() !== match.requested_set.toLowerCase()) ||
-                               (match.requested_cn && bestMatch.collector_number !== match.requested_cn)
-                             ) && (
-                               <span className="text-[10px] bg-gold/20 text-gold-dark px-1.5 py-0.5 rounded border border-gold/30">{t('pages.deck_importer.matches.different_version', 'DIFFERENT VERSION')}</span>
-                             )}
-                             {match.is_matched ? (
-                               <span className="text-[10px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded border border-green-500/30">
-                                 {hasPartial ? t('pages.deck_importer.matches.partial', 'PARTIAL STOCK ({n})', { n: inStock }) : t('pages.deck_importer.matches.matched', 'MATCHED')}
-                               </span>
-                             ) : (
-                               <span className="text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded border border-red-500/30">{t('pages.deck_importer.matches.no_stock', 'NO STOCK')}</span>
-                             )}
-                          </div>
-                       </div>
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-xs font-mono-stack text-text-muted">{match.raw_line}</span>
+                        <div className="flex gap-2">
+                          {isDifferentVersion && (
+                            <span className="text-[10px] bg-gold/20 text-gold-dark px-1.5 py-0.5 rounded border border-gold/30">
+                              {t('pages.deck_importer.matches.different_version_details', 'DIFF. VERSION ({set} #{cn})', { 
+                                set: bestMatch?.set_code?.toUpperCase() || '???', 
+                                cn: bestMatch?.collector_number || '?'
+                              })}
+                            </span>
+                          )}
+                          {match.is_matched ? (
+                            <span className="text-[10px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded border border-green-500/30">
+                              {hasPartial ? t('pages.deck_importer.matches.partial', 'PARTIAL STOCK ({n})', { n: inStock }) : t('pages.deck_importer.matches.matched', 'MATCHED')}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded border border-red-500/30">{t('pages.deck_importer.matches.no_stock', 'NO STOCK')}</span>
+                          )}
+                        </div>
+                      </div>
 
                       {bestMatch && (
                         <div className="flex gap-3 mt-3">
                           <div className="w-12 h-16 flex-shrink-0">
-                            <CardImage 
-                              imageUrl={bestMatch.image_url} 
-                              name={bestMatch.name} 
-                              tcg={bestMatch.tcg} 
+                            <CardImage
+                              imageUrl={bestMatch.image_url}
+                              name={bestMatch.name}
+                              tcg={bestMatch.tcg}
                               foilTreatment={bestMatch.foil_treatment}
                               enableHover={true}
                               enableModal={true}
@@ -244,18 +261,21 @@ export default function DeckImporterPage() {
                             <div className="flex items-center justify-between">
                               <span className="price text-sm">${bestMatch.price.toLocaleString()} COP</span>
                               <div className="flex gap-2">
-                                <button 
+                                <button
                                   onClick={() => addItem(bestMatch)}
                                   className="btn-primary text-[10px] py-1 px-2"
                                 >
                                   + {t('pages.common.buttons.add', 'ADD')}
                                 </button>
-                                {hasPartial && (
-                                  <button 
-                                    onClick={() => toggleWanted(match, match.quantity - inStock, true)}
-                                    className={`text-[10px] py-1 px-2 rounded border transition-colors ${wanted[`${match.raw_line}_rem`] ? 'bg-accent-primary text-text-on-accent border-accent-primary' : 'bg-gold/10 text-gold-dark border-gold/30 hover:bg-gold/20'}`}
+                                {(hasPartial || isDifferentVersion) && (
+                                  <button
+                                    onClick={() => toggleWanted(match, isDifferentVersion ? match.quantity : (match.quantity - inStock), isDifferentVersion ? false : true)}
+                                    className={`text-[10px] py-1 px-2 rounded border transition-colors ${wanted[`${match.raw_line}_${isDifferentVersion ? 'full' : 'rem'}`] ? 'bg-accent-primary text-text-on-accent border-accent-primary' : 'bg-gold/10 text-gold-dark border-gold/30 hover:bg-gold/20'}`}
                                   >
-                                    {wanted[`${match.raw_line}_rem`] ? '✓' : `+ ${match.quantity - inStock} WANTED`}
+                                    {isDifferentVersion 
+                                      ? (wanted[`${match.raw_line}_full`] ? '✓ WANTED' : t('pages.deck_importer.matches.request_original', 'REQUEST ORIGINAL'))
+                                      : (wanted[`${match.raw_line}_rem`] ? '✓ WANTED' : t('pages.deck_importer.matches.add_wanted_rem', 'ADD REMAINDER'))
+                                    }
                                   </button>
                                 )}
                               </div>
@@ -267,7 +287,7 @@ export default function DeckImporterPage() {
                       {!match.is_matched && (
                         <div className="mt-4 flex items-center justify-between">
                           <p className="text-[11px] text-text-muted italic">{t('pages.deck_importer.matches.no_stock_desc', 'Not in stock currently.')}</p>
-                          <button 
+                          <button
                             onClick={() => toggleWanted(match, match.quantity, false)}
                             className={`text-[10px] py-1 px-2 rounded border transition-colors ${wanted[`${match.raw_line}_full`] ? 'bg-accent-primary text-text-on-accent border-accent-primary' : 'bg-gold/10 text-gold-dark border-gold/30 hover:bg-gold/20'}`}
                           >
@@ -285,99 +305,99 @@ export default function DeckImporterPage() {
           {/* Wanted List Summary Section */}
           {wantedCount > 0 && (
             <div className="card p-6 border-gold/30 bg-gold/5 animate-in slide-in-from-bottom-4 duration-300">
-               <div className="flex justify-between items-center mb-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">🕵️‍♂️</span>
-                    <h3 className="font-display text-xl uppercase tracking-wider">{t('pages.deck_importer.wanted.title', 'MISSION LIST')}</h3>
-                    <span className="bg-gold text-ink-page text-[10px] font-bold px-1.5 py-0.5 rounded-full">{wantedCount}</span>
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🕵️‍♂️</span>
+                  <h3 className="font-display text-xl uppercase tracking-wider">{t('pages.deck_importer.wanted.title', 'MISSION LIST')}</h3>
+                  <span className="bg-gold text-ink-page text-[10px] font-bold px-1.5 py-0.5 rounded-full">{wantedCount}</span>
+                </div>
+                <button onClick={() => setWanted({})} className="text-[10px] text-text-muted hover:text-red-400 uppercase tracking-widest">{t('pages.common.buttons.clear', 'CLEAR')}</button>
+              </div>
+
+              <div className="space-y-2 mb-6 max-h-[150px] overflow-y-auto custom-scrollbar">
+                {Object.entries(wanted).map(([key, w]) => (
+                  <div key={key} className="flex justify-between items-center text-xs font-mono-stack p-2 bg-ink-page/50 rounded border border-gold/10">
+                    <span className="text-gold-dark">{w.quantity}x {w.card_name}</span>
+                    <button onClick={() => {
+                      const newWanted = { ...wanted };
+                      delete newWanted[key];
+                      setWanted(newWanted);
+                    }} className="text-text-muted hover:text-red-400">✕</button>
                   </div>
-                  <button onClick={() => setWanted({})} className="text-[10px] text-text-muted hover:text-red-400 uppercase tracking-widest">{t('pages.common.buttons.clear', 'CLEAR')}</button>
-               </div>
+                ))}
+              </div>
 
-               <div className="space-y-2 mb-6 max-h-[150px] overflow-y-auto custom-scrollbar">
-                  {Object.entries(wanted).map(([key, w]) => (
-                    <div key={key} className="flex justify-between items-center text-xs font-mono-stack p-2 bg-ink-page/50 rounded border border-gold/10">
-                       <span className="text-gold-dark">{w.quantity}x {w.card_name}</span>
-                       <button onClick={() => {
-                          const newWanted = { ...wanted };
-                          delete newWanted[key];
-                          setWanted(newWanted);
-                       }} className="text-text-muted hover:text-red-400">✕</button>
-                    </div>
-                  ))}
-               </div>
-
-               <button 
-                 onClick={() => setShowRequestModal(true)}
-                 className="w-full py-4 bg-accent-primary hover:bg-accent-primary-hover text-text-on-accent font-bold rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2"
-               >
-                 {t('pages.deck_importer.wanted.submit_btn', 'START ACQUISITION MISSION →')}
-               </button>
+              <button
+                onClick={() => setShowRequestModal(true)}
+                className="w-full py-4 bg-accent-primary hover:bg-accent-primary-hover text-text-on-accent font-bold rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2"
+              >
+                {t('pages.deck_importer.wanted.submit_btn', 'START ACQUISITION MISSION →')}
+              </button>
             </div>
           )}
         </div>
       </div>
 
       {/* Batch Request Modal */}
-      <Modal 
-        isOpen={showRequestModal} 
-        onClose={() => setShowRequestModal(false)} 
+      <Modal
+        isOpen={showRequestModal}
+        onClose={() => setShowRequestModal(false)}
         title={t('pages.deck_importer.modal.title', 'ACQUISITION MISSION')}
       >
-         <div className="mb-6">
-            <p className="text-xs text-text-muted uppercase tracking-widest leading-relaxed mb-4">
-              {t('pages.deck_importer.modal.desc', "Tell us where to contact you once we've secured your items. This mission includes {n} cards.", { n: wantedCount })}
-            </p>
-         </div>
+        <div className="mb-6">
+          <p className="text-xs text-text-muted uppercase tracking-widest leading-relaxed mb-4">
+            {t('pages.deck_importer.modal.desc', "Tell us where to contact you once we've secured your items. This mission includes {n} cards.", { n: wantedCount })}
+          </p>
+        </div>
 
-         <form onSubmit={(e) => { e.preventDefault(); handleSubmit(onSubmitBatch); }} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <div>
-                  <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">{t('components.client_request_modal.form.name_label', 'Your Name *')}</label>
-                  <input 
-                    name="customer_name"
-                    type="text" 
-                    className="w-full text-sm" 
-                    required 
-                    value={form.customer_name} 
-                    onChange={handleChange} 
-                    placeholder={t('components.client_request_modal.form.name_placeholder', 'John Doe')}
-                  />
-               </div>
-               <div>
-                  <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">{t('components.client_request_modal.form.contact_label', 'Contact Info *')}</label>
-                  <input 
-                    name="customer_contact"
-                    type="text" 
-                    className="w-full text-sm" 
-                    required 
-                    value={form.customer_contact} 
-                    onChange={handleChange} 
-                    placeholder={t('components.client_request_modal.form.contact_placeholder', 'Phone or Instagram')}
-                  />
-               </div>
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(onSubmitBatch); }} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">{t('components.client_request_modal.form.name_label', 'Your Name *')}</label>
+              <input
+                name="customer_name"
+                type="text"
+                className="w-full text-sm"
+                required
+                value={form.customer_name}
+                onChange={handleChange}
+                placeholder={t('components.client_request_modal.form.name_placeholder', 'John Doe')}
+              />
             </div>
-
-            <div className="p-4 bg-ink-surface/50 rounded-lg border border-ink-border max-h-[200px] overflow-y-auto custom-scrollbar">
-               <h4 className="text-[10px] font-mono-stack uppercase text-text-muted mb-2 tracking-widest">{t('pages.deck_importer.modal.items_list', 'ITEMS TO ACQUIRE')}</h4>
-               {Object.values(wanted).map((w, i) => (
-                 <div key={i} className="text-xs py-1 border-b border-ink-border last:border-0 flex justify-between">
-                    <span>{w.quantity}x {w.card_name}</span>
-                    <span className="text-text-muted text-[10px]">{w.set_name || ''}</span>
-                 </div>
-               ))}
+            <div>
+              <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">{t('components.client_request_modal.form.contact_label', 'Contact Info *')}</label>
+              <input
+                name="customer_contact"
+                type="text"
+                className="w-full text-sm"
+                required
+                value={form.customer_contact}
+                onChange={handleChange}
+                placeholder={t('components.client_request_modal.form.contact_placeholder', 'Phone or Instagram')}
+              />
             </div>
+          </div>
 
-            <Button 
-              type="submit" 
-              loading={submitting} 
-              fullWidth 
-              size="lg" 
-              className="mt-6"
-            >
-              {t('pages.deck_importer.modal.confirm_btn', 'CONFIRM MISSION')}
-            </Button>
-         </form>
+          <div className="p-4 bg-ink-surface/50 rounded-lg border border-ink-border max-h-[200px] overflow-y-auto custom-scrollbar">
+            <h4 className="text-[10px] font-mono-stack uppercase text-text-muted mb-2 tracking-widest">{t('pages.deck_importer.modal.items_list', 'ITEMS TO ACQUIRE')}</h4>
+            {Object.values(wanted).map((w, i) => (
+              <div key={i} className="text-xs py-1 border-b border-ink-border last:border-0 flex justify-between">
+                <span>{w.quantity}x {w.card_name}</span>
+                <span className="text-text-muted text-[10px]">{w.set_name || ''}</span>
+              </div>
+            ))}
+          </div>
+
+          <Button
+            type="submit"
+            loading={submitting}
+            fullWidth
+            size="lg"
+            className="mt-6"
+          >
+            {t('pages.deck_importer.modal.confirm_btn', 'CONFIRM MISSION')}
+          </Button>
+        </form>
       </Modal>
     </div>
   );

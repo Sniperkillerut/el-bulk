@@ -2885,7 +2885,7 @@
   },
   {
     "key": "pages.deck_importer.subtitle",
-    "value": "Paste your card list below (e.g. \"4 Birds of Paradise\") and we'll match it against our current stock."
+    "value": "Paste your card list below (works with Moxfield, Archideckt, MTGGoldfish, and more) and we'll match it against our current stock. If we don't have enough, you can request them in one go!"
   },
   {
     "key": "pages.deck_importer.list_label",

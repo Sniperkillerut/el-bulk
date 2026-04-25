@@ -185,7 +185,7 @@ func (s *BountyStore) SubmitRequestsBatch(ctx context.Context, input models.Clie
 		return nil, err
 	}
 	var result []byte
-	err = s.DB.GetContext(ctx, &result, "SELECT fn_submit_client_requests_batch($1, $2, $3, $4)",
+	err = s.DB.GetContext(ctx, &result, "SELECT fn_submit_client_requests_batch($1::TEXT, $2::TEXT, $3::JSONB, $4::UUID)",
 		input.CustomerName, input.CustomerContact, cardsJSON, userID)
 	return result, err
 }
