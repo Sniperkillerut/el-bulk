@@ -60,12 +60,12 @@ export default function HomeSearchBar({ placeholder }: HomeSearchBarProps) {
         <input
           type="text"
           placeholder={placeholder || t('components.search.placeholder', 'Search for cards, sets, or products...')}
-          className="w-full bg-white/40 border border-ink-plum/20 p-4 pr-12 rounded-sm text-sm text-ink-plum focus:outline-none focus:border-ink-plum/40 transition-all placeholder:text-ink-plum/40"
+          className="w-full bg-white/90 border border-ink-plum/20 p-5 pr-14 rounded-sm text-lg text-ink-plum focus:outline-none focus:border-ink-plum/40 transition-all placeholder:text-ink-plum/40 shadow-inner"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => query.trim() && setShowResults(true)}
         />
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-plum/40">
+        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-ink-plum/40">
           {loading ? (
             <div className="w-5 h-5 border-2 border-ink-plum border-t-transparent rounded-full animate-spin" />
           ) : (
@@ -77,7 +77,7 @@ export default function HomeSearchBar({ placeholder }: HomeSearchBarProps) {
       </div>
 
       {showResults && query.trim() && (
-        <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-bg-kraft border border-border-plum shadow-2xl rounded-sm animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-white border border-border-plum shadow-2xl rounded-sm animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
             {results && results.length > 0 ? (
               <div className="divide-y divide-border-plum/10">

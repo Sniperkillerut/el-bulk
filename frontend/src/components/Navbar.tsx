@@ -49,7 +49,7 @@ export default function Navbar() {
     <>
       <nav
         id="main-navbar"
-        className="sticky top-0 z-[var(--z-sticky)] bg-bg-kraft/80 backdrop-blur-md border-b border-border-plum"
+        className="sticky top-0 z-sticky bg-bg-kraft/80 backdrop-blur-md border-b border-border-plum"
       >
         <div className="w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14 max-w-[var(--content-max-width)] mx-auto">
           {/* Logo Section */}

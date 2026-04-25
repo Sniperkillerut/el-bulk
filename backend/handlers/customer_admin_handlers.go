@@ -108,7 +108,7 @@ func (h *CustomerAdminHandler) GetCustomerDetail(w http.ResponseWriter, r *http.
 
 	// Fetch bounty offers
 	err = h.DB.SelectContext(r.Context(), &detail.Offers, `
-		SELECT o.*, b.name as bounty_name
+		SELECT o.*, b.name as bounty_name, b.tcg as tcg
 		FROM bounty_offer o
 		JOIN bounty b ON o.bounty_id = b.id
 		WHERE o.customer_id = $1

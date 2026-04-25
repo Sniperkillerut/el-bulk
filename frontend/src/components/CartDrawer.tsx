@@ -15,7 +15,7 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
       {/* Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-50"
+          className="fixed inset-0 z-drawer"
           style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }}
           onClick={onClose}
         />
@@ -24,7 +24,7 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean; onClo
       {/* Drawer */}
       <div
         suppressHydrationWarning
-        className="fixed right-0 top-0 h-full z-50 flex flex-col overflow-x-hidden"
+        className="fixed right-0 top-0 h-full z-drawer flex flex-col overflow-x-hidden"
         style={{
           width: 'min(400px, 100vw)',
           background: 'var(--bg-surface)',

@@ -7,7 +7,7 @@ export default function HeroSection() {
   const { t } = useLanguage();
 
   return (
-    <section className="relative w-full overflow-hidden bg-bg-kraft py-12 md:py-20 border-b border-border-plum/20">
+    <section className="relative w-full bg-bg-kraft py-12 md:py-20 border-b border-border-plum/20">
       {/* Fixed Background Layer */}
       <div 
         className="absolute inset-0 z-0 animate-fade-in duration-1000"
@@ -22,7 +22,7 @@ export default function HeroSection() {
       </div>
 
       <div className="centered-container relative z-30 flex flex-col items-center text-center px-6">
-        <div className="animate-fade-up flex flex-col items-center">
+        <div className="animate-fade-up flex flex-col items-center w-full">
           {/* Humble Brand Header */}
           <h1 className="font-display text-fluid-h2 text-ink-plum mb-1 tracking-tight">
             EL BULK
@@ -32,8 +32,8 @@ export default function HeroSection() {
           </p>
 
           {/* Simple Search Bar Area */}
-          <div className="w-full max-w-2xl">
-            <div className="border border-ink-plum/20 rounded-md overflow-hidden bg-white/40 backdrop-blur-md shadow-lg shadow-ink-plum/5">
+          <div className="w-full max-w-6xl">
+            <div className="relative z-40 border border-ink-plum/20 rounded-md bg-white/60 backdrop-blur-xl shadow-lg shadow-ink-plum/5">
               <HomeSearchBar placeholder={t('pages.home.hero.search_placeholder', 'Search for cards, sets, or accessories...')} />
             </div>
           </div>

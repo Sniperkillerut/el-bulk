@@ -569,6 +569,7 @@ export interface BountyOffer {
   created_at: string;
   updated_at: string;
   bounty_name?: string;
+  tcg?: string;
 }
 
 export interface BountyOfferInput {

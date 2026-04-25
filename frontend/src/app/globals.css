@@ -62,6 +62,18 @@
   --color-ink-border: var(--border-main);
   --color-ink-surface: var(--bg-surface);
   --color-ink-deep: var(--text-main);
+
+  /* Clean Craft Palette */
+  --color-bg-kraft: var(--bg-kraft);
+  --color-ink-plum: var(--ink-plum);
+  --color-ink-lavender: var(--ink-lavender);
+  --color-border-plum: var(--border-plum);
+  --color-accent-rose: var(--accent-rose);
+  
+  /* Z-Index Hierarchy */
+  --z-index-sticky: var(--z-sticky);
+  --z-index-drawer: var(--z-drawer);
+  --z-index-modal: var(--z-modal);
 }
 
 :root {

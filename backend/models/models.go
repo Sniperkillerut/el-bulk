@@ -678,6 +678,7 @@ type BountyOffer struct {
 	UpdatedAt  *time.Time `db:"updated_at" json:"updated_at,omitempty"`
 	// Join fields
 	BountyName      *string `db:"bounty_name" json:"bounty_name,omitempty"`
+	TCG             string  `db:"tcg"         json:"tcg"`
 	CustomerName    string  `db:"customer_name" json:"customer_name"`
 	CustomerContact string  `db:"customer_contact" json:"customer_contact,omitempty"`
 }

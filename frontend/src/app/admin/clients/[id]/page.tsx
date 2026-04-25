@@ -312,13 +312,17 @@ export default function AdminClientDetailPage() {
                         <Link href={`/admin/bounties?tab=offers&scrollToId=${offer.id}`} key={offer.id} className="block p-3 bg-emerald-50 border border-emerald-300 hover:border-emerald-500 rounded-sm hover:-translate-y-0.5 hover:shadow-sm transition-all">
                           <div className="flex justify-between items-start mb-1">
                             <span className="font-bold text-xs uppercase text-emerald-800 flex items-center gap-1">
+                              {offer.quantity > 1 && <span className="bg-emerald-800/10 px-1 rounded">{offer.quantity}x</span>}
                               {offer.bounty_name || t('pages.common.labels.bounty_item', 'Bounty Item')}
                               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-50"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
                             </span>
-                            <span className="text-[8px] font-mono-stack px-1 rounded-sm bg-amber-600 text-white">{t(`pages.common.status.${offer.status}`, offer.status)}</span>
+                            <div className="flex flex-col items-end gap-1">
+                              <span className="text-[8px] font-mono-stack px-1 rounded-sm bg-amber-600 text-white">{t(`pages.common.status.${offer.status}`, offer.status)}</span>
+                              {offer.tcg && <span className="text-[7px] font-mono-stack px-1 bg-emerald-800/10 text-emerald-800 rounded border border-emerald-800/20">{offer.tcg.toUpperCase()}</span>}
+                            </div>
                           </div>
                           <div className="flex justify-between items-end mt-1">
-                            <span className="text-[9px] font-mono-stack opacity-80 font-bold text-emerald-900">{t('pages.common.labels.quantity_short', 'QTY')}: {offer.quantity}</span>
+                            <span className="text-[9px] font-mono-stack opacity-80 font-bold text-emerald-900">{offer.condition || 'NM'}</span>
                             <span className="text-[8px] font-mono-stack text-emerald-800/60">{new Date(offer.created_at).toLocaleDateString()}</span>
                           </div>
                         </Link>
@@ -335,15 +339,19 @@ export default function AdminClientDetailPage() {
                         <Link href={`/admin/bounties?tab=offers&scrollToId=${offer.id}`} key={offer.id} className="block p-3 bg-kraft-light/30 border border-kraft-dark/20 rounded-sm opacity-60 hover:opacity-100 hover:bg-white transition-all">
                           <div className="flex justify-between items-start mb-1">
                             <span className="font-bold text-xs uppercase text-ink-deep flex items-center gap-1">
+                              {offer.quantity > 1 && <span className="bg-ink-deep/10 px-1 rounded">{offer.quantity}x</span>}
                               {offer.bounty_name || t('pages.common.labels.bounty_item', 'Bounty Item')}
                               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-50"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
                             </span>
-                            <span className={`text-[8px] font-mono-stack px-1 rounded-sm text-white ${offer.status === 'fulfilled' || offer.status === 'accepted' ? 'bg-indigo-600' : 'bg-red-600'}`}>
-                              {t(`pages.common.status.${offer.status}`, offer.status)}
-                            </span>
+                            <div className="flex flex-col items-end gap-1">
+                              <span className={`text-[8px] font-mono-stack px-1 rounded-sm text-white ${offer.status === 'fulfilled' || offer.status === 'accepted' ? 'bg-indigo-600' : 'bg-red-600'}`}>
+                                {t(`pages.common.status.${offer.status}`, offer.status)}
+                              </span>
+                              {offer.tcg && <span className="text-[7px] font-mono-stack px-1 bg-ink-deep/10 text-ink-deep rounded border border-ink-deep/20">{offer.tcg.toUpperCase()}</span>}
+                            </div>
                           </div>
                           <div className="flex justify-between items-end mt-1">
-                            <span className="text-[9px] font-mono-stack opacity-60">{t('pages.common.labels.quantity_short', 'QTY')}: {offer.quantity}</span>
+                            <span className="text-[9px] font-mono-stack opacity-60">{offer.condition || 'NM'}</span>
                             <span className="text-[8px] font-mono-stack text-text-muted">{new Date(offer.created_at).toLocaleDateString()}</span>
                           </div>
                         </Link>
