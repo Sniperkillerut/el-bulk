@@ -1,8 +1,8 @@
 'use client';
-
-import { useState, useMemo } from 'react';
+ 
+import { useState } from 'react';
 import { bulkSearchDeck, createClientRequestsBatch } from '@/lib/api';
-import { DeckMatch, Product, ClientRequestBatchInput } from '@/lib/types';
+import { DeckMatch, ClientRequestBatchInput } from '@/lib/types';
 import { useCart } from '@/lib/CartContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useUser } from '@/context/UserContext';
@@ -13,7 +13,6 @@ import SetIcon from '@/components/SetIcon';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import { useForm } from '@/hooks/useForm';
-import { toast } from 'react-hot-toast';
 
 interface WantedItem {
   card_name: string;
@@ -66,7 +65,7 @@ export default function DeckImporterPage() {
         count++;
       }
     });
-    toast.success(t('pages.deck_importer.messages.added_count', 'Added products from {count} cards to your cart.', { count }));
+    alert(t('pages.deck_importer.messages.added_count', 'Added products from {count} cards to your cart.', { count }));
   };
 
   const toggleWanted = (match: DeckMatch, quantity: number, isRemainder: boolean) => {
@@ -102,7 +101,6 @@ export default function DeckImporterPage() {
   const {
     form,
     handleChange,
-    setFieldValue,
     submitting,
     handleSubmit
   } = useForm({
@@ -125,11 +123,11 @@ export default function DeckImporterPage() {
 
     try {
       await createClientRequestsBatch(batch);
-      toast.success(t('pages.deck_importer.messages.request_success', 'We have received your acquisition mission! We will contact you once we find the cards.'));
+      alert(t('pages.deck_importer.messages.request_success', 'We have received your acquisition mission! We will contact you once we find the cards.'));
       setWanted({});
       setShowRequestModal(false);
     } catch (err) {
-      toast.error(t('pages.deck_importer.errors.request_failed', 'Failed to submit requests. Please try again.'));
+      alert(t('pages.deck_importer.errors.request_failed', 'Failed to submit requests. Please try again.'));
     }
   };
 
@@ -196,9 +194,7 @@ export default function DeckImporterPage() {
                 {results.map((match, idx) => {
                   const bestMatch = match.matches?.[0];
                   const inStock = bestMatch?.stock || 0;
-                  const canSatisfyAll = match.is_matched && inStock >= match.quantity;
                   const hasPartial = match.is_matched && inStock > 0 && inStock < match.quantity;
-                  const isWanted = !!wanted[`${match.raw_line}_full`] || !!wanted[`${match.raw_line}_rem`];
 
                   return (
                     <div key={idx} className={`p-4 rounded-lg border transition-all ${match.is_matched ? 'bg-ink-surface/50 border-ink-border' : 'bg-hp-color/5 border-hp-color/20 opacity-90'}`}>
