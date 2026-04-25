@@ -659,6 +659,8 @@ type ClientRequest struct {
 	CardName        string    `db:"card_name" json:"card_name"`
 	SetName         *string   `db:"set_name" json:"set_name,omitempty"`
 	Details         *string    `db:"details" json:"details,omitempty"`
+	Quantity        int        `db:"quantity" json:"quantity"`
+	TCG             string     `db:"tcg" json:"tcg"`
 	Status          string     `db:"status" json:"status"`
 	CreatedAt       *time.Time `db:"created_at" json:"created_at,omitempty"`
 }
@@ -687,6 +689,25 @@ type ClientRequestInput struct {
 	CardName        string  `json:"card_name"`
 	SetName         *string `json:"set_name,omitempty"`
 	Details         *string `json:"details,omitempty"`
+	Quantity        int     `json:"quantity"`
+	TCG             string  `json:"tcg"`
+}
+
+type ClientRequestBatchInput struct {
+	CustomerName    string `json:"customer_name"`
+	CustomerContact string `json:"customer_contact"`
+	Cards           []struct {
+		CardName string  `json:"card_name"`
+		SetName  *string `json:"set_name,omitempty"`
+		Details  *string `json:"details,omitempty"`
+		Quantity int     `json:"quantity"`
+		TCG      string  `json:"tcg"`
+	} `json:"cards"`
+}
+
+type ClientRequestBatchResponse struct {
+	Count      int    `json:"count"`
+	CustomerID string `json:"customer_id"`
 }
 
 type BountyOfferInput struct {
