@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/el-bulk/backend/middleware"
@@ -235,7 +236,7 @@ func (h *BountyHandler) UpdateRequestStatus(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	validStatuses := map[string]bool{"pending": true, "accepted": true, "rejected": true, "solved": true}
+	validStatuses := map[string]bool{"pending": true, "accepted": true, "rejected": true, "solved": true, "not_needed": true}
 	if !validStatuses[input.Status] {
 		render.Error(w, "Invalid status value. Must be one of: pending, accepted, rejected, solved", http.StatusBadRequest)
 		return
@@ -317,9 +318,19 @@ func (h *BountyHandler) CancelMeRequest(w http.ResponseWriter, r *http.Request) 
 	}
 
 	id := chi.URLParam(r, "id")
-	if err := h.Service.CancelMeRequest(r.Context(), id, userID); err != nil {
+	var input models.CancelMeRequestInput
+	if err := decodeJSON(r, &input); err != nil {
+		input.Reason = "Unspecified"
+	}
+
+	reason := input.Reason
+	if input.Details != "" {
+		reason = fmt.Sprintf("%s: %s", input.Reason, input.Details)
+	}
+
+	if err := h.Service.CancelMeRequest(r.Context(), id, userID, reason); err != nil {
 		logger.ErrorCtx(r.Context(), "Failed to cancel user client request %s for user %s: %v", id, userID, err)
-		render.Error(w, "Request cannot be cancelled. It may not exist, belong to you, or is already being processed.", http.StatusBadRequest)
+		render.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
