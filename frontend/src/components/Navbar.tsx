@@ -14,8 +14,8 @@ import Dropdown from './ui/Dropdown';
 import ThemeSelector from './ui/ThemeSelector';
 
 const NavLink = ({ href, icon: Icon, label, colorClass = "", onClick }: { href: string, icon: React.ComponentType<React.SVGProps<SVGSVGElement>>, label: string, colorClass?: string, onClick?: () => void }) => (
-  <Link href={href} onClick={onClick} className={`flex flex-col items-center gap-1 no-underline group transition-all text-ink-plum`}>
-    <div className={`p-1 rounded-md group-hover:bg-ink-plum/5 transition-colors ${colorClass}`}>
+  <Link href={href} onClick={onClick} className={`flex flex-col items-center gap-1 no-underline group transition-all text-text-main`}>
+    <div className={`p-1 rounded-md group-hover:bg-text-main/5 transition-colors ${colorClass}`}>
       <Icon className="w-5 h-5 stroke-[1.5]" />
     </div>
     <span className="text-[10px] font-bold uppercase tracking-tighter opacity-70 group-hover:opacity-100 transition-opacity">
@@ -49,15 +49,15 @@ export default function Navbar() {
     <>
       <nav
         id="main-navbar"
-        className="sticky top-0 z-sticky bg-bg-kraft/80 backdrop-blur-md border-b border-border-plum"
+        className="sticky top-0 z-sticky bg-bg-page/80 backdrop-blur-md border-b border-border-main/20"
       >
         <div className="w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14 max-w-[var(--content-max-width)] mx-auto">
           {/* Logo Section */}
           <Link href="/" className="flex flex-col no-underline shrink-0 group">
-            <span className="font-display text-2xl text-ink-plum leading-none tracking-tight group-hover:opacity-80 transition-opacity">
+            <span className="font-display text-2xl text-text-main leading-none tracking-tight group-hover:opacity-80 transition-opacity">
               EL BULK
             </span>
-            <span className="text-[9px] font-bold uppercase tracking-[0.2em] opacity-60 text-ink-plum">
+            <span className="text-[9px] font-bold uppercase tracking-[0.2em] opacity-60 text-text-main">
               Grow your collection
             </span>
           </Link>
@@ -66,8 +66,8 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center gap-4 xl:gap-6">
             <div className="flex items-center gap-4 pr-4 border-r border-border-plum/30">
               <Dropdown
-                trigger={<button className="flex flex-col items-center gap-1 bg-transparent border-none cursor-pointer group text-ink-plum">
-                  <div className="p-1 rounded-md group-hover:bg-ink-plum/5 transition-colors">
+                trigger={<button className="flex flex-col items-center gap-1 bg-transparent border-none cursor-pointer group text-text-main">
+                  <div className="p-1 rounded-md group-hover:bg-text-main/5 transition-colors">
                     <LineIcons.Singles />
                   </div>
                   <span className="text-[10px] font-bold uppercase tracking-tighter opacity-70 group-hover:opacity-100">{t('pages.nav.main.singles', 'Singles')}</span>
@@ -75,8 +75,8 @@ export default function Navbar() {
                 items={singlesItems}
               />
               <Dropdown
-                trigger={<button className="flex flex-col items-center gap-1 bg-transparent border-none cursor-pointer group text-ink-plum">
-                  <div className="p-1 rounded-md group-hover:bg-ink-plum/5 transition-colors">
+                trigger={<button className="flex flex-col items-center gap-1 bg-transparent border-none cursor-pointer group text-text-main">
+                  <div className="p-1 rounded-md group-hover:bg-text-main/5 transition-colors">
                     <LineIcons.Sealed />
                   </div>
                   <span className="text-[10px] font-bold uppercase tracking-tighter opacity-70 group-hover:opacity-100">{t('pages.nav.main.sealed', 'Sealed')}</span>
@@ -105,7 +105,7 @@ export default function Navbar() {
                   align="end"
                   trigger={
                     <div className="flex items-center gap-2 cursor-pointer group">
-                      <div className="w-8 h-8 relative rounded-full border border-border-plum overflow-hidden shadow-sm group-hover:border-ink-plum transition-colors">
+                      <div className="w-8 h-8 relative rounded-full border border-border-main/50 overflow-hidden shadow-sm group-hover:border-text-main transition-colors">
                         <Image
                           src={user.avatar_url || 'https://www.gravatar.com/avatar/?d=mp'}
                           alt={user.first_name || 'User'}
@@ -119,9 +119,9 @@ export default function Navbar() {
                   }
                 >
                   <div className="p-2 w-48 bg-bg-kraft border border-border-plum rounded-sm shadow-xl">
-                    <div className="mb-2 px-2 py-1 border-b border-border-plum/30">
-                      <p className="text-[9px] font-mono text-ink-plum uppercase tracking-widest">{user.first_name} {user.last_name}</p>
-                      <p className="text-[10px] text-ink-lavender truncate font-medium">{user.email}</p>
+                    <div className="mb-2 px-2 py-1 border-b border-border-main/10">
+                      <p className="text-[9px] font-mono text-text-main uppercase tracking-widest">{user.first_name} {user.last_name}</p>
+                      <p className="text-[10px] text-text-secondary truncate font-medium">{user.email}</p>
                     </div>
                     <Link
                       href="/profile"
@@ -140,9 +140,9 @@ export default function Navbar() {
               ) : (
                 <Link
                   href="/login"
-                  className="flex flex-col items-center gap-1 no-underline group text-ink-plum"
+                  className="flex flex-col items-center gap-1 no-underline group text-text-main"
                 >
-                  <div className="p-1 rounded-md group-hover:bg-ink-plum/5 transition-colors">
+                  <div className="p-1 rounded-md group-hover:bg-text-main/5 transition-colors">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                   </div>
                   <span className="text-[9px] font-bold uppercase opacity-70">{t('pages.nav.user.login', 'Login')}</span>
@@ -155,7 +155,7 @@ export default function Navbar() {
                 align="end"
                 trigger={
                   <button
-                    className="p-1.5 rounded-md transition-all flex flex-col items-center justify-center bg-transparent border border-border-plum/30 cursor-pointer text-ink-plum group hover:border-ink-plum"
+                    className="p-1.5 rounded-md transition-all flex flex-col items-center justify-center bg-transparent border border-border-main/30 cursor-pointer text-text-main group hover:border-text-main"
                     title={t('pages.nav.tooltips.change_lang', 'Change language')}
                   >
                     <span className="text-[10px] font-bold uppercase">{locale}</span>
@@ -182,7 +182,7 @@ export default function Navbar() {
             <button
               id="cart-toggle"
               onClick={isOpen ? closeCart : openCart}
-              className="relative p-2 rounded-md transition-colors bg-transparent border border-border-plum/30 cursor-pointer text-ink-plum hover:border-ink-plum group"
+              className="relative p-2 rounded-md transition-colors bg-transparent border border-border-main/30 cursor-pointer text-text-main hover:border-text-main group"
               aria-label={isOpen ? t('pages.cart.drawer.close', 'Close cart') : t('pages.cart.drawer.title', 'Open cart')}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -199,7 +199,7 @@ export default function Navbar() {
 
             {/* Mobile hamburger */}
             <button
-              className="lg:hidden p-2 rounded bg-transparent border-none text-ink-plum cursor-pointer"
+              className="lg:hidden p-2 rounded bg-transparent border-none text-text-main cursor-pointer"
               onClick={() => setMobileOpen(o => !o)}
               aria-label={t('pages.nav.mobile.toggle_menu', 'Toggle menu')}
             >
@@ -215,7 +215,7 @@ export default function Navbar() {
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <div className="lg:hidden px-4 py-4 max-h-[calc(100vh-64px)] overflow-y-auto bg-bg-kraft border-t border-border-plum" data-theme-area="mobile-nav">
+          <div className="lg:hidden px-4 py-4 max-h-[calc(100vh-64px)] overflow-y-auto bg-bg-page border-t border-border-main" data-theme-area="mobile-nav">
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <NavLink href="/singles" icon={LineIcons.Singles} label={t('pages.nav.main.singles', 'Singles')} onClick={() => setMobileOpen(false)} />
               <NavLink href="/sealed" icon={LineIcons.Sealed} label={t('pages.nav.main.sealed', 'Sealed')} onClick={() => setMobileOpen(false)} />

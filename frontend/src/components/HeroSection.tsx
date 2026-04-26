@@ -7,7 +7,7 @@ export default function HeroSection() {
   const { t } = useLanguage();
 
   return (
-    <section className="relative w-full bg-bg-kraft py-12 md:py-20 border-b border-border-plum/20">
+    <section className="relative w-full bg-bg-page py-12 md:py-20 border-b border-border-main/20 overflow-hidden">
       {/* Fixed Background Layer */}
       <div 
         className="absolute inset-0 z-0 animate-fade-in duration-1000"
@@ -17,23 +17,26 @@ export default function HeroSection() {
           backgroundPosition: 'center',
         }}
       >
-        {/* Subtle Craft Overlay to blend with the cardboard aesthetic */}
-        <div className="absolute inset-0 bg-bg-kraft/60 backdrop-blur-[2px] paper-texture opacity-90" />
+        {/* Enhanced Overlay for readability */}
+        <div className="absolute inset-0 bg-bg-page/75 backdrop-blur-[4px] paper-texture opacity-90" />
+        {/* Radial gradient for center focus and vignette effect */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,var(--bg-page)_100%)] opacity-40" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-bg-page/10 to-bg-page/40" />
       </div>
 
       <div className="centered-container relative z-30 flex flex-col items-center text-center px-6">
-        <div className="animate-fade-up flex flex-col items-center w-full">
-          {/* Humble Brand Header */}
-          <h1 className="font-display text-fluid-h2 text-ink-plum mb-1 tracking-tight">
+        <div className="animate-fade-up flex flex-col items-center w-full max-w-2xl">
+          {/* Brand Header with shadow for contrast */}
+          <h1 className="font-display text-fluid-h2 text-text-main mb-1 tracking-tight hero-text-glow">
             EL BULK
           </h1>
-          <p className="text-sm md:text-lg text-ink-plum/60 font-bold uppercase tracking-[0.3em] mb-8">
+          <p className="text-sm md:text-lg text-text-main/70 font-bold uppercase tracking-[0.3em] mb-10 hero-text-glow">
             {t('pages.home.hero.tagline', 'Grow your collection')}
           </p>
 
           {/* Simple Search Bar Area */}
           <div className="w-full max-w-6xl">
-            <div className="relative z-40 border border-ink-plum/20 rounded-md bg-white/60 backdrop-blur-xl shadow-lg shadow-ink-plum/5">
+            <div className="relative z-40 border border-text-main/10 rounded-md bg-white/40 backdrop-blur-xl shadow-2xl shadow-text-main/5">
               <HomeSearchBar placeholder={t('pages.home.hero.search_placeholder', 'Search for cards, sets, or accessories...')} />
             </div>
           </div>

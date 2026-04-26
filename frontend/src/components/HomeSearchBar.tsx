@@ -60,14 +60,14 @@ export default function HomeSearchBar({ placeholder }: HomeSearchBarProps) {
         <input
           type="text"
           placeholder={placeholder || t('components.search.placeholder', 'Search for cards, sets, or products...')}
-          className="w-full bg-white/90 border border-ink-plum/20 p-5 pr-14 rounded-sm text-lg text-ink-plum focus:outline-none focus:border-ink-plum/40 transition-all placeholder:text-ink-plum/40 shadow-inner"
+          className="w-full bg-white/90 border border-text-main/20 p-5 pr-14 rounded-sm text-lg text-text-main focus:outline-none focus:border-text-main/40 transition-all placeholder:text-text-main/40 shadow-inner"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => query.trim() && setShowResults(true)}
         />
-        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-ink-plum/40">
+        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-text-main/40">
           {loading ? (
-            <div className="w-5 h-5 border-2 border-ink-plum border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-text-main border-t-transparent rounded-full animate-spin" />
           ) : (
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -77,14 +77,14 @@ export default function HomeSearchBar({ placeholder }: HomeSearchBarProps) {
       </div>
 
       {showResults && query.trim() && (
-        <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-white border border-border-plum shadow-2xl rounded-sm animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-white border border-border-main shadow-2xl rounded-sm animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
             {results && results.length > 0 ? (
-              <div className="divide-y divide-border-plum/10">
+              <div className="divide-y divide-border-main/10">
                 {results.map((product) => (
                   <div
                     key={product.id}
-                    className="p-4 flex items-center gap-5 hover:bg-ink-plum/5 transition-all group cursor-pointer"
+                    className="p-4 flex items-center gap-5 hover:bg-text-main/5 transition-all group cursor-pointer"
                     style={{ overflow: 'visible' }}
                     onClick={() => {
                       openProductModal(product);
@@ -103,10 +103,10 @@ export default function HomeSearchBar({ placeholder }: HomeSearchBarProps) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded border border-border-plum/20 text-ink-plum/60">
+                        <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded border border-border-main/20 text-text-main/60">
                           {TCG_SHORT[product.tcg] || product.tcg}
                         </span>
-                        <p className="text-base font-bold truncate text-ink-plum">{product.name}</p>
+                        <p className="text-base font-bold truncate text-text-main">{product.name}</p>
                       </div>
 
                       <div className="flex flex-wrap gap-1 mb-1">
@@ -122,8 +122,8 @@ export default function HomeSearchBar({ placeholder }: HomeSearchBarProps) {
                         )}
                       </div>
 
-                      <p className="text-xs text-ink-plum/60 truncate">
-                        {product.set_name || t('components.search.status.no_set', 'No Set')} • <span className={product.stock > 0 ? 'text-ink-plum' : 'text-accent-rose font-bold'}>
+                      <p className="text-xs text-text-main/60 truncate">
+                        {product.set_name || t('components.search.status.no_set', 'No Set')} • <span className={product.stock > 0 ? 'text-text-main' : 'text-accent-rose font-bold'}>
                           {product.stock > 0
                             ? t('components.search.status.in_stock', '{count} IN STOCK', { count: product.stock })
                             : t('components.search.status.out_of_stock', 'OUT OF STOCK')}
@@ -131,14 +131,14 @@ export default function HomeSearchBar({ placeholder }: HomeSearchBarProps) {
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-2">
-                      <p className="text-lg font-bold text-ink-plum tracking-tighter">${product.price.toLocaleString()} COP</p>
+                      <p className="text-lg font-bold text-text-main tracking-tighter">${product.price.toLocaleString()} COP</p>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           addItem(product);
                         }}
                         disabled={product.stock <= 0}
-                        className="py-1 px-4 text-[10px] font-bold uppercase rounded border border-ink-plum/20 hover:bg-ink-plum hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="py-1 px-4 text-[10px] font-bold uppercase rounded border border-text-main/20 hover:bg-text-main hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {product.stock > 0 ? t('components.search.actions.add', '+ ADD') : t('components.search.actions.sold_out', 'SOLD OUT')}
                       </button>
@@ -147,13 +147,13 @@ export default function HomeSearchBar({ placeholder }: HomeSearchBarProps) {
                 ))}
               </div>
             ) : (
-              <div className="p-8 text-center text-ink-plum/40 text-sm">
+              <div className="p-8 text-center text-text-main/40 text-sm">
                 {t('components.search.status.no_results', 'No products found for "{query}"').replace('{query}', query)}
               </div>
             )}
             {results && results.length > 0 && (
-              <div className="p-2 bg-ink-plum/5 text-center border-t border-border-plum/10">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-ink-plum/40">{t('components.search.status.top_results', 'Showing top results')}</p>
+              <div className="p-2 bg-text-main/5 text-center border-t border-border-main/10">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-text-main/40">{t('components.search.status.top_results', 'Showing top results')}</p>
               </div>
             )}
 

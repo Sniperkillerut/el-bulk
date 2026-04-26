@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS theme (
   font_heading        TEXT,
   font_body           TEXT,
   accent_secondary    TEXT,
+  accent_rose         TEXT,
   
   created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()

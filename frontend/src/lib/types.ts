@@ -714,6 +714,7 @@ export interface Theme {
   font_heading?: string;
   font_body?: string;
   accent_secondary?: string;
+  accent_rose?: string;
 
   created_at: string;
   updated_at: string;

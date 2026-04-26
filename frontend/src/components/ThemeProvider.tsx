@@ -44,6 +44,11 @@ const generateThemeCSS = (t: Theme, selector: string) => `
     --font-heading: ${t.font_heading || 'var(--font-heading)'};
     --font-body: ${t.font_body || 'var(--font-body)'};
     --accent-secondary: ${t.accent_secondary || 'transparent'};
+    --ink-plum: ${t.text_main};
+    --bg-kraft: ${t.bg_page};
+    --border-plum: ${t.border_main};
+    --accent-rose: ${t.accent_rose || t.accent_secondary || '#B78494'};
+    --ink-lavender: ${t.text_secondary};
     --ink-deep: ${t.text_main || '#3b3127'};
     --text-primary: ${t.text_main || '#3b3127'};
     --kraft-light: ${t.bg_page || '#e6dac3'};

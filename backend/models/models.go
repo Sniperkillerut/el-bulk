@@ -806,6 +806,7 @@ type Theme struct {
 	FontHeading        *string   `db:"font_heading"         json:"font_heading"`
 	FontBody           *string   `db:"font_body"            json:"font_body"`
 	AccentSecondary    *string   `db:"accent_secondary"     json:"accent_secondary"`
+	AccentRose         *string   `db:"accent_rose"          json:"accent_rose"`
 	
 	CreatedAt          time.Time `db:"created_at"           json:"created_at"`
 	UpdatedAt          time.Time `db:"updated_at"           json:"updated_at"`
@@ -861,4 +862,5 @@ type ThemeInput struct {
 	FontHeading        *string `json:"font_heading,omitempty"`
 	FontBody           *string `json:"font_body,omitempty"`
 	AccentSecondary    *string `json:"accent_secondary,omitempty"`
+	AccentRose         *string `json:"accent_rose,omitempty"`
 }

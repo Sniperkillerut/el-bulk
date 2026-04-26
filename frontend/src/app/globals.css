@@ -157,6 +157,14 @@
   z-index: 1;
 }
 
+.hero-text-glow {
+  text-shadow: 
+    0 0 40px var(--bg-page),
+    0 0 20px var(--bg-page),
+    0 0 10px var(--bg-page),
+    0 2px 4px rgba(0,0,0,0.1);
+}
+
 /* Theme Area Scoping - Ensures accents move with their backgrounds */
 [data-theme-area='header'],
 [data-theme-area='footer'],
