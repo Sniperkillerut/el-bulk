@@ -27,7 +27,7 @@ export default function CancellationModal({ request, isOpen, onClose, onConfirm,
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-md bg-page-bg border border-border-main rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="w-full max-w-md bg-bg-page border border-border-main rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
         <div className="p-6">
           <h2 className="text-xl font-bold text-text-main mb-2">Cancel Request</h2>
           <p className="text-text-secondary text-sm mb-6">
@@ -41,7 +41,7 @@ export default function CancellationModal({ request, isOpen, onClose, onConfirm,
               <select
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                className="w-full bg-surface-bg border border-border-main rounded-lg px-3 py-2 text-text-main focus:outline-none focus:border-accent-primary transition-colors"
+                className="w-full bg-bg-surface border border-border-main rounded-lg px-3 py-2 text-text-main focus:outline-none focus:border-accent-primary transition-colors"
                 disabled={isSubmitting}
               >
                 {REASONS.map(r => (
@@ -56,14 +56,14 @@ export default function CancellationModal({ request, isOpen, onClose, onConfirm,
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
                 placeholder="Anything else you'd like to tell us..."
-                className="w-full bg-surface-bg border border-border-main rounded-lg px-3 py-2 text-text-main h-24 resize-none focus:outline-none focus:border-accent-primary transition-colors"
+                className="w-full bg-bg-surface border border-border-main rounded-lg px-3 py-2 text-text-main h-24 resize-none focus:outline-none focus:border-accent-primary transition-colors"
                 disabled={isSubmitting}
               />
             </div>
           </div>
         </div>
 
-        <div className="p-4 bg-surface-bg/50 border-t border-border-main flex justify-end gap-3">
+        <div className="p-4 bg-bg-surface/50 border-t border-border-main flex justify-end gap-3">
           <button
             onClick={onClose}
             disabled={isSubmitting}
