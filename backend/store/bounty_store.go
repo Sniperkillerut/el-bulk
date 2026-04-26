@@ -164,7 +164,7 @@ func (s *BountyStore) CancelMeOffer(ctx context.Context, id, userID string) (int
 func (s *BountyStore) ListRequests(ctx context.Context) ([]models.ClientRequest, error) {
 	requests := []models.ClientRequest{}
 	query := `
-		SELECT id, customer_id, customer_name, customer_contact, card_name, set_name, details, quantity, tcg, status, created_at
+		SELECT id, customer_id, customer_name, customer_contact, card_name, set_name, details, quantity, tcg, status, cancellation_reason, created_at
 		FROM client_request
 		ORDER BY created_at DESC
 	`
@@ -195,7 +195,7 @@ func (s *BountyStore) UpdateRequestStatus(ctx context.Context, id, status string
 		UPDATE client_request
 		SET status = $1
 		WHERE id = $2
-		RETURNING id, customer_id, customer_name, customer_contact, card_name, set_name, details, quantity, tcg, status, created_at
+		RETURNING id, customer_id, customer_name, customer_contact, card_name, set_name, details, quantity, tcg, status, cancellation_reason, created_at
 	`
 	var req models.ClientRequest
 	err := s.DB.QueryRowxContext(ctx, query, status, id).StructScan(&req)
@@ -208,7 +208,7 @@ func (s *BountyStore) UpdateRequestStatus(ctx context.Context, id, status string
 func (s *BountyStore) ListMeRequests(ctx context.Context, userID string) ([]models.ClientRequest, error) {
 	requests := []models.ClientRequest{}
 	query := `
-		SELECT id, customer_id, customer_name, customer_contact, card_name, set_name, details, quantity, tcg, status, created_at
+		SELECT id, customer_id, customer_name, customer_contact, card_name, set_name, details, quantity, tcg, status, cancellation_reason, created_at
 		FROM client_request
 		WHERE customer_id = $1
 		ORDER BY created_at DESC
@@ -217,12 +217,12 @@ func (s *BountyStore) ListMeRequests(ctx context.Context, userID string) ([]mode
 	return requests, err
 }
 
-func (s *BountyStore) CancelMeRequest(ctx context.Context, id, userID string) (int64, error) {
+func (s *BountyStore) CancelMeRequest(ctx context.Context, id, userID, reason string) (int64, error) {
 	res, err := s.DB.ExecContext(ctx, `
 		UPDATE client_request 
-		SET status = 'cancelled' 
-		WHERE id = $1 AND customer_id = $2 AND status = 'pending'
-	`, id, userID)
+		SET status = 'not_needed', cancellation_reason = $1 
+		WHERE id = $2 AND customer_id = $3 AND (status = 'pending' OR status = 'accepted')
+	`, reason, id, userID)
 	if err != nil {
 		return 0, err
 	}

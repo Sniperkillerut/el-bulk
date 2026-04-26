@@ -221,13 +221,13 @@ func (s *BountyService) ListMeRequests(ctx context.Context, userID string) ([]mo
 	return requests, nil
 }
 
-func (s *BountyService) CancelMeRequest(ctx context.Context, id, userID string) error {
-	rows, err := s.Store.CancelMeRequest(ctx, id, userID)
+func (s *BountyService) CancelMeRequest(ctx context.Context, id, userID, reason string) error {
+	rows, err := s.Store.CancelMeRequest(ctx, id, userID, reason)
 	if err != nil {
 		return err
 	}
 	if rows == 0 {
-		return fmt.Errorf("request cannot be cancelled")
+		return fmt.Errorf("request cannot be cancelled (must be pending or accepted)")
 	}
 	return nil
 }
