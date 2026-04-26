@@ -662,6 +662,7 @@ type ClientRequest struct {
 	Quantity        int        `db:"quantity" json:"quantity"`
 	TCG             string     `db:"tcg" json:"tcg"`
 	Status          string     `db:"status" json:"status"`
+	CancellationReason *string `db:"cancellation_reason,omitempty" json:"cancellation_reason,omitempty"`
 	CreatedAt       *time.Time `db:"created_at" json:"created_at,omitempty"`
 }
 
@@ -724,6 +725,11 @@ type BountyOfferInput struct {
 
 type UpdateClientRequestStatusInput struct {
 	Status string `json:"status"` // expected: 'pending', 'accepted', 'rejected', 'solved'
+}
+
+type CancelMeRequestInput struct {
+	Reason  string `json:"reason"`
+	Details string `json:"details"`
 }
 
 type UpdateBountyOfferStatusInput struct {
