@@ -11,24 +11,39 @@ import { useLanguage } from '@/context/LanguageContext';
 interface BountyOfferResolveModalProps {
   offer: BountyOffer;
   bounty: Bounty;
-  requests: ClientRequest[];
+  linkedRequests: ClientRequest[];
   selectedRequestIds: string[];
   onClose: () => void;
-  onAccept: (action: 'inventory' | 'notify_requests', message?: string) => Promise<void>;
+  onAccept: (requestIds: string[]) => Promise<void>;
   onReject: () => Promise<void>;
 }
 
-export default function BountyOfferResolveModal({ offer, bounty, requests, selectedRequestIds, onClose, onAccept, onReject }: BountyOfferResolveModalProps) {
+export default function BountyOfferResolveModal({ 
+  offer, 
+  bounty, 
+  linkedRequests, 
+  selectedRequestIds: initialSelected, 
+  onClose, 
+  onAccept, 
+  onReject 
+}: BountyOfferResolveModalProps) {
   const { t } = useLanguage();
   const [processing, setProcessing] = useState(false);
-  const [action, setAction] = useState<'inventory' | 'notify_requests'>('inventory');
+  const [selectedIds, setSelectedIds] = useState<string[]>(initialSelected);
   
-  const relatedRequests = requests.filter(r => r.card_name.toLowerCase().includes(bounty.name.toLowerCase()) && r.status === 'pending');
-  const selectedCount = selectedRequestIds.length;
+  const exactMatches = linkedRequests.filter(r => r.match_type === 'exact' && r.status !== 'solved');
+  const genericMatches = linkedRequests.filter(r => r.match_type === 'any' && r.status !== 'solved');
+  
+  const selectedCount = selectedIds.length;
+  const isOverLimit = selectedCount > offer.quantity;
 
   const handleConfirm = async () => {
+    if (selectedCount === 0) {
+      alert(t('components.admin.resolve_modal.error_no_selection', 'Please select at least one request to fulfill.'));
+      return;
+    }
     setProcessing(true);
-    await onAccept(action);
+    await onAccept(selectedIds);
     setProcessing(false);
     onClose();
   };
@@ -40,6 +55,12 @@ export default function BountyOfferResolveModal({ offer, bounty, requests, selec
     onClose();
   };
 
+  const toggleRequest = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
   return (
     <Modal isOpen={true} onClose={onClose} title={t('components.admin.resolve_modal.title', 'Resolve Offer')} maxWidth="max-w-lg">
       <div className="mb-6 p-4 bg-gold/10 border border-gold/30 rounded flex gap-4">
@@ -48,65 +69,99 @@ export default function BountyOfferResolveModal({ offer, bounty, requests, selec
         </div>
         <div className="flex-1">
           <h4 className="font-bold mb-1">{t('components.admin.resolve_modal.offer_details', 'Offer details:')}</h4>
-          <p className="text-sm italic text-ink-deep mb-1">{bounty.name} ({bounty.set_name})</p>
+          <p className="text-sm italic text-ink-deep mb-1">{bounty.name} ({bounty.set_name || t('pages.common.labels.any_edition', 'Any Edition')})</p>
           <p className="text-sm">{t('pages.admin.bounties.requests.client_label', 'Client:') } <strong>{offer.customer_name}</strong> - <SmartContactLink 
             contact={offer.customer_contact} 
             className="text-gold-dark hover:underline font-bold transition-all"
           /></p>
-          <p className="text-xs text-text-muted mt-1">{offer.notes || t('components.admin.resolve_modal.no_notes', 'No notes provided')}</p>
-          <div className="mt-2 text-sm">
-            {t('pages.admin.bounties.offers.condition', 'Condition:')} <strong className="badge bg-gold/20 text-gold-dark border-gold/30">{offer.condition}</strong>
+          <div className="mt-2 text-sm flex gap-4">
+            <span>{t('pages.admin.bounties.offers.condition', 'Condition:')} <strong className="badge bg-gold/20 text-gold-dark border-gold/30">{offer.condition}</strong></span>
+            <span>{t('pages.admin.bounties.offers.quantity', 'Quantity:')} <strong className="text-gold-dark font-bold font-mono-stack">{offer.quantity}</strong></span>
           </div>
         </div>
       </div>
 
-      <h4 className="font-mono-stack text-[10px] uppercase text-text-muted mb-3">{t('components.admin.resolve_modal.action_title', 'ACTION UPON ACCEPTANCE')}</h4>
+      <div className="flex justify-between items-center mb-3">
+        <h4 className="font-mono-stack text-[10px] uppercase text-text-muted font-bold">{t('components.admin.resolve_modal.select_clients', 'SELECT CLIENTS TO FULFILL')}</h4>
+        {isOverLimit && (
+          <span className="text-[10px] font-bold text-red-600 animate-pulse">{t('pages.admin.bounties.offers.over_limit', '⚠️ OVER QUANTITY LIMIT')}</span>
+        )}
+      </div>
       
-      <div className="space-y-3 mb-6">
-        <label className={`flex items-start gap-3 p-4 border rounded cursor-pointer transition-colors ${action === 'inventory' ? 'border-gold bg-gold/5' : 'border-ink-border/30 hover:bg-ink-surface/30'}`}>
-          <input type="radio" name="action" checked={action === 'inventory'} onChange={() => setAction('inventory')} className="mt-1 accent-gold" />
+      <div className="space-y-4 mb-6 max-h-80 overflow-y-auto pr-1">
+        {exactMatches.length > 0 && (
           <div>
-            <strong className="block text-sm">{t('components.admin.resolve_modal.action_inventory', 'Add to Inventory')}</strong>
-            <p className="text-xs text-text-muted mt-1">{t('components.admin.resolve_modal.action_inventory_desc', 'Accept the card and add it directly to open stock for sale.')}</p>
-          </div>
-        </label>
-        
-        <label className={`flex items-start gap-3 p-4 border rounded cursor-pointer transition-colors ${action === 'notify_requests' ? 'border-gold bg-gold/5' : 'border-ink-border/30 hover:bg-ink-surface/30'}`}>
-          <input type="radio" name="action" checked={action === 'notify_requests'} onChange={() => setAction('notify_requests')} className="mt-1 accent-gold" />
-          <div className="w-full">
-            <strong className="block text-sm">
-              {selectedCount > 0 
-                ? t('components.admin.resolve_modal.action_fulfill_selected', 'Fulfill {count} Selected Requests', { count: selectedCount }) 
-                : t('components.admin.resolve_modal.action_fulfill_matching', 'Fulfill Matching Requests')}
-            </strong>
-            <p className="text-xs text-text-muted mt-1">
-              {selectedCount > 0 
-                ? t('components.admin.resolve_modal.action_fulfill_selected_desc', 'Accept the card and notify the {count} clients you selected.', { count: selectedCount })
-                : t('components.admin.resolve_modal.action_fulfill_matching_desc', 'Accept the card and notify ALL clients waiting for it.')
-              }
+            <p className="text-[10px] font-mono-stack uppercase text-emerald-600 mb-2 font-bold tracking-widest flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+              🎯 {t('components.admin.resolve_modal.direct_matches', 'Direct Matches')}
             </p>
-            {relatedRequests.length > 0 && (
-              <div className={`mt-3 p-2 text-xs rounded border ${selectedCount > 0 ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-gold/10 text-gold-dark border-gold/20'}`}>
-                <strong>
-                  {selectedCount > 0 
-                    ? t('components.admin.resolve_modal.matching_selected', '{count} of {total} matching requests selected.', { count: selectedCount, total: relatedRequests.length }) 
-                    : t('components.admin.resolve_modal.matching_found', '{total} matching requests found.', { total: relatedRequests.length })
-                  }
-                </strong>
-              </div>
-            )}
+            <div className="space-y-2">
+              {exactMatches.map(r => (
+                <RequestItem key={r.id} request={r} isSelected={selectedIds.includes(r.id)} onToggle={() => toggleRequest(r.id)} />
+              ))}
+            </div>
           </div>
-        </label>
+        )}
+
+        {genericMatches.length > 0 && (
+          <div className={exactMatches.length > 0 ? 'mt-4' : ''}>
+            <p className="text-[10px] font-mono-stack uppercase text-blue-600 mb-2 font-bold tracking-widest flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+              🤝 {t('components.admin.resolve_modal.compatible_matches', 'Any Version compatible')}
+            </p>
+            <div className="space-y-2">
+              {genericMatches.map(r => (
+                <RequestItem key={r.id} request={r} isSelected={selectedIds.includes(r.id)} onToggle={() => toggleRequest(r.id)} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {linkedRequests.length === 0 && (
+          <div className="p-8 text-center bg-kraft-light/30 rounded-lg border border-dashed border-kraft-dark/30">
+            <p className="text-sm text-text-muted italic">{t('components.admin.resolve_modal.no_requests', 'No active requests linked to this bounty.')}</p>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col-reverse sm:flex-row gap-3 justify-end pt-4 border-t border-ink-border/20">
-        <Button variant="secondary" onClick={handleDecline} loading={processing} className="text-red-500 border-red-200 hover:bg-red-50">
+        <Button variant="secondary" onClick={handleDecline} loading={processing} className="text-red-500 border-red-200 hover:bg-red-50 font-bold uppercase tracking-tighter">
           {t('components.admin.resolve_modal.reject_btn', 'REJECT OFFER')}
         </Button>
-        <Button onClick={handleConfirm} loading={processing} className="px-8">
-          {t('components.admin.resolve_modal.accept_btn', 'ACCEPT OFFER')}
+        <Button onClick={handleConfirm} loading={processing} disabled={selectedCount === 0 || isOverLimit} className="px-8 font-bold uppercase tracking-widest">
+          {t('components.admin.resolve_modal.accept_btn', 'FULFILL SELECTED')} ({selectedCount})
         </Button>
       </div>
     </Modal>
+  );
+}
+
+function RequestItem({ request, isSelected, onToggle }: { request: ClientRequest, isSelected: boolean, onToggle: () => void }) {
+  return (
+    <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+      isSelected 
+        ? 'bg-white border-gold shadow-sm ring-1 ring-gold' 
+        : 'bg-white/50 border-kraft-dark/10 hover:border-gold/30 hover:bg-white'
+    }`}>
+      <input 
+        type="checkbox" 
+        className="mt-1 accent-gold w-4 h-4 cursor-pointer"
+        checked={isSelected}
+        onChange={onToggle}
+      />
+      <div className="flex-1">
+        <div className="flex justify-between items-start">
+          <span className="text-sm font-bold text-ink-deep uppercase font-mono-stack">
+            {request.customer_name}
+            {request.quantity > 1 && <span className="ml-2 text-gold-dark">x{request.quantity}</span>}
+          </span>
+          <span className="text-[10px] text-text-muted font-mono-stack opacity-60 font-bold">{new Date(request.created_at).toLocaleDateString()}</span>
+        </div>
+        <SmartContactLink 
+          contact={request.customer_contact} 
+          className="text-xs text-gold-dark hover:underline font-mono-stack transition-all"
+        />
+      </div>
+    </label>
   );
 }

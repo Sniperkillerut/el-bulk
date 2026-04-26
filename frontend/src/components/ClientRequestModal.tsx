@@ -6,8 +6,9 @@ import Button from './ui/Button';
 import { useForm } from '@/hooks/useForm';
 import { useLanguage } from '@/context/LanguageContext';
 import { useUser } from '@/context/UserContext';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import ScryfallVariantPicker from './ScryfallVariantPicker';
 
 interface ClientRequestModalProps {
   onClose: () => void;
@@ -30,8 +31,12 @@ export default function ClientRequestModal({ onClose, onSuccess }: ClientRequest
     customer_contact: user ? (user.email || user.phone || '') : '',
     card_name: '',
     set_name: '',
+    quantity: '1',
     details: ''
   });
+
+  const [selectedPrint, setSelectedPrint] = useState<any | null>(null);
+  const [matchType, setMatchType] = useState<'any' | 'exact'>('any');
 
   useEffect(() => {
     if (user && !form.customer_name) {
@@ -41,7 +46,13 @@ export default function ClientRequestModal({ onClose, onSuccess }: ClientRequest
   }, [user, setFieldValue, form.customer_name]);
 
   const onSubmit = async (data: Record<string, string>) => {
-    await createClientRequest(data as unknown as import('@/lib/types').ClientRequestInput);
+    await createClientRequest({
+      ...data,
+      quantity: parseInt(data.quantity || '1', 10),
+      match_type: matchType,
+      scryfall_id: selectedPrint?.id,
+      set_name: selectedPrint?.set_name || data.set_name,
+    } as any);
     onSuccess();
   };
 
@@ -113,20 +124,46 @@ export default function ClientRequestModal({ onClose, onSuccess }: ClientRequest
             </div>
           </div>
           
-          <div>
-            <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">{t('components.client_request_modal.form.card_label', 'Card Name *')}</label>
-            <input 
-              name="card_name"
-              type="text" 
-              className="w-full text-sm" 
-              required 
-              value={form.card_name} 
-              onChange={handleChange} 
-              placeholder={t('components.client_request_modal.form.card_placeholder', 'e.g. Sheoldred, the Apocalypse')}
-            />
+          <div className="grid grid-cols-3 gap-4">
+            <div className="col-span-2">
+              <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">{t('components.client_request_modal.form.card_label', 'Card Name *')}</label>
+              <input 
+                name="card_name"
+                type="text" 
+                className="w-full text-sm" 
+                required 
+                value={form.card_name} 
+                onChange={handleChange} 
+                placeholder={t('components.client_request_modal.form.card_placeholder', 'e.g. Sheoldred, the Apocalypse')}
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">{t('components.client_request_modal.form.quantity_label', 'Quantity')}</label>
+              <input 
+                name="quantity"
+                type="number" 
+                min="1"
+                className="w-full text-sm" 
+                value={form.quantity || '1'} 
+                onChange={handleChange} 
+              />
+            </div>
           </div>
+
+          {form.card_name.length >= 3 && (
+            <div className="pt-2 border-t border-kraft-dark/10">
+              <ScryfallVariantPicker 
+                cardName={form.card_name}
+                selectedId={selectedPrint?.id}
+                onSelect={(print) => {
+                  setSelectedPrint(print);
+                  setMatchType(print ? 'exact' : 'any');
+                }}
+              />
+            </div>
+          )}
           
-          <div>
+          <div className={`transition-all duration-300 overflow-hidden ${matchType === 'exact' ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-20 opacity-100'}`}>
             <label className="block text-[10px] font-mono-stack uppercase mb-1 text-text-muted">{t('components.client_request_modal.form.set_label', 'Specific Set (Optional)')}</label>
             <input 
               name="set_name"
@@ -155,7 +192,7 @@ export default function ClientRequestModal({ onClose, onSuccess }: ClientRequest
             loading={submitting} 
             fullWidth 
             size="lg" 
-            className="mt-4"
+            className="mt-4 font-bold uppercase tracking-widest shadow-lg shadow-gold/20"
           >
             {t('components.client_request_modal.form.submit_btn', 'SUBMIT MISSION')}
           </Button>

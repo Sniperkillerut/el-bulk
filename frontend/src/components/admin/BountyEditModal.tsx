@@ -23,7 +23,7 @@ export const EMPTY_BOUNTY: BountyInput = {
   foil_treatment: 'non_foil', card_treatment: 'normal',
   collector_number: '', promo_type: '', language: 'en',
   target_price: 0, hide_price: false, quantity_needed: 1, image_url: '',
-  price_source: 'tcgplayer', price_reference: 0, request_id: undefined
+  price_source: 'tcgplayer', price_reference: 0, is_generic: false
 };
 
 export default function BountyEditModal({
@@ -58,7 +58,7 @@ export default function BountyEditModal({
         image_url: editBounty.image_url || '',
         price_source: editBounty.price_source || 'tcgplayer',
         price_reference: editBounty.price_reference || 0,
-        request_id: editBounty.request_id,
+        is_generic: editBounty.is_generic,
         ...extractMTGMetadata(editBounty as unknown as ScryfallCard)
       });
     } else {
@@ -420,6 +420,19 @@ export default function BountyEditModal({
               <div className="p-4 bg-ink-surface/30 rounded-sm border border-ink-border/50">
                 <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">{t('components.admin.bounty_modal.quantity_label', 'QUANTITY NEEDED')}</label>
                 <input type="number" min="1" className="w-full max-w-[200px] font-mono bg-white/80 border-white/40 h-[42px]" value={form.quantity_needed} onChange={e => setForm(f => ({ ...f, quantity_needed: parseInt(e.target.value) || 1 }))} />
+              </div>
+
+              <div className="p-4 bg-ink-surface/30 rounded-sm border border-ink-border/50">
+                <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">{t('components.admin.bounty_modal.is_generic', 'MATCH MODE')}</label>
+                <div 
+                  onClick={() => setForm(f => ({ ...f, is_generic: !f.is_generic }))}
+                  className={`flex items-center gap-3 p-2 rounded-lg border-2 cursor-pointer transition-all ${form.is_generic ? 'border-gold bg-gold/5' : 'border-ink-border/20 bg-white/50'}`}
+                >
+                  <div className={`w-10 h-6 rounded-full transition-colors relative flex-shrink-0 ${form.is_generic ? 'bg-gold' : 'bg-kraft-dark/40'}`}>
+                    <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all shadow ${form.is_generic ? 'left-5' : 'left-1'}`} />
+                  </div>
+                  <span className="text-[10px] font-bold uppercase font-mono-stack tracking-widest">{form.is_generic ? t('pages.admin.bounties.generic_badge', 'ANY VERSION') : t('pages.common.labels.specific', 'SPECIFIC')}</span>
+                </div>
               </div>
             </div>
 

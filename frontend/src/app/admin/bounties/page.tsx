@@ -6,7 +6,8 @@ import { useSearchParams } from 'next/navigation';
 import { 
   adminUpdateBounty, adminDeleteBounty, fetchBounties,
   adminFetchClientRequests, adminUpdateClientRequestStatus, adminFetchTCGs,
-  adminFetchBountyOffers, adminUpdateBountyOfferStatus
+  adminFetchBountyOffers, adminUpdateBountyOfferStatus, adminAcceptClientRequest,
+  adminFetchRequestsByBounty, adminFulfillBountyOffer
 } from '@/lib/api';
 import { Bounty, BountyInput, ClientRequest, TCG, BountyOffer } from '@/lib/types';
 import { useAdmin } from '@/hooks/useAdmin';
@@ -43,6 +44,18 @@ export default function AdminBountiesPage() {
   const [onlyShowActive, setOnlyShowActive] = useState(true);
   const [onlyShowPendingRequests, setOnlyShowPendingRequests] = useState(true);
   const [onlyShowPendingOffers, setOnlyShowPendingOffers] = useState(true);
+
+  const [linkedRequests, setLinkedRequests] = useState<Record<string, ClientRequest[]>>({});
+
+  const loadLinkedRequests = async (bountyId: string) => {
+    if (linkedRequests[bountyId]) return;
+    try {
+      const reqs = await adminFetchRequestsByBounty(bountyId);
+      setLinkedRequests(prev => ({ ...prev, [bountyId]: reqs }));
+    } catch (err) {
+      console.error('Failed to load linked requests', err);
+    }
+  };
 
   // Scroll to element if parameter present when data loads
   useEffect(() => {
@@ -105,43 +118,30 @@ export default function AdminBountiesPage() {
     }
   };
 
-  const handleAcceptRequest = (req: ClientRequest) => {
-    setEditingBounty(null);
-    setInitialBountyData({ 
-      name: req.card_name, 
-      set_name: req.set_name || '',
-      request_id: req.id
-    });
-    setShowEditModal(true);
-    handleUpdateStatus(req.id, 'accepted');
-  };
-
-  const handleResolveOffer = async (action: 'inventory' | 'notify_requests') => {
-    if (!resolvingOffer) return;
+  const handleAcceptRequest = async (req: ClientRequest) => {
     try {
-      await adminUpdateBountyOfferStatus(resolvingOffer.offer.id, 'accepted');
-      if (action === 'notify_requests') {
-        const selectedIds = selectedRequests[resolvingOffer.offer.id] || [];
-        const toFulfill = selectedIds.length > 0 
-          ? requests.filter(r => selectedIds.includes(r.id))
-          : requests.filter(r => r.card_name.toLowerCase().includes(resolvingOffer.bounty.name.toLowerCase()) && (r.status === 'pending' || r.status === 'accepted'));
-
-        await Promise.all(toFulfill.map(req => adminUpdateClientRequestStatus(req.id, 'solved')));
-
-        const countsFulfilled = toFulfill.length;
-        const newQty = Math.max(0, resolvingOffer.bounty.quantity_needed - countsFulfilled);
-        const isActive = newQty > 0;
-        
-        await adminUpdateBounty(resolvingOffer.bounty.id, {
-          ...resolvingOffer.bounty,
-          quantity_needed: newQty,
-          is_active: isActive
-        });
-      }
+      await adminAcceptClientRequest(req.id);
       handleRefresh();
     } catch {
-      alert(t('pages.admin.bounties.error_resolve', 'Failed to resolve offer'));
+      alert(t('pages.admin.bounties.error_accept', 'Failed to accept request.'));
     }
+  };
+
+  const handleFulfillOffer = async (requestIds: string[]) => {
+    if (!resolvingOffer) return;
+    try {
+      await adminFulfillBountyOffer(resolvingOffer.offer.id, requestIds);
+      handleRefresh();
+    } catch {
+      alert(t('pages.admin.bounties.error_fulfill', 'Failed to fulfill offer.'));
+    } finally {
+      setResolvingOffer(null);
+    }
+  };
+
+  const handleOpenResolveModal = async (offer: BountyOffer, bounty: Bounty) => {
+    setResolvingOffer({ offer, bounty });
+    await loadLinkedRequests(bounty.id);
   };
 
   const handleRejectOffer = async () => {
@@ -266,17 +266,12 @@ export default function AdminBountiesPage() {
                               <div className="font-bold text-sm text-ink-deep leading-tight truncate">{b.name}</div>
                               <div className="flex items-center gap-1.5 mt-1">
                                 <span className="badge bg-gold/10 text-gold text-[8px] font-mono-stack">{b.tcg.toUpperCase()}</span>
-                                {(() => {
-                                  if (b.request_id) {
-                                    return requests.find(r => r.id === b.request_id)?.status === 'not_needed';
-                                  }
-                                  // Fallback for existing data: match by name (case-insensitive, partial)
-                                  return requests.some(r => 
-                                    r.status === 'not_needed' && 
-                                    (b.name.toLowerCase().includes(r.card_name.toLowerCase()) || 
-                                     r.card_name.toLowerCase().includes(b.name.toLowerCase()))
-                                  );
-                                })() && (
+                                {b.is_generic && (
+                                  <span className="badge bg-blue-100 text-blue-600 text-[8px] font-mono-stack border border-blue-200">
+                                    {t('pages.admin.bounties.generic_badge', 'ANY VERSION')}
+                                  </span>
+                                )}
+                                {requests.some(r => r.bounty_id === b.id && r.status === 'not_needed') && (
                                   <span className="badge bg-red-100 text-red-600 text-[8px] font-bold animate-pulse border border-red-200">
                                     ⚠️ {t('pages.admin.bounties.request_cancelled_warning', 'CLIENT NO LONGER NEEDS THIS')}
                                   </span>
@@ -410,7 +405,7 @@ export default function AdminBountiesPage() {
                     
                     <div className="flex flex-col gap-2 shrink-0 justify-center">
                       {offer.status === 'pending' && (
-                        <button onClick={() => setResolvingOffer({ offer, bounty: b })} className="btn-primary py-2 px-6 text-xs bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-500/20 font-bold uppercase tracking-widest">{t('pages.admin.bounties.resolve_btn', 'RESOLVE OFFER')}</button>
+                        <button onClick={() => handleOpenResolveModal(offer, b)} className="btn-primary py-2 px-6 text-xs bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-500/20 font-bold uppercase tracking-widest">{t('pages.admin.bounties.resolve_btn', 'RESOLVE OFFER')}</button>
                       )}
                       {offer.status !== 'pending' && (
                         <button onClick={async () => { await adminUpdateBountyOfferStatus(offer.id, 'pending'); handleRefresh(); }} className="btn-secondary py-1 text-[10px] font-mono-stack font-bold">{t('pages.admin.bounties.revert_btn', 'REVERT TO PENDING')}</button>
@@ -588,10 +583,10 @@ export default function AdminBountiesPage() {
         <BountyOfferResolveModal
           offer={resolvingOffer.offer}
           bounty={resolvingOffer.bounty}
-          requests={requests}
+          linkedRequests={linkedRequests[resolvingOffer.bounty.id] || []}
           selectedRequestIds={selectedRequests[resolvingOffer.offer.id] || []}
           onClose={() => setResolvingOffer(null)}
-          onAccept={handleResolveOffer}
+          onAccept={handleFulfillOffer}
           onReject={handleRejectOffer}
         />
       )}
