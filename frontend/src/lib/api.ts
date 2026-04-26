@@ -792,6 +792,21 @@ export async function adminUpdateClientRequestStatus(id: string, status: string)
   });
 }
 
+export async function adminAcceptClientRequest(id: string): Promise<{ bounty_id: string; request_id: string; is_generic: boolean }> {
+  return apiFetch<{ bounty_id: string; request_id: string; is_generic: boolean }>(`/api/admin/client-requests/${id}/accept`, { method: 'POST' });
+}
+
+export async function adminFulfillBountyOffer(offerId: string, requestIds: string[]): Promise<{ offer_id: string; bounty_id: string; fulfilled: number }> {
+  return apiFetch<{ offer_id: string; bounty_id: string; fulfilled: number }>(`/api/admin/bounties/offers/${offerId}/fulfill`, {
+    method: 'POST',
+    body: JSON.stringify({ request_ids: requestIds }),
+  });
+}
+
+export async function adminFetchRequestsByBounty(bountyId: string): Promise<import('./types').ClientRequest[]> {
+  return apiFetch<import('./types').ClientRequest[]>(`/api/admin/bounties/${bountyId}/requests`, { cache: 'no-store' });
+}
+
 // ---------------------------------------------------------------------------
 // Notices (Blog/News)
 // ---------------------------------------------------------------------------

@@ -486,7 +486,7 @@ export interface Bounty {
   target_price?: number;
   hide_price: boolean;
   quantity_needed: number;
-  request_id?: string;
+  is_generic: boolean;
   image_url?: string;
   price_source: PriceSource;
   price_reference?: number;
@@ -508,7 +508,7 @@ export interface BountyInput {
   target_price?: number;
   hide_price: boolean;
   quantity_needed: number;
-  request_id?: string;
+  is_generic: boolean;
   image_url?: string;
   price_source: PriceSource;
   price_reference?: number;
@@ -527,6 +527,9 @@ export interface ClientRequest {
   tcg: string;
   status: 'pending' | 'accepted' | 'rejected' | 'solved' | 'cancelled' | 'not_needed';
   cancellation_reason?: string;
+  bounty_id?: string;
+  match_type: 'any' | 'exact';
+  scryfall_id?: string;
   created_at: string;
 }
 
@@ -539,6 +542,8 @@ export interface ClientRequestInput {
   details?: string;
   quantity: number;
   tcg: string;
+  match_type?: 'any' | 'exact';
+  scryfall_id?: string;
 }
 
 export interface ClientRequestBatchInput {
