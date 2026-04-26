@@ -502,19 +502,21 @@ export default function AdminBountiesPage() {
                          t(`pages.common.status.${req.status}`, req.status).toUpperCase()}
                       </span>
                     </div>
-                    <p className="text-sm">{t('pages.admin.bounties.requests.client_label', 'Client:')} <strong>
-                      {req.customer_id ? (
-                        <Link href={`/admin/clients/${req.customer_id}`} className="inline-flex items-center gap-1 text-indigo-700 hover:text-indigo-900 underline decoration-indigo-300 hover:decoration-indigo-700 underline-offset-4 transition-all">
-                          {req.customer_name}
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-70"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                        </Link>
-                      ) : (
-                        req.customer_name
-                      )}
-                    </strong> - <SmartContactLink 
-            contact={req.customer_contact} 
-            className="text-gold-dark hover:underline font-bold transition-all"
-          /></p>
+                    <p className="text-sm">
+                      {t('pages.admin.bounties.requests.client_label', 'Client:')} <strong>
+                        {req.customer_id ? (
+                          <Link href={`/admin/clients/${req.customer_id}`} className="inline-flex items-center gap-1 text-indigo-700 hover:text-indigo-900 underline decoration-indigo-300 hover:decoration-indigo-700 underline-offset-4 transition-all">
+                            {req.customer_name}
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-70"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                          </Link>
+                        ) : (
+                          req.customer_name
+                        )}
+                      </strong> - <SmartContactLink 
+                        contact={req.customer_contact} 
+                        className="text-gold-dark hover:underline font-bold transition-all"
+                      />
+                    </p>
                     <p className="text-xs text-text-muted mt-2 italic border-l-2 border-kraft-dark/10 pl-3">&quot;{req.details || t('pages.admin.bounties.requests.no_details', 'No additional details provided.')}&quot;</p>
                     {req.cancellation_reason && (
                       <div className="mt-3 p-2 bg-purple-50 border border-purple-100 rounded text-xs">
