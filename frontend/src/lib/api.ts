@@ -774,9 +774,10 @@ export async function userFetchClientRequests(): Promise<import('./types').Clien
   return apiFetch<import('./types').ClientRequest[]>('/api/client-requests/me');
 }
 
-export async function userCancelClientRequest(id: string): Promise<void> {
-  return apiFetch<void>(`/api/client-requests/me/${id}`, {
-    method: 'DELETE'
+export async function userCancelClientRequest(id: string, reason: string, details: string): Promise<void> {
+  return apiFetch<void>(`/api/client-requests/me/${id}/cancel`, {
+    method: 'POST',
+    body: JSON.stringify({ reason, details }),
   });
 }
 

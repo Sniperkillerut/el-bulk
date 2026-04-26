@@ -204,7 +204,7 @@ func main() {
 		r.With(middleware.RequireUserAuth, middleware.RateLimit(5, 10*time.Minute)).Post("/client-requests", bountyHandler.CreateRequest)
 		r.With(middleware.RequireUserAuth, middleware.RateLimit(5, 10*time.Minute)).Post("/client-requests/batch", bountyHandler.CreateRequestsBatch)
 		r.With(middleware.RequireUserAuth).Get("/client-requests/me", bountyHandler.ListMeRequests)
-		r.With(middleware.RequireUserAuth).Delete("/client-requests/me/{id}", bountyHandler.CancelMeRequest)
+		r.With(middleware.RequireUserAuth).Post("/client-requests/me/{id}/cancel", bountyHandler.CancelMeRequest)
 		
 		// Newsletter
 		r.With(middleware.RateLimit(3, 30*time.Minute)).Post("/newsletter/subscribe", newsletterHandler.Subscribe)

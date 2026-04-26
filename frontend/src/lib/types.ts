@@ -523,7 +523,8 @@ export interface ClientRequest {
   details?: string;
   quantity: number;
   tcg: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'solved' | 'cancelled';
+  status: 'pending' | 'accepted' | 'rejected' | 'solved' | 'cancelled' | 'not_needed';
+  cancellation_reason?: string;
   created_at: string;
 }
 
