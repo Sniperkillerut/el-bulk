@@ -564,37 +564,40 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 	fromClause := fmt.Sprintf("FROM %s p", table)
 	args := []interface{}{}
 
-	var mandatory []string
-	var optional []string
+	// All conditions are mandatory (AND across categories).
+	// Within each category, single-value fields are OR'd (a card has one condition).
+	// Multi-value fields (Color, Collection, Format) use OR or AND within category
+	// depending on FilterLogic.
+	var conditions []string
 
 	fromClause += " LEFT JOIN tcg t ON p.tcg = t.id"
-	mandatory = append(mandatory, "(t.is_active IS NULL OR t.is_active = true)")
+	conditions = append(conditions, "(t.is_active IS NULL OR t.is_active = true)")
 
 	if params.StorageID != "" {
 		fromClause = fmt.Sprintf("FROM %s p JOIN product_storage ps ON p.id = ps.product_id", table)
 		fromClause += " LEFT JOIN tcg t ON p.tcg = t.id"
 		placeholder := fmt.Sprintf("$%d", len(args)+1)
 		args = append(args, params.StorageID)
-		mandatory = append(mandatory, "ps.storage_id = "+placeholder)
-		mandatory = append(mandatory, "ps.quantity > 0")
+		conditions = append(conditions, "ps.storage_id = "+placeholder)
+		conditions = append(conditions, "ps.quantity > 0")
 	}
 
 	if params.TCG != "" {
 		placeholder := fmt.Sprintf("$%d", len(args)+1)
 		args = append(args, strings.ToLower(params.TCG))
-		mandatory = append(mandatory, "p.tcg = "+placeholder)
+		conditions = append(conditions, "p.tcg = "+placeholder)
 	}
 	if params.Category != "" {
 		placeholder := fmt.Sprintf("$%d", len(args)+1)
 		args = append(args, strings.ToLower(params.Category))
-		mandatory = append(mandatory, "p.category = "+placeholder)
+		conditions = append(conditions, "p.category = "+placeholder)
 	}
 
 	if params.InStock {
-		mandatory = append(mandatory, "p.stock > 0")
+		conditions = append(conditions, "p.stock > 0")
 	}
 	if params.OnlyDuplicates {
-		mandatory = append(mandatory, "p.name IN (SELECT name FROM product GROUP BY name HAVING COUNT(*) > 1)")
+		conditions = append(conditions, "p.name IN (SELECT name FROM product GROUP BY name HAVING COUNT(*) > 1)")
 	}
 
 	if len(params.IDs) > 0 {
@@ -603,25 +606,19 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 			idPlaceholders = append(idPlaceholders, fmt.Sprintf("$%d", len(args)+1))
 			args = append(args, id)
 		}
-		mandatory = append(mandatory, fmt.Sprintf("p.id IN (%s)", strings.Join(idPlaceholders, ", ")))
+		conditions = append(conditions, fmt.Sprintf("p.id IN (%s)", strings.Join(idPlaceholders, ", ")))
 	}
 
 	if params.Search != "" {
 		placeholderIdx := len(args) + 1
 		args = append(args, params.Search)
 		cond := fmt.Sprintf("(p.search_vector @@ websearch_to_tsquery('english', $%d) OR p.name ILIKE '%%' || $%d || '%%')", placeholderIdx, placeholderIdx)
-		if strings.ToLower(params.FilterLogic) == "and" {
-			mandatory = append(mandatory, cond)
-		} else {
-			optional = append(optional, cond)
-		}
+		conditions = append(conditions, cond)
 	}
 
-	opLogic := " OR "
-	if strings.ToLower(params.FilterLogic) == "and" {
-		opLogic = " AND "
-	}
+	isAndMode := strings.ToLower(params.FilterLogic) == "and"
 
+	// Single-value fields: always OR within category (a card can only have one value)
 	if params.Foil != "" {
 		vals := strings.Split(params.Foil, ",")
 		var conds []string
@@ -630,7 +627,7 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 			conds = append(conds, "LOWER(p.foil_treatment) = "+placeholder)
 			args = append(args, strings.ToLower(v))
 		}
-		optional = append(optional, "("+strings.Join(conds, opLogic)+")")
+		conditions = append(conditions, "("+strings.Join(conds, " OR ")+")")
 	}
 	if params.Treatment != "" {
 		vals := strings.Split(params.Treatment, ",")
@@ -648,7 +645,7 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 			conds = append(conds, cond)
 			args = append(args, lv)
 		}
-		optional = append(optional, "("+strings.Join(conds, opLogic)+")")
+		conditions = append(conditions, "("+strings.Join(conds, " OR ")+")")
 	}
 	if params.Condition != "" {
 		vals := strings.Split(params.Condition, ",")
@@ -658,52 +655,7 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 			conds = append(conds, "p.condition = "+placeholder)
 			args = append(args, strings.ToUpper(v))
 		}
-		optional = append(optional, "("+strings.Join(conds, opLogic)+")")
-	}
-
-	// MTG Metadata Filters
-	switch params.IsLegendary {
-	case "true":
-		optional = append(optional, "p.is_legendary = true")
-	case "false":
-		optional = append(optional, "p.is_legendary = false")
-	}
-
-	switch params.IsLand {
-	case "true":
-		optional = append(optional, "p.is_land = true")
-	case "false":
-		optional = append(optional, "p.is_land = false")
-	}
-
-	switch params.IsHistoric {
-	case "true":
-		optional = append(optional, "p.is_historic = true")
-	case "false":
-		optional = append(optional, "p.is_historic = false")
-	}
-
-	if params.Format != "" {
-		vals := strings.Split(params.Format, ",")
-		var conds []string
-		for _, v := range vals {
-			placeholder := fmt.Sprintf("$%d", len(args)+1)
-			args = append(args, v)
-			conds = append(conds, fmt.Sprintf("p.legalities->>%s = 'legal'", placeholder))
-		}
-		optional = append(optional, "("+strings.Join(conds, opLogic)+")")
-	}
-	if params.Collection != "" {
-		vals := strings.Split(params.Collection, ",")
-		var conds []string
-		for _, v := range vals {
-			placeholder := fmt.Sprintf("$%d", len(args)+1)
-			// Simpler subquery to avoid complex nesting collisions at character 194
-			cond := fmt.Sprintf("p.id IN (SELECT pc_col.product_id FROM product_category pc_col JOIN custom_category c_col ON pc_col.category_id = c_col.id WHERE c_col.slug = %s)", placeholder)
-			conds = append(conds, cond)
-			args = append(args, strings.ToLower(v))
-		}
-		optional = append(optional, "("+strings.Join(conds, opLogic)+")")
+		conditions = append(conditions, "("+strings.Join(conds, " OR ")+")")
 	}
 	if params.Rarity != "" {
 		vals := strings.Split(params.Rarity, ",")
@@ -713,7 +665,7 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 			conds = append(conds, "LOWER(p.rarity) = "+placeholder)
 			args = append(args, strings.ToLower(v))
 		}
-		optional = append(optional, "("+strings.Join(conds, opLogic)+")")
+		conditions = append(conditions, "("+strings.Join(conds, " OR ")+")")
 	}
 	if params.Language != "" {
 		vals := strings.Split(params.Language, ",")
@@ -723,17 +675,7 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 			conds = append(conds, "LOWER(p.language) = "+placeholder)
 			args = append(args, strings.ToLower(v))
 		}
-		optional = append(optional, "("+strings.Join(conds, opLogic)+")")
-	}
-	if params.Color != "" {
-		vals := strings.Split(params.Color, ",")
-		var conds []string
-		for _, v := range vals {
-			placeholder := fmt.Sprintf("$%d", len(args)+1)
-			conds = append(conds, "p.color_identity ILIKE "+placeholder)
-			args = append(args, "%"+strings.ToUpper(v)+"%")
-		}
-		optional = append(optional, "("+strings.Join(conds, opLogic)+")")
+		conditions = append(conditions, "("+strings.Join(conds, " OR ")+")")
 	}
 	if params.SetName != "" {
 		vals := strings.Split(params.SetName, ",")
@@ -743,17 +685,86 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 			conds = append(conds, "p.set_name = "+placeholder)
 			args = append(args, v)
 		}
-		optional = append(optional, "("+strings.Join(conds, opLogic)+")")
+		conditions = append(conditions, "("+strings.Join(conds, " OR ")+")")
 	}
 
-	finalConditions := mandatory
-	if len(optional) > 0 {
-		finalConditions = append(finalConditions, "("+strings.Join(optional, opLogic)+")")
+	// MTG Metadata Filters (boolean, always single-value)
+	switch params.IsLegendary {
+	case "true":
+		conditions = append(conditions, "p.is_legendary = true")
+	case "false":
+		conditions = append(conditions, "p.is_legendary = false")
+	}
+
+	switch params.IsLand {
+	case "true":
+		conditions = append(conditions, "p.is_land = true")
+	case "false":
+		conditions = append(conditions, "p.is_land = false")
+	}
+
+	switch params.IsHistoric {
+	case "true":
+		conditions = append(conditions, "p.is_historic = true")
+	case "false":
+		conditions = append(conditions, "p.is_historic = false")
+	}
+
+	// Multi-value fields: OR in broad mode, AND in narrow mode
+	if params.Format != "" {
+		vals := strings.Split(params.Format, ",")
+		var conds []string
+		for _, v := range vals {
+			placeholder := fmt.Sprintf("$%d", len(args)+1)
+			args = append(args, v)
+			conds = append(conds, fmt.Sprintf("p.legalities->>%s = 'legal'", placeholder))
+		}
+		joinOp := " OR "
+		if isAndMode {
+			joinOp = " AND "
+		}
+		conditions = append(conditions, "("+strings.Join(conds, joinOp)+")")
+	}
+	if params.Collection != "" {
+		vals := strings.Split(params.Collection, ",")
+		if isAndMode {
+			// AND mode: card must be in ALL selected collections
+			for _, v := range vals {
+				placeholder := fmt.Sprintf("$%d", len(args)+1)
+				cond := fmt.Sprintf("p.id IN (SELECT pc_col.product_id FROM product_category pc_col JOIN custom_category c_col ON pc_col.category_id = c_col.id WHERE c_col.slug = %s)", placeholder)
+				conditions = append(conditions, cond)
+				args = append(args, strings.ToLower(v))
+			}
+		} else {
+			// OR mode: card must be in ANY selected collection
+			var conds []string
+			for _, v := range vals {
+				placeholder := fmt.Sprintf("$%d", len(args)+1)
+				cond := fmt.Sprintf("p.id IN (SELECT pc_col.product_id FROM product_category pc_col JOIN custom_category c_col ON pc_col.category_id = c_col.id WHERE c_col.slug = %s)", placeholder)
+				conds = append(conds, cond)
+				args = append(args, strings.ToLower(v))
+			}
+			conditions = append(conditions, "("+strings.Join(conds, " OR ")+")")
+		}
+	}
+	if params.Color != "" {
+		vals := strings.Split(params.Color, ",")
+		var conds []string
+		for _, v := range vals {
+			placeholder := fmt.Sprintf("$%d", len(args)+1)
+			conds = append(conds, "p.color_identity ILIKE "+placeholder)
+			args = append(args, "%"+strings.ToUpper(v)+"%")
+		}
+		joinOp := " OR "
+		if isAndMode {
+			joinOp = " AND "
+		}
+		conditions = append(conditions, "("+strings.Join(conds, joinOp)+")")
 	}
 
 	whereClause := ""
-	if len(finalConditions) > 0 {
-		whereClause = "WHERE " + strings.Join(finalConditions, " AND ")
+	if len(conditions) > 0 {
+		whereClause = "WHERE " + strings.Join(conditions, " AND ")
 	}
 
 	return fromClause, whereClause, args

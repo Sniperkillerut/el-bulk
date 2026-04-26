@@ -1,6 +1,7 @@
 -- fn_get_product_facets
 -- Returns a JSONB object containing counts for Condition, Foil, Treatment, Rarity, Language, Color, Collection, and Set.
--- Optimized to use array operators (ANY) instead of unnest loops for performance.
+-- Filter logic: always AND across dimensions. OR/AND mode only affects within-dimension
+-- behavior for multi-value fields (Color, Collection, Format).
 CREATE OR REPLACE FUNCTION fn_get_product_facets(
     p_tcg TEXT DEFAULT '',
     p_category TEXT DEFAULT '',
@@ -60,14 +61,34 @@ BEGIN
             AND (NOT p_in_stock OR p.stock > 0)
             AND (p_is_admin OR (t.is_active IS NULL OR t.is_active = true))
     ),
+    active_filters AS (
+        SELECT 
+            v_foil_arr IS NOT NULL as has_foil,
+            v_treatment_arr IS NOT NULL as has_treatment,
+            v_condition_arr IS NOT NULL as has_condition,
+            v_rarity_arr IS NOT NULL as has_rarity,
+            v_language_arr IS NOT NULL as has_language,
+            v_color_arr IS NOT NULL as has_color,
+            v_collection_arr IS NOT NULL as has_collection,
+            v_set_name_arr IS NOT NULL as has_set,
+            p_is_legendary != '' as has_legendary,
+            p_is_land != '' as has_land,
+            p_is_historic != '' as has_historic,
+            v_format_arr IS NOT NULL as has_format
+    ),
     all_filtered AS (
-        -- Standard filtering applies to all facets except their own dimension
         SELECT *,
+               -- Single-value fields: always OR within category
                (v_foil_arr IS NULL OR LOWER(foil_treatment) = ANY(v_foil_arr)) as match_foil,
                (v_treatment_arr IS NULL OR LOWER(card_treatment) = ANY(v_treatment_arr) OR (full_art AND 'full_art' = ANY(v_treatment_arr)) OR (textless AND 'textless' = ANY(v_treatment_arr))) as match_treatment,
                (v_condition_arr IS NULL OR UPPER(condition) = ANY(v_condition_arr)) as match_condition,
                (v_rarity_arr IS NULL OR LOWER(rarity) = ANY(v_rarity_arr)) as match_rarity,
                (v_language_arr IS NULL OR LOWER(language) = ANY(v_language_arr)) as match_language,
+               (v_set_name_arr IS NULL OR set_name = ANY(v_set_name_arr)) as match_set,
+               (p_is_legendary = '' OR (p_is_legendary = 'true' AND is_legendary = true) OR (p_is_legendary = 'false' AND is_legendary = false)) as match_legendary,
+               (p_is_land = '' OR (p_is_land = 'true' AND is_land = true) OR (p_is_land = 'false' AND is_land = false)) as match_land,
+               (p_is_historic = '' OR (p_is_historic = 'true' AND is_historic = true) OR (p_is_historic = 'false' AND is_historic = false)) as match_historic,
+               -- Multi-value fields: OR/AND within category based on p_filter_logic
                (v_color_arr IS NULL OR (
                    CASE WHEN p_filter_logic = 'and' 
                    THEN (SELECT bool_and(color_identity ILIKE '%' || c || '%') FROM unnest(v_color_arr) c)
@@ -80,31 +101,92 @@ BEGIN
                    ELSE EXISTS (SELECT 1 FROM product_category pc JOIN custom_category cc ON pc.category_id = cc.id WHERE pc.product_id = base_products.id AND cc.slug = ANY(v_collection_arr))
                    END
                )) as match_collection,
-               (v_set_name_arr IS NULL OR set_name = ANY(v_set_name_arr)) as match_set,
-               (p_is_legendary = '' OR (p_is_legendary = 'true' AND is_legendary = true) OR (p_is_legendary = 'false' AND is_legendary = false)) as match_legendary,
-               (p_is_land = '' OR (p_is_land = 'true' AND is_land = true) OR (p_is_land = 'false' AND is_land = false)) as match_land,
-               (p_is_historic = '' OR (p_is_historic = 'true' AND is_historic = true) OR (p_is_historic = 'false' AND is_historic = false)) as match_historic,
-               (v_format_arr IS NULL OR EXISTS (SELECT 1 FROM unnest(v_format_arr) f WHERE legalities->>f = 'legal')) as match_format
+               (v_format_arr IS NULL OR (
+                   CASE WHEN p_filter_logic = 'and'
+                   THEN (SELECT bool_and(legalities->>f = 'legal') FROM unnest(v_format_arr) f)
+                   ELSE EXISTS (SELECT 1 FROM unnest(v_format_arr) f WHERE legalities->>f = 'legal')
+                   END
+               )) as match_format
         FROM base_products
     ),
+    -- Always AND across dimensions (both OR and AND mode)
+    filter_matches AS (
+        SELECT *,
+               (NOT (SELECT has_foil FROM active_filters) OR match_foil) AND
+               (NOT (SELECT has_treatment FROM active_filters) OR match_treatment) AND
+               (NOT (SELECT has_condition FROM active_filters) OR match_condition) AND
+               (NOT (SELECT has_rarity FROM active_filters) OR match_rarity) AND
+               (NOT (SELECT has_language FROM active_filters) OR match_language) AND
+               (NOT (SELECT has_color FROM active_filters) OR match_color) AND
+               (NOT (SELECT has_collection FROM active_filters) OR match_collection) AND
+               (NOT (SELECT has_set FROM active_filters) OR match_set) AND
+               (NOT (SELECT has_legendary FROM active_filters) OR match_legendary) AND
+               (NOT (SELECT has_land FROM active_filters) OR match_land) AND
+               (NOT (SELECT has_historic FROM active_filters) OR match_historic) AND
+               (NOT (SELECT has_format FROM active_filters) OR match_format)
+               as match_all_filters
+        FROM all_filtered
+    ),
+    -- For each facet dimension: in AND mode, include ALL filters (so impossible options show count=0).
+    -- In OR mode, exclude self dimension (standard faceted search: show alternatives).
+    dimension_matches AS (
+        SELECT *,
+               -- Match others for Foil
+               CASE WHEN p_filter_logic = 'and' THEN match_all_filters
+               ELSE (NOT (SELECT has_condition FROM active_filters) OR match_condition) AND (NOT (SELECT has_treatment FROM active_filters) OR match_treatment) AND (NOT (SELECT has_rarity FROM active_filters) OR match_rarity) AND (NOT (SELECT has_language FROM active_filters) OR match_language) AND (NOT (SELECT has_color FROM active_filters) OR match_color) AND (NOT (SELECT has_collection FROM active_filters) OR match_collection) AND (NOT (SELECT has_set FROM active_filters) OR match_set) AND (NOT (SELECT has_legendary FROM active_filters) OR match_legendary) AND (NOT (SELECT has_land FROM active_filters) OR match_land) AND (NOT (SELECT has_historic FROM active_filters) OR match_historic) AND (NOT (SELECT has_format FROM active_filters) OR match_format)
+               END as others_foil,
+               -- Match others for Treatment
+               CASE WHEN p_filter_logic = 'and' THEN match_all_filters
+               ELSE (NOT (SELECT has_foil FROM active_filters) OR match_foil) AND (NOT (SELECT has_condition FROM active_filters) OR match_condition) AND (NOT (SELECT has_rarity FROM active_filters) OR match_rarity) AND (NOT (SELECT has_language FROM active_filters) OR match_language) AND (NOT (SELECT has_color FROM active_filters) OR match_color) AND (NOT (SELECT has_collection FROM active_filters) OR match_collection) AND (NOT (SELECT has_set FROM active_filters) OR match_set) AND (NOT (SELECT has_legendary FROM active_filters) OR match_legendary) AND (NOT (SELECT has_land FROM active_filters) OR match_land) AND (NOT (SELECT has_historic FROM active_filters) OR match_historic) AND (NOT (SELECT has_format FROM active_filters) OR match_format)
+               END as others_treatment,
+               -- Match others for Condition
+               CASE WHEN p_filter_logic = 'and' THEN match_all_filters
+               ELSE (NOT (SELECT has_foil FROM active_filters) OR match_foil) AND (NOT (SELECT has_treatment FROM active_filters) OR match_treatment) AND (NOT (SELECT has_rarity FROM active_filters) OR match_rarity) AND (NOT (SELECT has_language FROM active_filters) OR match_language) AND (NOT (SELECT has_color FROM active_filters) OR match_color) AND (NOT (SELECT has_collection FROM active_filters) OR match_collection) AND (NOT (SELECT has_set FROM active_filters) OR match_set) AND (NOT (SELECT has_legendary FROM active_filters) OR match_legendary) AND (NOT (SELECT has_land FROM active_filters) OR match_land) AND (NOT (SELECT has_historic FROM active_filters) OR match_historic) AND (NOT (SELECT has_format FROM active_filters) OR match_format)
+               END as others_condition,
+               -- Match others for Rarity
+               CASE WHEN p_filter_logic = 'and' THEN match_all_filters
+               ELSE (NOT (SELECT has_foil FROM active_filters) OR match_foil) AND (NOT (SELECT has_treatment FROM active_filters) OR match_treatment) AND (NOT (SELECT has_condition FROM active_filters) OR match_condition) AND (NOT (SELECT has_language FROM active_filters) OR match_language) AND (NOT (SELECT has_color FROM active_filters) OR match_color) AND (NOT (SELECT has_collection FROM active_filters) OR match_collection) AND (NOT (SELECT has_set FROM active_filters) OR match_set) AND (NOT (SELECT has_legendary FROM active_filters) OR match_legendary) AND (NOT (SELECT has_land FROM active_filters) OR match_land) AND (NOT (SELECT has_historic FROM active_filters) OR match_historic) AND (NOT (SELECT has_format FROM active_filters) OR match_format)
+               END as others_rarity,
+               -- Match others for Language
+               CASE WHEN p_filter_logic = 'and' THEN match_all_filters
+               ELSE (NOT (SELECT has_foil FROM active_filters) OR match_foil) AND (NOT (SELECT has_treatment FROM active_filters) OR match_treatment) AND (NOT (SELECT has_condition FROM active_filters) OR match_condition) AND (NOT (SELECT has_rarity FROM active_filters) OR match_rarity) AND (NOT (SELECT has_color FROM active_filters) OR match_color) AND (NOT (SELECT has_collection FROM active_filters) OR match_collection) AND (NOT (SELECT has_set FROM active_filters) OR match_set) AND (NOT (SELECT has_legendary FROM active_filters) OR match_legendary) AND (NOT (SELECT has_land FROM active_filters) OR match_land) AND (NOT (SELECT has_historic FROM active_filters) OR match_historic) AND (NOT (SELECT has_format FROM active_filters) OR match_format)
+               END as others_language,
+               -- Match others for Color
+               CASE WHEN p_filter_logic = 'and' THEN match_all_filters
+               ELSE (NOT (SELECT has_foil FROM active_filters) OR match_foil) AND (NOT (SELECT has_treatment FROM active_filters) OR match_treatment) AND (NOT (SELECT has_condition FROM active_filters) OR match_condition) AND (NOT (SELECT has_rarity FROM active_filters) OR match_rarity) AND (NOT (SELECT has_language FROM active_filters) OR match_language) AND (NOT (SELECT has_collection FROM active_filters) OR match_collection) AND (NOT (SELECT has_set FROM active_filters) OR match_set) AND (NOT (SELECT has_legendary FROM active_filters) OR match_legendary) AND (NOT (SELECT has_land FROM active_filters) OR match_land) AND (NOT (SELECT has_historic FROM active_filters) OR match_historic) AND (NOT (SELECT has_format FROM active_filters) OR match_format)
+               END as others_color,
+               -- Match others for Collection
+               CASE WHEN p_filter_logic = 'and' THEN match_all_filters
+               ELSE (NOT (SELECT has_foil FROM active_filters) OR match_foil) AND (NOT (SELECT has_treatment FROM active_filters) OR match_treatment) AND (NOT (SELECT has_condition FROM active_filters) OR match_condition) AND (NOT (SELECT has_rarity FROM active_filters) OR match_rarity) AND (NOT (SELECT has_language FROM active_filters) OR match_language) AND (NOT (SELECT has_color FROM active_filters) OR match_color) AND (NOT (SELECT has_set FROM active_filters) OR match_set) AND (NOT (SELECT has_legendary FROM active_filters) OR match_legendary) AND (NOT (SELECT has_land FROM active_filters) OR match_land) AND (NOT (SELECT has_historic FROM active_filters) OR match_historic) AND (NOT (SELECT has_format FROM active_filters) OR match_format)
+               END as others_collection,
+               -- Match others for Set
+               CASE WHEN p_filter_logic = 'and' THEN match_all_filters
+               ELSE (NOT (SELECT has_foil FROM active_filters) OR match_foil) AND (NOT (SELECT has_treatment FROM active_filters) OR match_treatment) AND (NOT (SELECT has_condition FROM active_filters) OR match_condition) AND (NOT (SELECT has_rarity FROM active_filters) OR match_rarity) AND (NOT (SELECT has_language FROM active_filters) OR match_language) AND (NOT (SELECT has_color FROM active_filters) OR match_color) AND (NOT (SELECT has_collection FROM active_filters) OR match_collection) AND (NOT (SELECT has_legendary FROM active_filters) OR match_legendary) AND (NOT (SELECT has_land FROM active_filters) OR match_land) AND (NOT (SELECT has_historic FROM active_filters) OR match_historic) AND (NOT (SELECT has_format FROM active_filters) OR match_format)
+               END as others_set,
+               -- Match others for Format
+               CASE WHEN p_filter_logic = 'and' THEN match_all_filters
+               ELSE (NOT (SELECT has_foil FROM active_filters) OR match_foil) AND (NOT (SELECT has_treatment FROM active_filters) OR match_treatment) AND (NOT (SELECT has_condition FROM active_filters) OR match_condition) AND (NOT (SELECT has_rarity FROM active_filters) OR match_rarity) AND (NOT (SELECT has_language FROM active_filters) OR match_language) AND (NOT (SELECT has_color FROM active_filters) OR match_color) AND (NOT (SELECT has_collection FROM active_filters) OR match_collection) AND (NOT (SELECT has_set FROM active_filters) OR match_set) AND (NOT (SELECT has_legendary FROM active_filters) OR match_legendary) AND (NOT (SELECT has_land FROM active_filters) OR match_land) AND (NOT (SELECT has_historic FROM active_filters) OR match_historic)
+               END as others_format
+        FROM filter_matches
+    ),
     f_condition AS (
-        SELECT COALESCE(condition, 'unknown') as val, COUNT(*) as c FROM all_filtered
-        WHERE (p_filter_logic = 'or' OR match_condition) AND match_foil AND match_treatment AND match_rarity AND match_language AND match_color AND match_collection AND match_set AND match_legendary AND match_land AND match_historic AND match_format
+        SELECT COALESCE(condition, 'unknown') as val, COUNT(*) as c FROM dimension_matches
+        WHERE others_condition
         GROUP BY val
     ),
     f_foil AS (
-        SELECT COALESCE(LOWER(foil_treatment), 'non_foil') as val, COUNT(*) as c FROM all_filtered
-        WHERE (p_filter_logic = 'or' OR match_foil) AND match_condition AND match_treatment AND match_rarity AND match_language AND match_color AND match_collection AND match_set AND match_legendary AND match_land AND match_historic AND match_format
+        SELECT COALESCE(LOWER(foil_treatment), 'non_foil') as val, COUNT(*) as c FROM dimension_matches
+        WHERE others_foil
         GROUP BY val
     ),
     f_rarity AS (
-        SELECT COALESCE(LOWER(rarity), 'unknown') as val, COUNT(*) as c FROM all_filtered
-        WHERE (p_filter_logic = 'or' OR match_rarity) AND match_condition AND match_foil AND match_treatment AND match_language AND match_color AND match_collection AND match_set AND match_legendary AND match_land AND match_historic AND match_format
+        SELECT COALESCE(LOWER(rarity), 'unknown') as val, COUNT(*) as c FROM dimension_matches
+        WHERE others_rarity
         GROUP BY val
     ),
     f_language AS (
-        SELECT COALESCE(LOWER(language), 'en') as val, COUNT(*) as c FROM all_filtered
-        WHERE (p_filter_logic = 'or' OR match_language) AND match_condition AND match_foil AND match_treatment AND match_rarity AND match_color AND match_collection AND match_set AND match_legendary AND match_land AND match_historic AND match_format
+        SELECT COALESCE(LOWER(language), 'en') as val, COUNT(*) as c FROM dimension_matches
+        WHERE others_language
         GROUP BY val
     ),
     f_color AS (
@@ -115,28 +197,28 @@ BEGIN
             COUNT(*) FILTER (WHERE color_identity ILIKE '%R%') as r,
             COUNT(*) FILTER (WHERE color_identity ILIKE '%G%') as g,
             COUNT(*) FILTER (WHERE color_identity ILIKE '%C%') as c
-        FROM all_filtered
-        WHERE (p_filter_logic = 'or' OR match_color) AND match_condition AND match_foil AND match_treatment AND match_rarity AND match_language AND match_collection AND match_set AND match_legendary AND match_land AND match_historic AND match_format
+        FROM dimension_matches
+        WHERE others_color
     ),
     f_treatment AS (
         SELECT val, SUM(c) as c FROM (
-            SELECT COALESCE(LOWER(card_treatment), 'normal') as val, COUNT(*) as c FROM all_filtered
-            WHERE (p_filter_logic = 'or' OR match_treatment) AND match_condition AND match_foil AND match_rarity AND match_language AND match_color AND match_collection AND match_set AND match_legendary AND match_land AND match_historic AND match_format
+            SELECT COALESCE(LOWER(card_treatment), 'normal') as val, COUNT(*) as c FROM dimension_matches
+            WHERE others_treatment
             GROUP BY val
             UNION ALL
-            SELECT 'full_art' as val, COUNT(*) as c FROM all_filtered
-            WHERE full_art = true AND (p_filter_logic = 'or' OR match_treatment) AND match_condition AND match_foil AND match_rarity AND match_language AND match_color AND match_collection AND match_set AND match_legendary AND match_land AND match_historic AND match_format
+            SELECT 'full_art' as val, COUNT(*) as c FROM dimension_matches
+            WHERE full_art = true AND others_treatment
             UNION ALL
-            SELECT 'textless' as val, COUNT(*) as c FROM all_filtered
-            WHERE textless = true AND (p_filter_logic = 'or' OR match_treatment) AND match_condition AND match_foil AND match_rarity AND match_language AND match_color AND match_collection AND match_set AND match_legendary AND match_land AND match_historic AND match_format
+            SELECT 'textless' as val, COUNT(*) as c FROM dimension_matches
+            WHERE textless = true AND others_treatment
         ) t GROUP BY val
     ),
     f_collection AS (
-        SELECT COALESCE(cc.slug, 'unknown') as val, COUNT(DISTINCT all_filtered.id) as c
-        FROM all_filtered
-        JOIN product_category pc ON all_filtered.id = pc.product_id
+        SELECT COALESCE(cc.slug, 'unknown') as val, COUNT(DISTINCT dimension_matches.id) as c
+        FROM dimension_matches
+        JOIN product_category pc ON dimension_matches.id = pc.product_id
         JOIN custom_category cc ON pc.category_id = cc.id
-        WHERE (p_filter_logic = 'or' OR match_collection) AND match_condition AND match_foil AND match_treatment AND match_rarity AND match_language AND match_color AND match_set AND match_legendary AND match_land AND match_historic AND match_format
+        WHERE others_collection
         GROUP BY val
     ),
     f_set_name AS (
@@ -144,26 +226,26 @@ BEGIN
             COALESCE(p.set_name, 'Unknown') as val, 
             COUNT(*) as c,
             MAX(s.released_at) as release_date
-        FROM all_filtered p
+        FROM dimension_matches p
         LEFT JOIN tcg_set s ON (LOWER(p.set_name) = LOWER(s.name) AND p.tcg = s.tcg) OR (LOWER(p.set_code) = LOWER(s.code) AND p.tcg = s.tcg)
-        WHERE (p_filter_logic = 'or' OR match_set) AND match_condition AND match_foil AND match_treatment AND match_rarity AND match_language AND match_color AND match_collection AND match_legendary AND match_land AND match_historic AND match_format
+        WHERE others_set
         GROUP BY val
         HAVING COUNT(*) > 0
         ORDER BY release_date DESC NULLS LAST, val ASC
         LIMIT 50
     ),
     f_legendary AS (
-        SELECT 'true' as val, COUNT(*) as c FROM all_filtered WHERE is_legendary = true AND match_condition AND match_foil AND match_treatment AND match_rarity AND match_language AND match_color AND match_collection AND match_set AND match_land AND match_historic AND match_format
+        SELECT 'true' as val, COUNT(*) as c FROM dimension_matches WHERE is_legendary = true AND others_foil AND others_treatment AND others_rarity AND others_language AND others_color AND others_collection AND others_set AND others_condition AND others_format
     ),
     f_land AS (
-        SELECT 'true' as val, COUNT(*) as c FROM all_filtered WHERE is_land = true AND match_condition AND match_foil AND match_treatment AND match_rarity AND match_language AND match_color AND match_collection AND match_set AND match_legendary AND match_historic AND match_format
+        SELECT 'true' as val, COUNT(*) as c FROM dimension_matches WHERE is_land = true AND others_foil AND others_treatment AND others_rarity AND others_language AND others_color AND others_collection AND others_set AND others_condition AND others_format
     ),
     f_historic AS (
-        SELECT 'true' as val, COUNT(*) as c FROM all_filtered WHERE is_historic = true AND match_condition AND match_foil AND match_treatment AND match_rarity AND match_language AND match_color AND match_collection AND match_set AND match_legendary AND match_land AND match_format
+        SELECT 'true' as val, COUNT(*) as c FROM dimension_matches WHERE is_historic = true AND others_foil AND others_treatment AND others_rarity AND others_language AND others_color AND others_collection AND others_set AND others_condition AND others_format
     ),
     f_format AS (
-        SELECT f as val, COUNT(*) as c FROM all_filtered, unnest(ARRAY['commander', 'modern', 'standard', 'legacy', 'vintage', 'pauper', 'pioneer']) f
-        WHERE legalities->>f = 'legal' AND (p_filter_logic = 'or' OR match_format) AND match_condition AND match_foil AND match_treatment AND match_rarity AND match_language AND match_color AND match_collection AND match_set AND match_legendary AND match_land AND match_historic
+        SELECT f as val, COUNT(*) as c FROM dimension_matches, unnest(ARRAY['commander', 'modern', 'standard', 'legacy', 'vintage', 'pauper', 'pioneer']) f
+        WHERE legalities->>f = 'legal' AND others_format
         GROUP BY val
     )
     SELECT jsonb_build_object(

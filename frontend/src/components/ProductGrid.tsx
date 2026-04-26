@@ -260,8 +260,8 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
               </div>
               <p className="text-[8px] italic text-text-muted/80 leading-tight">
                 {logic === 'or'
-                  ? t('pages.inventory.grid.filters.strategy.broad_desc', "Broadens results: match ANY selected filter.")
-                  : t('pages.inventory.grid.filters.strategy.narrow_desc', "Narrows results: match ALL selected filters.")}
+                  ? t('pages.inventory.grid.filters.strategy.broad_desc', "Broadens within each filter group (e.g., Foil OR Etched). Filters across groups still narrow results.")
+                  : t('pages.inventory.grid.filters.strategy.narrow_desc', "Narrows results: requires ALL selected colors, collections, and formats.")}
               </p>
             </div>
 
