@@ -67,14 +67,14 @@ export default function CancellationModal({ request, isOpen, onClose, onConfirm,
           <button
             onClick={onClose}
             disabled={isSubmitting}
-            className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-main transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-main hover:bg-bg-surface/80 rounded-lg transition-all duration-200 disabled:opacity-50"
           >
             Go Back
           </button>
           <button
             onClick={() => onConfirm(reason, details)}
             disabled={isSubmitting}
-            className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-lg shadow-lg shadow-red-600/20 transition-all active:scale-95 disabled:opacity-50 disabled:scale-100 flex items-center gap-2"
+            className="px-6 py-2 bg-red-600 hover:bg-red-500 text-white text-sm font-bold rounded-lg shadow-lg shadow-red-900/20 hover:shadow-red-900/40 hover:-translate-y-0.5 transition-all duration-200 active:scale-95 active:translate-y-0 disabled:opacity-50 disabled:scale-100 disabled:translate-y-0 flex items-center gap-2"
           >
             {isSubmitting ? (
               <>
