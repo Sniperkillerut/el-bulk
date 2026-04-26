@@ -9,6 +9,7 @@ import { UserOrder, BountyOffer, ClientRequest, ORDER_STATUS_LABELS } from '@/li
 import LoadingSpinner from '@/components/LoadingSpinner';
 import OrderDetailsModal from '@/components/OrderDetailsModal';
 import { useLanguage } from '@/context/LanguageContext';
+import CancellationModal from '@/components/profile/CancellationModal';
 
 export default function ProfilePage() {
   const { user, loading: userLoading, updateProfile, loginWithGoogle } = useUser();
@@ -30,6 +31,9 @@ export default function ProfilePage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  const [requestToCancel, setRequestToCancel] = useState<ClientRequest | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -113,14 +117,23 @@ export default function ProfilePage() {
     }
   };
 
-  const handleCancelRequest = async (id: string) => {
-    if (!confirm(t('pages.profile.confirm.cancel_request', 'Are you sure you want to cancel this request?'))) return;
+  const handleCancelRequest = (req: ClientRequest) => {
+    setRequestToCancel(req);
+  };
+
+  const onConfirmCancellation = async (reason: string, details: string) => {
+    if (!requestToCancel) return;
+    
     try {
-      await userCancelClientRequest(id);
-      setMessage({ type: 'success', text: t('pages.profile.messages.request_cancelled', 'Request cancelled successfully.') });
+      setIsCancelling(true);
+      await userCancelClientRequest(requestToCancel.id, reason, details);
+      setMessage({ type: 'success', text: t('pages.profile.messages.request_cancelled', 'Request marked as no longer needed. Admin has been notified.') });
+      setRequestToCancel(null);
       fetchRequests();
     } catch (err: unknown) {
       setMessage({ type: 'error', text: (err as Error).message || t('pages.profile.messages.cancel_error', 'Failed to cancel.') });
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -433,18 +446,20 @@ export default function ProfilePage() {
                             </td>
                             <td className="px-6 py-4">
                               <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded-sm border ${
-                                req.status === 'solved' ? 'text-green-400 border-green-400/30 bg-green-400/10' :
-                                req.status === 'pending' ? 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10' :
-                                req.status === 'rejected' || req.status === 'cancelled' ? 'text-red-400 border-red-400/30 bg-red-400/10' :
-                                'text-blue-400 border-blue-400/30 bg-blue-400/10'
-                              }`}>
-                                {t(`pages.profile.status.${req.status}`, req.status)}
-                              </span>
+                                  req.status === 'solved' ? 'text-green-400 border-green-400/30 bg-green-400/10' :
+                                  req.status === 'pending' ? 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10' :
+                                  req.status === 'accepted' ? 'text-blue-400 border-blue-400/30 bg-blue-400/10' :
+                                  req.status === 'not_needed' ? 'text-purple-400 border-purple-400/30 bg-purple-400/10' :
+                                  req.status === 'rejected' || req.status === 'cancelled' ? 'text-red-400 border-red-400/30 bg-red-400/10' :
+                                  'text-text-muted border-border-main/30 bg-bg-surface/50'
+                                }`}>
+                                  {req.status === 'not_needed' ? t('pages.profile.status.not_needed', 'No longer needed') : t(`pages.profile.status.${req.status}`, req.status)}
+                                </span>
                             </td>
                             <td className="px-6 py-4 text-right">
-                              {req.status === 'pending' && (
+                              {(req.status === 'pending' || req.status === 'accepted') && (
                                 <button 
-                                  onClick={() => handleCancelRequest(req.id)}
+                                  onClick={() => handleCancelRequest(req)}
                                   className="text-xs text-red-400 hover:text-red-300 transition-colors"
                                 >
                                   {t('pages.profile.actions.cancel', 'Cancel')}
@@ -530,6 +545,16 @@ export default function ProfilePage() {
         onClose={() => setIsModalOpen(false)}
         onOrderCancelled={() => fetchOrders()}
       />
+
+      {requestToCancel && (
+        <CancellationModal
+          request={requestToCancel}
+          isOpen={!!requestToCancel}
+          onClose={() => setRequestToCancel(null)}
+          onConfirm={onConfirmCancellation}
+          isSubmitting={isCancelling}
+        />
+      )}
     </div>
   );
 }
