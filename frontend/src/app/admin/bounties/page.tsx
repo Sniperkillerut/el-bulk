@@ -266,7 +266,17 @@ export default function AdminBountiesPage() {
                               <div className="font-bold text-sm text-ink-deep leading-tight truncate">{b.name}</div>
                               <div className="flex items-center gap-1.5 mt-1">
                                 <span className="badge bg-gold/10 text-gold text-[8px] font-mono-stack">{b.tcg.toUpperCase()}</span>
-                                {b.request_id && requests.find(r => r.id === b.request_id)?.status === 'not_needed' && (
+                                {(() => {
+                                  if (b.request_id) {
+                                    return requests.find(r => r.id === b.request_id)?.status === 'not_needed';
+                                  }
+                                  // Fallback for existing data: match by name (case-insensitive, partial)
+                                  return requests.some(r => 
+                                    r.status === 'not_needed' && 
+                                    (b.name.toLowerCase().includes(r.card_name.toLowerCase()) || 
+                                     r.card_name.toLowerCase().includes(b.name.toLowerCase()))
+                                  );
+                                })() && (
                                   <span className="badge bg-red-100 text-red-600 text-[8px] font-bold animate-pulse border border-red-200">
                                     ⚠️ {t('pages.admin.bounties.request_cancelled_warning', 'CLIENT NO LONGER NEEDS THIS')}
                                   </span>
