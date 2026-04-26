@@ -3,8 +3,10 @@ package store
 import (
 	"context"
 	"encoding/json"
+
 	"github.com/el-bulk/backend/models"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 type BountyStore struct {
@@ -22,7 +24,7 @@ func (s *BountyStore) ListBounties(ctx context.Context, activeParam string) ([]m
 	query := `
 		SELECT 
 			b.id, b.name, b.tcg, b.set_name, b.condition, b.foil_treatment, b.card_treatment, b.collector_number, b.promo_type, b.language, b.target_price, 
-			b.hide_price, b.quantity_needed, b.request_id, b.image_url, b.price_source, b.price_reference, b.is_active, b.created_at, b.updated_at
+			b.hide_price, b.quantity_needed, b.is_generic, b.image_url, b.price_source, b.price_reference, b.is_active, b.created_at, b.updated_at
 		FROM bounty b
 		WHERE ($1 = '' OR b.is_active = ($1 = 'true'))
 		ORDER BY b.created_at DESC
@@ -33,15 +35,15 @@ func (s *BountyStore) ListBounties(ctx context.Context, activeParam string) ([]m
 
 func (s *BountyStore) CreateBounty(ctx context.Context, input models.BountyInput, isActive bool) (*models.Bounty, error) {
 	query := `
-		INSERT INTO bounty (name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, request_id, image_url, price_source, price_reference, is_active)
+		INSERT INTO bounty (name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, is_generic, image_url, price_source, price_reference, is_active)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, request_id, image_url, price_source, price_reference, is_active, created_at, updated_at
+		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, is_generic, image_url, price_source, price_reference, is_active, created_at, updated_at
 	`
 	var bounty models.Bounty
 	err := s.DB.QueryRowxContext(ctx, query,
 		input.Name, input.TCG, input.SetName, input.Condition, input.FoilTreatment,
 		input.CardTreatment, input.CollectorNumber, input.PromoType, input.Language,
-		input.TargetPrice, input.HidePrice, input.QuantityNeeded, input.RequestID, input.ImageURL,
+		input.TargetPrice, input.HidePrice, input.QuantityNeeded, input.IsGeneric, input.ImageURL,
 		input.PriceSource, input.PriceReference, isActive,
 	).StructScan(&bounty)
 	if err != nil {
@@ -55,16 +57,16 @@ func (s *BountyStore) UpdateBounty(ctx context.Context, id string, input models.
 		UPDATE bounty
 		SET name = $1, tcg = $2, set_name = $3, condition = $4, foil_treatment = $5,
 		    card_treatment = $6, collector_number = $7, promo_type = $8, language = $9,
-		    target_price = $10, hide_price = $11, quantity_needed = $12, request_id = $13, image_url = $14,
+		    target_price = $10, hide_price = $11, quantity_needed = $12, is_generic = $13, image_url = $14,
 		    price_source = $15, price_reference = $16, is_active = $17, updated_at = now()
 		WHERE id = $18
-		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, request_id, image_url, price_source, price_reference, is_active, created_at, updated_at
+		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, is_generic, image_url, price_source, price_reference, is_active, created_at, updated_at
 	`
 	var bounty models.Bounty
 	err := s.DB.QueryRowxContext(ctx, query,
 		input.Name, input.TCG, input.SetName, input.Condition, input.FoilTreatment,
 		input.CardTreatment, input.CollectorNumber, input.PromoType, input.Language,
-		input.TargetPrice, input.HidePrice, input.QuantityNeeded, input.RequestID, input.ImageURL,
+		input.TargetPrice, input.HidePrice, input.QuantityNeeded, input.IsGeneric, input.ImageURL,
 		input.PriceSource, input.PriceReference, isActive, id,
 	).StructScan(&bounty)
 	if err != nil {
@@ -161,21 +163,19 @@ func (s *BountyStore) CancelMeOffer(ctx context.Context, id, userID string) (int
 
 // ── Client Requests ─────────────────────────────────────
 
+const requestColumns = `id, customer_id, customer_name, customer_contact, card_name, set_name, details, quantity, tcg, status, cancellation_reason, bounty_id, match_type, scryfall_id, created_at`
+
 func (s *BountyStore) ListRequests(ctx context.Context) ([]models.ClientRequest, error) {
 	requests := []models.ClientRequest{}
-	query := `
-		SELECT id, customer_id, customer_name, customer_contact, card_name, set_name, details, quantity, tcg, status, cancellation_reason, created_at
-		FROM client_request
-		ORDER BY created_at DESC
-	`
+	query := `SELECT ` + requestColumns + ` FROM client_request ORDER BY created_at DESC`
 	err := s.DB.SelectContext(ctx, &requests, query)
 	return requests, err
 }
 
-func (s *BountyStore) SubmitRequest(ctx context.Context, customerName, customerContact, cardName string, setName, details *string, quantity int, tcg string, userID *string) ([]byte, error) {
+func (s *BountyStore) SubmitRequest(ctx context.Context, customerName, customerContact, cardName string, setName, details *string, quantity int, tcg string, userID *string, matchType string, scryfallID *string) ([]byte, error) {
 	var result []byte
-	err := s.DB.GetContext(ctx, &result, "SELECT fn_submit_client_request($1, $2, $3, $4, $5, $6, $7, $8)",
-		customerName, customerContact, cardName, setName, details, quantity, tcg, userID)
+	err := s.DB.GetContext(ctx, &result, "SELECT fn_submit_client_request($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+		customerName, customerContact, cardName, setName, details, quantity, tcg, userID, matchType, scryfallID)
 	return result, err
 }
 
@@ -195,8 +195,7 @@ func (s *BountyStore) UpdateRequestStatus(ctx context.Context, id, status string
 		UPDATE client_request
 		SET status = $1
 		WHERE id = $2
-		RETURNING id, customer_id, customer_name, customer_contact, card_name, set_name, details, quantity, tcg, status, cancellation_reason, created_at
-	`
+		RETURNING ` + requestColumns
 	var req models.ClientRequest
 	err := s.DB.QueryRowxContext(ctx, query, status, id).StructScan(&req)
 	if err != nil {
@@ -207,12 +206,7 @@ func (s *BountyStore) UpdateRequestStatus(ctx context.Context, id, status string
 
 func (s *BountyStore) ListMeRequests(ctx context.Context, userID string) ([]models.ClientRequest, error) {
 	requests := []models.ClientRequest{}
-	query := `
-		SELECT id, customer_id, customer_name, customer_contact, card_name, set_name, details, quantity, tcg, status, cancellation_reason, created_at
-		FROM client_request
-		WHERE customer_id = $1
-		ORDER BY created_at DESC
-	`
+	query := `SELECT ` + requestColumns + ` FROM client_request WHERE customer_id = $1 ORDER BY created_at DESC`
 	err := s.DB.SelectContext(ctx, &requests, query, userID)
 	return requests, err
 }
@@ -227,4 +221,42 @@ func (s *BountyStore) CancelMeRequest(ctx context.Context, id, userID, reason st
 		return 0, err
 	}
 	return res.RowsAffected()
+}
+
+// ── New Bridge Methods ───────────────────────────────────
+
+// AcceptRequest atomically finds/creates a bounty, links the request, and marks it accepted.
+func (s *BountyStore) AcceptRequest(ctx context.Context, requestID string) (map[string]interface{}, error) {
+	var result []byte
+	err := s.DB.GetContext(ctx, &result, "SELECT fn_accept_client_request($1::UUID)", requestID)
+	if err != nil {
+		return nil, err
+	}
+	var out map[string]interface{}
+	if err := json.Unmarshal(result, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// FulfillOffer atomically accepts an offer and marks selected requests as solved.
+func (s *BountyStore) FulfillOffer(ctx context.Context, offerID string, requestIDs []string) (map[string]interface{}, error) {
+	var result []byte
+	err := s.DB.GetContext(ctx, &result, "SELECT fn_fulfill_bounty_offer($1::UUID, $2::UUID[])", offerID, pq.Array(requestIDs))
+	if err != nil {
+		return nil, err
+	}
+	var out map[string]interface{}
+	if err := json.Unmarshal(result, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ListRequestsByBounty returns all active requests linked to a specific bounty.
+func (s *BountyStore) ListRequestsByBounty(ctx context.Context, bountyID string) ([]models.ClientRequest, error) {
+	requests := []models.ClientRequest{}
+	query := `SELECT ` + requestColumns + ` FROM client_request WHERE bounty_id = $1 AND status IN ('accepted', 'pending') ORDER BY created_at ASC`
+	err := s.DB.SelectContext(ctx, &requests, query, bountyID)
+	return requests, err
 }

@@ -256,7 +256,48 @@ func (h *BountyHandler) UpdateRequestStatus(w http.ResponseWriter, r *http.Reque
 	render.Success(w, req)
 }
 
-// === USER-FACING (Me) ===
+func (h *BountyHandler) AcceptRequest(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	logger.TraceCtx(r.Context(), "Entering BountyHandler.AcceptRequest | ID: %s", id)
+	result, err := h.Service.AcceptRequest(r.Context(), id)
+	if err != nil {
+		logger.ErrorCtx(r.Context(), "Failed to accept request %s: %v", id, err)
+		render.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	render.Success(w, result)
+}
+
+func (h *BountyHandler) FulfillOffer(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	logger.TraceCtx(r.Context(), "Entering BountyHandler.FulfillOffer | ID: %s", id)
+	var input models.FulfillOfferInput
+	if err := decodeJSON(r, &input); err != nil {
+		logger.ErrorCtx(r.Context(), "Failed to decode fulfill offer input for %s: %v", id, err)
+		render.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	result, err := h.Service.FulfillOffer(r.Context(), id, input.RequestIDs)
+	if err != nil {
+		logger.ErrorCtx(r.Context(), "Failed to fulfill offer %s: %v", id, err)
+		render.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	render.Success(w, result)
+}
+
+func (h *BountyHandler) ListRequestsByBounty(w http.ResponseWriter, r *http.Request) {
+	bountyID := chi.URLParam(r, "id")
+	logger.TraceCtx(r.Context(), "Entering BountyHandler.ListRequestsByBounty | BountyID: %s", bountyID)
+	requests, err := h.Service.ListRequestsByBounty(r.Context(), bountyID)
+	if err != nil {
+		logger.ErrorCtx(r.Context(), "Failed to list requests for bounty %s: %v", bountyID, err)
+		render.Error(w, "Failed to fetch requests", http.StatusInternalServerError)
+		return
+	}
+	render.Success(w, requests)
+}
+
 
 func (h *BountyHandler) ListMeOffers(w http.ResponseWriter, r *http.Request) {
 	logger.TraceCtx(r.Context(), "Entering BountyHandler.ListMeOffers")

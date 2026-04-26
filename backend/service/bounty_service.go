@@ -165,10 +165,14 @@ func (s *BountyService) SubmitRequest(ctx context.Context, input models.ClientRe
 	if input.TCG == "" {
 		input.TCG = "mtg"
 	}
+	if input.MatchType == "" {
+		input.MatchType = "any"
+	}
 
 	result, err := s.Store.SubmitRequest(
 		ctx, input.CustomerName, input.CustomerContact, input.CardName,
 		input.SetName, input.Details, input.Quantity, input.TCG, userID,
+		input.MatchType, input.ScryfallID,
 	)
 	if err != nil {
 		return nil, err
@@ -230,4 +234,28 @@ func (s *BountyService) CancelMeRequest(ctx context.Context, id, userID, reason 
 		return fmt.Errorf("request cannot be cancelled (must be pending or accepted)")
 	}
 	return nil
+}
+
+// ── Bridge Methods ───────────────────────────────────────
+
+func (s *BountyService) AcceptRequest(ctx context.Context, requestID string) (map[string]interface{}, error) {
+	return s.Store.AcceptRequest(ctx, requestID)
+}
+
+func (s *BountyService) FulfillOffer(ctx context.Context, offerID string, requestIDs []string) (map[string]interface{}, error) {
+	if len(requestIDs) == 0 {
+		return nil, fmt.Errorf("at least one request_id is required")
+	}
+	return s.Store.FulfillOffer(ctx, offerID, requestIDs)
+}
+
+func (s *BountyService) ListRequestsByBounty(ctx context.Context, bountyID string) ([]models.ClientRequest, error) {
+	requests, err := s.Store.ListRequestsByBounty(ctx, bountyID)
+	if err != nil {
+		return nil, err
+	}
+	for i := range requests {
+		requests[i].CustomerContact = *crypto.DecryptSafe(&requests[i].CustomerContact)
+	}
+	return requests, nil
 }

@@ -5,26 +5,26 @@ import (
 )
 
 type Bounty struct {
-	ID             string        `db:"id"               json:"id"`
-	Name           string        `db:"name"             json:"name"`
-	TCG            string        `db:"tcg"              json:"tcg"`
-	SetName        *string       `db:"set_name"         json:"set_name,omitempty"`
-	Condition      *string       `db:"condition"        json:"condition,omitempty"`
-	FoilTreatment  FoilTreatment `db:"foil_treatment"   json:"foil_treatment"`
-	CardTreatment  CardTreatment `db:"card_treatment"   json:"card_treatment"`
-	CollectorNumber *string      `db:"collector_number" json:"collector_number,omitempty"`
-	PromoType      *string       `db:"promo_type"       json:"promo_type,omitempty"`
-	Language       string        `db:"language"         json:"language"`
-	TargetPrice    *float64      `db:"target_price"     json:"target_price,omitempty"`
-	HidePrice      bool          `db:"hide_price"       json:"hide_price"`
-	QuantityNeeded int           `db:"quantity_needed"  json:"quantity_needed"`
-	RequestID      *string       `db:"request_id"       json:"request_id,omitempty"`
-	ImageURL       *string       `db:"image_url"        json:"image_url,omitempty"`
-	PriceSource    string        `db:"price_source"     json:"price_source,omitempty"`
-	PriceReference *float64      `db:"price_reference"  json:"price_reference,omitempty"`
-	IsActive       bool          `db:"is_active"        json:"is_active"`
-	CreatedAt      *time.Time    `db:"created_at"       json:"created_at,omitempty"`
-	UpdatedAt      *time.Time    `db:"updated_at"       json:"updated_at,omitempty"`
+	ID              string        `db:"id"               json:"id"`
+	Name            string        `db:"name"             json:"name"`
+	TCG             string        `db:"tcg"              json:"tcg"`
+	SetName         *string       `db:"set_name"         json:"set_name,omitempty"`
+	Condition       *string       `db:"condition"        json:"condition,omitempty"`
+	FoilTreatment   FoilTreatment `db:"foil_treatment"   json:"foil_treatment"`
+	CardTreatment   CardTreatment `db:"card_treatment"   json:"card_treatment"`
+	CollectorNumber *string       `db:"collector_number" json:"collector_number,omitempty"`
+	PromoType       *string       `db:"promo_type"       json:"promo_type,omitempty"`
+	Language        string        `db:"language"         json:"language"`
+	TargetPrice     *float64      `db:"target_price"     json:"target_price,omitempty"`
+	HidePrice       bool          `db:"hide_price"       json:"hide_price"`
+	QuantityNeeded  int           `db:"quantity_needed"  json:"quantity_needed"`
+	IsGeneric       bool          `db:"is_generic"       json:"is_generic"`
+	ImageURL        *string       `db:"image_url"        json:"image_url,omitempty"`
+	PriceSource     string        `db:"price_source"     json:"price_source,omitempty"`
+	PriceReference  *float64      `db:"price_reference"  json:"price_reference,omitempty"`
+	IsActive        bool          `db:"is_active"        json:"is_active"`
+	CreatedAt       *time.Time    `db:"created_at"       json:"created_at,omitempty"`
+	UpdatedAt       *time.Time    `db:"updated_at"       json:"updated_at,omitempty"`
 }
 
 // Redact strips sensitive or internal fields for non-admin users.
@@ -32,7 +32,6 @@ func (b *Bounty) Redact(isAdmin bool) {
 	if !isAdmin {
 		b.PriceSource = ""
 		b.PriceReference = nil
-		b.RequestID = nil
 		b.CreatedAt = nil
 		b.UpdatedAt = nil
 		if b.HidePrice {
@@ -54,7 +53,7 @@ type BountyInput struct {
 	TargetPrice     *float64      `json:"target_price,omitempty"`
 	HidePrice       bool          `json:"hide_price"`
 	QuantityNeeded  int           `json:"quantity_needed"`
-	RequestID       *string       `json:"request_id,omitempty"`
+	IsGeneric       bool          `json:"is_generic"`
 	ImageURL        *string       `json:"image_url,omitempty"`
 	PriceSource     string        `json:"price_source"`
 	PriceReference  *float64      `json:"price_reference,omitempty"`
@@ -64,4 +63,8 @@ type BountyInput struct {
 type BountyWithOffers struct {
 	Bounty
 	Offers []BountyOffer `json:"offers"`
+}
+
+type FulfillOfferInput struct {
+	RequestIDs []string `json:"request_ids"`
 }

@@ -652,18 +652,21 @@ type CustomerNote struct {
 }
 
 type ClientRequest struct {
-	ID              string    `db:"id" json:"id"`
-	CustomerID      *string   `db:"customer_id" json:"customer_id,omitempty"`
-	CustomerName    string    `db:"customer_name" json:"customer_name"`
-	CustomerContact string    `db:"customer_contact" json:"customer_contact"`
-	CardName        string    `db:"card_name" json:"card_name"`
-	SetName         *string   `db:"set_name" json:"set_name,omitempty"`
-	Details         *string    `db:"details" json:"details,omitempty"`
-	Quantity        int        `db:"quantity" json:"quantity"`
-	TCG             string     `db:"tcg" json:"tcg"`
-	Status          string     `db:"status" json:"status"`
-	CancellationReason *string `db:"cancellation_reason,omitempty" json:"cancellation_reason,omitempty"`
-	CreatedAt       *time.Time `db:"created_at" json:"created_at,omitempty"`
+	ID                 string     `db:"id" json:"id"`
+	CustomerID         *string    `db:"customer_id" json:"customer_id,omitempty"`
+	CustomerName       string     `db:"customer_name" json:"customer_name"`
+	CustomerContact    string     `db:"customer_contact" json:"customer_contact"`
+	CardName           string     `db:"card_name" json:"card_name"`
+	SetName            *string    `db:"set_name" json:"set_name,omitempty"`
+	Details            *string    `db:"details" json:"details,omitempty"`
+	Quantity           int        `db:"quantity" json:"quantity"`
+	TCG                string     `db:"tcg" json:"tcg"`
+	Status             string     `db:"status" json:"status"`
+	CancellationReason *string    `db:"cancellation_reason,omitempty" json:"cancellation_reason,omitempty"`
+	BountyID           *string    `db:"bounty_id" json:"bounty_id,omitempty"`
+	MatchType          string     `db:"match_type" json:"match_type"`
+	ScryfallID         *string    `db:"scryfall_id" json:"scryfall_id,omitempty"`
+	CreatedAt          *time.Time `db:"created_at" json:"created_at,omitempty"`
 }
 
 type BountyOffer struct {
@@ -693,6 +696,8 @@ type ClientRequestInput struct {
 	Details         *string `json:"details,omitempty"`
 	Quantity        int     `json:"quantity"`
 	TCG             string  `json:"tcg"`
+	MatchType       string  `json:"match_type"`
+	ScryfallID      *string `json:"scryfall_id,omitempty"`
 }
 
 type ClientRequestBatchInput struct {

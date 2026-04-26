@@ -322,8 +322,11 @@ func main() {
 				r.Delete("/bounties/{id}", bountyHandler.Delete)
 				r.Get("/bounties/offers", bountyHandler.ListOffers)
 				r.Put("/bounties/offers/{id}/status", bountyHandler.UpdateOfferStatus)
+				r.Post("/bounties/offers/{id}/fulfill", bountyHandler.FulfillOffer)
+				r.Get("/bounties/{id}/requests", bountyHandler.ListRequestsByBounty)
 				r.Get("/client-requests", bountyHandler.ListRequests)
 				r.Put("/client-requests/{id}/status", bountyHandler.UpdateRequestStatus)
+				r.Post("/client-requests/{id}/accept", bountyHandler.AcceptRequest)
 
 				// Notices (Blog/News) CRUD
 				r.Get("/notices", noticeHandler.AdminList)
