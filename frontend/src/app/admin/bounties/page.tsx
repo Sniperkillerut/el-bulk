@@ -490,13 +490,15 @@ export default function AdminBountiesPage() {
                         <h3 className={`font-bold text-lg m-0 font-mono-stack ${req.status === 'solved' ? 'text-indigo-900' : 'text-ink-deep'}`}>{req.card_name}</h3>
                       </div>
                       <span className="badge bg-gold/10 text-gold text-[8px] font-mono-stack px-1.5 py-0.5 rounded border border-gold/20">{req.tcg.toUpperCase()}</span>
-                      <span className={`badge ${
                         req.status === 'pending' ? 'bg-gold text-ink-deep font-bold' : 
                         req.status === 'accepted' ? 'bg-emerald-100 text-emerald-700' : 
                         req.status === 'solved' ? 'bg-indigo-600 text-white shadow-sm' :
+                        req.status === 'not_needed' ? 'bg-purple-100 text-purple-700' :
                         'bg-red-100 text-red-700'
                       }`}>
-                        {req.status === 'solved' ? t('pages.admin.bounties.requests.complete_status', 'COMPLETE') : t(`pages.common.status.${req.status}`, req.status).toUpperCase()}
+                        {req.status === 'solved' ? t('pages.admin.bounties.requests.complete_status', 'COMPLETE') : 
+                         req.status === 'not_needed' ? t('pages.admin.bounties.requests.not_needed_status', 'NO LONGER NEEDED') :
+                         t(`pages.common.status.${req.status}`, req.status).toUpperCase()}
                       </span>
                     </div>
                     <p className="text-sm">{t('pages.admin.bounties.requests.client_label', 'Client:')} <strong>
@@ -513,6 +515,12 @@ export default function AdminBountiesPage() {
             className="text-gold-dark hover:underline font-bold transition-all"
           /></p>
                     <p className="text-xs text-text-muted mt-2 italic border-l-2 border-kraft-dark/10 pl-3">&quot;{req.details || t('pages.admin.bounties.requests.no_details', 'No additional details provided.')}&quot;</p>
+                    {req.cancellation_reason && (
+                      <div className="mt-3 p-2 bg-purple-50 border border-purple-100 rounded text-xs">
+                        <span className="font-bold text-purple-800 uppercase text-[10px] block mb-1">{t('pages.admin.bounties.requests.cancellation_reason', 'Cancellation Reason:') || 'Cancellation Reason:'}</span>
+                        <p className="text-purple-900 font-medium italic">&quot;{req.cancellation_reason}&quot;</p>
+                      </div>
+                    )}
                     <p className="text-[10px] text-text-muted mt-3 uppercase tracking-widest font-mono-stack font-bold opacity-40">{t('pages.admin.bounties.requests.requested_date', 'Requested:')} {new Date(req.created_at).toLocaleString()}</p>
                   </div>
                   
