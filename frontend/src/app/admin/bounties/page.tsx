@@ -107,7 +107,11 @@ export default function AdminBountiesPage() {
 
   const handleAcceptRequest = (req: ClientRequest) => {
     setEditingBounty(null);
-    setInitialBountyData({ name: req.card_name, set_name: req.set_name || '' });
+    setInitialBountyData({ 
+      name: req.card_name, 
+      set_name: req.set_name || '',
+      request_id: req.id
+    });
     setShowEditModal(true);
     handleUpdateStatus(req.id, 'accepted');
   };
@@ -260,7 +264,14 @@ export default function AdminBountiesPage() {
                             </div>
                             <div className="min-w-0">
                               <div className="font-bold text-sm text-ink-deep leading-tight truncate">{b.name}</div>
-                              <span className="badge bg-gold/10 text-gold text-[8px] mt-1 font-mono-stack">{b.tcg.toUpperCase()}</span>
+                              <div className="flex items-center gap-1.5 mt-1">
+                                <span className="badge bg-gold/10 text-gold text-[8px] font-mono-stack">{b.tcg.toUpperCase()}</span>
+                                {b.request_id && requests.find(r => r.id === b.request_id)?.status === 'not_needed' && (
+                                  <span className="badge bg-red-100 text-red-600 text-[8px] font-bold animate-pulse border border-red-200">
+                                    ⚠️ {t('pages.admin.bounties.request_cancelled_warning', 'CLIENT NO LONGER NEEDS THIS')}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </td>

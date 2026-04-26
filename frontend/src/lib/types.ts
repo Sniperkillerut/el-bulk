@@ -486,6 +486,7 @@ export interface Bounty {
   target_price?: number;
   hide_price: boolean;
   quantity_needed: number;
+  request_id?: string;
   image_url?: string;
   price_source: PriceSource;
   price_reference?: number;
@@ -507,6 +508,7 @@ export interface BountyInput {
   target_price?: number;
   hide_price: boolean;
   quantity_needed: number;
+  request_id?: string;
   image_url?: string;
   price_source: PriceSource;
   price_reference?: number;

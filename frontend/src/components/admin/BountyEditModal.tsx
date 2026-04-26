@@ -23,7 +23,7 @@ export const EMPTY_BOUNTY: BountyInput = {
   foil_treatment: 'non_foil', card_treatment: 'normal',
   collector_number: '', promo_type: '', language: 'en',
   target_price: 0, hide_price: false, quantity_needed: 1, image_url: '',
-  price_source: 'tcgplayer', price_reference: 0
+  price_source: 'tcgplayer', price_reference: 0, request_id: undefined
 };
 
 export default function BountyEditModal({
@@ -58,6 +58,7 @@ export default function BountyEditModal({
         image_url: editBounty.image_url || '',
         price_source: editBounty.price_source || 'tcgplayer',
         price_reference: editBounty.price_reference || 0,
+        request_id: editBounty.request_id,
         ...extractMTGMetadata(editBounty as unknown as ScryfallCard)
       });
     } else {

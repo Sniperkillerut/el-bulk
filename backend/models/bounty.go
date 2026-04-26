@@ -18,6 +18,7 @@ type Bounty struct {
 	TargetPrice    *float64      `db:"target_price"     json:"target_price,omitempty"`
 	HidePrice      bool          `db:"hide_price"       json:"hide_price"`
 	QuantityNeeded int           `db:"quantity_needed"  json:"quantity_needed"`
+	RequestID      *string       `db:"request_id"       json:"request_id,omitempty"`
 	ImageURL       *string       `db:"image_url"        json:"image_url,omitempty"`
 	PriceSource    string        `db:"price_source"     json:"price_source,omitempty"`
 	PriceReference *float64      `db:"price_reference"  json:"price_reference,omitempty"`
@@ -31,6 +32,7 @@ func (b *Bounty) Redact(isAdmin bool) {
 	if !isAdmin {
 		b.PriceSource = ""
 		b.PriceReference = nil
+		b.RequestID = nil
 		b.CreatedAt = nil
 		b.UpdatedAt = nil
 		if b.HidePrice {
@@ -52,6 +54,7 @@ type BountyInput struct {
 	TargetPrice     *float64      `json:"target_price,omitempty"`
 	HidePrice       bool          `json:"hide_price"`
 	QuantityNeeded  int           `json:"quantity_needed"`
+	RequestID       *string       `json:"request_id,omitempty"`
 	ImageURL        *string       `json:"image_url,omitempty"`
 	PriceSource     string        `json:"price_source"`
 	PriceReference  *float64      `json:"price_reference,omitempty"`

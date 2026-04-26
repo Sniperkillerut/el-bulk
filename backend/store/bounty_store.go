@@ -21,11 +21,11 @@ func (s *BountyStore) ListBounties(ctx context.Context, activeParam string) ([]m
 	bounties := []models.Bounty{}
 	query := `
 		SELECT 
-			id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, 
-			hide_price, quantity_needed, image_url, price_source, price_reference, is_active, created_at, updated_at
-		FROM bounty
-		WHERE ($1 = '' OR is_active = ($1 = 'true'))
-		ORDER BY created_at DESC
+			b.id, b.name, b.tcg, b.set_name, b.condition, b.foil_treatment, b.card_treatment, b.collector_number, b.promo_type, b.language, b.target_price, 
+			b.hide_price, b.quantity_needed, b.request_id, b.image_url, b.price_source, b.price_reference, b.is_active, b.created_at, b.updated_at
+		FROM bounty b
+		WHERE ($1 = '' OR b.is_active = ($1 = 'true'))
+		ORDER BY b.created_at DESC
 	`
 	err := s.DB.SelectContext(ctx, &bounties, query, activeParam)
 	return bounties, err
@@ -33,15 +33,15 @@ func (s *BountyStore) ListBounties(ctx context.Context, activeParam string) ([]m
 
 func (s *BountyStore) CreateBounty(ctx context.Context, input models.BountyInput, isActive bool) (*models.Bounty, error) {
 	query := `
-		INSERT INTO bounty (name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, image_url, price_source, price_reference, is_active)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, image_url, price_source, price_reference, is_active, created_at, updated_at
+		INSERT INTO bounty (name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, request_id, image_url, price_source, price_reference, is_active)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, request_id, image_url, price_source, price_reference, is_active, created_at, updated_at
 	`
 	var bounty models.Bounty
 	err := s.DB.QueryRowxContext(ctx, query,
 		input.Name, input.TCG, input.SetName, input.Condition, input.FoilTreatment,
 		input.CardTreatment, input.CollectorNumber, input.PromoType, input.Language,
-		input.TargetPrice, input.HidePrice, input.QuantityNeeded, input.ImageURL,
+		input.TargetPrice, input.HidePrice, input.QuantityNeeded, input.RequestID, input.ImageURL,
 		input.PriceSource, input.PriceReference, isActive,
 	).StructScan(&bounty)
 	if err != nil {
@@ -55,16 +55,16 @@ func (s *BountyStore) UpdateBounty(ctx context.Context, id string, input models.
 		UPDATE bounty
 		SET name = $1, tcg = $2, set_name = $3, condition = $4, foil_treatment = $5,
 		    card_treatment = $6, collector_number = $7, promo_type = $8, language = $9,
-		    target_price = $10, hide_price = $11, quantity_needed = $12, image_url = $13,
-		    price_source = $14, price_reference = $15, is_active = $16, updated_at = now()
-		WHERE id = $17
-		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, image_url, price_source, price_reference, is_active, created_at, updated_at
+		    target_price = $10, hide_price = $11, quantity_needed = $12, request_id = $13, image_url = $14,
+		    price_source = $15, price_reference = $16, is_active = $17, updated_at = now()
+		WHERE id = $18
+		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, request_id, image_url, price_source, price_reference, is_active, created_at, updated_at
 	`
 	var bounty models.Bounty
 	err := s.DB.QueryRowxContext(ctx, query,
 		input.Name, input.TCG, input.SetName, input.Condition, input.FoilTreatment,
 		input.CardTreatment, input.CollectorNumber, input.PromoType, input.Language,
-		input.TargetPrice, input.HidePrice, input.QuantityNeeded, input.ImageURL,
+		input.TargetPrice, input.HidePrice, input.QuantityNeeded, input.RequestID, input.ImageURL,
 		input.PriceSource, input.PriceReference, isActive, id,
 	).StructScan(&bounty)
 	if err != nil {
