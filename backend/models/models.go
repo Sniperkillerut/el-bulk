@@ -898,3 +898,14 @@ type ThemeInput struct {
 	AccentSecondary    *string `json:"accent_secondary,omitempty"`
 	AccentRose         *string `json:"accent_rose,omitempty"`
 }
+
+type BulkMoveStorageRequest struct {
+	TargetStorageID string            `json:"target_storage_id"`
+	Moves           []MoveStorageItem `json:"moves"`
+}
+
+type MoveStorageItem struct {
+	ProductID     string `json:"product_id"`
+	FromStorageID string `json:"from_storage_id"`
+	Quantity      int    `json:"quantity"`
+}
