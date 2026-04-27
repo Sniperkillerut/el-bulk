@@ -448,7 +448,7 @@ export default function AdminBountiesPage() {
                       </div>
                       <div className="space-y-2">
                         {requests
-                          .filter(r => r.card_name.toLowerCase().includes(b.name.toLowerCase()) && (r.status === 'pending' || r.status === 'accepted'))
+                          .filter(r => r.card_name.toLowerCase().includes(displayBounty.name.toLowerCase()) && (r.status === 'pending' || r.status === 'accepted'))
                           .map(r => (
                             <label key={r.id} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
                               (selectedRequests[offer.id] || []).includes(r.id) 
