@@ -85,7 +85,7 @@ func TestOrderService_RestoreStock(t *testing.T) {
 		increments := []models.StockDecrement{
 			{ProductID: "p-1", Quantity: 3},
 		}
-		
+
 		// OrderStore.RestoreStock calls SELECT fn_restore_order_stock($1::uuid, $2::jsonb)
 		sqlMock.ExpectExec(`SELECT fn_restore_order_stock`).
 			WithArgs(orderID, sqlmock.AnyArg()).

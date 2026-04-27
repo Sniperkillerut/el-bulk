@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"github.com/el-bulk/backend/utils/render"
 	"database/sql"
 	"encoding/json"
+	"github.com/el-bulk/backend/utils/render"
 	"net/http"
 	"os"
 	"strconv"
@@ -13,14 +13,14 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/service"
+	"github.com/el-bulk/backend/utils/authutil"
 	"github.com/el-bulk/backend/utils/cache"
 	"github.com/el-bulk/backend/utils/logger"
-	"github.com/el-bulk/backend/models"
-	"github.com/el-bulk/backend/utils/authutil"
+	"github.com/go-chi/chi/v5"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
-	"github.com/go-chi/chi/v5"
 )
 
 var AdminFailedLogins = cache.NewTTLMap[int](15 * time.Minute)
@@ -175,7 +175,7 @@ func (h *AdminHandler) UpdateLogLevel(w http.ResponseWriter, r *http.Request) {
 func (h *AdminHandler) ListAuditLogs(w http.ResponseWriter, r *http.Request) {
 	page := 1
 	pageSize := 20
-	
+
 	if pStr := r.URL.Query().Get("page"); pStr != "" {
 		if p, err := strconv.Atoi(pStr); err == nil && p > 0 {
 			page = p
@@ -303,9 +303,9 @@ func (h *AdminHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	defer resp.Body.Close()
 
 	var gInfo struct {
-		Email     string `json:"email"`
-		Name      string `json:"name"`
-		Picture   string `json:"picture"`
+		Email   string `json:"email"`
+		Name    string `json:"name"`
+		Picture string `json:"picture"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&gInfo); err != nil {
 		logger.ErrorCtx(r.Context(), "Failed to parse Google admin info: %v", err)

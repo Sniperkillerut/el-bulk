@@ -11,17 +11,17 @@ func seedMultiTCGProducts(db *sqlx.DB, cats CategoryMap, storage StorageMap) ([]
 	logger.Info("🌍 Seeding multi-TCG products (Pokémon, Yu-Gi-Oh!, Lorcana, One Piece)...")
 
 	type Item struct {
-		Name      string
-		TCG       string
-		Category  string   // 'singles' or 'sealed'
-		SetName   string
-		SetCode   string
-		Condition string
-		Price     float64
-		Stock     int
-		ImageURL  string
+		Name       string
+		TCG        string
+		Category   string // 'singles' or 'sealed'
+		SetName    string
+		SetCode    string
+		Condition  string
+		Price      float64
+		Stock      int
+		ImageURL   string
 		StorageLoc string
-		CatSlug   string
+		CatSlug    string
 	}
 
 	items := []Item{

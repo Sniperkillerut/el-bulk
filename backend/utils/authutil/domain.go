@@ -8,7 +8,7 @@ import (
 
 // GetCookieDomain returns the root domain for cookies based on the FRONTEND_ORIGIN.
 // For example, if origin is "https://elbulk.com", it returns "elbulk.com".
-// If origin is "https://demo.elbulk.co.uk", it handles common TLDs but 
+// If origin is "https://demo.elbulk.co.uk", it handles common TLDs but
 // for elbulk.com specific production, it simplifies to the registrable domain.
 func GetCookieDomain() string {
 	origin := os.Getenv("FRONTEND_ORIGIN")
@@ -22,7 +22,7 @@ func GetCookieDomain() string {
 	}
 
 	host := u.Hostname()
-	
+
 	// If it's localhost or an IP, don't set a domain attribute (browser defaults to host-only)
 	if host == "localhost" || host == "127.0.0.1" || strings.Contains(host, ":") {
 		return ""

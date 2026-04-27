@@ -41,7 +41,7 @@ func (s *StorageLocationStore) GetByID(ctx context.Context, id string) (*models.
 func (s *StorageLocationStore) Create(ctx context.Context, name string, id *string) (*models.StoredIn, error) {
 	var loc models.StoredIn
 	loc.Name = name
-	
+
 	query := "INSERT INTO storage_location (id, name) VALUES (COALESCE($1, gen_random_uuid()), $2) RETURNING id"
 	err := s.DB.QueryRowContext(ctx, query, id, name).Scan(&loc.ID)
 	if err != nil {

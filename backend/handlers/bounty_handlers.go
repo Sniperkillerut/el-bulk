@@ -310,7 +310,6 @@ func (h *BountyHandler) ListRequestsByBounty(w http.ResponseWriter, r *http.Requ
 	render.Success(w, requests)
 }
 
-
 func (h *BountyHandler) ListMeOffers(w http.ResponseWriter, r *http.Request) {
 	logger.TraceCtx(r.Context(), "Entering BountyHandler.ListMeOffers")
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)

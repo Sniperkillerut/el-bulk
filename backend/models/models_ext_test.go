@@ -39,13 +39,13 @@ func TestCustomCategory_JSON(t *testing.T) {
 func TestBounty_JSON(t *testing.T) {
 	targetPrice := 100.0
 	bounty := Bounty{
-		ID:            "b-1",
-		Name:          "Black Lotus",
-		TCG:           "mtg",
-		Language:      "en",
-		TargetPrice:   &targetPrice,
+		ID:             "b-1",
+		Name:           "Black Lotus",
+		TCG:            "mtg",
+		Language:       "en",
+		TargetPrice:    &targetPrice,
 		QuantityNeeded: 1,
-		IsActive:      true,
+		IsActive:       true,
 	}
 
 	data, err := json.Marshal(bounty)

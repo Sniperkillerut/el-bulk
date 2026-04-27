@@ -35,7 +35,7 @@ func seedSettings(db *sqlx.DB) error {
 		"new_days_threshold":  "14",
 
 		// Internationalization
-		"default_locale":        "es",
+		"default_locale":         "es",
 		"hide_language_selector": "false",
 
 		// Last set sync placeholder (updated after real sync)

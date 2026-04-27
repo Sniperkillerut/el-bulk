@@ -27,7 +27,7 @@ func (s *OrderStore) ListWithCustomer(ctx context.Context, whereClause string, a
 	query := fmt.Sprintf(`SELECT * FROM view_order_list o %s ORDER BY o.created_at DESC LIMIT %d OFFSET %d`, whereClause, limit, offset)
 	rebound := s.DB.Rebind(query)
 	logger.TraceCtx(ctx, "[DB] Executing ListWithCustomer: %s | Args: %+v", rebound, args)
-	
+
 	err := s.DB.SelectContext(ctx, &orders, rebound, args...)
 	if err != nil {
 		logger.ErrorCtx(ctx, "[DB] ListWithCustomer failed: %v", err)
@@ -60,7 +60,7 @@ func (s *OrderStore) GetEnrichedItems(ctx context.Context, orderID string) ([]mo
 		Stock        int     `db:"stock"`
 		StoredInJSON []byte  `db:"stored_in"`
 	}
-	
+
 	start := time.Now()
 	query := `SELECT * FROM view_order_item_enriched WHERE order_id = $1 ORDER BY product_name`
 	logger.TraceCtx(ctx, "[DB] Executing GetEnrichedItems for %s: %s", orderID, query)

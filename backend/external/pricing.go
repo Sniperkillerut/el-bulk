@@ -6,11 +6,11 @@ import (
 
 // ResolvedPrices holds the results from all pricing sources for a single card.
 type ResolvedPrices struct {
-	ScryfallID    string
-	TCGPlayerUSD  *float64
-	CardmarketEUR *float64
+	ScryfallID     string
+	TCGPlayerUSD   *float64
+	CardmarketEUR  *float64
 	CardKingdomUSD *float64
-	Metadata      *CardMetadata // Full Scryfall metadata if found
+	Metadata       *CardMetadata // Full Scryfall metadata if found
 }
 
 // ResolveMTGPrice is the single source of truth for MTG pricing resolution.

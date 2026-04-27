@@ -154,7 +154,7 @@ func TestProductHandler_BulkCreate_Extra(t *testing.T) {
 			Products []models.ProductInput `json:"products"`
 		}{Products: inputs}
 		body, _ := json.Marshal(reqBody)
-		
+
 		mock.ExpectQuery("SELECT upserted_id FROM fn_bulk_upsert_product").
 			WithArgs(sqlmock.AnyArg()).
 			WillReturnRows(sqlmock.NewRows([]string{"upserted_id"}).AddRow("p-new"))
@@ -171,7 +171,7 @@ func TestProductHandler_BulkCreate_Extra(t *testing.T) {
 			Products []models.ProductInput `json:"products"`
 		}{Products: inputs}
 		body, _ := json.Marshal(reqBody)
-		
+
 		mock.ExpectQuery("SELECT upserted_id FROM fn_bulk_upsert_product").WillReturnError(fmt.Errorf("db error"))
 
 		req, _ := http.NewRequest("POST", "/api/admin/products/bulk", bytes.NewBuffer(body))

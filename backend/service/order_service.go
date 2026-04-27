@@ -401,10 +401,10 @@ func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input mo
 
 		var orderItemArgs []interface{}
 		var orderItemVals []string
-		
+
 		var storageArgs []interface{}
 		var storageVals []string
-		
+
 		valIdxOI := 1
 		valIdxPS := 1
 		hasAdded := false

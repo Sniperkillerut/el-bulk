@@ -19,25 +19,25 @@ func seedOrders(db *sqlx.DB, customers []CustomerSeeded, allProductIDs []string)
 
 	// Cache product info to avoid repeated queries
 	type ProductInfo struct {
-		ID       string
-		Name     string
-		Set      string
-		Price    float64
-		Foil     string
-		Treat    string
-		Cond     string
+		ID    string
+		Name  string
+		Set   string
+		Price float64
+		Foil  string
+		Treat string
+		Cond  string
 	}
 
 	productCache := make(map[string]ProductInfo)
 	for _, pID := range allProductIDs {
 		var p struct {
-			ID              string   `db:"id"`
-			Name            string   `db:"name"`
-			SetName         *string  `db:"set_name"`
+			ID               string   `db:"id"`
+			Name             string   `db:"name"`
+			SetName          *string  `db:"set_name"`
 			PriceCOPOverride *float64 `db:"price_cop_override"`
-			FoilTreatment   string   `db:"foil_treatment"`
-			CardTreatment   string   `db:"card_treatment"`
-			Condition       *string  `db:"condition"`
+			FoilTreatment    string   `db:"foil_treatment"`
+			CardTreatment    string   `db:"card_treatment"`
+			Condition        *string  `db:"condition"`
 		}
 		if err := db.Get(&p, `SELECT id, name, set_name, price_cop_override, foil_treatment, card_treatment, condition FROM product WHERE id = $1`, pID); err == nil {
 			setName := ""

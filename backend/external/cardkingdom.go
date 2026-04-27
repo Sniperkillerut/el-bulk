@@ -4,14 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/logger"
-	"sync"
+	"github.com/jmoiron/sqlx"
 )
 
 const CardKingdomPricelistURL = "https://api.cardkingdom.com/api/v2/pricelist"
@@ -47,14 +49,13 @@ var (
 
 const CacheDuration = 1 * time.Hour
 
-// BuildCardKingdomPriceMap downloads the CK pricelist and builds a lookup map.
-// The map is keyed by a composite of (Name, Edition, Variation, IsFoil).
-// Uses an in-memory cache valid for 1 hour to avoid excessive downloads.
-func BuildCardKingdomPriceMap(ctx context.Context) (map[string]*float64, error) {
+// BuildCardKingdomPriceMap loads the CK pricelist from the external_cardkingdom table.
+// Uses an in-memory cache valid for 1 hour.
+func BuildCardKingdomPriceMap(ctx context.Context, db *sqlx.DB) (map[string]*float64, error) {
 	ckCacheMutex.RLock()
 	if ckCache != nil && time.Since(ckCacheTime) < CacheDuration {
-		logger.DebugCtx(ctx, "Using cached CardKingdom pricelist (downloaded %s ago)", time.Since(ckCacheTime).Round(time.Minute))
-		cacheCopy := ckCache 
+		logger.DebugCtx(ctx, "Using cached CardKingdom pricelist (loaded %s ago)", time.Since(ckCacheTime).Round(time.Minute))
+		cacheCopy := ckCache
 		ckCacheMutex.RUnlock()
 		return cacheCopy, nil
 	}
@@ -68,66 +69,52 @@ func BuildCardKingdomPriceMap(ctx context.Context) (map[string]*float64, error) 
 		return ckCache, nil
 	}
 
-	logger.InfoCtx(ctx, "Downloading CardKingdom pricelist (cache empty or expired)...")
-	
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, CardKingdomPricelistURL, nil)
+	logger.InfoCtx(ctx, "Loading CardKingdom pricelist from database...")
+
+	type row struct {
+		ID          int      `db:"ck_id"`
+		ScryfallID  *string  `db:"scryfall_id"`
+		Name        string   `db:"name"`
+		Edition     string   `db:"edition"`
+		Variation   string   `db:"variation"`
+		IsFoil      bool     `db:"is_foil"`
+		PriceRetail *float64 `db:"price_retail"`
+	}
+
+	var rows []row
+	err := db.SelectContext(ctx, &rows, "SELECT ck_id, scryfall_id, name, edition, variation, is_foil, price_retail FROM external_cardkingdom")
 	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("User-Agent", "ElBulkTCGStore/1.0 (contact@elbulk.com)")
-
-	resp, err := ckClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch CardKingdom pricelist: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("CardKingdom API returned status %d", resp.StatusCode)
+		return nil, fmt.Errorf("failed to query external_cardkingdom: %w", err)
 	}
 
-	var ckResp CardKingdomResponse
-	if err := json.NewDecoder(resp.Body).Decode(&ckResp); err != nil {
-		return nil, fmt.Errorf("failed to decode CardKingdom response: %w", err)
-	}
-
-	priceMap := make(map[string]*float64, len(ckResp.Data)*3)
-	nameIndex := make(map[string][]string, len(ckResp.Data))
-	for _, p := range ckResp.Data {
-		price, err := strconv.ParseFloat(p.PriceRetail, 64)
-		if err != nil {
+	priceMap := make(map[string]*float64, len(rows)*3)
+	nameIndex := make(map[string][]string, len(rows))
+	for _, p := range rows {
+		if p.PriceRetail == nil {
 			continue
 		}
-		priceCopy := price // avoid loop-variable capture
+		priceCopy := *p.PriceRetail
 
-		isFoilBool := p.IsFoil == "true"
-
-		// Primary index: scryfall_id + foil — direct O(1) match, no name/edition needed.
-		// ~98% of CK entries have a scryfall_id; this is the preferred lookup path.
-		if p.ScryfallID != "" {
+		// Primary index: scryfall_id + foil
+		if p.ScryfallID != nil && *p.ScryfallID != "" {
 			foilSuffix := "non_foil"
-			if isFoilBool {
+			if p.IsFoil {
 				foilSuffix = "foil"
 			}
-			scryKey := "scry:" + p.ScryfallID + ":" + foilSuffix
-			// When multiple CK entries share a scryfall_id+foil (e.g. alt-art variants
-			// with the same Scryfall ID), keep the lowest price — consistent with
-			// the tie-breaking rule used in LookupCKPrice.
+			scryKey := "scry:" + *p.ScryfallID + ":" + foilSuffix
 			if existing, ok := priceMap[scryKey]; !ok || priceCopy < *existing {
 				priceMap[scryKey] = &priceCopy
 			}
 		}
 
-		// Secondary index: CK integer ID — used by the Scryfall bulk-data fast-path
-		// (card_kingdom_id / card_kingdom_foil_id fields on Scryfall cards).
+		// Secondary index: CK integer ID
 		priceMap[fmt.Sprintf("ckid:%d", p.ID)] = &priceCopy
 
-		// Fallback index: name|edition|variation|foil — covers the ~2% of entries
-		// with no scryfall_id and cards that fall through the above paths.
-		key := generateCKKey(p.Name, p.Edition, p.Variation, isFoilBool)
+		// Fallback index
+		key := generateCKKey(p.Name, p.Edition, p.Variation, p.IsFoil)
 		priceMap[key] = &priceCopy
 
-		// Populate NameIndex for O(1) jump in LookupCKPrice
+		// Populate NameIndex
 		nameKey := strings.ToLower(strings.TrimSpace(p.Name))
 		nameIndex[nameKey] = append(nameIndex[nameKey], key)
 	}
@@ -136,7 +123,7 @@ func BuildCardKingdomPriceMap(ctx context.Context) (map[string]*float64, error) 
 	ckNameIndex = nameIndex
 	ckCacheTime = time.Now()
 
-	logger.InfoCtx(ctx, "Parsed and cached %d CardKingdom products", len(ckResp.Data))
+	logger.InfoCtx(ctx, "Loaded %d CardKingdom products from database", len(rows))
 	return priceMap, nil
 }
 
@@ -214,13 +201,9 @@ func NormalizeCKEdition(edition string) string {
 	return e
 }
 
-
 func MapFoilTreatmentToCKVariation(foil models.FoilTreatment, treatment models.CardTreatment) string {
-	// Most CK variations are things like "Etched", "Extended Art", etc.
-	// They are often combined in the variation field.
-	
 	var parts []string
-	
+
 	switch treatment {
 	case models.TreatmentBorderless:
 		parts = append(parts, "borderless")
@@ -234,7 +217,7 @@ func MapFoilTreatmentToCKVariation(foil models.FoilTreatment, treatment models.C
 		parts = append(parts, "full art")
 	case models.TreatmentAlternateArt:
 		parts = append(parts, "alternate art")
-	case models.TreatmentLegacyBorder, "retro": // Retro is common in variations
+	case models.TreatmentLegacyBorder, "retro":
 		parts = append(parts, "retro")
 	}
 
@@ -256,4 +239,113 @@ func MapFoilTreatmentToCKVariation(foil models.FoilTreatment, treatment models.C
 	}
 
 	return strings.Join(parts, " ")
+}
+
+// SyncCardKingdomToDB streams the CK pricelist JSON into the external_cardkingdom table.
+func SyncCardKingdomToDB(ctx context.Context, db *sqlx.DB, r io.Reader) error {
+	logger.InfoCtx(ctx, "Syncing CardKingdom pricelist to database...")
+
+	if r == nil {
+		resp, err := http.Get(CardKingdomPricelistURL)
+		if err != nil {
+			return fmt.Errorf("failed to download cardkingdom pricelist: %w", err)
+		}
+		defer resp.Body.Close()
+		r = resp.Body
+	}
+
+	// 1. Clear existing data (Full refresh pattern)
+	if _, err := db.ExecContext(ctx, "TRUNCATE TABLE external_cardkingdom"); err != nil {
+		return fmt.Errorf("failed to truncate external_cardkingdom: %w", err)
+	}
+
+	decoder := json.NewDecoder(r)
+
+	// Navigate to the "data" array
+	for {
+		t, err := decoder.Token()
+		if err != nil {
+			return fmt.Errorf("failed to find data array: %w", err)
+		}
+		if s, ok := t.(string); ok && s == "data" {
+			break
+		}
+	}
+
+	// Read opening '['
+	if _, err := decoder.Token(); err != nil {
+		return fmt.Errorf("failed to read data array opening: %w", err)
+	}
+
+	const batchSize = 1000
+	var batch []CardKingdomProduct
+
+	for decoder.More() {
+		var p CardKingdomProduct
+		if err := decoder.Decode(&p); err != nil {
+			logger.WarnCtx(ctx, "Skipping malformed CK product: %v", err)
+			continue
+		}
+		batch = append(batch, p)
+
+		if len(batch) >= batchSize {
+			if err := flushCKBatch(ctx, db, batch); err != nil {
+				return err
+			}
+			batch = batch[:0]
+		}
+	}
+
+	if len(batch) > 0 {
+		if err := flushCKBatch(ctx, db, batch); err != nil {
+			return err
+		}
+	}
+
+	logger.InfoCtx(ctx, "Successfully synced CardKingdom pricelist to database")
+	return nil
+}
+
+func flushCKBatch(ctx context.Context, db *sqlx.DB, batch []CardKingdomProduct) error {
+	query := `
+		INSERT INTO external_cardkingdom (ck_id, scryfall_id, name, edition, variation, is_foil, price_retail)
+		VALUES (:id, :scryfall_id, :name, :edition, :variation, :is_foil, :price_retail)
+	`
+	// Map is_foil string to boolean
+	type row struct {
+		ID          int      `db:"id"`
+		ScryfallID  *string  `db:"scryfall_id"`
+		Name        string   `db:"name"`
+		Edition     string   `db:"edition"`
+		Variation   string   `db:"variation"`
+		IsFoil      bool     `db:"is_foil"`
+		PriceRetail *float64 `db:"price_retail"`
+	}
+
+	rows := make([]row, len(batch))
+	for i, p := range batch {
+		var sid *string
+		if p.ScryfallID != "" {
+			sid = &p.ScryfallID
+		}
+		var price *float64
+		if p.PriceRetail != "" {
+			if v, err := strconv.ParseFloat(p.PriceRetail, 64); err == nil {
+				price = &v
+			}
+		}
+
+		rows[i] = row{
+			ID:          p.ID,
+			ScryfallID:  sid,
+			Name:        p.Name,
+			Edition:     p.Edition,
+			Variation:   p.Variation,
+			IsFoil:      p.IsFoil == "true",
+			PriceRetail: price,
+		}
+	}
+
+	_, err := db.NamedExecContext(ctx, query, rows)
+	return err
 }

@@ -15,12 +15,12 @@ type RevertService struct {
 	AuditStore             *store.AuditStore
 	Audit                  Auditer
 	ProductStore           *store.ProductStore
-	ProductService        *ProductService
-	CategoryService       *CategoryService
-	CategoryStore         *store.CategoryStore
+	ProductService         *ProductService
+	CategoryService        *CategoryService
+	CategoryStore          *store.CategoryStore
 	StorageLocationService *StorageLocationService
-	StorageStore          *store.StorageLocationStore
-	SettingsService       *SettingsService
+	StorageStore           *store.StorageLocationStore
+	SettingsService        *SettingsService
 }
 
 func NewRevertService(as *store.AuditStore, a Auditer, ps *store.ProductStore, p *ProductService, c *CategoryService, cs *store.CategoryStore, sl *StorageLocationService, ss *store.StorageLocationStore, s *SettingsService) *RevertService {
@@ -28,12 +28,12 @@ func NewRevertService(as *store.AuditStore, a Auditer, ps *store.ProductStore, p
 		AuditStore:             as,
 		Audit:                  a,
 		ProductStore:           ps,
-		ProductService:        p,
-		CategoryService:       c,
-		CategoryStore:         cs,
+		ProductService:         p,
+		CategoryService:        c,
+		CategoryStore:          cs,
 		StorageLocationService: sl,
-		StorageStore:          ss,
-		SettingsService:       s,
+		StorageStore:           ss,
+		SettingsService:        s,
 	}
 }
 
@@ -200,7 +200,7 @@ func (s *RevertService) undoCategoryAction(ctx context.Context, log *models.Audi
 		if !ok {
 			return fmt.Errorf("invalid state for category restoration")
 		}
-		
+
 		isActive := state["is_active"].(bool)
 		showBadge := state["show_badge"].(bool)
 		searchable := state["searchable"].(bool)
@@ -213,7 +213,7 @@ func (s *RevertService) undoCategoryAction(ctx context.Context, log *models.Audi
 			ShowBadge:  &showBadge,
 			Searchable: &searchable,
 		}
-		
+
 		// Restoration Part 1: Entity
 		_, err := s.CategoryService.Create(ctx, input)
 		if err != nil {
@@ -254,7 +254,7 @@ func (s *RevertService) undoStorageAction(ctx context.Context, log *models.Audit
 		if !ok {
 			return fmt.Errorf("invalid state for storage restoration")
 		}
-		
+
 		// Restoration Part 1: Entity
 		_, err := s.StorageLocationService.Create(ctx, fmt.Sprintf("%v", state["name"]), &log.ResourceID)
 		if err != nil {
@@ -304,7 +304,7 @@ func (s *RevertService) mapProductToRawMap(raw interface{}, id string) (map[stri
 		"category":           p.Category,
 		"set_name":           p.SetName,
 		"set_code":           p.SetCode,
-		"collector_number":    p.CollectorNumber,
+		"collector_number":   p.CollectorNumber,
 		"condition":          p.Condition,
 		"foil_treatment":     p.FoilTreatment,
 		"card_treatment":     p.CardTreatment,

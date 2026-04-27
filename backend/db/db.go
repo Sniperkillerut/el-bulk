@@ -14,7 +14,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
-	
+
 	// Cloud SQL Connector imports
 	"cloud.google.com/go/cloudsqlconn"
 	"cloud.google.com/go/cloudsqlconn/postgres/pgxv5"
@@ -64,14 +64,14 @@ func ConnectResilient() (*sqlx.DB, error) {
 	dsn := os.Getenv("DATABASE_URL")
 	instanceName := os.Getenv("INSTANCE_CONNECTION_NAME")
 
-	logger.InfoCtx(ctx, "🔍 [DB] Diagnostics: INSTANCE_CONNECTION_NAME=%q | DATABASE_URL_SET=%v (len=%d) | DB_IAM_AUTH=%q", 
+	logger.InfoCtx(ctx, "🔍 [DB] Diagnostics: INSTANCE_CONNECTION_NAME=%q | DATABASE_URL_SET=%v (len=%d) | DB_IAM_AUTH=%q",
 		instanceName, dsn != "", len(dsn), os.Getenv("DB_IAM_AUTH"))
 
 	// 0. Cloud SQL Connector (Recommended for GCP)
 	// If INSTANCE_CONNECTION_NAME is provided, we use the official connector.
 	if instanceName != "" {
 		logger.InfoCtx(ctx, "☁️ Using Cloud SQL Go Connector for instance: %s", instanceName)
-		
+
 		var opts []cloudsqlconn.Option
 		if os.Getenv("DB_IAM_AUTH") == "true" {
 			logger.InfoCtx(ctx, "🔐 Cloud SQL: Using IAM-based authentication")
@@ -109,7 +109,7 @@ func ConnectResilient() (*sqlx.DB, error) {
 					if len(credSplit) > 1 {
 						pass = credSplit[1]
 					}
-					
+
 					remaining := atSplit[1]
 					pathSplit := strings.Split(remaining, "/")
 					if len(pathSplit) > 1 {
@@ -121,7 +121,7 @@ func ConnectResilient() (*sqlx.DB, error) {
 
 		// Build the DSN for pgx/cloudsqlconn
 		connectorDsn := fmt.Sprintf("host=%s dbname=%s sslmode=disable", instanceName, dbName)
-		
+
 		if os.Getenv("DB_IAM_AUTH") == "true" {
 			iamUser := os.Getenv("DB_IAM_USER")
 			if iamUser == "" {
@@ -147,22 +147,22 @@ func ConnectResilient() (*sqlx.DB, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to open database via Cloud SQL Connector: %v", err)
 		}
-		
+
 		maxOpen := getEnvInt("DB_MAX_OPEN_CONNS", 25)
 		maxIdle := getEnvInt("DB_MAX_IDLE_CONNS", 5)
 		db.SetMaxOpenConns(maxOpen)
 		db.SetMaxIdleConns(maxIdle)
 		db.SetConnMaxLifetime(time.Hour)
-		
+
 		logger.InfoCtx(ctx, "⚙️ DB Pooling: MaxOpen=%d, MaxIdle=%d", maxOpen, maxIdle)
-		
+
 		if err := Initialize(db); err != nil {
 			logger.ErrorCtx(ctx, "Schema initialization failure: %v", err)
 		}
 		if err := Migrate(db); err != nil {
 			logger.ErrorCtx(ctx, "Migration failure: %v", err)
 		}
-		
+
 		return db, nil
 	}
 
@@ -216,7 +216,7 @@ func ConnectResilient() (*sqlx.DB, error) {
 	db.SetMaxOpenConns(maxOpen)
 	db.SetMaxIdleConns(maxIdle)
 	db.SetConnMaxLifetime(time.Hour)
-	
+
 	logger.InfoCtx(ctx, "⚙️ DB Pooling: MaxOpen=%d, MaxIdle=%d", maxOpen, maxIdle)
 
 	logger.InfoCtx(ctx, "Database connected successfully")

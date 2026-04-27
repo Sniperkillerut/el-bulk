@@ -45,17 +45,22 @@ func main() {
 	if os.Getenv("LOG_FORMAT") == "json" {
 		logger.SetJSON(true)
 	}
-	
+
 	// Auto-detect GCP context (overrides manual format if on GCP)
 	logger.AutoDetectGCP()
 
 	if os.Getenv("APP_ENV") == "" {
 		logger.Warn("⚠️ APP_ENV is not set. CORS and security middleware will run in development mode.")
 	}
-	
-	logger.Info("Logger initialized | Level: %s | Format: %s", 
-		logger.Default.GetLevel().String(), 
-		func() string { if os.Getenv("LOG_FORMAT") == "json" || os.Getenv("K_SERVICE") != "" { return "JSON" }; return "TEXT" }())
+
+	logger.Info("Logger initialized | Level: %s | Format: %s",
+		logger.Default.GetLevel().String(),
+		func() string {
+			if os.Getenv("LOG_FORMAT") == "json" || os.Getenv("K_SERVICE") != "" {
+				return "JSON"
+			}
+			return "TEXT"
+		}())
 	logger.Info("Backend Version: %s", Version)
 
 	database, err := db.ConnectResilient()
@@ -108,9 +113,9 @@ func main() {
 	accountingService := service.NewAccountingService(accountingStore, settingsService)
 
 	revertService := service.NewRevertService(auditStore, auditService, productStore, productService, categoryService, categoryStore, storageLocationService, storageLocationStore, settingsService)
-	
+
 	seoService := service.NewSeoService(productStore, noticeStore, tcgStore, categoryStore)
-	
+
 	// Initialize Handlers
 	productHandler := handlers.NewProductHandler(productService, database)
 	adminHandler := handlers.NewAdminHandler(adminService, auditService, revertService)
@@ -164,7 +169,7 @@ func main() {
 	default:
 		logger.Warn("⚠️ No Cloud Storage configured (STORAGE_TYPE empty or unknown). Image uploads will be disabled.")
 	}
-	
+
 	uploadHandler := handlers.NewUploadHandler(storageDriver)
 
 	// Start nightly price refresh at midnight
@@ -192,9 +197,9 @@ func main() {
 		r.Get("/tcgs", productHandler.ListTCGs)
 		r.With(middleware.OptionalAdminAuth).Get("/categories", categoriesHandler.List)
 		r.With(middleware.OptionalAdminAuth).Get("/settings", settingsHandler.PublicGet)
-		
+
 		r.Get("/themes", themeHandler.List)
-		
+
 		r.Get("/translations", translationHandler.List)
 
 		r.With(middleware.OptionalAdminAuth).Get("/bounties", bountyHandler.List)
@@ -205,7 +210,7 @@ func main() {
 		r.With(middleware.RequireUserAuth, middleware.RateLimit(5, 10*time.Minute)).Post("/client-requests/batch", bountyHandler.CreateRequestsBatch)
 		r.With(middleware.RequireUserAuth).Get("/client-requests/me", bountyHandler.ListMeRequests)
 		r.With(middleware.RequireUserAuth).Post("/client-requests/me/{id}/cancel", bountyHandler.CancelMeRequest)
-		
+
 		// Newsletter
 		r.With(middleware.RateLimit(3, 30*time.Minute)).Post("/newsletter/subscribe", newsletterHandler.Subscribe)
 
@@ -244,7 +249,7 @@ func main() {
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.AdminAuth)
 				r.Get("/stats", healthHandler.GetStats)
-				
+
 				// Media Uploads
 				r.Post("/upload", uploadHandler.Upload)
 
@@ -303,7 +308,7 @@ func main() {
 				r.Get("/lookup/mtg", lookupHandler.MTG)
 				r.Post("/lookup/mtg/batch", lookupHandler.BatchMTG)
 				r.Get("/lookup/pokemon", lookupHandler.Pokemon)
-				
+
 				// External Price Lookups
 				r.Get("/lookup/external/prices", tcgHandler.GetExternalPrice)
 

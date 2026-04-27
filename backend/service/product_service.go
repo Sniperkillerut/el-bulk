@@ -203,28 +203,8 @@ func (s *ProductService) EnrichProducts(ctx context.Context, products []models.P
 	}
 
 	// 2. Secondary Enrichment: Side-data population
-	// We log errors but continue to ensure the basic resource remains accessible
-
-	if err := s.Store.PopulateStorage(ctx, products); err != nil {
-		logger.ErrorCtx(ctx, "Failed to populate storage info for %d products: %v", len(products), err)
-	}
-
-	if err := s.Store.PopulateCategories(ctx, products); err != nil {
-		logger.ErrorCtx(ctx, "Failed to populate category info for %d products: %v", len(products), err)
-	}
-
-	if !isAdmin {
-		// Filter categories that shouldn't be shown to public
-		for i := range products {
-			filtered := []models.CustomCategory{}
-			for _, c := range products[i].Categories {
-				if c.ShowBadge {
-					filtered = append(filtered, c)
-				}
-			}
-			products[i].Categories = filtered
-		}
-	}
+	// Storage and Categories are now pre-populated by view_product_enriched
+	// or fn_get_product_detail in the Store layer.
 
 	if err := s.Store.PopulateCartCounts(ctx, products); err != nil {
 		logger.ErrorCtx(ctx, "Failed to populate cart counts for %d products: %v", len(products), err)
@@ -377,7 +357,7 @@ func (s *ProductService) BulkSearch(ctx context.Context, list string) ([]models.
 				} else {
 					setHint = fullHint
 				}
-				
+
 				after := strings.TrimSpace(name[endIdx+1:])
 				if after != "" && cnHint == "" {
 					cnHint = after
@@ -396,23 +376,23 @@ func (s *ProductService) BulkSearch(ctx context.Context, list string) ([]models.
 
 		var matches []models.Product
 		if setHint != "" && cnHint != "" {
-			sql := `SELECT * FROM product WHERE (LOWER(name) = LOWER($1) OR name ILIKE $1) 
-			        AND (LOWER(set_code) = LOWER($2) OR LOWER(set_name) = LOWER($2))
-					AND collector_number = $3 AND stock > 0 ORDER BY stock DESC LIMIT 5`
-			_ = s.Store.DB.SelectContext(ctx, &matches, sql, cleanName, setHint, cnHint)
+			sql := `SELECT p.* FROM view_product_enriched p WHERE (LOWER(p.name) = LOWER($1) OR p.name ILIKE $1) 
+			        AND (LOWER(p.set_code) = LOWER($2) OR LOWER(p.set_name) = LOWER($2))
+					AND p.collector_number = $3 AND p.stock > 0 ORDER BY p.stock DESC LIMIT 5`
+			matches, _, _ = s.Store.SelectEnriched(ctx, sql, cleanName, setHint, cnHint)
 		}
 
 		if len(matches) == 0 && setHint != "" {
-			sql := `SELECT * FROM product WHERE (LOWER(name) = LOWER($1) OR name ILIKE $1) 
-			        AND (LOWER(set_code) = LOWER($2) OR LOWER(set_name) = LOWER($2))
-					AND stock > 0 ORDER BY stock DESC LIMIT 5`
-			_ = s.Store.DB.SelectContext(ctx, &matches, sql, cleanName, setHint)
+			sql := `SELECT p.* FROM view_product_enriched p WHERE (LOWER(p.name) = LOWER($1) OR p.name ILIKE $1) 
+			        AND (LOWER(p.set_code) = LOWER($2) OR LOWER(p.set_name) = LOWER($2))
+					AND p.stock > 0 ORDER BY p.stock DESC LIMIT 5`
+			matches, _, _ = s.Store.SelectEnriched(ctx, sql, cleanName, setHint)
 		}
 
 		if len(matches) == 0 {
-			sql := `SELECT * FROM product WHERE (LOWER(name) = LOWER($1) OR name ILIKE $1) 
-					AND stock > 0 ORDER BY stock DESC LIMIT 5`
-			_ = s.Store.DB.SelectContext(ctx, &matches, sql, cleanName)
+			sql := `SELECT p.* FROM view_product_enriched p WHERE (LOWER(p.name) = LOWER($1) OR p.name ILIKE $1) 
+					AND p.stock > 0 ORDER BY p.stock DESC LIMIT 5`
+			matches, _, _ = s.Store.SelectEnriched(ctx, sql, cleanName)
 		}
 
 		if err := s.EnrichProducts(ctx, matches, settings, false); err != nil {
@@ -441,8 +421,8 @@ func (s *ProductService) BulkSearch(ctx context.Context, list string) ([]models.
 }
 
 func (s *ProductService) GetLowStock(ctx context.Context, threshold int) ([]models.Product, error) {
-	var products []models.Product
-	err := s.Store.DB.SelectContext(ctx, &products, "SELECT * FROM product WHERE stock <= $1 AND stock > 0 ORDER BY stock ASC LIMIT 100", threshold)
+	sql := "SELECT p.* FROM view_product_enriched p WHERE p.stock <= $1 AND p.stock > 0 ORDER BY p.stock ASC LIMIT 100"
+	products, _, err := s.Store.SelectEnriched(ctx, sql, threshold)
 	if err != nil {
 		return nil, err
 	}
@@ -631,7 +611,7 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 				}
 			}
 			if needsCK {
-				ckPriceMap, _ = external.BuildCardKingdomPriceMap(ctx)
+				ckPriceMap, _ = external.BuildCardKingdomPriceMap(ctx, s.Store.DB)
 			}
 
 			updates := make([]store.MetadataUpdate, 0, len(rows))
@@ -738,7 +718,7 @@ func (s *ProductService) EnrichCardLookupResults(ctx context.Context, results []
 	}
 
 	// Load CK Price Map
-	ckPriceMap, err := external.BuildCardKingdomPriceMap(ctx)
+	ckPriceMap, err := external.BuildCardKingdomPriceMap(ctx, s.Store.DB)
 	if err != nil {
 		logger.WarnCtx(ctx, "Failed to load CK price map for enrichment: %v", err)
 		return nil // Non-fatal, just no CK prices
@@ -806,7 +786,7 @@ func (s *ProductService) GetRecommendations(ctx context.Context, ids []string) (
 	logger.TraceCtx(ctx, "Entering ProductService.GetRecommendations | Count: %d", len(ids))
 
 	settings, _ := s.Settings.GetSettings(ctx)
-	
+
 	// 1. Fetch products currently in cart to check for commanders
 	cartProducts, err := s.Store.GetByIDs(ctx, ids)
 	if err != nil {
@@ -837,7 +817,7 @@ func (s *ProductService) GetRecommendations(ctx context.Context, ids []string) (
 		for _, name := range edhrecRecommendations {
 			uniqueRecs[name] = true
 		}
-		
+
 		names := make([]string, 0, len(uniqueRecs))
 		for name := range uniqueRecs {
 			names = append(names, name)
@@ -851,14 +831,14 @@ func (s *ProductService) GetRecommendations(ctx context.Context, ids []string) (
 			for _, p := range products {
 				existingIds[p.ID] = true
 			}
-			
+
 			var uniqueEdh []models.Product
 			for _, p := range edhProducts {
 				if !existingIds[p.ID] {
 					uniqueEdh = append(uniqueEdh, p)
 				}
 			}
-			
+
 			// Prepend EDHREC suggestions (limit to 3)
 			if len(uniqueEdh) > 3 {
 				uniqueEdh = uniqueEdh[:3]

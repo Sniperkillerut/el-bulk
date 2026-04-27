@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"time"
-	
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/el-bulk/backend/middleware"
 	"github.com/el-bulk/backend/models"

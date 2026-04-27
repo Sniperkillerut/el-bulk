@@ -4,15 +4,15 @@ import "time"
 
 // CustomCategory represents a user-defined collection for grouping products.
 type CustomCategory struct {
-	ID         string    `db:"id"          json:"id"`
-	Name       string    `db:"name"        json:"name"`
-	Slug       string    `db:"slug"        json:"slug"`
-	IsActive   bool      `db:"is_active"   json:"is_active"`
-	ShowBadge  bool      `db:"show_badge"  json:"show_badge"`
-	Searchable bool      `db:"searchable"  json:"searchable"`
-	BgColor    *string   `db:"bg_color"    json:"bg_color"`
-	TextColor  *string   `db:"text_color"  json:"text_color"`
-	Icon       *string   `db:"icon"        json:"icon"`
+	ID         string     `db:"id"          json:"id"`
+	Name       string     `db:"name"        json:"name"`
+	Slug       string     `db:"slug"        json:"slug"`
+	IsActive   bool       `db:"is_active"   json:"is_active"`
+	ShowBadge  bool       `db:"show_badge"  json:"show_badge"`
+	Searchable bool       `db:"searchable"  json:"searchable"`
+	BgColor    *string    `db:"bg_color"    json:"bg_color"`
+	TextColor  *string    `db:"text_color"  json:"text_color"`
+	Icon       *string    `db:"icon"        json:"icon"`
 	CreatedAt  *time.Time `db:"created_at"  json:"created_at,omitempty"`
 	ItemCount  int        `db:"item_count"  json:"item_count,omitempty"` // Computed field
 	IsHot      bool       `json:"is_hot,omitempty"`

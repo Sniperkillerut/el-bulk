@@ -76,7 +76,7 @@ func (h *ThemeHandler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *ThemeHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	logger.TraceCtx(r.Context(), "Entering ThemeHandler.Delete | ID: %s", id)
-	
+
 	err := h.Service.Delete(r.Context(), id)
 	if err != nil {
 		if strings.Contains(err.Error(), "system theme") {

@@ -59,14 +59,14 @@ func (s *CategoryService) Update(ctx context.Context, id string, updates map[str
 func (s *CategoryService) Delete(ctx context.Context, id string) error {
 	logger.TraceCtx(ctx, "Entering CategoryService.Delete | ID: %s", id)
 	before, _ := s.Store.GetByID(ctx, id)
-	
+
 	// Deep Capture: Get all product mappings before they are cascaded away
 	mappings, _ := s.Store.GetProductMappings(ctx, id)
-	
+
 	err := s.Store.Delete(ctx, id)
 	if err == nil {
 		s.Audit.LogAction(ctx, "DELETE_CATEGORY", "category", id, models.JSONB{
-			"deleted": before,
+			"deleted":          before,
 			"product_mappings": mappings,
 		})
 	}
@@ -78,7 +78,7 @@ func (s *CategoryService) populateHotNew(ctx context.Context, categories []model
 		return
 	}
 	tenDaysAgo := time.Now().AddDate(0, 0, -10)
-	
+
 	ids := make([]string, 0, len(categories))
 	for i := range categories {
 		if categories[i].CreatedAt != nil && categories[i].CreatedAt.After(tenDaysAgo) {

@@ -99,7 +99,7 @@ func (h *CustomerAdminHandler) GetCustomerDetail(w http.ResponseWriter, r *http.
 
 	// Fetch subscription status
 	_ = h.DB.GetContext(r.Context(), &detail.IsSubscriber, "SELECT EXISTS(SELECT 1 FROM newsletter_subscriber WHERE customer_id = $1 OR email = $2)", id, detail.Email)
-	
+
 	// Fetch requests
 	err = h.DB.SelectContext(r.Context(), &detail.Requests, `SELECT * FROM client_request WHERE customer_id = $1 OR customer_contact = $2 ORDER BY created_at DESC`, id, detail.Email)
 	if err != nil {

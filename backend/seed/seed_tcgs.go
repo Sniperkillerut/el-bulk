@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"time"
-	_ "embed"
 
 	"github.com/el-bulk/backend/external"
 	"github.com/el-bulk/backend/utils/logger"

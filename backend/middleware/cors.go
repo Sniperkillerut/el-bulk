@@ -17,7 +17,7 @@ func CORS(next http.Handler) http.Handler {
 		// Allow multiple origins
 		requestOrigin := r.Header.Get("Origin")
 		allowedOrigins := strings.Split(origin, ",")
-		
+
 		allowed := false
 		if requestOrigin != "" {
 			for _, o := range allowedOrigins {

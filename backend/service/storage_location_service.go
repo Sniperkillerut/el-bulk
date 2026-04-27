@@ -57,14 +57,14 @@ func (s *StorageLocationService) Update(ctx context.Context, id, name string) er
 
 func (s *StorageLocationService) Delete(ctx context.Context, id string) error {
 	before, _ := s.Store.GetByID(ctx, id)
-	
+
 	// Deep Capture: Get all stock mappings before they are cascaded away
 	mappings, _ := s.Store.GetStockMappings(ctx, id)
-	
+
 	err := s.Store.Delete(ctx, id)
 	if err == nil {
 		s.Audit.LogAction(ctx, "DELETE_STORAGE", "storage", id, models.JSONB{
-			"deleted": before,
+			"deleted":        before,
 			"stock_mappings": mappings,
 		})
 	}

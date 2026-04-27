@@ -23,13 +23,13 @@ func (s *NoticeStore) List(ctx context.Context, isPublished bool, limit int) ([]
 	start := time.Now()
 	query := "SELECT * FROM notice"
 	var args []interface{}
-	
+
 	if isPublished {
 		query += " WHERE is_published = true"
 	}
-	
+
 	query += " ORDER BY created_at DESC"
-	
+
 	if limit > 0 {
 		query += " LIMIT $1"
 		args = append(args, limit)

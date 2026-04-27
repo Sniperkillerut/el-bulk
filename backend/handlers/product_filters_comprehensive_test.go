@@ -21,8 +21,8 @@ func TestProductHandler_BuildFilters_Comprehensive(t *testing.T) {
 			defer db.Close()
 			sqlxDB := sqlx.NewDb(db, "postgres")
 			settingsStore := store.NewSettingsStore(sqlxDB)
-	settingsService := service.NewSettingsService(settingsStore, nil)
-	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, nil)
+			settingsService := service.NewSettingsService(settingsStore, nil)
+			ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, nil)
 			h := &ProductHandler{Service: ps, DB: sqlxDB}
 			settingsService.ResetCache()
 
@@ -33,12 +33,12 @@ func TestProductHandler_BuildFilters_Comprehensive(t *testing.T) {
 
 			// Settings (now called after main query in List)
 			mock.ExpectQuery("(?i)SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop", "4000"))
-			
+
 			// Note: populatePrices NO LONGER calls loadSettings because we passed it from handler
-			
+
 			// 4. Enrichment: populateStorage
 			mock.ExpectQuery("(?i)SELECT .* FROM product_storage").WillReturnRows(sqlmock.NewRows([]string{"product_id", "stored_in_id", "name", "quantity"}).AddRow("1", "loc1", "Box 1", 10))
-			
+
 			// 5. Enrichment: populateCategories
 			mock.ExpectQuery("(?i)SELECT .* FROM product_category pc JOIN custom_category c").
 				WithArgs("1").
@@ -75,17 +75,17 @@ func TestProductHandler_AdminVsPublic(t *testing.T) {
 		defer db.Close()
 		sqlxDB := sqlx.NewDb(db, "postgres")
 		settingsStore := store.NewSettingsStore(sqlxDB)
-	settingsService := service.NewSettingsService(settingsStore, nil)
-	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, nil)
+		settingsService := service.NewSettingsService(settingsStore, nil)
+		ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, nil)
 		h := &ProductHandler{Service: ps, DB: sqlxDB}
 		settingsService.ResetCache()
 
 		mock.ExpectQuery("(?i)SELECT COUNT\\(\\*\\) FROM product p LEFT JOIN tcg t").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 		mock.ExpectQuery("(?i)SELECT .* FROM view_product_enriched p LEFT JOIN tcg t").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("1"))
-		
+
 		// Settings (now called after main query)
 		mock.ExpectQuery("(?i)SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop", "4000"))
-		
+
 		// Enrichment (populatePrices)
 		mock.ExpectQuery("(?i)SELECT .* FROM product_storage").WillReturnRows(sqlmock.NewRows([]string{"product_id", "stored_in_id", "name", "quantity"}).AddRow("1", "loc1", "Box 1", 10))
 		mock.ExpectQuery("(?i)SELECT .* FROM product_category pc JOIN custom_category c").
@@ -110,17 +110,17 @@ func TestProductHandler_AdminVsPublic(t *testing.T) {
 		defer db.Close()
 		sqlxDB := sqlx.NewDb(db, "postgres")
 		settingsStore := store.NewSettingsStore(sqlxDB)
-	settingsService := service.NewSettingsService(settingsStore, nil)
-	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, nil)
+		settingsService := service.NewSettingsService(settingsStore, nil)
+		ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, nil)
 		h := &ProductHandler{Service: ps, DB: sqlxDB}
 		settingsService.ResetCache()
 
 		mock.ExpectQuery("(?i)SELECT COUNT\\(\\*\\) FROM product p").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 		mock.ExpectQuery("(?i)SELECT .* FROM view_product_enriched p").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("1"))
-		
+
 		// Settings (now called after main query)
 		mock.ExpectQuery("(?i)SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop", "4000"))
-		
+
 		// Enrichment (populatePrices)
 		mock.ExpectQuery("(?i)SELECT .* FROM product_storage").WillReturnRows(sqlmock.NewRows([]string{"product_id", "stored_in_id", "name", "quantity"}).AddRow("1", "loc1", "Box 1", 10))
 		mock.ExpectQuery("(?i)SELECT .* FROM product_category pc JOIN custom_category c").

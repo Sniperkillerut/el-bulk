@@ -11,12 +11,12 @@ import (
 
 func TestCORS(t *testing.T) {
 	tests := []struct {
-		name            string
-		frontendOrigin  string
-		requestOrigin   string
-		requestMethod   string
-		expectedOrigin  string
-		expectedStatus  int
+		name           string
+		frontendOrigin string
+		requestOrigin  string
+		requestMethod  string
+		expectedOrigin string
+		expectedStatus int
 	}{
 		{
 			name:           "Allowed Origin from ENV",

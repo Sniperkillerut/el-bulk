@@ -15,7 +15,7 @@ func daysAgo(n int) time.Time {
 
 // daysAgoFixed returns a deterministic time N days before now at noon.
 func daysAgoFixed(n int) time.Time {
-	return time.Now().AddDate(0, 0, -n).Truncate(24*time.Hour).Add(12 * time.Hour)
+	return time.Now().AddDate(0, 0, -n).Truncate(24 * time.Hour).Add(12 * time.Hour)
 }
 
 // randInt returns a random int in [min, max].

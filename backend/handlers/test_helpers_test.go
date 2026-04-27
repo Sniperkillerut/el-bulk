@@ -30,7 +30,7 @@ func testAdminHandler(db *sqlx.DB) *AdminHandler {
 	cSvc := service.NewCategoryService(store.NewCategoryStore(db), aud)
 	slSvc := service.NewStorageLocationService(store.NewStorageLocationStore(db), aud)
 	sSvc := service.NewSettingsService(store.NewSettingsStore(db), aud)
-	
+
 	rs := service.NewRevertService(as, aud, ps, pSvc, cSvc, store.NewCategoryStore(db), slSvc, store.NewStorageLocationStore(db), sSvc)
 	return NewAdminHandler(service.NewAdminService(store.NewAdminStore(db)), aud, rs)
 }

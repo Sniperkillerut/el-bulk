@@ -38,7 +38,7 @@ func (s *SeoService) GetSitemapData(ctx context.Context) (*SitemapData, error) {
 	}
 
 	// 1. Fetch Active Products (only IDs for indexing)
-	// We use the store directly to bypass heavy joins if possible, 
+	// We use the store directly to bypass heavy joins if possible,
 	// but here we can just do a simple query.
 	queryProducts := "SELECT id FROM product WHERE stock > 0"
 	if err := s.ProductStore.DB.SelectContext(ctx, &data.Products, queryProducts); err != nil {

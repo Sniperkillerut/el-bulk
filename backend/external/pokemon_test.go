@@ -16,8 +16,8 @@ func TestLookupPokemonCard(t *testing.T) {
 			resp := pokemonAPIResponse{
 				Data: []pokemonAPICard{
 					{
-						ID:   "base1-4",
-						Name: "Charizard",
+						ID:     "base1-4",
+						Name:   "Charizard",
 						Number: "4",
 						Set: struct {
 							ID   string `json:"id"`

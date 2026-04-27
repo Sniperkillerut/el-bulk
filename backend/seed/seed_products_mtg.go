@@ -116,15 +116,15 @@ func seedMTGSingles(db *sqlx.DB, cats CategoryMap, storage StorageMap) ([]string
 		models.TreatmentFullArt,
 	}
 	conditions := []string{"NM", "LP", "MP", "HP", "DMG"}
-	languages  := []string{"en", "en", "en", "es", "ja", "pt"} // weighted toward English
+	languages := []string{"en", "en", "en", "es", "ja", "pt"} // weighted toward English
 	priceSources := []struct {
 		source string
 		ref    float64 // USD or EUR reference
 	}{
-		{"manual", 0},         // will use price_cop_override
-		{"tcgplayer", 12.50},  // USD
+		{"manual", 0},        // will use price_cop_override
+		{"tcgplayer", 12.50}, // USD
 		{"tcgplayer", 45.00},
-		{"cardmarket", 8.75},  // EUR
+		{"cardmarket", 8.75}, // EUR
 		{"manual", 0},
 	}
 
@@ -165,12 +165,12 @@ func seedMTGSingles(db *sqlx.DB, cats CategoryMap, storage StorageMap) ([]string
 
 	var productIDs []string
 	for i, res := range results {
-		foil    := foilTreatments[i%len(foilTreatments)]
-		treat   := cardTreatments[i%len(cardTreatments)]
-		cond    := conditions[i%len(conditions)]
-		lang    := languages[i%len(languages)]
-		ps      := priceSources[i%len(priceSources)]
-		stock   := randInt(1, 12)
+		foil := foilTreatments[i%len(foilTreatments)]
+		treat := cardTreatments[i%len(cardTreatments)]
+		cond := conditions[i%len(conditions)]
+		lang := languages[i%len(languages)]
+		ps := priceSources[i%len(priceSources)]
+		stock := randInt(1, 12)
 		createdAt := daysAgo(randInt(1, 90))
 		costBasis := float64(randInt(5, 50)) * 1000.0
 

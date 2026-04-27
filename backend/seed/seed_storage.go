@@ -13,15 +13,15 @@ func seedStorage(db *sqlx.DB) (StorageMap, error) {
 	logger.Info("📦 Seeding storage locations...")
 
 	locations := []string{
-		"pending",        // system: order flow
-		"Showcase A",     // front display cabinet
-		"Showcase B",     // side display cabinet
-		"Storage Box 1",  // back storage area
+		"pending",       // system: order flow
+		"Showcase A",    // front display cabinet
+		"Showcase B",    // side display cabinet
+		"Storage Box 1", // back storage area
 		"Storage Box 2",
 		"Storage Box 3",
-		"Binder Vault",   // premium binders
-		"Counter Display",// behind the counter
-		"Bulk Bin",       // inexpensive bulk cards
+		"Binder Vault",    // premium binders
+		"Counter Display", // behind the counter
+		"Bulk Bin",        // inexpensive bulk cards
 	}
 
 	result := make(StorageMap)

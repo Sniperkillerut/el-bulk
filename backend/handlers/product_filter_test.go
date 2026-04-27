@@ -1,7 +1,7 @@
 package handlers
 
 import (
-"database/sql"
+	"database/sql"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -71,17 +71,17 @@ func TestProductHandler_GetByID_Public_FiltersInactiveTCG(t *testing.T) {
 	ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, nil)
 	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
-        // Mocking a scenario where product is not found (e.g. inactive)
-        mock.ExpectQuery("(?is)SELECT fn_get_product_detail").
-                WithArgs("123").
-                WillReturnError(sql.ErrNoRows)
+	// Mocking a scenario where product is not found (e.g. inactive)
+	mock.ExpectQuery("(?is)SELECT fn_get_product_detail").
+		WithArgs("123").
+		WillReturnError(sql.ErrNoRows)
 
 	r := chi.NewRouter()
 	r.Get("/api/products/{id}", h.GetByID)
 
 	req, _ := http.NewRequest("GET", "/api/products/123", nil)
 	rr := httptest.NewRecorder()
-	
+
 	r.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusNotFound, rr.Code)

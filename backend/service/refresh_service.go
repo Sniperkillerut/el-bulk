@@ -72,18 +72,26 @@ func (s *RefreshService) RunPriceRefresh(ctx context.Context, tcgID string) (upd
 
 		var idMap map[string]external.CardMetadata
 		if needsScry {
-			scryPriceMap, idMap, err = external.BuildPriceMap(ctx)
+			logger.InfoCtx(ctx, "[price-refresh] triggering fresh Scryfall sync to DB...")
+			if err := external.SyncScryfallToDB(ctx, s.Store.DB, nil); err != nil {
+				logger.WarnCtx(ctx, "[price-refresh] Scryfall sync failed, falling back to existing DB data: %v", err)
+			}
+			scryPriceMap, idMap, err = external.BuildPriceMap(ctx, s.Store.DB)
 			if err != nil {
-				logger.ErrorCtx(ctx, "[price-refresh] scryfall bulk download failed: %v", err)
+				logger.ErrorCtx(ctx, "[price-refresh] failed to build scryfall map from DB: %v", err)
 				return 0, len(mtgRows)
 			}
 		}
 
 		if needsCK {
-			ckPriceMap, err = external.BuildCardKingdomPriceMap(ctx)
+			logger.InfoCtx(ctx, "[price-refresh] triggering fresh Card Kingdom sync to DB...")
+			if err := external.SyncCardKingdomToDB(ctx, s.Store.DB, nil); err != nil {
+				logger.WarnCtx(ctx, "[price-refresh] CK sync failed, falling back to existing DB data: %v", err)
+			}
+			ckPriceMap, err = external.BuildCardKingdomPriceMap(ctx, s.Store.DB)
 			if err != nil {
-				logger.ErrorCtx(ctx, "[price-refresh] cardkingdom pricelist download failed: %v", err)
-				errs += len(mtgRows) // Consider them all errors if we can't get the source
+				logger.ErrorCtx(ctx, "[price-refresh] failed to build CK map from DB: %v", err)
+				errs += len(mtgRows)
 			}
 		}
 
@@ -108,7 +116,7 @@ func (s *RefreshService) RunPriceRefresh(ctx context.Context, tcgID string) (upd
 
 func (s *RefreshService) GetSuggestedPrice(ctx context.Context, scryfallID, name, set, setName, collector, foil, treatment, source, ckEdition string) (*float64, error) {
 	foil = strings.ToLower(foil)
-	
+
 	// 1. Fetch real-time Scryfall metadata (Fast-Path)
 	res, err := external.LookupMTGCard(ctx, scryfallID, name, set, collector, foil)
 	if err != nil {
@@ -122,7 +130,7 @@ func (s *RefreshService) GetSuggestedPrice(ctx context.Context, scryfallID, name
 
 	var ckMap map[string]*float64
 	if source == "cardkingdom" {
-		ckMap, _ = external.BuildCardKingdomPriceMap(ctx)
+		ckMap, _ = external.BuildCardKingdomPriceMap(ctx, s.Store.DB)
 	}
 
 	// 3. Resolve curated metadata and use 'ground truth' textures from Scryfall
@@ -136,7 +144,7 @@ func (s *RefreshService) GetSuggestedPrice(ctx context.Context, scryfallID, name
 
 	// 4. Unified Resolve (Single Source of Truth)
 	pResult := external.ResolveMTGPrice(
-		scryfallID, name, set, collector, groundFoil, groundTreatment, 
+		scryfallID, name, set, collector, groundFoil, groundTreatment,
 		ckEdition, variation,
 		nil, scryBatch, ckMap,
 	)

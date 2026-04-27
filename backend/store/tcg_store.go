@@ -23,12 +23,12 @@ func NewTCGStore(db *sqlx.DB) *TCGStore {
 func (s *TCGStore) ListWithCount(ctx context.Context, activeOnly bool) ([]models.TCG, error) {
 	start := time.Now()
 	var tcgs []models.TCG
-	
+
 	where := ""
 	if activeOnly {
 		where = "WHERE t.is_active = true"
 	}
-	
+
 	query := fmt.Sprintf(`
 		SELECT t.*, COUNT(p.id) as item_count 
 		FROM tcg t 
@@ -37,7 +37,7 @@ func (s *TCGStore) ListWithCount(ctx context.Context, activeOnly bool) ([]models
 		GROUP BY t.id 
 		ORDER BY t.name
 	`, where)
-	
+
 	logger.TraceCtx(ctx, "[DB] Executing ListWithCount (TCG): %s", query)
 	err := s.DB.Unsafe().SelectContext(ctx, &tcgs, query)
 	if err != nil {

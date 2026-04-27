@@ -35,7 +35,7 @@ func (s *AuditService) LogAction(ctx context.Context, action, resourceType, reso
 		return
 	}
 	adminID, _ := ctx.Value(middleware.AdminContextKey).(string)
-	
+
 	username := "system"
 	if adminID != "" && s.AdminStore != nil {
 		admin, err := s.AdminStore.GetByID(ctx, adminID)
@@ -53,7 +53,7 @@ func (s *AuditService) LogAction(ctx context.Context, action, resourceType, reso
 		ResourceID:    resourceID,
 		Details:       details,
 	}
-	
+
 	if adminID != "" {
 		log.AdminID = &adminID
 	}

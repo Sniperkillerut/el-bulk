@@ -49,13 +49,13 @@ func (s *RefreshStore) ListRefreshableProducts(ctx context.Context) ([]RefreshRo
 }
 
 type MetadataUpdate struct {
-	ID         string
-	Price      *float64
-	Legalities models.JSONB
-	OracleText string
-	ScryfallID string
-	TypeLine   string
-	ImageURL   string
+	ID          string
+	Price       *float64
+	Legalities  models.JSONB
+	OracleText  string
+	ScryfallID  string
+	TypeLine    string
+	ImageURL    string
 	PriceSource string
 }
 
@@ -181,8 +181,8 @@ func BuildPriceUpdates(rows []RefreshRow, scryPriceMap map[external.PriceKey]ext
 			update.Legalities = pResult.Metadata.Legalities
 			update.OracleText = pResult.Metadata.OracleText
 			update.ScryfallID = pResult.Metadata.ScryfallID
-			update.TypeLine   = pResult.Metadata.TypeLine
-			update.ImageURL   = pResult.Metadata.ImageURL
+			update.TypeLine = pResult.Metadata.TypeLine
+			update.ImageURL = pResult.Metadata.ImageURL
 		}
 
 		updates = append(updates, update)

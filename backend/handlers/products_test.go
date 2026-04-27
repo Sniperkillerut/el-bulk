@@ -107,7 +107,7 @@ func TestProductHandler_Create(t *testing.T) {
 		body, _ := json.Marshal(input)
 
 		mock.ExpectQuery("(?i)INSERT INTO product").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("p-new"))
-		
+
 		mock.ExpectExec("(?i)DELETE FROM product_category").WillReturnResult(sqlmock.NewResult(0, 0)) // Categories DELETE
 		mock.ExpectExec("(?i)DELETE FROM product_storage").WillReturnResult(sqlmock.NewResult(0, 0))  // Storage DELETE
 
@@ -146,7 +146,7 @@ func TestProductHandler_Update(t *testing.T) {
 		body, _ := json.Marshal(input)
 
 		mock.ExpectQuery("(?i)UPDATE product").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("p1"))
-		
+
 		mock.ExpectExec("(?i)DELETE FROM product_category").WillReturnResult(sqlmock.NewResult(0, 0))
 		mock.ExpectExec("(?i)DELETE FROM product_storage").WillReturnResult(sqlmock.NewResult(0, 0))
 

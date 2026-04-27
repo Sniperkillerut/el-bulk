@@ -11,10 +11,10 @@ func TestProduct_ComputePrice(t *testing.T) {
 	priceCOPOverride := 50000.0
 
 	tests := []struct {
-		name           string
-		product        Product
-		usdToCOP       float64
-		eurToCOP       float64
+		name          string
+		product       Product
+		usdToCOP      float64
+		eurToCOP      float64
 		expectedPrice float64
 	}{
 		{

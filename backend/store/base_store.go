@@ -27,18 +27,18 @@ func (s *BaseStore[T]) List(ctx context.Context, conditions string, args ...inte
 	items := make([]T, 0)
 	query := fmt.Sprintf("SELECT * FROM %s", s.TableName)
 	if conditions != "" {
-		if !strings.HasPrefix(strings.ToUpper(strings.TrimSpace(conditions)), "ORDER BY") && 
-		   !strings.HasPrefix(strings.ToUpper(strings.TrimSpace(conditions)), "LIMIT") {
+		if !strings.HasPrefix(strings.ToUpper(strings.TrimSpace(conditions)), "ORDER BY") &&
+			!strings.HasPrefix(strings.ToUpper(strings.TrimSpace(conditions)), "LIMIT") {
 			query += " WHERE " + conditions
 		} else {
 			query += " " + conditions
 		}
 	}
-	
+
 	start := time.Now()
 	rebound := s.DB.Rebind(query)
 	logger.TraceCtx(ctx, "[DB] Executing List on %s: %s | Args: %+v", s.TableName, rebound, args)
-	
+
 	err := s.DB.Unsafe().SelectContext(ctx, &items, rebound, args...)
 	if err != nil {
 		logger.ErrorCtx(ctx, "[DB] List on %s failed: %v", s.TableName, err)
@@ -51,10 +51,10 @@ func (s *BaseStore[T]) List(ctx context.Context, conditions string, args ...inte
 func (s *BaseStore[T]) GetByID(ctx context.Context, id string) (*T, error) {
 	var item T
 	query := fmt.Sprintf("SELECT * FROM %s WHERE id = $1", s.TableName)
-	
+
 	start := time.Now()
 	logger.TraceCtx(ctx, "[DB] Executing GetByID on %s: %s | ID: %s", s.TableName, query, id)
-	
+
 	err := s.DB.Unsafe().GetContext(ctx, &item, query, id)
 	if err != nil {
 		logger.ErrorCtx(ctx, "[DB] GetByID on %s (%s) failed: %v", s.TableName, id, err)
@@ -104,10 +104,10 @@ func (s *BaseStore[T]) Update(ctx context.Context, id string, updates map[string
 
 func (s *BaseStore[T]) Delete(ctx context.Context, id string) error {
 	query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", s.TableName)
-	
+
 	start := time.Now()
 	logger.TraceCtx(ctx, "[DB] Executing Delete on %s | ID: %s", s.TableName, id)
-	
+
 	res, err := s.DB.ExecContext(ctx, query, id)
 	if err != nil {
 		logger.ErrorCtx(ctx, "[DB] Delete on %s (%s) failed: %v", s.TableName, id, err)

@@ -110,7 +110,7 @@ func TestAdminAuth(t *testing.T) {
 func TestAdminAuth_MissingSecret(t *testing.T) {
 	// Ensure internal server error if JWT_SECRET is not set
 	os.Unsetenv("JWT_SECRET")
-	
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": "admin-test",
 		"exp": time.Now().Add(time.Hour).Unix(),

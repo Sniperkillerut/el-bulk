@@ -15,28 +15,28 @@ func TestLookupCKPrice(t *testing.T) {
 	//   "name|edition|variation|foil" — fallback (~2% without scryfall_id)
 	ckMap := map[string]*float64{
 		// ── scry: entries (primary) ─────────────────────────────────────────────
-		"scry:uuid-bolt-m10:non_foil": fptr(0.50),
-		"scry:uuid-bolt-m10:foil":     fptr(2.50),
+		"scry:uuid-bolt-m10:non_foil":  fptr(0.50),
+		"scry:uuid-bolt-m10:foil":      fptr(2.50),
 		"scry:uuid-shock-rav:non_foil": fptr(0.10),
 		// A card that exists ONLY in scry: (no name-key fallback) to prove direct hit
 		"scry:uuid-only-scry:non_foil": fptr(9.99),
 
 		// ── name|edition|variation|foil entries (fallback) ──────────────────────
 		// Normal print
-		"lightning bolt|magic 2010||non_foil":          fptr(0.50),
+		"lightning bolt|magic 2010||non_foil": fptr(0.50),
 		// Showcase variant (same set, different variation)
-		"lightning bolt|magic 2010|showcase|non_foil":  fptr(3.00),
+		"lightning bolt|magic 2010|showcase|non_foil": fptr(3.00),
 		// Foil
-		"lightning bolt|magic 2010||foil":              fptr(2.50),
+		"lightning bolt|magic 2010||foil": fptr(2.50),
 		// Different set (should NOT bleed into magic 2010 lookups)
 		"lightning bolt|modern masters 2015||non_foil": fptr(1.20),
 		// Art card junk — must be skipped
-		"lightning bolt|magic 2010|art card|non_foil":  fptr(99.99),
+		"lightning bolt|magic 2010|art card|non_foil": fptr(99.99),
 		// Token junk — must be skipped
-		"lightning bolt|magic 2010|token|non_foil":     fptr(99.99),
+		"lightning bolt|magic 2010|token|non_foil": fptr(99.99),
 		// Cards from another set
-		"shock|ravnica||non_foil":                      fptr(0.10),
-		"shock|ravnica remastered||non_foil":           fptr(0.15),
+		"shock|ravnica||non_foil":            fptr(0.10),
+		"shock|ravnica remastered||non_foil": fptr(0.15),
 	}
 
 	// Populate the global index for the matcher (since it now uses O(1) lookups)

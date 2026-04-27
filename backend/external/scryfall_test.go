@@ -116,7 +116,7 @@ func TestLookupMTGCard(t *testing.T) {
 			json.NewEncoder(w).Encode(card)
 		}))
 		defer server.Close()
-		
+
 		originalBase := ScryfallBase
 		ScryfallBase = server.URL
 		defer func() { ScryfallBase = originalBase }()
@@ -147,7 +147,7 @@ func TestLookupMTGCard(t *testing.T) {
 			json.NewEncoder(w).Encode(card)
 		}))
 		defer server.Close()
-		
+
 		originalBase := ScryfallBase
 		ScryfallBase = server.URL
 		defer func() { ScryfallBase = originalBase }()
@@ -202,8 +202,8 @@ func TestBatchLookupMTGCard(t *testing.T) {
 func TestScryfall_MappingEdgeCases(t *testing.T) {
 	t.Run("Mapping Types", func(t *testing.T) {
 		card := &scryfallCard{
-			Name: "Karn",
-			TypeLine: "Legendary Artifact Creature — Golem",
+			Name:          "Karn",
+			TypeLine:      "Legendary Artifact Creature — Golem",
 			ColorIdentity: []string{"W", "U"},
 		}
 		res := mapScryfallToResult(card, "non_foil")

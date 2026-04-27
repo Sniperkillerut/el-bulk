@@ -300,7 +300,7 @@ func TestOrderHandler_Update(t *testing.T) {
 	t.Run("Metadata Lock (Shipped Order)", func(t *testing.T) {
 		shippingValue := 20000.0
 		input := map[string]interface{}{
-			"shipping_cop":    &shippingValue,
+			"shipping_cop":   &shippingValue,
 			"payment_method": "cash",
 		}
 		body, _ := json.Marshal(input)
@@ -459,7 +459,6 @@ func TestOrderHandler_Confirm(t *testing.T) {
 		mock.ExpectExec("SELECT fn_confirm_order").
 			WithArgs("o1", sqlmock.AnyArg()).
 			WillReturnError(fmt.Errorf("Insufficient stock"))
-
 
 		r := chi.NewRouter()
 		r.Post("/api/admin/orders/{id}/confirm", h.Confirm)

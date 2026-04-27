@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
 	"github.com/el-bulk/backend/external"
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/store"
+	"github.com/jmoiron/sqlx"
 )
 
 // We define an unexported structure matching the one used in the old logic loop to simulate the baseline

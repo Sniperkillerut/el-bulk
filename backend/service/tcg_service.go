@@ -141,7 +141,7 @@ func (s *TCGService) SyncSets(ctx context.Context, tcgID string) (int, error) {
 
 func (s *TCGService) SyncPrices(ctx context.Context, tcgID string) (int, int, error) {
 	logger.TraceCtx(ctx, "Entering TCGService.SyncPrices | TCG: %s", tcgID)
-	
+
 	// Price refresh is currently only implemented for MTG via Scryfall/CardKingdom
 	if tcgID != "mtg" {
 		return 0, 0, fmt.Errorf("price sync currently only supported for MTG")

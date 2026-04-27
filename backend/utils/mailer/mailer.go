@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jordan-wright/email"
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
+	"github.com/jordan-wright/email"
 )
 
 func SendEmail(to string, subject string, bodyHTML string) error {
@@ -118,7 +118,7 @@ func BroadcastNotice(db *sqlx.DB, notice models.Notice) {
 			// Skip seed/example emails to avoid spamming fake addresses
 			continue
 		}
-		
+
 		err = SendEmail(email, "New Update: "+notice.Title, body)
 		if err == nil {
 			successCount++

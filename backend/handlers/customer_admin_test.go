@@ -51,7 +51,7 @@ func TestCustomerAdminHandler_GetCustomerDetail(t *testing.T) {
 
 	t.Run("Not Found", func(t *testing.T) {
 		mock.ExpectQuery("SELECT \\* FROM customer WHERE id = \\$1").WithArgs("nonexistent").WillReturnError(assert.AnError)
-		
+
 		r := chi.NewRouter()
 		r.Get("/admin/customers/{id}", h.GetCustomerDetail)
 		req := httptest.NewRequest("GET", "/admin/customers/nonexistent", nil)

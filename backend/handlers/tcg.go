@@ -50,7 +50,7 @@ func (h *TCGHandler) Create(w http.ResponseWriter, r *http.Request) {
 	tcg, err := h.Service.Create(r.Context(), input)
 	if err != nil {
 		logger.ErrorCtx(r.Context(), "Error creating TCG: %v", err)
-		
+
 		// Check for PostgreSQL unique constraint violation
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == "23505" {
 			render.Error(w, fmt.Sprintf("TCG with ID '%s' already exists", input.ID), http.StatusConflict)

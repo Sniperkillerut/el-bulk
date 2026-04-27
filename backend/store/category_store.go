@@ -23,7 +23,7 @@ func (s *CategoryStore) Create(ctx context.Context, input models.CustomCategoryI
 	// Custom implementation for Create to handle specific logic like slug generation if needed,
 	// or just mapping the input struct to the DB.
 	var cat models.CustomCategory
-	
+
 	isActive := true
 	if input.IsActive != nil {
 		isActive = *input.IsActive
@@ -41,12 +41,12 @@ func (s *CategoryStore) Create(ctx context.Context, input models.CustomCategoryI
 		INSERT INTO custom_category (id, name, slug, is_active, show_badge, searchable, bg_color, text_color, icon) 
 		VALUES (COALESCE($1, gen_random_uuid()), $2, $3, $4, $5, $6, $7, $8, $9) 
 		RETURNING *`
-	
+
 	logger.TraceCtx(ctx, "[DB] Executing CreateCategory: %s", query)
-	err := s.DB.QueryRowxContext(ctx, query, 
+	err := s.DB.QueryRowxContext(ctx, query,
 		input.ID, input.Name, input.Slug, isActive, showBadge, searchable, input.BgColor, input.TextColor, input.Icon,
 	).StructScan(&cat)
-	
+
 	if err != nil {
 		logger.ErrorCtx(ctx, "[DB] CreateCategory failed: %v", err)
 	}
@@ -55,7 +55,7 @@ func (s *CategoryStore) Create(ctx context.Context, input models.CustomCategoryI
 
 func (s *CategoryStore) ListWithCount(ctx context.Context, isAdmin bool) ([]models.CustomCategory, error) {
 	categories := []models.CustomCategory{}
-	
+
 	query := `
 		SELECT c.id, c.name, c.slug, c.is_active, c.show_badge, c.searchable, c.bg_color, c.text_color, c.icon, c.created_at, COUNT(pc.product_id) as item_count
 		FROM custom_category c
@@ -71,7 +71,7 @@ func (s *CategoryStore) ListWithCount(ctx context.Context, isAdmin bool) ([]mode
 		query += " HAVING COUNT(pc.product_id) > 0 "
 	}
 	query += ` ORDER BY c.name `
-	
+
 	start := time.Now()
 	logger.TraceCtx(ctx, "[DB] Executing ListWithCount (isAdmin=%v): %s", isAdmin, query)
 	err := s.DB.SelectContext(ctx, &categories, query)
@@ -93,7 +93,7 @@ func (s *CategoryStore) BatchAddProducts(ctx context.Context, categoryID string,
 	if len(productIDs) == 0 {
 		return nil
 	}
-	
+
 	// Use a transaction for safety
 	tx, err := s.DB.Beginx()
 	if err != nil {

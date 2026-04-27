@@ -53,22 +53,22 @@ func (h *SettingsHandler) PublicGet(w http.ResponseWriter, r *http.Request) {
 // PUT /api/admin/settings
 func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		USDToCOPRate         *float64 `json:"usd_to_cop_rate"`
-		EURToCOPRate         *float64 `json:"eur_to_cop_rate"`
-		CKToCOPRate          *float64 `json:"ck_to_cop_rate"`
-		ContactAddress       *string  `json:"contact_address"`
-		ContactPhone         *string  `json:"contact_phone"`
-		ContactEmail         *string  `json:"contact_email"`
-		ContactInstagram     *string  `json:"contact_instagram"`
-		ContactHours         *string  `json:"contact_hours"`
-		FlatShippingFeeCOP   *float64 `json:"flat_shipping_fee_cop"`
-		HotSalesThreshold    *int     `json:"hot_sales_threshold"`
-		HotDaysThreshold     *int     `json:"hot_days_threshold"`
-		NewDaysThreshold     *int     `json:"new_days_threshold"`
-		DefaultLocale        *string  `json:"default_locale"`
-		HideLanguageSelector *bool    `json:"hide_language_selector"`
-		DefaultThemeID       *string  `json:"default_theme_id"`
-		DeliveryPriorityEnabled *bool   `json:"delivery_priority_enabled"`
+		USDToCOPRate            *float64 `json:"usd_to_cop_rate"`
+		EURToCOPRate            *float64 `json:"eur_to_cop_rate"`
+		CKToCOPRate             *float64 `json:"ck_to_cop_rate"`
+		ContactAddress          *string  `json:"contact_address"`
+		ContactPhone            *string  `json:"contact_phone"`
+		ContactEmail            *string  `json:"contact_email"`
+		ContactInstagram        *string  `json:"contact_instagram"`
+		ContactHours            *string  `json:"contact_hours"`
+		FlatShippingFeeCOP      *float64 `json:"flat_shipping_fee_cop"`
+		HotSalesThreshold       *int     `json:"hot_sales_threshold"`
+		HotDaysThreshold        *int     `json:"hot_days_threshold"`
+		NewDaysThreshold        *int     `json:"new_days_threshold"`
+		DefaultLocale           *string  `json:"default_locale"`
+		HideLanguageSelector    *bool    `json:"hide_language_selector"`
+		DefaultThemeID          *string  `json:"default_theme_id"`
+		DeliveryPriorityEnabled *bool    `json:"delivery_priority_enabled"`
 		PriorityShippingFeeCOP  *float64 `json:"priority_shipping_fee_cop"`
 		SynergyMaxPriceCOP      *float64 `json:"synergy_max_price_cop"`
 	}
@@ -211,7 +211,7 @@ func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	
+
 	s, err := h.Service.GetSettings(r.Context())
 	if err != nil {
 		logger.ErrorCtx(r.Context(), "Failed to load settings after update: %v", err)
@@ -220,4 +220,3 @@ func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	render.Success(w, s)
 }
-

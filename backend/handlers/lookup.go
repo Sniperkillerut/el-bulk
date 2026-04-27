@@ -81,7 +81,6 @@ func (h *LookupHandler) BatchMTG(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, results)
 }
 
-
 // GET /api/admin/lookup/pokemon?name=<name>&set=<setID>
 func (h *LookupHandler) Pokemon(w http.ResponseWriter, r *http.Request) {
 	logger.TraceCtx(r.Context(), "Entering LookupHandler.Pokemon | Query: %s", r.URL.RawQuery)

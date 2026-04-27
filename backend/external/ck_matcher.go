@@ -47,7 +47,7 @@ func LookupCKPrice(scryfallID, name, ckEdition, variation string, isFoil bool, c
 		if cp == nil {
 			continue
 		}
-		
+
 		if !strings.HasSuffix(k, foilKeySuffix) {
 			continue
 		}

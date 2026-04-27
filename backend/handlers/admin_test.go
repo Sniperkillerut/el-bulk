@@ -118,7 +118,7 @@ func TestAdminHandler_Login(t *testing.T) {
 			h.Login(rr, req)
 
 			assert.Equal(t, tt.expectedStatus, rr.Code)
-			
+
 			if tt.expectedStatus == http.StatusOK {
 				var res map[string]string
 				json.NewDecoder(rr.Body).Decode(&res)
@@ -133,7 +133,7 @@ func TestAdminHandler_Login(t *testing.T) {
 func TestAdminHandler_Login_MissingSecret(t *testing.T) {
 	// Ensure internal server error if JWT_SECRET is not set
 	os.Unsetenv("JWT_SECRET")
-	
+
 	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)
 	defer db.Close()

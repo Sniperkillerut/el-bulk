@@ -3,11 +3,11 @@ package service
 import (
 	"context"
 	"database/sql/driver"
-	"testing"
-	"github.com/el-bulk/backend/models"
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
+	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/store"
+	"github.com/jmoiron/sqlx"
+	"testing"
 )
 
 func BenchmarkUpdateOrder_AddedItems(b *testing.B) {

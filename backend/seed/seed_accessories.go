@@ -10,14 +10,14 @@ func seedAccessories(db *sqlx.DB, cats CategoryMap, storage StorageMap) ([]strin
 	logger.Info("🛡️  Seeding Accessories...")
 
 	type Acc struct {
-		Name      string
-		TCG       string
-		Price     float64
-		Stock     int
-		ImageURL  string
+		Name       string
+		TCG        string
+		Price      float64
+		Stock      int
+		ImageURL   string
 		StorageLoc string
-		CatSlug   string
-		Desc      string
+		CatSlug    string
+		Desc       string
 	}
 
 	items := []Acc{

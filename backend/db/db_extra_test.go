@@ -1,9 +1,9 @@
 package db
 
 import (
+	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestConnectResilient_Failures(t *testing.T) {
@@ -11,7 +11,7 @@ func TestConnectResilient_Failures(t *testing.T) {
 		old := os.Getenv("DATABASE_URL")
 		os.Setenv("DATABASE_URL", "")
 		defer os.Setenv("DATABASE_URL", old)
-		
+
 		_, err := ConnectResilient()
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "required")

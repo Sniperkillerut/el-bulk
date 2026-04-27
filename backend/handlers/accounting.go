@@ -13,8 +13,8 @@ import (
 )
 
 type AccountingHandler struct {
-	DB       *sqlx.DB // Kept for CSV export complex query
-	Service  *service.AccountingService
+	DB      *sqlx.DB // Kept for CSV export complex query
+	Service *service.AccountingService
 }
 
 func NewAccountingHandler(db *sqlx.DB, s *service.AccountingService) *AccountingHandler {

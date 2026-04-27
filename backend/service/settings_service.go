@@ -20,7 +20,7 @@ type SettingsProvider interface {
 type SettingsService struct {
 	Store *store.SettingsStore
 	Audit Auditer
-	
+
 	cache         models.Settings
 	cacheTime     time.Time
 	cacheDuration time.Duration
@@ -55,20 +55,20 @@ func (s *SettingsService) GetSettings(ctx context.Context) (models.Settings, err
 	}
 
 	settings := models.Settings{
-		USDToCOPRate:       4200,
-		EURToCOPRate:       4600,
-		CKToCOPRate:        4000,
-		ContactAddress:     "Cra. 15 # 76-54, Local 201, Centro Comercial Unilago, Bogotá",
-		ContactPhone:       "+57 300 000 0000",
-		ContactEmail:       "contact@el-bulk.co",
-		ContactInstagram:   "el-bulk",
-		ContactHours:       "Mon - Sat: 11:00 AM - 7:00 PM",
-		FlatShippingFeeCOP: 20000,
-		HotSalesThreshold:  3,
-		HotDaysThreshold:   7,
-		NewDaysThreshold:   10,
-		DefaultLocale:      "en",
-		HideLanguageSelector: false,
+		USDToCOPRate:            4200,
+		EURToCOPRate:            4600,
+		CKToCOPRate:             4000,
+		ContactAddress:          "Cra. 15 # 76-54, Local 201, Centro Comercial Unilago, Bogotá",
+		ContactPhone:            "+57 300 000 0000",
+		ContactEmail:            "contact@el-bulk.co",
+		ContactInstagram:        "el-bulk",
+		ContactHours:            "Mon - Sat: 11:00 AM - 7:00 PM",
+		FlatShippingFeeCOP:      20000,
+		HotSalesThreshold:       3,
+		HotDaysThreshold:        7,
+		NewDaysThreshold:        10,
+		DefaultLocale:           "en",
+		HideLanguageSelector:    false,
 		DeliveryPriorityEnabled: true,
 		PriorityShippingFeeCOP:  30000,
 		SynergyMaxPriceCOP:      2000,
@@ -153,7 +153,7 @@ func (s *SettingsService) Upsert(ctx context.Context, key, value string) error {
 		logger.ErrorCtx(ctx, "Failed to upsert setting %s: %v", key, err)
 		return err
 	}
-	
+
 	if s.Audit != nil {
 		// Try to get before value for better undos
 		before := ""
@@ -162,12 +162,12 @@ func (s *SettingsService) Upsert(ctx context.Context, key, value string) error {
 		}
 		s.Audit.LogAction(ctx, "UPDATE_SETTING", "setting", key, models.JSONB{"before": before, "after": value})
 	}
-	
+
 	s.mu.Lock()
 	s.cacheTime = time.Time{} // Invalidate cache
 	s.mu.Unlock()
 	logger.DebugCtx(ctx, "Settings cache invalidated after upsert of %s", key)
-	
+
 	return nil
 }
 
@@ -179,7 +179,7 @@ func (s *SettingsService) InvalidateCache() {
 
 // ResetCache clears the internal settings cache (primarily for unit tests).
 func (s *SettingsService) ResetCache() {
-s.mu.Lock()
-s.cacheTime = time.Now().Add(-2 * time.Minute) // Force expiration
-s.mu.Unlock()
+	s.mu.Lock()
+	s.cacheTime = time.Now().Add(-2 * time.Minute) // Force expiration
+	s.mu.Unlock()
 }

@@ -16,17 +16,17 @@ func NewHealthService(s *store.HealthStore) *HealthService {
 }
 
 type DBStats struct {
-	DatabaseSize           string                   `json:"database_size"`
-	CacheHitRatio          float64                  `json:"cache_hit_ratio"`
-	ActiveConns            int                      `json:"active_connections"`
-	MaxConns               int                      `json:"max_connections"`
-	TotalProducts          int                      `json:"total_products"`
-	TotalSKURecords        int                      `json:"total_sku_records"`
-	QuerySpeedMS           int                      `json:"query_speed_ms"`
-	PendingOrdersCount     int                      `json:"pending_orders_count"`
-	PendingOffersCount     int                      `json:"pending_offers_count"`
-	PendingRequestsCount   int                      `json:"pending_requests_count"`
-	TranslationProgress    []TranslationLocaleStats `json:"translation_progress"`
+	DatabaseSize         string                   `json:"database_size"`
+	CacheHitRatio        float64                  `json:"cache_hit_ratio"`
+	ActiveConns          int                      `json:"active_connections"`
+	MaxConns             int                      `json:"max_connections"`
+	TotalProducts        int                      `json:"total_products"`
+	TotalSKURecords      int                      `json:"total_sku_records"`
+	QuerySpeedMS         int                      `json:"query_speed_ms"`
+	PendingOrdersCount   int                      `json:"pending_orders_count"`
+	PendingOffersCount   int                      `json:"pending_offers_count"`
+	PendingRequestsCount int                      `json:"pending_requests_count"`
+	TranslationProgress  []TranslationLocaleStats `json:"translation_progress"`
 }
 
 type TranslationLocaleStats struct {

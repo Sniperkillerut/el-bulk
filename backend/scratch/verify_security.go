@@ -8,8 +8,8 @@ import (
 
 func main() {
 	p := models.Product{
-		ID: "test-1",
-		Name: "Black Lotus",
+		ID:           "test-1",
+		Name:         "Black Lotus",
 		CostBasisCOP: 1000000.0,
 	}
 

@@ -48,7 +48,7 @@ type ProductFilterParams struct {
 	Offset         int
 
 	IDs []string
-	
+
 	// MTG Metadata Filters
 	IsLegendary string
 	IsLand      string
@@ -67,18 +67,12 @@ func (s *ProductStore) ListWithFilters(ctx context.Context, params ProductFilter
 
 	var total int
 	countQuery := fmt.Sprintf("SELECT COUNT(*) %s %s", fromClause, where)
-	logger.TraceCtx(ctx, "[DB] Executing countQuery in ListWithFilters: %s | Args: %+v", countQuery, args)
 	if err := s.DB.GetContext(ctx, &total, countQuery, args...); err != nil {
-		logger.ErrorCtx(ctx, "[DB] ListWithFilters countQuery failed: %v", err)
 		return nil, 0, err
 	}
 
 	orderBy := s.buildOrderBy(params, len(args))
-
-	// Use enriched view for listing
 	viewFrom, where, args := s.buildFilters(params, "view_product_enriched")
-
-	orderBy = s.buildOrderBy(params, len(args))
 
 	listQuery := fmt.Sprintf("SELECT p.* %s %s ORDER BY %s LIMIT $%d OFFSET $%d",
 		viewFrom, where, orderBy, len(args)+1, len(args)+2)
@@ -86,6 +80,16 @@ func (s *ProductStore) ListWithFilters(ctx context.Context, params ProductFilter
 	listArgs := append([]interface{}{}, args...)
 	listArgs = append(listArgs, params.PageSize, params.Offset)
 
+	products, _, err := s.SelectEnriched(ctx, listQuery, listArgs...)
+	if err != nil {
+		return nil, 0, err
+	}
+	logger.DebugCtx(ctx, "[DB] ListWithFilters (count+list) took %v", time.Since(start))
+
+	return products, total, nil
+}
+
+func (s *ProductStore) SelectEnriched(ctx context.Context, query string, args ...interface{}) ([]models.Product, int, error) {
 	var rows []struct {
 		models.Product
 		StoredInJSON   []byte `db:"stored_in_json"`
@@ -93,11 +97,9 @@ func (s *ProductStore) ListWithFilters(ctx context.Context, params ProductFilter
 		DeckCardsJSON  []byte `db:"deck_cards_json"`
 	}
 
-	if err := s.DB.Unsafe().SelectContext(ctx, &rows, listQuery, listArgs...); err != nil {
-		logger.ErrorCtx(ctx, "[DB] ListWithFilters listQuery failed: %v", err)
+	if err := s.DB.Unsafe().SelectContext(ctx, &rows, query, args...); err != nil {
 		return nil, 0, err
 	}
-	logger.DebugCtx(ctx, "[DB] ListWithFilters (count+list) took %v", time.Since(start))
 
 	products := make([]models.Product, len(rows))
 	for i, r := range rows {
@@ -113,7 +115,7 @@ func (s *ProductStore) ListWithFilters(ctx context.Context, params ProductFilter
 		}
 	}
 
-	return products, total, nil
+	return products, len(products), nil
 }
 
 func (s *ProductStore) GetFacets(ctx context.Context, params ProductFilterParams, isAdmin bool) (models.Facets, error) {

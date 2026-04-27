@@ -26,8 +26,6 @@ func NewOrderHandler(s *service.OrderService) *OrderHandler {
 	return &OrderHandler{Service: s}
 }
 
-
-
 // POST /api/orders — public checkout
 func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 	logger.TraceCtx(r.Context(), "Entering OrderHandler.Create")
@@ -118,9 +116,6 @@ func (h *OrderHandler) GetDetail(w http.ResponseWriter, r *http.Request) {
 
 	render.Success(w, detail)
 }
-
-
-
 
 // PUT /api/admin/orders/{id} — update order (status, item quantities)
 func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {

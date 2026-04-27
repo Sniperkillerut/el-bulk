@@ -20,13 +20,13 @@ func seedCustomers(db *sqlx.DB) ([]CustomerSeeded, error) {
 	logger.Info("👥 Seeding customers (30 — full field coverage)...")
 
 	type Cust struct {
-		FirstName   string
-		LastName    string
-		Email       string
-		Phone       string
-		IDNumber    string
-		Address     string
-		AvatarURL   string
+		FirstName      string
+		LastName       string
+		Email          string
+		Phone          string
+		IDNumber       string
+		Address        string
+		AvatarURL      string
 		AuthProvider   string
 		AuthProviderID string
 	}

@@ -16,9 +16,9 @@ func seedTranslations(db *sqlx.DB) error {
 
 	// Find the translations directory with multiple fallbacks for different environments
 	searchPaths := []string{
-		filepath.Join("seed", "data", "translations"),         // Production (from Dockerfile)
+		filepath.Join("seed", "data", "translations"),            // Production (from Dockerfile)
 		filepath.Join("backend", "seed", "data", "translations"), // Local (from project root)
-		filepath.Join("data", "translations"),                 // Alternative production
+		filepath.Join("data", "translations"),                    // Alternative production
 	}
 
 	basePath := ""
