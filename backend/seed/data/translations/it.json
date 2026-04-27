@@ -1,47 +1,47 @@
 [
   {
     "key": "pages.common.buttons.add",
-    "value": "ADICIONAR"
+    "value": "AGGIUNGI"
   },
   {
     "key": "pages.common.buttons.add_to_cart",
-    "value": "AO CARRINHO"
+    "value": "AL CARRELLO"
   },
   {
     "key": "pages.common.buttons.added_to_cart",
-    "value": "NO CARRINHO"
+    "value": "NEL CARRELLO"
   },
   {
     "key": "pages.common.buttons.close",
-    "value": "Fechar"
+    "value": "Chiudi"
   },
   {
     "key": "pages.common.status.sold_out",
-    "value": "ESGOTADO"
+    "value": "ESAURITO"
   },
   {
     "key": "pages.common.status.out_of_stock",
-    "value": "FORA DE STOCK"
+    "value": "NON DISPONIBILE"
   },
   {
     "key": "pages.common.status.in_stock",
-    "value": "EM STOCK"
+    "value": "DISPONIBILE"
   },
   {
     "key": "pages.common.labels.art_by",
-    "value": "Arte de"
+    "value": "Illustrazione di"
   },
   {
     "key": "pages.common.labels.rarity",
-    "value": "Raridade"
+    "value": "Rarità"
   },
   {
     "key": "pages.common.labels.identity",
-    "value": "Identidade"
+    "value": "Identità"
   },
   {
     "key": "pages.common.labels.art_var",
-    "value": "Var. de Arte"
+    "value": "Var. d'Arte"
   },
   {
     "key": "pages.common.labels.cmc",
@@ -49,51 +49,51 @@
   },
   {
     "key": "pages.common.labels.any_edition",
-    "value": "Qualquer Edição"
+    "value": "Qualsiasi Edizione"
   },
   {
     "key": "pages.common.labels.normal",
-    "value": "Normal"
+    "value": "Normale"
   },
   {
     "key": "pages.common.labels.any_condition",
-    "value": "QUALQUER"
+    "value": "QUALSIASI"
   },
   {
     "key": "pages.common.labels.hidden",
-    "value": "Oculto"
+    "value": "Nascosto"
   },
   {
     "key": "pages.common.labels.direct_demand",
-    "value": "PROCURA DIRETA"
+    "value": "DOMANDA DIRETTA"
   },
   {
     "key": "pages.common.labels.any",
-    "value": "Qualquer"
+    "value": "Qualsiasi"
   },
   {
     "key": "pages.common.labels.offer",
-    "value": "Oferta"
+    "value": "Offerta"
   },
   {
     "key": "pages.common.labels.ask",
-    "value": "PEDIDO"
+    "value": "DOMANDA"
   },
   {
     "key": "pages.common.actions.sell",
-    "value": "VENDER"
+    "value": "VENDI"
   },
   {
     "key": "pages.common.tooltips.quantity_needed",
-    "value": "Quantidade necessária"
+    "value": "Quantità necessaria"
   },
   {
     "key": "pages.common.labels.id_number",
-    "value": "NÚMERO ID"
+    "value": "NUMERO ID"
   },
   {
     "key": "pages.common.labels.address",
-    "value": "ENDEREÇO"
+    "value": "INDIRIZZO"
   },
   {
     "key": "pages.common.currency.cop",
@@ -101,23 +101,23 @@
   },
   {
     "key": "pages.common.labels.error",
-    "value": "Erro"
+    "value": "Errore"
   },
   {
     "key": "pages.common.actions.cancel",
-    "value": "CANCELAR"
+    "value": "ANNULLA"
   },
   {
     "key": "pages.common.forms.newsletter.title",
-    "value": "Junte-se à Alcateia"
+    "value": "Unisciti al Pack"
   },
   {
     "key": "pages.common.forms.newsletter.subtitle",
-    "value": "Receba alertas de stock e novidades."
+    "value": "Ricevi avvisi di restock e novità."
   },
   {
     "key": "pages.common.forms.newsletter.placeholder",
-    "value": "TEU EMAIL"
+    "value": "TUA EMAIL"
   },
   {
     "key": "pages.common.forms.newsletter.submit",
@@ -125,31 +125,31 @@
   },
   {
     "key": "pages.common.forms.newsletter.success",
-    "value": "OBRIGADO! VERIFICA TEU EMAIL EM BREVE."
+    "value": "GRAZIE! CONTROLLA LA MAIL A BREVE."
   },
   {
     "key": "pages.common.forms.newsletter.error",
-    "value": "ALGO CORREU MAL."
+    "value": "QUALCOSA È ANDATO STORTO."
   },
   {
     "key": "pages.product.details.not_found",
-    "value": "ITEM NÃO ENCONTRADO"
+    "value": "OGGETTO NON TROVATO"
   },
   {
     "key": "pages.product.details.not_found_desc",
-    "value": "Este item pode ter sido vendido ou removido."
+    "value": "L'articolo potrebbe essere stato venduto o rimosso."
   },
   {
     "key": "pages.product.details.view_full_page",
-    "value": "Ver página completa"
+    "value": "Vedi pagina intera"
   },
   {
     "key": "pages.product.details.no_info",
-    "value": "Sem informações adicionais."
+    "value": "Nessuna info aggiuntiva."
   },
   {
     "key": "pages.product.details.textless",
-    "value": "SEM TEXTO"
+    "value": "SENZA TESTO"
   },
   {
     "key": "pages.product.details.full_art",
@@ -157,39 +157,39 @@
   },
   {
     "key": "pages.product.status.in_stock",
-    "value": "{count} EM STOCK"
+    "value": "{count} DISPONIBILI"
   },
   {
     "key": "pages.product.cart_users_has",
-    "value": "{count} OUTRO UTILIZADOR TEM ISTO NO CARRINHO"
+    "value": "{count} ALTRO UTENTE HA QUESTO NEL CARRELLO"
   },
   {
     "key": "pages.product.cart_users_have",
-    "value": "{count} OUTROS UTILIZADORES TÊM ISTO NO CARRINHO"
+    "value": "{count} ALTRI UTENTI HANNO QUESTO NEL CARRELLO"
   },
   {
     "key": "pages.product.status.available",
-    "value": "disponível"
+    "value": "disponibile"
   },
   {
     "key": "pages.product.details.legalities",
-    "value": "LEGALIDADE DO FORMATO"
+    "value": "LEGALITÀ FORMATO"
   },
   {
     "key": "pages.product.details.store_notice",
-    "value": "Finalize a compra na loja ou verifique no balcão."
+    "value": "Completa l'acquisto in negozio o verifica la disponibilità."
   },
   {
     "key": "pages.common.status.active_bounty",
-    "value": "Recompensa Ativa"
+    "value": "Taglia Attiva"
   },
   {
     "key": "pages.common.status.completed_past",
-    "value": "Concluído / Passado"
+    "value": "Completato / Passato"
   },
   {
     "key": "pages.common.status.mission_complete",
-    "value": "MISSÃO CUMPRIDA\nCARTA ENTREGUE"
+    "value": "MISSIONE COMPIUTA\nCARTA CONSEGNATA"
   },
   {
     "key": "pages.checkout.page.title",
@@ -197,19 +197,19 @@
   },
   {
     "key": "pages.checkout.section.contact",
-    "value": "INFORMAÇÃO DE CONTACTO"
+    "value": "INFO DI CONTATTO"
   },
   {
     "key": "pages.checkout.form.first_name",
-    "value": "PRIMEIRO NOME"
+    "value": "NOME"
   },
   {
     "key": "pages.checkout.form.last_name",
-    "value": "APELIDO"
+    "value": "COGNOME"
   },
   {
     "key": "pages.checkout.form.phone",
-    "value": "TELEMÓVEL / WHATSAPP"
+    "value": "TELEFONO / WHATSAPP"
   },
   {
     "key": "pages.checkout.form.email",
@@ -217,143 +217,143 @@
   },
   {
     "key": "pages.checkout.form.id_number",
-    "value": "NÚMERO ID / CÉDULA"
+    "value": "N° ID / CÉDULA"
   },
   {
     "key": "pages.checkout.form.address",
-    "value": "ENDEREÇO"
+    "value": "INDIRIZZO"
   },
   {
     "key": "pages.checkout.section.payment",
-    "value": "MÉTODO DE PAGAMENTO"
+    "value": "METODO DI PAGAMENTO"
   },
   {
     "key": "pages.checkout.form.notes",
-    "value": "NOTAS (OPCIONAL)"
+    "value": "NOTE (OPZIONALE)"
   },
   {
     "key": "pages.checkout.form.notes_placeholder",
-    "value": "Instruções especiais..."
+    "value": "Istruzioni speciali..."
   },
   {
     "key": "pages.checkout.section.summary",
-    "value": "RESUMO DO PEDIDO"
+    "value": "RIEPILOGO ORDINE"
   },
   {
     "key": "pages.checkout.summary.empty_cart",
-    "value": "Teu carrinho está vazio."
+    "value": "Il carrello è vuoto."
   },
   {
     "key": "pages.checkout.summary.vaciar",
-    "value": "LIMPAR CARRINHO"
+    "value": "SVUOTA CARRELLO"
   },
   {
     "key": "pages.checkout.summary.item",
-    "value": "ITEM"
+    "value": "ARTICOLO"
   },
   {
     "key": "pages.checkout.summary.items",
-    "value": "ITENS"
+    "value": "ARTICOLI"
   },
   {
     "key": "pages.checkout.buttons.confirm",
-    "value": "CONFIRMAR PEDIDO →"
+    "value": "CONFERMA ORDINE →"
   },
   {
     "key": "pages.checkout.buttons.processing",
-    "value": "A PROCESSAR..."
+    "value": "ELABORAZIONE..."
   },
   {
     "key": "pages.checkout.footer.notice",
-    "value": "Após confirmação, um consultor contactará para coordenar a entrega."
+    "value": "Dopo la conferma, un addetto ti contatterà per la consegna."
   },
   {
     "key": "pages.order.confirmation.title",
-    "value": "PEDIDO RECEBIDO!"
+    "value": "ORDINE RICEVUTO!"
   },
   {
     "key": "pages.order.confirmation.order_no",
-    "value": "NÚMERO DO PEDIDO"
+    "value": "NUMERO ORDINE"
   },
   {
     "key": "pages.order.confirmation.desc",
-    "value": "Pedido registado com sucesso. Um consultor contactará para o pagamento."
+    "value": "Ordine registrato. Un addetto ti contatterà per il pagamento."
   },
   {
     "key": "pages.order.confirmation.back",
-    "value": "← VOLTAR À LOJA"
+    "value": "← TORNA ALLO SHOP"
   },
   {
     "key": "pages.order.confirmation.contact",
-    "value": "CONTACTO"
+    "value": "CONTATTO"
   },
   {
     "key": "pages.order.modal.title",
-    "value": "Pedido {number}"
+    "value": "Ordine {number}"
   },
   {
     "key": "pages.order.modal.title_generic",
-    "value": "Detalhes do Pedido"
+    "value": "Dettagli Ordine"
   },
   {
     "key": "pages.order.modal.fetching",
-    "value": "A obter detalhes seguros"
+    "value": "Recupero dettagli sicuri"
   },
   {
     "key": "pages.order.modal.error",
-    "value": "Erro ao carregar detalhes. Tenta de novo."
+    "value": "Errore caricamento. Riprova."
   },
   {
     "key": "pages.order.modal.close",
-    "value": "Fechar Janela"
+    "value": "Chiudi Finestra"
   },
   {
     "key": "pages.order.modal.status_label",
-    "value": "Estado do Pedido"
+    "value": "Stato Ordine"
   },
   {
     "key": "pages.order.modal.date_label",
-    "value": "Data da Transação"
+    "value": "Data Transazione"
   },
   {
     "key": "pages.order.modal.amount_label",
-    "value": "Montante Total"
+    "value": "Importo Totale"
   },
   {
     "key": "pages.order.modal.summary_label",
-    "value": "Resumo do Pedido"
+    "value": "Riepilogo Ordine"
   },
   {
     "key": "pages.order.modal.unknown_set",
-    "value": "Set Desconhecido"
+    "value": "Set Sconosciuto"
   },
   {
     "key": "pages.order.modal.qty_label",
-    "value": "QTD:"
+    "value": "QTA:"
   },
   {
     "key": "pages.order.modal.reference",
-    "value": "Referência do Pedido:"
+    "value": "Riferimento Ordine:"
   },
   {
     "key": "pages.order.modal.method",
-    "value": "Método:"
+    "value": "Metodo:"
   },
   {
     "key": "pages.order.modal.issues",
-    "value": "Problemas? Contacta"
+    "value": "Problemi? Contatta"
   },
   {
     "key": "pages.profile.title",
-    "value": "Tua Conta"
+    "value": "Tuo Account"
   },
   {
     "key": "pages.profile.subtitle",
-    "value": "Gere teu perfil e histórico de pedidos."
+    "value": "Gestisci profilo e storico ordini."
   },
   {
     "key": "pages.profile.section.settings",
-    "value": "Definições de Perfil"
+    "value": "Ajustes de Perfil"
   },
   {
     "key": "pages.profile.form.full_name",
@@ -361,75 +361,75 @@
   },
   {
     "key": "pages.profile.form.email",
-    "value": "Endereço de Email"
+    "value": "Indirizzo Email"
   },
   {
     "key": "pages.profile.form.phone",
-    "value": "Número de Telefone"
+    "value": "Numero di Telefono"
   },
   {
     "key": "pages.profile.form.id",
-    "value": "Número ID / Cédula"
+    "value": "N° ID / Cédula"
   },
   {
     "key": "pages.profile.form.shipping",
-    "value": "Endereço de Envio"
+    "value": "Indirizzo Spedizione"
   },
   {
     "key": "pages.profile.placeholders.phone",
-    "value": "ex: +57 300..."
+    "value": "es. +57 300..."
   },
   {
     "key": "pages.profile.placeholders.id",
-    "value": "Obrigatório para Colômbia"
+    "value": "Richiesto per Colombia"
   },
   {
     "key": "pages.profile.placeholders.address",
-    "value": "Endereço completo, cidade e instruções"
+    "value": "Indirizzo, città e istruzioni"
   },
   {
     "key": "pages.profile.actions.save",
-    "value": "Guardar Perfil"
+    "value": "Salva Profilo"
   },
   {
     "key": "pages.profile.actions.saving",
-    "value": "A guardar..."
+    "value": "Salvataggio..."
   },
   {
     "key": "pages.profile.messages.success",
-    "value": "Perfil atualizado com sucesso!"
+    "value": "Profilo aggiornato!"
   },
   {
     "key": "pages.profile.messages.error",
-    "value": "Erro ao atualizar perfil."
+    "value": "Errore aggiornamento."
   },
   {
     "key": "pages.profile.section.linked",
-    "value": "Contas Vinculadas"
+    "value": "Account Collegati"
   },
   {
     "key": "pages.profile.status.connected",
-    "value": "Ligado"
+    "value": "Connesso"
   },
   {
     "key": "pages.profile.actions.link",
-    "value": "Ligar"
+    "value": "Collega"
   },
   {
     "key": "pages.profile.section.orders",
-    "value": "Histórico de Pedidos"
+    "value": "Storico Ordini"
   },
   {
     "key": "pages.profile.orders.empty",
-    "value": "Ainda não fizeste pedidos."
+    "value": "Non hai ancora ordini."
   },
   {
     "key": "pages.profile.orders.browse",
-    "value": "Explora o inventário →"
+    "value": "Sfoglia inventario →"
   },
   {
     "key": "pages.profile.table.order_no",
-    "value": "Pedido N.º"
+    "value": "Ordine N."
   },
   {
     "key": "pages.profile.table.date",
@@ -437,15 +437,15 @@
   },
   {
     "key": "pages.profile.table.status",
-    "value": "Estado"
+    "value": "Stato"
   },
   {
     "key": "pages.profile.table.items",
-    "value": "Itens"
+    "value": "Articoli"
   },
   {
     "key": "pages.profile.table.total",
-    "value": "Total"
+    "value": "Totale"
   },
   {
     "key": "pages.checkout.placeholders.first_name",
@@ -461,7 +461,7 @@
   },
   {
     "key": "pages.checkout.placeholders.email",
-    "value": "juan@exemplo.pt"
+    "value": "juan@esempio.it"
   },
   {
     "key": "pages.checkout.placeholders.id",
@@ -469,47 +469,47 @@
   },
   {
     "key": "pages.checkout.placeholders.address",
-    "value": "Rua # 1-2"
+    "value": "Via # 1-2"
   },
   {
     "key": "pages.login.loading",
-    "value": "A iniciar Matriz de Auth..."
+    "value": "Inizializzazione Matrice Auth..."
   },
   {
     "key": "pages.login.security_v",
-    "value": "Protocolo de Segurança v2.5"
+    "value": "Protocollo Sicurezza v2.5"
   },
   {
     "key": "pages.login.title",
-    "value": "BEM-VINDO"
+    "value": "BENTORNATO"
   },
   {
     "key": "pages.login.subtitle",
-    "value": "Acede ao Coletivo El Bulk"
+    "value": "Accesso al Collettivo El Bulk"
   },
   {
     "key": "pages.login.google",
-    "value": "ENTRAR COM GOOGLE"
+    "value": "ACCEDI CON GOOGLE"
   },
   {
     "key": "pages.login.facebook",
-    "value": "ENTRAR COM FACEBOOK"
+    "value": "ACCEDI CON FACEBOOK"
   },
   {
     "key": "pages.login.footer.text",
-    "value": "Ao entrar, aceitas nossos {terms} e {privacy}."
+    "value": "Entrando, accetti i nostri {terms} e {privacy}."
   },
   {
     "key": "pages.login.footer.terms",
-    "value": "Termos de Compromisso"
+    "value": "Termini di Ingaggio"
   },
   {
     "key": "pages.login.footer.privacy",
-    "value": "Protocolos de Dados"
+    "value": "Protocolli Dati"
   },
   {
     "key": "pages.login.return",
-    "value": "Voltar para Ops Terreno"
+    "value": "Torna alle Ops"
   },
   {
     "key": "pages.login.accent.store",
@@ -517,59 +517,59 @@
   },
   {
     "key": "pages.login.accent.logistics",
-    "value": "LOGÍSTICA"
+    "value": "LOGISTICA"
   },
   {
     "key": "pages.inventory.grid.filters.title",
-    "value": "FILTROS"
+    "value": "FILTRI"
   },
   {
     "key": "pages.inventory.grid.filters.strategy.title",
-    "value": "Estratégia de Pesquisa"
+    "value": "Strategia di Ricerca"
   },
   {
     "key": "pages.inventory.grid.filters.strategy.broad",
-    "value": "AMPLA (OU)"
+    "value": "AMPIA (OR)"
   },
   {
     "key": "pages.inventory.grid.filters.strategy.narrow",
-    "value": "RESTRITA (E)"
+    "value": "PRECISA (AND)"
   },
   {
     "key": "pages.inventory.grid.filters.strategy.broad_desc",
-    "value": "Alarga resultados: match com QUALQUER filtro."
+    "value": "Espande: match con QUALSIASI filtro."
   },
   {
     "key": "pages.inventory.grid.filters.strategy.narrow_desc",
-    "value": "Restringe: match com TODOS os filtros."
+    "value": "Restringe: match con TUTTI i filtri."
   },
   {
     "key": "pages.inventory.grid.filters.keywords",
-    "value": "Palavras-chave"
+    "value": "Parole Chiave"
   },
   {
     "key": "pages.inventory.grid.filters.search_placeholder",
-    "value": "Procurar cartas..."
+    "value": "Cerca carte..."
   },
   {
     "key": "pages.inventory.grid.filters.availability",
-    "value": "Disponibilidade"
+    "value": "Disponibilità"
   },
   {
     "key": "pages.inventory.grid.filters.in_stock",
-    "value": "Apenas em Stock"
+    "value": "Solo Disponibili"
   },
   {
     "key": "pages.inventory.grid.filters.clear",
-    "value": "Limpar Filtros ×"
+    "value": "Pulisci Filtri ×"
   },
   {
     "key": "pages.inventory.grid.sort.label",
-    "value": "Ordenar"
+    "value": "Ordina"
   },
   {
     "key": "pages.inventory.grid.sort.newest",
-    "value": "Recente"
+    "value": "Più Recenti"
   },
   {
     "key": "pages.inventory.grid.sort.name",
@@ -577,75 +577,75 @@
   },
   {
     "key": "pages.inventory.grid.sort.price",
-    "value": "Preço"
+    "value": "Prezzo"
   },
   {
     "key": "pages.inventory.grid.sort.cmc",
-    "value": "Custo de Mana"
+    "value": "Costo di Mana"
   },
   {
     "key": "pages.inventory.grid.sort.rarity",
-    "value": "Raridade"
+    "value": "Rarità"
   },
   {
     "key": "pages.inventory.grid.status.result",
-    "value": "resultado"
+    "value": "risultato"
   },
   {
     "key": "pages.inventory.grid.status.results",
-    "value": "resultados"
+    "value": "risultati"
   },
   {
     "key": "pages.inventory.grid.status.no_results",
-    "value": "SEM RESULTADOS"
+    "value": "NESSUN RISULTATO"
   },
   {
     "key": "pages.inventory.grid.status.no_results_desc",
-    "value": "Tenta limpar filtros ou volta mais tarde."
+    "value": "Prova a pulire i filtri o torna più tardi."
   },
   {
     "key": "pages.inventory.grid.pagination.prev",
-    "value": "← Ant."
+    "value": "← Prec."
   },
   {
     "key": "pages.inventory.grid.pagination.next",
-    "value": "Seg. →"
+    "value": "Succ. →"
   },
   {
     "key": "grid.filters.condition",
-    "value": "CONDIÇÃO"
+    "value": "CONDIZIONE"
   },
   {
     "key": "grid.filters.finish",
-    "value": "ACABAMENTO"
+    "value": "FINITURA"
   },
   {
     "key": "grid.filters.version",
-    "value": "VERSÃO"
+    "value": "VERSIONE"
   },
   {
     "key": "grid.filters.rarity",
-    "value": "RARIDADE"
+    "value": "RARITÀ"
   },
   {
     "key": "grid.filters.set",
-    "value": "SET"
+    "value": "EDIZIONE"
   },
   {
     "key": "grid.filters.color",
-    "value": "COR"
+    "value": "COLORE"
   },
   {
     "key": "grid.filters.language",
-    "value": "IDIOMA"
+    "value": "LINGUA"
   },
   {
     "key": "grid.filters.collections",
-    "value": "COLEÇÕES"
+    "value": "COLLEZIONI"
   },
   {
     "key": "pages.product.finish.non_foil",
-    "value": "Não-Foil"
+    "value": "Non-Foil"
   },
   {
     "key": "pages.product.finish.foil",
@@ -657,11 +657,11 @@
   },
   {
     "key": "pages.product.version.normal",
-    "value": "Regular"
+    "value": "Regolare"
   },
   {
     "key": "pages.product.version.borderless",
-    "value": "Sem Borda"
+    "value": "Senza Bordo"
   },
   {
     "key": "pages.product.version.showcase",
@@ -681,251 +681,251 @@
   },
   {
     "key": "pages.singles.landing.title",
-    "value": "CARTAS INDIVIDUAIS"
+    "value": "CARTE SINGOLE"
   },
   {
     "key": "pages.singles.landing.desc",
-    "value": "Explora centenas de cartas dos teus TCGs favoritos. Escolhe o teu jogo."
+    "value": "Sfoglia centinaia di singole dei tuoi TCG preferiti. Scegli il gioco."
   },
   {
     "key": "pages.singles.landing.view_all",
-    "value": "VER TODAS AS SINGLES →"
+    "value": "VEDI TUTTE LE SINGOLE →"
   },
   {
     "key": "pages.singles.landing.featured",
-    "value": "SINGLES EM DESTAQUE"
+    "value": "SINGOLE IN EVIDENZA"
   },
   {
     "key": "pages.singles.landing.no_featured",
-    "value": "SEM SINGLES EM DESTAQUE"
+    "value": "NESSUNA SINGOLA IN EVIDENZA"
   },
   {
     "key": "pages.singles.title",
-    "value": "SINGLES DE {tcg}"
+    "value": "SINGLES DI {tcg}"
   },
   {
     "key": "pages.sealed.title",
-    "value": "PRODUTO SELADO DE {tcg}"
+    "value": "PRODOTTO SIGILLATO DI {tcg}"
   },
   {
     "key": "pages.accessories.title",
-    "value": "PROTEÇÃO E ACESSÓRIOS"
+    "value": "PROTEZIONE E ACCESSORI"
   },
   {
     "key": "pages.store_exclusives.title",
-    "value": "EXCLUSIVOS LOJA"
+    "value": "ESCLUSIVE STORE"
   },
   {
     "key": "pages.checkout.section.removed",
-    "value": "ITENS REMOVIDOS"
+    "value": "ARTICOLI RIMOSSI"
   },
   {
     "key": "pages.checkout.buttons.re_add",
-    "value": "RE-ADICIONAR"
+    "value": "RI-AGGIUNGI"
   },
   {
     "key": "pages.checkout.error.empty",
-    "value": "Carrinho vazio. Adiciona algo primeiro."
+    "value": "Carrello vuoto. Aggiungi prodotti."
   },
   {
     "key": "pages.checkout.buttons.back",
-    "value": "← VOLTAR LOJA"
+    "value": "← TORNA SHOP"
   },
   {
     "key": "pages.bounties.page.title",
-    "value": "WANTED / RECOMPENSAS"
+    "value": "WANTED / TAGLIE"
   },
   {
     "key": "pages.bounties.page.subtitle",
-    "value": "Estamos à procura destas cartas. Se as tens, fala connosco! Não encontras? Faz um pedido!"
+    "value": "Cerchiamo queste carte. Se le hai, contattaci! Non trovi nulla? Fai una richiesta!"
   },
   {
     "key": "pages.bounties.status.showing",
-    "value": "MOSTRANDO {count} ENTRADAS"
+    "value": "MOSTRANDO {count} VOCI"
   },
   {
     "key": "pages.bounties.buttons.request",
-    "value": "PEDIR UMA CARTA"
+    "value": "RICHIEDI UNA CARTA"
   },
   {
     "key": "pages.bounties.success.request",
-    "value": "Pedido enviado! Contactamos-te se a encontrarmos."
+    "value": "Richiesta inviata! Ti contatteremo se la troviamo."
   },
   {
     "key": "pages.bounties.empty.title",
-    "value": "SEM RECOMPENSAS ATIVAS"
+    "value": "NESSUNA TAGLIA ATTIVA"
   },
   {
     "key": "pages.bounties.empty.desc",
-    "value": "Não estamos à procura de nada específico agora. Mas podes pedir!"
+    "value": "Nessuna ricerca specifica al momento. Ma puoi fare una richiesta!"
   },
   {
     "key": "pages.bounties.buttons.submit_request",
-    "value": "ENVIAR PEDIDO"
+    "value": "INVIA RICHIESTA"
   },
   {
     "key": "pages.singles.subtitle",
-    "value": "Explora cartas de {tcg} por estado e acabamento."
+    "value": "Sfoglia singole di {tcg} per condizione e finitura."
   },
   {
     "key": "pages.sealed.subtitle",
-    "value": "Booster boxes, bundles e selado para {tcg}."
+    "value": "Booster box, bundle e sigillato per {tcg}."
   },
   {
     "key": "pages.contact.page.title",
-    "value": "Contacta-nos"
+    "value": "Contattaci"
   },
   {
     "key": "pages.contact.section.visit",
-    "value": "VISITA O BOX"
+    "value": "VISITA IL BOX"
   },
   {
     "key": "pages.contact.info.address",
-    "value": "MORADA"
+    "value": "INDIRIZZO"
   },
   {
     "key": "pages.contact.info.hours",
-    "value": "HORÁRIO"
+    "value": "ORARI"
   },
   {
     "key": "pages.contact.info.quote",
-    "value": "\"Basta procurar a pilha de caixas de sapatos perto da entrada traseira.\""
+    "value": "\"Cerca la pila di scatole di scarpe vicino all'ingresso sul retro.\""
   },
   {
     "key": "pages.contact.section.digital",
-    "value": "COMUNICAÇÕES DIGITAIS"
+    "value": "COMUNICAZIONI DIGITALI"
   },
   {
     "key": "pages.contact.info.whatsapp",
-    "value": "WHATSAPP / VENDAS"
+    "value": "WHATSAPP / VENDITE"
   },
   {
     "key": "pages.contact.buttons.sell_bulk",
-    "value": "VENDE-NOS O TEU BULK →"
+    "value": "VENDICI IL TUO BULK →"
   },
   {
     "key": "pages.contact.map.placeholder",
-    "value": "INTEGRAÇÃO DE MAPA"
+    "value": "INTEGRAZIONE MAPPA"
   },
   {
     "key": "pages.home.status.empty",
-    "value": "LOJA ESTÁ VAZIA"
+    "value": "LO STORE È VUOTO"
   },
   {
     "key": "pages.home.status.empty_desc",
-    "value": "Nenhuma coleção foi populada ainda."
+    "value": "Nessuna collezione ancora popolata."
   },
   {
     "key": "pages.home.buttons.view_all",
-    "value": "VER TUDO →"
+    "value": "VEDI TUTTO →"
   },
   {
     "key": "pages.home.status.no_items",
-    "value": "Nenhum item atribuído a esta coleção ainda."
+    "value": "Nessun articolo assegnato a questa collezione."
   },
   {
     "key": "pages.home.tags.urgently_needed",
-    "value": "Necessário Urgente"
+    "value": "Richiesto Urgente"
   },
   {
     "key": "pages.nav.main.singles",
-    "value": "Singles"
+    "value": "Singole"
   },
   {
     "key": "pages.nav.main.sealed",
-    "value": "Selado"
+    "value": "Sigillato"
   },
   {
     "key": "pages.nav.main.accessories",
-    "value": "Acessórios"
+    "value": "Accessori"
   },
   {
     "key": "pages.nav.main.store_exclusives",
-    "value": "Exclusivos"
+    "value": "Esclusive"
   },
   {
     "key": "pages.nav.main.notices",
-    "value": "Notícias"
+    "value": "Novità"
   },
   {
     "key": "pages.nav.main.contact",
-    "value": "Contacto"
+    "value": "Contatti"
   },
   {
     "key": "pages.nav.main.wanted",
-    "value": "Cartas Procuradas"
+    "value": "Carte Cercate"
   },
   {
     "key": "pages.nav.main.bulk",
-    "value": "Vende teu Bulk"
+    "value": "Vendi il tuo Bulk"
   },
   {
     "key": "pages.nav.main.tcg_store",
-    "value": "LOJA TCG"
+    "value": "STORE TCG"
   },
   {
     "key": "pages.nav.mobile.inventory_title",
-    "value": "Inventário de Singles"
+    "value": "Inventario Singole"
   },
   {
     "key": "pages.cookies.title",
-    "value": "CONSENTIMENTO DE COOKIES"
+    "value": "CONSENSO COOKIE"
   },
   {
     "key": "pages.cookies.description",
-    "value": "Usamos cookies para melhorar tua experiência. Podes aceitar todos ou personalizar."
+    "value": "Usiamo i cookie per migliorare la tua esperienza. Puoi accettare tutto o personalizzare."
   },
   {
     "key": "pages.cookies.customize",
-    "value": "PERSONALIZAR"
+    "value": "PERSONALIZZA"
   },
   {
     "key": "pages.order.status.pending",
-    "value": "Pendente"
+    "value": "In attesa"
   },
   {
     "key": "pages.order.status.confirmed",
-    "value": "Confirmado"
+    "value": "Confermato"
   },
   {
     "key": "pages.order.status.completed",
-    "value": "Concluído"
+    "value": "Completato"
   },
   {
     "key": "pages.order.status.cancelled",
-    "value": "Cancelado"
+    "value": "Annullato"
   },
   {
     "key": "pages.order.status.shipped",
-    "value": "Enviado"
+    "value": "Spedito"
   },
   {
     "key": "pages.order.status.ready_for_pickup",
-    "value": "Pronto para Levantamento"
+    "value": "Pronto al ritiro"
   },
   {
     "key": "pages.cookies.always_required",
-    "value": "Sempre Necessários"
+    "value": "Sempre richiesti"
   },
   {
     "key": "pages.cookies.preferences",
-    "value": "PREFERÊNCIAS DE COOKIES"
+    "value": "PREFERENZE COOKIE"
   },
   {
     "key": "pages.cookies.essential_title",
-    "value": "NECESSÁRIOS"
+    "value": "NECESSARI"
   },
   {
     "key": "pages.cookies.essential_desc",
-    "value": "Essenciais para o site funcionar (Auth, Tema, Carrinho)."
+    "value": "Essenziali per il sito (Auth, Tema, Carrello)."
   },
   {
     "key": "pages.cookies.analytics_title",
-    "value": "ANÁLISE"
+    "value": "ANALISI"
   },
   {
     "key": "pages.cookies.analytics_desc",
-    "value": "Ajudam-nos a entender como a loja é usada."
+    "value": "Aiutano a capire come viene usato lo store."
   },
   {
     "key": "pages.cookies.marketing_title",
@@ -933,363 +933,363 @@
   },
   {
     "key": "pages.cookies.marketing_desc",
-    "value": "Usados para publicidade personalizada e redes sociais."
+    "value": "Pubblicità personalizzata e funzioni social."
   },
   {
     "key": "pages.cookies.save",
-    "value": "GUARDAR MINHAS ESCOLHAS"
+    "value": "SALVA LE MIE SCELTE"
   },
   {
     "key": "pages.common.back",
-    "value": "VOLTAR"
+    "value": "INDIETRO"
   },
   {
     "key": "pages.nav.mobile.sealed_title",
-    "value": "Produto Selado"
+    "value": "Prodotti Sigillati"
   },
   {
     "key": "pages.nav.tooltips.foil_enable",
-    "value": "Ativar efeitos foil"
+    "value": "Attiva effetti foil"
   },
   {
     "key": "pages.nav.tooltips.foil_disable",
-    "value": "Desativar efeitos foil"
+    "value": "Disattiva effetti foil"
   },
   {
     "key": "pages.nav.tooltips.change_lang",
-    "value": "Alterar idioma"
+    "value": "Cambia lingua"
   },
   {
     "key": "pages.nav.user.login",
-    "value": "Entrar"
+    "value": "Accedi"
   },
   {
     "key": "pages.nav.user.profile",
-    "value": "Meu Perfil"
+    "value": "Profilo"
   },
   {
     "key": "pages.nav.user.logout",
-    "value": "Sair"
+    "value": "Esci"
   },
   {
     "key": "pages.privacy.title",
-    "value": "Política de Privacidade"
+    "value": "Informativa sulla Privacy"
   },
   {
     "key": "pages.privacy.last_updated",
-    "value": "Última atualização: 12 de abril de 2026"
+    "value": "Ultimo aggiornamento: 12 aprile 2026"
   },
   {
     "key": "pages.privacy.intro",
-    "value": "No El Bulk, comprometemo-nos a proteger tua privacidade. Esta política explica como tratamos teus dados."
+    "value": "In El Bulk proteggiamo la tua privacy. Questa policy spiega come trattiamo i tuoi dati."
   },
   {
     "key": "pages.privacy.sections.info_collected.title",
-    "value": "1. Informação que Recolhemos"
+    "value": "1. Informazioni Raccolte"
   },
   {
     "key": "pages.privacy.sections.info_collected.content",
-    "value": "Recolhemos nome, email, morada e telefone ao criar conta ou fazer pedido."
+    "value": "Raccogliamo nome, email, indirizzo e telefono durante la creazione dell'account o l'ordine."
   },
   {
     "key": "pages.privacy.sections.habeas_data.title",
-    "value": "2. Protocolo Habeas Data"
+    "value": "2. Protocollo Habeas Data"
   },
   {
     "key": "pages.privacy.sections.habeas_data.content",
-    "value": "Conforme a lei colombiana, autorizas o El Bulk a processar teus dados para logística e pedidos. Tens direito a acesso e retificação."
+    "value": "Secondo la legge colombiana, autorizzi El Bulk a trattare i dati per logistica e ordini. Hai diritto di accesso e rettifica."
   },
   {
     "key": "pages.privacy.sections.auth.title",
-    "value": "3. Serviços de Autenticação (OAuth)"
+    "value": "3. Servizi di Autenticazione (OAuth)"
   },
   {
     "key": "pages.privacy.sections.auth.content",
-    "value": "Via Google ou Facebook, recebemos teu perfil básico. Usado apenas para gerir a conta."
+    "value": "Via Google o Facebook riceviamo il tuo profilo base. Usato solo per gestire l'account."
   },
   {
     "key": "pages.privacy.sections.cookies.title",
-    "value": "4. Cookies e Rastreio"
+    "value": "4. Cookie e Tracciamento"
   },
   {
     "key": "pages.privacy.sections.cookies.content",
-    "value": "Cookies essenciais para a sessão. Com consentimento: análise (Google Analytics) e marketing (Meta Pixel)."
+    "value": "Cookie essenziali per la sessione. Con consenso: analisi (Google Analytics) e marketing (Meta Pixel)."
   },
   {
     "key": "pages.privacy.sections.data_usage.title",
-    "value": "5. Uso dos Dados"
+    "value": "5. Utilizzo dei Dati"
   },
   {
     "key": "pages.privacy.sections.data_usage.content",
-    "value": "Para pedidos, coordenação WhatsApp e novidades. Nunca vendemos teus dados."
+    "value": "Per ordini, coordinamento WhatsApp e news. Non vendiamo mai i tuoi dati."
   },
   {
     "key": "pages.privacy.sections.rights.title",
-    "value": "6. Teus Direitos"
+    "value": "6. I Tuoi Diritti"
   },
   {
     "key": "pages.privacy.sections.rights.content",
-    "value": "Acesso, correção ou eliminação via tuas definições."
+    "value": "Accesso, correzione o cancellazione via impostazioni."
   },
   {
     "key": "pages.privacy.sections.data_deletion.title",
-    "value": "7. Pedido de Eliminação de Dados"
+    "value": "7. Richiesta Cancellazione Dati"
   },
   {
     "key": "pages.privacy.sections.data_deletion.content",
-    "value": "Remove 'El Bulk' das tuas definições de Facebook ou envia email para admin@elbulk.com com assunto 'Data Deletion Request'."
+    "value": "Rimuovi 'El Bulk' da Facebook o scrivi a admin@elbulk.com con oggetto 'Data Deletion Request'."
   },
   {
     "key": "pages.privacy.sections.contact.title",
-    "value": "8. Contacto"
+    "value": "8. Contatti"
   },
   {
     "key": "pages.privacy.sections.contact.content",
-    "value": "Questões? admin@elbulk.com ou visita-nos na loja física."
+    "value": "Domande? admin@elbulk.com o vieni a trovarci in sede."
   },
   {
     "key": "pages.terms.title",
-    "value": "Termos de Compromisso"
+    "value": "Termini di Ingaggio"
   },
   {
     "key": "pages.terms.last_updated",
-    "value": "Última atualização: 12 de abril de 2026"
+    "value": "Ultimo aggiornamento: 12 aprile 2026"
   },
   {
     "key": "pages.terms.intro",
-    "value": "Ao aceder ao El Bulk, aceitas estes protocolos. Curamos o essencial para tua estratégia TCG."
+    "value": "Accedendo a El Bulk accetti questi protocolli. Curiamo l'essenziale per la tua strategia TCG."
   },
   {
     "key": "pages.terms.sections.rules_of_engagement.title",
-    "value": "1. Regras de Engajamento"
+    "value": "1. Regole di Ingaggio"
   },
   {
     "key": "pages.terms.sections.rules_of_engagement.content",
-    "value": "Plataforma especializada para TCG. Abusos sistémicos resultarão no fim do protocolo."
+    "value": "Piattaforma specializzata per TCG. Abusi sistemici porteranno alla chiusura del protocollo."
   },
   {
     "key": "pages.terms.sections.condition_grading.title",
-    "value": "2. Protocolo de Estado de Cartas"
+    "value": "2. Protocollo Condizione Carte"
   },
   {
     "key": "pages.terms.sections.condition_grading.content",
-    "value": "Classificadas em NM, LP ou MP. Não garantimos estado 'Gem Mint'."
+    "value": "Classificate in NM, LP o MP. Nessuna garanzia 'Gem Mint'."
   },
   {
     "key": "pages.terms.sections.inventory_availability.title",
-    "value": "3. Integridade de Inventário"
+    "value": "3. Integrità Inventario"
   },
   {
     "key": "pages.terms.sections.inventory_availability.content",
-    "value": "Apesar da precisão, podem ocorrer erros de sincro. O El Bulk reserva o direito de cancelar se o item não estiver em vault."
+    "value": "Nonostante la precisione, possibili errori di sincro. El Bulk può annullare se l'articolo non è in vault."
   },
   {
     "key": "pages.terms.sections.order_fulfillment.title",
-    "value": "4. Comms Tácticas"
+    "value": "4. Comms Tattiche"
   },
   {
     "key": "pages.terms.sections.order_fulfillment.content",
-    "value": "Registos preliminares. Confirmação via WhatsApp seguro. Levantamento em loja em 30 dias."
+    "value": "Registrazioni preliminari. Conferma via WhatsApp sicuro. Ritiro store entro 30 giorni."
   },
   {
     "key": "pages.terms.sections.pricing_inventory.title",
-    "value": "5. Dinâmica de Preços"
+    "value": "5. Dinamiche di Prezzo"
   },
   {
     "key": "pages.terms.sections.pricing_inventory.content",
-    "value": "Preços em COP conforme o mercado. Ajustes possíveis antes da confirmação."
+    "value": "Prezzi in COP secondo il mercato. Possibili rettifiche prima della conferma."
   },
   {
     "key": "pages.terms.sections.bulk_submissions.title",
-    "value": "6. Liquidação de Bulk"
+    "value": "6. Liquidazione Bulk"
   },
   {
     "key": "pages.terms.sections.bulk_submissions.content",
-    "value": "Devem cumprir nossos padrões. Não aceitamos 'Danificados' a preço total. Inspeção física obrigatória."
+    "value": "Deve rispettare i nostri standard. No 'Danneggiati' a prezzo pieno. Ispezione fisica richiesta."
   },
   {
     "key": "pages.terms.sections.user_conduct.title",
-    "value": "7. Protocolos de Utilizador"
+    "value": "7. Protocolli Utente"
   },
   {
     "key": "pages.terms.sections.user_conduct.content",
-    "value": "Responsável pelas tuas credenciais. Mantém conduta profissional com os operativos El Bulk."
+    "value": "Responsabile delle credenziali. Comportamento professionale con gli operativi El Bulk."
   },
   {
     "key": "pages.terms.sections.limits_of_liability.title",
-    "value": "8. Limites de Responsabilidade"
+    "value": "8. Limiti di Responsabilità"
   },
   {
     "key": "pages.terms.sections.limits_of_liability.content",
-    "value": "O El Bulk não é responsável por perdas após entrega a transportadoras. Risco passa para o destinatário."
+    "value": "Nessuna responsabilità dopo consegna a corrieri terzi. Rischio al destinatario alla consegna."
   },
   {
     "key": "pages.cart.drawer.title",
-    "value": "TEU CARRINHO"
+    "value": "TUO CARRELLO"
   },
   {
     "key": "pages.cart.drawer.empty_msg",
-    "value": "Teu carrinho está vazio. Vai procurar cartas."
+    "value": "Il carrello è vuoto. Cerca delle carte."
   },
   {
     "key": "pages.cart.drawer.clear",
-    "value": "LIMPAR"
+    "value": "SVUOTA"
   },
   {
     "key": "pages.cart.drawer.confirm_clear",
-    "value": "Tens a certeza que queres limpar o carrinho?"
+    "value": "Svuotare il carrello?"
   },
   {
     "key": "pages.cart.drawer.remove_tooltip",
-    "value": "Remover"
+    "value": "Rimuovi"
   },
   {
     "key": "pages.cart.drawer.delete_perm_tooltip",
-    "value": "Eliminar permanentemente"
+    "value": "Elimina definitivamente"
   },
   {
     "key": "pages.cart.drawer.total",
-    "value": "TOTAL"
+    "value": "TOTALE"
   },
   {
     "key": "pages.cart.drawer.checkout_btn",
-    "value": "PROCEDER AO PAGAMENTO →"
+    "value": "PROCEDI AL PAGAMENTO →"
   },
   {
     "key": "pages.cart.drawer.checkout_notice",
-    "value": "Revê o teu pedido e completa os dados de envio."
+    "value": "Controlla l'ordine e i dati di spedizione."
   },
   {
     "key": "pages.cart.drawer.removed_items",
-    "value": "Itens Removidos"
+    "value": "Articoli Rimossi"
   },
   {
     "key": "pages.cart.drawer.restore",
-    "value": "Restaurar"
+    "value": "Ripristina"
   },
   {
     "key": "pages.home.hero.subtitle",
-    "value": "TUA LOJA TCG LOCAL"
+    "value": "IL TUO SHOP TCG LOCALE"
   },
   {
     "key": "pages.home.hero.title_refined",
-    "value": "EL BULK / AS CARTAS QUE OUTROS IGNORARAM."
+    "value": "EL BULK / LE CARTE CHE ALTRI HANNO PERSO."
   },
   {
     "key": "pages.home.hero.description",
-    "value": "A caixa de sapatos onde guardamos o material bom. Singles, selado e acessórios."
+    "value": "La scatola di scarpe dove teniamo le cose buone. Singole, sigillato e accessori."
   },
   {
     "key": "pages.home.hero.description_refined",
-    "value": "As peças essenciais que outros tratam como lixo. Curamos o comum e o impossível de achar."
+    "value": "I pezzi essenziali che altri considerano scarti. Curiamo le comuni e le introvabili."
   },
   {
     "key": "pages.home.hero.search_placeholder",
-    "value": "Encontra as cartas que todos os outros perderam..."
+    "value": "Trova le carte che gli altri hanno perso..."
   },
   {
     "key": "pages.home.hero.browse_singles",
-    "value": "VER SINGLES"
+    "value": "VEDI LE SINGOLE"
   },
   {
     "key": "pages.home.hero.sell_bulk",
-    "value": "VENDE TEU BULK →"
+    "value": "VENDI IL TUO BULK →"
   },
   {
     "key": "pages.home.sections.view_all",
-    "value": "VER TUDO →"
+    "value": "VEDI TUTTO →"
   },
   {
     "key": "pages.home.sections.empty",
-    "value": "LOJA ESTÁ VAZIA"
+    "value": "LO STORE È VUOTO"
   },
   {
     "key": "pages.home.sections.got_bulk",
-    "value": "TENS BULK?"
+    "value": "HAI DEL BULK?"
   },
   {
     "key": "pages.home.sections.bulk_cta_text",
-    "value": "Compramos comuns, uncommons e raras bulk. Embala, traz, recebe dinheiro. Sem marcação."
+    "value": "Compriamo comuni, non comuni e rari bulk. Scatola, porta, incassa. Senza appuntamento."
   },
   {
     "key": "pages.home.sections.see_bulk_prices",
-    "value": "VER PREÇOS DE BULK"
+    "value": "PREZZI BULK"
   },
   {
     "key": "pages.layout.footer.slogan",
-    "value": "Compramos bulk. Vendemos singles. Amamos o cartão."
+    "value": "Compriamo bulk. Vendiamo singole. Amiamo il cartone."
   },
   {
     "key": "pages.home.bounties.urgently_needed",
-    "value": "Necessário Urgente"
+    "value": "Richiesto Urgente"
   },
   {
     "key": "pages.bulk.page.title",
-    "value": "TRAZ O TEU BULK"
+    "value": "PORTA IL TUO BULK"
   },
   {
     "key": "pages.bulk.page.subtitle",
-    "value": "Tens caixas de cartas velhas a ganhar pó? Nós ficamos com elas e damos-te dinheiro. Sem marcação."
+    "value": "Hai scatole di vecchie carte a prender polvere? Te le togliamo noi e ti diamo cash. Senza appuntamento."
   },
   {
     "key": "pages.bulk.intro.we_buy",
-    "value": "COMPRAMOS"
+    "value": "COMPRIAMO"
   },
   {
     "key": "pages.bulk.tiers.common.label",
-    "value": "COMUNS E UNCOMMONS BULK"
+    "value": "COMUNI & UNCO BULK"
   },
   {
     "key": "pages.bulk.tiers.common.price",
-    "value": "$20.000 COP por 1.000"
+    "value": "$20.000 COP ogni 1.000"
   },
   {
     "key": "pages.bulk.tiers.common.desc",
-    "value": "Qualquer estado ou set. Ordenado ou não. Aceitamos tudo."
+    "value": "Qualsiasi stato o set. Ordinato o no. Prendiamo tutto."
   },
   {
     "key": "pages.bulk.tiers.rare.label",
-    "value": "RARAS E MÍTICAS BULK"
+    "value": "RARE & MITICHE BULK"
   },
   {
     "key": "pages.bulk.tiers.rare.price",
-    "value": "$1.000 COP por carta"
+    "value": "$1.000 COP a carta"
   },
   {
     "key": "pages.bulk.tiers.rare.desc",
-    "value": "Apenas NM/LP. Raras bulk de Standard e anteriores."
+    "value": "Solo NM/LP. Rare bulk Standard e precedenti."
   },
   {
     "key": "pages.bulk.tiers.junk.label",
-    "value": "LOTES DE RARAS JUNK"
+    "value": "LOTTI RARE JUNK"
   },
   {
     "key": "pages.bulk.tiers.junk.price",
-    "value": "$12.000 COP por 100"
+    "value": "$12.000 COP ogni 100"
   },
   {
     "key": "pages.bulk.tiers.junk.desc",
-    "value": "Raras MP-DMG, ou comuns/uncommons em mau estado."
+    "value": "Rare MP-DMG, o comuni/unco in pessimo stato."
   },
   {
     "key": "pages.bulk.tiers.foil.label",
-    "value": "COMUNES E UNCOMMONS FOIL"
+    "value": "COMUNI & UNCO FOIL"
   },
   {
     "key": "pages.bulk.tiers.foil.price",
-    "value": "$40.000 COP por 500"
+    "value": "$40.000 COP ogni 500"
   },
   {
     "key": "pages.bulk.tiers.foil.desc",
-    "value": "Qualquer estado. Bulk foil ordenado à parte."
+    "value": "Qualsiasi stato. Bulk foil ordinato a parte."
   },
   {
     "key": "pages.bulk.accepts.0",
-    "value": "Magic: The Gathering (todos os sets)"
+    "value": "Magic: The Gathering (tutti i set)"
   },
   {
     "key": "pages.bulk.accepts.1",
-    "value": "Pokémon TCG (apenas inglês)"
+    "value": "Pokémon TCG (solo inglese)"
   },
   {
     "key": "pages.bulk.accepts.2",
@@ -1301,335 +1301,335 @@
   },
   {
     "key": "pages.bulk.accepts.4",
-    "value": "Terrenos básicos ($4.000 COP por 200)"
+    "value": "Terre base ($4.000 COP ogni 200)"
   },
   {
     "key": "pages.bulk.accepts.5",
-    "value": "Tokens e emblemas ($0 valor mas aceitamos)"
+    "value": "Token e emblemi ($0 ma li prendiamo)"
   },
   {
     "key": "pages.bulk.sections.prices",
-    "value": "PREÇOS DE BULK ATUAIS"
+    "value": "PREZZI BULK ATTUALI"
   },
   {
     "key": "pages.bulk.sections.accept",
-    "value": "ACEITAMOS COM GOSTO"
+    "value": "ACCETTIAMO"
   },
   {
     "key": "pages.bulk.sections.how_it_works",
-    "value": "COMO FUNCIONA"
+    "value": "COME FUNZIONA"
   },
   {
     "key": "pages.bulk.cta.questions",
-    "value": "TENS QUESTÕES?"
+    "value": "DOMANDE?"
   },
   {
     "key": "pages.bulk.cta.email_btn",
-    "value": "EMAIL SOBRE TEU BULK"
+    "value": "MAIL PER IL TUO BULK"
   },
   {
     "key": "pages.bulk.sections.price_disclaimer",
-    "value": "⚠ Preços atualizados. Lotes grandes (1000+) bónus possíveis. Dinheiro ou crédito (+25%)."
+    "value": "⚠ Prezzi aggiornati. Lotti grandi (1000+) bonus possibili. Cash o credito (+25%)."
   },
   {
     "key": "pages.bulk.how.1.title",
-    "value": "TRAZ AS TUAS CARTAS"
+    "value": "PORTA LE CARTE"
   },
   {
     "key": "pages.bulk.how.1.desc",
-    "value": "Vem com o teu bulk. Em caixas ou sacos – não importa."
+    "value": "Vieni col tuo bulk. Scatole o buste – non importa."
   },
   {
     "key": "pages.bulk.how.2.title",
-    "value": "CONTAGEM E ESTADO"
+    "value": "CONTEGGIO & GRADING"
   },
   {
     "key": "pages.bulk.how.2.desc",
-    "value": "Contagem rápida. Para lotes grandes pedimos um dia."
+    "value": "Conteggio rapido. Possibile attesa per grandi lotti."
   },
   {
     "key": "pages.bulk.how.3.title",
-    "value": "RECEBE OFERTA"
+    "value": "OFFERTA"
   },
   {
     "key": "pages.bulk.how.3.desc",
-    "value": "Damos oferta em dinheiro na hora. Sem pressão."
+    "value": "Offerta cash immediata. Nessuna pressione."
   },
   {
     "key": "pages.bulk.how.4.title",
-    "value": "RECEBE O DINHEIRO"
+    "value": "INCASSA"
   },
   {
     "key": "pages.bulk.how.4.desc",
-    "value": "Aceita e sai com o dinheiro (ou crédito extra). Simples."
+    "value": "Accetta e vai via col cash. Semplice."
   },
   {
     "key": "pages.sealed.landing.category",
-    "value": "CATEGORIA // SELADO"
+    "value": "CATEGORIA // SIGILLATO"
   },
   {
     "key": "pages.sealed.landing.title.main",
-    "value": "CAIXAS E"
+    "value": "BOX &"
   },
   {
     "key": "pages.sealed.landing.title.accent",
-    "value": "PACKS"
+    "value": "BUSTINE"
   },
   {
     "key": "pages.sealed.landing.desc",
-    "value": "De booster boxes a collector packs, explora o nosso vault."
+    "value": "Dai box alle bustine collector, esplora la nostra vault."
   },
   {
     "key": "pages.sealed.landing.view_all",
-    "value": "VER TODO O SELADO →"
+    "value": "VEDI TUTTO IL SIGILLATO →"
   },
   {
     "key": "pages.sealed.landing.no_featured",
-    "value": "SEM SELADO EM DESTAQUE"
+    "value": "NESSUN SIGILLATO IN EVIDENZA"
   },
   {
     "key": "pages.sealed.landing.featured.main",
-    "value": "SELADO"
+    "value": "SIGILLATO"
   },
   {
     "key": "pages.sealed.landing.featured.accent",
-    "value": "DESTAQUE"
+    "value": "IN EVIDENZA"
   },
   {
     "key": "pages.accessories.title",
-    "value": "ACESSÓRIOS"
+    "value": "ACCESSORI"
   },
   {
     "key": "pages.accessories.subtitle",
-    "value": "Sleeves, pastas, deck boxes, playmats e mais."
+    "value": "Protezioni, album, deck box, tappetini e altro."
   },
   {
     "key": "components.client_request_modal.title",
-    "value": "Pedir uma carta"
+    "value": "Richiedi una carta"
   },
   {
     "key": "components.client_request_modal.desc",
-    "value": "Não encontras? Diz-nos e começamos a caça!"
+    "value": "Non trovi qualcosa? Dicci i dettagli, lanciamo la caccia!"
   },
   {
     "key": "components.client_request_modal.form.name_label",
-    "value": "Teu Nome *"
+    "value": "Tuo Nome *"
   },
   {
     "key": "components.client_request_modal.form.name_placeholder",
-    "value": "João Silva"
+    "value": "Mario Rossi"
   },
   {
     "key": "components.client_request_modal.form.contact_label",
-    "value": "Info de Contacto *"
+    "value": "Info Contatto *"
   },
   {
     "key": "components.client_request_modal.form.contact_placeholder",
-    "value": "Telemóvel ou Instagram"
+    "value": "Tel o Instagram"
   },
   {
     "key": "components.client_request_modal.form.card_label",
-    "value": "Nome da Carta *"
+    "value": "Nome Carta *"
   },
   {
     "key": "components.client_request_modal.form.card_placeholder",
-    "value": "ex: Sheoldred, o Apocalipse"
+    "value": "es: Sheoldred, l'Apocalisse"
   },
   {
     "key": "components.client_request_modal.form.set_label",
-    "value": "Set Específico (Opcional)"
+    "value": "Set Specifico (Opzionale)"
   },
   {
     "key": "components.client_request_modal.form.set_placeholder",
-    "value": "ex: Dominaria Unida"
+    "value": "es: Dominaria Unita"
   },
   {
     "key": "components.client_request_modal.form.details_label",
-    "value": "Detalhes Adicionais"
+    "value": "Dettagli Aggiuntivi"
   },
   {
     "key": "components.client_request_modal.form.details_placeholder",
-    "value": "Estado, foil, idioma, etc..."
+    "value": "Condizione, foil, lingua, ecc..."
   },
   {
     "key": "components.client_request_modal.form.submit_btn",
-    "value": "LANÇAR MISSÃO"
+    "value": "LANCIA MISSIONE"
   },
   {
     "key": "components.client_request_modal.login_prompt",
-    "value": "para preencher teus dados e seguir o estado."
+    "value": "per compilare i dati e seguire lo stato."
   },
   {
     "key": "components.cancellation_modal.title",
-    "value": "Descartar Pedido"
+    "value": "Annulla Richiesta"
   },
   {
     "key": "components.cancellation_modal.desc",
-    "value": "Vais **descartar** o pedido de {card}. Por favor diz porquê."
+    "value": "Stai per **annullare** la richiesta per {card}. Dicci perché."
   },
   {
     "key": "components.cancellation_modal.reason_label",
-    "value": "Razão"
+    "value": "Ragione"
   },
   {
     "key": "components.cancellation_modal.details_label",
-    "value": "Detalhes (Opcional)"
+    "value": "Dettagli (Opzionale)"
   },
   {
     "key": "components.cancellation_modal.details_placeholder",
-    "value": "Algo mais que queiras dizer..."
+    "value": "Altro da aggiungere..."
   },
   {
     "key": "components.cancellation_modal.back_button",
-    "value": "Voltar"
+    "value": "Indietro"
   },
   {
     "key": "components.cancellation_modal.confirm_button",
-    "value": "Confirmar Descarte"
+    "value": "Conferma Annullamento"
   },
   {
     "key": "components.cancellation_modal.submitting",
-    "value": "A descartar..."
+    "value": "Annullamento..."
   },
   {
     "key": "components.cancellation_modal.reasons.found",
-    "value": "Encontrei noutro lado"
+    "value": "Trovata altrove"
   },
   {
     "key": "components.cancellation_modal.reasons.not_needed",
-    "value": "Já não preciso"
+    "value": "Non più necessaria"
   },
   {
     "key": "components.cancellation_modal.reasons.price",
-    "value": "Preço muito alto"
+    "value": "Prezzo troppo alto"
   },
   {
     "key": "components.cancellation_modal.reasons.mind",
-    "value": "Mudei de ideias"
+    "value": "Cambiato idea"
   },
   {
     "key": "components.cancellation_modal.reasons.other",
-    "value": "Outro"
+    "value": "Altro"
   },
   {
     "key": "components.admin.csv_import.title",
-    "value": "IMPORTADOR DE MANIFESTO"
+    "value": "IMPORTATORE MANIFESTO"
   },
   {
     "key": "components.admin.csv_import.subtitle",
-    "value": "Adição bulk ao manifesto de inventário"
+    "value": "Aggiunta bulk al manifesto d'inventario"
   },
   {
     "key": "components.admin.csv_import.drop_zone.title",
-    "value": "Larga Manifesto Aqui"
+    "value": "Rilascia Manifesto Qui"
   },
   {
     "key": "components.admin.csv_import.drop_zone.subtitle",
-    "value": "ou clica para explorar arquivos locais"
+    "value": "o clicca per sfogliare i tuoi archivi"
   },
   {
     "key": "components.admin.csv_import.drop_zone.button",
-    "value": "SELECIONAR MANIFESTO MESTRE"
+    "value": "SELEZIONA MANIFESTO MASTER"
   },
   {
     "key": "components.admin.csv_import.config.title",
-    "value": "Configuração do Sistema"
+    "value": "Configurazione Sistema"
   },
   {
     "key": "components.admin.csv_import.config.destination_label",
-    "value": "Destino do Inventário"
+    "value": "Destinazione Inventario"
   },
   {
     "key": "components.admin.csv_import.config.dest_singles",
-    "value": "Singles Individuais"
+    "value": "Singole Individuali"
   },
   {
     "key": "components.admin.csv_import.config.dest_deck",
-    "value": "Deck Curado"
+    "value": "Mazzo Curato"
   },
   {
     "key": "components.admin.csv_import.config.deck_name_label",
-    "value": "Identificador de Manifesto (Mazo)"
+    "value": "Identificativo Manifesto (Nome Mazzo)"
   },
   {
     "key": "components.admin.csv_import.config.deck_name_placeholder",
-    "value": "ex: MONO BLACK CONTROL"
+    "value": "es: MONO BLACK CONTROL"
   },
   {
     "key": "components.admin.csv_import.config.tcg_framework",
-    "value": "Estrutura TCG"
+    "value": "Framework TCG"
   },
   {
     "key": "components.admin.csv_import.config.vault_allocation",
-    "value": "Alocação de Bóveda"
+    "value": "Allocazione Vault"
   },
   {
     "key": "components.admin.csv_import.config.storage_placeholder",
-    "value": "Selecionar Localização"
+    "value": "Seleziona Luogo"
   },
   {
     "key": "components.admin.csv_import.config.language_label",
-    "value": "Idioma Principal"
+    "value": "Lingua principale"
   },
   {
     "key": "components.admin.csv_import.config.price_source_label",
-    "value": "Fonte de Preço Padrão"
+    "value": "Fonte prezzo predefinita"
   },
   {
     "key": "components.admin.csv_import.config.tagging_label",
-    "value": "Marcação de Metadados (Bulk)"
+    "value": "Tagging metadati (Bulk)"
   },
   {
     "key": "components.admin.csv_import.config.no_collections",
-    "value": "Nenhuma coleção definida"
+    "value": "Nessuna collezione definita"
   },
   {
     "key": "components.admin.csv_import.mapping.title",
-    "value": "Mapeamento de Topologia de Colunas"
+    "value": "Mappatura topologia colonne"
   },
   {
     "key": "components.admin.csv_import.actions.return",
-    "value": "Voltar"
+    "value": "Indietro"
   },
   {
     "key": "components.admin.csv_import.actions.generate",
-    "value": "Gerar Manifesto"
+    "value": "Genera manifesto"
   },
   {
     "key": "components.admin.csv_import.preview.enrich_loading",
-    "value": "SONDANDO OS ARQUIVOS..."
+    "value": "SCRUTANDO GLI ARCHIVI..."
   },
   {
     "key": "components.admin.csv_import.preview.enrich_button",
-    "value": "REVELAR CONHECIMENTO OCULTO"
+    "value": "RIVELA CONOSCENZA NASCOSTA"
   },
   {
     "key": "components.admin.csv_import.preview.complete",
-    "value": "Completo"
+    "value": "Completato"
   },
   {
     "key": "components.admin.csv_import.preview.found_count",
-    "value": "Encontradas {count} Assinaturas"
+    "value": "Trovate {count} firme"
   },
   {
     "key": "components.admin.csv_import.preview.table.art",
-    "value": "Arte"
+    "value": "Immagine"
   },
   {
     "key": "components.admin.csv_import.preview.table.info",
-    "value": "Info do Produto"
+    "value": "Info Prodotto"
   },
   {
     "key": "components.admin.csv_import.preview.table.lang",
-    "value": "Idiom."
+    "value": "Lingua"
   },
   {
     "key": "components.admin.csv_import.preview.table.cond",
-    "value": "Est."
+    "value": "Cond."
   },
   {
     "key": "components.admin.csv_import.preview.table.treatment",
-    "value": "Tratamento"
+    "value": "Trattamento"
   },
   {
     "key": "components.admin.csv_import.preview.table.vault",
@@ -1637,27 +1637,27 @@
   },
   {
     "key": "components.admin.csv_import.preview.table.collections",
-    "value": "Coleções"
+    "value": "Collezioni"
   },
   {
     "key": "components.admin.csv_import.preview.table.reference",
-    "value": "Referência"
+    "value": "Riferimento"
   },
   {
     "key": "components.admin.csv_import.preview.table.qty",
-    "value": "Qtd"
+    "value": "Qtà"
   },
   {
     "key": "components.admin.csv_import.preview.scanning",
-    "value": "A ESCANEAR..."
+    "value": "SCANSIONE..."
   },
   {
     "key": "components.admin.csv_import.preview.placeholders.name",
-    "value": "Chave de Assinatura"
+    "value": "Chiave firma"
   },
   {
     "key": "components.admin.csv_import.preview.placeholders.uuid",
-    "value": "UUID do Sistema"
+    "value": "UUID di sistema"
   },
   {
     "key": "components.admin.csv_import.preview.placeholders.set",
@@ -1669,103 +1669,103 @@
   },
   {
     "key": "components.admin.csv_import.importing.title",
-    "value": "ABASTECENDO O VAULT..."
+    "value": "RIFORNENDO IL VAULT..."
   },
   {
     "key": "components.admin.csv_import.importing.subtitle",
-    "value": "\"Desembalando carregamento e organizando arquivos\""
+    "value": "\"Disimballaggio carico e organizzazione archivi\""
   },
   {
     "key": "components.admin.csv_import.importing.status",
-    "value": "Sistema a processar Manifesto de {count} Registos"
+    "value": "Il sistema elabora il manifesto di {count} record"
   },
   {
     "key": "components.admin.csv_import.summary.title",
-    "value": "Manifesto com Sucesso!"
+    "value": "Manifesto riuscito!"
   },
   {
     "key": "components.admin.csv_import.summary.success_msg",
-    "value": "Arquivadas com sucesso {count} unidades SKU."
+    "value": "Archiviate con successo {count} unità SKU."
   },
   {
     "key": "components.admin.csv_import.summary.return_button",
-    "value": "Voltar ao Deck de Comando"
+    "value": "Torna al Command Deck"
   },
   {
     "key": "components.admin.csv_import.actions.return_to_topology",
-    "value": "Voltar à Topologia"
+    "value": "Torna alla topologia"
   },
   {
     "key": "components.admin.csv_import.actions.finalize",
-    "value": "⚡ FINALIZAR CARREGAMENTO"
+    "value": "⚡ FINALIZZA CARICO"
   },
   {
     "key": "components.deck_contents.title",
-    "value": "Conteúdo do Deck"
+    "value": "Contenuto Mazzo"
   },
   {
     "key": "components.deck_contents.expand_all",
-    "value": "Expandir Tudo"
+    "value": "Espandi tutto"
   },
   {
     "key": "components.deck_contents.collapse_all",
-    "value": "Recolher Tudo"
+    "value": "Comprimi tutto"
   },
   {
     "key": "pages.notices.list.header_main",
-    "value": "AVISOS &"
+    "value": "AVVISI &"
   },
   {
     "key": "pages.notices.list.header_accent",
-    "value": "NOTÍCIAS"
+    "value": "NOVITÀ"
   },
   {
     "key": "pages.notices.list.subtitle",
-    "value": "Últimas notícias, spoilers e reviews da loja."
+    "value": "Ultime notizie, spoiler e recensioni dallo store."
   },
   {
     "key": "pages.notices.list.total_count",
-    "value": "{count} POSTS NO TOTAL"
+    "value": "{count} POST TOTALI"
   },
   {
     "key": "pages.notices.list.empty_title",
-    "value": "SEM AVISOS PUBLICADOS"
+    "value": "NESSUN AVVISO PUBBLICATO"
   },
   {
     "key": "pages.notices.list.empty_subtitle",
-    "value": "Volta em breve para novidades."
+    "value": "Torna presto per le novità."
   },
   {
     "key": "pages.notices.list.open_btn",
-    "value": "ABRIR AVISO →"
+    "value": "APRI AVVISO →"
   },
   {
     "key": "pages.notices.detail.back_btn",
-    "value": "← VOLTAR PARA AVISOS"
+    "value": "← TORNA AGLI AVVISI"
   },
   {
     "key": "pages.notices.detail.published_on",
-    "value": "Publicado em {date}"
+    "value": "Pubblicato il {date}"
   },
   {
     "key": "pages.notices.detail.all_notices_btn",
-    "value": "← TODOS OS AVISOS"
+    "value": "← TUTTI GLI AVVISI"
   },
   {
     "key": "pages.notices.detail.share_label",
-    "value": "PARTILHAR:"
+    "value": "CONDIVIDI:"
   },
   {
     "key": "pages.notices.detail.sidebar.title",
-    "value": "LOJA EL BULK"
+    "value": "STORE EL BULK"
   },
   {
     "key": "pages.notices.detail.sidebar.desc",
-    "value": "A caixa de sapatos onde guardamos o material bom. Singles, selado e acessórios. Visita-nos!"
+    "value": "La scatola di scarpe dove teniamo le cose buone. Singole, sigillato e accessori. Visitateci!"
   },
   {
     "key": "pages.notices.detail.sidebar.shop_btn",
-    "value": "COMPRAR SINGLES"
+    "value": "SHOP SINGOLE"
   },
   {
     "key": "pages.notices.detail.sidebar.newsletter_title",
@@ -1773,67 +1773,67 @@
   },
   {
     "key": "pages.notices.detail.sidebar.newsletter_desc",
-    "value": "Mantém-te atualizado com notícias e spoilers."
+    "value": "Resta aggiornato su news e spoiler."
   },
   {
     "key": "pages.notices.section.title",
-    "value": "AVISOS / NOTÍCIAS"
+    "value": "AVVISI / NEWS"
   },
   {
     "key": "pages.notices.actions.view_all",
-    "value": "VER TUDO →"
+    "value": "VEDI TUTTO →"
   },
   {
     "key": "pages.notices.actions.read_more",
-    "value": "LER MAIS"
+    "value": "LEGGI DI PIÙ"
   },
   {
     "key": "pages.notices.actions.show_more",
-    "value": "MOSTRAR POSTS ANTERIORES"
+    "value": "MOSTRA ALTRI POST PRECEDENTI"
   },
   {
     "key": "components.search.placeholder",
-    "value": "Procurar cartas, sets ou produtos..."
+    "value": "Cerca carte, set o prodotti..."
   },
   {
     "key": "components.search.status.manual_price",
-    "value": "PREÇO MANUAL"
+    "value": "PREZZO MANUALE"
   },
   {
     "key": "components.search.status.no_set",
-    "value": "Sem Set"
+    "value": "Nessun Set"
   },
   {
     "key": "components.search.status.in_stock",
-    "value": "{count} EM STOCK"
+    "value": "{count} IN STOCK"
   },
   {
     "key": "components.search.status.out_of_stock",
-    "value": "ESGOTADO"
+    "value": "ESAURITO"
   },
   {
     "key": "components.search.actions.add",
-    "value": "+ ADICIONAR"
+    "value": "+ AGGIUNGI"
   },
   {
     "key": "components.search.actions.sold_out",
-    "value": "ESGOTADO"
+    "value": "ESAURITO"
   },
   {
     "key": "components.search.status.no_results",
-    "value": "Nenhum produto para \"{query}\""
+    "value": "Nessun prodotto per \"{query}\""
   },
   {
     "key": "components.search.status.top_results",
-    "value": "A mostrar melhores resultados"
+    "value": "Mostrando i risultati principali"
   },
   {
     "key": "pages.checkout.page.title",
-    "value": "FINALIZAR COMPRA"
+    "value": "FINALIZZA ACQUISTO"
   },
   {
     "key": "pages.checkout.form.contact_info",
-    "value": "INFORMAÇÃO DE CONTACTO"
+    "value": "INFO DI CONTATTO"
   },
   {
     "key": "pages.checkout.form.first_name",
@@ -1841,7 +1841,7 @@
   },
   {
     "key": "pages.checkout.form.last_name",
-    "value": "APELIDO"
+    "value": "COGNOME"
   },
   {
     "key": "pages.checkout.form.phone",
@@ -1853,131 +1853,131 @@
   },
   {
     "key": "pages.checkout.form.id_number",
-    "value": "NÚMERO DE ID"
+    "value": "N° IDENTITÀ"
   },
   {
     "key": "pages.checkout.form.address",
-    "value": "MORADA"
+    "value": "INDIRIZZO"
   },
   {
     "key": "pages.checkout.form.payment_method",
-    "value": "MÉTODO DE PAGAMENTO"
+    "value": "METODO DI PAGAMENTO"
   },
   {
     "key": "pages.checkout.form.notes",
-    "value": "NOTAS (OPCIONAL)"
+    "value": "NOTE (OPZIONALE)"
   },
   {
     "key": "pages.checkout.summary.title",
-    "value": "RESUMO DO PEDIDO"
+    "value": "RIEPILOGO ORDINE"
   },
   {
     "key": "pages.checkout.summary.confirm_btn",
-    "value": "CONFIRMAR PEDIDO →"
+    "value": "CONFERMA ORDINE →"
   },
   {
     "key": "pages.checkout.summary.processing",
-    "value": "A PROCESSAR..."
+    "value": "ELABORAZIONE..."
   },
   {
     "key": "pages.checkout.summary.footer_note",
-    "value": "Após confirmação, um consultor entrará em contacto."
+    "value": "Dopo la conferma, un consulente ti contatterà."
   },
   {
     "key": "pages.admin.notices.title",
-    "value": "AVISOS (BLOG/NOTÍCIAS)"
+    "value": "AVVISI (BLOG/NEWS)"
   },
   {
     "key": "pages.admin.notices.subtitle",
-    "value": "Gere atualizações e posts da loja."
+    "value": "Gestisci aggiornamenti e post dello store."
   },
   {
     "key": "pages.admin.tcg_registry.title",
-    "value": "Sistemas Registados"
+    "value": "Sistemi registrati"
   },
   {
     "key": "pages.admin.tcg_registry.subtitle",
-    "value": "Ativa ou desativa sistemas de jogo do armazém"
+    "value": "Attiva o disattiva sistemi gioco dal magazzino"
   },
   {
     "key": "pages.admin.tcg_registry.loading",
-    "value": "DESEMBALANDO REGISTO TCG..."
+    "value": "APRENDO IL REGISTRO TCG..."
   },
   {
     "key": "pages.admin.tcg_registry.buttons.register_new",
-    "value": "＋ REGISTAR NOVO TCG"
+    "value": "＋ REGISTRA NUOVO TCG"
   },
   {
     "key": "pages.admin.tcg_registry.form.slug_label",
-    "value": "Slug Interno (URL ID)"
+    "value": "Slug interno (ID URL)"
   },
   {
     "key": "pages.admin.tcg_registry.form.display_name",
-    "value": "Nome a Mostrar"
+    "value": "Nome visualizzato"
   },
   {
     "key": "pages.admin.tcg_registry.buttons.confirm_registration",
-    "value": "CONFIRMAR REGISTO DE SISTEMA"
+    "value": "CONFERMA REGISTRAZIONE SISTEMA"
   },
   {
     "key": "pages.admin.tcg_registry.buttons.save",
-    "value": "GUARDAR"
+    "value": "SALVA"
   },
   {
     "key": "pages.admin.tcg_registry.buttons.cancel",
-    "value": "CANCELAR"
+    "value": "ANNULLA"
   },
   {
     "key": "pages.admin.tcg_registry.no_systems",
-    "value": "Sem sistemas registados"
+    "value": "Nessun sistema registrato"
   },
   {
     "key": "components.admin.product.storage.quick_add",
-    "value": "Adicionar Localização Rápido"
+    "value": "Aggiunta rapida luogo"
   },
   {
     "key": "components.admin.product.storage.title",
-    "value": "LOCALIZAÇÕES DE STOCK"
+    "value": "LUOGHI DI STOCCAGGIO"
   },
   {
     "key": "components.admin.product.storage.empty",
-    "value": "Sem atribuições de stock ainda."
+    "value": "Ancora nessuna assegnazione luogo."
   },
   {
     "key": "components.admin.product.storage.select_placeholder",
-    "value": "-- Selecionar Local --"
+    "value": "-- Seleziona luogo --"
   },
   {
     "key": "pages.admin.notices.create_btn",
-    "value": "CRIAR NOVO AVISO"
+    "value": "CREA NUOVO AVVISO"
   },
   {
     "key": "pages.admin.notices.confirm_delete",
-    "value": "Tens a certeza que queres eliminar este aviso?"
+    "value": "Vuoi davvero eliminare questo avviso?"
   },
   {
     "key": "pages.admin.notices.error_delete",
-    "value": "Falha ao eliminar aviso"
+    "value": "Eliminazione avviso fallita"
   },
   {
     "key": "pages.admin.notices.status.published",
-    "value": "PUBLICADO"
+    "value": "PUBBLICATO"
   },
   {
     "key": "pages.admin.notices.status.draft",
-    "value": "RASCUNHO"
+    "value": "BOZZA"
   },
   {
     "key": "pages.admin.notices.actions.view",
-    "value": "VER"
+    "value": "VEDI"
   },
   {
     "key": "pages.admin.notices.actions.edit",
-    "value": "EDITAR"
+    "value": "MODIFICA"
   },
   {
     "key": "pages.admin.notices.actions.delete",
-    "value": "ELIMINAR"
+    "value": "ELIMINA"
   },
   {
     "key": "pages.admin.notices.table.date",
@@ -1985,7 +1985,7 @@
   },
   {
     "key": "pages.admin.notices.table.title",
-    "value": "Título"
+    "value": "Titolo"
   },
   {
     "key": "pages.admin.notices.table.slug",
@@ -1993,71 +1993,71 @@
   },
   {
     "key": "pages.admin.notices.table.status",
-    "value": "Estado"
+    "value": "Stato"
   },
   {
     "key": "pages.admin.notices.table.actions",
-    "value": "Ações"
+    "value": "Azioni"
   },
   {
     "key": "pages.admin.notices.table.empty",
-    "value": "Sem avisos. Cria o teu primeiro!"
+    "value": "Nessun avviso. Crea il primo!"
   },
   {
     "key": "pages.admin.notices.editor.loading",
-    "value": "Desembalando Aviso..."
+    "value": "Caricamento avviso..."
   },
   {
     "key": "pages.admin.notices.editor.title_edit",
-    "value": "EDITAR AVISO"
+    "value": "MODIFICA AVVISO"
   },
   {
     "key": "pages.admin.notices.editor.title_new",
-    "value": "NOVO AVISO"
+    "value": "NUOVO AVVISO"
   },
   {
     "key": "pages.admin.notices.editor.subtitle",
-    "value": "Compõe tua notícia usando HTML puro."
+    "value": "Componi il tuo update in puro HTML."
   },
   {
     "key": "pages.admin.notices.editor.error_save",
-    "value": "Falha ao guardar aviso"
+    "value": "Salvataggio avviso fallito"
   },
   {
     "key": "pages.admin.notices.editor.form.title_label",
-    "value": "Título do Post"
+    "value": "Titolo Post"
   },
   {
     "key": "pages.admin.notices.editor.form.title_placeholder",
-    "value": "EX: CHEGARAM NOVAS SINGLES!"
+    "value": "ES. NUOVE SINGOLE APPENA ARRIVATE!"
   },
   {
     "key": "pages.admin.notices.editor.form.content_label",
-    "value": "Conteúdo HTML"
+    "value": "Contenuto HTML"
   },
   {
     "key": "pages.admin.notices.editor.form.content_placeholder",
-    "value": "<h2>Subtítulo</h2><p>Escreve aqui...</p>"
+    "value": "<h2>Sottotitolo</h2><p>Scrivi qui...</p>"
   },
   {
     "key": "pages.admin.notices.editor.sidebar.settings_title",
-    "value": "Ajustes de Publicação"
+    "value": "Impostazioni pubblicazione"
   },
   {
     "key": "pages.admin.notices.editor.sidebar.slug_label",
-    "value": "Slug de URL"
+    "value": "Slug URL"
   },
   {
     "key": "pages.admin.notices.editor.sidebar.sync_btn",
-    "value": "SINCRONIZAR COM TÍTULO"
+    "value": "SINCRONIZZA CON TITOLO"
   },
   {
     "key": "pages.admin.notices.editor.sidebar.slug_placeholder",
-    "value": "slug-de-url-post"
+    "value": "slug-url-post"
   },
   {
     "key": "pages.admin.notices.editor.sidebar.image_label",
-    "value": "URL de Imagem em Destaque"
+    "value": "URL Immagine Evidenza"
   },
   {
     "key": "pages.admin.notices.editor.sidebar.image_placeholder",
@@ -2065,227 +2065,227 @@
   },
   {
     "key": "pages.admin.notices.editor.sidebar.published_label",
-    "value": "Publicado / Público"
+    "value": "Pubblicato / Pubblico"
   },
   {
     "key": "pages.admin.notices.editor.actions.update",
-    "value": "ATUALIZAR POST"
+    "value": "AGGIORNA POST"
   },
   {
     "key": "pages.admin.notices.editor.actions.publish",
-    "value": "PUBLICAR POST"
+    "value": "PUBBLICA POST"
   },
   {
     "key": "pages.admin.notices.editor.sidebar.help_title",
-    "value": "Ajuda HTML"
+    "value": "Aiuto HTML"
   },
   {
     "key": "pages.admin.notices.editor.sidebar.help_desc",
-    "value": "Podes usar tags HTML padrão como {tags}."
+    "value": "Puoi usare tag HTML standard come {tags}."
   },
   {
     "key": "pages.admin.notices.editor.sidebar.card_preview_label",
-    "value": "Para inserir pré-visualização de carta, usa:"
+    "value": "Per inserire anteprima carta, usa:"
   },
   {
     "key": "pages.admin.clients.details.not_found",
-    "value": "CLIENTE NÃO ENCONTRADO."
+    "value": "CLIENTE NON TROVATO."
   },
   {
     "key": "pages.admin.clients.details.subscriber_badge",
-    "value": "SUBSCRITOR DE NEWSLETTER"
+    "value": "ISCRITTO NEWSLETTER"
   },
   {
     "key": "pages.admin.clients.details.contact_profile",
-    "value": "Perfil de Contacto"
+    "value": "Profilo contatto"
   },
   {
     "key": "pages.admin.clients.details.email_label",
-    "value": "Endereço de Email"
+    "value": "Indirizzo email"
   },
   {
     "key": "pages.admin.clients.details.phone_label",
-    "value": "Nº de Telefone"
+    "value": "N° telefono"
   },
   {
     "key": "pages.admin.clients.details.account_details",
-    "value": "Detalhes da Conta"
+    "value": "Dettagli account"
   },
   {
     "key": "pages.admin.clients.details.id_label",
-    "value": "Documento de Identidade"
+    "value": "Documento Identità"
   },
   {
     "key": "pages.admin.clients.details.address_label",
-    "value": "Morada de Entrega"
+    "value": "Indirizzo consegna"
   },
   {
     "key": "pages.admin.clients.details.general_interaction",
-    "value": "Interação Geral / Sem pedido"
+    "value": "Interazione generale / Senza ordine"
   },
   {
     "key": "pages.admin.clients.details.add_note_btn",
-    "value": "ADICIONAR NOTA"
+    "value": "AGGIUNGI NOTA"
   },
   {
     "key": "pages.admin.clients.details.empty_notes",
-    "value": "Sem entradas no jornal."
+    "value": "Nessuna voce nel diario."
   },
   {
     "key": "pages.admin.clients.details.order_history",
-    "value": "HISTÓRICO DE PEDIDOS"
+    "value": "STORICO ORDINI"
   },
   {
     "key": "pages.admin.clients.details.no_orders",
-    "value": "SEM PEDIDOS ENCONTRADOS."
+    "value": "NESSUN ORDINE TROVATO."
   },
   {
     "key": "pages.admin.clients.details.journal_title",
-    "value": "JORNAL DE INTERAÇÕES"
+    "value": "DIARIO INTERAZIONI"
   },
   {
     "key": "pages.admin.clients.details.note_placeholder",
-    "value": "ADICIONAR NOVA NOTA OU COMENTÁRIO..."
+    "value": "AGGIUNGI NOTA O COMMENTO..."
   },
   {
     "key": "pages.admin.clients.details.order_option",
-    "value": "Sobre o Pedido {number}"
+    "value": "Su Ordine {number}"
   },
   {
     "key": "pages.admin.clients.details.reference_label",
-    "value": "REFERÊNCIA"
+    "value": "RIFERIMENTO"
   },
   {
     "key": "pages.admin.clients.details.summary_title",
-    "value": "RESUMO DE CLIENTE VALIOSO"
+    "value": "RIEPILOGO CLIENTE VALUTATO"
   },
   {
     "key": "pages.admin.clients.details.lifetime_label",
-    "value": "Lifetime"
+    "value": "Totale Vita"
   },
   {
     "key": "pages.admin.clients.details.purchased_label",
-    "value": "Comprado"
+    "value": "Acquistato"
   },
   {
     "key": "pages.admin.clients.details.back_link",
-    "value": "← VOLTAR PARA CLIENTES"
+    "value": "← TORNA AI CLIENTI"
   },
   {
     "key": "pages.admin.clients.details.active_group",
-    "value": "Ativo"
+    "value": "Attivo"
   },
   {
     "key": "pages.admin.clients.details.past_group",
-    "value": "Passado"
+    "value": "Passato"
   },
   {
     "key": "pages.admin.clients.details.no_active_requests",
-    "value": "SEM PEDIDOS ATIVOS."
+    "value": "NESSUNA RICHIESTA ATTIVA."
   },
   {
     "key": "pages.admin.clients.details.no_pending_offers",
-    "value": "SEM OFERTAS PENDENTES."
+    "value": "NESSUNA OFFERTA PENDENTE."
   },
   {
     "key": "pages.admin.clients.details.requests_title",
-    "value": "PEDIDOS DE CLIENTE"
+    "value": "RICHIESTE CLIENTI"
   },
   {
     "key": "pages.admin.clients.details.offers_title",
-    "value": "OFERTAS DE RECOMPENSA"
+    "value": "OFFERTE TAGLIE"
   },
   {
     "key": "pages.admin.bounties.focus_mode",
-    "value": "Modo Foco: Ocultar Resolvidas"
+    "value": "Modalità Focus: Nascondi risolte"
   },
   {
     "key": "pages.admin.bounties.offering_card",
-    "value": "Oferecendo Carta:"
+    "value": "Carta offerta:"
   },
   {
     "key": "pages.admin.bounties.resolve_btn",
-    "value": "RESOLVER OFERTA"
+    "value": "RISOLVI OFFERTA"
   },
   {
     "key": "pages.admin.bounties.revert_btn",
-    "value": "REVERTER PARA PENDENTE"
+    "value": "RIPRISTINA PENDENTE"
   },
   {
     "key": "components.admin.sidebar.nav.inventory",
-    "value": "INVENTÁRIO"
+    "value": "INVENTARIO"
   },
   {
     "key": "components.admin.sidebar.nav.tcg_registry",
-    "value": "REGISTO TCG"
+    "value": "REGISTRO TCG"
   },
   {
     "key": "components.admin.sidebar.nav.orders",
-    "value": "PEDIDOS"
+    "value": "ORDINI"
   },
   {
     "key": "components.admin.sidebar.nav.bounties",
-    "value": "WANTED / RECOMPENSAS"
+    "value": "WANTED / TAGLIE"
   },
   {
     "key": "components.admin.sidebar.nav.clients",
-    "value": "CLIENTES"
+    "value": "CLIENTI"
   },
   {
     "key": "components.admin.sidebar.nav.subscribers",
-    "value": "SUBSCRITORES"
+    "value": "ISCRITTI"
   },
   {
     "key": "components.admin.sidebar.nav.notices",
-    "value": "AVISOS"
+    "value": "AVVISI"
   },
   {
     "key": "components.admin.sidebar.nav.themes",
-    "value": "TEMAS & SKINS"
+    "value": "TEMI & SKIN"
   },
   {
     "key": "components.admin.sidebar.nav.translations",
-    "value": "TRADUÇÕES"
+    "value": "TRADUZIONI"
   },
   {
     "key": "components.admin.sidebar.nav.settings",
-    "value": "DEFINIÇÕES GLOBAIS"
+    "value": "IMPOSTAZIONI GLOBAURI"
   },
   {
     "key": "components.admin.sidebar.section.ops",
-    "value": "Operações Base"
+    "value": "Operazioni Core"
   },
   {
     "key": "components.admin.sidebar.section.design",
-    "value": "Design & Idioma"
+    "value": "Design & Lingua"
   },
   {
     "key": "components.admin.sidebar.section.system",
-    "value": "Ações de Sistema"
+    "value": "Azioni Sistema"
   },
   {
     "key": "components.admin.sidebar.health.title",
-    "value": "Saúde do Sistema"
+    "value": "Salute Sistema"
   },
   {
     "key": "components.admin.sidebar.health.refresh",
-    "value": "Atualizar Stats"
+    "value": "Aggiorna Stats"
   },
   {
     "key": "components.admin.sidebar.health.sync",
-    "value": "Sincronizando núcleo..."
+    "value": "Sincronizzando core..."
   },
   {
     "key": "components.admin.sidebar.health.db_size",
-    "value": "Tamanho DB"
+    "value": "Dimensione DB"
   },
   {
     "key": "components.admin.sidebar.health.latency",
-    "value": "Latência"
+    "value": "Latenza"
   },
   {
     "key": "components.admin.sidebar.health.clients",
-    "value": "Clientes Ativos"
+    "value": "Client Attivi"
   },
   {
     "key": "components.admin.sidebar.health.cache",
@@ -2293,23 +2293,23 @@
   },
   {
     "key": "components.admin.sidebar.auth.logout",
-    "value": "FECHAR SESSÃO"
+    "value": "CHIUDI SESSIONE"
   },
   {
     "key": "components.admin.sidebar.status.secure",
-    "value": "Link Seguro Ativo"
+    "value": "Link Sicuro Attivo"
   },
   {
     "key": "pages.admin.bounties.offers.waiting_clients",
-    "value": "CLIENTES À ESPERA"
+    "value": "CLIENTI IN ATTESA"
   },
   {
     "key": "pages.admin.bounties.offers.select_clients",
-    "value": "Escolher Clientes para Cumprir (Máx {qty})"
+    "value": "Scegli clienti da servire (Max {qty})"
   },
   {
     "key": "pages.admin.bounties.offers.over_limit",
-    "value": "⚠️ LIMITE DE QUANTIDADE EXCEDIDO"
+    "value": "⚠️ LIMITE QUANTITÀ SUPERATO"
   },
   {
     "key": "pages.admin.bounties.requests.complete_status",
@@ -2317,15 +2317,15 @@
   },
   {
     "key": "pages.admin.bounties.title",
-    "value": "WANTED / RECOMPENSAS"
+    "value": "WANTED / TAGLIE"
   },
   {
     "key": "pages.admin.bounties.subtitle",
-    "value": "Cartas que queremos comprar // Pedidos de Clientes"
+    "value": "Carte che cerchiamo // Richieste Clienti"
   },
   {
     "key": "pages.admin.bounties.add_btn",
-    "value": "ADICIONAR RECOMPENSA"
+    "value": "AGGIUNGI TAGLIA"
   },
   {
     "key": "pages.admin.bounties.tabs.bounties",
@@ -2333,11 +2333,11 @@
   },
   {
     "key": "pages.admin.bounties.tabs.offers",
-    "value": "VERIFICAÇÃO DE OFERTAS"
+    "value": "VERIFICA OFFERTE"
   },
   {
     "key": "pages.admin.bounties.tabs.requests",
-    "value": "PEDIDOS DE CLIENTES"
+    "value": "RICHIESTE CLIENTI"
   },
   {
     "key": "pages.admin.bounties.tabs.pending_suffix",
@@ -2345,7 +2345,7 @@
   },
   {
     "key": "pages.admin.bounties.loading",
-    "value": "Sincronizando Logística..."
+    "value": "Sincronizzando Logistica..."
   },
   {
     "key": "pages.admin.bounties.table.card",
@@ -2357,51 +2357,51 @@
   },
   {
     "key": "pages.admin.bounties.table.condition",
-    "value": "Est."
+    "value": "Cond."
   },
   {
     "key": "pages.admin.bounties.table.target_price",
-    "value": "Preço Alvo"
+    "value": "Prezzo Obiettivo"
   },
   {
     "key": "pages.admin.bounties.table.qty",
-    "value": "Qtd"
+    "value": "Qtà"
   },
   {
     "key": "pages.admin.bounties.table.status",
-    "value": "Estado"
+    "value": "Stato"
   },
   {
     "key": "pages.admin.bounties.table.actions",
-    "value": "Ações"
+    "value": "Azioni"
   },
   {
     "key": "pages.admin.bounties.offers.seller",
-    "value": "Vendedor:"
+    "value": "Venditore:"
   },
   {
     "key": "pages.admin.bounties.offers.condition",
-    "value": "Estado:"
+    "value": "Condizione:"
   },
   {
     "key": "pages.admin.bounties.offers.quantity",
-    "value": "Quantidade:"
+    "value": "Quantità:"
   },
   {
     "key": "pages.admin.bounties.offers.waiting_clients",
-    "value": "CLIENTES À ESPERA"
+    "value": "CLIENTI IN ATTESA"
   },
   {
     "key": "pages.admin.bounties.offers.submitted_on",
-    "value": "Enviado em:"
+    "value": "Inviato il:"
   },
   {
     "key": "pages.admin.bounties.offers.select_clients",
-    "value": "Escolher Clientes para Cumprir (Máx {qty})"
+    "value": "Scegli clienti da servire (Max {qty})"
   },
   {
     "key": "pages.admin.bounties.offers.over_limit",
-    "value": "⚠️ LIMITE DE QUANTIDADE EXCEDIDO"
+    "value": "⚠️ LIMITE QUANTITÀ SUPERATO"
   },
   {
     "key": "pages.admin.bounties.requests.complete_status",
@@ -2413,99 +2413,99 @@
   },
   {
     "key": "pages.admin.bounties.requests.requested_date",
-    "value": "Pedido em:"
+    "value": "Richiesto il:"
   },
   {
     "key": "pages.admin.bounties.requests.no_details",
-    "value": "Sem detalhes adicionais."
+    "value": "Nessun dettaglio aggiuntivo."
   },
   {
     "key": "pages.admin.bounties.requests.accept_btn",
-    "value": "ACEITAR E ADICIONAR RECOMPENSA"
+    "value": "ACCETTA E AGGIUNGI TAGLIA"
   },
   {
     "key": "pages.admin.bounties.requests.solve_btn",
-    "value": "MARCAR COMO RESOLVIDA"
+    "value": "SEGNA COME RISOLTO"
   },
   {
     "key": "pages.admin.bounties.requests.reject_btn",
-    "value": "REJEITAR"
+    "value": "RIFIUTA"
   },
   {
     "key": "pages.admin.bounties.requests.mission_complete",
-    "value": "MISSÃO CUMPRIDA\nCARTA ENTREGUE"
+    "value": "MISSIONE COMPIUTA\nCARTA CONSEGNATA"
   },
   {
     "key": "components.admin.bounty_modal.title_edit",
-    "value": "EDITAR CARTA WANTED"
+    "value": "MODIFICA CARTA WANTED"
   },
   {
     "key": "components.admin.bounty_modal.title_add",
-    "value": "ADICIONAR CARTA WANTED"
+    "value": "AGGIUNGI CARTA WANTED"
   },
   {
     "key": "components.admin.bounty_modal.tcg_label",
-    "value": "ESTRUTURA TCG"
+    "value": "SISTEMA TCG"
   },
   {
     "key": "components.admin.bounty_modal.condition_label",
-    "value": "ESTADO"
+    "value": "CONDIZIONE"
   },
   {
     "key": "components.admin.bounty_modal.card_name",
-    "value": "NOME DA CARTA"
+    "value": "NOME CARTA"
   },
   {
     "key": "components.admin.bounty_modal.set_name",
-    "value": "NOME DO SET / INFO"
+    "value": "NOME SET / INFO"
   },
   {
     "key": "components.admin.bounty_modal.image_url",
-    "value": "URL DA IMAGEM"
+    "value": "URL IMMAGINE"
   },
   {
     "key": "components.admin.bounty_modal.pricing_title",
-    "value": "PREÇOS"
+    "value": "PREZZI"
   },
   {
     "key": "components.admin.bounty_modal.price_source",
-    "value": "FONTE DE PREÇO *"
+    "value": "FONTE PREZZO *"
   },
   {
     "key": "components.admin.bounty_modal.source_manual",
-    "value": "Manual (COP)"
+    "value": "Manuale (COP)"
   },
   {
     "key": "components.admin.bounty_modal.source_tcgplayer",
-    "value": "Externo: TCGPlayer (USD)"
+    "value": "Esterno: TCGPlayer (USD)"
   },
   {
     "key": "components.admin.bounty_modal.source_cardmarket",
-    "value": "Externo: Cardmarket (EUR)"
+    "value": "Esterno: Cardmarket (EUR)"
   },
   {
     "key": "components.admin.bounty_modal.ref_price_label",
-    "value": "PREÇO DE REFERÊNCIA ({source}) *"
+    "value": "PREZZO RIFERIMENTO ({source}) *"
   },
   {
     "key": "components.admin.bounty_modal.price_cop_label",
-    "value": "PREÇO (COP) *"
+    "value": "PREZZO (COP) *"
   },
   {
     "key": "components.admin.product_modal.title_edit",
-    "value": "EDITAR PRODUTO"
+    "value": "MODIFICA PRODOTTO"
   },
   {
     "key": "components.admin.product_modal.title_new",
-    "value": "NOVO PRODUTO"
+    "value": "NUOVO PRODOTTO"
   },
   {
     "key": "components.admin.product_modal.product_id",
-    "value": "ID DO PRODUTO: {id}"
+    "value": "ID PRODOTTO: {id}"
   },
   {
     "key": "components.admin.product_modal.tcg_system_label",
-    "value": "ESTRUTURA TCG"
+    "value": "SISTEMA TCG"
   },
   {
     "key": "components.admin.product_modal.category_label",
@@ -2513,123 +2513,123 @@
   },
   {
     "key": "components.admin.product_modal.condition_label",
-    "value": "ESTADO"
+    "value": "CONDIZIONE"
   },
   {
     "key": "components.admin.product_modal.product_name_label",
-    "value": "NOME DO PRODUTO"
+    "value": "NOME PRODOTTO"
   },
   {
     "key": "components.admin.product_modal.tab_deck",
-    "value": "CONSTRUTOR DE DECKS"
+    "value": "COSTRUTTORE MAZZI"
   },
   {
     "key": "components.admin.product_modal.tab_variant",
-    "value": "VARIANTE E IDENTIDADE"
+    "value": "VARIANTE & IDENTITÀ"
   },
   {
     "key": "components.admin.product_modal.tab_pricing",
-    "value": "PREÇO E STOCK"
+    "value": "PREZZI & STOCK"
   },
   {
     "key": "components.admin.product_modal.image_preview_label",
-    "value": "PRÉ-VISUALIZAÇÃO"
+    "value": "ANTEPRIMA IMMAGINE"
   },
   {
     "key": "components.admin.product_modal.saving",
-    "value": "A GUARDAR..."
+    "value": "SALVATAGGIO..."
   },
   {
     "key": "components.admin.product_modal.save_btn",
-    "value": "GUARDAR PRODUTO"
+    "value": "SALVA PRODOTTO"
   },
   {
     "key": "components.admin.product_modal.save_and_new_btn",
-    "value": "GUARDAR E NOVO"
+    "value": "SALVA & NUOVO"
   },
   {
     "key": "components.admin.product_modal.cancel_btn",
-    "value": "CANCELAR"
+    "value": "ANNULLA"
   },
   {
     "key": "components.admin.product_modal.error_required",
-    "value": "Nome, TCG e Categoria são obrigatórios."
+    "value": "Nome, TCG e Categoria sono obbligatori."
   },
   {
     "key": "components.admin.product_modal.error_save",
-    "value": "Falha ao guardar produto."
+    "value": "Salvataggio prodotto fallito."
   },
   {
     "key": "components.admin.product_modal.error_no_prints",
-    "value": "Nenhuma impressão encontrada."
+    "value": "Nessuna stampa trovata."
   },
   {
     "key": "components.admin.product_modal.error_no_match",
-    "value": "Não foi possível identificar a impressão."
+    "value": "Impossibile identificare la stampa."
   },
   {
     "key": "components.admin.product_modal.error_fetch",
-    "value": "Falha no Scryfall"
+    "value": "Errore Scryfall"
   },
   {
     "key": "components.admin.product_modal.variant.set_info_title",
-    "value": "INFO DO SET"
+    "value": "INFO SET"
   },
   {
     "key": "components.admin.product_modal.variant.set_name_label",
-    "value": "NOME DO SET"
+    "value": "NOME SET"
   },
   {
     "key": "components.admin.product_modal.variant.set_code_label",
-    "value": "CÓDIGO"
+    "value": "CODICE"
   },
   {
     "key": "components.admin.product_modal.variant.collector_number_label",
-    "value": "Nº COLEC."
+    "value": "N° COLL."
   },
   {
     "key": "components.admin.product_modal.variant.language_label",
-    "value": "IDIOMA DA CARTA"
+    "value": "LINGUA CARTA"
   },
   {
     "key": "components.admin.product_modal.variant.treatment_title",
-    "value": "TRATAMENTO E ACABAMENTO"
+    "value": "TRATTAMENTO & FINITURA"
   },
   {
     "key": "components.admin.product_modal.variant.foil_label",
-    "value": "BRILHO (FOIL)"
+    "value": "BRILLANTEZZA (FOIL)"
   },
   {
     "key": "components.admin.product_modal.variant.card_treatment_label",
-    "value": "TRATAMENTO DA CARTA"
+    "value": "TRATTAMENTO CARTA"
   },
   {
     "key": "components.admin.product_modal.variant.promo_type_label",
-    "value": "TIPO DE PROMO"
+    "value": "TIPO PROMO"
   },
   {
     "key": "components.admin.product_modal.variant.art_variation_label",
-    "value": "VARIAÇÃO DE ARTE"
+    "value": "VARIAZIONE ARTE"
   },
   {
     "key": "components.admin.product_modal.variant.optimized_hint",
-    "value": "OPÇÕES DE VARIANTE OPTIMIZADAS PARA SINGLES DE MTG."
+    "value": "OPZIONI VARIANTE OTTIMIZZATE PER SINGOLE MTG."
   },
   {
     "key": "components.admin.product_modal.variant.general_hint",
-    "value": "Detalhes gerais são geridos no cabeçalho e tab de Preços."
+    "value": "I dettagli generali sono gestiti in header e nel tab Prezzi."
   },
   {
     "key": "components.admin.product_modal.variant.metadata_title",
-    "value": "Metadados MTG"
+    "value": "Metadati MTG"
   },
   {
     "key": "components.admin.product_modal.variant.rarity_label",
-    "value": "Raridade"
+    "value": "Rarità"
   },
   {
     "key": "components.admin.product_modal.variant.colors_label",
-    "value": "Cores"
+    "value": "Colori"
   },
   {
     "key": "components.admin.product_modal.variant.cmc_label",
@@ -2637,31 +2637,31 @@
   },
   {
     "key": "components.admin.product_modal.variant.legendary_label",
-    "value": "LENDÁRIA"
+    "value": "LEGGENDARIA"
   },
   {
     "key": "components.admin.product_modal.variant.historic_label",
-    "value": "HISTÓRICA"
+    "value": "STORICA"
   },
   {
     "key": "components.admin.product_modal.variant.land_label",
-    "value": "TERRENO"
+    "value": "TERRA"
   },
   {
     "key": "components.admin.product_modal.variant.basic_label",
-    "value": "BÁSICO"
+    "value": "BASE"
   },
   {
     "key": "components.admin.product_modal.variant.full_art_label",
-    "value": "ARTE COMPLETA"
+    "value": "FULL ART"
   },
   {
     "key": "components.admin.product_modal.variant.textless_label",
-    "value": "SEM TEXTO"
+    "value": "SENZA TESTO"
   },
   {
     "key": "components.admin.product_modal.variant.type_line_label",
-    "value": "Linha de Tipo"
+    "value": "Tipo"
   },
   {
     "key": "components.admin.product_modal.variant.artist_label",
@@ -2669,151 +2669,151 @@
   },
   {
     "key": "components.admin.product_modal.variant.oracle_text_label",
-    "value": "Texto Oracle"
+    "value": "Testo Oracle"
   },
   {
     "key": "components.admin.product_modal.pricing.stock_title",
-    "value": "GESTÃO DE STOCK"
+    "value": "GESTIONE STOCK"
   },
   {
     "key": "components.admin.product_modal.pricing.total_stock_label",
-    "value": "STOCK TOTAL"
+    "value": "STOCK TOTALE"
   },
   {
     "key": "components.admin.product_modal.pricing.add_location_btn",
-    "value": "ATRIBUIR NOVA LOCALIZAÇÃO"
+    "value": "ASSEGNA NUOVO LUOGO"
   },
   {
     "key": "components.admin.product_modal.pricing.description_label",
-    "value": "DESCRIÇÃO / NOTAS (INTERNO)"
+    "value": "DESCRIZIONE / NOTE (INTERNO)"
   },
   {
     "key": "components.admin.product_modal.pricing.description_placeholder",
-    "value": "Notas opcionais..."
+    "value": "Note opzionali..."
   },
   {
     "key": "components.admin.product_modal.pricing.collections_label",
-    "value": "COLEÇÕES / TAGS"
+    "value": "COLLEZIONI / TAG"
   },
   {
     "key": "components.admin.product_modal.pricing.title",
-    "value": "PREÇOS"
+    "value": "PREZZI"
   },
   {
     "key": "components.admin.product_modal.pricing.source_label",
-    "value": "FONTE DE PREÇO *"
+    "value": "FONTE PREZZO *"
   },
   {
     "key": "components.admin.product_modal.pricing.source_manual",
-    "value": "Manual (COP)"
+    "value": "Manuale (COP)"
   },
   {
     "key": "components.admin.product_modal.pricing.source_tcgplayer",
-    "value": "Externo: TCGPlayer (USD)"
+    "value": "Esterno: TCGPlayer (USD)"
   },
   {
     "key": "components.admin.product_modal.pricing.source_cardmarket",
-    "value": "Externo: Cardmarket (EUR)"
+    "value": "Esterno: Cardmarket (EUR)"
   },
   {
     "key": "components.admin.product_modal.pricing.price_cop_label",
-    "value": "PREÇO (COP) *"
+    "value": "PREZZO (COP) *"
   },
   {
     "key": "components.admin.product_modal.pricing.ref_price_label",
-    "value": "PREÇO REFERÊNCIA ({currency}) *"
+    "value": "PREZZO RIFERIMENTO ({currency}) *"
   },
   {
     "key": "components.admin.product_modal.pricing.basic_title",
-    "value": "Detalhes Base"
+    "value": "Dettagli Base"
   },
   {
     "key": "components.admin.product_modal.pricing.image_url_label",
-    "value": "URL da imagem"
+    "value": "URL immagine"
   },
   {
     "key": "components.admin.product_modal.pricing.no_collections",
-    "value": "Sem coleções personalizadas."
+    "value": "Nessuna collezione custom."
   },
   {
     "key": "components.admin.product_modal.scryfall.search_hint",
-    "value": "Nome ou SET + Nº e clica em Popular"
+    "value": "Inserisci Nome o SET + N° e clicca Popola"
   },
   {
     "key": "components.admin.product_modal.scryfall.populate_btn",
-    "value": "POPULAR DADOS"
+    "value": "POPOLA DATI"
   },
   {
     "key": "components.admin.product_modal.scryfall.looking_up",
-    "value": "PROCURANDO..."
+    "value": "RICERCA..."
   },
   {
     "key": "components.admin.product_modal.scryfall.no_image",
-    "value": "SEM IMAGEM"
+    "value": "NESSUNA IMMAGINE"
   },
   {
     "key": "components.admin.product_modal.deck.select_printing_label",
-    "value": "Escolher Impressão Específica"
+    "value": "Scegli stampa specifica"
   },
   {
     "key": "components.admin.product_modal.deck.add_btn",
-    "value": "+ ADICIONAR"
+    "value": "+ AGGIUNGI"
   },
   {
     "key": "components.admin.product_modal.deck.custom_name_label",
-    "value": "Nome da Carta (Custom)"
+    "value": "Nome Carta (Custom)"
   },
   {
     "key": "components.admin.product_modal.deck.custom_name_placeholder",
-    "value": "Escrever nome custom..."
+    "value": "Scrivi nome custom..."
   },
   {
     "key": "components.admin.product_modal.deck.add_custom_btn",
-    "value": "Adicionar Carta Custom"
+    "value": "Aggiungi carta custom"
   },
   {
     "key": "components.admin.product_modal.deck.list_title",
-    "value": "Lista do Deck Atual"
+    "value": "Lista Mazzo Attuale"
   },
   {
     "key": "components.admin.product_modal.deck.card_count",
-    "value": "{count} CARTAS"
+    "value": "{count} CARTE"
   },
   {
     "key": "components.admin.product_modal.deck.empty_msg",
-    "value": "O deck está vazio."
+    "value": "Il mazzo è vuoto."
   },
   {
     "key": "components.admin.product_modal.deck.edit_tooltip",
-    "value": "Editar/Repopular"
+    "value": "Modifica/Ripopola"
   },
   {
     "key": "components.admin.product_modal.deck.remove_tooltip",
-    "value": "Remover"
+    "value": "Rimuovi"
   },
   {
     "key": "components.admin.bounty_modal.quantity_label",
-    "value": "QUANTIDADE NECESSÁRIA"
+    "value": "QUANTITÀ NECESSARIA"
   },
   {
     "key": "components.admin.bounty_modal.hide_price_label",
-    "value": "Ocultar preço alvo ao público"
+    "value": "Nascondi prezzo obiettivo al pubblico"
   },
   {
     "key": "components.admin.bounty_modal.hide_price_desc",
-    "value": "Se marcado, verão \"Preço sob consulta\" em vez do valor COP."
+    "value": "Se attivo, vedranno \"Prezzo su richiesta\" invece del valore COP."
   },
   {
     "key": "components.admin.bounty_modal.no_image",
-    "value": "SEM IMAGEM"
+    "value": "NESSUNA IMMAGINE"
   },
   {
     "key": "components.admin.bounty_modal.name_placeholder",
-    "value": "Nome da Entidade"
+    "value": "Nome entità"
   },
   {
     "key": "components.admin.bounty_modal.set_placeholder",
-    "value": "Set Opcional"
+    "value": "Set opzionale"
   },
   {
     "key": "components.admin.bounty_modal.image_placeholder",
@@ -2821,111 +2821,111 @@
   },
   {
     "key": "components.admin.bounty_modal.saving",
-    "value": "A GUARDAR..."
+    "value": "SALVATAGGIO..."
   },
   {
     "key": "components.admin.bounty_modal.save_btn",
-    "value": "💾 GUARDAR RECOMPENSA"
+    "value": "💾 SALVA TAGLIA"
   },
   {
     "key": "components.admin.bounty_modal.error_required",
-    "value": "Nome e TCG são obrigatórios."
+    "value": "Nome e TCG sono obbligatori."
   },
   {
     "key": "components.admin.bounty_modal.error_save",
-    "value": "Falha ao guardar recompensa."
+    "value": "Salvataggio taglia fallito."
   },
   {
     "key": "components.admin.resolve_modal.title",
-    "value": "Resolver oferta"
+    "value": "Risolvi offerta"
   },
   {
     "key": "components.admin.resolve_modal.offer_details",
-    "value": "Detalhes da oferta:"
+    "value": "Dettagli offerta:"
   },
   {
     "key": "components.admin.resolve_modal.no_notes",
-    "value": "Sem notas"
+    "value": "Nessuna nota"
   },
   {
     "key": "components.admin.resolve_modal.action_title",
-    "value": "AÇÃO APÓS ACEITAÇÃO"
+    "value": "AZIONE ALL'ACCETTAZIONE"
   },
   {
     "key": "components.admin.resolve_modal.action_inventory",
-    "value": "Adicionar ao Inventário"
+    "value": "Aggiungi all'inventario"
   },
   {
     "key": "components.admin.resolve_modal.action_inventory_desc",
-    "value": "Aceitar e colocar logo em venda."
+    "value": "Accetta e metti subito in vendita."
   },
   {
     "key": "components.admin.resolve_modal.action_fulfill_selected",
-    "value": "Cumprir {count} Pedidos Escolhidos"
+    "value": "Servi {count} richieste scelte"
   },
   {
     "key": "components.admin.resolve_modal.action_fulfill_matching",
-    "value": "Cumprir Pedidos Correspondentes"
+    "value": "Servi richieste corrispondenti"
   },
   {
     "key": "components.admin.resolve_modal.action_fulfill_selected_desc",
-    "value": "Aceitar e notificar os {count} clientes escolhidos."
+    "value": "Accetta e notifica i {count} clienti scelti."
   },
   {
     "key": "components.admin.resolve_modal.action_fulfill_matching_desc",
-    "value": "Aceitar e notificar TODOS os clientes."
+    "value": "Accetta e notifica TUTTI i clienti."
   },
   {
     "key": "components.admin.resolve_modal.matching_selected",
-    "value": "{count} de {total} pedidos escolhidos."
+    "value": "{count} su {total} richieste scelte."
   },
   {
     "key": "components.admin.resolve_modal.matching_found",
-    "value": "{total} pedidos correspondentes encontrados."
+    "value": "{total} richieste corrispondenti trovate."
   },
   {
     "key": "components.admin.resolve_modal.reject_btn",
-    "value": "REJEITAR OFERTA"
+    "value": "RIFIUTA OFFERTA"
   },
   {
     "key": "components.admin.resolve_modal.accept_btn",
-    "value": "ACEITAR OFERTA"
+    "value": "ACCETTA OFFERTA"
   },
   {
     "key": "pages.admin.inventory.title",
-    "value": "GESTÃO DE INVENTÁRIO"
+    "value": "GESTIONE INVENTARIO"
   },
   {
     "key": "pages.admin.inventory.subtitle",
-    "value": "Deck de Comando // Operações Ativas"
+    "value": "Command Deck // Operazioni Attive"
   },
   {
     "key": "pages.admin.inventory.sync_sets_btn",
-    "value": "SINCRONIZAR SETS"
+    "value": "SINCRO SET"
   },
   {
     "key": "pages.admin.inventory.syncing",
-    "value": "A SINCRONIZAR..."
+    "value": "SINCRO..."
   },
   {
     "key": "pages.admin.inventory.last_sync",
-    "value": "ÚLT. SINCRO: {date}"
+    "value": "ULTIMA SINCRO: {date}"
   },
   {
     "key": "pages.admin.inventory.import_csv_btn",
-    "value": "IMPORTAR CSV"
+    "value": "IMPORTA CSV"
   },
   {
     "key": "pages.admin.inventory.add_product_btn",
-    "value": "ADICIONAR PRODUTO"
+    "value": "AGGIUNGI PRODOTTO"
   },
   {
     "key": "pages.admin.inventory.search_label",
-    "value": "Procurar Produto"
+    "value": "Cerca Prodotto"
   },
   {
     "key": "pages.admin.inventory.search_placeholder",
-    "value": "Nome, set, código..."
+    "value": "Nome, set, codice..."
   },
   {
     "key": "pages.admin.inventory.tcg_filter_label",
@@ -2937,83 +2937,83 @@
   },
   {
     "key": "pages.admin.inventory.storage_label",
-    "value": "Localização Física"
+    "value": "Luogo fisico"
   },
   {
     "key": "pages.admin.inventory.manage_locations_tooltip",
-    "value": "Gerir locais"
+    "value": "Gestisci luoghi"
   },
   {
     "key": "components.admin.inventory.manage_locations_tooltip",
-    "value": "Gerir locais"
+    "value": "Gestisci luoghi"
   },
   {
     "key": "pages.admin.inventory.manage_collections_tooltip",
-    "value": "Gerir coleções"
+    "value": "Gestisci collezioni"
   },
   {
     "key": "pages.admin.inventory.count_label",
-    "value": "CONTAGEM DE STOCK"
+    "value": "CONTEGGIO INVENTARIO"
   },
   {
     "key": "pages.admin.inventory.response_time_label",
-    "value": "TEMPO RESPOSTA"
+    "value": "TEMPO RISPOSTA"
   },
   {
     "key": "pages.admin.inventory.confirm_delete",
-    "value": "Eliminar {name}?"
+    "value": "Eliminare {name}?"
   },
   {
     "key": "pages.admin.inventory.error_delete",
-    "value": "Falha ao eliminar produto."
+    "value": "Eliminazione prodotto fallita."
   },
   {
     "key": "pages.admin.inventory.sync_success",
-    "value": "{count} sets sincronizados!"
+    "value": "{count} set sincronizzati!"
   },
   {
     "key": "pages.admin.inventory.sync_error",
-    "value": "Falha ao sincronizar sets."
+    "value": "Sincro set fallita."
   },
   {
     "key": "pages.admin.inventory.confirm_delete_storage_items",
-    "value": "O local \"{name}\" tem {count} itens. Eliminar apagará estas atribuições. Continuar?"
+    "value": "Il luogo \"{name}\" ha {count} articoli. Eliminarlo cancellerà queste assegnazioni. Continuare?"
   },
   {
     "key": "pages.admin.inventory.confirm_delete_storage",
-    "value": "Eliminar local \"{name}\"?"
+    "value": "Eliminare luogo \"{name}\"?"
   },
   {
     "key": "pages.admin.inventory.confirm_delete_category",
-    "value": "Eliminar coleção \"{name}\"?"
+    "value": "Eliminare collezione \"{name}\"?"
   },
   {
     "key": "pages.common.dates.just_now",
-    "value": "Agora mesmo"
+    "value": "Adesso"
   },
   {
     "key": "pages.common.dates.mins_ago",
-    "value": "há {mins}m"
+    "value": "{mins}m fa"
   },
   {
     "key": "pages.common.dates.hours_ago",
-    "value": "há {hours}h"
+    "value": "{hours}h fa"
   },
   {
     "key": "pages.admin.inventory.unassigned",
-    "value": "não atribuído"
+    "value": "non assegnato"
   },
   {
     "key": "pages.admin.inventory.delete_product_tooltip",
-    "value": "Eliminar produto"
+    "value": "Elimina prodotto"
   },
   {
     "key": "pages.admin.inventory.scanning_catalog",
-    "value": "Escaneando Catálogo..."
+    "value": "Scansione catalogo..."
   },
   {
     "key": "pages.admin.inventory.table.product",
-    "value": "PRODUTO"
+    "value": "PRODOTTO"
   },
   {
     "key": "pages.admin.inventory.table.type",
@@ -3021,11 +3021,11 @@
   },
   {
     "key": "pages.admin.inventory.table.rarity",
-    "value": "RARIDADE"
+    "value": "RARITÀ"
   },
   {
     "key": "pages.admin.inventory.table.price",
-    "value": "PREÇO"
+    "value": "PREZZO"
   },
   {
     "key": "pages.admin.inventory.table.stock",
@@ -3033,7 +3033,7 @@
   },
   {
     "key": "pages.admin.inventory.table.updated",
-    "value": "ATUALIZADO"
+    "value": "AGGIORNATO"
   },
   {
     "key": "pages.admin.inventory.table.cmd",
@@ -3041,87 +3041,87 @@
   },
   {
     "key": "pages.admin.inventory.no_products",
-    "value": "NENHUM PRODUTO ENCONTRADO"
+    "value": "NESSUN PRODOTTO TROVATO"
   },
   {
     "key": "pages.admin.inventory.no_products_hint",
-    "value": "Ajusta os teus filtros de scan"
+    "value": "Prova a regolare i filtri"
   },
   {
     "key": "pages.profile.title",
-    "value": "MEU PERFIL"
+    "value": "MIO PROFILO"
   },
   {
     "key": "pages.profile.linked_accounts",
-    "value": "CONTAS VINCULADAS"
+    "value": "ACCOUNT COLLEGATI"
   },
   {
     "key": "pages.profile.order_history",
-    "value": "HISTÓRICO DE PEDIDOS"
+    "value": "STORICO ORDINI"
   },
   {
     "key": "pages.profile.personal_info",
-    "value": "INFO PESSOAL"
+    "value": "INFO PERSONALI"
   },
   {
     "key": "pages.profile.no_orders",
-    "value": "Ainda não tens pedidos."
+    "value": "Non hai ancora fatto ordini."
   },
   {
     "key": "nav.deck_importer_cta",
-    "value": "Testa o nosso importador de decks"
+    "value": "Prova l'importatore mazzi"
   },
   {
     "key": "pages.cart.drawer.try_importer",
-    "value": "USAR IMPORTADOR DE DECKS →"
+    "value": "USA IMPORTATORE MAZZI →"
   },
   {
     "key": "pages.cart.drawer.importer_nudge",
-    "value": "Faltam cartas? Testa o importador"
+    "value": "Mancano carte? Prova l'importatore"
   },
   {
     "key": "pages.deck_importer.title",
-    "value": "IMPORTADOR DE DECKS"
+    "value": "IMPORTATORE MAZZI"
   },
   {
     "key": "pages.deck_importer.subtitle",
-    "value": "Cola tua lista (Moxfield, Archideckt etc.) e procuramos no stock. Se faltar algo, pede tudo de uma vez!"
+    "value": "Incolla la tua lista (Moxfield, Archideckt ecc.) e cercheremo nel nostro stock. Se manca qualcosa, richiedilo subito!"
   },
   {
     "key": "pages.deck_importer.list_label",
-    "value": "LISTA DE CARTAS"
+    "value": "LISTA CARTE"
   },
   {
     "key": "pages.deck_importer.buttons.analyze",
-    "value": "ANALISAR LISTA →"
+    "value": "ANALIZZA LISTA →"
   },
   {
     "key": "pages.deck_importer.buttons.analyzing",
-    "value": "A ANALISAR..."
+    "value": "ANALISI..."
   },
   {
     "key": "pages.deck_importer.results_title",
-    "value": "CORRESPONDÊNCIAS"
+    "value": "MATCH"
   },
   {
     "key": "pages.deck_importer.buttons.add_all",
-    "value": "ADICIONAR TUDO"
+    "value": "AGGIUNGI TUTTO"
   },
   {
     "key": "pages.deck_importer.no_results",
-    "value": "Cola uma lista para ver disponibilidade."
+    "value": "Incolla lista per vedere disponibilità."
   },
   {
     "key": "pages.deck_importer.errors.analyze_failed",
-    "value": "Falha ao analisar. Revê o formato."
+    "value": "Analisi fallita. Controlla il formato."
   },
   {
     "key": "pages.deck_importer.messages.added_count",
-    "value": "Adicionadas {count} cartas ao carrinho."
+    "value": "Aggiunte {count} carte al carrello."
   },
   {
     "key": "pages.deck_importer.matches.different_version",
-    "value": "VERSÃO DIFERENTE"
+    "value": "VERSIONE DIVERSA"
   },
   {
     "key": "pages.deck_importer.matches.matched",
@@ -3129,7 +3129,7 @@
   },
   {
     "key": "pages.deck_importer.matches.no_stock",
-    "value": "SEM STOCK"
+    "value": "NO STOCK"
   },
   {
     "key": "pages.product.condition.nm",
@@ -3153,103 +3153,103 @@
   },
   {
     "key": "pages.product.badges.hot",
-    "value": "QUENTE"
+    "value": "HOT"
   },
   {
     "key": "pages.product.badges.new",
-    "value": "NOVO"
+    "value": "NUOVO"
   },
   {
     "key": "pages.common.labels.home",
-    "value": "INÍCIO"
+    "value": "HOME"
   },
   {
     "key": "pages.common.labels.collection",
-    "value": "COLEÇÃO"
+    "value": "COLLEZIONE"
   },
   {
     "key": "pages.common.labels.product",
-    "value": "PRODUTO"
+    "value": "PRODOTTO"
   },
   {
     "key": "pages.common.labels.products",
-    "value": "PRODUTOS"
+    "value": "PRODOTTI"
   },
   {
     "key": "pages.common.pagination.prev",
-    "value": "← ANTERIOR"
+    "value": "← PREC"
   },
   {
     "key": "pages.common.pagination.next",
-    "value": "SEGUINTE →"
+    "value": "SUCC →"
   },
   {
     "key": "components.theme_selector.title",
-    "value": "Selecionar Tema"
+    "value": "Seleziona Tema"
   },
   {
     "key": "pages.checkout.delivery.shipping",
-    "value": "ENVIO"
+    "value": "SPEDIZIONE"
   },
   {
     "key": "pages.checkout.delivery.pickup",
-    "value": "RECOLHA LOCAL"
+    "value": "RITIRO IN NEGOZIO"
   },
   {
     "key": "pages.checkout.delivery.shipping_desc",
-    "value": "Entrega confiável na tua morada"
+    "value": "Consegna affidabile al tuo indirizzo"
   },
   {
     "key": "pages.checkout.delivery.pickup_desc",
-    "value": "Recolha na nossa loja em Bogotá"
+    "value": "Ritira presso il nostro store a Bogotá"
   },
   {
     "key": "pages.checkout.section.contact",
-    "value": "INFORMAÇÃO DE CONTACTO"
+    "value": "INFO DI CONTATTO"
   },
   {
     "key": "pages.checkout.section.delivery",
-    "value": "MÉTODO DE ENTREGA"
+    "value": "METODO DI CONSEGNA"
   },
   {
     "key": "pages.checkout.section.summary",
-    "value": "RESUMO DO PEDIDO"
+    "value": "RIEPILOGO ORDINE"
   },
   {
     "key": "pages.checkout.summary.item",
-    "value": "ARTIGO"
+    "value": "ARTICOLO"
   },
   {
     "key": "pages.checkout.summary.items",
-    "value": "ARTIGOS"
+    "value": "ARTICOLI"
   },
   {
     "key": "pages.checkout.summary.subtotal",
-    "value": "SUBTOTAL"
+    "value": "SUBTOTALE"
   },
   {
     "key": "pages.checkout.summary.shipping",
-    "value": "ENVIO"
+    "value": "SPEDIZIONE"
   },
   {
     "key": "pages.checkout.summary.free",
-    "value": "GRÁTIS"
+    "value": "GRATIS"
   },
   {
     "key": "pages.checkout.total",
-    "value": "TOTAL"
+    "value": "TOTALE"
   },
   {
     "key": "pages.checkout.footer.notice",
-    "value": "Após confirmação, um consultor entrará em contacto para coordenar a entrega."
+    "value": "Dopo la conferma, un consulente ti contatterà per coordinare la consegna."
   },
   {
     "key": "pages.checkout.payment_methods.cash",
-    "value": "Dinheiro"
+    "value": "Contanti"
   },
   {
     "key": "pages.checkout.payment_methods.transfer",
-    "value": "Transferência Bancária"
+    "value": "Bonifico Bancario"
   },
   {
     "key": "pages.checkout.payment_methods.nequi",
@@ -3261,79 +3261,79 @@
   },
   {
     "key": "components.bounty_offer.title",
-    "value": "Vende-nos a tua Carta"
+    "value": "Vendici la tua Carta"
   },
   {
     "key": "components.bounty_offer.success_title",
-    "value": "Oferta Recebida!"
+    "value": "Offerta Ricevuta!"
   },
   {
     "key": "components.bounty_offer.success_desc",
-    "value": "Vamos rever e contactar-te em breve."
+    "value": "La esamineremo e ti contatteremo presto."
   },
   {
     "key": "components.bounty_offer.login_prompt",
-    "value": "para preencher os teus dados e seguir as tuas ofertas."
+    "value": "per precompilare le tue info e tracciare le offerte."
   },
   {
     "key": "components.bounty_offer.pay_upto",
-    "value": "Pagamos até:"
+    "value": "Paghiamo fino a:"
   },
   {
     "key": "components.bounty_offer.labels.name",
-    "value": "Teu Nome"
+    "value": "Tuo Nome"
   },
   {
     "key": "components.bounty_offer.labels.contact",
-    "value": "Info de Contacto"
+    "value": "Info Contatto"
   },
   {
     "key": "components.bounty_offer.labels.condition",
-    "value": "Estado"
+    "value": "Condizione"
   },
   {
     "key": "components.bounty_offer.labels.quantity",
-    "value": "Quantidade"
+    "value": "Quantità"
   },
   {
     "key": "components.bounty_offer.labels.notes",
-    "value": "Notas Adicionais (Opcional)"
+    "value": "Note Aggiuntive (Opzionale)"
   },
   {
     "key": "components.bounty_offer.placeholders.notes",
-    "value": "Detalhes sobre a carta..."
+    "value": "Dettagli sulla carta..."
   },
   {
     "key": "components.bounty_offer.placeholders.name",
-    "value": "João Silva"
+    "value": "Mario Rossi"
   },
   {
     "key": "components.bounty_offer.placeholders.contact",
-    "value": "Telemóvel ou Instagram"
+    "value": "Telefono o Instagram"
   },
   {
     "key": "components.bounty_offer.buttons.submit",
-    "value": "ENVIAR OFERTA"
+    "value": "INVIA OFFERTA"
   },
   {
     "key": "pages.store_exclusives.title",
-    "value": "EXCLUSIVOS DA LOJA"
+    "value": "ESCLUSIVE DELLO STORE"
   },
   {
     "key": "pages.store_exclusives.subtitle",
-    "value": "Decks Commander custom, kits proxy e outros artigos premium feitos na casa."
+    "value": "Mazzi Commander custom, kit proxy e altri articoli premium fatti in casa."
   },
   {
     "key": "pages.collection.vault.bg_text_1",
-    "value": "MEU VAULT"
+    "value": "IL MIO VAULT"
   },
   {
     "key": "pages.collection.vault.bg_text_2",
-    "value": "COLEÇÃO"
+    "value": "COLLEZIONE"
   },
   {
     "key": "pages.collection.vault.title_part1",
-    "value": "O"
+    "value": "IL"
   },
   {
     "key": "pages.collection.vault.title_part2",
@@ -3341,67 +3341,67 @@
   },
   {
     "key": "pages.collection.vault.subject_prefix",
-    "value": "Arquivo Digital Seguro // Sujeito:"
+    "value": "Archivio Digitale Sicuro // Soggetto:"
   },
   {
     "key": "pages.collection.vault.default_subject",
-    "value": "COLECIONADOR"
+    "value": "COLLEZIONISTA"
   },
   {
     "key": "pages.collection.vault.scanning",
-    "value": "A ESCANEAR STOCK..."
+    "value": "SCANSIONE INVENTARIO..."
   },
   {
     "key": "pages.collection.vault.desc",
-    "value": "O teu arquivo TCG pessoal está a ser indexado. Em breve poderás gerir a tua coleção física e seguir valores de mercado aqui."
+    "value": "Il tuo archivio TCG personale è in fase di indicizzazione. Presto potrai gestire la tua collezione fisica e tracciare i valori di mercato qui."
   },
   {
     "key": "pages.collection.vault.return",
-    "value": "Voltar ao Centro de Comando"
+    "value": "Torna al Centro di Comando"
   },
   {
     "key": "pages.collection.not_found",
-    "value": "COLEÇÃO NÃO ENCONTRADA"
+    "value": "COLLEZIONE NON TROVATA"
   },
   {
     "key": "pages.collection.not_found_desc",
-    "value": "A coleção pedida não existe ou foi removida."
+    "value": "La collezione richiesta non esiste o è stata rimossa."
   },
   {
     "key": "pages.collection.empty",
-    "value": "COLEÇÃO VAZIA"
+    "value": "COLLEZIONE VUOTA"
   },
   {
     "key": "pages.collection.empty_desc",
-    "value": "Nenhum produto encontrado nesta coleção."
+    "value": "Nessun prodotto trovato in questa collezione."
   },
   {
     "key": "pages.404.title",
-    "value": "ELO CORTADO"
+    "value": "LEGAME SPEZZATO"
   },
   {
     "key": "pages.404.message",
-    "value": "As coordenadas levam a um vazio no arquivo. Código de Erro: [PÁGINA_NÃO_ENCONTRADA]."
+    "value": "Le coordinate richieste portano a un vuoto nell'archivio. Codice Errore: [PAGINA_NON_TROVATA]."
   },
   {
     "key": "pages.404.back_home",
-    "value": "← Voltar ao Centro de Comando"
+    "value": "← Torna al Centro di Comando"
   },
   {
     "key": "pages.admin.dashboard.valuation",
-    "value": "AVALIAÇÃO"
+    "value": "VALUTAZIONE"
   },
   {
     "key": "pages.admin.dashboard.low_stock",
-    "value": "STOCK BAIXO"
+    "value": "STOCK BASSO"
   },
   {
     "key": "pages.admin.dashboard.import_csv",
-    "value": "IMPORTAR CSV"
+    "value": "IMPORTA CSV"
   },
   {
     "key": "pages.admin.dashboard.add_product",
-    "value": "PRODUTO"
+    "value": "PRODOTTO"
   },
   {
     "key": "pages.admin.dashboard.sync",
@@ -3409,75 +3409,75 @@
   },
   {
     "key": "pages.admin.dashboard.syncing",
-    "value": "A SINCRONIZAR..."
+    "value": "SINCRONIZZANDO..."
   },
   {
     "key": "pages.admin.dashboard.prev",
-    "value": "ANT."
+    "value": "PREC"
   },
   {
     "key": "pages.admin.dashboard.next",
-    "value": "SEGUINTE"
+    "value": "SUCC"
   },
   {
     "key": "pages.admin.settings.financial_overrides",
-    "value": "AJUSTES FINANCEIROS"
+    "value": "REGOLAZIONI FINANZIARIE"
   },
   {
     "key": "pages.admin.settings.store_identity",
-    "value": "IDENTIDADE DA LOJA"
+    "value": "IDENTITÀ STORE"
   },
   {
     "key": "pages.admin.settings.address_label",
-    "value": "Morada Física da Loja"
+    "value": "Indirizzo Fisico Negozio"
   },
   {
     "key": "pages.admin.settings.whatsapp_label",
-    "value": "Contacto WhatsApp"
+    "value": "Contatto WhatsApp"
   },
   {
     "key": "pages.admin.settings.instagram_label",
-    "value": "Utilizador Instagram"
+    "value": "Account Instagram"
   },
   {
     "key": "pages.admin.settings.email_label",
-    "value": "Email de Suporte"
+    "value": "Email di Supporto"
   },
   {
     "key": "pages.admin.settings.hours_label",
-    "value": "Horário de Funcionamento"
+    "value": "Orari di Apertura"
   },
   {
     "key": "pages.admin.settings.hot_threshold",
-    "value": "Limite de Itens Hot"
+    "value": "Soglia Articoli Hot"
   },
   {
     "key": "pages.admin.settings.new_threshold",
-    "value": "Limite de Itens Novos"
+    "value": "Soglia Nuovi Articoli"
   },
   {
     "key": "pages.admin.settings.sales_in_last",
-    "value": "Vendas nos últimos"
+    "value": "Vendite negli ultimi"
   },
   {
     "key": "pages.admin.settings.days",
-    "value": "Dias"
+    "value": "Giorni"
   },
   {
     "key": "pages.admin.settings.days_since_creation",
-    "value": "Dias desde Criação"
+    "value": "Giorni dalla Creazione"
   },
   {
     "key": "pages.admin.settings.save_btn",
-    "value": "GUARDAR DEFINIÇÕES GLOBAIS"
+    "value": "SALVA IMPOSTAZIONI GLOBALI"
   },
   {
     "key": "pages.admin.clients.title",
-    "value": "CRM: Registo de Clientes"
+    "value": "CRM: Registro Clienti"
   },
   {
     "key": "pages.admin.clients.subtitle",
-    "value": "Gerindo Relacionamentos e Interações"
+    "value": "Gestione Relazioni e Interazioni"
   },
   {
     "key": "pages.admin.clients.table.customer",
@@ -3485,19 +3485,19 @@
   },
   {
     "key": "pages.admin.clients.table.contact",
-    "value": "Contacto"
+    "value": "Contatto"
   },
   {
     "key": "pages.admin.clients.table.orders",
-    "value": "Pedidos"
+    "value": "Ordini"
   },
   {
     "key": "pages.admin.clients.table.requests",
-    "value": "Pedidos de Carta"
+    "value": "Richieste"
   },
   {
     "key": "pages.admin.clients.table.offers",
-    "value": "Ofertas"
+    "value": "Offerte"
   },
   {
     "key": "pages.admin.clients.table.newsletter",
@@ -3505,83 +3505,83 @@
   },
   {
     "key": "pages.admin.clients.table.recent_journal",
-    "value": "Última Entrada no Jornal"
+    "value": "Ultima Voce Diario"
   },
   {
     "key": "pages.admin.clients.status.subscribed",
-    "value": "SUBSCRITO"
+    "value": "ISCRITTO"
   },
   {
     "key": "pages.admin.clients.status.no",
-    "value": "NÃO"
+    "value": "NO"
   },
   {
     "key": "pages.admin.subscribers.secure_link",
-    "value": "Link Seguro Ativo"
+    "value": "Link Sicuro Attivo"
   },
   {
     "key": "pages.admin.subscribers.title",
-    "value": "SUBSCRITORES"
+    "value": "ISCRITTI"
   },
   {
     "key": "pages.admin.subscribers.subtitle",
-    "value": "Gestão de Newsletter"
+    "value": "Gestione Newsletter"
   },
   {
     "key": "pages.admin.subscribers.table.email",
-    "value": "Endereço de Email"
+    "value": "Indirizzo Email"
   },
   {
     "key": "pages.admin.subscribers.table.linked_user",
-    "value": "Utilizador Vinculado"
+    "value": "Utente Collegato"
   },
   {
     "key": "pages.admin.subscribers.table.date",
-    "value": "Data de Subscrição"
+    "value": "Data Iscrizione"
   },
   {
     "key": "pages.admin.subscribers.status.unlinked",
-    "value": "CONVIDADO NÃO VINCULADO"
+    "value": "OSPITE NON COLLEGATO"
   },
   {
     "key": "pages.admin.accounting.total_cost",
-    "value": "BASE DE CUSTO TOTAL"
+    "value": "BASE COSTO TOTALE"
   },
   {
     "key": "pages.admin.accounting.net_profit",
-    "value": "LUCRO POTENCIAL LÍQUIDO"
+    "value": "PROFITTO POTENZIALE NETTO"
   },
   {
     "key": "pages.admin.valuation.authenticating",
-    "value": "Autenticando Contabilidade..."
+    "value": "Autenticazione Contabilità..."
   },
   {
     "key": "pages.admin.valuation.unit",
-    "value": "unidade"
+    "value": "unità"
   },
   {
     "key": "pages.admin.valuation.units",
-    "value": "unidades"
+    "value": "unità"
   },
   {
     "key": "pages.admin.valuation.unique_products",
-    "value": "Em {count} produtos únicos."
+    "value": "Su {count} prodotti unici."
   },
   {
     "key": "pages.admin.valuation.revenue_desc",
-    "value": "Receita total projetada se todos os itens forem vendidos ao preço atual."
+    "value": "Entrate totali proiettate se tutti gli articoli sono venduti ai prezzi attuali."
   },
   {
     "key": "pages.admin.themes.title",
-    "value": "MOTOR DE TEMAS"
+    "value": "MOTORE TEMI"
   },
   {
     "key": "pages.admin.themes.subtitle",
-    "value": "Configura a identidade visual e skins da loja"
+    "value": "Configura identità visiva e skin store"
   },
   {
     "key": "pages.admin.themes.live_matrix",
-    "value": "MATRIZ EM VIVO"
+    "value": "MATRICE LIVE"
   },
   {
     "key": "pages.admin.themes.desktop_view",
@@ -3589,23 +3589,23 @@
   },
   {
     "key": "pages.admin.themes.mobile_view",
-    "value": "Vista Móvel"
+    "value": "Vista Mobile"
   },
   {
     "key": "pages.admin.themes.high_fidelity",
-    "value": "Alta Fidelidade"
+    "value": "Alta Fedeltà"
   },
   {
     "key": "pages.admin.themes.edit_identity",
-    "value": "Editar Identidade"
+    "value": "Modifica Identità"
   },
   {
     "key": "pages.admin.themes.forge_identity",
-    "value": "Forjar Identidade"
+    "value": "Forgia Identità"
   },
   {
     "key": "pages.admin.themes.reset_original",
-    "value": "Repor Original"
+    "value": "Ripristina Originale"
   },
   {
     "key": "pages.admin.themes.sections.base_info",
@@ -3613,63 +3613,63 @@
   },
   {
     "key": "pages.admin.themes.sections.surfaces",
-    "value": "Fundos e Superfícies"
+    "value": "Sfondi & Superfici"
   },
   {
     "key": "pages.admin.themes.sections.brand",
-    "value": "Marca e Destaques"
+    "value": "Brand & Highlights"
   },
   {
     "key": "pages.admin.themes.sections.interactive",
-    "value": "Botões e Inputs"
+    "value": "Bottoni & Input"
   },
   {
     "key": "pages.admin.themes.sections.typography",
-    "value": "Tipografia e Conteúdo"
+    "value": "Tipografia & Contenuti"
   },
   {
     "key": "pages.admin.themes.sections.logic",
-    "value": "Indicadores de Estado"
+    "value": "Indicatori di Stato"
   },
   {
     "key": "pages.admin.themes.sections.geometry",
-    "value": "Layout e Geometria de Cartas"
+    "value": "Layout & Geometria Carte"
   },
   {
     "key": "pages.admin.themes.sections.advanced",
-    "value": "Branding Avançado e Ajustes"
+    "value": "Branding Avanzato & Overrides"
   },
   {
     "key": "pages.admin.themes.labels.theme_name",
-    "value": "Nome do Tema"
+    "value": "Nome Tema"
   },
   {
     "key": "pages.admin.themes.buttons.persist",
-    "value": "Fixar Blueprint"
+    "value": "Fissa Blueprint"
   },
   {
     "key": "pages.admin.themes.buttons.initialize",
-    "value": "Inicializar Skin"
+    "value": "Inizializza Skin"
   },
   {
     "key": "pages.admin.themes.buttons.purge",
-    "value": "Purgar Matriz"
+    "value": "Purga Matrice"
   },
   {
     "key": "pages.admin.themes.name_label",
-    "value": "Nome do Tema"
+    "value": "Nome Tema"
   },
   {
     "key": "pages.admin.themes.primary_btn",
-    "value": "Botão Primário"
+    "value": "Bottone Primario"
   },
   {
     "key": "pages.admin.themes.secondary_btn",
-    "value": "Botão Secundário"
+    "value": "Bottone Secondario"
   },
   {
     "key": "pages.admin.themes.checkboxes",
-    "value": "Caixas de Seleção"
+    "value": "Checkbox"
   },
   {
     "key": "pages.auth.providers.google",
@@ -3681,187 +3681,187 @@
   },
   {
     "key": "pages.admin.themes.preview.critical_alert",
-    "value": "Alerta Crítico"
+    "value": "Allerta Critica"
   },
   {
     "key": "pages.admin.themes.preview.singles",
-    "value": "SINGLES"
+    "value": "SINGOLE"
   },
   {
     "key": "pages.admin.themes.preview.explore",
-    "value": "EXPLORAR"
+    "value": "ESPLORA"
   },
   {
     "key": "pages.admin.themes.preview.decks",
-    "value": "DECKS"
+    "value": "MAZZI"
   },
   {
     "key": "pages.admin.themes.preview.vault_search",
-    "value": "Procura na Matriz do Vault"
+    "value": "Ricerca Matrice Vault"
   },
   {
     "key": "pages.admin.themes.preview.filter_state",
-    "value": "Estado do Filtro"
+    "value": "Stato Filtro"
   },
   {
     "key": "pages.admin.themes.preview.normal_inactive",
-    "value": "Normal Inativo"
+    "value": "Normale Inattivo"
   },
   {
     "key": "pages.admin.themes.preview.active_selected",
-    "value": "Ativo Selecionado"
+    "value": "Attivo Selezionato"
   },
   {
     "key": "pages.admin.themes.preview.primary_action",
-    "value": "Ação Primária"
+    "value": "Azione Primaria"
   },
   {
     "key": "pages.admin.themes.preview.secondary_action",
-    "value": "Ação Secundária"
+    "value": "Azione Secondaria"
   },
   {
     "key": "pages.admin.themes.preview.dynamic_flags",
-    "value": "Flags de Estado Dinâmicos"
+    "value": "Flag di Stato Dinamici"
   },
   {
     "key": "pages.admin.login.title",
-    "value": "ACESSO AO VAULT"
+    "value": "ACCESSO AL VAULT"
   },
   {
     "key": "pages.admin.login.subtitle",
-    "value": "APENAS PESSOAL AUTORIZADO"
+    "value": "SOLO PERSONALE AUTORIZZATO"
   },
   {
     "key": "pages.admin.login.email",
-    "value": "Identificação de Sistema (Email)"
+    "value": "Identificazione Sistema (Email)"
   },
   {
     "key": "pages.admin.login.password",
-    "value": "Credencial de Segurança (Password)"
+    "value": "Credenziale Sicurezza (Password)"
   },
   {
     "key": "pages.admin.login.button",
-    "value": "ESTABELECER CONEXÃO"
+    "value": "STABILISCI CONNESSIONE"
   },
   {
     "key": "pages.admin.login.authenticating",
-    "value": "AUTENTICANDO..."
+    "value": "AUTENTICAZIONE..."
   },
   {
     "key": "pages.admin.login.return",
-    "value": "Voltar à Loja"
+    "value": "Torna allo Store"
   },
   {
     "key": "pages.common.breadcrumb.home",
-    "value": "Início"
+    "value": "Home"
   },
   {
     "key": "pages.admin.clients.table.spend",
-    "value": "Gasto (COP)"
+    "value": "Spesa (COP)"
   },
   {
     "key": "pages.admin.orders.title",
-    "value": "MANIFESTO DE COMANDO"
+    "value": "MANIFESTO DI COMANDO"
   },
   {
     "key": "pages.admin.orders.search_placeholder",
-    "value": "Procurar Logs (#, nome, tel...)"
+    "value": "Cerca nei Log (#, nome, tel...)"
   },
   {
     "key": "pages.admin.orders.empty_list",
-    "value": "Nenhum manifesto encontrado nos arquivos."
+    "value": "Nessun manifesto trovato negli archivi."
   },
   {
     "key": "pages.admin.orders.status_filter_all",
-    "value": "TODOS OS LOGS"
+    "value": "TUTTI I LOG"
   },
   {
     "key": "pages.admin.orders.list.item_count",
-    "value": "{count} artigo(s)"
+    "value": "{count} articolo/i"
   },
   {
     "key": "pages.admin.orders.detail.select_prompt",
-    "value": "Seleciona um manifesto para inspecionar"
+    "value": "Seleziona un manifesto da ispezionare"
   },
   {
     "key": "pages.admin.orders.detail.error_title",
-    "value": "Erro de Acesso Archival"
+    "value": "Errore Accesso Archivio"
   },
   {
     "key": "pages.admin.orders.detail.close_btn",
-    "value": "FECHAR LOG"
+    "value": "CHIUDI LOG"
   },
   {
     "key": "pages.admin.orders.detail.back_to_list",
-    "value": "← VOLTAR AOS LOGS DE COMANDO"
+    "value": "← TORNA AI LOG DI COMANDO"
   },
   {
     "key": "pages.admin.orders.detail.confirmed_at",
-    "value": "Confirmado em {date}"
+    "value": "Confermato il {date}"
   },
   {
     "key": "pages.admin.orders.detail.confirm_btn",
-    "value": "✓ AUTORIZAR ENVIO"
+    "value": "✓ AUTORIZZA SPEDIZIONE"
   },
   {
     "key": "pages.admin.orders.detail.restore_inventory",
-    "value": "♻ DESENTERRAR STOCK (UNEARTH)"
+    "value": "♻ DESENTERRAR INVENTARIO (UNEARTH)"
   },
   {
     "key": "pages.admin.orders.detail.inventory_restored",
-    "value": "Stock Reanimado"
+    "value": "Inventario Rianimato"
   },
   {
     "key": "pages.admin.orders.detail.tracking.title",
-    "value": "SIGILO DE ENTREGA / TRACKING"
+    "value": "SIGILLO DI CONSEGNA / TRACKING"
   },
   {
     "key": "pages.admin.orders.detail.tracking.local_pickup",
-    "value": "INVOCAÇÃO EM LOJA"
+    "value": "INVOCAZIONE IN STORE"
   },
   {
     "key": "pages.admin.orders.detail.tracking.label",
-    "value": "Sigilo de Tracking"
+    "value": "Sigillo di Tracking"
   },
   {
     "key": "pages.admin.orders.detail.tracking.url",
-    "value": "Portal de Tracking"
+    "value": "Portale di Tracking"
   },
   {
     "key": "pages.admin.orders.detail.customer.title",
-    "value": "PERFIL DE INVOCADOR"
+    "value": "PROFILO INVOCATORE"
   },
   {
     "key": "pages.admin.orders.detail.customer.notify_whatsapp",
-    "value": "NOTIFICAR VIA WHATSAPP"
+    "value": "NOTIFICA VIA WHATSAPP"
   },
   {
     "key": "pages.admin.orders.detail.payment.title",
-    "value": "TROCA DE OURO"
+    "value": "SCAMBIO D'ORO"
   },
   {
     "key": "pages.admin.orders.detail.payment.locked",
-    "value": "🔒 BLOQUEADO"
+    "value": "🔒 BLOCCATO"
   },
   {
     "key": "pages.admin.orders.detail.payment.subtotal",
-    "value": "Subtotal"
+    "value": "Subtotale"
   },
   {
     "key": "pages.admin.orders.detail.payment.shipping",
-    "value": "Envio"
+    "value": "Spedizione"
   },
   {
     "key": "pages.admin.orders.detail.payment.total",
-    "value": "OURO TOTAL"
+    "value": "ORO TOTALE"
   },
   {
     "key": "pages.admin.orders.detail.items.title",
-    "value": "MANIFESTO DO PRODUTO ({count})"
+    "value": "MANIFESTO PRODOTTO ({count})"
   },
   {
     "key": "pages.admin.orders.detail.items.locked",
-    "value": "Stock Bloqueado"
+    "value": "Inventario Bloccato"
   },
   {
     "key": "pages.admin.orders.detail.items.stock_label",
@@ -3869,63 +3869,63 @@
   },
   {
     "key": "pages.admin.orders.detail.items.qty_label",
-    "value": "QTD"
+    "value": "QTÀ"
   },
   {
     "key": "pages.admin.orders.detail.items.removed",
-    "value": "REMOVIDO"
+    "value": "RIMOSSO"
   },
   {
     "key": "pages.admin.orders.detail.items.deleted",
-    "value": "ELIMINADO"
+    "value": "ELIMINATO"
   },
   {
     "key": "pages.admin.orders.detail.items.price_unit",
-    "value": "${price} cada"
+    "value": "${price} cad."
   },
   {
     "key": "pages.admin.orders.detail.items.restore_btn",
-    "value": "Restaurar"
+    "value": "Ripristina"
   },
   {
     "key": "pages.admin.orders.detail.items.delete_btn",
-    "value": "Remover do manifesto"
+    "value": "Rimuovi dal manifesto"
   },
   {
     "key": "pages.admin.orders.detail.add_item.title",
-    "value": "🎁 ADICIONAR BOTIM / PRENDA"
+    "value": "🎁 AGGIUNGI BOTTINO / REGALO"
   },
   {
     "key": "pages.admin.orders.detail.add_item.placeholder",
-    "value": "Procurar carta ou produto..."
+    "value": "Cerca carta o prodotto..."
   },
   {
     "key": "pages.admin.orders.detail.add_item.staged_label",
-    "value": "Para adicionar:"
+    "value": "Da aggiungere:"
   },
   {
     "key": "pages.admin.orders.detail.actions.saving",
-    "value": "A SINCRONIZAR..."
+    "value": "SINCRO..."
   },
   {
     "key": "pages.admin.orders.detail.actions.save",
-    "value": "CONFIRMAR ALTERAÇÕES"
+    "value": "CONSOLIDA CAMBIAMENTI"
   },
   {
     "key": "pages.admin.orders.detail.actions.discard",
-    "value": "DESCARTAR"
+    "value": "SCARTA"
   },
   {
     "key": "pages.admin.orders.confirm_modal.title",
-    "value": "AUTORIZAR ENVIO"
+    "value": "AUTORIZZA SPEDIZIONE"
   },
   {
     "key": "pages.admin.orders.confirm_modal.desc",
-    "value": "Escolhe de que vaults retirar o stock."
+    "value": "Scegli da quali vault prelevare lo stock."
   },
   {
     "key": "pages.admin.orders.confirm_modal.no_locations",
-    "value": "⚠️ Sem vaults físicos atribuídos"
+    "value": "⚠️ Nessun vault fisico assegnato"
   },
   {
     "key": "pages.admin.orders.confirm_modal.auto_label",
@@ -3933,71 +3933,71 @@
   },
   {
     "key": "pages.admin.orders.confirm_modal.available_label",
-    "value": "(disponível: {count})"
+    "value": "(disponibile: {count})"
   },
   {
     "key": "pages.admin.orders.confirm_modal.warning",
-    "value": "⚠️ Tens a certeza? Isto bloqueará o stock atribuído."
+    "value": "⚠️ Sicuro? Questo bloccherà lo stock assegnato."
   },
   {
     "key": "pages.admin.orders.confirm_modal.processing",
-    "value": "A PROCESSAR..."
+    "value": "ELABORAZIONE..."
   },
   {
     "key": "pages.admin.orders.restore_modal.title",
-    "value": "DESENTERRAR STOCK (UNEARTH)"
+    "value": "DESENTERRAR INVENTARIO (UNEARTH)"
   },
   {
     "key": "pages.admin.orders.restore_modal.desc",
-    "value": "Escolhe para que vaults devolver estes artigos."
+    "value": "Scegli a quali vault restituire questi articoli."
   },
   {
     "key": "pages.admin.orders.restore_modal.add_location",
-    "value": "ADICIONAR LOCALIZAÇÃO DE VAULT"
+    "value": "AGGIUNGI POSIZIONE VAULT"
   },
   {
     "key": "pages.admin.orders.restore_modal.processing",
-    "value": "A REANIMAR..."
+    "value": "RIANIMAZIONE..."
   },
   {
     "key": "pages.admin.orders.alerts.complete_confirm",
-    "value": "Tens a certeza que queres marcar como COMPLETADO? Este é um feitiço final e o manifesto ficará bloqueado."
+    "value": "Sicuro di voler segnare come COMPLETATO? È un incantesimo finale e il manifesto sarà bloccato."
   },
   {
     "key": "pages.admin.orders.alerts.cancel_confirm",
-    "value": "Tens a certeza que queres DESCARTAR este pedido? Esta ação é definitiva."
+    "value": "Sicuro di voler SCARTARE questo ordine? L'azione è definitiva."
   },
   {
     "key": "pages.admin.settings.title",
-    "value": "DEFINIÇÕES GLOBAIS"
+    "value": "IMPOSTAZIONI GLOBALI"
   },
   {
     "key": "pages.admin.settings.subtitle",
-    "value": "Configuração de Sistema // Ajustes Mestres"
+    "value": "Configurazione Sistema // Regolazioni Maestre"
   },
   {
     "key": "pages.admin.settings.financial.tcgplayer_rate",
-    "value": "USD para COP (TCGPlayer)"
+    "value": "Da USD a COP (TCGPlayer)"
   },
   {
     "key": "pages.admin.settings.financial.tcgplayer_desc",
-    "value": "Multiplicador para preços Market da TCGPlayer em COP."
+    "value": "Moltiplicatore per prezzi Market TCGPlayer in COP."
   },
   {
     "key": "pages.admin.settings.financial.ck_rate",
-    "value": "USD para COP (CardKingdom)"
+    "value": "Da USD a COP (CardKingdom)"
   },
   {
     "key": "pages.admin.settings.financial.ck_desc",
-    "value": "Multiplicador para preços USD da CardKingdom em COP."
+    "value": "Moltiplicatore per prezzi USD CardKingdom in COP."
   },
   {
     "key": "pages.admin.settings.financial.cm_rate",
-    "value": "EUR para COP (Cardmarket)"
+    "value": "Da EUR a COP (Cardmarket)"
   },
   {
     "key": "pages.admin.settings.financial.cm_desc",
-    "value": "Multiplicador para preços Avg da Cardmarket em COP."
+    "value": "Moltiplicatore per prezzi Avg Cardmarket in COP."
   },
   {
     "key": "pages.admin.settings.financial.note_title",
@@ -4005,135 +4005,135 @@
   },
   {
     "key": "pages.admin.settings.financial.note_text",
-    "value": "Estas taxas são aplicadas durante a ingestão de inventário e sincronização de preços. Ajustes manuais em produtos individuais têm prioridade."
+    "value": "Questi tassi sono applicati durante l'ingestione inventario e sincronizzazione prezzi. Le regolazioni manuali hanno priorità."
   },
   {
     "key": "pages.admin.settings.discovery.title",
-    "value": "ALGORITMOS DE BUSCA E LOGÍSTICA"
+    "value": "ALGORITMI DI RICERCA E LOGISTICA"
   },
   {
     "key": "pages.admin.settings.discovery.hot_desc",
-    "value": "Os produtos que atingirem este limite mostrarão o selo 🔥 HOT."
+    "value": "I prodotti che superano questa soglia mostreranno il badge 🔥 HOT."
   },
   {
     "key": "pages.admin.settings.discovery.new_desc",
-    "value": "Os produtos criados neste intervalo mostrarão o selo 🆕 NOVO."
+    "value": "I prodotti creati in questo arco di tempo mostreranno il badge 🆕 NUOVO."
   },
   {
     "key": "pages.admin.settings.discovery.express_label",
-    "value": "Entrega Express Bogotá"
+    "value": "Consegna Express Bogotá"
   },
   {
     "key": "pages.admin.settings.discovery.express_desc",
-    "value": "Se DESLIGADO, o selo de entrega mostrará OFFLINE independentemente da hora."
+    "value": "Se spento, il badge consegna sarà OFFLINE indipendentemente dall'orario."
   },
   {
     "key": "pages.admin.settings.discovery.express_on",
-    "value": "INTERRUPTOR MESTRE: LIGADO"
+    "value": "INTERRUTTORE MAESTRO: ACCESO"
   },
   {
     "key": "pages.admin.settings.discovery.express_off",
-    "value": "INTERRUPTOR MESTRE: DESLIGADO"
+    "value": "INTERRUTTORE MAESTRO: SPENTO"
   },
   {
     "key": "pages.admin.settings.discovery.synergy_label",
-    "value": "Limite Preço Synergy Scout (COP)"
+    "value": "Limite Prezzo Synergy Scout (COP)"
   },
   {
     "key": "pages.admin.settings.discovery.synergy_desc",
-    "value": "Preço máximo para cartas sugeridas no widget Synergy Scout."
+    "value": "Prezzo massimo per le carte suggerite nel widget Synergy Scout."
   },
   {
     "key": "pages.admin.settings.discovery.shipping_label",
-    "value": "Taxa Fixa de Envio (COP)"
+    "value": "Tariffa Spedizione Fissa (COP)"
   },
   {
     "key": "pages.admin.settings.discovery.shipping_desc",
-    "value": "Taxa padrão aplicada a todos os envios (ignorada na recolha local)."
+    "value": "Tariffa standard applicata a tutte le spedizioni (ignorata per il ritiro locale)."
   },
   {
     "key": "pages.admin.settings.discovery.priority_shipping_label",
-    "value": "Taxa Envio Prioritário (COP)"
+    "value": "Tariffa Spedizione Prioritaria (COP)"
   },
   {
     "key": "pages.admin.settings.discovery.priority_shipping_desc",
-    "value": "Taxa para entrega Express em Bogotá. Só se aplica se Express for escolhido."
+    "value": "Tariffa per consegna Express a Bogotá. Applicata solo se si sceglie Express."
   },
   {
     "key": "pages.admin.settings.system.title",
-    "value": "MANUTENÇÃO E DIAGNÓSTICO DE SISTEMA"
+    "value": "MANUTENZIONE E DIAGNOSTICA DI SISTEMA"
   },
   {
     "key": "pages.admin.settings.system.backend_logs",
-    "value": "Nível Log Servidor Backend"
+    "value": "Livello Log Server Backend"
   },
   {
     "key": "pages.admin.settings.system.backend_logs_desc",
-    "value": "Controla a verbosidade dos logs do servidor Go. Alterações instantâneas."
+    "value": "Controlla la verbosità dei log server Go. Cambiamenti istantanei."
   },
   {
     "key": "pages.admin.settings.system.frontend_logs",
-    "value": "Nível Log Cliente Frontend"
+    "value": "Livello Log Client Frontend"
   },
   {
     "key": "pages.admin.settings.system.frontend_logs_desc",
-    "value": "Controla logs locais e remotos desta sessão. Guardado em localStorage."
+    "value": "Controlla log locali e remoti della sessione. Persistito in localStorage."
   },
   {
     "key": "pages.admin.settings.footer.save_desc",
-    "value": "Estas alterações atualizarão as taxas de moeda e identidade da loja em todas as páginas."
+    "value": "Questi cambiamenti aggiorneranno i tassi di cambio e l'identità dello store su ogni pagina."
   },
   {
     "key": "pages.admin.settings.actions.updating",
-    "value": "ATUALIZANDO NÚCLEO..."
+    "value": "AGGIORNAMENTO CORE..."
   },
   {
     "key": "pages.admin.settings.actions.sync",
-    "value": "SINCRONIZAR TODA A CONFIGURAÇÃO DO SISTEMA →"
+    "value": "SINCRONIZZA TUTTA LA CONFIGURAZIONE DI SISTEMA →"
   },
   {
     "key": "pages.admin.settings.actions.success",
-    "value": "✓ ATUALIZADO COM SUCESSO"
+    "value": "✓ AGGIORNATO CON SUCCESSO"
   },
   {
     "key": "pages.common.buttons.reset",
-    "value": "REPOR"
+    "value": "RESET"
   },
   {
     "key": "pages.admin.settings.alerts.update_failed",
-    "value": "Falha ao atualizar definições."
+    "value": "Aggiornamento impostazioni fallito."
   },
   {
     "key": "pages.admin.settings.alerts.fetch_logs_failed",
-    "value": "Falha ao obter nível de logs"
+    "value": "Recupero livello log fallito"
   },
   {
     "key": "pages.admin.settings.alerts.update_logs_failed",
-    "value": "Falha ao atualizar nível de logs"
+    "value": "Aggiornamento livello log fallito"
   },
   {
     "key": "pages.admin.inventory.move_modal.title",
-    "value": "Relocação em Massa"
+    "value": "Ricollocamento Massivo"
   },
   {
     "key": "pages.admin.inventory.move_modal.target_label",
-    "value": "Armazém Destino:"
+    "value": "Destinazione Stoccaggio:"
   },
   {
     "key": "pages.admin.inventory.move_modal.target_placeholder",
-    "value": "Escolher Destino..."
+    "value": "Seleziona Destinazione..."
   },
   {
     "key": "pages.admin.inventory.move_modal.target_desc",
-    "value": "Todos os itens serão movidos para esta localização"
+    "value": "Tutti gli articoli saranno spostati in questo luogo"
   },
   {
     "key": "pages.admin.inventory.move_modal.table.image",
-    "value": "Imagem"
+    "value": "Immagine"
   },
   {
     "key": "pages.admin.inventory.move_modal.table.product_name",
-    "value": "Nome do Produto"
+    "value": "Nome Prodotto"
   },
   {
     "key": "pages.admin.inventory.move_modal.table.set",
@@ -4141,7 +4141,7 @@
   },
   {
     "key": "pages.admin.inventory.move_modal.table.code",
-    "value": "Código"
+    "value": "Codice"
   },
   {
     "key": "pages.admin.inventory.move_modal.table.foil",
@@ -4153,7 +4153,7 @@
   },
   {
     "key": "pages.admin.inventory.move_modal.table.source",
-    "value": "Origem"
+    "value": "Origine"
   },
   {
     "key": "pages.admin.inventory.move_modal.table.stock",
@@ -4161,47 +4161,47 @@
   },
   {
     "key": "pages.admin.inventory.move_modal.table.to_move",
-    "value": "A Mover"
+    "value": "Da Spostare"
   },
   {
     "key": "pages.admin.inventory.move_modal.no_image",
-    "value": "Sem Imagem"
+    "value": "Nessuna Immagine"
   },
   {
     "key": "pages.admin.inventory.move_modal.regular_variant",
-    "value": "Regular"
+    "value": "Regolare"
   },
   {
     "key": "pages.admin.inventory.move_modal.processing",
-    "value": "A processar..."
+    "value": "Elaborazione..."
   },
   {
     "key": "pages.admin.inventory.move_modal.confirm_btn",
-    "value": "Confirmar Relocação"
+    "value": "Conferma Ricollocamento"
   },
   {
     "key": "pages.admin.inventory.move_modal.alerts.select_target",
-    "value": "Por favor seleciona um local de armazém destino"
+    "value": "Seleziona un luogo di stoccaggio"
   },
   {
     "key": "pages.admin.inventory.move_modal.alerts.no_items",
-    "value": "Nenhum item para mover"
+    "value": "Nessun articolo da spostare"
   },
   {
     "key": "pages.admin.inventory.move_modal.alerts.success",
-    "value": "Produtos relocados com sucesso"
+    "value": "Prodotti ricollocati con successo"
   },
   {
     "key": "pages.admin.inventory.move_modal.alerts.error",
-    "value": "Falha ao relocar produtos"
+    "value": "Ricollocamento prodotti fallito"
   },
   {
     "key": "pages.admin.inventory.move_modal.alerts.load_error",
-    "value": "Falha ao carregar localizações de armazém"
+    "value": "Caricamento luoghi stoccaggio fallito"
   },
   {
     "key": "components.language_selector.names",
-    "value": "🇵🇹 Português"
+    "value": "🇮🇹 Italiano"
   },
   {
     "key": "pages.admin.themes.labels.accent_header",

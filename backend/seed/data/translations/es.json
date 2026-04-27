@@ -1,15 +1,15 @@
 [
   {
     "key": "pages.common.buttons.add",
-    "value": "AGREGAR"
+    "value": "AÑADIR"
   },
   {
     "key": "pages.common.buttons.add_to_cart",
-    "value": "AGREGAR AL CARRITO"
+    "value": "AL CARRITO"
   },
   {
     "key": "pages.common.buttons.added_to_cart",
-    "value": "AGREGADO"
+    "value": "EN EL CARRITO"
   },
   {
     "key": "pages.common.buttons.close",
@@ -21,7 +21,7 @@
   },
   {
     "key": "pages.common.status.out_of_stock",
-    "value": "SIN STOCK"
+    "value": "SIN EXISTENCIAS"
   },
   {
     "key": "pages.common.status.in_stock",
@@ -29,7 +29,7 @@
   },
   {
     "key": "pages.common.labels.art_by",
-    "value": "Arte por"
+    "value": "Arte de"
   },
   {
     "key": "pages.common.labels.rarity",
@@ -49,7 +49,7 @@
   },
   {
     "key": "pages.common.labels.any_edition",
-    "value": "Cualquier Edici\u00f3n"
+    "value": "Cualquier Edición"
   },
   {
     "key": "pages.common.labels.normal",
@@ -77,7 +77,7 @@
   },
   {
     "key": "pages.common.labels.ask",
-    "value": "CONSULTAR"
+    "value": "DEMANDA"
   },
   {
     "key": "pages.common.actions.sell",
@@ -89,11 +89,11 @@
   },
   {
     "key": "pages.common.labels.id_number",
-    "value": "C\u00c9DULA / ID"
+    "value": "NÚMERO DE ID"
   },
   {
     "key": "pages.common.labels.address",
-    "value": "DIRECCI\u00d3N"
+    "value": "DIRECCIÓN"
   },
   {
     "key": "pages.common.currency.cop",
@@ -108,20 +108,12 @@
     "value": "CANCELAR"
   },
   {
-    "key": "pages.common.labels.id_number",
-    "value": "C\u00c9DULA / ID"
-  },
-  {
-    "key": "pages.common.labels.address",
-    "value": "DIRECCI\u00d3N"
-  },
-  {
     "key": "pages.common.forms.newsletter.title",
-    "value": "\u00danete a la manada"
+    "value": "Únete al Pack"
   },
   {
     "key": "pages.common.forms.newsletter.subtitle",
-    "value": "Alertas de stock y novedades."
+    "value": "Recibe alertas de stock y noticias de la tienda."
   },
   {
     "key": "pages.common.forms.newsletter.placeholder",
@@ -133,27 +125,27 @@
   },
   {
     "key": "pages.common.forms.newsletter.success",
-    "value": "\u00a1GRACIAS! REVISA TU CORREO PRONTO."
+    "value": "¡GRACIAS! REVISA TU CORREO PRONTO."
   },
   {
     "key": "pages.common.forms.newsletter.error",
-    "value": "ALGO SALI\u00d3 MAL."
+    "value": "ALGO SALIÓ MAL."
   },
   {
     "key": "pages.product.details.not_found",
-    "value": "ART\u00cdCULO NO ENCONTRADO"
+    "value": "OBJETO NO ENCONTRADO"
   },
   {
     "key": "pages.product.details.not_found_desc",
-    "value": "Este art\u00edculo puede haber sido vendido o eliminado."
+    "value": "Este artículo puede haberse vendido o eliminado."
   },
   {
     "key": "pages.product.details.view_full_page",
-    "value": "Ver p\u00e1gina completa"
+    "value": "Ver página completa"
   },
   {
     "key": "pages.product.details.no_info",
-    "value": "No hay informaci\u00f3n adicional disponible."
+    "value": "No hay información adicional disponible."
   },
   {
     "key": "pages.product.details.textless",
@@ -177,19 +169,19 @@
   },
   {
     "key": "pages.product.status.available",
-    "value": "dispon."
+    "value": "disponible"
   },
   {
     "key": "pages.product.details.legalities",
-    "value": "LEGALIDAD EN FORMATOS"
+    "value": "LEGALIDAD EN FORMATO"
   },
   {
     "key": "pages.product.details.store_notice",
-    "value": "Completa la compra en tienda o verifica disponibilidad en el mostrador."
+    "value": "Completa la compra en tienda o verifica disponibilidad en mostrador."
   },
   {
     "key": "pages.common.status.active_bounty",
-    "value": "Bounty Activo"
+    "value": "Recompensa Activa"
   },
   {
     "key": "pages.common.status.completed_past",
@@ -197,15 +189,15 @@
   },
   {
     "key": "pages.common.status.mission_complete",
-    "value": "MISI\u00d3N CUMPLIDA\nCARTA ENTREGADA"
+    "value": "MISIÓN COMPLETADA\nCARTA ENTREGADA"
   },
   {
     "key": "pages.checkout.page.title",
-    "value": "FINALIZAR COMPRA"
+    "value": "PAGAR"
   },
   {
     "key": "pages.checkout.section.contact",
-    "value": "INFORMACI\u00d3N DE CONTACTO"
+    "value": "INFORMACIÓN DE CONTACTO"
   },
   {
     "key": "pages.checkout.form.first_name",
@@ -217,7 +209,7 @@
   },
   {
     "key": "pages.checkout.form.phone",
-    "value": "TEL\u00c9FONO / WHATSAPP"
+    "value": "TELÉFONO / WHATSAPP"
   },
   {
     "key": "pages.checkout.form.email",
@@ -225,15 +217,15 @@
   },
   {
     "key": "pages.checkout.form.id_number",
-    "value": "C\u00c9DULA / ID"
+    "value": "ID / CÉDULA"
   },
   {
     "key": "pages.checkout.form.address",
-    "value": "DIRECCI\u00d3N"
+    "value": "DIRECCIÓN"
   },
   {
     "key": "pages.checkout.section.payment",
-    "value": "M\u00c9TODO DE PAGO"
+    "value": "MÉTODO DE PAGO"
   },
   {
     "key": "pages.checkout.form.notes",
@@ -249,7 +241,7 @@
   },
   {
     "key": "pages.checkout.summary.empty_cart",
-    "value": "Tu carrito est\u00e1 vac\u00edo."
+    "value": "Tu carrito está vacío."
   },
   {
     "key": "pages.checkout.summary.vaciar",
@@ -257,15 +249,15 @@
   },
   {
     "key": "pages.checkout.summary.item",
-    "value": "ART\u00cdCULO"
+    "value": "ARTÍCULO"
   },
   {
     "key": "pages.checkout.summary.items",
-    "value": "ART\u00cdCULOS"
+    "value": "ARTÍCULOS"
   },
   {
     "key": "pages.checkout.buttons.confirm",
-    "value": "CONFIRMAR PEDIDO \u2192"
+    "value": "CONFIRMAR PEDIDO →"
   },
   {
     "key": "pages.checkout.buttons.processing",
@@ -273,27 +265,27 @@
   },
   {
     "key": "pages.checkout.footer.notice",
-    "value": "Al confirmar, un asesor se pondr\u00e1 en contacto contigo para coordinar la entrega."
+    "value": "Tras la confirmación, un asesor te contactará para coordinar la entrega."
   },
   {
     "key": "pages.order.confirmation.title",
-    "value": "\u00a1ORDEN RECIBIDA!"
+    "value": "¡PEDIDO RECIBIDO!"
   },
   {
     "key": "pages.order.confirmation.order_no",
-    "value": "N\u00daMERO DE ORDEN"
+    "value": "NÚMERO DE PEDIDO"
   },
   {
     "key": "pages.order.confirmation.desc",
-    "value": "Tu pedido ha sido registrado exitosamente. Un asesor se pondr\u00e1 en contacto contigo para coordinar el pago y la entrega."
+    "value": "Tu pedido ha sido registrado con éxito. Un asesor te contactará para coordinar el pago y la entrega."
   },
   {
     "key": "pages.order.confirmation.back",
-    "value": "\u2190 VOLVER A LA TIENDA"
+    "value": "← VOLVER A LA TIENDA"
   },
   {
     "key": "pages.order.confirmation.contact",
-    "value": "CONTACTAR"
+    "value": "CONTACTO"
   },
   {
     "key": "pages.order.modal.title",
@@ -309,7 +301,7 @@
   },
   {
     "key": "pages.order.modal.error",
-    "value": "Error al cargar los detalles. Intenta de nuevo."
+    "value": "Error al cargar detalles. Reintenta."
   },
   {
     "key": "pages.order.modal.close",
@@ -321,7 +313,7 @@
   },
   {
     "key": "pages.order.modal.date_label",
-    "value": "Fecha de Transacci\u00f3n"
+    "value": "Fecha de Transacción"
   },
   {
     "key": "pages.order.modal.amount_label",
@@ -341,15 +333,15 @@
   },
   {
     "key": "pages.order.modal.reference",
-    "value": "Referencia de Pedido:"
+    "value": "Referencia del Pedido:"
   },
   {
     "key": "pages.order.modal.method",
-    "value": "M\u00e9todo:"
+    "value": "Método:"
   },
   {
     "key": "pages.order.modal.issues",
-    "value": "\u00bfProblemas? Contacta a"
+    "value": "¿Problemas? Contacta a"
   },
   {
     "key": "pages.profile.title",
@@ -357,11 +349,11 @@
   },
   {
     "key": "pages.profile.subtitle",
-    "value": "Administra tu perfil y revisa tu historial de compras."
+    "value": "Gestiona tu perfil e historial de pedidos."
   },
   {
     "key": "pages.profile.section.settings",
-    "value": "Configuraci\u00f3n de Perfil"
+    "value": "Ajustes de Perfil"
   },
   {
     "key": "pages.profile.form.full_name",
@@ -369,19 +361,19 @@
   },
   {
     "key": "pages.profile.form.email",
-    "value": "Correo Electr\u00f3nico"
+    "value": "Correo Electrónico"
   },
   {
     "key": "pages.profile.form.phone",
-    "value": "N\u00famero de Tel\u00e9fono"
+    "value": "Teléfono"
   },
   {
     "key": "pages.profile.form.id",
-    "value": "Documento de Identidad"
+    "value": "ID / Cédula"
   },
   {
     "key": "pages.profile.form.shipping",
-    "value": "Direcci\u00f3n de Env\u00edo"
+    "value": "Dirección de Envío"
   },
   {
     "key": "pages.profile.placeholders.phone",
@@ -389,11 +381,11 @@
   },
   {
     "key": "pages.profile.placeholders.id",
-    "value": "Requerido para env\u00edos en Colombia"
+    "value": "Requerido para envíos en Colombia"
   },
   {
     "key": "pages.profile.placeholders.address",
-    "value": "Direcci\u00f3n completa, ciudad e instrucciones"
+    "value": "Dirección completa, ciudad e instrucciones"
   },
   {
     "key": "pages.profile.actions.save",
@@ -405,7 +397,7 @@
   },
   {
     "key": "pages.profile.messages.success",
-    "value": "\u00a1Perfil actualizado con \u00e9xito!"
+    "value": "¡Perfil actualizado!"
   },
   {
     "key": "pages.profile.messages.error",
@@ -429,15 +421,15 @@
   },
   {
     "key": "pages.profile.orders.empty",
-    "value": "A\u00fan no has realizado pedidos."
+    "value": "Aún no has hecho pedidos."
   },
   {
     "key": "pages.profile.orders.browse",
-    "value": "Explora nuestro inventario \u2192"
+    "value": "Explora el inventario →"
   },
   {
     "key": "pages.profile.table.order_no",
-    "value": "No. Pedido"
+    "value": "Pedido No."
   },
   {
     "key": "pages.profile.table.date",
@@ -449,7 +441,7 @@
   },
   {
     "key": "pages.profile.table.items",
-    "value": "Art\u00edculos"
+    "value": "Artículos"
   },
   {
     "key": "pages.profile.table.total",
@@ -461,7 +453,7 @@
   },
   {
     "key": "pages.checkout.placeholders.last_name",
-    "value": "P\u00e9rez"
+    "value": "Pérez"
   },
   {
     "key": "pages.checkout.placeholders.phone",
@@ -469,7 +461,7 @@
   },
   {
     "key": "pages.checkout.placeholders.email",
-    "value": "correo@ejemplo.com"
+    "value": "juan@ejemplo.com"
   },
   {
     "key": "pages.checkout.placeholders.id",
@@ -477,11 +469,11 @@
   },
   {
     "key": "pages.checkout.placeholders.address",
-    "value": "Cra 1 # 2-3"
+    "value": "Calle # 1-2"
   },
   {
     "key": "pages.login.loading",
-    "value": "Iniciando Matriz de Autenticaci\u00f3n..."
+    "value": "Iniciando Matriz de Autenticación..."
   },
   {
     "key": "pages.login.security_v",
@@ -489,7 +481,7 @@
   },
   {
     "key": "pages.login.title",
-    "value": "BIENVENIDO DE NUEVO"
+    "value": "BIENVENIDO"
   },
   {
     "key": "pages.login.subtitle",
@@ -497,19 +489,19 @@
   },
   {
     "key": "pages.login.google",
-    "value": "INICIAR SESI\u00d3N CON GOOGLE"
+    "value": "ENTRAR CON GOOGLE"
   },
   {
     "key": "pages.login.facebook",
-    "value": "INICIAR SESI\u00d3N CON FACEBOOK"
+    "value": "ENTRAR CON FACEBOOK"
   },
   {
     "key": "pages.login.footer.text",
-    "value": "Al ingresar a la plataforma, aceptas nuestros {terms} y {privacy}."
+    "value": "Al entrar, aceptas nuestros {terms} y {privacy}."
   },
   {
     "key": "pages.login.footer.terms",
-    "value": "T\u00e9rminos de Participaci\u00f3n"
+    "value": "Términos de Compromiso"
   },
   {
     "key": "pages.login.footer.privacy",
@@ -517,7 +509,7 @@
   },
   {
     "key": "pages.login.return",
-    "value": "Regresar a Operaciones"
+    "value": "Volver a Operaciones"
   },
   {
     "key": "pages.login.accent.store",
@@ -525,7 +517,7 @@
   },
   {
     "key": "pages.login.accent.logistics",
-    "value": "LOG\u00cdSTICA"
+    "value": "LOGÍSTICA"
   },
   {
     "key": "pages.inventory.grid.filters.title",
@@ -533,23 +525,23 @@
   },
   {
     "key": "pages.inventory.grid.filters.strategy.title",
-    "value": "Estrategia de B\u00fasqueda"
+    "value": "Estrategia de Búsqueda"
   },
   {
     "key": "pages.inventory.grid.filters.strategy.broad",
-    "value": "AMPLIA (O)"
+    "value": "AMPLIA (OR)"
   },
   {
     "key": "pages.inventory.grid.filters.strategy.narrow",
-    "value": "ESTRICTA (Y)"
+    "value": "ESTRECHA (AND)"
   },
   {
     "key": "pages.inventory.grid.filters.strategy.broad_desc",
-    "value": "Ampl\u00eda resultados: coincide con CUALQUIER filtro."
+    "value": "Amplía resultados: coincide con CUALQUIER filtro."
   },
   {
     "key": "pages.inventory.grid.filters.strategy.narrow_desc",
-    "value": "Reduce resultados: coincide con TODOS los filtros."
+    "value": "Estrecha resultados: coincide con TODOS los filtros."
   },
   {
     "key": "pages.inventory.grid.filters.keywords",
@@ -569,7 +561,7 @@
   },
   {
     "key": "pages.inventory.grid.filters.clear",
-    "value": "Limpiar Filtros \u00d7"
+    "value": "Limpiar Filtros ×"
   },
   {
     "key": "pages.inventory.grid.sort.label",
@@ -577,7 +569,7 @@
   },
   {
     "key": "pages.inventory.grid.sort.newest",
-    "value": "M\u00e1s Nuevo"
+    "value": "Más Reciente"
   },
   {
     "key": "pages.inventory.grid.sort.name",
@@ -589,7 +581,7 @@
   },
   {
     "key": "pages.inventory.grid.sort.cmc",
-    "value": "Costo de Man\u00e1"
+    "value": "Costo de Maná"
   },
   {
     "key": "pages.inventory.grid.sort.rarity",
@@ -609,27 +601,27 @@
   },
   {
     "key": "pages.inventory.grid.status.no_results_desc",
-    "value": "Intenta limpiar los filtros o vuelve m\u00e1s tarde."
+    "value": "Prueba limpiando filtros o vuelve luego."
   },
   {
     "key": "pages.inventory.grid.pagination.prev",
-    "value": "\u2190 Ant"
+    "value": "← Ant."
   },
   {
     "key": "pages.inventory.grid.pagination.next",
-    "value": "Siguiente \u2192"
+    "value": "Sig. →"
   },
   {
     "key": "grid.filters.condition",
-    "value": "ESTADO"
+    "value": "CONDICIÓN"
   },
   {
     "key": "grid.filters.finish",
-    "value": "TIPO DE FOIL"
+    "value": "ACABADO"
   },
   {
     "key": "grid.filters.version",
-    "value": "VERSI\u00d3N"
+    "value": "VERSIÓN"
   },
   {
     "key": "grid.filters.rarity",
@@ -637,7 +629,7 @@
   },
   {
     "key": "grid.filters.set",
-    "value": "EDICI\u00d3N"
+    "value": "SET"
   },
   {
     "key": "grid.filters.color",
@@ -661,7 +653,7 @@
   },
   {
     "key": "pages.product.finish.etched_foil",
-    "value": "Foil Etched"
+    "value": "Etched Foil"
   },
   {
     "key": "pages.product.version.normal",
@@ -681,11 +673,11 @@
   },
   {
     "key": "tcg.pokemon",
-    "value": "Pok\u00e9mon"
+    "value": "Pokémon"
   },
   {
     "key": "pages.singles.landing.category",
-    "value": "CATEGOR\u00cdA // SINGLES"
+    "value": "CATEGORÍA // SINGLES"
   },
   {
     "key": "pages.singles.landing.title",
@@ -693,19 +685,19 @@
   },
   {
     "key": "pages.singles.landing.desc",
-    "value": "Explora nuestra colecci\u00f3n de cientos de singles de tus TCGs favoritos. Elige tu juego para ver el inventario completo."
+    "value": "Explora cientos de cartas sueltas de tus TCGs favoritos. Elige tu juego."
   },
   {
     "key": "pages.singles.landing.view_all",
-    "value": "VER TODAS LAS SINGLES \u2192"
+    "value": "VER TODAS LAS CARTAS →"
   },
   {
     "key": "pages.singles.landing.featured",
-    "value": "SINGLES DESTACADAS"
+    "value": "CARTAS DESTACADAS"
   },
   {
     "key": "pages.singles.landing.no_featured",
-    "value": "NO SE ENCONTRARON SINGLES DESTACADAS"
+    "value": "SIN CARTAS DESTACADAS"
   },
   {
     "key": "pages.singles.title",
@@ -717,7 +709,7 @@
   },
   {
     "key": "pages.accessories.title",
-    "value": "ACCESORIOS Y PROTECCI\u00d3N"
+    "value": "PROTECCIÓN Y ACCESORIOS"
   },
   {
     "key": "pages.store_exclusives.title",
@@ -729,27 +721,23 @@
   },
   {
     "key": "pages.checkout.buttons.re_add",
-    "value": "REAGREGAR"
+    "value": "RE-AÑADIR"
   },
   {
     "key": "pages.checkout.error.empty",
-    "value": "Tu carrito est\u00e1 vac\u00edo. Agrega productos antes de continuar."
+    "value": "Tu carrito está vacío. Añade algo antes de seguir."
   },
   {
     "key": "pages.checkout.buttons.back",
-    "value": "\u2190 VOLVER A LA TIENDA"
-  },
-  {
-    "key": "pages.checkout.buttons.back",
-    "value": "\u2190 VOLVER A LA TIENDA"
+    "value": "← VOLVER A LA TIENDA"
   },
   {
     "key": "pages.bounties.page.title",
-    "value": "BUSCAMOS / BOUNTIES"
+    "value": "RECOMPENSAS / WANTED"
   },
   {
     "key": "pages.bounties.page.subtitle",
-    "value": "Estamos buscando comprar las siguientes cartas. \u00a1Si las tienes, cont\u00e1ctanos! \u00bfNo encuentras lo que buscas? \u00a1Env\u00edanos una solicitud!"
+    "value": "Buscamos estas cartas. Si las tienes, ¡avísanos! ¿No encuentras lo que buscas? ¡Pídela!"
   },
   {
     "key": "pages.bounties.status.showing",
@@ -757,55 +745,43 @@
   },
   {
     "key": "pages.bounties.buttons.request",
-    "value": "SOLICITAR CARTA"
+    "value": "PEDIR UNA CARTA"
   },
   {
     "key": "pages.bounties.success.request",
-    "value": "\u00a1Tu solicitud fue enviada con \u00e9xito! Te contactaremos si localizamos la carta."
+    "value": "¡Petición enviada! Te contactaremos si la hallamos."
   },
   {
     "key": "pages.bounties.empty.title",
-    "value": "SIN BOUNTIES ACTIVOS"
+    "value": "SIN RECOMPENSAS ACTIVAS"
   },
   {
     "key": "pages.bounties.empty.desc",
-    "value": "No estamos buscando ninguna carta espec\u00edfica en este momento. \u00a1Pero a\u00fan puedes enviarnos una solicitud!"
+    "value": "No buscamos cartas específicas ahora, ¡pero puedes pedir una!"
   },
   {
     "key": "pages.bounties.buttons.submit_request",
-    "value": "ENVIAR SOLICITUD"
-  },
-  {
-    "key": "pages.singles.title",
-    "value": "SINGLES DE {tcg}"
+    "value": "ENVIAR PETICIÓN"
   },
   {
     "key": "pages.singles.subtitle",
-    "value": "Explora cartas individuales de {tcg} por estado, tratamiento y acabado foil."
-  },
-  {
-    "key": "pages.sealed.title",
-    "value": "PRODUCTO SELLADO DE {tcg}"
+    "value": "Explora cartas sueltas de {tcg} por condición y acabado."
   },
   {
     "key": "pages.sealed.subtitle",
-    "value": "Cajas de sobres, bundles y producto sellado de {tcg}."
-  },
-  {
-    "key": "pages.sealed.subtitle",
-    "value": "Cajas de sobres, bundles y producto sellado de {tcg}."
+    "value": "Booster boxes, bundles y producto sellado para {tcg}."
   },
   {
     "key": "pages.contact.page.title",
-    "value": "Cont\u00e1ctanos"
+    "value": "Contáctanos"
   },
   {
     "key": "pages.contact.section.visit",
-    "value": "VIS\u00cdTANOS"
+    "value": "VISITA EL BOX"
   },
   {
     "key": "pages.contact.info.address",
-    "value": "DIRECCI\u00d3N"
+    "value": "DIRECCIÓN"
   },
   {
     "key": "pages.contact.info.hours",
@@ -813,11 +789,11 @@
   },
   {
     "key": "pages.contact.info.quote",
-    "value": "\"Busca la pila de cajas de zapatos cerca de la entrada trasera.\""
+    "value": "\"Solo busca la pila de cajas de zapatos cerca de la entrada trasera.\""
   },
   {
     "key": "pages.contact.section.digital",
-    "value": "MEDIOS DIGITALES"
+    "value": "COMUNICACIONES DIGITALES"
   },
   {
     "key": "pages.contact.info.whatsapp",
@@ -825,35 +801,31 @@
   },
   {
     "key": "pages.contact.buttons.sell_bulk",
-    "value": "V\u00c9NDENOS TU BULK \u2192"
+    "value": "VÉNDENOS TU BULK →"
   },
   {
     "key": "pages.contact.map.placeholder",
-    "value": "INTEGRACI\u00d3N DE MAPA"
-  },
-  {
-    "key": "pages.contact.map.placeholder",
-    "value": "INTEGRACI\u00d3N DE MAPA"
+    "value": "INTEGRACIÓN DE MAPA"
   },
   {
     "key": "pages.home.status.empty",
-    "value": "LA TIENDA EST\u00c1 VAC\u00cdA"
+    "value": "LA TIENDA ESTÁ VACÍA"
   },
   {
     "key": "pages.home.status.empty_desc",
-    "value": "No se han publicado colecciones todav\u00eda."
+    "value": "Aún no se han poblado colecciones."
   },
   {
     "key": "pages.home.buttons.view_all",
-    "value": "VER TODO \u2192"
+    "value": "VER TODO →"
   },
   {
     "key": "pages.home.status.no_items",
-    "value": "No hay art\u00edculos asignados a esta colecci\u00f3n todav\u00eda."
+    "value": "Aún no hay artículos asignados a esta colección."
   },
   {
     "key": "pages.home.tags.urgently_needed",
-    "value": "Urgente"
+    "value": "Necesitado Urgente"
   },
   {
     "key": "pages.nav.main.singles",
@@ -881,7 +853,7 @@
   },
   {
     "key": "pages.nav.main.wanted",
-    "value": "Buscamos"
+    "value": "Cartas Buscadas"
   },
   {
     "key": "pages.nav.main.bulk",
@@ -901,7 +873,7 @@
   },
   {
     "key": "pages.cookies.description",
-    "value": "Usamos cookies para mejorar tu experiencia. Puedes elegir aceptar todas o personalizar tus preferencias."
+    "value": "Usamos cookies para mejorar tu experiencia. Puedes aceptar todo o personalizar tus preferencias."
   },
   {
     "key": "pages.cookies.customize",
@@ -937,7 +909,7 @@
   },
   {
     "key": "pages.cookies.preferences",
-    "value": "PREFERENCIAS de COOKIES"
+    "value": "PREFERENCIAS DE COOKIES"
   },
   {
     "key": "pages.cookies.essential_title",
@@ -945,15 +917,15 @@
   },
   {
     "key": "pages.cookies.essential_desc",
-    "value": "Esenciales para que el sitio funcione (Autenticaci\u00f3n, Tema, Carrito)."
+    "value": "Esenciales para que el sitio funcione (Auth, Tema, Carrito)."
   },
   {
     "key": "pages.cookies.analytics_title",
-    "value": "ANAL\u00cdTICA"
+    "value": "ANÁLISIS"
   },
   {
     "key": "pages.cookies.analytics_desc",
-    "value": "Nos ayudan a entender c\u00f3mo la gente usa la tienda para mejorar la experiencia."
+    "value": "Nos ayudan a entender cómo se usa la tienda para mejorar la experiencia."
   },
   {
     "key": "pages.cookies.marketing_title",
@@ -961,15 +933,15 @@
   },
   {
     "key": "pages.cookies.marketing_desc",
-    "value": "Se usan para publicidad personalizada y funciones sociales."
+    "value": "Usadas para publicidad personalizada y funciones sociales."
   },
   {
     "key": "pages.cookies.save",
-    "value": "GUARDAR MIS PREFERENCIAS"
+    "value": "GUARDAR MIS OPCIONES"
   },
   {
     "key": "pages.common.back",
-    "value": "ATR\u00c1S"
+    "value": "ATRÁS"
   },
   {
     "key": "pages.nav.mobile.sealed_title",
@@ -989,7 +961,7 @@
   },
   {
     "key": "pages.nav.user.login",
-    "value": "Ingresar"
+    "value": "Entrar"
   },
   {
     "key": "pages.nav.user.profile",
@@ -997,27 +969,27 @@
   },
   {
     "key": "pages.nav.user.logout",
-    "value": "Cerrar Sesi\u00f3n"
+    "value": "Salir"
   },
   {
     "key": "pages.privacy.title",
-    "value": "Pol\u00edtica de Privacidad"
+    "value": "Política de Privacidad"
   },
   {
     "key": "pages.privacy.last_updated",
-    "value": "\u00daltima actualizaci\u00f3n: 12 de abril, 2026"
+    "value": "Última actualización: 12 de abril de 2026"
   },
   {
     "key": "pages.privacy.intro",
-    "value": "En El Bulk, estamos comprometidos con la protecci\u00f3n de tu privacidad. Esta pol\u00edtica explica c\u00f3mo recopilamos, usamos y protegemos tus datos cuando visitas nuestra tienda o usas nuestros servicios."
+    "value": "En El Bulk, nos comprometemos a proteger tu privacidad. Esta política explica cómo recopilamos, usamos y protegemos tus datos."
   },
   {
     "key": "pages.privacy.sections.info_collected.title",
-    "value": "1. Informaci\u00f3n que Recopilamos"
+    "value": "1. Información que Recopilamos"
   },
   {
     "key": "pages.privacy.sections.info_collected.content",
-    "value": "Recopilamos la informaci\u00f3n que nos proporcionas directamente, como tu nombre, correo electr\u00f3nico, direcci\u00f3n f\u00edsica (para env\u00edos) y n\u00famero de tel\u00e9fono cuando creas una cuenta o realizas un pedido."
+    "value": "Recopilamos información que nos proporcionas directamente, como nombre, email, dirección y teléfono al crear una cuenta o hacer un pedido."
   },
   {
     "key": "pages.privacy.sections.habeas_data.title",
@@ -1025,15 +997,15 @@
   },
   {
     "key": "pages.privacy.sections.habeas_data.content",
-    "value": "De acuerdo con la ley colombiana, al usar esta plataforma autorizas a El Bulk a tratar tus datos personales para el cumplimiento de pedidos, coordinaci\u00f3n log\u00edstica con transportadores externos e inteligencia de negocios. Mantienes el derecho de acceder, actualizar, rectificar o solicitar la supresi\u00f3n de tus datos a trav\u00e9s de nuestros canales de comunicaci\u00f3n seguros."
+    "value": "De acuerdo con la ley colombiana, al usar esta plataforma autorizas a El Bulk a procesar tus datos para el cumplimiento de pedidos y logística. Tienes derecho a acceder, actualizar o rectificar tus datos."
   },
   {
     "key": "pages.privacy.sections.auth.title",
-    "value": "3. Servicios de Autenticaci\u00f3n (OAuth)"
+    "value": "3. Servicios de Autenticación (OAuth)"
   },
   {
     "key": "pages.privacy.sections.auth.content",
-    "value": "Si eliges iniciar sesi\u00f3n con Google o Facebook, recibimos tu informaci\u00f3n de perfil b\u00e1sica (nombre, correo y foto de perfil). Usamos estos datos solo para crear y administrar tu cuenta. No publicamos en tus perfiles sociales ni compartimos tus datos sociales con terceros."
+    "value": "Si inicias sesión con Google o Facebook, recibimos tu perfil básico. Usamos esto solo para gestionar tu cuenta. No publicamos en tus perfiles ni compartimos tus datos."
   },
   {
     "key": "pages.privacy.sections.cookies.title",
@@ -1041,15 +1013,15 @@
   },
   {
     "key": "pages.privacy.sections.cookies.content",
-    "value": "Usamos cookies esenciales para gestionar tu sesi\u00f3n, carrito y preferencias. Con tu consentimiento, tambi\u00e9n usamos cookies de anal\u00edtica (Google Analytics) y marketing (Meta Pixel) para mejorar nuestra tienda y ofrecer contenido relevante."
+    "value": "Usamos cookies esenciales para tu sesión. Con tu consentimiento, también usamos análisis (Google Analytics) y marketing (Meta Pixel)."
   },
   {
     "key": "pages.privacy.sections.data_usage.title",
-    "value": "5. C\u00f3mo Usamos tus Datos"
+    "value": "5. Cómo Usamos tus Datos"
   },
   {
     "key": "pages.privacy.sections.data_usage.content",
-    "value": "Tus datos se usan para procesar pedidos, coordinar entregas v\u00eda WhatsApp y (si te suscribes) enviarte novedades. Nunca vendemos tu informaci\u00f3n personal a terceros."
+    "value": "Tus datos sirven para procesar pedidos, coordinar entregas vía WhatsApp y enviarte noticias si te suscribes. Nunca vendemos tu información."
   },
   {
     "key": "pages.privacy.sections.rights.title",
@@ -1057,43 +1029,43 @@
   },
   {
     "key": "pages.privacy.sections.rights.content",
-    "value": "Tienes el derecho de acceder, corregir o eliminar tus datos personales en cualquier momento a trav\u00e9s de la configuraci\u00f3n de tu perfil o contact\u00e1ndonos directamente."
+    "value": "Tienes derecho a acceder, corregir o borrar tus datos en cualquier momento desde tus ajustes."
   },
   {
     "key": "pages.privacy.sections.data_deletion.title",
-    "value": "7. Solicitud de Eliminaci\u00f3n de Datos"
+    "value": "7. Solicitud de Eliminación de Datos"
   },
   {
     "key": "pages.privacy.sections.data_deletion.content",
-    "value": "Para eliminar tus datos, puedes quitar 'El Bulk' desde la Configuraci\u00f3n de tu perfil de Facebook en 'Apps y sitios web'. Alternativamente, puedes solicitar la eliminaci\u00f3n manual de tu cuenta y todos los datos asociados enviando un correo a admin@elbulk.com con el asunto 'Solicitud de Eliminaci\u00f3n de Datos'."
+    "value": "Para borrar tus datos, puedes eliminar 'El Bulk' de tus ajustes de Facebook o enviarnos un correo a admin@elbulk.com con el asunto 'Solicitud de Eliminación de Datos'."
   },
   {
     "key": "pages.privacy.sections.contact.title",
-    "value": "8. Cont\u00e1ctanos"
+    "value": "8. Contáctanos"
   },
   {
     "key": "pages.privacy.sections.contact.content",
-    "value": "Si tienes dudas sobre esta pol\u00edtica, por favor escr\u00edbenos a admin@elbulk.com o vis\u00edtanos en nuestra ubicaci\u00f3n f\u00edsica."
+    "value": "Si tienes preguntas, escríbenos a admin@elbulk.com o visítanos en nuestra tienda física."
   },
   {
     "key": "pages.terms.title",
-    "value": "T\u00e9rminos de Participaci\u00f3n"
+    "value": "Términos de Compromiso"
   },
   {
     "key": "pages.terms.last_updated",
-    "value": "\u00daltima actualizaci\u00f3n: 12 de abril, 2026"
+    "value": "Última actualización: 12 de abril de 2026"
   },
   {
     "key": "pages.terms.intro",
-    "value": "Al acceder a El Bulk, aceptas estos protocolos. Curamos las piezas comunes, infrecuentes y esenciales de tu estrategia TCG."
+    "value": "Al acceder a El Bulk, aceptas estos protocolos. Curamos lo común, lo poco común y las piezas esenciales de tu estrategia TCG."
   },
   {
     "key": "pages.terms.sections.rules_of_engagement.title",
-    "value": "1. Reglas de Participaci\u00f3n"
+    "value": "1. Reglas de Compromiso"
   },
   {
     "key": "pages.terms.sections.rules_of_engagement.content",
-    "value": "Proveemos una plataforma especializada para navegar, adquirir y liquidar productos TCG. Cualquier extracci\u00f3n no autorizada de datos o abuso sist\u00e9mico resultar\u00e1 en la terminaci\u00f3n del protocolo."
+    "value": "Proveemos una plataforma especializada para adquirir y liquidar productos TCG. Cualquier abuso sistémico resultará en la terminación del protocolo."
   },
   {
     "key": "pages.terms.sections.condition_grading.title",
@@ -1101,7 +1073,7 @@
   },
   {
     "key": "pages.terms.sections.condition_grading.content",
-    "value": "Todos los activos se clasifican en NM (Near Mint), LP (Lightly Played) o MP (Moderately Played). No garantizamos el estado 'Gem Mint'. El idioma se determina por los metadatos espec\u00edficos del producto proporcionados en el t\u00edtulo o descripci\u00f3n."
+    "value": "Los activos se clasifican en NM, LP o MP. No garantizamos estado 'Gem Mint'. El idioma se determina por la metadata del producto."
   },
   {
     "key": "pages.terms.sections.inventory_availability.title",
@@ -1109,23 +1081,23 @@
   },
   {
     "key": "pages.terms.sections.inventory_availability.content",
-    "value": "Aunque mantenemos sensores de alta precisi\u00f3n en nuestro inventario, pueden ocurrir errores de sincronizaci\u00f3n. El Bulk se reserva el derecho de cancelar cualquier pedido y proporcionar un reembolso completo si el activo ya no est\u00e1 disponible en la b\u00f3veda."
+    "value": "Aunque mantenemos alta precisión, pueden ocurrir errores de sincronización. El Bulk se reserva el derecho de cancelar si el activo ya no está en la bóveda."
   },
   {
     "key": "pages.terms.sections.order_fulfillment.title",
-    "value": "4. Comunicaciones T\u00e1cticas"
+    "value": "4. Comunicaciones Tácticas"
   },
   {
     "key": "pages.terms.sections.order_fulfillment.content",
-    "value": "Todos los registros son preliminares. La confirmaci\u00f3n final y la coordinaci\u00f3n de extracci\u00f3n se manejar\u00e1n v\u00eda enlace seguro de WhatsApp. Los pedidos para recogida en tienda deben retirarse en 30 d\u00edas o arriesgan la expiraci\u00f3n del protocolo."
+    "value": "Los registros son preliminares. La confirmación final se hará vía enlace seguro de WhatsApp. Los pedidos para recoger deben retirarse en 30 días."
   },
   {
     "key": "pages.terms.sections.pricing_inventory.title",
-    "value": "5. Din\u00e1mica de Precios"
+    "value": "5. Dinámica de Precios"
   },
   {
     "key": "pages.terms.sections.pricing_inventory.content",
-    "value": "Los precios se denotan en COP basados en la inteligencia de mercado actual. Nos reservamos el derecho de ajustar los valores para extracciones pendientes si se detectan cambios extremos en el mercado antes de la confirmaci\u00f3n."
+    "value": "Los precios están en COP según inteligencia de mercado. Podemos ajustar valores si se detectan cambios extremos antes de la confirmación."
   },
   {
     "key": "pages.terms.sections.bulk_submissions.title",
@@ -1133,7 +1105,7 @@
   },
   {
     "key": "pages.terms.sections.bulk_submissions.content",
-    "value": "Las entregas deben cumplir con nuestros est\u00e1ndares de clasificaci\u00f3n. No aceptamos activos en estado 'Da\u00f1ado' para las tasas completas de compra. Todos los activos est\u00e1n sujetos a inspecci\u00f3n f\u00edsica en nuestro punto de extracci\u00f3n."
+    "value": "Las entregas deben cumplir nuestros estándares. No aceptamos activos en estado 'Dañado' por tarifas completas. Sujeto a inspección física."
   },
   {
     "key": "pages.terms.sections.user_conduct.title",
@@ -1141,15 +1113,15 @@
   },
   {
     "key": "pages.terms.sections.user_conduct.content",
-    "value": "Los usuarios son responsables de la encriptaci\u00f3n y seguridad de sus credenciales de acceso. Mant\u00e9n una conducta profesional al interactuar con los operativos de El Bulk durante los ciclos de confirmaci\u00f3n."
+    "value": "Los usuarios son responsables de sus credenciales. Mantén una conducta profesional con los operativos de El Bulk."
   },
   {
     "key": "pages.terms.sections.limits_of_liability.title",
-    "value": "8. L\u00edmite de Responsabilidad"
+    "value": "8. Límite de Responsabilidad"
   },
   {
     "key": "pages.terms.sections.limits_of_liability.content",
-    "value": "El Bulk no es responsable por la p\u00e9rdida de datos o interceptaci\u00f3n f\u00edsica una vez que la extracci\u00f3n ha sido entregada a mensajeros externos. El riesgo pasa al destinatario tras la verificaci\u00f3n del mensajero."
+    "value": "El Bulk no es responsable de pérdidas una vez entregado a transportistas externos. El riesgo pasa al destinatario tras la verificación."
   },
   {
     "key": "pages.cart.drawer.title",
@@ -1157,7 +1129,7 @@
   },
   {
     "key": "pages.cart.drawer.empty_msg",
-    "value": "Tu carrito est\u00e1 vac\u00edo. \u00a1Ve por unas cartas!"
+    "value": "Tu carrito está vacío. Ve a buscar cartas."
   },
   {
     "key": "pages.cart.drawer.clear",
@@ -1165,7 +1137,7 @@
   },
   {
     "key": "pages.cart.drawer.confirm_clear",
-    "value": "\u00bfEst\u00e1s seguro de que deseas vaciar tu carrito?"
+    "value": "¿Seguro que quieres vaciar tu carrito?"
   },
   {
     "key": "pages.cart.drawer.remove_tooltip",
@@ -1181,15 +1153,15 @@
   },
   {
     "key": "pages.cart.drawer.checkout_btn",
-    "value": "PROCEDER AL PAGO \u2192"
+    "value": "PROCEDER AL PAGO →"
   },
   {
     "key": "pages.cart.drawer.checkout_notice",
-    "value": "Revisa tu orden y completa los datos de env\u00edo."
+    "value": "Revisa tu pedido y completa los datos de envío."
   },
   {
     "key": "pages.cart.drawer.removed_items",
-    "value": "Art\u00edculos Eliminados"
+    "value": "Artículos Eliminados"
   },
   {
     "key": "pages.cart.drawer.restore",
@@ -1201,7 +1173,7 @@
   },
   {
     "key": "pages.home.hero.title_refined",
-    "value": "EL BULK / LAS CARTAS QUE ELLOS IGNORAN."
+    "value": "EL BULK / LAS CARTAS QUE OTROS IGNORARON."
   },
   {
     "key": "pages.home.hero.description",
@@ -1209,11 +1181,11 @@
   },
   {
     "key": "pages.home.hero.description_refined",
-    "value": "Las piezas esenciales que otros tratan como basura. Curamos las comunes, infrecuentes y cartas imposibles de encontrar que completan tu estrategia."
+    "value": "Las piezas esenciales que otros consideran basura. Curamos lo común y lo imposible de hallar que completa tu estrategia."
   },
   {
     "key": "pages.home.hero.search_placeholder",
-    "value": "Encuentra las cartas que todos los dem\u00e1s pasaron por alto..."
+    "value": "Halla las cartas que otros pasaron por alto..."
   },
   {
     "key": "pages.home.hero.browse_singles",
@@ -1221,23 +1193,23 @@
   },
   {
     "key": "pages.home.hero.sell_bulk",
-    "value": "VENDE TU BULK \u2192"
+    "value": "VENDE TU BULK →"
   },
   {
     "key": "pages.home.sections.view_all",
-    "value": "VER TODO \u2192"
+    "value": "VER TODO →"
   },
   {
     "key": "pages.home.sections.empty",
-    "value": "TIENDA VAC\u00cdA"
+    "value": "LA TIENDA ESTÁ VACÍA"
   },
   {
     "key": "pages.home.sections.got_bulk",
-    "value": "\u00bfTIENES BULK?"
+    "value": "¿TIENES BULK?"
   },
   {
     "key": "pages.home.sections.bulk_cta_text",
-    "value": "Compramos tus comunes, infrecuentes y raras. Emp\u00e1calas y tr\u00e1elas por efectivo. Sin cita previa."
+    "value": "Compramos comunes, infrecuentes y raras bulk. Empsca y trae tus cartas, recibe efectivo. Sin cita previa."
   },
   {
     "key": "pages.home.sections.see_bulk_prices",
@@ -1245,11 +1217,11 @@
   },
   {
     "key": "pages.layout.footer.slogan",
-    "value": "Compramos bulk. Vendemos singles. Amamos el cart\u00f3n."
+    "value": "Compramos bulk. Vendemos singles. Amamos el cartón."
   },
   {
     "key": "pages.home.bounties.urgently_needed",
-    "value": "Urgente"
+    "value": "Necesitado Urgente"
   },
   {
     "key": "pages.bulk.page.title",
@@ -1257,7 +1229,7 @@
   },
   {
     "key": "pages.bulk.page.subtitle",
-    "value": "\u00bfTienes una caja de cartas viejas llen\u00e1ndose de polvo? Nosotros las recibimos y te damos efectivo. Sin cita \u2014 solo ven."
+    "value": "¿Tienes cajas de cartas viejas cogiendo polvo? Te las quitamos de encima y ponemos dinero en tu bolsillo. Sin cita previa."
   },
   {
     "key": "pages.bulk.intro.we_buy",
@@ -1265,7 +1237,7 @@
   },
   {
     "key": "pages.bulk.tiers.common.label",
-    "value": "BULK COMUNES E INFRECUENTES"
+    "value": "COMUNES E INFRECUENTES BULK"
   },
   {
     "key": "pages.bulk.tiers.common.price",
@@ -1273,11 +1245,11 @@
   },
   {
     "key": "pages.bulk.tiers.common.desc",
-    "value": "Cualquier estado, cualquier set. Clasificadas o no. Lo recibimos todo."
+    "value": "Cualquier estado o set. Ordenado o no. Lo recibimos todo."
   },
   {
     "key": "pages.bulk.tiers.rare.label",
-    "value": "BULK RARAS Y M\u00cdTICAS"
+    "value": "RARAS Y MÍTICAS BULK"
   },
   {
     "key": "pages.bulk.tiers.rare.price",
@@ -1297,11 +1269,11 @@
   },
   {
     "key": "pages.bulk.tiers.junk.desc",
-    "value": "Raras y m\u00edticas MP-DMG, o comunes/infrecuentes en mal estado."
+    "value": "Raras MP-DMG, o comunes/infrecuentes en mal estado."
   },
   {
     "key": "pages.bulk.tiers.foil.label",
-    "value": "BULK COMUNES E INFRECUENTES FOIL"
+    "value": "COMUNES E INFRECUENTES FOIL"
   },
   {
     "key": "pages.bulk.tiers.foil.price",
@@ -1309,15 +1281,15 @@
   },
   {
     "key": "pages.bulk.tiers.foil.desc",
-    "value": "Cualquier estado. El bulk foil se clasifica por separado."
+    "value": "Cualquier estado. El bulk foil se ordena por separado."
   },
   {
     "key": "pages.bulk.accepts.0",
-    "value": "Magic: The Gathering (todos los sets, todos los formatos)"
+    "value": "Magic: The Gathering (todos los sets)"
   },
   {
     "key": "pages.bulk.accepts.1",
-    "value": "Pok\u00e9mon TCG (Solo ingl\u00e9s)"
+    "value": "Pokémon TCG (solo inglés)"
   },
   {
     "key": "pages.bulk.accepts.2",
@@ -1329,35 +1301,35 @@
   },
   {
     "key": "pages.bulk.accepts.4",
-    "value": "Tierras b\u00e1sicas (pagamos $4.000 COP por 200)"
+    "value": "Tierras básicas ($4.000 COP por 200)"
   },
   {
     "key": "pages.bulk.accepts.5",
-    "value": "Tokens y emblemas (valor $0 pero los recibimos)"
+    "value": "Tokens y emblemas ($0 valor pero los recibimos)"
   },
   {
     "key": "pages.bulk.sections.prices",
-    "value": "PRECIOS ACTUALES"
+    "value": "PRECIOS ACTUALES DE BULK"
   },
   {
     "key": "pages.bulk.sections.accept",
-    "value": "ACEPTAMOS"
+    "value": "ACEPTAMOS CON GUSTO"
   },
   {
     "key": "pages.bulk.sections.how_it_works",
-    "value": "\u00bfC\u00d3MO FUNCIONA?"
+    "value": "CÓMO FUNCIONA"
   },
   {
     "key": "pages.bulk.cta.questions",
-    "value": "\u00bfTIENES DUDAS?"
+    "value": "¿TIENES PREGUNTAS?"
   },
   {
     "key": "pages.bulk.cta.email_btn",
-    "value": "ESCR\u00cdBENOS POR TU BULK"
+    "value": "ESCRÍBENOS SOBRE TU BULK"
   },
   {
     "key": "pages.bulk.sections.price_disclaimer",
-    "value": "\u26a0 Precios actualizados regularmente. Lotes grandes (m\u00e1s de 1,000 cartas) pueden recibir bonificaciones. Los precios son en efectivo \u2014 las ofertas de cr\u00e9dito de la tienda son hasta un 25% m\u00e1s."
+    "value": "⚠ Precios actualizados. Lotes grandes (1.000+) pueden recibir bonos. Precios en efectivo — crédito en tienda hasta 25% más."
   },
   {
     "key": "pages.bulk.how.1.title",
@@ -1365,7 +1337,7 @@
   },
   {
     "key": "pages.bulk.how.1.desc",
-    "value": "Ven con tu bulk. Ordenado o sin ordenar, en cajas o bolsas \u2014 no importa."
+    "value": "Ven con tu bulk. En cajas o bolsas — no importa."
   },
   {
     "key": "pages.bulk.how.2.title",
@@ -1373,7 +1345,7 @@
   },
   {
     "key": "pages.bulk.how.2.desc",
-    "value": "Hacemos un conteo r\u00e1pido de tus cartas. Para lotes grandes, podemos pedir un d\u00eda para clasificar."
+    "value": "Hacemos un conteo rápido. Para lotes grandes podemos pedir un día."
   },
   {
     "key": "pages.bulk.how.3.title",
@@ -1381,19 +1353,19 @@
   },
   {
     "key": "pages.bulk.how.3.desc",
-    "value": "Te damos una oferta en efectivo al instante. Sin presi\u00f3n para aceptar."
+    "value": "Te damos una oferta al instante. Sin presión por aceptar."
   },
   {
     "key": "pages.bulk.how.4.title",
-    "value": "LL\u00c9VATE EL EFECTIVO"
+    "value": "TOMA EL EFECTIVO"
   },
   {
     "key": "pages.bulk.how.4.desc",
-    "value": "Acepta y ret\u00edrate con efectivo (o m\u00e1s cr\u00e9dito de la tienda). Simple."
+    "value": "Acepta y sal con dinero (o crédito extra). Simple."
   },
   {
     "key": "pages.sealed.landing.category",
-    "value": "CATEGOR\u00cdA // SELLADO"
+    "value": "CATEGORÍA // SELLADO"
   },
   {
     "key": "pages.sealed.landing.title.main",
@@ -1405,15 +1377,15 @@
   },
   {
     "key": "pages.sealed.landing.desc",
-    "value": "Desde booster boxes hasta sobres de coleccionista, explora cada set en nuestra b\u00f3veda. Elige tu juego para ver el inventario actual."
+    "value": "Desde cajas de sobres hasta sobres de coleccionista. Elige tu juego para ver la bóveda."
   },
   {
     "key": "pages.sealed.landing.view_all",
-    "value": "VER TODO SELLADO \u2192"
+    "value": "VER TODO EL SELLADO →"
   },
   {
     "key": "pages.sealed.landing.no_featured",
-    "value": "NO SE ENCONTRARON PRODUCTOS SELLADOS DESTACADOS"
+    "value": "SIN SELLADO DESTACADO"
   },
   {
     "key": "pages.sealed.landing.featured.main",
@@ -1429,15 +1401,15 @@
   },
   {
     "key": "pages.accessories.subtitle",
-    "value": "Protectores, carpetas, deck boxes, playmats y m\u00e1s \u2014 para todos los TCGs."
+    "value": "Protectores, carpetas, cajas y más para tus TCGs."
   },
   {
     "key": "components.client_request_modal.title",
-    "value": "Solicitar una carta"
+    "value": "Pedir una carta"
   },
   {
     "key": "components.client_request_modal.desc",
-    "value": "\u00bfNo encuentras lo que buscas? \u00a1Danos los detalles y empezaremos la b\u00fasqueda!"
+    "value": "¿No hallas lo que buscas? ¡Danos los detalles y empezamos la cacería!"
   },
   {
     "key": "components.client_request_modal.form.name_label",
@@ -1445,35 +1417,31 @@
   },
   {
     "key": "components.client_request_modal.form.name_placeholder",
-    "value": "John Doe"
+    "value": "Juan Pérez"
   },
   {
     "key": "components.client_request_modal.form.contact_label",
-    "value": "Informaci\u00f3n de Contacto *"
-  },
-  {
-    "key": "components.language_selector.names",
-    "value": "\ud83c\uddea\ud83c\uddf8 Espa\u00f1ol"
+    "value": "Info de Contacto *"
   },
   {
     "key": "components.client_request_modal.form.contact_placeholder",
-    "value": "Tel\u00e9fono o Instagram"
+    "value": "Teléfono o Instagram"
   },
   {
     "key": "components.client_request_modal.form.card_label",
-    "value": "Nombre de la Carta *"
+    "value": "Nombre de Carta *"
   },
   {
     "key": "components.client_request_modal.form.card_placeholder",
-    "value": "ej. Sheoldred, the Apocalypse"
+    "value": "ej. Sheoldred, el Apocalipsis"
   },
   {
     "key": "components.client_request_modal.form.set_label",
-    "value": "Set Espec\u00edfico (Opcional)"
+    "value": "Set Específico (Opcional)"
   },
   {
     "key": "components.client_request_modal.form.set_placeholder",
-    "value": "ej. Dominaria United"
+    "value": "ej. Dominaria Unida"
   },
   {
     "key": "components.client_request_modal.form.details_label",
@@ -1485,35 +1453,275 @@
   },
   {
     "key": "components.client_request_modal.form.submit_btn",
-    "value": "ENVIAR MISI\u00d3N"
+    "value": "ENVIAR MISIÓN"
   },
   {
     "key": "components.client_request_modal.login_prompt",
-    "value": "para autocompletar tu info y seguir el estado de tu solicitud."
+    "value": "para llenar tus datos automáticamente y rastrear tu pedido."
+  },
+  {
+    "key": "components.cancellation_modal.title",
+    "value": "Descartar Petición"
+  },
+  {
+    "key": "components.cancellation_modal.desc",
+    "value": "Vas a **descartar** tu petición de {card}. Por favor dinos por qué."
+  },
+  {
+    "key": "components.cancellation_modal.reason_label",
+    "value": "Razón"
+  },
+  {
+    "key": "components.cancellation_modal.details_label",
+    "value": "Detalles Adicionales (Opcional)"
+  },
+  {
+    "key": "components.cancellation_modal.details_placeholder",
+    "value": "Algo más que quieras decirnos..."
+  },
+  {
+    "key": "components.cancellation_modal.back_button",
+    "value": "Volver"
+  },
+  {
+    "key": "components.cancellation_modal.confirm_button",
+    "value": "Confirmar Descarte"
+  },
+  {
+    "key": "components.cancellation_modal.submitting",
+    "value": "Descartando..."
+  },
+  {
+    "key": "components.cancellation_modal.reasons.found",
+    "value": "Lo hallé en otro lado"
+  },
+  {
+    "key": "components.cancellation_modal.reasons.not_needed",
+    "value": "Ya no lo necesito"
+  },
+  {
+    "key": "components.cancellation_modal.reasons.price",
+    "value": "Precio muy alto"
+  },
+  {
+    "key": "components.cancellation_modal.reasons.mind",
+    "value": "Cambié de opinión"
+  },
+  {
+    "key": "components.cancellation_modal.reasons.other",
+    "value": "Otro"
+  },
+  {
+    "key": "components.admin.csv_import.title",
+    "value": "IMPORTADOR DE MANIFIESTO"
+  },
+  {
+    "key": "components.admin.csv_import.subtitle",
+    "value": "Añade bulk al manifiesto de inventario"
+  },
+  {
+    "key": "components.admin.csv_import.drop_zone.title",
+    "value": "Suelta Manifiesto Aquí"
+  },
+  {
+    "key": "components.admin.csv_import.drop_zone.subtitle",
+    "value": "o haz clic para explorar tus archivos"
+  },
+  {
+    "key": "components.admin.csv_import.drop_zone.button",
+    "value": "Seleccionar Manifiesto"
+  },
+  {
+    "key": "components.admin.csv_import.config.title",
+    "value": "Configuración del Sistema"
+  },
+  {
+    "key": "components.admin.csv_import.config.destination_label",
+    "value": "Destino de Inventario"
+  },
+  {
+    "key": "components.admin.csv_import.config.dest_singles",
+    "value": "Singles Individuales"
+  },
+  {
+    "key": "components.admin.csv_import.config.dest_deck",
+    "value": "Mazo Curado"
+  },
+  {
+    "key": "components.admin.csv_import.config.deck_name_label",
+    "value": "Identificador de Manifiesto (Mazo)"
+  },
+  {
+    "key": "components.admin.csv_import.config.deck_name_placeholder",
+    "value": "ej. MONO BLACK CONTROL"
+  },
+  {
+    "key": "components.admin.csv_import.config.tcg_framework",
+    "value": "Marco TCG"
+  },
+  {
+    "key": "components.admin.csv_import.config.vault_allocation",
+    "value": "Asignación de Bóveda"
+  },
+  {
+    "key": "components.admin.csv_import.config.storage_placeholder",
+    "value": "Seleccionar Ubicación"
+  },
+  {
+    "key": "components.admin.csv_import.config.language_label",
+    "value": "Idioma Principal"
+  },
+  {
+    "key": "components.admin.csv_import.config.price_source_label",
+    "value": "Fuente de Precio por Defecto"
+  },
+  {
+    "key": "components.admin.csv_import.config.tagging_label",
+    "value": "Etiquetado de Metadata (Bulk)"
+  },
+  {
+    "key": "components.admin.csv_import.config.no_collections",
+    "value": "No hay colecciones definidas"
+  },
+  {
+    "key": "components.admin.csv_import.mapping.title",
+    "value": "Mapeo de Topología de Columnas"
+  },
+  {
+    "key": "components.admin.csv_import.actions.return",
+    "value": "Volver"
+  },
+  {
+    "key": "components.admin.csv_import.actions.generate",
+    "value": "Generar Manifiesto"
+  },
+  {
+    "key": "components.admin.csv_import.preview.enrich_loading",
+    "value": "ESCUDRIÑANDO ARCHIVOS..."
+  },
+  {
+    "key": "components.admin.csv_import.preview.enrich_button",
+    "value": "REVELAR CONOCIMIENTO OCULTO"
+  },
+  {
+    "key": "components.admin.csv_import.preview.complete",
+    "value": "Completado"
+  },
+  {
+    "key": "components.admin.csv_import.preview.found_count",
+    "value": "Se hallaron {count} Firmas"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.art",
+    "value": "Arte"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.info",
+    "value": "Info de Producto"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.lang",
+    "value": "Idi."
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.cond",
+    "value": "Est."
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.treatment",
+    "value": "Tratamiento"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.vault",
+    "value": "Bóveda"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.collections",
+    "value": "Colecciones"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.reference",
+    "value": "Referencia"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.qty",
+    "value": "Cant."
+  },
+  {
+    "key": "components.admin.csv_import.preview.scanning",
+    "value": "ESCANEO..."
+  },
+  {
+    "key": "components.admin.csv_import.preview.placeholders.name",
+    "value": "Clave de Firma"
+  },
+  {
+    "key": "components.admin.csv_import.preview.placeholders.uuid",
+    "value": "UUID de Sistema"
+  },
+  {
+    "key": "components.admin.csv_import.preview.placeholders.set",
+    "value": "SET"
+  },
+  {
+    "key": "components.admin.csv_import.preview.placeholders.number",
+    "value": "#"
+  },
+  {
+    "key": "components.admin.csv_import.importing.title",
+    "value": "ABASTECIENDO LA BÓVEDA..."
+  },
+  {
+    "key": "components.admin.csv_import.importing.subtitle",
+    "value": "\"Desempacando cargamento y organizando archivos\""
+  },
+  {
+    "key": "components.admin.csv_import.importing.status",
+    "value": "Procesando Manifiesto de {count} Registros"
+  },
+  {
+    "key": "components.admin.csv_import.summary.title",
+    "value": "¡Manifiesto Exitoso!"
+  },
+  {
+    "key": "components.admin.csv_import.summary.success_msg",
+    "value": "Se archivaron con éxito {count} unidades SKU."
+  },
+  {
+    "key": "components.admin.csv_import.summary.return_button",
+    "value": "Volver a la Cubierta de Mando"
+  },
+  {
+    "key": "components.admin.csv_import.actions.return_to_topology",
+    "value": "Volver a Topología"
+  },
+  {
+    "key": "components.admin.csv_import.actions.finalize",
+    "value": "⚡ FINALIZAR CARGAMENTO"
   },
   {
     "key": "components.deck_contents.title",
-    "value": "Contenido del mazo"
+    "value": "Contenido del Mazo"
   },
   {
     "key": "components.deck_contents.expand_all",
-    "value": "Expandir todo"
+    "value": "Expandir Todo"
   },
   {
     "key": "components.deck_contents.collapse_all",
-    "value": "Colapsar todo"
+    "value": "Colapsar Todo"
   },
   {
     "key": "pages.notices.list.header_main",
-    "value": "AVISOS Y"
+    "value": "NOTICIAS Y"
   },
   {
     "key": "pages.notices.list.header_accent",
-    "value": "NOVEDADES"
+    "value": "AVISOS"
   },
   {
     "key": "pages.notices.list.subtitle",
-    "value": "\u00daltimas noticias, spoilers y rese\u00f1as de la tienda."
+    "value": "Últimas noticias, spoilers y reseñas de la tienda."
   },
   {
     "key": "pages.notices.list.total_count",
@@ -1521,19 +1729,19 @@
   },
   {
     "key": "pages.notices.list.empty_title",
-    "value": "A\u00daN NO HAY AVISOS PUBLICADOS"
+    "value": "AÚN NO HAY AVISOS"
   },
   {
     "key": "pages.notices.list.empty_subtitle",
-    "value": "Vuelve pronto para ver noticias y actualizaciones."
+    "value": "Vuelve pronto para ver las novedades."
   },
   {
     "key": "pages.notices.list.open_btn",
-    "value": "ABRIR AVISO \u2192"
+    "value": "ABRIR AVISO →"
   },
   {
     "key": "pages.notices.detail.back_btn",
-    "value": "\u2190 VOLVER A TODOS LOS AVISOS"
+    "value": "← VOLVER A AVISOS"
   },
   {
     "key": "pages.notices.detail.published_on",
@@ -1541,7 +1749,7 @@
   },
   {
     "key": "pages.notices.detail.all_notices_btn",
-    "value": "\u2190 TODOS LOS AVISOS"
+    "value": "← TODOS LOS AVISOS"
   },
   {
     "key": "pages.notices.detail.share_label",
@@ -1553,19 +1761,19 @@
   },
   {
     "key": "pages.notices.detail.sidebar.desc",
-    "value": "La caja de zapatos donde guardamos lo bueno. Vendemos singles, producto sellado y accesorios. \u00a1Vis\u00edtanos en persona o compra online!"
+    "value": "La caja de zapatos donde guardamos lo bueno. Venta de singles, sellado y accesorios. ¡Visítanos o compra online!"
   },
   {
     "key": "pages.notices.detail.sidebar.shop_btn",
-    "value": "COMPRAR SINGLES"
+    "value": "VER SINGLES"
   },
   {
     "key": "pages.notices.detail.sidebar.newsletter_title",
-    "value": "Bolet\u00edn Informativo"
+    "value": "Newsletter"
   },
   {
     "key": "pages.notices.detail.sidebar.newsletter_desc",
-    "value": "Mantente al d\u00eda con nuestras \u00faltimas noticias y spoilers."
+    "value": "Mantente al día con nuestras noticias y spoilers."
   },
   {
     "key": "pages.notices.section.title",
@@ -1573,15 +1781,15 @@
   },
   {
     "key": "pages.notices.actions.view_all",
-    "value": "VER TODO \u2192"
+    "value": "VER TODO →"
   },
   {
     "key": "pages.notices.actions.read_more",
-    "value": "LEER M\u00c1S"
+    "value": "LEER MÁS"
   },
   {
     "key": "pages.notices.actions.show_more",
-    "value": "MOSTRAR M\u00c1S PUBLICACIONES"
+    "value": "MOSTRAR MÁS POSTS"
   },
   {
     "key": "components.search.placeholder",
@@ -1605,7 +1813,7 @@
   },
   {
     "key": "components.search.actions.add",
-    "value": "+ AGREGAR"
+    "value": "+ AÑADIR"
   },
   {
     "key": "components.search.actions.sold_out",
@@ -1613,11 +1821,11 @@
   },
   {
     "key": "components.search.status.no_results",
-    "value": "No se encontraron productos para \"{query}\""
+    "value": "No se hallaron productos para \"{query}\""
   },
   {
     "key": "components.search.status.top_results",
-    "value": "Mostrando resultados principales"
+    "value": "Mostrando mejores resultados"
   },
   {
     "key": "pages.checkout.page.title",
@@ -1625,7 +1833,7 @@
   },
   {
     "key": "pages.checkout.form.contact_info",
-    "value": "INFORMACI\u00d3N DE CONTACTO"
+    "value": "INFORMACIÓN DE CONTACTO"
   },
   {
     "key": "pages.checkout.form.first_name",
@@ -1637,7 +1845,7 @@
   },
   {
     "key": "pages.checkout.form.phone",
-    "value": "TEL\u00c9FONO / WHATSAPP"
+    "value": "TELÉFONO / WHATSAPP"
   },
   {
     "key": "pages.checkout.form.email",
@@ -1645,15 +1853,15 @@
   },
   {
     "key": "pages.checkout.form.id_number",
-    "value": "C\u00c9DULA / ID"
+    "value": "NÚMERO DE ID"
   },
   {
     "key": "pages.checkout.form.address",
-    "value": "DIRECCI\u00d3N"
+    "value": "DIRECCIÓN"
   },
   {
     "key": "pages.checkout.form.payment_method",
-    "value": "M\u00c9TODO DE PAGO"
+    "value": "MÉTODO DE PAGO"
   },
   {
     "key": "pages.checkout.form.notes",
@@ -1665,7 +1873,7 @@
   },
   {
     "key": "pages.checkout.summary.confirm_btn",
-    "value": "CONFIRMAR PEDIDO \u2192"
+    "value": "CONFIRMAR PEDIDO →"
   },
   {
     "key": "pages.checkout.summary.processing",
@@ -1673,7 +1881,7 @@
   },
   {
     "key": "pages.checkout.summary.footer_note",
-    "value": "Al confirmar, un asesor se pondr\u00e1 en contacto contigo para coordinar la entrega."
+    "value": "Tras la confirmación, un asesor te contactará para coordinar la entrega."
   },
   {
     "key": "pages.admin.notices.title",
@@ -1681,7 +1889,7 @@
   },
   {
     "key": "pages.admin.notices.subtitle",
-    "value": "Administra las actualizaciones y noticias de la tienda."
+    "value": "Gestiona avisos y noticias de la tienda."
   },
   {
     "key": "pages.admin.tcg_registry.title",
@@ -1689,19 +1897,19 @@
   },
   {
     "key": "pages.admin.tcg_registry.subtitle",
-    "value": "Activa o desactiva sistemas de juego del almac\u00e9n"
+    "value": "Activa o desactiva sistemas de juego del almacén"
   },
   {
     "key": "pages.admin.tcg_registry.loading",
-    "value": "DESEMPAQUETANDO REGISTRO TCG..."
+    "value": "DESEMPACANDO REGISTRO TCG..."
   },
   {
     "key": "pages.admin.tcg_registry.buttons.register_new",
-    "value": "\uff0b REGISTRAR NUEVO TCG"
+    "value": "＋ REGISTRAR NUEVO TCG"
   },
   {
     "key": "pages.admin.tcg_registry.form.slug_label",
-    "value": "Slug Interno (ID de URL)"
+    "value": "Slug Interno (URL ID)"
   },
   {
     "key": "pages.admin.tcg_registry.form.display_name",
@@ -1725,19 +1933,19 @@
   },
   {
     "key": "components.admin.product.storage.quick_add",
-    "value": "Agregar ubicaci\u00f3n r\u00e1pida"
+    "value": "Añadir Ubicación Rápido"
   },
   {
     "key": "components.admin.product.storage.title",
-    "value": "UBICACIONES DE ALMACENAMIENTO"
+    "value": "UBICACIONES DE ALMACÉN"
   },
   {
     "key": "components.admin.product.storage.empty",
-    "value": "A\u00fan no hay asignaciones de almacenamiento."
+    "value": "Aún no hay ubicaciones asignadas."
   },
   {
     "key": "components.admin.product.storage.select_placeholder",
-    "value": "-- Seleccionar Ubicaci\u00f3n --"
+    "value": "-- Seleccionar Ubicación --"
   },
   {
     "key": "pages.admin.notices.create_btn",
@@ -1745,11 +1953,11 @@
   },
   {
     "key": "pages.admin.notices.confirm_delete",
-    "value": "\u00bfEst\u00e1s seguro de que deseas eliminar este aviso?"
+    "value": "¿Seguro que quieres borrar este aviso?"
   },
   {
     "key": "pages.admin.notices.error_delete",
-    "value": "Error al eliminar el aviso"
+    "value": "Error al borrar aviso"
   },
   {
     "key": "pages.admin.notices.status.published",
@@ -1769,7 +1977,7 @@
   },
   {
     "key": "pages.admin.notices.actions.delete",
-    "value": "ELIMINAR"
+    "value": "BORRAR"
   },
   {
     "key": "pages.admin.notices.table.date",
@@ -1777,7 +1985,7 @@
   },
   {
     "key": "pages.admin.notices.table.title",
-    "value": "T\u00edtulo"
+    "value": "Título"
   },
   {
     "key": "pages.admin.notices.table.slug",
@@ -1793,11 +2001,11 @@
   },
   {
     "key": "pages.admin.notices.table.empty",
-    "value": "No se encontraron noticias. \u00a1Crea la primera!"
+    "value": "No hay avisos. ¡Crea el primero!"
   },
   {
     "key": "pages.admin.notices.editor.loading",
-    "value": "Desempaquetando Aviso..."
+    "value": "Desempacando Aviso..."
   },
   {
     "key": "pages.admin.notices.editor.title_edit",
@@ -1809,19 +2017,19 @@
   },
   {
     "key": "pages.admin.notices.editor.subtitle",
-    "value": "Redacta la actualizaci\u00f3n de tu tienda usando HTML puro."
+    "value": "Compón tu noticia usando HTML puro."
   },
   {
     "key": "pages.admin.notices.editor.error_save",
-    "value": "Error al guardar el aviso"
+    "value": "Error al guardar aviso"
   },
   {
     "key": "pages.admin.notices.editor.form.title_label",
-    "value": "T\u00edtulo de la Publicaci\u00f3n"
+    "value": "Título del Post"
   },
   {
     "key": "pages.admin.notices.editor.form.title_placeholder",
-    "value": "EJ. \u00a1LLEGARON NUEVAS SINGLES!"
+    "value": "EJ. ¡LLEGARON NUEVAS SINGLES!"
   },
   {
     "key": "pages.admin.notices.editor.form.content_label",
@@ -1829,11 +2037,11 @@
   },
   {
     "key": "pages.admin.notices.editor.form.content_placeholder",
-    "value": "<h2>Subt\u00edtulo</h2><p>Escribe tu contenido aqu\u00ed...</p>"
+    "value": "<h2>Subtítulo</h2><p>Escribe aquí...</p>"
   },
   {
     "key": "pages.admin.notices.editor.sidebar.settings_title",
-    "value": "Ajustes de Publicaci\u00f3n"
+    "value": "Ajustes de Publicación"
   },
   {
     "key": "pages.admin.notices.editor.sidebar.slug_label",
@@ -1841,11 +2049,11 @@
   },
   {
     "key": "pages.admin.notices.editor.sidebar.sync_btn",
-    "value": "SINCRONIZAR CON T\u00cdTULO"
+    "value": "SINCRONIZAR CON TÍTULO"
   },
   {
     "key": "pages.admin.notices.editor.sidebar.slug_placeholder",
-    "value": "slug-de-la-publicacion"
+    "value": "slug-de-url"
   },
   {
     "key": "pages.admin.notices.editor.sidebar.image_label",
@@ -1857,7 +2065,7 @@
   },
   {
     "key": "pages.admin.notices.editor.sidebar.published_label",
-    "value": "Publicado / P\u00fablico"
+    "value": "Publicado / Público"
   },
   {
     "key": "pages.admin.notices.editor.actions.update",
@@ -1873,11 +2081,11 @@
   },
   {
     "key": "pages.admin.notices.editor.sidebar.help_desc",
-    "value": "Puedes usar etiquetas HTML est\u00e1ndar como {tags}."
+    "value": "Puedes usar etiquetas HTML estándar como {tags}."
   },
   {
     "key": "pages.admin.notices.editor.sidebar.card_preview_label",
-    "value": "Para incrustar una vista previa de carta, usa:"
+    "value": "Para insertar previsualización de carta, usa:"
   },
   {
     "key": "pages.admin.clients.details.not_found",
@@ -1885,43 +2093,43 @@
   },
   {
     "key": "pages.admin.clients.details.subscriber_badge",
-    "value": "SUSCRIPTOR AL NEWSLETTER"
+    "value": "SUSCRIPTOR DE NEWSLETTER"
   },
   {
     "key": "pages.admin.clients.details.contact_profile",
-    "value": "Perfil de contacto"
+    "value": "Perfil de Contacto"
   },
   {
     "key": "pages.admin.clients.details.email_label",
-    "value": "Correo electr\u00f3nico"
+    "value": "Email"
   },
   {
     "key": "pages.admin.clients.details.phone_label",
-    "value": "N\u00famero de tel\u00e9fono"
+    "value": "Teléfono"
   },
   {
     "key": "pages.admin.clients.details.account_details",
-    "value": "Detalles de cuenta"
+    "value": "Detalles de Cuenta"
   },
   {
     "key": "pages.admin.clients.details.id_label",
-    "value": "Documento de identidad"
+    "value": "Documento de Identidad"
   },
   {
     "key": "pages.admin.clients.details.address_label",
-    "value": "Direcci\u00f3n de entrega"
+    "value": "Dirección de Entrega"
   },
   {
     "key": "pages.admin.clients.details.general_interaction",
-    "value": "Interacci\u00f3n general / Sin pedido espec\u00edfico"
+    "value": "Interacción General / Sin orden específica"
   },
   {
     "key": "pages.admin.clients.details.add_note_btn",
-    "value": "AGREGAR NOTA"
+    "value": "AÑADIR NOTA"
   },
   {
     "key": "pages.admin.clients.details.empty_notes",
-    "value": "No hay entradas registradas en el diario."
+    "value": "No hay entradas en el diario."
   },
   {
     "key": "pages.admin.clients.details.order_history",
@@ -1929,7 +2137,7 @@
   },
   {
     "key": "pages.admin.clients.details.no_orders",
-    "value": "NO SE ENCONTRARON PEDIDOS."
+    "value": "NO SE HALLARON PEDIDOS."
   },
   {
     "key": "pages.admin.clients.details.journal_title",
@@ -1937,11 +2145,11 @@
   },
   {
     "key": "pages.admin.clients.details.note_placeholder",
-    "value": "AGREGAR UNA NUEVA NOTA O COMENTARIO..."
+    "value": "AÑADIR NUEVA NOTA O COMENTARIO..."
   },
   {
     "key": "pages.admin.clients.details.order_option",
-    "value": "Sobre el pedido {number}"
+    "value": "Sobre el Pedido {number}"
   },
   {
     "key": "pages.admin.clients.details.reference_label",
@@ -1949,11 +2157,11 @@
   },
   {
     "key": "pages.admin.clients.details.summary_title",
-    "value": "RESUMEN DEL CLIENTE"
+    "value": "RESUMEN DE CLIENTE VALIOSO"
   },
   {
     "key": "pages.admin.clients.details.lifetime_label",
-    "value": "Total Hist\u00f3rico"
+    "value": "Total de Vida"
   },
   {
     "key": "pages.admin.clients.details.purchased_label",
@@ -1961,19 +2169,19 @@
   },
   {
     "key": "pages.admin.clients.details.back_link",
-    "value": "\u2190 VOLVER A CLIENTES"
+    "value": "← VOLVER A CLIENTES"
   },
   {
     "key": "pages.admin.clients.details.active_group",
-    "value": "Activo"
+    "value": "Activos"
   },
   {
     "key": "pages.admin.clients.details.past_group",
-    "value": "Pasado"
+    "value": "Pasados"
   },
   {
     "key": "pages.admin.clients.details.no_active_requests",
-    "value": "SIN SOLICITUDES ACTIVAS."
+    "value": "SIN PETICIONES ACTIVAS."
   },
   {
     "key": "pages.admin.clients.details.no_pending_offers",
@@ -1981,19 +2189,19 @@
   },
   {
     "key": "pages.admin.clients.details.requests_title",
-    "value": "SOLICITUDES DE CLIENTES"
+    "value": "PETICIONES DE CLIENTE"
   },
   {
     "key": "pages.admin.clients.details.offers_title",
-    "value": "OFERTAS DE BOUNTIES"
+    "value": "OFERTAS DE RECOMPENSA"
   },
   {
     "key": "pages.admin.bounties.focus_mode",
-    "value": "Modo Enfoque: Ocultar resueltos"
+    "value": "Modo Foco: Ocultar Resueltas"
   },
   {
     "key": "pages.admin.bounties.offering_card",
-    "value": "Ofreciendo carta:"
+    "value": "Ofreciendo Carta:"
   },
   {
     "key": "pages.admin.bounties.resolve_btn",
@@ -2017,7 +2225,7 @@
   },
   {
     "key": "components.admin.sidebar.nav.bounties",
-    "value": "BUSCADOS / BOUNTIES"
+    "value": "RECOMPENSAS / WANTED"
   },
   {
     "key": "components.admin.sidebar.nav.clients",
@@ -2033,7 +2241,7 @@
   },
   {
     "key": "components.admin.sidebar.nav.themes",
-    "value": "TEMAS Y APARIENCIA"
+    "value": "TEMAS Y SKINS"
   },
   {
     "key": "components.admin.sidebar.nav.translations",
@@ -2049,11 +2257,11 @@
   },
   {
     "key": "components.admin.sidebar.section.design",
-    "value": "Dise\u00f1o e Idioma"
+    "value": "Diseño e Idioma"
   },
   {
     "key": "components.admin.sidebar.section.system",
-    "value": "Acciones del Sistema"
+    "value": "Acciones de Sistema"
   },
   {
     "key": "components.admin.sidebar.health.title",
@@ -2061,15 +2269,15 @@
   },
   {
     "key": "components.admin.sidebar.health.refresh",
-    "value": "Refrescar Estad\u00edsticas"
+    "value": "Refrescar Stats"
   },
   {
     "key": "components.admin.sidebar.health.sync",
-    "value": "Sincronizando n\u00facleo..."
+    "value": "Sincronizando núcleo..."
   },
   {
     "key": "components.admin.sidebar.health.db_size",
-    "value": "Tama\u00f1o DB"
+    "value": "Tamaño DB"
   },
   {
     "key": "components.admin.sidebar.health.latency",
@@ -2081,11 +2289,11 @@
   },
   {
     "key": "components.admin.sidebar.health.cache",
-    "value": "Cach\u00e9"
+    "value": "Caché"
   },
   {
     "key": "components.admin.sidebar.auth.logout",
-    "value": "CERRAR SESI\u00d3N"
+    "value": "CERRAR SESIÓN"
   },
   {
     "key": "components.admin.sidebar.status.secure",
@@ -2097,11 +2305,11 @@
   },
   {
     "key": "pages.admin.bounties.offers.select_clients",
-    "value": "Seleccionar clientes para cumplir (M\u00e1x {qty})"
+    "value": "Elegir Clientes para Cumplir (Máx {qty})"
   },
   {
     "key": "pages.admin.bounties.offers.over_limit",
-    "value": "\u26a0\ufe0f L\u00cdMITE DE CANTIDAD EXCEDIDO"
+    "value": "⚠️ LÍMITE DE CANTIDAD EXCEDIDO"
   },
   {
     "key": "pages.admin.bounties.requests.complete_status",
@@ -2109,27 +2317,27 @@
   },
   {
     "key": "pages.admin.bounties.title",
-    "value": "BUSCADOS / BOUNTIES"
+    "value": "RECOMPENSAS / WANTED"
   },
   {
     "key": "pages.admin.bounties.subtitle",
-    "value": "Cartas que queremos comprar // Solicitudes de clientes"
+    "value": "Cartas que buscamos comprar // Peticiones de Clientes"
   },
   {
     "key": "pages.admin.bounties.add_btn",
-    "value": "AGREGAR NUEVO BOUNTY"
+    "value": "AÑADIR RECOMPENSA"
   },
   {
     "key": "pages.admin.bounties.tabs.bounties",
-    "value": "LISTA DE BUSCADOS"
+    "value": "LISTA WANTED"
   },
   {
     "key": "pages.admin.bounties.tabs.offers",
-    "value": "VERIFICACI\u00d3N DE OFERTAS"
+    "value": "VERIFICACIÓN DE OFERTAS"
   },
   {
     "key": "pages.admin.bounties.tabs.requests",
-    "value": "SOLICITUDES DE CLIENTES"
+    "value": "PETICIONES DE CLIENTES"
   },
   {
     "key": "pages.admin.bounties.tabs.pending_suffix",
@@ -2137,7 +2345,7 @@
   },
   {
     "key": "pages.admin.bounties.loading",
-    "value": "Sincronizando log\u00edstica..."
+    "value": "Sincronizando Logística..."
   },
   {
     "key": "pages.admin.bounties.table.card",
@@ -2189,11 +2397,11 @@
   },
   {
     "key": "pages.admin.bounties.offers.select_clients",
-    "value": "Selecciona clientes para completar (M\u00e1x {qty})"
+    "value": "Elegir Clientes para Cumplir (Máx {qty})"
   },
   {
     "key": "pages.admin.bounties.offers.over_limit",
-    "value": "\u26a0\ufe0f EXCESO DE CANTIDAD"
+    "value": "⚠️ LÍMITE DE CANTIDAD EXCEDIDO"
   },
   {
     "key": "pages.admin.bounties.requests.complete_status",
@@ -2205,15 +2413,15 @@
   },
   {
     "key": "pages.admin.bounties.requests.requested_date",
-    "value": "Solicitado:"
+    "value": "Pedido el:"
   },
   {
     "key": "pages.admin.bounties.requests.no_details",
-    "value": "No se proporcionaron detalles adicionales."
+    "value": "Sin detalles adicionales."
   },
   {
     "key": "pages.admin.bounties.requests.accept_btn",
-    "value": "ACEPTAR Y AGREGAR BOUNTY"
+    "value": "ACEPTAR Y AÑADIR RECOMPENSA"
   },
   {
     "key": "pages.admin.bounties.requests.solve_btn",
@@ -2225,15 +2433,15 @@
   },
   {
     "key": "pages.admin.bounties.requests.mission_complete",
-    "value": "MISI\u00d3N COMPLETADA\nCARTA ENTREGADA"
+    "value": "MISIÓN CUMPLIDA\nCARTA ENTREGADA"
   },
   {
     "key": "components.admin.bounty_modal.title_edit",
-    "value": "EDITAR CARTA BUSCADA"
+    "value": "EDITAR CARTA WANTED"
   },
   {
     "key": "components.admin.bounty_modal.title_add",
-    "value": "AGREGAR CARTA BUSCADA"
+    "value": "AÑADIR CARTA WANTED"
   },
   {
     "key": "components.admin.bounty_modal.tcg_label",
@@ -2245,15 +2453,15 @@
   },
   {
     "key": "components.admin.bounty_modal.card_name",
-    "value": "NOMBRE DE LA CARTA"
+    "value": "NOMBRE DE CARTA"
   },
   {
     "key": "components.admin.bounty_modal.set_name",
-    "value": "NOMBRE DEL SET / INFO"
+    "value": "NOMBRE DE SET / INFO"
   },
   {
     "key": "components.admin.bounty_modal.image_url",
-    "value": "URL DE LA IMAGEN"
+    "value": "URL DE IMAGEN"
   },
   {
     "key": "components.admin.bounty_modal.pricing_title",
@@ -2265,7 +2473,7 @@
   },
   {
     "key": "components.admin.bounty_modal.source_manual",
-    "value": "Anulaci\u00f3n Manual (COP)"
+    "value": "Manual (COP)"
   },
   {
     "key": "components.admin.bounty_modal.source_tcgplayer",
@@ -2293,7 +2501,7 @@
   },
   {
     "key": "components.admin.product_modal.product_id",
-    "value": "ID PRODUCTO: {id}"
+    "value": "ID DE PRODUCTO: {id}"
   },
   {
     "key": "components.admin.product_modal.tcg_system_label",
@@ -2301,7 +2509,7 @@
   },
   {
     "key": "components.admin.product_modal.category_label",
-    "value": "CATEGOR\u00cdA"
+    "value": "CATEGORÍA"
   },
   {
     "key": "components.admin.product_modal.condition_label",
@@ -2309,11 +2517,11 @@
   },
   {
     "key": "components.admin.product_modal.product_name_label",
-    "value": "NOMBRE DEL PRODUCTO"
+    "value": "NOMBRE DE PRODUCTO"
   },
   {
     "key": "components.admin.product_modal.tab_deck",
-    "value": "CONSTRUCTOR DE MAZO"
+    "value": "CONSTRUCTOR DE MAZOS"
   },
   {
     "key": "components.admin.product_modal.tab_variant",
@@ -2321,7 +2529,7 @@
   },
   {
     "key": "components.admin.product_modal.tab_pricing",
-    "value": "PRECIO Y STOCK"
+    "value": "PRECIOS Y STOCK"
   },
   {
     "key": "components.admin.product_modal.image_preview_label",
@@ -2337,7 +2545,7 @@
   },
   {
     "key": "components.admin.product_modal.save_and_new_btn",
-    "value": "GUARDAR Y NUEVO"
+    "value": "GUARDAR Y AÑADIR OTRO"
   },
   {
     "key": "components.admin.product_modal.cancel_btn",
@@ -2345,43 +2553,43 @@
   },
   {
     "key": "components.admin.product_modal.error_required",
-    "value": "Nombre, TCG y Categor\u00eda son requeridos."
+    "value": "Nombre, TCG y Categoría son obligatorios."
   },
   {
     "key": "components.admin.product_modal.error_save",
-    "value": "Error al guardar el producto."
+    "value": "Error al guardar producto."
   },
   {
     "key": "components.admin.product_modal.error_no_prints",
-    "value": "No se encontraron impresiones para esa b\u00fasqueda."
+    "value": "No se hallaron impresiones para esa búsqueda."
   },
   {
     "key": "components.admin.product_modal.error_no_match",
-    "value": "No se pudo identificar una impresi\u00f3n coincidente."
+    "value": "No se pudo identificar una impresión que coincida."
   },
   {
     "key": "components.admin.product_modal.error_fetch",
-    "value": "La descarga de Scryfall fall\u00f3"
+    "value": "Fallo al obtener datos de Scryfall"
   },
   {
     "key": "components.admin.product_modal.variant.set_info_title",
-    "value": "INFORMACI\u00d3N DEL SET"
+    "value": "INFORMACIÓN DE SET"
   },
   {
     "key": "components.admin.product_modal.variant.set_name_label",
-    "value": "NOMBRE DEL SET"
+    "value": "NOMBRE DE SET"
   },
   {
     "key": "components.admin.product_modal.variant.set_code_label",
-    "value": "C\u00d3DIGO"
+    "value": "CÓDIGO"
   },
   {
     "key": "components.admin.product_modal.variant.collector_number_label",
-    "value": "N\u00daMERO #"
+    "value": "N° COLECCIONISTA"
   },
   {
     "key": "components.admin.product_modal.variant.language_label",
-    "value": "IDIOMA DE LA CARTA"
+    "value": "IDIOMA DE CARTA"
   },
   {
     "key": "components.admin.product_modal.variant.treatment_title",
@@ -2401,15 +2609,15 @@
   },
   {
     "key": "components.admin.product_modal.variant.art_variation_label",
-    "value": "VARIACI\u00d3N DE ARTE"
+    "value": "VARIACIÓN DE ARTE"
   },
   {
     "key": "components.admin.product_modal.variant.optimized_hint",
-    "value": "LAS OPCIONES DE VARIANTE EST\u00c1N OPTIMIZADAS PARA MTG SINGLES."
+    "value": "LAS OPCIONES DE VARIANTE ESTÁN OPTIMIZADAS PARA SINGLES DE MTG."
   },
   {
     "key": "components.admin.product_modal.variant.general_hint",
-    "value": "Los detalles generales del producto se gestionan en el encabezado y la pesta\u00f1a de Precios."
+    "value": "Los detalles generales se gestionan en la cabecera y en la pestaña de Precios."
   },
   {
     "key": "components.admin.product_modal.variant.metadata_title",
@@ -2433,7 +2641,7 @@
   },
   {
     "key": "components.admin.product_modal.variant.historic_label",
-    "value": "HIST\u00d3RICA"
+    "value": "HISTÓRICA"
   },
   {
     "key": "components.admin.product_modal.variant.land_label",
@@ -2441,7 +2649,7 @@
   },
   {
     "key": "components.admin.product_modal.variant.basic_label",
-    "value": "B\u00c1SICA"
+    "value": "BÁSICA"
   },
   {
     "key": "components.admin.product_modal.variant.full_art_label",
@@ -2453,7 +2661,7 @@
   },
   {
     "key": "components.admin.product_modal.variant.type_line_label",
-    "value": "L\u00ednea de Tipo"
+    "value": "Línea de Tipo"
   },
   {
     "key": "components.admin.product_modal.variant.artist_label",
@@ -2465,7 +2673,7 @@
   },
   {
     "key": "components.admin.product_modal.pricing.stock_title",
-    "value": "GESTI\u00d3N DE STOCK"
+    "value": "GESTIÓN DE STOCK"
   },
   {
     "key": "components.admin.product_modal.pricing.total_stock_label",
@@ -2473,11 +2681,11 @@
   },
   {
     "key": "components.admin.product_modal.pricing.add_location_btn",
-    "value": "ASIGNAR NUEVA UBICACI\u00d3N"
+    "value": "ASIGNAR NUEVA UBICACIÓN"
   },
   {
     "key": "components.admin.product_modal.pricing.description_label",
-    "value": "DESCRIPCI\u00d3N / NOTAS (INTERNO)"
+    "value": "DESCRIPCIÓN / NOTAS (INTERNO)"
   },
   {
     "key": "components.admin.product_modal.pricing.description_placeholder",
@@ -2497,7 +2705,7 @@
   },
   {
     "key": "components.admin.product_modal.pricing.source_manual",
-    "value": "Anulaci\u00f3n Manual (COP)"
+    "value": "Manual (COP)"
   },
   {
     "key": "components.admin.product_modal.pricing.source_tcgplayer",
@@ -2517,11 +2725,11 @@
   },
   {
     "key": "components.admin.product_modal.pricing.basic_title",
-    "value": "Detalles B\u00e1sicos"
+    "value": "Detalles Básicos"
   },
   {
     "key": "components.admin.product_modal.pricing.image_url_label",
-    "value": "URL de la Imagen"
+    "value": "URL de Imagen"
   },
   {
     "key": "components.admin.product_modal.pricing.no_collections",
@@ -2529,11 +2737,11 @@
   },
   {
     "key": "components.admin.product_modal.scryfall.search_hint",
-    "value": "Ingrese Nombre o SET + CN y haga clic en Cargar para obtener de Scryfall"
+    "value": "Ingresa Nombre o SET + CN y pulsa Poblar para traer datos de Scryfall"
   },
   {
     "key": "components.admin.product_modal.scryfall.populate_btn",
-    "value": "CARGAR DATOS"
+    "value": "POBLAR DATOS"
   },
   {
     "key": "components.admin.product_modal.scryfall.looking_up",
@@ -2545,11 +2753,11 @@
   },
   {
     "key": "components.admin.product_modal.deck.select_printing_label",
-    "value": "Seleccionar Impresi\u00f3n Espec\u00edfica para Agregar"
+    "value": "Elegir Impresión Específica para Añadir"
   },
   {
     "key": "components.admin.product_modal.deck.add_btn",
-    "value": "+ AGREGAR"
+    "value": "+ AÑADIR"
   },
   {
     "key": "components.admin.product_modal.deck.custom_name_label",
@@ -2557,11 +2765,11 @@
   },
   {
     "key": "components.admin.product_modal.deck.custom_name_placeholder",
-    "value": "Escriba un nombre de carta personalizado..."
+    "value": "Escribe un nombre personalizado..."
   },
   {
     "key": "components.admin.product_modal.deck.add_custom_btn",
-    "value": "Agregar Carta Personalizada"
+    "value": "Añadir Carta Personalizada"
   },
   {
     "key": "components.admin.product_modal.deck.list_title",
@@ -2573,27 +2781,27 @@
   },
   {
     "key": "components.admin.product_modal.deck.empty_msg",
-    "value": "El mazo est\u00e1 actualmente vac\u00edo."
+    "value": "El mazo está vacío actualmente."
   },
   {
     "key": "components.admin.product_modal.deck.edit_tooltip",
-    "value": "Editar/Recargar"
+    "value": "Editar/Repoblar"
   },
   {
     "key": "components.admin.product_modal.deck.remove_tooltip",
-    "value": "Eliminar"
+    "value": "Quitar"
   },
   {
     "key": "components.admin.bounty_modal.quantity_label",
-    "value": "CANTIDAD NECESARIA"
+    "value": "CANTIDAD REQUERIDA"
   },
   {
     "key": "components.admin.bounty_modal.hide_price_label",
-    "value": "Ocultar precio objetivo del p\u00fablico"
+    "value": "Ocultar precio objetivo del público"
   },
   {
     "key": "components.admin.bounty_modal.hide_price_desc",
-    "value": "Si se marca, los usuarios ver\u00e1n \"Contactar para precio\" en lugar de su valor COP objetivo."
+    "value": "Si se marca, los usuarios verán \"Contactar para Precio\" en vez de tu valor COP."
   },
   {
     "key": "components.admin.bounty_modal.no_image",
@@ -2601,11 +2809,11 @@
   },
   {
     "key": "components.admin.bounty_modal.name_placeholder",
-    "value": "Nombre de la entidad"
+    "value": "Nombre de Entidad"
   },
   {
     "key": "components.admin.bounty_modal.set_placeholder",
-    "value": "Nombre opcional del set"
+    "value": "Nombre de Set Opcional"
   },
   {
     "key": "components.admin.bounty_modal.image_placeholder",
@@ -2617,23 +2825,15 @@
   },
   {
     "key": "components.admin.bounty_modal.save_btn",
-    "value": "\ud83d\udcbe GUARDAR BOUNTY"
-  },
-  {
-    "key": "components.admin.bounty_modal.saving",
-    "value": "GUARDANDO..."
-  },
-  {
-    "key": "components.admin.bounty_modal.save_btn",
-    "value": "\ud83d\udcbe GUARDAR BOUNTY"
+    "value": "💾 GUARDAR RECOMPENSA"
   },
   {
     "key": "components.admin.bounty_modal.error_required",
-    "value": "El nombre y el TCG son obligatorios."
+    "value": "Nombre y TCG son obligatorios."
   },
   {
     "key": "components.admin.bounty_modal.error_save",
-    "value": "Error al guardar el bounty."
+    "value": "Error al guardar recompensa."
   },
   {
     "key": "components.admin.resolve_modal.title",
@@ -2641,47 +2841,47 @@
   },
   {
     "key": "components.admin.resolve_modal.offer_details",
-    "value": "Detalles de la oferta:"
+    "value": "Detalles de oferta:"
   },
   {
     "key": "components.admin.resolve_modal.no_notes",
-    "value": "No se proporcionaron notas"
+    "value": "Sin notas"
   },
   {
     "key": "components.admin.resolve_modal.action_title",
-    "value": "ACCI\u00d3N AL ACEPTAR"
+    "value": "ACCIÓN TRAS ACEPTACIÓN"
   },
   {
     "key": "components.admin.resolve_modal.action_inventory",
-    "value": "Agregar al Inventario"
+    "value": "Añadir al Inventario"
   },
   {
     "key": "components.admin.resolve_modal.action_inventory_desc",
-    "value": "Acepte la carta y agr\u00e9guela directamente al stock abierto para la venta."
+    "value": "Aceptar la carta y añadirla directo al stock para venta."
   },
   {
     "key": "components.admin.resolve_modal.action_fulfill_selected",
-    "value": "Cumplir {count} Solicitudes Seleccionadas"
+    "value": "Cumplir {count} Peticiones Elegidas"
   },
   {
     "key": "components.admin.resolve_modal.action_fulfill_matching",
-    "value": "Cumplir Solicitudes Coincidentes"
+    "value": "Cumplir Peticiones que Coincidan"
   },
   {
     "key": "components.admin.resolve_modal.action_fulfill_selected_desc",
-    "value": "Acepte la carta y notifique a los {count} clientes que seleccion\u00f3."
+    "value": "Aceptar carta y avisar a los {count} clientes elegidos."
   },
   {
     "key": "components.admin.resolve_modal.action_fulfill_matching_desc",
-    "value": "Acepte la carta y notifique a TODOS los clientes que la esperan."
+    "value": "Aceptar carta y avisar a TODOS los clientes esperándola."
   },
   {
     "key": "components.admin.resolve_modal.matching_selected",
-    "value": "{count} de {total} solicitudes coincidentes seleccionadas."
+    "value": "{count} de {total} peticiones elegidas."
   },
   {
     "key": "components.admin.resolve_modal.matching_found",
-    "value": "{total} solicitudes coincidentes encontradas."
+    "value": "Se hallaron {total} peticiones coincidentes."
   },
   {
     "key": "components.admin.resolve_modal.reject_btn",
@@ -2693,11 +2893,11 @@
   },
   {
     "key": "pages.admin.inventory.title",
-    "value": "GESTI\u00d3N DE INVENTARIO"
+    "value": "GESTIÓN DE INVENTARIO"
   },
   {
     "key": "pages.admin.inventory.subtitle",
-    "value": "Panel de Control // Operaciones Activas"
+    "value": "Dashboard de Tienda // Operaciones Activas"
   },
   {
     "key": "pages.admin.inventory.sync_sets_btn",
@@ -2709,7 +2909,7 @@
   },
   {
     "key": "pages.admin.inventory.last_sync",
-    "value": "\u00daLTIMA SINCRONIZACI\u00d3N: {date}"
+    "value": "ÚLT. SINCRO: {date}"
   },
   {
     "key": "pages.admin.inventory.import_csv_btn",
@@ -2717,15 +2917,15 @@
   },
   {
     "key": "pages.admin.inventory.add_product_btn",
-    "value": "AGREGAR PRODUCTO"
+    "value": "AÑADIR NUEVO PRODUCTO"
   },
   {
     "key": "pages.admin.inventory.search_label",
-    "value": "B\u00fasqueda de Productos"
+    "value": "Búsqueda de Producto"
   },
   {
     "key": "pages.admin.inventory.search_placeholder",
-    "value": "Buscar por nombre, set, c\u00f3digo..."
+    "value": "Buscar por nombre, set, código..."
   },
   {
     "key": "pages.admin.inventory.tcg_filter_label",
@@ -2733,11 +2933,11 @@
   },
   {
     "key": "pages.admin.inventory.category_label",
-    "value": "Categor\u00eda"
+    "value": "Categoría"
   },
   {
     "key": "pages.admin.inventory.storage_label",
-    "value": "Ubicaci\u00f3n F\u00edsica"
+    "value": "Ubicación Física"
   },
   {
     "key": "pages.admin.inventory.manage_locations_tooltip",
@@ -2761,31 +2961,31 @@
   },
   {
     "key": "pages.admin.inventory.confirm_delete",
-    "value": "\u00bfEst\u00e1s seguro de que quieres eliminar {name}?"
+    "value": "¿Seguro que quieres borrar {name}?"
   },
   {
     "key": "pages.admin.inventory.error_delete",
-    "value": "Error al eliminar el producto."
+    "value": "Fallo al borrar producto."
   },
   {
     "key": "pages.admin.inventory.sync_success",
-    "value": "\u00a1Se sincronizaron correctamente {count} sets!"
+    "value": "¡Se sincronizaron {count} sets!"
   },
   {
     "key": "pages.admin.inventory.sync_error",
-    "value": "Error al sincronizar los sets."
+    "value": "Fallo al sincronizar sets."
   },
   {
     "key": "pages.admin.inventory.confirm_delete_storage_items",
-    "value": "La ubicaci\u00f3n \"{name}\" contiene {count} art\u00edculos. Al eliminarla se borrar\u00e1n estas asignaciones. \u00bfContinuar?"
+    "value": "La ubicación \"{name}\" tiene {count} artículos. Borrarla quitará estas asignaciones. ¿Continuar?"
   },
   {
     "key": "pages.admin.inventory.confirm_delete_storage",
-    "value": "\u00bfEliminar ubicaci\u00f3n de almacenamiento \"{name}\"?"
+    "value": "¿Borrar ubicación de almacén \"{name}\"?"
   },
   {
     "key": "pages.admin.inventory.confirm_delete_category",
-    "value": "\u00bfEliminar colecci\u00f3n \"{name}\"?"
+    "value": "¿Borrar colección \"{name}\"?"
   },
   {
     "key": "pages.common.dates.just_now",
@@ -2805,11 +3005,11 @@
   },
   {
     "key": "pages.admin.inventory.delete_product_tooltip",
-    "value": "Eliminar Producto"
+    "value": "Borrar Producto"
   },
   {
     "key": "pages.admin.inventory.scanning_catalog",
-    "value": "Escaneando Cat\u00e1logo..."
+    "value": "Escaneando Catálogo..."
   },
   {
     "key": "pages.admin.inventory.table.product",
@@ -2841,11 +3041,11 @@
   },
   {
     "key": "pages.admin.inventory.no_products",
-    "value": "NO SE ENCONTRARON PRODUCTOS"
+    "value": "NO SE HALLARON PRODUCTOS"
   },
   {
     "key": "pages.admin.inventory.no_products_hint",
-    "value": "Intente ajustar sus filtros de escaneo"
+    "value": "Prueba ajustando tus filtros de escáner"
   },
   {
     "key": "pages.profile.title",
@@ -2861,11 +3061,11 @@
   },
   {
     "key": "pages.profile.personal_info",
-    "value": "INFORMACI\u00d3N PERSONAL"
+    "value": "INFORMACIÓN PERSONAL"
   },
   {
     "key": "pages.profile.no_orders",
-    "value": "A\u00fan no has realizado pedidos."
+    "value": "Aún no has realizado pedidos."
   },
   {
     "key": "nav.deck_importer_cta",
@@ -2873,11 +3073,11 @@
   },
   {
     "key": "pages.cart.drawer.try_importer",
-    "value": "USAR IMPORTADOR DE MAZOS \u2192"
+    "value": "USAR IMPORTADOR DE MAZOS →"
   },
   {
     "key": "pages.cart.drawer.importer_nudge",
-    "value": "\u00bfTe faltan algunas cartas? Prueba el importador de mazos"
+    "value": "¿Faltan cartas? Prueba el importador de mazos"
   },
   {
     "key": "pages.deck_importer.title",
@@ -2885,7 +3085,7 @@
   },
   {
     "key": "pages.deck_importer.subtitle",
-    "value": "Pega tu lista de cartas abajo (funciona con Moxfield, Archideckt, MTGGoldfish y más) y la compararemos con nuestro stock actual. ¡Si no tenemos suficientes, puedes pedirlas todas a la vez!"
+    "value": "Pega tu lista abajo (funciona con Moxfield, Archideckt, MTGGoldfish y más) y la buscaremos en nuestro stock. ¡Si no tenemos suficientes, puedes pedirlas todas de una!"
   },
   {
     "key": "pages.deck_importer.list_label",
@@ -2893,7 +3093,7 @@
   },
   {
     "key": "pages.deck_importer.buttons.analyze",
-    "value": "ANALIZAR LISTA \u2192"
+    "value": "ANALIZAR LISTA →"
   },
   {
     "key": "pages.deck_importer.buttons.analyzing",
@@ -2905,27 +3105,27 @@
   },
   {
     "key": "pages.deck_importer.buttons.add_all",
-    "value": "AGREGAR TODO LO ENCONTRADO"
+    "value": "AÑADIR TODO LO HALLADO"
   },
   {
     "key": "pages.deck_importer.no_results",
-    "value": "Pega una lista para ver las cartas disponibles."
+    "value": "Pega una lista para ver cartas disponibles."
   },
   {
     "key": "pages.deck_importer.errors.analyze_failed",
-    "value": "Error al analizar la lista. Por favor verifica el formato."
+    "value": "Fallo al analizar lista. Revisa el formato."
   },
   {
     "key": "pages.deck_importer.messages.added_count",
-    "value": "Se agregaron productos de {count} cartas a tu carrito."
+    "value": "Se añadieron productos de {count} cartas a tu carrito."
   },
   {
     "key": "pages.deck_importer.matches.different_version",
-    "value": "VERSI\u00d3N DIFERENTE"
+    "value": "VERSIÓN DISTINTA"
   },
   {
     "key": "pages.deck_importer.matches.matched",
-    "value": "ENCONTRADO"
+    "value": "COINCIDE"
   },
   {
     "key": "pages.deck_importer.matches.no_stock",
@@ -2949,11 +3149,11 @@
   },
   {
     "key": "pages.product.condition.dmg",
-    "value": "Da\u00f1ado"
+    "value": "Damaged"
   },
   {
     "key": "pages.product.badges.hot",
-    "value": "CALIENTE"
+    "value": "HOT"
   },
   {
     "key": "pages.product.badges.new",
@@ -2965,7 +3165,7 @@
   },
   {
     "key": "pages.common.labels.collection",
-    "value": "COLECCI\u00d3N"
+    "value": "COLECCIÓN"
   },
   {
     "key": "pages.common.labels.product",
@@ -2977,19 +3177,19 @@
   },
   {
     "key": "pages.common.pagination.prev",
-    "value": "\u2190 ANTERIOR"
+    "value": "← ANTERIOR"
   },
   {
     "key": "pages.common.pagination.next",
-    "value": "SIGUIENTE \u2192"
+    "value": "SIGUIENTE →"
   },
   {
     "key": "components.theme_selector.title",
-    "value": "Seleccionar Tema"
+    "value": "Elegir Tema"
   },
   {
     "key": "pages.checkout.delivery.shipping",
-    "value": "ENV\u00cdO"
+    "value": "ENVÍO"
   },
   {
     "key": "pages.checkout.delivery.pickup",
@@ -2997,19 +3197,19 @@
   },
   {
     "key": "pages.checkout.delivery.shipping_desc",
-    "value": "Env\u00edo confiable a tu direcci\u00f3n"
+    "value": "Entrega confiable a tu dirección"
   },
   {
     "key": "pages.checkout.delivery.pickup_desc",
-    "value": "Recoge en nuestra tienda en Bogot\u00e1"
+    "value": "Recoge en nuestra tienda en Bogotá"
   },
   {
     "key": "pages.checkout.section.contact",
-    "value": "INFORMACI\u00d3N DE CONTACTO"
+    "value": "INFORMACIÓN DE CONTACTO"
   },
   {
     "key": "pages.checkout.section.delivery",
-    "value": "M\u00c9TODO DE ENTREGA"
+    "value": "MÉTODO DE ENTREGA"
   },
   {
     "key": "pages.checkout.section.summary",
@@ -3017,11 +3217,11 @@
   },
   {
     "key": "pages.checkout.summary.item",
-    "value": "ART\u00cdCULO"
+    "value": "ARTÍCULO"
   },
   {
     "key": "pages.checkout.summary.items",
-    "value": "ART\u00cdCULOS"
+    "value": "ARTÍCULOS"
   },
   {
     "key": "pages.checkout.summary.subtotal",
@@ -3029,7 +3229,7 @@
   },
   {
     "key": "pages.checkout.summary.shipping",
-    "value": "ENV\u00cdO"
+    "value": "ENVÍO"
   },
   {
     "key": "pages.checkout.summary.free",
@@ -3041,7 +3241,7 @@
   },
   {
     "key": "pages.checkout.footer.notice",
-    "value": "Al confirmar, un asesor te contactar\u00e1 para coordinar la entrega."
+    "value": "Al confirmar, un asesor te contactará para coordinar la entrega."
   },
   {
     "key": "pages.checkout.payment_methods.cash",
@@ -3061,11 +3261,11 @@
   },
   {
     "key": "components.bounty_offer.title",
-    "value": "V\u00e9ndenos Tu Carta"
+    "value": "Véndenos tu Carta"
   },
   {
     "key": "components.bounty_offer.success_title",
-    "value": "\u00a1Oferta Recibida!"
+    "value": "¡Oferta Recibida!"
   },
   {
     "key": "components.bounty_offer.success_desc",
@@ -3073,7 +3273,7 @@
   },
   {
     "key": "components.bounty_offer.login_prompt",
-    "value": "para autocompletar tu info y seguir tus ofertas."
+    "value": "para autocompletar tu info y rastrear tus ofertas."
   },
   {
     "key": "components.bounty_offer.pay_upto",
@@ -3097,19 +3297,19 @@
   },
   {
     "key": "components.bounty_offer.labels.notes",
-    "value": "Notas Adicionales (Opcional)"
+    "value": "Notas adicionales (Opcional)"
   },
   {
     "key": "components.bounty_offer.placeholders.notes",
-    "value": "Cualquier detalle sobre la carta..."
+    "value": "Detalles sobre la carta..."
   },
   {
     "key": "components.bounty_offer.placeholders.name",
-    "value": "Juan P\u00e9rez"
+    "value": "Juan Pérez"
   },
   {
     "key": "components.bounty_offer.placeholders.contact",
-    "value": "Tel\u00e9fono o usuario de Instagram"
+    "value": "Teléfono o Instagram"
   },
   {
     "key": "components.bounty_offer.buttons.submit",
@@ -3121,15 +3321,15 @@
   },
   {
     "key": "pages.store_exclusives.subtitle",
-    "value": "Mazos Commander personalizados, kits de proxies y otros art\u00edculos premium creados internamente."
+    "value": "Mazos Commander personalizados, kits de proxy y otros artículos premium hechos en casa."
   },
   {
     "key": "pages.collection.vault.bg_text_1",
-    "value": "MI B\u00d3VEDA"
+    "value": "MI BÓVEDA"
   },
   {
     "key": "pages.collection.vault.bg_text_2",
-    "value": "COLECCI\u00d3N"
+    "value": "COLECCIÓN"
   },
   {
     "key": "pages.collection.vault.title_part1",
@@ -3137,7 +3337,7 @@
   },
   {
     "key": "pages.collection.vault.title_part2",
-    "value": "B\u00d3VEDA"
+    "value": "BÓVEDA"
   },
   {
     "key": "pages.collection.vault.subject_prefix",
@@ -3153,7 +3353,7 @@
   },
   {
     "key": "pages.collection.vault.desc",
-    "value": "Tu archivo personal de TCG est\u00e1 siendo indexado. Pronto podr\u00e1s gestionar tu colecci\u00f3n f\u00edsica y seguir valoraciones de mercado aqu\u00ed."
+    "value": "Tu archivo TCG personal se está indexando. Pronto podrás gestionar tu colección física y rastrear valoraciones de mercado aquí."
   },
   {
     "key": "pages.collection.vault.return",
@@ -3161,35 +3361,35 @@
   },
   {
     "key": "pages.collection.not_found",
-    "value": "COLECCI\u00d3N NO ENCONTRADA"
+    "value": "COLECCIÓN NO HALLADA"
   },
   {
     "key": "pages.collection.not_found_desc",
-    "value": "La colecci\u00f3n solicitada no existe o ha sido eliminada."
+    "value": "La colección solicitada no existe o ha sido borrada."
   },
   {
     "key": "pages.collection.empty",
-    "value": "COLECCI\u00d3N VAC\u00cdA"
+    "value": "COLECCIÓN VACÍA"
   },
   {
     "key": "pages.collection.empty_desc",
-    "value": "No se encontraron productos en esta colecci\u00f3n."
+    "value": "No se hallaron productos en esta colección."
   },
   {
     "key": "pages.404.title",
-    "value": "ENLACE CORTADO"
+    "value": "VÍNCULO SEVERADO"
   },
   {
     "key": "pages.404.message",
-    "value": "Las coordenadas solicitadas llevan a un vac\u00edo en el archivo. C\u00f3digo de Error: [P\u00c1GINA_NO_ENCONTRADA]."
+    "value": "Las coordenadas solicitadas llevan a un vacío en el archivo. Código de Error: [PÁGINA_NO_HALLADA]."
   },
   {
     "key": "pages.404.back_home",
-    "value": "\u2190 Volver al Centro de Mando"
+    "value": "← Volver al Centro de Mando"
   },
   {
     "key": "pages.admin.dashboard.valuation",
-    "value": "VALORACI\u00d3N"
+    "value": "VALORACIÓN"
   },
   {
     "key": "pages.admin.dashboard.low_stock",
@@ -3205,7 +3405,7 @@
   },
   {
     "key": "pages.admin.dashboard.sync",
-    "value": "SINCRONIZAR"
+    "value": "SINCRO"
   },
   {
     "key": "pages.admin.dashboard.syncing",
@@ -3213,11 +3413,11 @@
   },
   {
     "key": "pages.admin.dashboard.prev",
-    "value": "ANT"
+    "value": "ANT."
   },
   {
     "key": "pages.admin.dashboard.next",
-    "value": "SIG"
+    "value": "SIG."
   },
   {
     "key": "pages.admin.settings.financial_overrides",
@@ -3225,11 +3425,11 @@
   },
   {
     "key": "pages.admin.settings.store_identity",
-    "value": "IDENTIDAD DE LA TIENDA"
+    "value": "IDENTIDAD DE TIENDA"
   },
   {
     "key": "pages.admin.settings.address_label",
-    "value": "Direcci\u00f3n F\u00edsica de la Tienda"
+    "value": "Dirección Física de la Tienda"
   },
   {
     "key": "pages.admin.settings.whatsapp_label",
@@ -3245,31 +3445,31 @@
   },
   {
     "key": "pages.admin.settings.hours_label",
-    "value": "Horarios de Atenci\u00f3n"
+    "value": "Horario de Atención"
   },
   {
     "key": "pages.admin.settings.hot_threshold",
-    "value": "Umbral de Art\u00edculos Hot"
+    "value": "Umbral de Artículos Hot"
   },
   {
     "key": "pages.admin.settings.new_threshold",
-    "value": "Umbral de Art\u00edculos Nuevos"
+    "value": "Umbral de Artículos Nuevos"
   },
   {
     "key": "pages.admin.settings.sales_in_last",
-    "value": "Ventas en los \u00faltimos"
+    "value": "Ventas en los últimos"
   },
   {
     "key": "pages.admin.settings.days",
-    "value": "D\u00edas"
+    "value": "Días"
   },
   {
     "key": "pages.admin.settings.days_since_creation",
-    "value": "D\u00edas Desde Creaci\u00f3n"
+    "value": "Días desde Creación"
   },
   {
     "key": "pages.admin.settings.save_btn",
-    "value": "GUARDAR CONFIGURACI\u00d3N GLOBAL"
+    "value": "GUARDAR AJUSTES GLOBALES"
   },
   {
     "key": "pages.admin.clients.title",
@@ -3293,7 +3493,7 @@
   },
   {
     "key": "pages.admin.clients.table.requests",
-    "value": "Solicitudes"
+    "value": "Peticiones"
   },
   {
     "key": "pages.admin.clients.table.offers",
@@ -3305,7 +3505,7 @@
   },
   {
     "key": "pages.admin.clients.table.recent_journal",
-    "value": "Entrada de Diario Reciente"
+    "value": "Última Entrada en Diario"
   },
   {
     "key": "pages.admin.clients.status.subscribed",
@@ -3325,11 +3525,11 @@
   },
   {
     "key": "pages.admin.subscribers.subtitle",
-    "value": "Gesti\u00f3n de Newsletter"
+    "value": "Gestión de Newsletter"
   },
   {
     "key": "pages.admin.subscribers.table.email",
-    "value": "Correo Electr\u00f3nico"
+    "value": "Dirección de Email"
   },
   {
     "key": "pages.admin.subscribers.table.linked_user",
@@ -3337,7 +3537,7 @@
   },
   {
     "key": "pages.admin.subscribers.table.date",
-    "value": "Fecha de Suscripci\u00f3n"
+    "value": "Fecha de Suscripción"
   },
   {
     "key": "pages.admin.subscribers.status.unlinked",
@@ -3349,7 +3549,7 @@
   },
   {
     "key": "pages.admin.accounting.net_profit",
-    "value": "UTILIDAD NETA POTENCIAL"
+    "value": "GANANCIA POTENCIAL NETA"
   },
   {
     "key": "pages.admin.valuation.authenticating",
@@ -3365,11 +3565,11 @@
   },
   {
     "key": "pages.admin.valuation.unique_products",
-    "value": "En {count} productos \u00fanicos."
+    "value": "En {count} productos únicos."
   },
   {
     "key": "pages.admin.valuation.revenue_desc",
-    "value": "Ingresos proyectados totales si todos los art\u00edculos se venden a los precios de lista actuales."
+    "value": "Ingresos proyectados totales si se venden todos los artículos al precio actual."
   },
   {
     "key": "pages.admin.themes.title",
@@ -3377,7 +3577,7 @@
   },
   {
     "key": "pages.admin.themes.subtitle",
-    "value": "Configura la identidad visual y apariencias de la tienda"
+    "value": "Configura la identidad visual y skins de la tienda"
   },
   {
     "key": "pages.admin.themes.live_matrix",
@@ -3385,11 +3585,11 @@
   },
   {
     "key": "pages.admin.themes.desktop_view",
-    "value": "Vista de Escritorio"
+    "value": "Vista Escritorio"
   },
   {
     "key": "pages.admin.themes.mobile_view",
-    "value": "Vista M\u00f3vil"
+    "value": "Vista Móvil"
   },
   {
     "key": "pages.admin.themes.high_fidelity",
@@ -3405,11 +3605,11 @@
   },
   {
     "key": "pages.admin.themes.reset_original",
-    "value": "Restablecer al Original"
+    "value": "Restablecer Original"
   },
   {
     "key": "pages.admin.themes.sections.base_info",
-    "value": "Informaci\u00f3n Base"
+    "value": "Info Base"
   },
   {
     "key": "pages.admin.themes.sections.surfaces",
@@ -3425,7 +3625,7 @@
   },
   {
     "key": "pages.admin.themes.sections.typography",
-    "value": "Tipograf\u00eda y Contenido"
+    "value": "Tipografía y Contenido"
   },
   {
     "key": "pages.admin.themes.sections.logic",
@@ -3433,11 +3633,11 @@
   },
   {
     "key": "pages.admin.themes.sections.geometry",
-    "value": "Geometr\u00eda de Dise\u00f1o"
+    "value": "Diseño y Geometría de Cartas"
   },
   {
     "key": "pages.admin.themes.sections.advanced",
-    "value": "Branding Avanzado y Sobrescrituras"
+    "value": "Branding Avanzado y Ajustes"
   },
   {
     "key": "pages.admin.themes.labels.theme_name",
@@ -3445,19 +3645,15 @@
   },
   {
     "key": "pages.admin.themes.buttons.persist",
-    "value": "Persistir Plano"
+    "value": "Persistir Plano (Blueprint)"
   },
   {
     "key": "pages.admin.themes.buttons.initialize",
-    "value": "Inicializar Piel"
+    "value": "Inicializar Skin"
   },
   {
     "key": "pages.admin.themes.buttons.purge",
     "value": "Purgar Matriz"
-  },
-  {
-    "key": "pages.admin.themes.high_fidelity",
-    "value": "Alta Fidelidad"
   },
   {
     "key": "pages.admin.themes.name_label",
@@ -3465,15 +3661,15 @@
   },
   {
     "key": "pages.admin.themes.primary_btn",
-    "value": "Bot\u00f3n Primario"
+    "value": "Botón Primario"
   },
   {
     "key": "pages.admin.themes.secondary_btn",
-    "value": "Bot\u00f3n Secundario"
+    "value": "Botón Secundario"
   },
   {
     "key": "pages.admin.themes.checkboxes",
-    "value": "Casillas de Verificaci\u00f3n"
+    "value": "Casillas (Checkboxes)"
   },
   {
     "key": "pages.auth.providers.google",
@@ -3484,12 +3680,8 @@
     "value": "Facebook"
   },
   {
-    "key": "pages.common.labels.mostrar",
-    "value": "Mostrar"
-  },
-  {
     "key": "pages.admin.themes.preview.critical_alert",
-    "value": "Alerta Cr\u00edtica"
+    "value": "Alerta Crítica"
   },
   {
     "key": "pages.admin.themes.preview.singles",
@@ -3505,7 +3697,7 @@
   },
   {
     "key": "pages.admin.themes.preview.vault_search",
-    "value": "B\u00fasqueda en Matriz de B\u00f3veda"
+    "value": "Búsqueda en Matriz de Bóveda"
   },
   {
     "key": "pages.admin.themes.preview.filter_state",
@@ -3513,27 +3705,27 @@
   },
   {
     "key": "pages.admin.themes.preview.normal_inactive",
-    "value": "Inactivo Normal"
+    "value": "Normal Inactivo"
   },
   {
     "key": "pages.admin.themes.preview.active_selected",
-    "value": "Seleccionado Activo"
+    "value": "Activo Seleccionado"
   },
   {
     "key": "pages.admin.themes.preview.primary_action",
-    "value": "Acci\u00f3n Primaria"
+    "value": "Acción Primaria"
   },
   {
     "key": "pages.admin.themes.preview.secondary_action",
-    "value": "Acci\u00f3n Secundaria"
+    "value": "Acción Secundaria"
   },
   {
     "key": "pages.admin.themes.preview.dynamic_flags",
-    "value": "Banderas de Estado Din\u00e1micas"
+    "value": "Banderas de Estado Dinámicas"
   },
   {
     "key": "pages.admin.login.title",
-    "value": "ACCESO A LA B\u00d3VEDA"
+    "value": "ACCESO A LA BÓVEDA"
   },
   {
     "key": "pages.admin.login.subtitle",
@@ -3541,15 +3733,15 @@
   },
   {
     "key": "pages.admin.login.email",
-    "value": "Identificaci\u00f3n del Sistema (Correo)"
+    "value": "Identificación de Sistema (Email)"
   },
   {
     "key": "pages.admin.login.password",
-    "value": "Credencial de Seguridad (Contrase\u00f1a)"
+    "value": "Credencial de Seguridad (Contraseña)"
   },
   {
     "key": "pages.admin.login.button",
-    "value": "ESTABLECER CONEXI\u00d3N"
+    "value": "ESTABLECER CONEXIÓN"
   },
   {
     "key": "pages.admin.login.authenticating",
@@ -3568,7 +3760,695 @@
     "value": "Gasto (COP)"
   },
   {
-    "key": "pages.admin.clients.table.no_notes",
-    "value": "Sin notas registradas..."
+    "key": "pages.admin.orders.title",
+    "value": "MANIFESTO DE MANDO"
+  },
+  {
+    "key": "pages.admin.orders.search_placeholder",
+    "value": "Buscar Logs (#, nombre, tel...)"
+  },
+  {
+    "key": "pages.admin.orders.empty_list",
+    "value": "No se hallaron manifestos en los archivos."
+  },
+  {
+    "key": "pages.admin.orders.status_filter_all",
+    "value": "TODOS LOS LOGS"
+  },
+  {
+    "key": "pages.admin.orders.list.item_count",
+    "value": "{count} artículo{s}"
+  },
+  {
+    "key": "pages.admin.orders.detail.select_prompt",
+    "value": "Selecciona un manifesto para inspeccionar"
+  },
+  {
+    "key": "pages.admin.orders.detail.error_title",
+    "value": "Error de Acceso Archival"
+  },
+  {
+    "key": "pages.admin.orders.detail.close_btn",
+    "value": "CERRAR LOG"
+  },
+  {
+    "key": "pages.admin.orders.detail.back_to_list",
+    "value": "← VOLVER A LOGS DE MANDO"
+  },
+  {
+    "key": "pages.admin.orders.detail.confirmed_at",
+    "value": "Confirmado el {date}"
+  },
+  {
+    "key": "pages.admin.orders.detail.confirm_btn",
+    "value": "✓ AUTORIZAR ENVÍO"
+  },
+  {
+    "key": "pages.admin.orders.detail.restore_inventory",
+    "value": "♻ DESENTERRAR INVENTARIO"
+  },
+  {
+    "key": "pages.admin.orders.detail.inventory_restored",
+    "value": "Inventario Reanimado"
+  },
+  {
+    "key": "pages.admin.orders.detail.tracking.title",
+    "value": "SIGILO DE ENTREGA / SEGUIMIENTO"
+  },
+  {
+    "key": "pages.admin.orders.detail.tracking.local_pickup",
+    "value": "INVOCACIÓN EN TIENDA"
+  },
+  {
+    "key": "pages.admin.orders.detail.tracking.label",
+    "value": "Sigilo de Seguimiento"
+  },
+  {
+    "key": "pages.admin.orders.detail.tracking.url",
+    "value": "Portal de Seguimiento"
+  },
+  {
+    "key": "pages.admin.orders.detail.customer.title",
+    "value": "PERFIL DE INVOCADOR"
+  },
+  {
+    "key": "pages.admin.orders.detail.customer.notify_whatsapp",
+    "value": "NOTIFICAR VÍA WHATSAPP"
+  },
+  {
+    "key": "pages.admin.orders.detail.payment.title",
+    "value": "INTERCAMBIO DE ORO"
+  },
+  {
+    "key": "pages.admin.orders.detail.payment.locked",
+    "value": "🔒 BLOQUEADO"
+  },
+  {
+    "key": "pages.admin.orders.detail.payment.subtotal",
+    "value": "Subtotal"
+  },
+  {
+    "key": "pages.admin.orders.detail.payment.shipping",
+    "value": "Envío"
+  },
+  {
+    "key": "pages.admin.orders.detail.payment.total",
+    "value": "ORO TOTAL"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.title",
+    "value": "MANIFESTO DE PRODUCTO ({count})"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.locked",
+    "value": "Inventario Bloqueado"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.stock_label",
+    "value": "STOCK"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.qty_label",
+    "value": "CANT"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.removed",
+    "value": "QUITADO"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.deleted",
+    "value": "ELIMINADO"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.price_unit",
+    "value": "${price} c/u"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.restore_btn",
+    "value": "Restaurar"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.delete_btn",
+    "value": "Quitar del manifesto"
+  },
+  {
+    "key": "pages.admin.orders.detail.add_item.title",
+    "value": "🎁 AÑADIR BOTÍN / REGALO"
+  },
+  {
+    "key": "pages.admin.orders.detail.add_item.placeholder",
+    "value": "Buscar carta o producto..."
+  },
+  {
+    "key": "pages.admin.orders.detail.add_item.staged_label",
+    "value": "Para añadir:"
+  },
+  {
+    "key": "pages.admin.orders.detail.actions.saving",
+    "value": "SINCRONIZANDO..."
+  },
+  {
+    "key": "pages.admin.orders.detail.actions.save",
+    "value": "CONSOLIDAR CAMBIOS"
+  },
+  {
+    "key": "pages.admin.orders.detail.actions.discard",
+    "value": "DESCARTAR"
+  },
+  {
+    "key": "pages.admin.orders.confirm_modal.title",
+    "value": "AUTORIZAR ENVÍO"
+  },
+  {
+    "key": "pages.admin.orders.confirm_modal.desc",
+    "value": "Elige de qué bóvedas extraer stock."
+  },
+  {
+    "key": "pages.admin.orders.confirm_modal.no_locations",
+    "value": "⚠️ Sin bóvedas físicas asignadas"
+  },
+  {
+    "key": "pages.admin.orders.confirm_modal.auto_label",
+    "value": "AUTO"
+  },
+  {
+    "key": "pages.admin.orders.confirm_modal.available_label",
+    "value": "(disponible: {count})"
+  },
+  {
+    "key": "pages.admin.orders.confirm_modal.warning",
+    "value": "⚠️ ¿Seguro? Esto bloqueará el stock asignado."
+  },
+  {
+    "key": "pages.admin.orders.confirm_modal.processing",
+    "value": "PROCESANDO..."
+  },
+  {
+    "key": "pages.admin.orders.restore_modal.title",
+    "value": "DESENTERRAR INVENTARIO"
+  },
+  {
+    "key": "pages.admin.orders.restore_modal.desc",
+    "value": "Elige a qué bóvedas devolver estos artículos."
+  },
+  {
+    "key": "pages.admin.orders.restore_modal.add_location",
+    "value": "AÑADIR UBICACIÓN DE BÓVEDA"
+  },
+  {
+    "key": "pages.admin.orders.restore_modal.processing",
+    "value": "REANIMANDO..."
+  },
+  {
+    "key": "pages.admin.orders.alerts.complete_confirm",
+    "value": "¿Seguro que quieres marcar como COMPLETADO? Este es un conjuro final y el manifesto quedará bloqueado."
+  },
+  {
+    "key": "pages.admin.orders.alerts.cancel_confirm",
+    "value": "¿Seguro que quieres DESCARTAR este pedido? Esta acción es definitiva."
+  },
+  {
+    "key": "pages.admin.settings.title",
+    "value": "AJUSTES GLOBALES"
+  },
+  {
+    "key": "pages.admin.settings.subtitle",
+    "value": "Configuración de Sistema // Ajustes Maestros"
+  },
+  {
+    "key": "pages.admin.settings.financial.tcgplayer_rate",
+    "value": "USD a COP (TCGPlayer)"
+  },
+  {
+    "key": "pages.admin.settings.financial.tcgplayer_desc",
+    "value": "Multiplicador para precios Market de TCGPlayer en COP."
+  },
+  {
+    "key": "pages.admin.settings.financial.ck_rate",
+    "value": "USD a COP (CardKingdom)"
+  },
+  {
+    "key": "pages.admin.settings.financial.ck_desc",
+    "value": "Multiplicador para precios USD de CardKingdom en COP."
+  },
+  {
+    "key": "pages.admin.settings.financial.cm_rate",
+    "value": "EUR a COP (Cardmarket)"
+  },
+  {
+    "key": "pages.admin.settings.financial.cm_desc",
+    "value": "Multiplicador para precios Avg de Cardmarket en COP."
+  },
+  {
+    "key": "pages.admin.settings.financial.note_title",
+    "value": "Nota:"
+  },
+  {
+    "key": "pages.admin.settings.financial.note_text",
+    "value": "Estas tasas se aplican durante la ingesta de inventario y sincronización de precios. Los ajustes manuales en productos individuales tienen prioridad."
+  },
+  {
+    "key": "pages.admin.settings.discovery.title",
+    "value": "ALGORITMOS DE BÚSQUEDA Y LOGÍSTICA"
+  },
+  {
+    "key": "pages.admin.settings.discovery.hot_desc",
+    "value": "Los productos que cumplan este umbral mostrarán la insignia 🔥 HOT."
+  },
+  {
+    "key": "pages.admin.settings.discovery.new_desc",
+    "value": "Los productos creados en este lapso mostrarán la insignia 🆕 NUEVO."
+  },
+  {
+    "key": "pages.admin.settings.discovery.express_label",
+    "value": "Entrega Express Bogotá"
+  },
+  {
+    "key": "pages.admin.settings.discovery.express_desc",
+    "value": "Si está APAGADO, la insignia de entrega mostrará OFFLINE sin importar la hora."
+  },
+  {
+    "key": "pages.admin.settings.discovery.express_on",
+    "value": "INTERRUPTOR MAESTRO: ENCENDIDO"
+  },
+  {
+    "key": "pages.admin.settings.discovery.express_off",
+    "value": "INTERRUPTOR MAESTRO: APAGADO"
+  },
+  {
+    "key": "pages.admin.settings.discovery.synergy_label",
+    "value": "Límite de Precio Explorador de Sinergias (COP)"
+  },
+  {
+    "key": "pages.admin.settings.discovery.synergy_desc",
+    "value": "Precio máximo para cartas sugeridas en el widget Explorador de Sinergias."
+  },
+  {
+    "key": "pages.admin.settings.discovery.shipping_label",
+    "value": "Tarifa Plana de Envío (COP)"
+  },
+  {
+    "key": "pages.admin.settings.discovery.shipping_desc",
+    "value": "Tarifa estándar aplicada a pedidos con envío (se ignora en recogida local)."
+  },
+  {
+    "key": "pages.admin.settings.discovery.priority_shipping_label",
+    "value": "Tarifa de Envío Prioritario (COP)"
+  },
+  {
+    "key": "pages.admin.settings.discovery.priority_shipping_desc",
+    "value": "Tarifa para entrega Express/Prioritaria en Bogotá. Solo se aplica si se elige Express."
+  },
+  {
+    "key": "pages.admin.settings.system.title",
+    "value": "MANTENIMIENTO Y DIAGNÓSTICOS DE SISTEMA"
+  },
+  {
+    "key": "pages.admin.settings.system.backend_logs",
+    "value": "Nivel de Logs del Servidor Backend"
+  },
+  {
+    "key": "pages.admin.settings.system.backend_logs_desc",
+    "value": "Controla la verbosidad de los logs del servidor Go. Cambios instantáneos."
+  },
+  {
+    "key": "pages.admin.settings.system.frontend_logs",
+    "value": "Nivel de Logs del Cliente Frontend"
+  },
+  {
+    "key": "pages.admin.settings.system.frontend_logs_desc",
+    "value": "Controla logs locales y remotos de esta sesión. Persistido en localStorage."
+  },
+  {
+    "key": "pages.admin.settings.footer.save_desc",
+    "value": "Estos cambios actualizarán las tasas de moneda e identidad de la tienda en todas las páginas."
+  },
+  {
+    "key": "pages.admin.settings.actions.updating",
+    "value": "ACTUALIZANDO NÚCLEO..."
+  },
+  {
+    "key": "pages.admin.settings.actions.sync",
+    "value": "SINCRONIZAR TODA LA CONFIGURACIÓN →"
+  },
+  {
+    "key": "pages.admin.settings.actions.success",
+    "value": "✓ ACTUALIZADO CON ÉXITO"
+  },
+  {
+    "key": "pages.common.buttons.reset",
+    "value": "REINICIAR"
+  },
+  {
+    "key": "pages.admin.settings.alerts.update_failed",
+    "value": "Error al actualizar ajustes."
+  },
+  {
+    "key": "pages.admin.settings.alerts.fetch_logs_failed",
+    "value": "Error al obtener nivel de logs"
+  },
+  {
+    "key": "pages.admin.settings.alerts.update_logs_failed",
+    "value": "Error al actualizar nivel de logs"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.title",
+    "value": "Reubicación Masiva"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.target_label",
+    "value": "Almacén Destino:"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.target_placeholder",
+    "value": "Elegir Destino..."
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.target_desc",
+    "value": "Todos los artículos se moverán a esta ubicación"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.image",
+    "value": "Imagen"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.product_name",
+    "value": "Nombre de Producto"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.set",
+    "value": "Set"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.code",
+    "value": "Código"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.foil",
+    "value": "Foil"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.variant",
+    "value": "Variante"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.source",
+    "value": "Origen"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.stock",
+    "value": "Stock"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.to_move",
+    "value": "A Mover"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.no_image",
+    "value": "Sin Imagen"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.regular_variant",
+    "value": "Regular"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.processing",
+    "value": "Procesando..."
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.confirm_btn",
+    "value": "Confirmar Reubicación"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.alerts.select_target",
+    "value": "Por favor selecciona un almacén de destino"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.alerts.no_items",
+    "value": "No hay artículos para mover"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.alerts.success",
+    "value": "Productos reubicados con éxito"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.alerts.error",
+    "value": "Error al reubicar productos"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.alerts.load_error",
+    "value": "Error al cargar ubicaciones de almacén"
+  },
+  {
+    "key": "components.language_selector.names",
+    "value": "🇪🇸 Español"
+  },
+  {
+    "key": "pages.admin.themes.labels.accent_header",
+    "value": "Acento para Áreas de Cabecera"
+  },
+  {
+    "key": "pages.admin.themes.labels.bg_overlay_url",
+    "value": "URL de Imagen de Superposición de Fondo"
+  },
+  {
+    "key": "pages.admin.themes.labels.body_typography",
+    "value": "Familia Tipográfica del Cuerpo"
+  },
+  {
+    "key": "pages.admin.themes.labels.borders_dividers",
+    "value": "Bordes y Divisores"
+  },
+  {
+    "key": "pages.admin.themes.labels.button_bg",
+    "value": "Fondo de Botón"
+  },
+  {
+    "key": "pages.admin.themes.labels.button_text",
+    "value": "Texto de Botón"
+  },
+  {
+    "key": "pages.admin.themes.labels.card_rounding",
+    "value": "Redondeo de Esquinas de Carta"
+  },
+  {
+    "key": "pages.admin.themes.labels.card_panel_surface",
+    "value": "Superficie de Carta y Panel"
+  },
+  {
+    "key": "pages.admin.themes.labels.checkbox_border",
+    "value": "Borde de Casilla"
+  },
+  {
+    "key": "pages.admin.themes.labels.checkbox_checked_bg",
+    "value": "Fondo de Casilla Marcada"
+  },
+  {
+    "key": "pages.admin.themes.labels.dmg_status",
+    "value": "Estado Dañado (DMG)"
+  },
+  {
+    "key": "pages.admin.themes.labels.focus_state",
+    "value": "Color de Estado de Foco"
+  },
+  {
+    "key": "pages.admin.themes.labels.global_bg",
+    "value": "Fondo Global de Página"
+  },
+  {
+    "key": "pages.admin.themes.labels.grid_spacing",
+    "value": "Espaciado de Rejilla (Gap)"
+  },
+  {
+    "key": "pages.admin.themes.labels.header_typography",
+    "value": "Familia Tipográfica de Cabecera"
+  },
+  {
+    "key": "pages.admin.themes.labels.hp_status",
+    "value": "Estado Heavily Played (HP)"
+  },
+  {
+    "key": "pages.admin.themes.labels.high_contrast_hp",
+    "value": "HP de Alto Contraste (Cabecera)"
+  },
+  {
+    "key": "pages.admin.themes.labels.hover_accent",
+    "value": "Acento de Hover / Secundario"
+  },
+  {
+    "key": "pages.admin.themes.labels.inner_card_bg",
+    "value": "Fondo Interno de Carta"
+  },
+  {
+    "key": "pages.admin.themes.labels.internal_card_padding",
+    "value": "Padding Interno de Carta"
+  },
+  {
+    "key": "pages.admin.themes.labels.lp_status",
+    "value": "Estado Lightly Played (LP)"
+  },
+  {
+    "key": "pages.admin.themes.labels.mp_status",
+    "value": "Estado Moderately Played (MP)"
+  },
+  {
+    "key": "pages.admin.themes.labels.muted_text",
+    "value": "Texto Silenciado / Pequeño"
+  },
+  {
+    "key": "pages.admin.themes.labels.navigation_header",
+    "value": "Cabecera de Navegación"
+  },
+  {
+    "key": "pages.admin.themes.labels.nm_status",
+    "value": "Estado Near Mint (NM)"
+  },
+  {
+    "key": "pages.admin.themes.labels.primary_accent",
+    "value": "Color de Acento Primario"
+  },
+  {
+    "key": "pages.admin.themes.labels.primary_heading",
+    "value": "Texto de Título Primario"
+  },
+  {
+    "key": "pages.admin.themes.labels.secondary_text",
+    "value": "Texto Secundario / Cuerpo"
+  },
+  {
+    "key": "pages.admin.themes.labels.secondary_edge",
+    "value": "Color de Borde/Acento Secundario"
+  },
+  {
+    "key": "pages.admin.themes.labels.text_on_accent",
+    "value": "Texto sobre Fondos de Acento"
+  },
+  {
+    "key": "pages.admin.themes.labels.text_on_nav",
+    "value": "Texto en Cabecera de Navegación"
+  },
+  {
+    "key": "components.admin.category_modal.title",
+    "value": "COLECCIONES Y CATS"
+  },
+  {
+    "key": "components.admin.category_modal.placeholder",
+    "value": "Nombre de Nueva Colección (ej. Commander Staples)"
+  },
+  {
+    "key": "components.admin.category_modal.add_btn",
+    "value": "AÑADIR"
+  },
+  {
+    "key": "components.admin.category_modal.save_btn",
+    "value": "GUARDAR"
+  },
+  {
+    "key": "components.admin.category_modal.cancel_btn",
+    "value": "CANCELAR"
+  },
+  {
+    "key": "components.admin.category_modal.labels.bg_text",
+    "value": "Fondo y Texto"
+  },
+  {
+    "key": "components.admin.category_modal.labels.badge_icon",
+    "value": "Icono de Insignia"
+  },
+  {
+    "key": "components.admin.category_modal.preview",
+    "value": "PREVISUALIZACIÓN:"
+  },
+  {
+    "key": "components.admin.category_modal.products_linked",
+    "value": "Productos Vinculados"
+  },
+  {
+    "key": "components.admin.category_modal.edit_btn",
+    "value": "EDITAR"
+  },
+  {
+    "key": "components.admin.category_modal.delete_btn",
+    "value": "BORRAR"
+  },
+  {
+    "key": "components.admin.category_modal.empty",
+    "value": "VACÍO DETECTADO // NO HAY COLECCIONES DEFINIDAS"
+  },
+  {
+    "key": "components.admin.settings_modal.sections.rates",
+    "value": "TASAS DE CAMBIO"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.usd_tcg",
+    "value": "USD A COP (TCG)"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.usd_ck",
+    "value": "USD A COP (CK)"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.eur_mck",
+    "value": "EUR A COP (MCK)"
+  },
+  {
+    "key": "components.admin.settings_modal.notes.rates",
+    "value": "* Estas tasas se usan para calcular precios finales en COP desde fuentes externas."
+  },
+  {
+    "key": "components.admin.settings_modal.sections.identity",
+    "value": "IDENTIDAD DE TIENDA"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.address",
+    "value": "DIRECCIÓN FÍSICA"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.whatsapp",
+    "value": "WHATSAPP"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.instagram",
+    "value": "INSTAGRAM"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.email",
+    "value": "EMAIL DE TIENDA"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.hours",
+    "value": "HORARIO COMERCIAL"
+  },
+  {
+    "key": "components.admin.settings_modal.sections.localization",
+    "value": "LOCALIZACIÓN"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.visibility",
+    "value": "Control de Visibilidad"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.hide_selector",
+    "value": "Ocultar Selector del Footer"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.default_lang",
+    "value": "Idioma Maestro por Defecto"
+  },
+  {
+    "key": "components.admin.settings_modal.notes.localization",
+    "value": "* El idioma por defecto se carga para visitantes nuevos que no han elegido preferencia."
+  },
+  {
+    "key": "components.admin.settings_modal.buttons.save",
+    "value": "GUARDAR TODA LA CONFIG DE DB →"
+  },
+  {
+    "key": "components.admin.settings_modal.buttons.discard",
+    "value": "DESCARTAR"
+  },
+  {
+    "key": "components.admin.variant_selector.identity_summary",
+    "value": "Resumen de Identidad"
   }
 ]

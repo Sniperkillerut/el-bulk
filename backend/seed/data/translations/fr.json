@@ -1,14 +1,4454 @@
 [
   {
-    "key": "components.language_selector.names",
-    "value": "🇫🇷 Français"
-  },
-  {
     "key": "pages.common.buttons.add",
     "value": "AJOUTER"
   },
   {
     "key": "pages.common.buttons.add_to_cart",
-    "value": "AJOUTER AU PANIER"
+    "value": "AU PANIER"
+  },
+  {
+    "key": "pages.common.buttons.added_to_cart",
+    "value": "DANS LE PANIER"
+  },
+  {
+    "key": "pages.common.buttons.close",
+    "value": "Fermer"
+  },
+  {
+    "key": "pages.common.status.sold_out",
+    "value": "ÉPUISÉ"
+  },
+  {
+    "key": "pages.common.status.out_of_stock",
+    "value": "RUPTURE DE STOCK"
+  },
+  {
+    "key": "pages.common.status.in_stock",
+    "value": "EN STOCK"
+  },
+  {
+    "key": "pages.common.labels.art_by",
+    "value": "Illustration par"
+  },
+  {
+    "key": "pages.common.labels.rarity",
+    "value": "Rareté"
+  },
+  {
+    "key": "pages.common.labels.identity",
+    "value": "Identité"
+  },
+  {
+    "key": "pages.common.labels.art_var",
+    "value": "Var. d'art"
+  },
+  {
+    "key": "pages.common.labels.cmc",
+    "value": "CMC"
+  },
+  {
+    "key": "pages.common.labels.any_edition",
+    "value": "Toute édition"
+  },
+  {
+    "key": "pages.common.labels.normal",
+    "value": "Normal"
+  },
+  {
+    "key": "pages.common.labels.any_condition",
+    "value": "TOUT"
+  },
+  {
+    "key": "pages.common.labels.hidden",
+    "value": "Masqué"
+  },
+  {
+    "key": "pages.common.labels.direct_demand",
+    "value": "DEMANDE DIRECTE"
+  },
+  {
+    "key": "pages.common.labels.any",
+    "value": "Tout"
+  },
+  {
+    "key": "pages.common.labels.offer",
+    "value": "Offre"
+  },
+  {
+    "key": "pages.common.labels.ask",
+    "value": "DEMANDE"
+  },
+  {
+    "key": "pages.common.actions.sell",
+    "value": "VENDRE"
+  },
+  {
+    "key": "pages.common.tooltips.quantity_needed",
+    "value": "Quantité requise"
+  },
+  {
+    "key": "pages.common.labels.id_number",
+    "value": "NUMÉRO D'ID"
+  },
+  {
+    "key": "pages.common.labels.address",
+    "value": "ADRESSE"
+  },
+  {
+    "key": "pages.common.currency.cop",
+    "value": "COP"
+  },
+  {
+    "key": "pages.common.labels.error",
+    "value": "Erreur"
+  },
+  {
+    "key": "pages.common.actions.cancel",
+    "value": "ANNULER"
+  },
+  {
+    "key": "pages.common.forms.newsletter.title",
+    "value": "Rejoignez la Meute"
+  },
+  {
+    "key": "pages.common.forms.newsletter.subtitle",
+    "value": "Alertes de réapprovisionnement et actus."
+  },
+  {
+    "key": "pages.common.forms.newsletter.placeholder",
+    "value": "VOTRE EMAIL"
+  },
+  {
+    "key": "pages.common.forms.newsletter.submit",
+    "value": "OK"
+  },
+  {
+    "key": "pages.common.forms.newsletter.success",
+    "value": "MERCI ! VÉRIFIEZ VOS MAILS BIENTÔT."
+  },
+  {
+    "key": "pages.common.forms.newsletter.error",
+    "value": "UNE ERREUR EST SURVENUE."
+  },
+  {
+    "key": "pages.product.details.not_found",
+    "value": "OBJET NON TROUVÉ"
+  },
+  {
+    "key": "pages.product.details.not_found_desc",
+    "value": "Cet article a pu être vendu ou retiré."
+  },
+  {
+    "key": "pages.product.details.view_full_page",
+    "value": "Voir page complète"
+  },
+  {
+    "key": "pages.product.details.no_info",
+    "value": "Aucune info supplémentaire."
+  },
+  {
+    "key": "pages.product.details.textless",
+    "value": "SANS TEXTE"
+  },
+  {
+    "key": "pages.product.details.full_art",
+    "value": "FULL ART"
+  },
+  {
+    "key": "pages.product.status.in_stock",
+    "value": "{count} EN STOCK"
+  },
+  {
+    "key": "pages.product.cart_users_has",
+    "value": "{count} AUTRE UTILISATEUR A CECI DANS SON PANIER"
+  },
+  {
+    "key": "pages.product.cart_users_have",
+    "value": "{count} AUTRES UTILISATEURS ONT CECI DANS LEUR PANIER"
+  },
+  {
+    "key": "pages.product.status.available",
+    "value": "disponible"
+  },
+  {
+    "key": "pages.product.details.legalities",
+    "value": "LÉGALITÉ DU FORMAT"
+  },
+  {
+    "key": "pages.product.details.store_notice",
+    "value": "Achat en magasin ou vérification au comptoir."
+  },
+  {
+    "key": "pages.common.status.active_bounty",
+    "value": "Prime Active"
+  },
+  {
+    "key": "pages.common.status.completed_past",
+    "value": "Terminé / Passé"
+  },
+  {
+    "key": "pages.common.status.mission_complete",
+    "value": "MISSION ACCOMPLIE\nCARTE LIVRÉE"
+  },
+  {
+    "key": "pages.checkout.page.title",
+    "value": "PAIEMENT"
+  },
+  {
+    "key": "pages.checkout.section.contact",
+    "value": "INFOS DE CONTACT"
+  },
+  {
+    "key": "pages.checkout.form.first_name",
+    "value": "PRÉNOM"
+  },
+  {
+    "key": "pages.checkout.form.last_name",
+    "value": "NOM"
+  },
+  {
+    "key": "pages.checkout.form.phone",
+    "value": "TÉLÉPHONE / WHATSAPP"
+  },
+  {
+    "key": "pages.checkout.form.email",
+    "value": "EMAIL"
+  },
+  {
+    "key": "pages.checkout.form.id_number",
+    "value": "N° ID / CÉDULE"
+  },
+  {
+    "key": "pages.checkout.form.address",
+    "value": "ADRESSE"
+  },
+  {
+    "key": "pages.checkout.section.payment",
+    "value": "MODE DE PAIEMENT"
+  },
+  {
+    "key": "pages.checkout.form.notes",
+    "value": "NOTES (OPTIONNEL)"
+  },
+  {
+    "key": "pages.checkout.form.notes_placeholder",
+    "value": "Instructions spéciales..."
+  },
+  {
+    "key": "pages.checkout.section.summary",
+    "value": "RÉSUMÉ DE COMMANDE"
+  },
+  {
+    "key": "pages.checkout.summary.empty_cart",
+    "value": "Votre panier est vide."
+  },
+  {
+    "key": "pages.checkout.summary.vaciar",
+    "value": "VIDER LE PANIER"
+  },
+  {
+    "key": "pages.checkout.summary.item",
+    "value": "ARTICLE"
+  },
+  {
+    "key": "pages.checkout.summary.items",
+    "value": "ARTICLES"
+  },
+  {
+    "key": "pages.checkout.buttons.confirm",
+    "value": "CONFIRMER COMMANDE →"
+  },
+  {
+    "key": "pages.checkout.buttons.processing",
+    "value": "TRAITEMENT..."
+  },
+  {
+    "key": "pages.checkout.footer.notice",
+    "value": "Après confirmation, un conseiller vous contactera pour la livraison."
+  },
+  {
+    "key": "pages.order.confirmation.title",
+    "value": "COMMANDE REÇUE !"
+  },
+  {
+    "key": "pages.order.confirmation.order_no",
+    "value": "N° DE COMMANDE"
+  },
+  {
+    "key": "pages.order.confirmation.desc",
+    "value": "Votre commande est enregistrée. Un conseiller vous contactera pour le paiement."
+  },
+  {
+    "key": "pages.order.confirmation.back",
+    "value": "← RETOUR AU SHOP"
+  },
+  {
+    "key": "pages.order.confirmation.contact",
+    "value": "CONTACT"
+  },
+  {
+    "key": "pages.order.modal.title",
+    "value": "Commande {number}"
+  },
+  {
+    "key": "pages.order.modal.title_generic",
+    "value": "Détails de Commande"
+  },
+  {
+    "key": "pages.order.modal.fetching",
+    "value": "Récupération sécurisée"
+  },
+  {
+    "key": "pages.order.modal.error",
+    "value": "Échec du chargement. Réessayez."
+  },
+  {
+    "key": "pages.order.modal.close",
+    "value": "Fermer"
+  },
+  {
+    "key": "pages.order.modal.status_label",
+    "value": "Statut"
+  },
+  {
+    "key": "pages.order.modal.date_label",
+    "value": "Date de transaction"
+  },
+  {
+    "key": "pages.order.modal.amount_label",
+    "value": "Montant total"
+  },
+  {
+    "key": "pages.order.modal.summary_label",
+    "value": "Résumé"
+  },
+  {
+    "key": "pages.order.modal.unknown_set",
+    "value": "Édition inconnue"
+  },
+  {
+    "key": "pages.order.modal.qty_label",
+    "value": "QTÉ :"
+  },
+  {
+    "key": "pages.order.modal.reference",
+    "value": "Référence :"
+  },
+  {
+    "key": "pages.order.modal.method",
+    "value": "Mode :"
+  },
+  {
+    "key": "pages.order.modal.issues",
+    "value": "Problème ? Contactez"
+  },
+  {
+    "key": "pages.profile.title",
+    "value": "Votre Compte"
+  },
+  {
+    "key": "pages.profile.subtitle",
+    "value": "Gérez votre profil et vos commandes."
+  },
+  {
+    "key": "pages.profile.section.settings",
+    "value": "Paramètres de Profil"
+  },
+  {
+    "key": "pages.profile.form.full_name",
+    "value": "Nom complet"
+  },
+  {
+    "key": "pages.profile.form.email",
+    "value": "Email"
+  },
+  {
+    "key": "pages.profile.form.phone",
+    "value": "Téléphone"
+  },
+  {
+    "key": "pages.profile.form.id",
+    "value": "N° ID / Cédule"
+  },
+  {
+    "key": "pages.profile.form.shipping",
+    "value": "Adresse de livraison"
+  },
+  {
+    "key": "pages.profile.placeholders.phone",
+    "value": "ex: +57 300..."
+  },
+  {
+    "key": "pages.profile.placeholders.id",
+    "value": "Requis pour Colombie"
+  },
+  {
+    "key": "pages.profile.placeholders.address",
+    "value": "Adresse complète, ville, instructions"
+  },
+  {
+    "key": "pages.profile.actions.save",
+    "value": "Enregistrer"
+  },
+  {
+    "key": "pages.profile.actions.saving",
+    "value": "Enregistrement..."
+  },
+  {
+    "key": "pages.profile.messages.success",
+    "value": "Profil mis à jour !"
+  },
+  {
+    "key": "pages.profile.messages.error",
+    "value": "Échec de mise à jour."
+  },
+  {
+    "key": "pages.profile.section.linked",
+    "value": "Comptes liés"
+  },
+  {
+    "key": "pages.profile.status.connected",
+    "value": "Connecté"
+  },
+  {
+    "key": "pages.profile.actions.link",
+    "value": "Lier"
+  },
+  {
+    "key": "pages.profile.section.orders",
+    "value": "Historique"
+  },
+  {
+    "key": "pages.profile.orders.empty",
+    "value": "Aucune commande pour l'instant."
+  },
+  {
+    "key": "pages.profile.orders.browse",
+    "value": "Voir l'inventaire →"
+  },
+  {
+    "key": "pages.profile.table.order_no",
+    "value": "N° de commande"
+  },
+  {
+    "key": "pages.profile.table.date",
+    "value": "Date"
+  },
+  {
+    "key": "pages.profile.table.status",
+    "value": "Statut"
+  },
+  {
+    "key": "pages.profile.table.items",
+    "value": "Articles"
+  },
+  {
+    "key": "pages.profile.table.total",
+    "value": "Total"
+  },
+  {
+    "key": "pages.checkout.placeholders.first_name",
+    "value": "Jean"
+  },
+  {
+    "key": "pages.checkout.placeholders.last_name",
+    "value": "Dupont"
+  },
+  {
+    "key": "pages.checkout.placeholders.phone",
+    "value": "3001234567"
+  },
+  {
+    "key": "pages.checkout.placeholders.email",
+    "value": "jean@exemple.fr"
+  },
+  {
+    "key": "pages.checkout.placeholders.id",
+    "value": "123456789"
+  },
+  {
+    "key": "pages.checkout.placeholders.address",
+    "value": "Rue # 1-2"
+  },
+  {
+    "key": "pages.login.loading",
+    "value": "Initialisation de la Matrice d'Auth..."
+  },
+  {
+    "key": "pages.login.security_v",
+    "value": "Protocole Sécu v2.5"
+  },
+  {
+    "key": "pages.login.title",
+    "value": "BON RETOUR"
+  },
+  {
+    "key": "pages.login.subtitle",
+    "value": "Accès au Collectif El Bulk"
+  },
+  {
+    "key": "pages.login.google",
+    "value": "CONNEXION GOOGLE"
+  },
+  {
+    "key": "pages.login.facebook",
+    "value": "CONNEXION FACEBOOK"
+  },
+  {
+    "key": "pages.login.footer.text",
+    "value": "En entrant, vous acceptez nos {terms} et {privacy}."
+  },
+  {
+    "key": "pages.login.footer.terms",
+    "value": "Conditions d'Engagement"
+  },
+  {
+    "key": "pages.login.footer.privacy",
+    "value": "Protocoles de Données"
+  },
+  {
+    "key": "pages.login.return",
+    "value": "Retour aux Ops Terrain"
+  },
+  {
+    "key": "pages.login.accent.store",
+    "value": "EL BULK"
+  },
+  {
+    "key": "pages.login.accent.logistics",
+    "value": "LOGISTIQUE"
+  },
+  {
+    "key": "pages.inventory.grid.filters.title",
+    "value": "FILTRES"
+  },
+  {
+    "key": "pages.inventory.grid.filters.strategy.title",
+    "value": "Stratégie de Recherche"
+  },
+  {
+    "key": "pages.inventory.grid.filters.strategy.broad",
+    "value": "LARGE (OU)"
+  },
+  {
+    "key": "pages.inventory.grid.filters.strategy.narrow",
+    "value": "PRÉCISE (ET)"
+  },
+  {
+    "key": "pages.inventory.grid.filters.strategy.broad_desc",
+    "value": "Élargit : match N'IMPORTE QUEL filtre."
+  },
+  {
+    "key": "pages.inventory.grid.filters.strategy.narrow_desc",
+    "value": "Réduit : match TOUS les filtres."
+  },
+  {
+    "key": "pages.inventory.grid.filters.keywords",
+    "value": "Mots-clés"
+  },
+  {
+    "key": "pages.inventory.grid.filters.search_placeholder",
+    "value": "Chercher cartes..."
+  },
+  {
+    "key": "pages.inventory.grid.filters.availability",
+    "value": "Disponibilité"
+  },
+  {
+    "key": "pages.inventory.grid.filters.in_stock",
+    "value": "Stock uniquement"
+  },
+  {
+    "key": "pages.inventory.grid.filters.clear",
+    "value": "Vider filtres ×"
+  },
+  {
+    "key": "pages.inventory.grid.sort.label",
+    "value": "Trier"
+  },
+  {
+    "key": "pages.inventory.grid.sort.newest",
+    "value": "Récent"
+  },
+  {
+    "key": "pages.inventory.grid.sort.name",
+    "value": "Nom"
+  },
+  {
+    "key": "pages.inventory.grid.sort.price",
+    "value": "Prix"
+  },
+  {
+    "key": "pages.inventory.grid.sort.cmc",
+    "value": "Coût de Mana"
+  },
+  {
+    "key": "pages.inventory.grid.sort.rarity",
+    "value": "Rareté"
+  },
+  {
+    "key": "pages.inventory.grid.status.result",
+    "value": "résultat"
+  },
+  {
+    "key": "pages.inventory.grid.status.results",
+    "value": "résultats"
+  },
+  {
+    "key": "pages.inventory.grid.status.no_results",
+    "value": "AUCUN RÉSULTAT"
+  },
+  {
+    "key": "pages.inventory.grid.status.no_results_desc",
+    "value": "Videz les filtres ou revenez plus tard."
+  },
+  {
+    "key": "pages.inventory.grid.pagination.prev",
+    "value": "← Préc."
+  },
+  {
+    "key": "pages.inventory.grid.pagination.next",
+    "value": "Suiv. →"
+  },
+  {
+    "key": "grid.filters.condition",
+    "value": "ÉTAT"
+  },
+  {
+    "key": "grid.filters.finish",
+    "value": "FINITION"
+  },
+  {
+    "key": "grid.filters.version",
+    "value": "VERSION"
+  },
+  {
+    "key": "grid.filters.rarity",
+    "value": "RARETÉ"
+  },
+  {
+    "key": "grid.filters.set",
+    "value": "ÉDITION"
+  },
+  {
+    "key": "grid.filters.color",
+    "value": "COULEUR"
+  },
+  {
+    "key": "grid.filters.language",
+    "value": "LANGUE"
+  },
+  {
+    "key": "grid.filters.collections",
+    "value": "COLLECTIONS"
+  },
+  {
+    "key": "pages.product.finish.non_foil",
+    "value": "Non-Foil"
+  },
+  {
+    "key": "pages.product.finish.foil",
+    "value": "Foil"
+  },
+  {
+    "key": "pages.product.finish.etched_foil",
+    "value": "Etched Foil"
+  },
+  {
+    "key": "pages.product.version.normal",
+    "value": "Régulier"
+  },
+  {
+    "key": "pages.product.version.borderless",
+    "value": "Sans Bordure"
+  },
+  {
+    "key": "pages.product.version.showcase",
+    "value": "Showcase"
+  },
+  {
+    "key": "tcg.mtg",
+    "value": "Magic: The Gathering"
+  },
+  {
+    "key": "tcg.pokemon",
+    "value": "Pokémon"
+  },
+  {
+    "key": "pages.singles.landing.category",
+    "value": "CATÉGORIE // SINGLES"
+  },
+  {
+    "key": "pages.singles.landing.title",
+    "value": "CARTES À L'UNITÉ"
+  },
+  {
+    "key": "pages.singles.landing.desc",
+    "value": "Découvrez des centaines d'unités de vos TCG favoris. Choisissez votre jeu."
+  },
+  {
+    "key": "pages.singles.landing.view_all",
+    "value": "VOIR TOUS LES SINGLES →"
+  },
+  {
+    "key": "pages.singles.landing.featured",
+    "value": "UNITÉS VEDETTES"
+  },
+  {
+    "key": "pages.singles.landing.no_featured",
+    "value": "AUCUNE UNITÉ VEDETTE"
+  },
+  {
+    "key": "pages.singles.title",
+    "value": "SINGLES {tcg}"
+  },
+  {
+    "key": "pages.sealed.title",
+    "value": "PRODUITS SCELLÉS {tcg}"
+  },
+  {
+    "key": "pages.accessories.title",
+    "value": "PROTECTION & ACCESSOIRES"
+  },
+  {
+    "key": "pages.store_exclusives.title",
+    "value": "EXCLUSIVITÉS BOUTIQUE"
+  },
+  {
+    "key": "pages.checkout.section.removed",
+    "value": "ARTICLES RETIRÉS"
+  },
+  {
+    "key": "pages.checkout.buttons.re_add",
+    "value": "RE-AJOUTER"
+  },
+  {
+    "key": "pages.checkout.error.empty",
+    "value": "Panier vide. Ajoutez des produits."
+  },
+  {
+    "key": "pages.checkout.buttons.back",
+    "value": "← RETOUR SHOP"
+  },
+  {
+    "key": "pages.bounties.page.title",
+    "value": "WANTED / PRIMES"
+  },
+  {
+    "key": "pages.bounties.page.subtitle",
+    "value": "Nous achetons ces cartes. Si vous les avez, contactez-nous ! Pas trouvé ? Faites une demande !"
+  },
+  {
+    "key": "pages.bounties.status.showing",
+    "value": "AFFICHAGE DE {count} ENTRÉES"
+  },
+  {
+    "key": "pages.bounties.buttons.request",
+    "value": "DEMANDER UNE CARTE"
+  },
+  {
+    "key": "pages.bounties.success.request",
+    "value": "Demande envoyée ! On vous contacte si on la trouve."
+  },
+  {
+    "key": "pages.bounties.empty.title",
+    "value": "AUCUNE PRIME ACTIVE"
+  },
+  {
+    "key": "pages.bounties.empty.desc",
+    "value": "Pas de recherche spécifique en ce moment. Mais vous pouvez faire une demande !"
+  },
+  {
+    "key": "pages.bounties.buttons.submit_request",
+    "value": "ENVOYER LA DEMANDE"
+  },
+  {
+    "key": "pages.singles.subtitle",
+    "value": "Cartes {tcg} par état et finition."
+  },
+  {
+    "key": "pages.sealed.subtitle",
+    "value": "Booster boxes, bundles et scellé pour {tcg}."
+  },
+  {
+    "key": "pages.contact.page.title",
+    "value": "Contactez-nous"
+  },
+  {
+    "key": "pages.contact.section.visit",
+    "value": "VISITEZ LE BOX"
+  },
+  {
+    "key": "pages.contact.info.address",
+    "value": "ADRESSE"
+  },
+  {
+    "key": "pages.contact.info.hours",
+    "value": "HORAIRES"
+  },
+  {
+    "key": "pages.contact.info.quote",
+    "value": "\"Cherchez la pile de boîtes à chaussures près de l'entrée arrière.\""
+  },
+  {
+    "key": "pages.contact.section.digital",
+    "value": "COMMS DIGITALES"
+  },
+  {
+    "key": "pages.contact.info.whatsapp",
+    "value": "WHATSAPP / VENTES"
+  },
+  {
+    "key": "pages.contact.buttons.sell_bulk",
+    "value": "VENDEZ VOTRE BULK →"
+  },
+  {
+    "key": "pages.contact.map.placeholder",
+    "value": "INTÉGRATION CARTE"
+  },
+  {
+    "key": "pages.home.status.empty",
+    "value": "LA BOUTIQUE EST VIDE"
+  },
+  {
+    "key": "pages.home.status.empty_desc",
+    "value": "Aucune collection n'a encore été peuplée."
+  },
+  {
+    "key": "pages.home.buttons.view_all",
+    "value": "VOIR TOUT →"
+  },
+  {
+    "key": "pages.home.status.no_items",
+    "value": "Aucun article assigné à cette collection."
+  },
+  {
+    "key": "pages.home.tags.urgently_needed",
+    "value": "Besoin urgent"
+  },
+  {
+    "key": "pages.nav.main.singles",
+    "value": "Singles"
+  },
+  {
+    "key": "pages.nav.main.sealed",
+    "value": "Scellé"
+  },
+  {
+    "key": "pages.nav.main.accessories",
+    "value": "Accessoires"
+  },
+  {
+    "key": "pages.nav.main.store_exclusives",
+    "value": "Exclusivités"
+  },
+  {
+    "key": "pages.nav.main.notices",
+    "value": "Actualités"
+  },
+  {
+    "key": "pages.nav.main.contact",
+    "value": "Contact"
+  },
+  {
+    "key": "pages.nav.main.wanted",
+    "value": "Cartes Recherchées"
+  },
+  {
+    "key": "pages.nav.main.bulk",
+    "value": "Vendre du Bulk"
+  },
+  {
+    "key": "pages.nav.main.tcg_store",
+    "value": "BOUTIQUE TCG"
+  },
+  {
+    "key": "pages.nav.mobile.inventory_title",
+    "value": "Inventaire Singles"
+  },
+  {
+    "key": "pages.cookies.title",
+    "value": "CONSENTEMENT COOKIES"
+  },
+  {
+    "key": "pages.cookies.description",
+    "value": "Nous utilisons des cookies pour améliorer votre expérience. Vous pouvez tout accepter ou personnaliser."
+  },
+  {
+    "key": "pages.cookies.customize",
+    "value": "PERSONNALISER"
+  },
+  {
+    "key": "pages.order.status.pending",
+    "value": "En attente"
+  },
+  {
+    "key": "pages.order.status.confirmed",
+    "value": "Confirmé"
+  },
+  {
+    "key": "pages.order.status.completed",
+    "value": "Terminé"
+  },
+  {
+    "key": "pages.order.status.cancelled",
+    "value": "Annulé"
+  },
+  {
+    "key": "pages.order.status.shipped",
+    "value": "Expédié"
+  },
+  {
+    "key": "pages.order.status.ready_for_pickup",
+    "value": "Prêt pour retrait"
+  },
+  {
+    "key": "pages.cookies.always_required",
+    "value": "Toujours requis"
+  },
+  {
+    "key": "pages.cookies.preferences",
+    "value": "PRÉFÉRENCES COOKIES"
+  },
+  {
+    "key": "pages.cookies.essential_title",
+    "value": "NÉCESSAIRES"
+  },
+  {
+    "key": "pages.cookies.essential_desc",
+    "value": "Essentiels pour le site (Auth, Thème, Panier)."
+  },
+  {
+    "key": "pages.cookies.analytics_title",
+    "value": "ANALYSE"
+  },
+  {
+    "key": "pages.cookies.analytics_desc",
+    "value": "Aide à comprendre l'usage pour améliorer l'expérience."
+  },
+  {
+    "key": "pages.cookies.marketing_title",
+    "value": "MARKETING"
+  },
+  {
+    "key": "pages.cookies.marketing_desc",
+    "value": "Publicité personnalisée et fonctions sociales."
+  },
+  {
+    "key": "pages.cookies.save",
+    "value": "ENREGISTRER MES CHOIX"
+  },
+  {
+    "key": "pages.common.back",
+    "value": "RETOUR"
+  },
+  {
+    "key": "pages.nav.mobile.sealed_title",
+    "value": "Produits Scellés"
+  },
+  {
+    "key": "pages.nav.tooltips.foil_enable",
+    "value": "Activer effets foil"
+  },
+  {
+    "key": "pages.nav.tooltips.foil_disable",
+    "value": "Désactiver effets foil"
+  },
+  {
+    "key": "pages.nav.tooltips.change_lang",
+    "value": "Changer de langue"
+  },
+  {
+    "key": "pages.nav.user.login",
+    "value": "Connexion"
+  },
+  {
+    "key": "pages.nav.user.profile",
+    "value": "Mon Profil"
+  },
+  {
+    "key": "pages.nav.user.logout",
+    "value": "Déconnexion"
+  },
+  {
+    "key": "pages.privacy.title",
+    "value": "Politique de Confidentialité"
+  },
+  {
+    "key": "pages.privacy.last_updated",
+    "value": "Dernière mise à jour : 12 avril 2026"
+  },
+  {
+    "key": "pages.privacy.intro",
+    "value": "Chez El Bulk, nous protégeons votre vie privée. Cette politique explique comment nous traitons vos données."
+  },
+  {
+    "key": "pages.privacy.sections.info_collected.title",
+    "value": "1. Informations collectées"
+  },
+  {
+    "key": "pages.privacy.sections.info_collected.content",
+    "value": "Nous collectons nom, email, adresse et téléphone lors de la création de compte ou commande."
+  },
+  {
+    "key": "pages.privacy.sections.habeas_data.title",
+    "value": "2. Protocole Habeas Data"
+  },
+  {
+    "key": "pages.privacy.sections.habeas_data.content",
+    "value": "Selon la loi colombienne, vous nous autorisez à traiter vos données pour la logistique. Vous avez un droit d'accès et de rectification."
+  },
+  {
+    "key": "pages.privacy.sections.auth.title",
+    "value": "3. Services d'Authentification (OAuth)"
+  },
+  {
+    "key": "pages.privacy.sections.auth.content",
+    "value": "Via Google ou Facebook, nous recevons votre profil de base. Utilisé uniquement pour gérer votre compte."
+  },
+  {
+    "key": "pages.privacy.sections.cookies.title",
+    "value": "4. Cookies et Suivi"
+  },
+  {
+    "key": "pages.privacy.sections.cookies.content",
+    "value": "Cookies essentiels pour la session. Avec accord : analyse (Google Analytics) et marketing (Meta Pixel)."
+  },
+  {
+    "key": "pages.privacy.sections.data_usage.title",
+    "value": "5. Usage des Données"
+  },
+  {
+    "key": "pages.privacy.sections.data_usage.content",
+    "value": "Pour commandes, coordination WhatsApp et actus. Nous ne vendons jamais vos données."
+  },
+  {
+    "key": "pages.privacy.sections.rights.title",
+    "value": "6. Vos Droits"
+  },
+  {
+    "key": "pages.privacy.sections.rights.content",
+    "value": "Accès, correction ou suppression via vos paramètres."
+  },
+  {
+    "key": "pages.privacy.sections.data_deletion.title",
+    "value": "7. Demande de Suppression"
+  },
+  {
+    "key": "pages.privacy.sections.data_deletion.content",
+    "value": "Retirez 'El Bulk' de Facebook ou mail à admin@elbulk.com avec sujet 'Data Deletion Request'."
+  },
+  {
+    "key": "pages.privacy.sections.contact.title",
+    "value": "8. Contact"
+  },
+  {
+    "key": "pages.privacy.sections.contact.content",
+    "value": "Questions ? admin@elbulk.com ou en boutique physique."
+  },
+  {
+    "key": "pages.terms.title",
+    "value": "Conditions d'Engagement"
+  },
+  {
+    "key": "pages.terms.last_updated",
+    "value": "Dernière mise à jour : 12 avril 2026"
+  },
+  {
+    "key": "pages.terms.intro",
+    "value": "En accédant à El Bulk, vous acceptez ces protocoles. Nous curons l'essentiel de votre stratégie TCG."
+  },
+  {
+    "key": "pages.terms.sections.rules_of_engagement.title",
+    "value": "1. Règles d'Engagement"
+  },
+  {
+    "key": "pages.terms.sections.rules_of_engagement.content",
+    "value": "Plateforme spécialisée pour TCG. Tout abus système entraînera la fin du protocole."
+  },
+  {
+    "key": "pages.terms.sections.condition_grading.title",
+    "value": "2. Protocole d'État des Cartes"
+  },
+  {
+    "key": "pages.terms.sections.condition_grading.content",
+    "value": "Classées en NM, LP ou MP. Pas de garantie 'Gem Mint'."
+  },
+  {
+    "key": "pages.terms.sections.inventory_availability.title",
+    "value": "3. Intégrité de l'Inventaire"
+  },
+  {
+    "key": "pages.terms.sections.inventory_availability.content",
+    "value": "Malgré notre précision, des erreurs de synchro sont possibles. El Bulk peut annuler si l'article n'est plus en réserve."
+  },
+  {
+    "key": "pages.terms.sections.order_fulfillment.title",
+    "value": "4. Comms Tactiques"
+  },
+  {
+    "key": "pages.terms.sections.order_fulfillment.content",
+    "value": "Inscriptions préliminaires. Confirmation via WhatsApp sécurisé. Retrait boutique sous 30 jours."
+  },
+  {
+    "key": "pages.terms.sections.pricing_inventory.title",
+    "value": "5. Dynamique des Prix"
+  },
+  {
+    "key": "pages.terms.sections.pricing_inventory.content",
+    "value": "Prix en COP selon le marché. Ajustements possibles avant confirmation."
+  },
+  {
+    "key": "pages.terms.sections.bulk_submissions.title",
+    "value": "6. Liquidation Bulk"
+  },
+  {
+    "key": "pages.terms.sections.bulk_submissions.content",
+    "value": "Doit respecter nos standards. Pas d'articles 'Endommagés' au prix fort. Inspection physique requise."
+  },
+  {
+    "key": "pages.terms.sections.user_conduct.title",
+    "value": "7. Protocoles Utilisateur"
+  },
+  {
+    "key": "pages.terms.sections.user_conduct.content",
+    "value": "Responsable de vos accès. Restez professionnel avec les opérateurs El Bulk."
+  },
+  {
+    "key": "pages.terms.sections.limits_of_liability.title",
+    "value": "8. Limites de Responsabilité"
+  },
+  {
+    "key": "pages.terms.sections.limits_of_liability.content",
+    "value": "Pas de responsabilité après remise aux coursiers tiers. Risque transféré à la livraison."
+  },
+  {
+    "key": "pages.cart.drawer.title",
+    "value": "VOTRE PANIER"
+  },
+  {
+    "key": "pages.cart.drawer.empty_msg",
+    "value": "Votre panier est vide. Allez chercher des cartes."
+  },
+  {
+    "key": "pages.cart.drawer.clear",
+    "value": "VIDER"
+  },
+  {
+    "key": "pages.cart.drawer.confirm_clear",
+    "value": "Vider le panier ?"
+  },
+  {
+    "key": "pages.cart.drawer.remove_tooltip",
+    "value": "Retirer"
+  },
+  {
+    "key": "pages.cart.drawer.delete_perm_tooltip",
+    "value": "Supprimer définitivement"
+  },
+  {
+    "key": "pages.cart.drawer.total",
+    "value": "TOTAL"
+  },
+  {
+    "key": "pages.cart.drawer.checkout_btn",
+    "value": "PASSER AU PAIEMENT →"
+  },
+  {
+    "key": "pages.cart.drawer.checkout_notice",
+    "value": "Vérifiez votre commande et infos de livraison."
+  },
+  {
+    "key": "pages.cart.drawer.removed_items",
+    "value": "Articles Retirés"
+  },
+  {
+    "key": "pages.cart.drawer.restore",
+    "value": "Restaurer"
+  },
+  {
+    "key": "pages.home.hero.subtitle",
+    "value": "VOTRE SHOP TCG LOCAL"
+  },
+  {
+    "key": "pages.home.hero.title_refined",
+    "value": "EL BULK / LES CARTES QU'ILS ONT IGNORÉES."
+  },
+  {
+    "key": "pages.home.hero.description",
+    "value": "La boîte à chaussures où l'on garde le bon matos. Singles, scellé et accessoires."
+  },
+  {
+    "key": "pages.home.hero.description_refined",
+    "value": "Les pièces essentielles traitées comme des déchets. Nous curons le commun et l'introuvable."
+  },
+  {
+    "key": "pages.home.hero.search_placeholder",
+    "value": "Trouvez les cartes ratées par les autres..."
+  },
+  {
+    "key": "pages.home.hero.browse_singles",
+    "value": "VOIR LES SINGLES"
+  },
+  {
+    "key": "pages.home.hero.sell_bulk",
+    "value": "VENDRE DU BULK →"
+  },
+  {
+    "key": "pages.home.sections.view_all",
+    "value": "VOIR TOUT →"
+  },
+  {
+    "key": "pages.home.sections.empty",
+    "value": "LA BOUTIQUE EST VIDE"
+  },
+  {
+    "key": "pages.home.sections.got_bulk",
+    "value": "DU BULK ?"
+  },
+  {
+    "key": "pages.home.sections.bulk_cta_text",
+    "value": "Nous achetons communes, rares et junk. Emballez, apportez, encaissez. Sans rendez-vous."
+  },
+  {
+    "key": "pages.home.sections.see_bulk_prices",
+    "value": "PRIX DU BULK"
+  },
+  {
+    "key": "pages.layout.footer.slogan",
+    "value": "Achat bulk. Vente singles. Amour du carton."
+  },
+  {
+    "key": "pages.home.bounties.urgently_needed",
+    "value": "Besoin urgent"
+  },
+  {
+    "key": "pages.bulk.page.title",
+    "value": "APPORTEZ VOTRE BULK"
+  },
+  {
+    "key": "pages.bulk.page.subtitle",
+    "value": "Des boîtes de vieilles cartes qui traînent ? On vous en débarrasse contre du cash. Sans rendez-vous."
+  },
+  {
+    "key": "pages.bulk.intro.we_buy",
+    "value": "NOUS ACHETONS"
+  },
+  {
+    "key": "pages.bulk.tiers.common.label",
+    "value": "COMMUNES & UNCO BULK"
+  },
+  {
+    "key": "pages.bulk.tiers.common.price",
+    "value": "$20.000 COP pour 1 000"
+  },
+  {
+    "key": "pages.bulk.tiers.common.desc",
+    "value": "Tout état, tout set. Trié ou non. On prend tout."
+  },
+  {
+    "key": "pages.bulk.tiers.rare.label",
+    "value": "RARES & MYTHIQUES BULK"
+  },
+  {
+    "key": "pages.bulk.tiers.rare.price",
+    "value": "$1.000 COP par carte"
+  },
+  {
+    "key": "pages.bulk.tiers.rare.desc",
+    "value": "NM/LP seulement. Rares bulk Standard et plus vieux."
+  },
+  {
+    "key": "pages.bulk.tiers.junk.label",
+    "value": "LOTS DE RARES JUNK"
+  },
+  {
+    "key": "pages.bulk.tiers.junk.price",
+    "value": "$12.000 COP pour 100"
+  },
+  {
+    "key": "pages.bulk.tiers.junk.desc",
+    "value": "Rares MP-DMG, ou communes/unco en mauvais état."
+  },
+  {
+    "key": "pages.bulk.tiers.foil.label",
+    "value": "COMMUNES & UNCO FOIL"
+  },
+  {
+    "key": "pages.bulk.tiers.foil.price",
+    "value": "$40.000 COP pour 500"
+  },
+  {
+    "key": "pages.bulk.tiers.foil.desc",
+    "value": "Tout état. Bulk foil trié séparément."
+  },
+  {
+    "key": "pages.bulk.accepts.0",
+    "value": "Magic: The Gathering (tous les sets)"
+  },
+  {
+    "key": "pages.bulk.accepts.1",
+    "value": "Pokémon TCG (anglais seulement)"
+  },
+  {
+    "key": "pages.bulk.accepts.2",
+    "value": "Disney Lorcana"
+  },
+  {
+    "key": "pages.bulk.accepts.3",
+    "value": "One Piece TCG"
+  },
+  {
+    "key": "pages.bulk.accepts.4",
+    "value": "Terrains de base ($4.000 COP pour 200)"
+  },
+  {
+    "key": "pages.bulk.accepts.5",
+    "value": "Tokens ($0 mais on les prend)"
+  },
+  {
+    "key": "pages.bulk.sections.prices",
+    "value": "PRIX ACTUELS DU BULK"
+  },
+  {
+    "key": "pages.bulk.sections.accept",
+    "value": "NOUS ACCEPTONS"
+  },
+  {
+    "key": "pages.bulk.sections.how_it_works",
+    "value": "COMMENT ÇA MARCHE"
+  },
+  {
+    "key": "pages.bulk.cta.questions",
+    "value": "DES QUESTIONS ?"
+  },
+  {
+    "key": "pages.bulk.cta.email_btn",
+    "value": "MAIL POUR VOTRE BULK"
+  },
+  {
+    "key": "pages.bulk.sections.price_disclaimer",
+    "value": "⚠ Prix mis à jour. Gros lots (1000+) bonus possibles. Cash ou crédit (+25%)."
+  },
+  {
+    "key": "pages.bulk.how.1.title",
+    "value": "APPORTEZ VOS CARTES"
+  },
+  {
+    "key": "pages.bulk.how.1.desc",
+    "value": "Venez avec votre bulk. Boîtes ou sacs – peu importe."
+  },
+  {
+    "key": "pages.bulk.how.2.title",
+    "value": "COMPTAGE & ÉTAT"
+  },
+  {
+    "key": "pages.bulk.how.2.desc",
+    "value": "Comptage rapide. Délai possible pour les gros lots."
+  },
+  {
+    "key": "pages.bulk.how.3.title",
+    "value": "OFFRE"
+  },
+  {
+    "key": "pages.bulk.how.3.desc",
+    "value": "Offre cash immédiate. Aucune pression."
+  },
+  {
+    "key": "pages.bulk.how.4.title",
+    "value": "ENCAISSEZ"
+  },
+  {
+    "key": "pages.bulk.how.4.desc",
+    "value": "Acceptez et repartez avec le cash. Simple."
+  },
+  {
+    "key": "pages.sealed.landing.category",
+    "value": "CATÉGORIE // SCELLÉ"
+  },
+  {
+    "key": "pages.sealed.landing.title.main",
+    "value": "BOÎTES &"
+  },
+  {
+    "key": "pages.sealed.landing.title.accent",
+    "value": "BOOSTERS"
+  },
+  {
+    "key": "pages.sealed.landing.desc",
+    "value": "Des boîtes aux boosters collector, explorez notre réserve."
+  },
+  {
+    "key": "pages.sealed.landing.view_all",
+    "value": "VOIR TOUT LE SCELLÉ →"
+  },
+  {
+    "key": "pages.sealed.landing.no_featured",
+    "value": "AUCUN SCELLÉ VEDETTE"
+  },
+  {
+    "key": "pages.sealed.landing.featured.main",
+    "value": "SCELLÉ"
+  },
+  {
+    "key": "pages.sealed.landing.featured.accent",
+    "value": "VEDETTE"
+  },
+  {
+    "key": "pages.accessories.title",
+    "value": "ACCESSOIRES"
+  },
+  {
+    "key": "pages.accessories.subtitle",
+    "value": "Protections, classeurs, deck boxes, tapis et plus."
+  },
+  {
+    "key": "components.client_request_modal.title",
+    "value": "Demander une carte"
+  },
+  {
+    "key": "components.client_request_modal.desc",
+    "value": "Pas trouvé ? Donnez les détails, on lance la chasse !"
+  },
+  {
+    "key": "components.client_request_modal.form.name_label",
+    "value": "Votre Nom *"
+  },
+  {
+    "key": "components.client_request_modal.form.name_placeholder",
+    "value": "Jean Dupont"
+  },
+  {
+    "key": "components.client_request_modal.form.contact_label",
+    "value": "Infos de Contact *"
+  },
+  {
+    "key": "components.client_request_modal.form.contact_placeholder",
+    "value": "Tél ou Instagram"
+  },
+  {
+    "key": "components.client_request_modal.form.card_label",
+    "value": "Nom de la Carte *"
+  },
+  {
+    "key": "components.client_request_modal.form.card_placeholder",
+    "value": "ex: Sheoldred, l'Apocalypse"
+  },
+  {
+    "key": "components.client_request_modal.form.set_label",
+    "value": "Édition (Optionnel)"
+  },
+  {
+    "key": "components.client_request_modal.form.set_placeholder",
+    "value": "ex: Dominaria Uni"
+  },
+  {
+    "key": "components.client_request_modal.form.details_label",
+    "value": "Détails Supplémentaires"
+  },
+  {
+    "key": "components.client_request_modal.form.details_placeholder",
+    "value": "État, foil, langue, etc..."
+  },
+  {
+    "key": "components.client_request_modal.form.submit_btn",
+    "value": "LANCER LA MISSION"
+  },
+  {
+    "key": "components.client_request_modal.login_prompt",
+    "value": "pour remplir vos infos et suivre le statut."
+  },
+  {
+    "key": "components.cancellation_modal.title",
+    "value": "Annuler la Demande"
+  },
+  {
+    "key": "components.cancellation_modal.desc",
+    "value": "Vous allez **annuler** votre demande de {card}. Pourquoi ?"
+  },
+  {
+    "key": "components.cancellation_modal.reason_label",
+    "value": "Raison"
+  },
+  {
+    "key": "components.cancellation_modal.details_label",
+    "value": "Détails (Optionnel)"
+  },
+  {
+    "key": "components.cancellation_modal.details_placeholder",
+    "value": "Autre chose à nous dire..."
+  },
+  {
+    "key": "components.cancellation_modal.back_button",
+    "value": "Retour"
+  },
+  {
+    "key": "components.cancellation_modal.confirm_button",
+    "value": "Confirmer l'Annulation"
+  },
+  {
+    "key": "components.cancellation_modal.submitting",
+    "value": "Annulation..."
+  },
+  {
+    "key": "components.cancellation_modal.reasons.found",
+    "value": "Trouvé ailleurs"
+  },
+  {
+    "key": "components.cancellation_modal.reasons.not_needed",
+    "value": "Plus besoin"
+  },
+  {
+    "key": "components.cancellation_modal.reasons.price",
+    "value": "Prix trop élevé"
+  },
+  {
+    "key": "components.cancellation_modal.reasons.mind",
+    "value": "Changé d'avis"
+  },
+  {
+    "key": "components.cancellation_modal.reasons.other",
+    "value": "Autre"
+  },
+  {
+    "key": "components.admin.csv_import.title",
+    "value": "IMPORTATEUR DE MANIFESTE"
+  },
+  {
+    "key": "components.admin.csv_import.subtitle",
+    "value": "Ajout bulk au manifeste d'inventaire"
+  },
+  {
+    "key": "components.admin.csv_import.drop_zone.title",
+    "value": "Déposer le Manifeste ici"
+  },
+  {
+    "key": "components.admin.csv_import.drop_zone.subtitle",
+    "value": "ou cliquez pour parcourir vos archives"
+  },
+  {
+    "key": "components.admin.csv_import.drop_zone.button",
+    "value": "SÉLECTIONNER LE MANIFESTE MAÎTRE"
+  },
+  {
+    "key": "components.admin.csv_import.config.title",
+    "value": "Configuration Système"
+  },
+  {
+    "key": "components.admin.csv_import.config.destination_label",
+    "value": "Destination de l'Inventaire"
+  },
+  {
+    "key": "components.admin.csv_import.config.dest_singles",
+    "value": "Singles Individuels"
+  },
+  {
+    "key": "components.admin.csv_import.config.dest_deck",
+    "value": "Deck Curé"
+  },
+  {
+    "key": "components.admin.csv_import.config.deck_name_label",
+    "value": "Identifiant du Manifeste (Nom du Deck)"
+  },
+  {
+    "key": "components.admin.csv_import.config.deck_name_placeholder",
+    "value": "ex: MONO BLACK CONTROL"
+  },
+  {
+    "key": "components.admin.csv_import.config.tcg_framework",
+    "value": "Framework TCG"
+  },
+  {
+    "key": "components.admin.csv_import.config.vault_allocation",
+    "value": "Allocation en Réserve"
+  },
+  {
+    "key": "components.admin.csv_import.config.storage_placeholder",
+    "value": "Lieu de Stockage"
+  },
+  {
+    "key": "components.admin.csv_import.config.language_label",
+    "value": "Langue principale"
+  },
+  {
+    "key": "components.admin.csv_import.config.price_source_label",
+    "value": "Source de prix par défaut"
+  },
+  {
+    "key": "components.admin.csv_import.config.tagging_label",
+    "value": "Marquage métadonnées (Bulk)"
+  },
+  {
+    "key": "components.admin.csv_import.config.no_collections",
+    "value": "Aucune collection définie"
+  },
+  {
+    "key": "components.admin.csv_import.mapping.title",
+    "value": "Mappage de topologie de colonnes"
+  },
+  {
+    "key": "components.admin.csv_import.actions.return",
+    "value": "Retour"
+  },
+  {
+    "key": "components.admin.csv_import.actions.generate",
+    "value": "Générer le manifeste"
+  },
+  {
+    "key": "components.admin.csv_import.preview.enrich_loading",
+    "value": "SCRUTATION DES ARCHIVES..."
+  },
+  {
+    "key": "components.admin.csv_import.preview.enrich_button",
+    "value": "RÉVÉLER LE SAVOIR CACHÉ"
+  },
+  {
+    "key": "components.admin.csv_import.preview.complete",
+    "value": "Complet"
+  },
+  {
+    "key": "components.admin.csv_import.preview.found_count",
+    "value": "{count} signatures trouvées"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.art",
+    "value": "Image"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.info",
+    "value": "Infos produit"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.lang",
+    "value": "Lang"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.cond",
+    "value": "État"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.treatment",
+    "value": "Traitement"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.vault",
+    "value": "Réserve"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.collections",
+    "value": "Collections"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.reference",
+    "value": "Référence"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.qty",
+    "value": "Qté"
+  },
+  {
+    "key": "components.admin.csv_import.preview.scanning",
+    "value": "SCAN EN COURS..."
+  },
+  {
+    "key": "components.admin.csv_import.preview.placeholders.name",
+    "value": "Clé de signature"
+  },
+  {
+    "key": "components.admin.csv_import.preview.placeholders.uuid",
+    "value": "UUID système"
+  },
+  {
+    "key": "components.admin.csv_import.preview.placeholders.set",
+    "value": "ÉDITION"
+  },
+  {
+    "key": "components.admin.csv_import.preview.placeholders.number",
+    "value": "N°"
+  },
+  {
+    "key": "components.admin.csv_import.importing.title",
+    "value": "APPROVISIONNEMENT DE LA RÉSERVE..."
+  },
+  {
+    "key": "components.admin.csv_import.importing.subtitle",
+    "value": "\"Déballage de la cargaison et organisation des archives\""
+  },
+  {
+    "key": "components.admin.csv_import.importing.status",
+    "value": "Traitement du manifeste de {count} entrées"
+  },
+  {
+    "key": "components.admin.csv_import.summary.title",
+    "value": "Manifeste réussi !"
+  },
+  {
+    "key": "components.admin.csv_import.summary.success_msg",
+    "value": "{count} unités SKU archivées avec succès."
+  },
+  {
+    "key": "components.admin.csv_import.summary.return_button",
+    "value": "Retour au poste de commande"
+  },
+  {
+    "key": "components.admin.csv_import.actions.return_to_topology",
+    "value": "Retour à la topologie"
+  },
+  {
+    "key": "components.admin.csv_import.actions.finalize",
+    "value": "⚡ FINALISER LA CARGAISON"
+  },
+  {
+    "key": "components.deck_contents.title",
+    "value": "Contenu du Deck"
+  },
+  {
+    "key": "components.deck_contents.expand_all",
+    "value": "Tout étendre"
+  },
+  {
+    "key": "components.deck_contents.collapse_all",
+    "value": "Tout réduire"
+  },
+  {
+    "key": "pages.notices.list.header_main",
+    "value": "AVIS &"
+  },
+  {
+    "key": "pages.notices.list.header_accent",
+    "value": "ACTUALITÉS"
+  },
+  {
+    "key": "pages.notices.list.subtitle",
+    "value": "Dernières infos, spoilers et critiques de la boutique."
+  },
+  {
+    "key": "pages.notices.list.total_count",
+    "value": "{count} POSTS AU TOTAL"
+  },
+  {
+    "key": "pages.notices.list.empty_title",
+    "value": "AUCUN AVIS PUBLIÉ"
+  },
+  {
+    "key": "pages.notices.list.empty_subtitle",
+    "value": "Revenez bientôt pour les nouveautés."
+  },
+  {
+    "key": "pages.notices.list.open_btn",
+    "value": "OUVRIR L'AVIS →"
+  },
+  {
+    "key": "pages.notices.detail.back_btn",
+    "value": "← RETOUR AUX AVIS"
+  },
+  {
+    "key": "pages.notices.detail.published_on",
+    "value": "Publié le {date}"
+  },
+  {
+    "key": "pages.notices.detail.all_notices_btn",
+    "value": "← TOUS LES AVIS"
+  },
+  {
+    "key": "pages.notices.detail.share_label",
+    "value": "PARTAGER :"
+  },
+  {
+    "key": "pages.notices.detail.sidebar.title",
+    "value": "SHOP EL BULK"
+  },
+  {
+    "key": "pages.notices.detail.sidebar.desc",
+    "value": "La boîte où l'on garde le bon matos. Singles, scellé et accessoires. Visitez-nous !"
+  },
+  {
+    "key": "pages.notices.detail.sidebar.shop_btn",
+    "value": "VOIR LES SINGLES"
+  },
+  {
+    "key": "pages.notices.detail.sidebar.newsletter_title",
+    "value": "Newsletter"
+  },
+  {
+    "key": "pages.notices.detail.sidebar.newsletter_desc",
+    "value": "Restez informé des news et spoilers."
+  },
+  {
+    "key": "pages.notices.section.title",
+    "value": "AVIS / NEWS"
+  },
+  {
+    "key": "pages.notices.actions.view_all",
+    "value": "VOIR TOUT →"
+  },
+  {
+    "key": "pages.notices.actions.read_more",
+    "value": "LIRE LA SUITE"
+  },
+  {
+    "key": "pages.notices.actions.show_more",
+    "value": "VOIR PLUS D'ANCIENS POSTS"
+  },
+  {
+    "key": "components.search.placeholder",
+    "value": "Chercher cartes, éditions ou produits..."
+  },
+  {
+    "key": "components.search.status.manual_price",
+    "value": "PRIX MANUEL"
+  },
+  {
+    "key": "components.search.status.no_set",
+    "value": "Pas d'édition"
+  },
+  {
+    "key": "components.search.status.in_stock",
+    "value": "{count} EN STOCK"
+  },
+  {
+    "key": "components.search.status.out_of_stock",
+    "value": "ÉPUISÉ"
+  },
+  {
+    "key": "components.search.actions.add",
+    "value": "+ AJOUTER"
+  },
+  {
+    "key": "components.search.actions.sold_out",
+    "value": "ÉPUISÉ"
+  },
+  {
+    "key": "components.search.status.no_results",
+    "value": "Aucun produit trouvé pour \"{query}\""
+  },
+  {
+    "key": "components.search.status.top_results",
+    "value": "Meilleurs résultats affichés"
+  },
+  {
+    "key": "pages.checkout.page.title",
+    "value": "FINALISER L'ACHAT"
+  },
+  {
+    "key": "pages.checkout.form.contact_info",
+    "value": "INFOS DE CONTACT"
+  },
+  {
+    "key": "pages.checkout.form.first_name",
+    "value": "PRÉNOM"
+  },
+  {
+    "key": "pages.checkout.form.last_name",
+    "value": "NOM"
+  },
+  {
+    "key": "pages.checkout.form.phone",
+    "value": "TÉLÉPHONE / WHATSAPP"
+  },
+  {
+    "key": "pages.checkout.form.email",
+    "value": "EMAIL"
+  },
+  {
+    "key": "pages.checkout.form.id_number",
+    "value": "N° ID"
+  },
+  {
+    "key": "pages.checkout.form.address",
+    "value": "ADRESSE"
+  },
+  {
+    "key": "pages.checkout.form.payment_method",
+    "value": "MODE DE PAIEMENT"
+  },
+  {
+    "key": "pages.checkout.form.notes",
+    "value": "NOTES (OPTIONNEL)"
+  },
+  {
+    "key": "pages.checkout.summary.title",
+    "value": "RÉSUMÉ DE COMMANDE"
+  },
+  {
+    "key": "pages.checkout.summary.confirm_btn",
+    "value": "CONFIRMER COMMANDE →"
+  },
+  {
+    "key": "pages.checkout.summary.processing",
+    "value": "TRAITEMENT..."
+  },
+  {
+    "key": "pages.checkout.summary.footer_note",
+    "value": "Un conseiller vous contactera après confirmation."
+  },
+  {
+    "key": "pages.admin.notices.title",
+    "value": "AVIS (BLOG/NEWS)"
+  },
+  {
+    "key": "pages.admin.notices.subtitle",
+    "value": "Gérez les mises à jour et posts d'actualité."
+  },
+  {
+    "key": "pages.admin.tcg_registry.title",
+    "value": "Systèmes enregistrés"
+  },
+  {
+    "key": "pages.admin.tcg_registry.subtitle",
+    "value": "Activer/désactiver des jeux de l'entrepôt"
+  },
+  {
+    "key": "pages.admin.tcg_registry.loading",
+    "value": "DÉBALLAGE DU REGISTRE TCG..."
+  },
+  {
+    "key": "pages.admin.tcg_registry.buttons.register_new",
+    "value": "＋ ENREGISTRER NOUVEAU TCG"
+  },
+  {
+    "key": "pages.admin.tcg_registry.form.slug_label",
+    "value": "Slug interne (ID URL)"
+  },
+  {
+    "key": "pages.admin.tcg_registry.form.display_name",
+    "value": "Nom d'affichage"
+  },
+  {
+    "key": "pages.admin.tcg_registry.buttons.confirm_registration",
+    "value": "CONFIRMER L'ENREGISTREMENT"
+  },
+  {
+    "key": "pages.admin.tcg_registry.buttons.save",
+    "value": "SAUVEGARDER"
+  },
+  {
+    "key": "pages.admin.tcg_registry.buttons.cancel",
+    "value": "ANNULER"
+  },
+  {
+    "key": "pages.admin.tcg_registry.no_systems",
+    "value": "Aucun système enregistré"
+  },
+  {
+    "key": "components.admin.product.storage.quick_add",
+    "value": "Ajout rapide de lieu"
+  },
+  {
+    "key": "components.admin.product.storage.title",
+    "value": "LIEUX DE STOCKAGE"
+  },
+  {
+    "key": "components.admin.product.storage.empty",
+    "value": "Aucune affectation de stockage."
+  },
+  {
+    "key": "components.admin.product.storage.select_placeholder",
+    "value": "-- Sélectionner lieu --"
+  },
+  {
+    "key": "pages.admin.notices.create_btn",
+    "value": "CRÉER UN NOUVEL AVIS"
+  },
+  {
+    "key": "pages.admin.notices.confirm_delete",
+    "value": "Supprimer cet avis ?"
+  },
+  {
+    "key": "pages.admin.notices.error_delete",
+    "value": "Échec de suppression de l'avis"
+  },
+  {
+    "key": "pages.admin.notices.status.published",
+    "value": "PUBLIÉ"
+  },
+  {
+    "key": "pages.admin.notices.status.draft",
+    "value": "BROUILLON"
+  },
+  {
+    "key": "pages.admin.notices.actions.view",
+    "value": "VOIR"
+  },
+  {
+    "key": "pages.admin.notices.actions.edit",
+    "value": "ÉDITER"
+  },
+  {
+    "key": "pages.admin.notices.actions.delete",
+    "value": "SUPPRIMER"
+  },
+  {
+    "key": "pages.admin.notices.table.date",
+    "value": "Date"
+  },
+  {
+    "key": "pages.admin.notices.table.title",
+    "value": "Titre"
+  },
+  {
+    "key": "pages.admin.notices.table.slug",
+    "value": "Slug"
+  },
+  {
+    "key": "pages.admin.notices.table.status",
+    "value": "Statut"
+  },
+  {
+    "key": "pages.admin.notices.table.actions",
+    "value": "Actions"
+  },
+  {
+    "key": "pages.admin.notices.table.empty",
+    "value": "Aucun avis. Créez le premier !"
+  },
+  {
+    "key": "pages.admin.notices.editor.loading",
+    "value": "Déballage de l'avis..."
+  },
+  {
+    "key": "pages.admin.notices.editor.title_edit",
+    "value": "ÉDITER L'AVIS"
+  },
+  {
+    "key": "pages.admin.notices.editor.title_new",
+    "value": "NOUVEL AVIS"
+  },
+  {
+    "key": "pages.admin.notices.editor.subtitle",
+    "value": "Composez votre news en HTML pur."
+  },
+  {
+    "key": "pages.admin.notices.editor.error_save",
+    "value": "Échec de sauvegarde de l'avis"
+  },
+  {
+    "key": "pages.admin.notices.editor.form.title_label",
+    "value": "Titre du post"
+  },
+  {
+    "key": "pages.admin.notices.editor.form.title_placeholder",
+    "value": "EX: NOUVEAUX SINGLES ARRIVÉS !"
+  },
+  {
+    "key": "pages.admin.notices.editor.form.content_label",
+    "value": "Contenu HTML"
+  },
+  {
+    "key": "pages.admin.notices.editor.form.content_placeholder",
+    "value": "<h2>Sous-titre</h2><p>Écrivez ici...</p>"
+  },
+  {
+    "key": "pages.admin.notices.editor.sidebar.settings_title",
+    "value": "Paramètres de publication"
+  },
+  {
+    "key": "pages.admin.notices.editor.sidebar.slug_label",
+    "value": "Slug URL"
+  },
+  {
+    "key": "pages.admin.notices.editor.sidebar.sync_btn",
+    "value": "SYNCHRO AVEC LE TITRE"
+  },
+  {
+    "key": "pages.admin.notices.editor.sidebar.slug_placeholder",
+    "value": "slug-url-post"
+  },
+  {
+    "key": "pages.admin.notices.editor.sidebar.image_label",
+    "value": "URL de l'image vedette"
+  },
+  {
+    "key": "pages.admin.notices.editor.sidebar.image_placeholder",
+    "value": "https://..."
+  },
+  {
+    "key": "pages.admin.notices.editor.sidebar.published_label",
+    "value": "Publié / Public"
+  },
+  {
+    "key": "pages.admin.notices.editor.actions.update",
+    "value": "METTRE À JOUR"
+  },
+  {
+    "key": "pages.admin.notices.editor.actions.publish",
+    "value": "PUBLIER LE POST"
+  },
+  {
+    "key": "pages.admin.notices.editor.sidebar.help_title",
+    "value": "Aide HTML"
+  },
+  {
+    "key": "pages.admin.notices.editor.sidebar.help_desc",
+    "value": "Utilisez les balises HTML comme {tags}."
+  },
+  {
+    "key": "pages.admin.notices.editor.sidebar.card_preview_label",
+    "value": "Pour intégrer une carte, utilisez :"
+  },
+  {
+    "key": "pages.admin.clients.details.not_found",
+    "value": "CLIENT NON TROUVÉ."
+  },
+  {
+    "key": "pages.admin.clients.details.subscriber_badge",
+    "value": "ABONNÉ NEWSLETTER"
+  },
+  {
+    "key": "pages.admin.clients.details.contact_profile",
+    "value": "Profil de contact"
+  },
+  {
+    "key": "pages.admin.clients.details.email_label",
+    "value": "Adresse email"
+  },
+  {
+    "key": "pages.admin.clients.details.phone_label",
+    "value": "N° de téléphone"
+  },
+  {
+    "key": "pages.admin.clients.details.account_details",
+    "value": "Détails du compte"
+  },
+  {
+    "key": "pages.admin.clients.details.id_label",
+    "value": "Pièce d'identité"
+  },
+  {
+    "key": "pages.admin.clients.details.address_label",
+    "value": "Adresse de livraison"
+  },
+  {
+    "key": "pages.admin.clients.details.general_interaction",
+    "value": "Interaction générale / Sans commande"
+  },
+  {
+    "key": "pages.admin.clients.details.add_note_btn",
+    "value": "AJOUTER NOTE"
+  },
+  {
+    "key": "pages.admin.clients.details.empty_notes",
+    "value": "Aucune entrée au journal."
+  },
+  {
+    "key": "pages.admin.clients.details.order_history",
+    "value": "HISTORIQUE COMMANDES"
+  },
+  {
+    "key": "pages.admin.clients.details.no_orders",
+    "value": "AUCUNE COMMANDE."
+  },
+  {
+    "key": "pages.admin.clients.details.journal_title",
+    "value": "JOURNAL DES INTERACTIONS"
+  },
+  {
+    "key": "pages.admin.clients.details.note_placeholder",
+    "value": "AJOUTER UNE NOTE OU COMMENTAIRE..."
+  },
+  {
+    "key": "pages.admin.clients.details.order_option",
+    "value": "Sur la commande {number}"
+  },
+  {
+    "key": "pages.admin.clients.details.reference_label",
+    "value": "RÉFÉRENCE"
+  },
+  {
+    "key": "pages.admin.clients.details.summary_title",
+    "value": "RÉSUMÉ CLIENT"
+  },
+  {
+    "key": "pages.admin.clients.details.lifetime_label",
+    "value": "Total à vie"
+  },
+  {
+    "key": "pages.admin.clients.details.purchased_label",
+    "value": "Acheté"
+  },
+  {
+    "key": "pages.admin.clients.details.back_link",
+    "value": "← RETOUR AUX CLIENTS"
+  },
+  {
+    "key": "pages.admin.clients.details.active_group",
+    "value": "Actif"
+  },
+  {
+    "key": "pages.admin.clients.details.past_group",
+    "value": "Passé"
+  },
+  {
+    "key": "pages.admin.clients.details.no_active_requests",
+    "value": "AUCUNE DEMANDE ACTIVE."
+  },
+  {
+    "key": "pages.admin.clients.details.no_pending_offers",
+    "value": "AUCUNE OFFRE EN ATTENTE."
+  },
+  {
+    "key": "pages.admin.clients.details.requests_title",
+    "value": "DEMANDES CLIENTS"
+  },
+  {
+    "key": "pages.admin.clients.details.offers_title",
+    "value": "OFFRES DE PRIMES"
+  },
+  {
+    "key": "pages.admin.bounties.focus_mode",
+    "value": "Mode Focus : Masquer historique résolu"
+  },
+  {
+    "key": "pages.admin.bounties.offering_card",
+    "value": "Carte offerte :"
+  },
+  {
+    "key": "pages.admin.bounties.resolve_btn",
+    "value": "RÉSOUDRE L'OFFRE"
+  },
+  {
+    "key": "pages.admin.bounties.revert_btn",
+    "value": "REMETTRE EN ATTENTE"
+  },
+  {
+    "key": "components.admin.sidebar.nav.inventory",
+    "value": "INVENTAIRE"
+  },
+  {
+    "key": "components.admin.sidebar.nav.tcg_registry",
+    "value": "REGISTRE TCG"
+  },
+  {
+    "key": "components.admin.sidebar.nav.orders",
+    "value": "COMMANDES"
+  },
+  {
+    "key": "components.admin.sidebar.nav.bounties",
+    "value": "WANTED / PRIMES"
+  },
+  {
+    "key": "components.admin.sidebar.nav.clients",
+    "value": "CLIENTS"
+  },
+  {
+    "key": "components.admin.sidebar.nav.subscribers",
+    "value": "ABONNÉS"
+  },
+  {
+    "key": "components.admin.sidebar.nav.notices",
+    "value": "AVIS"
+  },
+  {
+    "key": "components.admin.sidebar.nav.themes",
+    "value": "THÈMES & SKINS"
+  },
+  {
+    "key": "components.admin.sidebar.nav.translations",
+    "value": "TRADUCTIONS"
+  },
+  {
+    "key": "components.admin.sidebar.nav.settings",
+    "value": "RÉGLAGES GLOBAUX"
+  },
+  {
+    "key": "components.admin.sidebar.section.ops",
+    "value": "Opérations Core"
+  },
+  {
+    "key": "components.admin.sidebar.section.design",
+    "value": "Design & Langue"
+  },
+  {
+    "key": "components.admin.sidebar.section.system",
+    "value": "Actions Système"
+  },
+  {
+    "key": "components.admin.sidebar.health.title",
+    "value": "Santé Système"
+  },
+  {
+    "key": "components.admin.sidebar.health.refresh",
+    "value": "Rafraîchir Stats"
+  },
+  {
+    "key": "components.admin.sidebar.health.sync",
+    "value": "Synchro du cœur..."
+  },
+  {
+    "key": "components.admin.sidebar.health.db_size",
+    "value": "Taille DB"
+  },
+  {
+    "key": "components.admin.sidebar.health.latency",
+    "value": "Latence"
+  },
+  {
+    "key": "components.admin.sidebar.health.clients",
+    "value": "Clients Actifs"
+  },
+  {
+    "key": "components.admin.sidebar.health.cache",
+    "value": "Cache"
+  },
+  {
+    "key": "components.admin.sidebar.auth.logout",
+    "value": "FERMER LA SESSION"
+  },
+  {
+    "key": "components.admin.sidebar.status.secure",
+    "value": "Lien sécurisé actif"
+  },
+  {
+    "key": "pages.admin.bounties.offers.waiting_clients",
+    "value": "CLIENTS EN ATTENTE"
+  },
+  {
+    "key": "pages.admin.bounties.offers.select_clients",
+    "value": "Choisir clients à servir (Max {qty})"
+  },
+  {
+    "key": "pages.admin.bounties.offers.over_limit",
+    "value": "⚠️ LIMITE DE QUANTITÉ DÉPASSÉE"
+  },
+  {
+    "key": "pages.admin.bounties.requests.complete_status",
+    "value": "COMPLET"
+  },
+  {
+    "key": "pages.admin.bounties.title",
+    "value": "WANTED / PRIMES"
+  },
+  {
+    "key": "pages.admin.bounties.subtitle",
+    "value": "Cartes à acheter // Demandes Clients"
+  },
+  {
+    "key": "pages.admin.bounties.add_btn",
+    "value": "AJOUTER UNE PRIME"
+  },
+  {
+    "key": "pages.admin.bounties.tabs.bounties",
+    "value": "LISTE WANTED"
+  },
+  {
+    "key": "pages.admin.bounties.tabs.offers",
+    "value": "VÉRIF DES OFFRES"
+  },
+  {
+    "key": "pages.admin.bounties.tabs.requests",
+    "value": "DEMANDES CLIENTS"
+  },
+  {
+    "key": "pages.admin.bounties.tabs.pending_suffix",
+    "value": "EN ATTENTE"
+  },
+  {
+    "key": "pages.admin.bounties.loading",
+    "value": "Synchro de la logistique..."
+  },
+  {
+    "key": "pages.admin.bounties.table.card",
+    "value": "Carte"
+  },
+  {
+    "key": "pages.admin.bounties.table.set_info",
+    "value": "Édition / Infos"
+  },
+  {
+    "key": "pages.admin.bounties.table.condition",
+    "value": "État"
+  },
+  {
+    "key": "pages.admin.bounties.table.target_price",
+    "value": "Prix cible"
+  },
+  {
+    "key": "pages.admin.bounties.table.qty",
+    "value": "Qté"
+  },
+  {
+    "key": "pages.admin.bounties.table.status",
+    "value": "Statut"
+  },
+  {
+    "key": "pages.admin.bounties.table.actions",
+    "value": "Actions"
+  },
+  {
+    "key": "pages.admin.bounties.offers.seller",
+    "value": "Vendeur :"
+  },
+  {
+    "key": "pages.admin.bounties.offers.condition",
+    "value": "État :"
+  },
+  {
+    "key": "pages.admin.bounties.offers.quantity",
+    "value": "Quantité :"
+  },
+  {
+    "key": "pages.admin.bounties.offers.waiting_clients",
+    "value": "CLIENTS EN ATTENTE"
+  },
+  {
+    "key": "pages.admin.bounties.offers.submitted_on",
+    "value": "Soumis le :"
+  },
+  {
+    "key": "pages.admin.bounties.offers.select_clients",
+    "value": "Choisir clients à servir (Max {qty})"
+  },
+  {
+    "key": "pages.admin.bounties.offers.over_limit",
+    "value": "⚠️ LIMITE DE QUANTITÉ DÉPASSÉE"
+  },
+  {
+    "key": "pages.admin.bounties.requests.complete_status",
+    "value": "COMPLET"
+  },
+  {
+    "key": "pages.admin.bounties.requests.client_label",
+    "value": "Client :"
+  },
+  {
+    "key": "pages.admin.bounties.requests.requested_date",
+    "value": "Demandé le :"
+  },
+  {
+    "key": "pages.admin.bounties.requests.no_details",
+    "value": "Aucun détail fourni."
+  },
+  {
+    "key": "pages.admin.bounties.requests.accept_btn",
+    "value": "ACCEPTER & AJOUTER PRIME"
+  },
+  {
+    "key": "pages.admin.bounties.requests.solve_btn",
+    "value": "MARQUER COMME RÉSOLU"
+  },
+  {
+    "key": "pages.admin.bounties.requests.reject_btn",
+    "value": "REJETER"
+  },
+  {
+    "key": "pages.admin.bounties.requests.mission_complete",
+    "value": "MISSION ACCOMPLIE\nCARTE LIVRÉE"
+  },
+  {
+    "key": "components.admin.bounty_modal.title_edit",
+    "value": "ÉDITER CARTE WANTED"
+  },
+  {
+    "key": "components.admin.bounty_modal.title_add",
+    "value": "AJOUTER CARTE WANTED"
+  },
+  {
+    "key": "components.admin.bounty_modal.tcg_label",
+    "value": "SYSTÈME TCG"
+  },
+  {
+    "key": "components.admin.bounty_modal.condition_label",
+    "value": "ÉTAT"
+  },
+  {
+    "key": "components.admin.bounty_modal.card_name",
+    "value": "NOM DE LA CARTE"
+  },
+  {
+    "key": "components.admin.bounty_modal.set_name",
+    "value": "ÉDITION / INFOS"
+  },
+  {
+    "key": "components.admin.bounty_modal.image_url",
+    "value": "URL IMAGE"
+  },
+  {
+    "key": "components.admin.bounty_modal.pricing_title",
+    "value": "PRIX"
+  },
+  {
+    "key": "components.admin.bounty_modal.price_source",
+    "value": "SOURCE DE PRIX *"
+  },
+  {
+    "key": "components.admin.bounty_modal.source_manual",
+    "value": "Manuel (COP)"
+  },
+  {
+    "key": "components.admin.bounty_modal.source_tcgplayer",
+    "value": "Externe: TCGPlayer (USD)"
+  },
+  {
+    "key": "components.admin.bounty_modal.source_cardmarket",
+    "value": "Externe: Cardmarket (EUR)"
+  },
+  {
+    "key": "components.admin.bounty_modal.ref_price_label",
+    "value": "PRIX RÉFÉRENCE ({source}) *"
+  },
+  {
+    "key": "components.admin.bounty_modal.price_cop_label",
+    "value": "PRIX (COP) *"
+  },
+  {
+    "key": "components.admin.product_modal.title_edit",
+    "value": "ÉDITER PRODUIT"
+  },
+  {
+    "key": "components.admin.product_modal.title_new",
+    "value": "NOUVEAU PRODUIT"
+  },
+  {
+    "key": "components.admin.product_modal.product_id",
+    "value": "ID PRODUIT : {id}"
+  },
+  {
+    "key": "components.admin.product_modal.tcg_system_label",
+    "value": "SYSTÈME TCG"
+  },
+  {
+    "key": "components.admin.product_modal.category_label",
+    "value": "CATÉGORIE"
+  },
+  {
+    "key": "components.admin.product_modal.condition_label",
+    "value": "ÉTAT"
+  },
+  {
+    "key": "components.admin.product_modal.product_name_label",
+    "value": "NOM DU PRODUIT"
+  },
+  {
+    "key": "components.admin.product_modal.tab_deck",
+    "value": "BUILDER DE DECK"
+  },
+  {
+    "key": "components.admin.product_modal.tab_variant",
+    "value": "VARIANTE & IDENTITÉ"
+  },
+  {
+    "key": "components.admin.product_modal.tab_pricing",
+    "value": "PRIX & STOCK"
+  },
+  {
+    "key": "components.admin.product_modal.image_preview_label",
+    "value": "APERÇU IMAGE"
+  },
+  {
+    "key": "components.admin.product_modal.saving",
+    "value": "SAUVEGARDE..."
+  },
+  {
+    "key": "components.admin.product_modal.save_btn",
+    "value": "SAUVER PRODUIT"
+  },
+  {
+    "key": "components.admin.product_modal.save_and_new_btn",
+    "value": "SAUVER & NOUVEAU"
+  },
+  {
+    "key": "components.admin.product_modal.cancel_btn",
+    "value": "ANNULER"
+  },
+  {
+    "key": "components.admin.product_modal.error_required",
+    "value": "Nom, TCG et Catégorie requis."
+  },
+  {
+    "key": "components.admin.product_modal.error_save",
+    "value": "Échec sauvegarde produit."
+  },
+  {
+    "key": "components.admin.product_modal.error_no_prints",
+    "value": "Aucune impression trouvée."
+  },
+  {
+    "key": "components.admin.product_modal.error_no_match",
+    "value": "Impossible d'identifier l'impression."
+  },
+  {
+    "key": "components.admin.product_modal.error_fetch",
+    "value": "Échec Scryfall"
+  },
+  {
+    "key": "components.admin.product_modal.variant.set_info_title",
+    "value": "INFOS ÉDITION"
+  },
+  {
+    "key": "components.admin.product_modal.variant.set_name_label",
+    "value": "NOM ÉDITION"
+  },
+  {
+    "key": "components.admin.product_modal.variant.set_code_label",
+    "value": "CODE"
+  },
+  {
+    "key": "components.admin.product_modal.variant.collector_number_label",
+    "value": "N° COLLECTOR"
+  },
+  {
+    "key": "components.admin.product_modal.variant.language_label",
+    "value": "LANGUE CARTE"
+  },
+  {
+    "key": "components.admin.product_modal.variant.treatment_title",
+    "value": "TRAITEMENT & FINITION"
+  },
+  {
+    "key": "components.admin.product_modal.variant.foil_label",
+    "value": "BRILLANCE (FOIL)"
+  },
+  {
+    "key": "components.admin.product_modal.variant.card_treatment_label",
+    "value": "TRAITEMENT CARTE"
+  },
+  {
+    "key": "components.admin.product_modal.variant.promo_type_label",
+    "value": "TYPE PROMO"
+  },
+  {
+    "key": "components.admin.product_modal.variant.art_variation_label",
+    "value": "VARIATION D'ILLUSTRATION"
+  },
+  {
+    "key": "components.admin.product_modal.variant.optimized_hint",
+    "value": "OPTIONS OPTIMISÉES POUR LES SINGLES MTG."
+  },
+  {
+    "key": "components.admin.product_modal.variant.general_hint",
+    "value": "Détails gérés dans l'en-tête et l'onglet Prix."
+  },
+  {
+    "key": "components.admin.product_modal.variant.metadata_title",
+    "value": "Métadonnées MTG"
+  },
+  {
+    "key": "components.admin.product_modal.variant.rarity_label",
+    "value": "Rareté"
+  },
+  {
+    "key": "components.admin.product_modal.variant.colors_label",
+    "value": "Couleurs"
+  },
+  {
+    "key": "components.admin.product_modal.variant.cmc_label",
+    "value": "CMC"
+  },
+  {
+    "key": "components.admin.product_modal.variant.legendary_label",
+    "value": "LÉGENDAIRE"
+  },
+  {
+    "key": "components.admin.product_modal.variant.historic_label",
+    "value": "HISTORIQUE"
+  },
+  {
+    "key": "components.admin.product_modal.variant.land_label",
+    "value": "TERRAIN"
+  },
+  {
+    "key": "components.admin.product_modal.variant.basic_label",
+    "value": "DE BASE"
+  },
+  {
+    "key": "components.admin.product_modal.variant.full_art_label",
+    "value": "FULL ART"
+  },
+  {
+    "key": "components.admin.product_modal.variant.textless_label",
+    "value": "SANS TEXTE"
+  },
+  {
+    "key": "components.admin.product_modal.variant.type_line_label",
+    "value": "Type"
+  },
+  {
+    "key": "components.admin.product_modal.variant.artist_label",
+    "value": "Artiste"
+  },
+  {
+    "key": "components.admin.product_modal.variant.oracle_text_label",
+    "value": "Texte Oracle"
+  },
+  {
+    "key": "components.admin.product_modal.pricing.stock_title",
+    "value": "GESTION STOCK"
+  },
+  {
+    "key": "components.admin.product_modal.pricing.total_stock_label",
+    "value": "STOCK TOTAL"
+  },
+  {
+    "key": "components.admin.product_modal.pricing.add_location_btn",
+    "value": "ASSIGNER NOUVEAU LIEU"
+  },
+  {
+    "key": "components.admin.product_modal.pricing.description_label",
+    "value": "DESCRIPTION / NOTES (INTERNE)"
+  },
+  {
+    "key": "components.admin.product_modal.pricing.description_placeholder",
+    "value": "Notes optionnelles..."
+  },
+  {
+    "key": "components.admin.product_modal.pricing.collections_label",
+    "value": "COLLECTIONS / TAGS"
+  },
+  {
+    "key": "components.admin.product_modal.pricing.title",
+    "value": "PRIX"
+  },
+  {
+    "key": "components.admin.product_modal.pricing.source_label",
+    "value": "SOURCE DE PRIX *"
+  },
+  {
+    "key": "components.admin.product_modal.pricing.source_manual",
+    "value": "Manuel (COP)"
+  },
+  {
+    "key": "components.admin.product_modal.pricing.source_tcgplayer",
+    "value": "Externe: TCGPlayer (USD)"
+  },
+  {
+    "key": "components.admin.product_modal.pricing.source_cardmarket",
+    "value": "Externe: Cardmarket (EUR)"
+  },
+  {
+    "key": "components.admin.product_modal.pricing.price_cop_label",
+    "value": "PRIX (COP) *"
+  },
+  {
+    "key": "components.admin.product_modal.pricing.ref_price_label",
+    "value": "PRIX RÉFÉRENCE ({currency}) *"
+  },
+  {
+    "key": "components.admin.product_modal.pricing.basic_title",
+    "value": "Détails de base"
+  },
+  {
+    "key": "components.admin.product_modal.pricing.image_url_label",
+    "value": "URL image"
+  },
+  {
+    "key": "components.admin.product_modal.pricing.no_collections",
+    "value": "Aucune collection perso."
+  },
+  {
+    "key": "components.admin.product_modal.scryfall.search_hint",
+    "value": "Nom ou SET + N° et cliquez sur Peupler"
+  },
+  {
+    "key": "components.admin.product_modal.scryfall.populate_btn",
+    "value": "PEUPLER DONNÉES"
+  },
+  {
+    "key": "components.admin.product_modal.scryfall.looking_up",
+    "value": "RECHERCHE..."
+  },
+  {
+    "key": "components.admin.product_modal.scryfall.no_image",
+    "value": "PAS D'IMAGE"
+  },
+  {
+    "key": "components.admin.product_modal.deck.select_printing_label",
+    "value": "Choisir impression spécifique"
+  },
+  {
+    "key": "components.admin.product_modal.deck.add_btn",
+    "value": "+ AJOUTER"
+  },
+  {
+    "key": "components.admin.product_modal.deck.custom_name_label",
+    "value": "Nom carte (Perso)"
+  },
+  {
+    "key": "components.admin.product_modal.deck.custom_name_placeholder",
+    "value": "Taper nom perso..."
+  },
+  {
+    "key": "components.admin.product_modal.deck.add_custom_btn",
+    "value": "Ajouter carte perso"
+  },
+  {
+    "key": "components.admin.product_modal.deck.list_title",
+    "value": "Liste du Deck actuel"
+  },
+  {
+    "key": "components.admin.product_modal.deck.card_count",
+    "value": "{count} CARTES"
+  },
+  {
+    "key": "components.admin.product_modal.deck.empty_msg",
+    "value": "Le deck est vide."
+  },
+  {
+    "key": "components.admin.product_modal.deck.edit_tooltip",
+    "value": "Éditer/Repeupler"
+  },
+  {
+    "key": "components.admin.product_modal.deck.remove_tooltip",
+    "value": "Retirer"
+  },
+  {
+    "key": "components.admin.bounty_modal.quantity_label",
+    "value": "QUANTITÉ REQUISE"
+  },
+  {
+    "key": "components.admin.bounty_modal.hide_price_label",
+    "value": "Masquer prix cible au public"
+  },
+  {
+    "key": "components.admin.bounty_modal.hide_price_desc",
+    "value": "Si coché, verra \"Prix sur demande\" au lieu du COP."
+  },
+  {
+    "key": "components.admin.bounty_modal.no_image",
+    "value": "PAS D'IMAGE"
+  },
+  {
+    "key": "components.admin.bounty_modal.name_placeholder",
+    "value": "Nom entité"
+  },
+  {
+    "key": "components.admin.bounty_modal.set_placeholder",
+    "value": "Édition optionnelle"
+  },
+  {
+    "key": "components.admin.bounty_modal.image_placeholder",
+    "value": "https://..."
+  },
+  {
+    "key": "components.admin.bounty_modal.saving",
+    "value": "SAUVEGARDE..."
+  },
+  {
+    "key": "components.admin.bounty_modal.save_btn",
+    "value": "💾 SAUVER PRIME"
+  },
+  {
+    "key": "components.admin.bounty_modal.error_required",
+    "value": "Nom et TCG requis."
+  },
+  {
+    "key": "components.admin.bounty_modal.error_save",
+    "value": "Échec sauvegarde prime."
+  },
+  {
+    "key": "components.admin.resolve_modal.title",
+    "value": "Résoudre offre"
+  },
+  {
+    "key": "components.admin.resolve_modal.offer_details",
+    "value": "Détails offre :"
+  },
+  {
+    "key": "components.admin.resolve_modal.no_notes",
+    "value": "Aucune note"
+  },
+  {
+    "key": "components.admin.resolve_modal.action_title",
+    "value": "ACTION À L'ACCEPTATION"
+  },
+  {
+    "key": "components.admin.resolve_modal.action_inventory",
+    "value": "Ajouter à l'inventaire"
+  },
+  {
+    "key": "components.admin.resolve_modal.action_inventory_desc",
+    "value": "Accepter et mettre en vente direct."
+  },
+  {
+    "key": "components.admin.resolve_modal.action_fulfill_selected",
+    "value": "Servir {count} demandes choisies"
+  },
+  {
+    "key": "components.admin.resolve_modal.action_fulfill_matching",
+    "value": "Servir demandes correspondantes"
+  },
+  {
+    "key": "components.admin.resolve_modal.action_fulfill_selected_desc",
+    "value": "Accepter et notifier les {count} clients choisis."
+  },
+  {
+    "key": "components.admin.resolve_modal.action_fulfill_matching_desc",
+    "value": "Accepter et notifier TOUS les clients."
+  },
+  {
+    "key": "components.admin.resolve_modal.matching_selected",
+    "value": "{count} sur {total} demandes choisies."
+  },
+  {
+    "key": "components.admin.resolve_modal.matching_found",
+    "value": "{total} demandes correspondantes trouvées."
+  },
+  {
+    "key": "components.admin.resolve_modal.reject_btn",
+    "value": "REJETER OFFRE"
+  },
+  {
+    "key": "components.admin.resolve_modal.accept_btn",
+    "value": "ACCEPTER OFFRE"
+  },
+  {
+    "key": "pages.admin.inventory.title",
+    "value": "GESTION INVENTAIRE"
+  },
+  {
+    "key": "pages.admin.inventory.subtitle",
+    "value": "Poste de commande // Opérations Actives"
+  },
+  {
+    "key": "pages.admin.inventory.sync_sets_btn",
+    "value": "SYNCHRO ÉDITIONS"
+  },
+  {
+    "key": "pages.admin.inventory.syncing",
+    "value": "SYNCHRO..."
+  },
+  {
+    "key": "pages.admin.inventory.last_sync",
+    "value": "DERNIÈRE SYNC : {date}"
+  },
+  {
+    "key": "pages.admin.inventory.import_csv_btn",
+    "value": "IMPORT CSV"
+  },
+  {
+    "key": "pages.admin.inventory.add_product_btn",
+    "value": "AJOUTER PRODUIT"
+  },
+  {
+    "key": "pages.admin.inventory.search_label",
+    "value": "Recherche Produit"
+  },
+  {
+    "key": "pages.admin.inventory.search_placeholder",
+    "value": "Nom, édition, code..."
+  },
+  {
+    "key": "pages.admin.inventory.tcg_filter_label",
+    "value": "Filtre TCG"
+  },
+  {
+    "key": "pages.admin.inventory.category_label",
+    "value": "Catégorie"
+  },
+  {
+    "key": "pages.admin.inventory.storage_label",
+    "value": "Lieu physique"
+  },
+  {
+    "key": "pages.admin.inventory.manage_locations_tooltip",
+    "value": "Gérer lieux"
+  },
+  {
+    "key": "components.admin.inventory.manage_locations_tooltip",
+    "value": "Gérer lieux"
+  },
+  {
+    "key": "pages.admin.inventory.manage_collections_tooltip",
+    "value": "Gérer collections"
+  },
+  {
+    "key": "pages.admin.inventory.count_label",
+    "value": "COMPTAGE INVENTAIRE"
+  },
+  {
+    "key": "pages.admin.inventory.response_time_label",
+    "value": "TEMPS RÉPONSE"
+  },
+  {
+    "key": "pages.admin.inventory.confirm_delete",
+    "value": "Supprimer {name} ?"
+  },
+  {
+    "key": "pages.admin.inventory.error_delete",
+    "value": "Échec suppression produit."
+  },
+  {
+    "key": "pages.admin.inventory.sync_success",
+    "value": "{count} éditions synchronisées !"
+  },
+  {
+    "key": "pages.admin.inventory.sync_error",
+    "value": "Échec synchro éditions."
+  },
+  {
+    "key": "pages.admin.inventory.confirm_delete_storage_items",
+    "value": "Le lieu \"{name}\" contient {count} articles. La suppression effacera ces affectations. Continuer ?"
+  },
+  {
+    "key": "pages.admin.inventory.confirm_delete_storage",
+    "value": "Supprimer lieu \"{name}\" ?"
+  },
+  {
+    "key": "pages.admin.inventory.confirm_delete_category",
+    "value": "Supprimer collection \"{name}\" ?"
+  },
+  {
+    "key": "pages.common.dates.just_now",
+    "value": "À l'instant"
+  },
+  {
+    "key": "pages.common.dates.mins_ago",
+    "value": "il y a {mins}m"
+  },
+  {
+    "key": "pages.common.dates.hours_ago",
+    "value": "il y a {hours}h"
+  },
+  {
+    "key": "pages.admin.inventory.unassigned",
+    "value": "non assigné"
+  },
+  {
+    "key": "pages.admin.inventory.delete_product_tooltip",
+    "value": "Supprimer produit"
+  },
+  {
+    "key": "pages.admin.inventory.scanning_catalog",
+    "value": "Scan catalogue..."
+  },
+  {
+    "key": "pages.admin.inventory.table.product",
+    "value": "PRODUIT"
+  },
+  {
+    "key": "pages.admin.inventory.table.type",
+    "value": "TYPE"
+  },
+  {
+    "key": "pages.admin.inventory.table.rarity",
+    "value": "RARETÉ"
+  },
+  {
+    "key": "pages.admin.inventory.table.price",
+    "value": "PRIX"
+  },
+  {
+    "key": "pages.admin.inventory.table.stock",
+    "value": "STOCK"
+  },
+  {
+    "key": "pages.admin.inventory.table.updated",
+    "value": "MIS À JOUR"
+  },
+  {
+    "key": "pages.admin.inventory.table.cmd",
+    "value": "CMD"
+  },
+  {
+    "key": "pages.admin.inventory.no_products",
+    "value": "AUCUN PRODUIT TROUVÉ"
+  },
+  {
+    "key": "pages.admin.inventory.no_products_hint",
+    "value": "Ajustez vos filtres de scan"
+  },
+  {
+    "key": "pages.profile.title",
+    "value": "MON PROFIL"
+  },
+  {
+    "key": "pages.profile.linked_accounts",
+    "value": "COMPTES LIÉS"
+  },
+  {
+    "key": "pages.profile.order_history",
+    "value": "HISTORIQUE COMMANDES"
+  },
+  {
+    "key": "pages.profile.personal_info",
+    "value": "INFOS PERSOS"
+  },
+  {
+    "key": "pages.profile.no_orders",
+    "value": "Pas de commande encore."
+  },
+  {
+    "key": "nav.deck_importer_cta",
+    "value": "Testez l'importeur de deck"
+  },
+  {
+    "key": "pages.cart.drawer.try_importer",
+    "value": "UTILISER IMPORTEUR DE DECK →"
+  },
+  {
+    "key": "pages.cart.drawer.importer_nudge",
+    "value": "Cartes manquantes ? Testez l'importeur"
+  },
+  {
+    "key": "pages.deck_importer.title",
+    "value": "IMPORTEUR DE DECK"
+  },
+  {
+    "key": "pages.deck_importer.subtitle",
+    "value": "Collez votre liste (Moxfield, Archideckt etc.) et on cherche dans notre stock. Si absent, demandez tout d'un coup !"
+  },
+  {
+    "key": "pages.deck_importer.list_label",
+    "value": "LISTE DE CARTAS"
+  },
+  {
+    "key": "pages.deck_importer.buttons.analyze",
+    "value": "ANALYSER LISTE →"
+  },
+  {
+    "key": "pages.deck_importer.buttons.analyzing",
+    "value": "ANALYSE..."
+  },
+  {
+    "key": "pages.deck_importer.results_title",
+    "value": "RÉSULTATS"
+  },
+  {
+    "key": "pages.deck_importer.buttons.add_all",
+    "value": "TOUT AJOUTER"
+  },
+  {
+    "key": "pages.deck_importer.no_results",
+    "value": "Collez une liste pour voir la disponibilité."
+  },
+  {
+    "key": "pages.deck_importer.errors.analyze_failed",
+    "value": "Échec analyse. Vérifiez le format."
+  },
+  {
+    "key": "pages.deck_importer.messages.added_count",
+    "value": "{count} cartes ajoutées au panier."
+  },
+  {
+    "key": "pages.deck_importer.matches.different_version",
+    "value": "VERSION DIFFÉRENTE"
+  },
+  {
+    "key": "pages.deck_importer.matches.matched",
+    "value": "OK"
+  },
+  {
+    "key": "pages.deck_importer.matches.no_stock",
+    "value": "PAS DE STOCK"
+  },
+  {
+    "key": "pages.product.condition.nm",
+    "value": "Near Mint"
+  },
+  {
+    "key": "pages.product.condition.lp",
+    "value": "Lightly Played"
+  },
+  {
+    "key": "pages.product.condition.mp",
+    "value": "Moderately Played"
+  },
+  {
+    "key": "pages.product.condition.hp",
+    "value": "Heavily Played"
+  },
+  {
+    "key": "pages.product.condition.dmg",
+    "value": "Damaged"
+  },
+  {
+    "key": "pages.product.badges.hot",
+    "value": "HOT"
+  },
+  {
+    "key": "pages.product.badges.new",
+    "value": "NOUVEAU"
+  },
+  {
+    "key": "pages.common.labels.home",
+    "value": "ACCUEIL"
+  },
+  {
+    "key": "pages.common.labels.collection",
+    "value": "COLLECTION"
+  },
+  {
+    "key": "pages.common.labels.product",
+    "value": "PRODUIT"
+  },
+  {
+    "key": "pages.common.labels.products",
+    "value": "PRODUITS"
+  },
+  {
+    "key": "pages.common.pagination.prev",
+    "value": "← PRÉC"
+  },
+  {
+    "key": "pages.common.pagination.next",
+    "value": "SUIV →"
+  },
+  {
+    "key": "components.theme_selector.title",
+    "value": "Choisir Thème"
+  },
+  {
+    "key": "pages.checkout.delivery.shipping",
+    "value": "EXPÉDITION"
+  },
+  {
+    "key": "pages.checkout.delivery.pickup",
+    "value": "RETRAIT SUR PLACE"
+  },
+  {
+    "key": "pages.checkout.delivery.shipping_desc",
+    "value": "Livraison fiable à votre adresse"
+  },
+  {
+    "key": "pages.checkout.delivery.pickup_desc",
+    "value": "Retrait dans notre boutique à Bogotá"
+  },
+  {
+    "key": "pages.checkout.section.contact",
+    "value": "COORDONNÉES"
+  },
+  {
+    "key": "pages.checkout.section.delivery",
+    "value": "MODE DE LIVRAISON"
+  },
+  {
+    "key": "pages.checkout.section.summary",
+    "value": "RÉSUMÉ COMMANDE"
+  },
+  {
+    "key": "pages.checkout.summary.item",
+    "value": "ARTICLE"
+  },
+  {
+    "key": "pages.checkout.summary.items",
+    "value": "ARTICLES"
+  },
+  {
+    "key": "pages.checkout.summary.subtotal",
+    "value": "SOUS-TOTAL"
+  },
+  {
+    "key": "pages.checkout.summary.shipping",
+    "value": "LIVRAISON"
+  },
+  {
+    "key": "pages.checkout.summary.free",
+    "value": "GRATUIT"
+  },
+  {
+    "key": "pages.checkout.total",
+    "value": "TOTAL"
+  },
+  {
+    "key": "pages.checkout.footer.notice",
+    "value": "Après confirmation, un conseiller vous contactera pour coordonner la livraison."
+  },
+  {
+    "key": "pages.checkout.payment_methods.cash",
+    "value": "Espèces"
+  },
+  {
+    "key": "pages.checkout.payment_methods.transfer",
+    "value": "Virement Bancaire"
+  },
+  {
+    "key": "pages.checkout.payment_methods.nequi",
+    "value": "Nequi"
+  },
+  {
+    "key": "pages.checkout.payment_methods.daviplata",
+    "value": "Daviplata"
+  },
+  {
+    "key": "components.bounty_offer.title",
+    "value": "Vendez-nous votre carte"
+  },
+  {
+    "key": "components.bounty_offer.success_title",
+    "value": "Offre reçue !"
+  },
+  {
+    "key": "components.bounty_offer.success_desc",
+    "value": "Nous l'examinerons et vous contacterons bientôt."
+  },
+  {
+    "key": "components.bounty_offer.login_prompt",
+    "value": "pour pré-remplir vos infos et suivre vos offres."
+  },
+  {
+    "key": "components.bounty_offer.pay_upto",
+    "value": "Nous payons jusqu'à :"
+  },
+  {
+    "key": "components.bounty_offer.labels.name",
+    "value": "Votre Nom"
+  },
+  {
+    "key": "components.bounty_offer.labels.contact",
+    "value": "Coordonnées"
+  },
+  {
+    "key": "components.bounty_offer.labels.condition",
+    "value": "État"
+  },
+  {
+    "key": "components.bounty_offer.labels.quantity",
+    "value": "Quantité"
+  },
+  {
+    "key": "components.bounty_offer.labels.notes",
+    "value": "Notes additionnelles (Optionnel)"
+  },
+  {
+    "key": "components.bounty_offer.placeholders.notes",
+    "value": "Détails sur la carte..."
+  },
+  {
+    "key": "components.bounty_offer.placeholders.name",
+    "value": "Jean Dupont"
+  },
+  {
+    "key": "components.bounty_offer.placeholders.contact",
+    "value": "Téléphone ou Instagram"
+  },
+  {
+    "key": "components.bounty_offer.buttons.submit",
+    "value": "SOUMETTRE OFFRE"
+  },
+  {
+    "key": "pages.store_exclusives.title",
+    "value": "EXCLUSIVITÉS BOUTIQUE"
+  },
+  {
+    "key": "pages.store_exclusives.subtitle",
+    "value": "Decks Commander perso, kits proxy et autres articles premium faits maison."
+  },
+  {
+    "key": "pages.collection.vault.bg_text_1",
+    "value": "MON VAULT"
+  },
+  {
+    "key": "pages.collection.vault.bg_text_2",
+    "value": "COLLECTION"
+  },
+  {
+    "key": "pages.collection.vault.title_part1",
+    "value": "LE"
+  },
+  {
+    "key": "pages.collection.vault.title_part2",
+    "value": "VAULT"
+  },
+  {
+    "key": "pages.collection.vault.subject_prefix",
+    "value": "Archive Numérique Sécurisée // Sujet :"
+  },
+  {
+    "key": "pages.collection.vault.default_subject",
+    "value": "COLLECTIONNEUR"
+  },
+  {
+    "key": "pages.collection.vault.scanning",
+    "value": "SCAN DE L'INVENTAIRE..."
+  },
+  {
+    "key": "pages.collection.vault.desc",
+    "value": "Votre archive TCG perso est en cours d'indexation. Bientôt vous pourrez gérer votre collection physique et suivre les prix du marché ici."
+  },
+  {
+    "key": "pages.collection.vault.return",
+    "value": "Retour au Centre de Commande"
+  },
+  {
+    "key": "pages.collection.not_found",
+    "value": "COLLECTION INTROUVABLE"
+  },
+  {
+    "key": "pages.collection.not_found_desc",
+    "value": "La collection demandée n'existe pas ou a été supprimée."
+  },
+  {
+    "key": "pages.collection.empty",
+    "value": "COLLECTION VIDE"
+  },
+  {
+    "key": "pages.collection.empty_desc",
+    "value": "Aucun produit trouvé dans cette collection."
+  },
+  {
+    "key": "pages.404.title",
+    "value": "LIEN ROMPU"
+  },
+  {
+    "key": "pages.404.message",
+    "value": "Les coordonnées mènent à un vide dans l'archive. Code Erreur : [PAGE_NOT_FOUND]."
+  },
+  {
+    "key": "pages.404.back_home",
+    "value": "← Retour au Centre de Commande"
+  },
+  {
+    "key": "pages.admin.dashboard.valuation",
+    "value": "ESTIMATION"
+  },
+  {
+    "key": "pages.admin.dashboard.low_stock",
+    "value": "STOCK BAS"
+  },
+  {
+    "key": "pages.admin.dashboard.import_csv",
+    "value": "IMPORT CSV"
+  },
+  {
+    "key": "pages.admin.dashboard.add_product",
+    "value": "PRODUIT"
+  },
+  {
+    "key": "pages.admin.dashboard.sync",
+    "value": "SYNCHRO"
+  },
+  {
+    "key": "pages.admin.dashboard.syncing",
+    "value": "SYNCHRO..."
+  },
+  {
+    "key": "pages.admin.dashboard.prev",
+    "value": "PRÉC"
+  },
+  {
+    "key": "pages.admin.dashboard.next",
+    "value": "SUIV"
+  },
+  {
+    "key": "pages.admin.settings.financial_overrides",
+    "value": "AJUSTEMENTS FINANCIERS"
+  },
+  {
+    "key": "pages.admin.settings.store_identity",
+    "value": "IDENTITÉ BOUTIQUE"
+  },
+  {
+    "key": "pages.admin.settings.address_label",
+    "value": "Adresse physique de la boutique"
+  },
+  {
+    "key": "pages.admin.settings.whatsapp_label",
+    "value": "Contact WhatsApp"
+  },
+  {
+    "key": "pages.admin.settings.instagram_label",
+    "value": "Compte Instagram"
+  },
+  {
+    "key": "pages.admin.settings.email_label",
+    "value": "Email de support"
+  },
+  {
+    "key": "pages.admin.settings.hours_label",
+    "value": "Heures d'ouverture"
+  },
+  {
+    "key": "pages.admin.settings.hot_threshold",
+    "value": "Seuil articles Hot"
+  },
+  {
+    "key": "pages.admin.settings.new_threshold",
+    "value": "Seuil articles Nouveaux"
+  },
+  {
+    "key": "pages.admin.settings.sales_in_last",
+    "value": "Ventes lors des derniers"
+  },
+  {
+    "key": "pages.admin.settings.days",
+    "value": "Jours"
+  },
+  {
+    "key": "pages.admin.settings.days_since_creation",
+    "value": "Jours depuis création"
+  },
+  {
+    "key": "pages.admin.settings.save_btn",
+    "value": "SAUVER RÉGLAGES GLOBAUX"
+  },
+  {
+    "key": "pages.admin.clients.title",
+    "value": "CRM : Registre Clients"
+  },
+  {
+    "key": "pages.admin.clients.subtitle",
+    "value": "Gestion des relations & interactions"
+  },
+  {
+    "key": "pages.admin.clients.table.customer",
+    "value": "Client"
+  },
+  {
+    "key": "pages.admin.clients.table.contact",
+    "value": "Contact"
+  },
+  {
+    "key": "pages.admin.clients.table.orders",
+    "value": "Commandes"
+  },
+  {
+    "key": "pages.admin.clients.table.requests",
+    "value": "Requêtes"
+  },
+  {
+    "key": "pages.admin.clients.table.offers",
+    "value": "Offres"
+  },
+  {
+    "key": "pages.admin.clients.table.newsletter",
+    "value": "Newsletter"
+  },
+  {
+    "key": "pages.admin.clients.table.recent_journal",
+    "value": "Dernière entrée journal"
+  },
+  {
+    "key": "pages.admin.clients.status.subscribed",
+    "value": "INSCRIT"
+  },
+  {
+    "key": "pages.admin.clients.status.no",
+    "value": "NON"
+  },
+  {
+    "key": "pages.admin.subscribers.secure_link",
+    "value": "Lien sécurisé actif"
+  },
+  {
+    "key": "pages.admin.subscribers.title",
+    "value": "ABONNÉS"
+  },
+  {
+    "key": "pages.admin.subscribers.subtitle",
+    "value": "Gestion Newsletter"
+  },
+  {
+    "key": "pages.admin.subscribers.table.email",
+    "value": "Adresse Email"
+  },
+  {
+    "key": "pages.admin.subscribers.table.linked_user",
+    "value": "Utilisateur lié"
+  },
+  {
+    "key": "pages.admin.subscribers.table.date",
+    "value": "Date d'inscription"
+  },
+  {
+    "key": "pages.admin.subscribers.status.unlinked",
+    "value": "INVITÉ NON LIÉ"
+  },
+  {
+    "key": "pages.admin.accounting.total_cost",
+    "value": "BASE DE COÛT TOTAL"
+  },
+  {
+    "key": "pages.admin.accounting.net_profit",
+    "value": "PROFIT POTENTIEL NET"
+  },
+  {
+    "key": "pages.admin.valuation.authenticating",
+    "value": "Authentification comptable..."
+  },
+  {
+    "key": "pages.admin.valuation.unit",
+    "value": "unité"
+  },
+  {
+    "key": "pages.admin.valuation.units",
+    "value": "unités"
+  },
+  {
+    "key": "pages.admin.valuation.unique_products",
+    "value": "Sur {count} produits uniques."
+  },
+  {
+    "key": "pages.admin.valuation.revenue_desc",
+    "value": "Revenu total projeté si tous les articles sont vendus aux prix actuels."
+  },
+  {
+    "key": "pages.admin.themes.title",
+    "value": "MOTEUR DE THÈMES"
+  },
+  {
+    "key": "pages.admin.themes.subtitle",
+    "value": "Configurer l'identité visuelle et les skins"
+  },
+  {
+    "key": "pages.admin.themes.live_matrix",
+    "value": "MATRICE EN DIRECT"
+  },
+  {
+    "key": "pages.admin.themes.desktop_view",
+    "value": "Vue Bureau"
+  },
+  {
+    "key": "pages.admin.themes.mobile_view",
+    "value": "Vue Mobile"
+  },
+  {
+    "key": "pages.admin.themes.high_fidelity",
+    "value": "Haute Fidélité"
+  },
+  {
+    "key": "pages.admin.themes.edit_identity",
+    "value": "Éditer Identité"
+  },
+  {
+    "key": "pages.admin.themes.forge_identity",
+    "value": "Forger Identité"
+  },
+  {
+    "key": "pages.admin.themes.reset_original",
+    "value": "Reset à l'original"
+  },
+  {
+    "key": "pages.admin.themes.sections.base_info",
+    "value": "Infos de base"
+  },
+  {
+    "key": "pages.admin.themes.sections.surfaces",
+    "value": "Fonds & Surfaces"
+  },
+  {
+    "key": "pages.admin.themes.sections.brand",
+    "value": "Marque & Highlights"
+  },
+  {
+    "key": "pages.admin.themes.sections.interactive",
+    "value": "Boutons & Entrées"
+  },
+  {
+    "key": "pages.admin.themes.sections.typography",
+    "value": "Typographie & Contenu"
+  },
+  {
+    "key": "pages.admin.themes.sections.logic",
+    "value": "Indicateurs d'état"
+  },
+  {
+    "key": "pages.admin.themes.sections.geometry",
+    "value": "Mise en page & Géométrie cartes"
+  },
+  {
+    "key": "pages.admin.themes.sections.advanced",
+    "value": "Branding avancé & Overrides"
+  },
+  {
+    "key": "pages.admin.themes.labels.theme_name",
+    "value": "Nom du thème"
+  },
+  {
+    "key": "pages.admin.themes.buttons.persist",
+    "value": "Figer le blueprint"
+  },
+  {
+    "key": "pages.admin.themes.buttons.initialize",
+    "value": "Initialiser Skin"
+  },
+  {
+    "key": "pages.admin.themes.buttons.purge",
+    "value": "Purger Matrice"
+  },
+  {
+    "key": "pages.admin.themes.name_label",
+    "value": "Nom du thème"
+  },
+  {
+    "key": "pages.admin.themes.primary_btn",
+    "value": "Bouton Primaire"
+  },
+  {
+    "key": "pages.admin.themes.secondary_btn",
+    "value": "Bouton Secondaire"
+  },
+  {
+    "key": "pages.admin.themes.checkboxes",
+    "value": "Cases à cocher"
+  },
+  {
+    "key": "pages.auth.providers.google",
+    "value": "Google"
+  },
+  {
+    "key": "pages.auth.providers.facebook",
+    "value": "Facebook"
+  },
+  {
+    "key": "pages.admin.themes.preview.critical_alert",
+    "value": "Alerte Critique"
+  },
+  {
+    "key": "pages.admin.themes.preview.singles",
+    "value": "SINGLES"
+  },
+  {
+    "key": "pages.admin.themes.preview.explore",
+    "value": "EXPLORER"
+  },
+  {
+    "key": "pages.admin.themes.preview.decks",
+    "value": "DECKS"
+  },
+  {
+    "key": "pages.admin.themes.preview.vault_search",
+    "value": "Recherche Matrice Vault"
+  },
+  {
+    "key": "pages.admin.themes.preview.filter_state",
+    "value": "État du filtre"
+  },
+  {
+    "key": "pages.admin.themes.preview.normal_inactive",
+    "value": "Normal Inactif"
+  },
+  {
+    "key": "pages.admin.themes.preview.active_selected",
+    "value": "Actif Sélectionné"
+  },
+  {
+    "key": "pages.admin.themes.preview.primary_action",
+    "value": "Action Primaire"
+  },
+  {
+    "key": "pages.admin.themes.preview.secondary_action",
+    "value": "Action Secondaire"
+  },
+  {
+    "key": "pages.admin.themes.preview.dynamic_flags",
+    "value": "Drapeaux d'état dynamiques"
+  },
+  {
+    "key": "pages.admin.login.title",
+    "value": "ACCÈS AU VAULT"
+  },
+  {
+    "key": "pages.admin.login.subtitle",
+    "value": "PERSONNEL AUTORISÉ UNIQUEMENT"
+  },
+  {
+    "key": "pages.admin.login.email",
+    "value": "Identification Système (Email)"
+  },
+  {
+    "key": "pages.admin.login.password",
+    "value": "Code de sécurité (Mot de passe)"
+  },
+  {
+    "key": "pages.admin.login.button",
+    "value": "ÉTABLIR CONNEXION"
+  },
+  {
+    "key": "pages.admin.login.authenticating",
+    "value": "AUTHENTIFICATION..."
+  },
+  {
+    "key": "pages.admin.login.return",
+    "value": "Retour à la boutique"
+  },
+  {
+    "key": "pages.common.breadcrumb.home",
+    "value": "Accueil"
+  },
+  {
+    "key": "pages.admin.clients.table.spend",
+    "value": "Dépenses (COP)"
+  },
+  {
+    "key": "pages.admin.orders.title",
+    "value": "MANIFESTE DE COMMANDE"
+  },
+  {
+    "key": "pages.admin.orders.search_placeholder",
+    "value": "Chercher logs (#, nom, tel...)"
+  },
+  {
+    "key": "pages.admin.orders.empty_list",
+    "value": "Aucun manifeste trouvé dans les archives."
+  },
+  {
+    "key": "pages.admin.orders.status_filter_all",
+    "value": "TOUS LES LOGS"
+  },
+  {
+    "key": "pages.admin.orders.list.item_count",
+    "value": "{count} article{s}"
+  },
+  {
+    "key": "pages.admin.orders.detail.select_prompt",
+    "value": "Choisir un manifeste à inspecter"
+  },
+  {
+    "key": "pages.admin.orders.detail.error_title",
+    "value": "Erreur d'accès archival"
+  },
+  {
+    "key": "pages.admin.orders.detail.close_btn",
+    "value": "FERMER LOG"
+  },
+  {
+    "key": "pages.admin.orders.detail.back_to_list",
+    "value": "← RETOUR AUX LOGS DE COMMANDE"
+  },
+  {
+    "key": "pages.admin.orders.detail.confirmed_at",
+    "value": "Confirmé le {date}"
+  },
+  {
+    "key": "pages.admin.orders.detail.confirm_btn",
+    "value": "✓ AUTORISER EXPÉDITION"
+  },
+  {
+    "key": "pages.admin.orders.detail.restore_inventory",
+    "value": "♻ DÉTERRER L'INVENTAIRE (UNEARTH)"
+  },
+  {
+    "key": "pages.admin.orders.detail.inventory_restored",
+    "value": "Inventaire réanimé"
+  },
+  {
+    "key": "pages.admin.orders.detail.tracking.title",
+    "value": "SCEAU DE LIVRAISON / TRACKING"
+  },
+  {
+    "key": "pages.admin.orders.detail.tracking.local_pickup",
+    "value": "INVOCATION EN BOUTIQUE"
+  },
+  {
+    "key": "pages.admin.orders.detail.tracking.label",
+    "value": "Sceau de suivi"
+  },
+  {
+    "key": "pages.admin.orders.detail.tracking.url",
+    "value": "Portail de suivi"
+  },
+  {
+    "key": "pages.admin.orders.detail.customer.title",
+    "value": "PROFIL D'INVOCATEUR"
+  },
+  {
+    "key": "pages.admin.orders.detail.customer.notify_whatsapp",
+    "value": "NOTIFIER VIA WHATSAPP"
+  },
+  {
+    "key": "pages.admin.orders.detail.payment.title",
+    "value": "ÉCHANGE D'OR"
+  },
+  {
+    "key": "pages.admin.orders.detail.payment.locked",
+    "value": "🔒 VÉROUILLÉ"
+  },
+  {
+    "key": "pages.admin.orders.detail.payment.subtotal",
+    "value": "Sous-total"
+  },
+  {
+    "key": "pages.admin.orders.detail.payment.shipping",
+    "value": "Expédition"
+  },
+  {
+    "key": "pages.admin.orders.detail.payment.total",
+    "value": "OR TOTAL"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.title",
+    "value": "MANIFESTE PRODUIT ({count})"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.locked",
+    "value": "Inventaire verrouillé"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.stock_label",
+    "value": "STOCK"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.qty_label",
+    "value": "QTÉ"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.removed",
+    "value": "RETIRÉ"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.deleted",
+    "value": "ÉLIMINÉ"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.price_unit",
+    "value": "${price} ch."
+  },
+  {
+    "key": "pages.admin.orders.detail.items.restore_btn",
+    "value": "Restaurer"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.delete_btn",
+    "value": "Retirer du manifeste"
+  },
+  {
+    "key": "pages.admin.orders.detail.add_item.title",
+    "value": "🎁 AJOUTER BUTIN / CADEAU"
+  },
+  {
+    "key": "pages.admin.orders.detail.add_item.placeholder",
+    "value": "Chercher carte ou produit..."
+  },
+  {
+    "key": "pages.admin.orders.detail.add_item.staged_label",
+    "value": "À ajouter :"
+  },
+  {
+    "key": "pages.admin.orders.detail.actions.saving",
+    "value": "SYNCHRO..."
+  },
+  {
+    "key": "pages.admin.orders.detail.actions.save",
+    "value": "VALIDER LES CHANGEMENTS"
+  },
+  {
+    "key": "pages.admin.orders.detail.actions.discard",
+    "value": "ANNULER"
+  },
+  {
+    "key": "pages.admin.orders.confirm_modal.title",
+    "value": "AUTORISER EXPÉDITION"
+  },
+  {
+    "key": "pages.admin.orders.confirm_modal.desc",
+    "value": "Choisir les vaults où puiser le stock."
+  },
+  {
+    "key": "pages.admin.orders.confirm_modal.no_locations",
+    "value": "⚠️ Aucun vault physique assigné"
+  },
+  {
+    "key": "pages.admin.orders.confirm_modal.auto_label",
+    "value": "AUTO"
+  },
+  {
+    "key": "pages.admin.orders.confirm_modal.available_label",
+    "value": "(disponible : {count})"
+  },
+  {
+    "key": "pages.admin.orders.confirm_modal.warning",
+    "value": "⚠️ Sûr ? Cela bloquera le stock assigné."
+  },
+  {
+    "key": "pages.admin.orders.confirm_modal.processing",
+    "value": "TRAITEMENT..."
+  },
+  {
+    "key": "pages.admin.orders.restore_modal.title",
+    "value": "DÉTERRER L'INVENTAIRE (UNEARTH)"
+  },
+  {
+    "key": "pages.admin.orders.restore_modal.desc",
+    "value": "Choisir les vaults où retourner ces articles."
+  },
+  {
+    "key": "pages.admin.orders.restore_modal.add_location",
+    "value": "AJOUTER EMPLACEMENT VAULT"
+  },
+  {
+    "key": "pages.admin.orders.restore_modal.processing",
+    "value": "RÉANIMATION..."
+  },
+  {
+    "key": "pages.admin.orders.alerts.complete_confirm",
+    "value": "Sûr de vouloir marquer comme COMPLET ? C'est un sort final et le manifeste sera verrouillé."
+  },
+  {
+    "key": "pages.admin.orders.alerts.cancel_confirm",
+    "value": "Sûr de vouloir ANNULER cette commande ? Cette action est définitive."
+  },
+  {
+    "key": "pages.admin.settings.title",
+    "value": "RÉGLAGES GLOBAUX"
+  },
+  {
+    "key": "pages.admin.settings.subtitle",
+    "value": "Configuration Système // Ajustements Maîtres"
+  },
+  {
+    "key": "pages.admin.settings.financial.tcgplayer_rate",
+    "value": "USD vers COP (TCGPlayer)"
+  },
+  {
+    "key": "pages.admin.settings.financial.tcgplayer_desc",
+    "value": "Multiplicateur pour prix Market TCGPlayer en COP."
+  },
+  {
+    "key": "pages.admin.settings.financial.ck_rate",
+    "value": "USD vers COP (CardKingdom)"
+  },
+  {
+    "key": "pages.admin.settings.financial.ck_desc",
+    "value": "Multiplicateur pour prix USD CardKingdom en COP."
+  },
+  {
+    "key": "pages.admin.settings.financial.cm_rate",
+    "value": "EUR vers COP (Cardmarket)"
+  },
+  {
+    "key": "pages.admin.settings.financial.cm_desc",
+    "value": "Multiplicateur pour prix Avg Cardmarket en COP."
+  },
+  {
+    "key": "pages.admin.settings.financial.note_title",
+    "value": "Note :"
+  },
+  {
+    "key": "pages.admin.settings.financial.note_text",
+    "value": "Ces taux sont appliqués lors de l'ingestion d'inventaire et synchro des prix. Les ajustements manuels sur les produits restent prioritaires."
+  },
+  {
+    "key": "pages.admin.settings.discovery.title",
+    "value": "ALGORITHMES DE RECHERCHE & LOGISTIQUE"
+  },
+  {
+    "key": "pages.admin.settings.discovery.hot_desc",
+    "value": "Les produits atteignant ce seuil afficheront le badge 🔥 HOT."
+  },
+  {
+    "key": "pages.admin.settings.discovery.new_desc",
+    "value": "Les produits créés dans cette fenêtre afficheront le badge 🆕 NOUVEAU."
+  },
+  {
+    "key": "pages.admin.settings.discovery.express_label",
+    "value": "Livraison Express Bogotá"
+  },
+  {
+    "key": "pages.admin.settings.discovery.express_desc",
+    "value": "Si DÉSACTIVÉ, le badge livraison sera OFFLINE peu importe l'heure."
+  },
+  {
+    "key": "pages.admin.settings.discovery.express_on",
+    "value": "INTERRUPTEUR MAÎTRE : ON"
+  },
+  {
+    "key": "pages.admin.settings.discovery.express_off",
+    "value": "INTERRUPTEUR MAÎTRE : OFF"
+  },
+  {
+    "key": "pages.admin.settings.discovery.synergy_label",
+    "value": "Limite Prix Synergy Scout (COP)"
+  },
+  {
+    "key": "pages.admin.settings.discovery.synergy_desc",
+    "value": "Prix max pour les suggestions Synergy Scout."
+  },
+  {
+    "key": "pages.admin.settings.discovery.shipping_label",
+    "value": "Frais de port fixes (COP)"
+  },
+  {
+    "key": "pages.admin.settings.discovery.shipping_desc",
+    "value": "Frais standard pour toute expédition (ignoré en retrait local)."
+  },
+  {
+    "key": "pages.admin.settings.discovery.priority_shipping_label",
+    "value": "Frais livraison prioritaire (COP)"
+  },
+  {
+    "key": "pages.admin.settings.discovery.priority_shipping_desc",
+    "value": "Frais pour livraison Express à Bogotá. S'applique si Express est choisi."
+  },
+  {
+    "key": "pages.admin.settings.system.title",
+    "value": "MAINTENANCE & DIAGNOSTICS SYSTÈME"
+  },
+  {
+    "key": "pages.admin.settings.system.backend_logs",
+    "value": "Niveau Log Serveur Backend"
+  },
+  {
+    "key": "pages.admin.settings.system.backend_logs_desc",
+    "value": "Contrôle la verbosité des logs serveur Go. Changements instantanés."
+  },
+  {
+    "key": "pages.admin.settings.system.frontend_logs",
+    "value": "Niveau Log Client Frontend"
+  },
+  {
+    "key": "pages.admin.settings.system.frontend_logs_desc",
+    "value": "Contrôle les logs locaux et distants. Persisté en localStorage."
+  },
+  {
+    "key": "pages.admin.settings.footer.save_desc",
+    "value": "Ces changements mettront à jour les taux et l'identité de la boutique partout."
+  },
+  {
+    "key": "pages.admin.settings.actions.updating",
+    "value": "MISE À JOUR DU NOYAU..."
+  },
+  {
+    "key": "pages.admin.settings.actions.sync",
+    "value": "SYNCHRONISER TOUTE LA CONFIG SYSTÈME →"
+  },
+  {
+    "key": "pages.admin.settings.actions.success",
+    "value": "✓ MIS À JOUR AVEC SUCCÈS"
+  },
+  {
+    "key": "pages.common.buttons.reset",
+    "value": "RÉINITIALISER"
+  },
+  {
+    "key": "pages.admin.settings.alerts.update_failed",
+    "value": "Échec mise à jour réglages."
+  },
+  {
+    "key": "pages.admin.settings.alerts.fetch_logs_failed",
+    "value": "Échec récupération niveau log"
+  },
+  {
+    "key": "pages.admin.settings.alerts.update_logs_failed",
+    "value": "Échec mise à jour niveau log"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.title",
+    "value": "Relocalisation Massive"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.target_label",
+    "value": "Stockage Cible :"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.target_placeholder",
+    "value": "Choisir Cible..."
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.target_desc",
+    "value": "Tous les articles iront vers ce lieu"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.image",
+    "value": "Image"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.product_name",
+    "value": "Nom Produit"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.set",
+    "value": "Édition"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.code",
+    "value": "Code"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.foil",
+    "value": "Foil"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.variant",
+    "value": "Variante"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.source",
+    "value": "Source"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.stock",
+    "value": "Stock"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.to_move",
+    "value": "À Déplacer"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.no_image",
+    "value": "Pas d'image"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.regular_variant",
+    "value": "Régulier"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.processing",
+    "value": "Traitement..."
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.confirm_btn",
+    "value": "Confirmer Relocalisation"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.alerts.select_target",
+    "value": "Veuillez choisir un lieu cible"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.alerts.no_items",
+    "value": "Rien à déplacer"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.alerts.success",
+    "value": "Produits relocalisés"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.alerts.error",
+    "value": "Échec relocalisation"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.alerts.load_error",
+    "value": "Échec chargement lieux"
+  },
+  {
+    "key": "components.language_selector.names",
+    "value": "🇫🇷 Français"
+  },
+  {
+    "key": "pages.admin.themes.labels.accent_header",
+    "value": "Accent for Header Areas"
+  },
+  {
+    "key": "pages.admin.themes.labels.bg_overlay_url",
+    "value": "Background Overlay Image URL"
+  },
+  {
+    "key": "pages.admin.themes.labels.body_typography",
+    "value": "Body Typography Family"
+  },
+  {
+    "key": "pages.admin.themes.labels.borders_dividers",
+    "value": "Borders & Dividers"
+  },
+  {
+    "key": "pages.admin.themes.labels.button_bg",
+    "value": "Button Background"
+  },
+  {
+    "key": "pages.admin.themes.labels.button_text",
+    "value": "Button Text"
+  },
+  {
+    "key": "pages.admin.themes.labels.card_rounding",
+    "value": "Card Corner Rounding"
+  },
+  {
+    "key": "pages.admin.themes.labels.card_panel_surface",
+    "value": "Card & Panel Surface"
+  },
+  {
+    "key": "pages.admin.themes.labels.checkbox_border",
+    "value": "Checkbox Border"
+  },
+  {
+    "key": "pages.admin.themes.labels.checkbox_checked_bg",
+    "value": "Checkbox Checked BG"
+  },
+  {
+    "key": "pages.admin.themes.labels.dmg_status",
+    "value": "Damaged (DMG) Status"
+  },
+  {
+    "key": "pages.admin.themes.labels.focus_state",
+    "value": "Focus State Color"
+  },
+  {
+    "key": "pages.admin.themes.labels.global_bg",
+    "value": "Global Page Background"
+  },
+  {
+    "key": "pages.admin.themes.labels.grid_spacing",
+    "value": "Grid Spacing (Gap)"
+  },
+  {
+    "key": "pages.admin.themes.labels.header_typography",
+    "value": "Header Typography Family"
+  },
+  {
+    "key": "pages.admin.themes.labels.hp_status",
+    "value": "Heavily Played (HP) Status"
+  },
+  {
+    "key": "pages.admin.themes.labels.high_contrast_hp",
+    "value": "High Contrast HP (Header)"
+  },
+  {
+    "key": "pages.admin.themes.labels.hover_accent",
+    "value": "Hover / Secondary Accent"
+  },
+  {
+    "key": "pages.admin.themes.labels.inner_card_bg",
+    "value": "Inner Card Background"
+  },
+  {
+    "key": "pages.admin.themes.labels.internal_card_padding",
+    "value": "Internal Card Padding"
+  },
+  {
+    "key": "pages.admin.themes.labels.lp_status",
+    "value": "Lightly Played (LP) Status"
+  },
+  {
+    "key": "pages.admin.themes.labels.mp_status",
+    "value": "Moderately Played (MP) Status"
+  },
+  {
+    "key": "pages.admin.themes.labels.muted_text",
+    "value": "Muted / Small Text"
+  },
+  {
+    "key": "pages.admin.themes.labels.navigation_header",
+    "value": "Navigation Header"
+  },
+  {
+    "key": "pages.admin.themes.labels.nm_status",
+    "value": "Near Mint (NM) Status"
+  },
+  {
+    "key": "pages.admin.themes.labels.primary_accent",
+    "value": "Primary Accent Color"
+  },
+  {
+    "key": "pages.admin.themes.labels.primary_heading",
+    "value": "Primary Heading Text"
+  },
+  {
+    "key": "pages.admin.themes.labels.secondary_text",
+    "value": "Secondary / Body Text"
+  },
+  {
+    "key": "pages.admin.themes.labels.secondary_edge",
+    "value": "Secondary Edge/Accent Color"
+  },
+  {
+    "key": "pages.admin.themes.labels.text_on_accent",
+    "value": "Text on Accent Backgrounds"
+  },
+  {
+    "key": "pages.admin.themes.labels.text_on_nav",
+    "value": "Text on Navigation Header"
+  },
+  {
+    "key": "components.admin.category_modal.title",
+    "value": "COLLECTIONS & CATS"
+  },
+  {
+    "key": "components.admin.category_modal.placeholder",
+    "value": "New Collection Name (e.g. Commander Staples)"
+  },
+  {
+    "key": "components.admin.category_modal.add_btn",
+    "value": "ADD"
+  },
+  {
+    "key": "components.admin.category_modal.save_btn",
+    "value": "SAVE"
+  },
+  {
+    "key": "components.admin.category_modal.cancel_btn",
+    "value": "CANCEL"
+  },
+  {
+    "key": "components.admin.category_modal.labels.bg_text",
+    "value": "Background & Text"
+  },
+  {
+    "key": "components.admin.category_modal.labels.badge_icon",
+    "value": "Badge Icon"
+  },
+  {
+    "key": "components.admin.category_modal.preview",
+    "value": "PREVIEW:"
+  },
+  {
+    "key": "components.admin.category_modal.products_linked",
+    "value": "Products Linked"
+  },
+  {
+    "key": "components.admin.category_modal.edit_btn",
+    "value": "EDIT"
+  },
+  {
+    "key": "components.admin.category_modal.delete_btn",
+    "value": "DELETE"
+  },
+  {
+    "key": "components.admin.category_modal.empty",
+    "value": "VOID DETECTED // NO COLLECTIONS DEFINED"
+  },
+  {
+    "key": "components.admin.settings_modal.sections.rates",
+    "value": "EXCHANGE RATES"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.usd_tcg",
+    "value": "USD TO COP (TCG)"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.usd_ck",
+    "value": "USD TO COP (CK)"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.eur_mck",
+    "value": "EUR TO COP (MCK)"
+  },
+  {
+    "key": "components.admin.settings_modal.notes.rates",
+    "value": "* These rates are used to compute final COP prices from external sources."
+  },
+  {
+    "key": "components.admin.settings_modal.sections.identity",
+    "value": "STORE IDENTITY"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.address",
+    "value": "PHYSICAL ADDRESS"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.whatsapp",
+    "value": "WHATSAPP"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.instagram",
+    "value": "INSTAGRAM"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.email",
+    "value": "STORE EMAIL"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.hours",
+    "value": "BUSINESS HOURS"
+  },
+  {
+    "key": "components.admin.settings_modal.sections.localization",
+    "value": "LOCALIZATION"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.visibility",
+    "value": "Visibility Control"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.hide_selector",
+    "value": "Hide Selector from Client Footer"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.default_lang",
+    "value": "Master Default Language"
+  },
+  {
+    "key": "components.admin.settings_modal.notes.localization",
+    "value": "* The default language is loaded for first-time visitors who haven't set a preference."
+  },
+  {
+    "key": "components.admin.settings_modal.buttons.save",
+    "value": "SAVE ENTIRE DB CONFIG →"
+  },
+  {
+    "key": "components.admin.settings_modal.buttons.discard",
+    "value": "DISCARD"
+  },
+  {
+    "key": "components.admin.variant_selector.identity_summary",
+    "value": "Identity Summary"
   }
 ]

@@ -225,7 +225,7 @@
   },
   {
     "key": "pages.checkout.form.id_number",
-    "value": "ID NUMBER / C\u00c9DULA"
+    "value": "ID NUMBER / CÉDULA"
   },
   {
     "key": "pages.checkout.form.address",
@@ -265,7 +265,7 @@
   },
   {
     "key": "pages.checkout.buttons.confirm",
-    "value": "CONFIRM ORDER \u2192"
+    "value": "CONFIRM ORDER →"
   },
   {
     "key": "pages.checkout.buttons.processing",
@@ -289,7 +289,7 @@
   },
   {
     "key": "pages.order.confirmation.back",
-    "value": "\u2190 BACK TO STORE"
+    "value": "← BACK TO STORE"
   },
   {
     "key": "pages.order.confirmation.contact",
@@ -433,7 +433,7 @@
   },
   {
     "key": "pages.profile.orders.browse",
-    "value": "Browse our inventory \u2192"
+    "value": "Browse our inventory →"
   },
   {
     "key": "pages.profile.table.order_no",
@@ -569,7 +569,7 @@
   },
   {
     "key": "pages.inventory.grid.filters.clear",
-    "value": "Clear All Filters \u00d7"
+    "value": "Clear All Filters ×"
   },
   {
     "key": "pages.inventory.grid.sort.label",
@@ -613,11 +613,11 @@
   },
   {
     "key": "pages.inventory.grid.pagination.prev",
-    "value": "\u2190 Prev"
+    "value": "← Prev"
   },
   {
     "key": "pages.inventory.grid.pagination.next",
-    "value": "Next \u2192"
+    "value": "Next →"
   },
   {
     "key": "grid.filters.condition",
@@ -681,7 +681,7 @@
   },
   {
     "key": "tcg.pokemon",
-    "value": "Pok\u00e9mon"
+    "value": "Pokémon"
   },
   {
     "key": "pages.singles.landing.category",
@@ -697,7 +697,7 @@
   },
   {
     "key": "pages.singles.landing.view_all",
-    "value": "VIEW ALL SINGLES \u2192"
+    "value": "VIEW ALL SINGLES →"
   },
   {
     "key": "pages.singles.landing.featured",
@@ -737,11 +737,11 @@
   },
   {
     "key": "pages.checkout.buttons.back",
-    "value": "\u2190 BACK TO SHOP"
+    "value": "← BACK TO SHOP"
   },
   {
     "key": "pages.checkout.buttons.back",
-    "value": "\u2190 BACK TO SHOP"
+    "value": "← BACK TO SHOP"
   },
   {
     "key": "pages.bounties.page.title",
@@ -825,7 +825,7 @@
   },
   {
     "key": "pages.contact.buttons.sell_bulk",
-    "value": "SELL US YOUR BULK \u2192"
+    "value": "SELL US YOUR BULK →"
   },
   {
     "key": "pages.contact.map.placeholder",
@@ -845,7 +845,7 @@
   },
   {
     "key": "pages.home.buttons.view_all",
-    "value": "VIEW ALL \u2192"
+    "value": "VIEW ALL →"
   },
   {
     "key": "pages.home.status.no_items",
@@ -1181,7 +1181,7 @@
   },
   {
     "key": "pages.cart.drawer.checkout_btn",
-    "value": "PROCEED TO CHECKOUT \u2192"
+    "value": "PROCEED TO CHECKOUT →"
   },
   {
     "key": "pages.cart.drawer.checkout_notice",
@@ -1221,11 +1221,11 @@
   },
   {
     "key": "pages.home.hero.sell_bulk",
-    "value": "SELL YOUR BULK \u2192"
+    "value": "SELL YOUR BULK →"
   },
   {
     "key": "pages.home.sections.view_all",
-    "value": "VIEW ALL \u2192"
+    "value": "VIEW ALL →"
   },
   {
     "key": "pages.home.sections.empty",
@@ -1257,7 +1257,7 @@
   },
   {
     "key": "pages.bulk.page.subtitle",
-    "value": "Got a shoebox of old cards gathering dust? We'll take them off your hands and put cash in your pocket. No appointment needed \u2014 just walk in."
+    "value": "Got a shoebox of old cards gathering dust? We'll take them off your hands and put cash in your pocket. No appointment needed — just walk in."
   },
   {
     "key": "pages.bulk.intro.we_buy",
@@ -1317,7 +1317,7 @@
   },
   {
     "key": "pages.bulk.accepts.1",
-    "value": "Pok\u00e9mon TCG (English only)"
+    "value": "Pokémon TCG (English only)"
   },
   {
     "key": "pages.bulk.accepts.2",
@@ -1357,7 +1357,7 @@
   },
   {
     "key": "pages.bulk.sections.price_disclaimer",
-    "value": "\u26a0 Prices updated regularly. Large lots (1,000+ cards) may receive bonus offers. Prices are in-store cash \u2014 store credit offers up to 25% more."
+    "value": "⚠ Prices updated regularly. Large lots (1,000+ cards) may receive bonus offers. Prices are in-store cash — store credit offers up to 25% more."
   },
   {
     "key": "pages.bulk.how.1.title",
@@ -1365,7 +1365,7 @@
   },
   {
     "key": "pages.bulk.how.1.desc",
-    "value": "Walk in with your bulk. Sorted or unsorted, boxed or bagged \u2014 doesn't matter."
+    "value": "Walk in with your bulk. Sorted or unsorted, boxed or bagged — doesn't matter."
   },
   {
     "key": "pages.bulk.how.2.title",
@@ -1409,7 +1409,7 @@
   },
   {
     "key": "pages.sealed.landing.view_all",
-    "value": "VIEW ALL SEALED \u2192"
+    "value": "VIEW ALL SEALED →"
   },
   {
     "key": "pages.sealed.landing.no_featured",
@@ -1429,7 +1429,7 @@
   },
   {
     "key": "pages.accessories.subtitle",
-    "value": "Sleeves, binders, deck boxes, playmats and more \u2014 for all TCGs."
+    "value": "Sleeves, binders, deck boxes, playmats and more — for all TCGs."
   },
   {
     "key": "components.client_request_modal.title",
@@ -1457,7 +1457,7 @@
   },
   {
     "key": "components.language_selector.names",
-    "value": "\ud83c\uddfa\ud83c\uddf8 English"
+    "value": "🇺🇸 English"
   },
   {
     "key": "components.client_request_modal.form.card_label",
@@ -1490,6 +1490,246 @@
   {
     "key": "components.client_request_modal.login_prompt",
     "value": "to automatically fill your info and track your request status."
+  },
+  {
+    "key": "components.cancellation_modal.title",
+    "value": "Discard Request"
+  },
+  {
+    "key": "components.cancellation_modal.desc",
+    "value": "You are choosing to **discard** your request for {card} as no longer needed. Please let us know why."
+  },
+  {
+    "key": "components.cancellation_modal.reason_label",
+    "value": "Reason"
+  },
+  {
+    "key": "components.cancellation_modal.details_label",
+    "value": "Additional Details (Optional)"
+  },
+  {
+    "key": "components.cancellation_modal.details_placeholder",
+    "value": "Anything else you'd like to tell us..."
+  },
+  {
+    "key": "components.cancellation_modal.back_button",
+    "value": "Go Back"
+  },
+  {
+    "key": "components.cancellation_modal.confirm_button",
+    "value": "Confirm Discard"
+  },
+  {
+    "key": "components.cancellation_modal.submitting",
+    "value": "Discarding..."
+  },
+  {
+    "key": "components.cancellation_modal.reasons.found",
+    "value": "Found it elsewhere"
+  },
+  {
+    "key": "components.cancellation_modal.reasons.not_needed",
+    "value": "No longer need it"
+  },
+  {
+    "key": "components.cancellation_modal.reasons.price",
+    "value": "Price too high"
+  },
+  {
+    "key": "components.cancellation_modal.reasons.mind",
+    "value": "Changed my mind"
+  },
+  {
+    "key": "components.cancellation_modal.reasons.other",
+    "value": "Other"
+  },
+  {
+    "key": "components.admin.csv_import.title",
+    "value": "COLLECTOR'S MANIFEST IMPORTER"
+  },
+  {
+    "key": "components.admin.csv_import.subtitle",
+    "value": "Bulk add products to the inventory manifest"
+  },
+  {
+    "key": "components.admin.csv_import.drop_zone.title",
+    "value": "Drop Manifest Here"
+  },
+  {
+    "key": "components.admin.csv_import.drop_zone.subtitle",
+    "value": "or click to browse your local archives"
+  },
+  {
+    "key": "components.admin.csv_import.drop_zone.button",
+    "value": "Select Master Manifest"
+  },
+  {
+    "key": "components.admin.csv_import.config.title",
+    "value": "System Configuration"
+  },
+  {
+    "key": "components.admin.csv_import.config.destination_label",
+    "value": "Inventory Destination"
+  },
+  {
+    "key": "components.admin.csv_import.config.dest_singles",
+    "value": "Individual Singles"
+  },
+  {
+    "key": "components.admin.csv_import.config.dest_deck",
+    "value": "Curated Deck"
+  },
+  {
+    "key": "components.admin.csv_import.config.deck_name_label",
+    "value": "Manifest Identifier (Deck Name)"
+  },
+  {
+    "key": "components.admin.csv_import.config.deck_name_placeholder",
+    "value": "e.g. MONO BLACK CONTROL"
+  },
+  {
+    "key": "components.admin.csv_import.config.tcg_framework",
+    "value": "TCG Framework"
+  },
+  {
+    "key": "components.admin.csv_import.config.vault_allocation",
+    "value": "Vault Allocation"
+  },
+  {
+    "key": "components.admin.csv_import.config.storage_placeholder",
+    "value": "Select Storage Location"
+  },
+  {
+    "key": "components.admin.csv_import.config.language_label",
+    "value": "Main Language"
+  },
+  {
+    "key": "components.admin.csv_import.config.price_source_label",
+    "value": "Default Price Source"
+  },
+  {
+    "key": "components.admin.csv_import.config.tagging_label",
+    "value": "Metadata Tagging (Bulk)"
+  },
+  {
+    "key": "components.admin.csv_import.config.no_collections",
+    "value": "No collections defined"
+  },
+  {
+    "key": "components.admin.csv_import.mapping.title",
+    "value": "Column Topology Mapping"
+  },
+  {
+    "key": "components.admin.csv_import.actions.return",
+    "value": "Return"
+  },
+  {
+    "key": "components.admin.csv_import.actions.generate",
+    "value": "Generate Manifest"
+  },
+  {
+    "key": "components.admin.csv_import.preview.enrich_loading",
+    "value": "SCRYING ARCHIVES..."
+  },
+  {
+    "key": "components.admin.csv_import.preview.enrich_button",
+    "value": "REVEAL HIDDEN KNOWLEDGE"
+  },
+  {
+    "key": "components.admin.csv_import.preview.complete",
+    "value": "Complete"
+  },
+  {
+    "key": "components.admin.csv_import.preview.found_count",
+    "value": "Found {count} Signatures"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.art",
+    "value": "Art"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.info",
+    "value": "Product Info"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.lang",
+    "value": "Lang"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.cond",
+    "value": "Cond"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.treatment",
+    "value": "Treatment"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.vault",
+    "value": "Vault"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.collections",
+    "value": "Collections"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.reference",
+    "value": "Reference"
+  },
+  {
+    "key": "components.admin.csv_import.preview.table.qty",
+    "value": "Qty"
+  },
+  {
+    "key": "components.admin.csv_import.preview.scanning",
+    "value": "SCANNING..."
+  },
+  {
+    "key": "components.admin.csv_import.preview.placeholders.name",
+    "value": "Signature Key"
+  },
+  {
+    "key": "components.admin.csv_import.preview.placeholders.uuid",
+    "value": "System UUID"
+  },
+  {
+    "key": "components.admin.csv_import.preview.placeholders.set",
+    "value": "SET"
+  },
+  {
+    "key": "components.admin.csv_import.preview.placeholders.number",
+    "value": "#"
+  },
+  {
+    "key": "components.admin.csv_import.importing.title",
+    "value": "STOCKING THE VAULT..."
+  },
+  {
+    "key": "components.admin.csv_import.importing.subtitle",
+    "value": "\"Unpacking shipment and organizing archives\""
+  },
+  {
+    "key": "components.admin.csv_import.importing.status",
+    "value": "System Processing Manifest of {count} Records"
+  },
+  {
+    "key": "components.admin.csv_import.summary.title",
+    "value": "Manifest Success!"
+  },
+  {
+    "key": "components.admin.csv_import.summary.success_msg",
+    "value": "Successfully archived {count} SKU units."
+  },
+  {
+    "key": "components.admin.csv_import.summary.return_button",
+    "value": "Return to Command Deck"
+  },
+  {
+    "key": "components.admin.csv_import.actions.return_to_topology",
+    "value": "Return to Topology"
+  },
+  {
+    "key": "components.admin.csv_import.actions.finalize",
+    "value": "⚡ FINALIZE SHIPMENT"
   },
   {
     "key": "components.deck_contents.title",
@@ -1529,11 +1769,11 @@
   },
   {
     "key": "pages.notices.list.open_btn",
-    "value": "OPEN NOTICE \u2192"
+    "value": "OPEN NOTICE →"
   },
   {
     "key": "pages.notices.detail.back_btn",
-    "value": "\u2190 BACK TO ALL NOTICES"
+    "value": "← BACK TO ALL NOTICES"
   },
   {
     "key": "pages.notices.detail.published_on",
@@ -1541,7 +1781,7 @@
   },
   {
     "key": "pages.notices.detail.all_notices_btn",
-    "value": "\u2190 ALL NOTICES"
+    "value": "← ALL NOTICES"
   },
   {
     "key": "pages.notices.detail.share_label",
@@ -1573,7 +1813,7 @@
   },
   {
     "key": "pages.notices.actions.view_all",
-    "value": "VIEW ALL \u2192"
+    "value": "VIEW ALL →"
   },
   {
     "key": "pages.notices.actions.read_more",
@@ -1665,7 +1905,7 @@
   },
   {
     "key": "pages.checkout.summary.confirm_btn",
-    "value": "CONFIRM ORDER \u2192"
+    "value": "CONFIRM ORDER →"
   },
   {
     "key": "pages.checkout.summary.processing",
@@ -1697,7 +1937,7 @@
   },
   {
     "key": "pages.admin.tcg_registry.buttons.register_new",
-    "value": "\uff0b REGISTER NEW TCG"
+    "value": "＋ REGISTER NEW TCG"
   },
   {
     "key": "pages.admin.tcg_registry.form.slug_label",
@@ -1961,7 +2201,7 @@
   },
   {
     "key": "pages.admin.clients.details.back_link",
-    "value": "\u2190 BACK TO CLIENTS"
+    "value": "← BACK TO CLIENTS"
   },
   {
     "key": "pages.admin.clients.details.active_group",
@@ -2101,7 +2341,7 @@
   },
   {
     "key": "pages.admin.bounties.offers.over_limit",
-    "value": "\u26a0\ufe0f OVER QUANTITY LIMIT"
+    "value": "⚠️ OVER QUANTITY LIMIT"
   },
   {
     "key": "pages.admin.bounties.requests.complete_status",
@@ -2193,7 +2433,7 @@
   },
   {
     "key": "pages.admin.bounties.offers.over_limit",
-    "value": "\u26a0\ufe0f OVER QUANTITY LIMIT"
+    "value": "⚠️ OVER QUANTITY LIMIT"
   },
   {
     "key": "pages.admin.bounties.requests.complete_status",
@@ -2617,7 +2857,7 @@
   },
   {
     "key": "components.admin.bounty_modal.save_btn",
-    "value": "\ud83d\udcbe SAVE BOUNTY"
+    "value": "💾 SAVE BOUNTY"
   },
   {
     "key": "components.admin.bounty_modal.saving",
@@ -2625,7 +2865,7 @@
   },
   {
     "key": "components.admin.bounty_modal.save_btn",
-    "value": "\ud83d\udcbe SAVE BOUNTY"
+    "value": "💾 SAVE BOUNTY"
   },
   {
     "key": "components.admin.bounty_modal.error_required",
@@ -2873,7 +3113,7 @@
   },
   {
     "key": "pages.cart.drawer.try_importer",
-    "value": "USE DECK IMPORTER \u2192"
+    "value": "USE DECK IMPORTER →"
   },
   {
     "key": "pages.cart.drawer.importer_nudge",
@@ -2893,7 +3133,7 @@
   },
   {
     "key": "pages.deck_importer.buttons.analyze",
-    "value": "ANALYZE LIST \u2192"
+    "value": "ANALYZE LIST →"
   },
   {
     "key": "pages.deck_importer.buttons.analyzing",
@@ -2977,11 +3217,11 @@
   },
   {
     "key": "pages.common.pagination.prev",
-    "value": "\u2190 PREV"
+    "value": "← PREV"
   },
   {
     "key": "pages.common.pagination.next",
-    "value": "NEXT \u2192"
+    "value": "NEXT →"
   },
   {
     "key": "components.theme_selector.title",
@@ -3001,7 +3241,7 @@
   },
   {
     "key": "pages.checkout.delivery.pickup_desc",
-    "value": "Pick up at our store in Bogot\u00e1"
+    "value": "Pick up at our store in Bogotá"
   },
   {
     "key": "pages.checkout.section.contact",
@@ -3185,7 +3425,7 @@
   },
   {
     "key": "pages.404.back_home",
-    "value": "\u2190 Return to Command Center"
+    "value": "← Return to Command Center"
   },
   {
     "key": "pages.admin.dashboard.valuation",
@@ -3564,7 +3804,691 @@
     "value": "Spend (COP)"
   },
   {
-    "key": "pages.admin.clients.table.no_notes",
-    "value": "No notes recorded..."
+    "key": "pages.admin.orders.title",
+    "value": "COMMAND MANIFEST"
+  },
+  {
+    "key": "pages.admin.orders.search_placeholder",
+    "value": "Search Logs (#, name, phone...)"
+  },
+  {
+    "key": "pages.admin.orders.empty_list",
+    "value": "No manifests found in the archives."
+  },
+  {
+    "key": "pages.admin.orders.status_filter_all",
+    "value": "ALL LOGS"
+  },
+  {
+    "key": "pages.admin.orders.list.item_count",
+    "value": "{count} item{s}"
+  },
+  {
+    "key": "pages.admin.orders.detail.select_prompt",
+    "value": "Select a manifest to inspect"
+  },
+  {
+    "key": "pages.admin.orders.detail.error_title",
+    "value": "Archival Access Error"
+  },
+  {
+    "key": "pages.admin.orders.detail.close_btn",
+    "value": "CLOSE LOG"
+  },
+  {
+    "key": "pages.admin.orders.detail.back_to_list",
+    "value": "← BACK TO COMMAND LOGS"
+  },
+  {
+    "key": "pages.admin.orders.detail.confirmed_at",
+    "value": "Confirmed on {date}"
+  },
+  {
+    "key": "pages.admin.orders.detail.confirm_btn",
+    "value": "✓ AUTHORIZE SHIPMENT"
+  },
+  {
+    "key": "pages.admin.orders.detail.restore_inventory",
+    "value": "♻ UNEARTH INVENTORY"
+  },
+  {
+    "key": "pages.admin.orders.detail.inventory_restored",
+    "value": "Inventory Reanimated"
+  },
+  {
+    "key": "pages.admin.orders.detail.tracking.title",
+    "value": "DELIVERY SIGIL / TRACKING"
+  },
+  {
+    "key": "pages.admin.orders.detail.tracking.local_pickup",
+    "value": "IN-STORE SUMMONING"
+  },
+  {
+    "key": "pages.admin.orders.detail.tracking.label",
+    "value": "Tracking Sigil"
+  },
+  {
+    "key": "pages.admin.orders.detail.tracking.url",
+    "value": "Tracking Portal"
+  },
+  {
+    "key": "pages.admin.orders.detail.customer.title",
+    "value": "SUMMONER PROFILE"
+  },
+  {
+    "key": "pages.admin.orders.detail.customer.notify_whatsapp",
+    "value": "NOTIFY VIA WHATSAPP"
+  },
+  {
+    "key": "pages.admin.orders.detail.payment.title",
+    "value": "GOLD EXCHANGE"
+  },
+  {
+    "key": "pages.admin.orders.detail.payment.locked",
+    "value": "🔒 LOCKED"
+  },
+  {
+    "key": "pages.admin.orders.detail.payment.subtotal",
+    "value": "Subtotal"
+  },
+  {
+    "key": "pages.admin.orders.detail.payment.shipping",
+    "value": "Shipping"
+  },
+  {
+    "key": "pages.admin.orders.detail.payment.total",
+    "value": "TOTAL GOLD"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.title",
+    "value": "PRODUCT MANIFEST ({count})"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.locked",
+    "value": "Inventory Locked"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.stock_label",
+    "value": "STOCK"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.qty_label",
+    "value": "QTY"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.removed",
+    "value": "REMOVED"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.deleted",
+    "value": "ELIMINATED"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.price_unit",
+    "value": "${price} ea"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.restore_btn",
+    "value": "Restore"
+  },
+  {
+    "key": "pages.admin.orders.detail.items.delete_btn",
+    "value": "Remove from manifest"
+  },
+  {
+    "key": "pages.admin.orders.detail.add_item.title",
+    "value": "🎁 ADD BOOTY / GIFT"
+  },
+  {
+    "key": "pages.admin.orders.detail.add_item.placeholder",
+    "value": "Search for card or product..."
+  },
+  {
+    "key": "pages.admin.orders.detail.add_item.staged_label",
+    "value": "To be added:"
+  },
+  {
+    "key": "pages.admin.orders.detail.actions.saving",
+    "value": "SYNCING..."
+  },
+  {
+    "key": "pages.admin.orders.detail.actions.save",
+    "value": "COMMIT CHANGES"
+  },
+  {
+    "key": "pages.admin.orders.detail.actions.discard",
+    "value": "DISCARD"
+  },
+  {
+    "key": "pages.admin.orders.confirm_modal.title",
+    "value": "AUTHORIZE SHIPMENT"
+  },
+  {
+    "key": "pages.admin.orders.confirm_modal.desc",
+    "value": "Select which vault locations to draw stock from."
+  },
+  {
+    "key": "pages.admin.orders.confirm_modal.no_locations",
+    "value": "⚠️ No physical vaults assigned"
+  },
+  {
+    "key": "pages.admin.orders.confirm_modal.auto_label",
+    "value": "AUTO"
+  },
+  {
+    "key": "pages.admin.orders.confirm_modal.available_label",
+    "value": "(available: {count})"
+  },
+  {
+    "key": "pages.admin.orders.confirm_modal.warning",
+    "value": "⚠️ Are you sure? This will lock the assigned stock."
+  },
+  {
+    "key": "pages.admin.orders.confirm_modal.processing",
+    "value": "PROCESSING..."
+  },
+  {
+    "key": "pages.admin.orders.restore_modal.title",
+    "value": "UNEARTH INVENTORY"
+  },
+  {
+    "key": "pages.admin.orders.restore_modal.desc",
+    "value": "Select which vaults to return these items to."
+  },
+  {
+    "key": "pages.admin.orders.restore_modal.add_location",
+    "value": "ADD VAULT LOCATION"
+  },
+  {
+    "key": "pages.admin.orders.restore_modal.processing",
+    "value": "REANIMATING..."
+  },
+  {
+    "key": "pages.admin.orders.alerts.complete_confirm",
+    "value": "Are you sure you want to mark as COMPLETED? This is a final cast and the manifest will be locked."
+  },
+  {
+    "key": "pages.admin.orders.alerts.cancel_confirm",
+    "value": "Are you sure you want to DISCARD this order? This action is final."
+  },
+  {
+    "key": "pages.admin.settings.title",
+    "value": "GLOBAL SETTINGS"
+  },
+  {
+    "key": "pages.admin.settings.subtitle",
+    "value": "System Configuration // Global Overrides"
+  },
+  {
+    "key": "pages.admin.settings.financial.tcgplayer_rate",
+    "value": "USD to COP (TCGPlayer)"
+  },
+  {
+    "key": "pages.admin.settings.financial.tcgplayer_desc",
+    "value": "Multiplier for TCGPlayer Market prices in COP."
+  },
+  {
+    "key": "pages.admin.settings.financial.ck_rate",
+    "value": "USD to COP (CardKingdom)"
+  },
+  {
+    "key": "pages.admin.settings.financial.ck_desc",
+    "value": "Multiplier for CardKingdom USD prices in COP."
+  },
+  {
+    "key": "pages.admin.settings.financial.cm_rate",
+    "value": "EUR to COP (Cardmarket)"
+  },
+  {
+    "key": "pages.admin.settings.financial.cm_desc",
+    "value": "Multiplier for Cardmarket Avg prices in COP."
+  },
+  {
+    "key": "pages.admin.settings.financial.note_title",
+    "value": "Note:"
+  },
+  {
+    "key": "pages.admin.settings.financial.note_text",
+    "value": "These rates are applied during inventory ingestion and price sync tasks. Manual price overrides on individual products remain priority over these global settings."
+  },
+  {
+    "key": "pages.admin.settings.discovery.title",
+    "value": "DISCOVERY & LOGISTICS ALGORITHMS"
+  },
+  {
+    "key": "pages.admin.settings.discovery.hot_desc",
+    "value": "Products satisfying this threshold will display the 🔥 HOT badge."
+  },
+  {
+    "key": "pages.admin.settings.discovery.new_desc",
+    "value": "Products created within this window will display the 🆕 NEW badge."
+  },
+  {
+    "key": "pages.admin.settings.discovery.express_label",
+    "value": "Bogotá Express Delivery"
+  },
+  {
+    "key": "pages.admin.settings.discovery.express_desc",
+    "value": "When OFF, the delivery badge will show as OFFLINE regardless of hours."
+  },
+  {
+    "key": "pages.admin.settings.discovery.express_on",
+    "value": "MASTER SWITCH: ON"
+  },
+  {
+    "key": "pages.admin.settings.discovery.express_off",
+    "value": "MASTER SWITCH: OFF"
+  },
+  {
+    "key": "pages.admin.settings.discovery.synergy_label",
+    "value": "Synergy Scout Price Limit (COP)"
+  },
+  {
+    "key": "pages.admin.settings.discovery.synergy_desc",
+    "value": "Max price for cards suggested in the Synergy Scout widget."
+  },
+  {
+    "key": "pages.admin.settings.discovery.shipping_label",
+    "value": "Flat Shipping Fee (COP)"
+  },
+  {
+    "key": "pages.admin.settings.discovery.shipping_desc",
+    "value": "Standard fee applied to all shipping orders (ignored for local pickup)."
+  },
+  {
+    "key": "pages.admin.settings.discovery.priority_shipping_label",
+    "value": "Priority Shipping Fee (COP)"
+  },
+  {
+    "key": "pages.admin.settings.discovery.priority_shipping_desc",
+    "value": "Fee for Express/Priority delivery in Bogotá. Only applied if Express is selected."
+  },
+  {
+    "key": "pages.admin.settings.system.title",
+    "value": "SYSTEM MAINTENANCE & DIAGNOSTICS"
+  },
+  {
+    "key": "pages.admin.settings.system.backend_logs",
+    "value": "Backend Server Log Level"
+  },
+  {
+    "key": "pages.admin.settings.system.backend_logs_desc",
+    "value": "Controls verbosity of the Go backend server logs. Changes apply instantly."
+  },
+  {
+    "key": "pages.admin.settings.system.frontend_logs",
+    "value": "Frontend Client Log Level"
+  },
+  {
+    "key": "pages.admin.settings.system.frontend_logs_desc",
+    "value": "Controls local and remote logging for this browser session. Persisted in localStorage."
+  },
+  {
+    "key": "pages.admin.settings.footer.save_desc",
+    "value": "These changes will update your shop's currency rates and identity across all pages."
+  },
+  {
+    "key": "pages.admin.settings.actions.updating",
+    "value": "UPDATING CORE..."
+  },
+  {
+    "key": "pages.admin.settings.actions.sync",
+    "value": "SYNC ALL SYSTEM CONFIGURATION →"
+  },
+  {
+    "key": "pages.admin.settings.actions.success",
+    "value": "✓ UPDATED SUCCESSFULLY"
+  },
+  {
+    "key": "pages.common.buttons.reset",
+    "value": "RESET"
+  },
+  {
+    "key": "pages.admin.settings.alerts.update_failed",
+    "value": "Failed to update settings."
+  },
+  {
+    "key": "pages.admin.settings.alerts.fetch_logs_failed",
+    "value": "Failed to fetch log level"
+  },
+  {
+    "key": "pages.admin.settings.alerts.update_logs_failed",
+    "value": "Failed to update log level"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.title",
+    "value": "Bulk Relocation"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.target_label",
+    "value": "Target Storage:"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.target_placeholder",
+    "value": "Select Target..."
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.target_desc",
+    "value": "All items will be moved to this location"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.image",
+    "value": "Image"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.product_name",
+    "value": "Product Name"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.set",
+    "value": "Set"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.code",
+    "value": "Code"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.foil",
+    "value": "Foil"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.variant",
+    "value": "Variant"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.source",
+    "value": "Source"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.stock",
+    "value": "Stock"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.table.to_move",
+    "value": "To Move"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.no_image",
+    "value": "No Image"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.regular_variant",
+    "value": "Regular"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.processing",
+    "value": "Processing..."
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.confirm_btn",
+    "value": "Confirm Relocation"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.alerts.select_target",
+    "value": "Please select a target storage location"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.alerts.no_items",
+    "value": "No items to move"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.alerts.success",
+    "value": "Products relocated successfully"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.alerts.error",
+    "value": "Failed to relocate products"
+  },
+  {
+    "key": "pages.admin.inventory.move_modal.alerts.load_error",
+    "value": "Failed to load storage locations"
+  },
+  {
+    "key": "pages.admin.themes.labels.accent_header",
+    "value": "Accent for Header Areas"
+  },
+  {
+    "key": "pages.admin.themes.labels.bg_overlay_url",
+    "value": "Background Overlay Image URL"
+  },
+  {
+    "key": "pages.admin.themes.labels.body_typography",
+    "value": "Body Typography Family"
+  },
+  {
+    "key": "pages.admin.themes.labels.borders_dividers",
+    "value": "Borders & Dividers"
+  },
+  {
+    "key": "pages.admin.themes.labels.button_bg",
+    "value": "Button Background"
+  },
+  {
+    "key": "pages.admin.themes.labels.button_text",
+    "value": "Button Text"
+  },
+  {
+    "key": "pages.admin.themes.labels.card_rounding",
+    "value": "Card Corner Rounding"
+  },
+  {
+    "key": "pages.admin.themes.labels.card_panel_surface",
+    "value": "Card & Panel Surface"
+  },
+  {
+    "key": "pages.admin.themes.labels.checkbox_border",
+    "value": "Checkbox Border"
+  },
+  {
+    "key": "pages.admin.themes.labels.checkbox_checked_bg",
+    "value": "Checkbox Checked BG"
+  },
+  {
+    "key": "pages.admin.themes.labels.dmg_status",
+    "value": "Damaged (DMG) Status"
+  },
+  {
+    "key": "pages.admin.themes.labels.focus_state",
+    "value": "Focus State Color"
+  },
+  {
+    "key": "pages.admin.themes.labels.global_bg",
+    "value": "Global Page Background"
+  },
+  {
+    "key": "pages.admin.themes.labels.grid_spacing",
+    "value": "Grid Spacing (Gap)"
+  },
+  {
+    "key": "pages.admin.themes.labels.header_typography",
+    "value": "Header Typography Family"
+  },
+  {
+    "key": "pages.admin.themes.labels.hp_status",
+    "value": "Heavily Played (HP) Status"
+  },
+  {
+    "key": "pages.admin.themes.labels.high_contrast_hp",
+    "value": "High Contrast HP (Header)"
+  },
+  {
+    "key": "pages.admin.themes.labels.hover_accent",
+    "value": "Hover / Secondary Accent"
+  },
+  {
+    "key": "pages.admin.themes.labels.inner_card_bg",
+    "value": "Inner Card Background"
+  },
+  {
+    "key": "pages.admin.themes.labels.internal_card_padding",
+    "value": "Internal Card Padding"
+  },
+  {
+    "key": "pages.admin.themes.labels.lp_status",
+    "value": "Lightly Played (LP) Status"
+  },
+  {
+    "key": "pages.admin.themes.labels.mp_status",
+    "value": "Moderately Played (MP) Status"
+  },
+  {
+    "key": "pages.admin.themes.labels.muted_text",
+    "value": "Muted / Small Text"
+  },
+  {
+    "key": "pages.admin.themes.labels.navigation_header",
+    "value": "Navigation Header"
+  },
+  {
+    "key": "pages.admin.themes.labels.nm_status",
+    "value": "Near Mint (NM) Status"
+  },
+  {
+    "key": "pages.admin.themes.labels.primary_accent",
+    "value": "Primary Accent Color"
+  },
+  {
+    "key": "pages.admin.themes.labels.primary_heading",
+    "value": "Primary Heading Text"
+  },
+  {
+    "key": "pages.admin.themes.labels.secondary_text",
+    "value": "Secondary / Body Text"
+  },
+  {
+    "key": "pages.admin.themes.labels.secondary_edge",
+    "value": "Secondary Edge/Accent Color"
+  },
+  {
+    "key": "pages.admin.themes.labels.text_on_accent",
+    "value": "Text on Accent Backgrounds"
+  },
+  {
+    "key": "pages.admin.themes.labels.text_on_nav",
+    "value": "Text on Navigation Header"
+  },
+  {
+    "key": "components.admin.category_modal.title",
+    "value": "COLLECTIONS & CATS"
+  },
+  {
+    "key": "components.admin.category_modal.placeholder",
+    "value": "New Collection Name (e.g. Commander Staples)"
+  },
+  {
+    "key": "components.admin.category_modal.add_btn",
+    "value": "ADD"
+  },
+  {
+    "key": "components.admin.category_modal.save_btn",
+    "value": "SAVE"
+  },
+  {
+    "key": "components.admin.category_modal.cancel_btn",
+    "value": "CANCEL"
+  },
+  {
+    "key": "components.admin.category_modal.labels.bg_text",
+    "value": "Background & Text"
+  },
+  {
+    "key": "components.admin.category_modal.labels.badge_icon",
+    "value": "Badge Icon"
+  },
+  {
+    "key": "components.admin.category_modal.preview",
+    "value": "PREVIEW:"
+  },
+  {
+    "key": "components.admin.category_modal.products_linked",
+    "value": "Products Linked"
+  },
+  {
+    "key": "components.admin.category_modal.edit_btn",
+    "value": "EDIT"
+  },
+  {
+    "key": "components.admin.category_modal.delete_btn",
+    "value": "DELETE"
+  },
+  {
+    "key": "components.admin.category_modal.empty",
+    "value": "VOID DETECTED // NO COLLECTIONS DEFINED"
+  },
+  {
+    "key": "components.admin.settings_modal.sections.rates",
+    "value": "EXCHANGE RATES"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.usd_tcg",
+    "value": "USD TO COP (TCG)"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.usd_ck",
+    "value": "USD TO COP (CK)"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.eur_mck",
+    "value": "EUR TO COP (MCK)"
+  },
+  {
+    "key": "components.admin.settings_modal.notes.rates",
+    "value": "* These rates are used to compute final COP prices from external sources."
+  },
+  {
+    "key": "components.admin.settings_modal.sections.identity",
+    "value": "STORE IDENTITY"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.address",
+    "value": "PHYSICAL ADDRESS"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.whatsapp",
+    "value": "WHATSAPP"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.instagram",
+    "value": "INSTAGRAM"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.email",
+    "value": "STORE EMAIL"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.hours",
+    "value": "BUSINESS HOURS"
+  },
+  {
+    "key": "components.admin.settings_modal.sections.localization",
+    "value": "LOCALIZATION"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.visibility",
+    "value": "Visibility Control"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.hide_selector",
+    "value": "Hide Selector from Client Footer"
+  },
+  {
+    "key": "components.admin.settings_modal.labels.default_lang",
+    "value": "Master Default Language"
+  },
+  {
+    "key": "components.admin.settings_modal.notes.localization",
+    "value": "* The default language is loaded for first-time visitors who haven't set a preference."
+  },
+  {
+    "key": "components.admin.settings_modal.buttons.save",
+    "value": "SAVE ENTIRE DB CONFIG →"
+  },
+  {
+    "key": "components.admin.settings_modal.buttons.discard",
+    "value": "DISCARD"
+  },
+  {
+    "key": "components.admin.variant_selector.identity_summary",
+    "value": "Identity Summary"
   }
 ]

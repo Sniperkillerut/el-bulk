@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Modal from '@/components/ui/Modal';
+import Image from 'next/image';
+import { useLanguage } from '@/context/LanguageContext';
 import { Product, StorageLocation, StoredIn } from '@/lib/types';
 import { adminFetchStorage, adminBulkMoveStorage } from '@/lib/api';
 import { useToast } from '@/context/ToastContext';
@@ -26,6 +28,7 @@ export default function BulkMoveStorageModal({
   selectedProducts,
   onSuccess
 }: BulkMoveStorageModalProps) {
+  const { t } = useLanguage();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [storageLocations, setStorageLocations] = useState<StoredIn[]>([]);
@@ -37,9 +40,9 @@ export default function BulkMoveStorageModal({
       const data = await adminFetchStorage();
       setStorageLocations(data);
     } catch {
-      toast.error('Failed to load storage locations');
+      toast.error(t('pages.admin.inventory.move_modal.alerts.load_error', 'Failed to load storage locations'));
     }
-  }, [toast]);
+  }, [toast, t]);
 
   const initializeMoveItems = useCallback(() => {
     const items: MoveItem[] = [];
@@ -76,7 +79,7 @@ export default function BulkMoveStorageModal({
 
   const handleSubmit = async () => {
     if (!targetStorageId) {
-      toast.error('Please select a target storage location');
+      toast.error(t('pages.admin.inventory.move_modal.alerts.select_target', 'Please select a target storage location'));
       return;
     }
 
@@ -89,7 +92,7 @@ export default function BulkMoveStorageModal({
       }));
 
     if (moves.length === 0) {
-      toast.error('No items to move');
+      toast.error(t('pages.admin.inventory.move_modal.alerts.no_items', 'No items to move'));
       return;
     }
 
@@ -99,11 +102,11 @@ export default function BulkMoveStorageModal({
         target_storage_id: targetStorageId,
         moves
       });
-      toast.success('Products relocated successfully');
+      toast.success(t('pages.admin.inventory.move_modal.alerts.success', 'Products relocated successfully'));
       onSuccess();
       onClose();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to relocate products';
+      const message = err instanceof Error ? err.message : t('pages.admin.inventory.move_modal.alerts.error', 'Failed to relocate products');
       toast.error(message);
     } finally {
       setLoading(false);
@@ -114,27 +117,27 @@ export default function BulkMoveStorageModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Bulk Relocation"
+      title={t('pages.admin.inventory.move_modal.title', 'Bulk Relocation')}
       maxWidth="max-w-6xl"
     >
       <div className="p-6 space-y-6">
         {/* Global Target Selection */}
         <div className="bg-bg-header/30 p-4 rounded-lg border border-border-main/50 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <span className="text-sm font-medium uppercase tracking-wider text-text-muted">Target Storage:</span>
+            <span className="text-sm font-medium uppercase tracking-wider text-text-muted">{t('pages.admin.inventory.move_modal.target_label', 'Target Storage:')}</span>
             <select
               value={targetStorageId}
               onChange={(e) => setTargetStorageId(e.target.value)}
               className="bg-bg-surface border border-border-main rounded px-3 py-2 text-text-main focus:outline-none focus:border-accent-primary"
             >
-              <option value="">Select Target...</option>
+              <option value="">{t('pages.admin.inventory.move_modal.target_placeholder', 'Select Target...')}</option>
               {storageLocations.map(loc => (
                 <option key={loc.id} value={loc.id}>{loc.name}</option>
               ))}
             </select>
           </div>
           <div className="text-sm text-text-muted italic">
-            All items will be moved to this location
+            {t('pages.admin.inventory.move_modal.target_desc', 'All items will be moved to this location')}
           </div>
         </div>
 
@@ -143,15 +146,15 @@ export default function BulkMoveStorageModal({
           <table className="w-full text-left border-collapse">
             <thead className="bg-bg-header text-text-on-header uppercase text-xs tracking-widest font-bold">
               <tr>
-                <th className="p-3">Image</th>
-                <th className="p-3">Product Name</th>
-                <th className="p-3">Set</th>
-                <th className="p-3">Code</th>
-                <th className="p-3">Foil</th>
-                <th className="p-3">Variant</th>
-                <th className="p-3">Source</th>
-                <th className="p-3">Stock</th>
-                <th className="p-3 text-center">To Move</th>
+                <th className="p-3">{t('pages.admin.inventory.move_modal.table.image', 'Image')}</th>
+                <th className="p-3">{t('pages.admin.inventory.move_modal.table.product_name', 'Product Name')}</th>
+                <th className="p-3">{t('pages.admin.inventory.move_modal.table.set', 'Set')}</th>
+                <th className="p-3">{t('pages.admin.inventory.move_modal.table.code', 'Code')}</th>
+                <th className="p-3">{t('pages.admin.inventory.move_modal.table.foil', 'Foil')}</th>
+                <th className="p-3">{t('pages.admin.inventory.move_modal.table.variant', 'Variant')}</th>
+                <th className="p-3">{t('pages.admin.inventory.move_modal.table.source', 'Source')}</th>
+                <th className="p-3">{t('pages.admin.inventory.move_modal.table.stock', 'Stock')}</th>
+                <th className="p-3 text-center">{t('pages.admin.inventory.move_modal.table.to_move', 'To Move')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border-main/30">
@@ -162,9 +165,17 @@ export default function BulkMoveStorageModal({
                     <td className="p-3">
                       <div className="w-12 h-16 bg-bg-surface border border-border-main rounded overflow-hidden flex items-center justify-center">
                         {item.product.image_url ? (
-                          <img src={item.product.image_url} alt={item.product.name} className="w-full h-full object-cover" />
+                          <div className="relative w-full h-full">
+                            <Image 
+                              src={item.product.image_url} 
+                              alt={item.product.name}
+                              fill
+                              className="object-cover"
+                              unoptimized={item.product.tcg === 'mtg'}
+                            />
+                          </div>
                         ) : (
-                          <span className="text-[10px] text-text-muted">No Image</span>
+                          <span className="text-[10px] text-text-muted">{t('pages.admin.inventory.move_modal.no_image', 'No Image')}</span>
                         )}
                       </div>
                     </td>
@@ -186,7 +197,7 @@ export default function BulkMoveStorageModal({
                       </span>
                     </td>
                     <td className="p-3 text-sm text-text-muted">
-                      {resolveLabel(item.product.card_treatment, TREATMENT_LABELS) || 'Regular'}
+                      {resolveLabel(item.product.card_treatment, TREATMENT_LABELS) || t('pages.admin.inventory.move_modal.regular_variant', 'Regular')}
                     </td>
                     <td className="p-3 text-sm font-medium text-accent-header">
                       {item.sourceLocation.name}
@@ -230,7 +241,7 @@ export default function BulkMoveStorageModal({
             onClick={onClose}
             className="px-6 py-2 rounded-lg border border-border-main text-text-muted hover:bg-bg-header/50 transition-colors cursor-pointer"
           >
-            Cancel
+            {t('pages.common.labels.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleSubmit}
@@ -240,10 +251,10 @@ export default function BulkMoveStorageModal({
             {loading ? (
               <>
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                Processing...
+                {t('pages.admin.inventory.move_modal.processing', 'Processing...')}
               </>
             ) : (
-              'Confirm Relocation'
+              t('pages.admin.inventory.move_modal.confirm_btn', 'Confirm Relocation')
             )}
           </button>
         </div>

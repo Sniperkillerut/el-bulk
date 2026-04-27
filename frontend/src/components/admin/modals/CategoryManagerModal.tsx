@@ -4,6 +4,7 @@ import { CustomCategory } from '@/lib/types';
 import { useState } from 'react';
 import { CategoryIcon, COLLECTION_ICONS } from '@/components/CategoryIcon';
 import Modal from '@/components/ui/Modal';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface CategoryManagerModalProps {
   categories: CustomCategory[];
@@ -20,6 +21,7 @@ export default function CategoryManagerModal({
   onDelete,
   onClose
 }: CategoryManagerModalProps) {
+  const { t } = useLanguage();
   const [newName, setNewName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<CustomCategory>>({});
@@ -50,19 +52,19 @@ export default function CategoryManagerModal({
     <Modal
       isOpen={true}
       onClose={onClose}
-      title="COLLECTIONS & CATS"
+      title={t('components.admin.category_modal.title')}
       maxWidth="max-w-2xl"
     >
       <div className="p-4 md:p-8">
         <div className="flex flex-col sm:flex-row gap-2 mb-6">
           <input 
             type="text" 
-            placeholder="New Collection Name (e.g. Commander Staples)" 
+            placeholder={t('components.admin.category_modal.placeholder')} 
             value={newName} 
             onChange={e => setNewName(e.target.value)} 
             className="flex-1 bg-white border-border-main" 
           />
-          <button onClick={handleCreate} className="btn-primary px-6">ADD</button>
+          <button onClick={handleCreate} className="btn-primary px-6">{t('components.admin.category_modal.add_btn')}</button>
         </div>
 
         <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
@@ -80,14 +82,14 @@ export default function CategoryManagerModal({
                         className="flex-1 py-2 bg-white border-border-main text-base font-bold" 
                       />
                       <div className="flex gap-1">
-                        <button onClick={() => handleUpdate(cat.id)} className="btn-primary px-4 py-2 text-xs font-black uppercase tracking-widest">SAVE</button>
-                        <button onClick={() => setEditingId(null)} className="btn-secondary px-4 py-2 text-xs font-black uppercase tracking-widest">CANCEL</button>
+                        <button onClick={() => handleUpdate(cat.id)} className="btn-primary px-4 py-2 text-xs font-black uppercase tracking-widest">{t('components.admin.category_modal.save_btn')}</button>
+                        <button onClick={() => setEditingId(null)} className="btn-secondary px-4 py-2 text-xs font-black uppercase tracking-widest">{t('components.admin.category_modal.cancel_btn')}</button>
                       </div>
                     </div>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-border-main/10">
                       <div className="space-y-1">
-                        <label className="text-[10px] font-mono-stack uppercase font-bold text-text-muted opacity-60">Background & Text</label>
+                        <label className="text-[10px] font-mono-stack uppercase font-bold text-text-muted opacity-60">{t('components.admin.category_modal.labels.bg_text')}</label>
                         <div className="flex items-center gap-3">
                            <div className="flex items-center gap-2 bg-bg-surface/60 p-1.5 rounded border border-border-main/20">
                              <input type="color" value={editForm.bg_color} onChange={e => setEditForm({...editForm, bg_color: e.target.value})} className="w-8 h-8 rounded border-none cursor-pointer" />
@@ -100,7 +102,7 @@ export default function CategoryManagerModal({
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] font-mono-stack uppercase font-bold text-text-muted opacity-60">Badge Icon</label>
+                        <label className="text-[10px] font-mono-stack uppercase font-bold text-text-muted opacity-60">{t('components.admin.category_modal.labels.badge_icon')}</label>
                         <div className="flex flex-wrap gap-1.5">
                           {COLLECTION_ICONS.map(i => (
                             <button
@@ -118,7 +120,7 @@ export default function CategoryManagerModal({
                     </div>
 
                     <div className="flex items-center justify-center py-4 bg-bg-header/5 rounded-md border border-dashed border-border-main/20">
-                       <span className="text-[10px] font-mono uppercase text-text-muted mr-3">PREVIEW:</span>
+                       <span className="text-[10px] font-mono uppercase text-text-muted mr-3">{t('components.admin.category_modal.preview')}</span>
                        <span className="badge shadow-md" style={{ background: editForm.bg_color, color: editForm.text_color, fontSize: '0.65rem', padding: '0.2rem 0.65rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                          <CategoryIcon icon={editForm.icon} />
                          {editForm.name?.toUpperCase()}
@@ -146,7 +148,7 @@ export default function CategoryManagerModal({
                           </span>
                         </div>
                         <span className="text-[10px] font-mono-stack text-text-muted opacity-60 uppercase font-bold tracking-widest mt-0.5">
-                          {cat.item_count || 0} Products Linked
+                          {cat.item_count || 0} {t('components.admin.category_modal.products_linked')}
                         </span>
                       </div>
                     </div>
@@ -154,18 +156,18 @@ export default function CategoryManagerModal({
                       <button 
                         onClick={() => startEditing(cat)} 
                         className="btn-secondary px-4 py-1.5 text-xs font-bold"
-                      >EDIT</button>
+                      >{t('components.admin.category_modal.edit_btn')}</button>
                       <button 
                         onClick={() => onDelete(cat.id, cat.name)} 
                         className="px-4 py-1.5 text-xs font-bold border border-hp-color text-hp-color hover:bg-hp-color hover:text-white transition-colors rounded"
-                      >DELETE</button>
+                      >{t('components.admin.category_modal.delete_btn')}</button>
                     </div>
                   </div>
                 )}
               </div>
             );
           })}
-          {categories.length === 0 && <p className="text-center text-text-muted py-8 font-mono-stack">VOID DETECTED // NO COLLECTIONS DEFINED</p>}
+          {categories.length === 0 && <p className="text-center text-text-muted py-8 font-mono-stack">{t('components.admin.category_modal.empty')}</p>}
         </div>
       </div>
     </Modal>

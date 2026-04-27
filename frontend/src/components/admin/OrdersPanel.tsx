@@ -135,13 +135,13 @@ export default function OrdersPanel({ initialOrderId }: Props) {
       setShippingCopEdit(d.order.shipping_cop);
     } catch (err) {
       console.error('[AdminOrders] Failed to fetch order detail:', err);
-      setFetchError(err instanceof Error ? err.message : 'Error desconocido al cargar la orden');
+      setFetchError(err instanceof Error ? err.message : t('pages.admin.orders.detail.error_load_generic', 'Error desconocido al cargar la orden'));
       setDetail(null);
     } finally {
 
       setLoadingDetail(false);
     }
-  }, []);
+  }, [t]);
 
 
   useEffect(() => {
@@ -239,8 +239,8 @@ export default function OrdersPanel({ initialOrderId }: Props) {
     // Issue 3 & 4: Alert for final changes
     if (status === 'completed' || status === 'cancelled') {
         const msg = status === 'completed' 
-            ? '¿Estás seguro de marcar como COMPLETADA? Esta acción es final y la orden se bloqueará.'
-            : '¿Estás seguro de CANCELAR esta orden? Esta acción es final.';
+            ? t('pages.admin.orders.alerts.complete_confirm', '¿Estás seguro de marcar como COMPLETADA? Esta acción es final y la orden se bloqueará.')
+            : t('pages.admin.orders.alerts.cancel_confirm', '¿Estás seguro de CANCELAR esta orden? Esta acción es final.');
         if (!window.confirm(msg)) return;
     }
 
@@ -304,7 +304,10 @@ export default function OrdersPanel({ initialOrderId }: Props) {
       const productDecs = decrements[item.product_id] || {};
       const totalDec = Object.values(productDecs).reduce((s, v) => s + v, 0);
       if (totalDec !== item.quantity) {
-        setConfirmError(`${item.product_name}: asignaste ${totalDec} de ${item.quantity} necesarios.`);
+        setConfirmError(t('pages.admin.orders.confirm_modal.error_mismatch', '{name}: asignaste {assigned} de {required} necesarios.')
+          .replace('{name}', item.product_name)
+          .replace('{assigned}', totalDec.toString())
+          .replace('{required}', item.quantity.toString()));
         setConfirming(false);
         return;
       }
@@ -345,7 +348,10 @@ export default function OrdersPanel({ initialOrderId }: Props) {
       const totalAssigned = Object.values(productIncs).reduce((s, v) => s + v, 0);
       
       if (totalAssigned !== item.quantity) {
-        setRestoreError(`${item.product_name}: debes restaurar todos los productos (${totalAssigned} de ${item.quantity} asignados).`);
+        setRestoreError(t('pages.admin.orders.restore_modal.error_mismatch', '{name}: debes restaurar todos los productos ({assigned} de {required} asignados).')
+          .replace('{name}', item.product_name)
+          .replace('{assigned}', totalAssigned.toString())
+          .replace('{required}', item.quantity.toString()));
         setRestoring(false);
         return;
       }
@@ -361,7 +367,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
     });
 
     if (incArr.length === 0) {
-      setRestoreError('Debe asignar al menos una cantidad a una ubicación');
+      setRestoreError(t('pages.admin.orders.restore_modal.error_no_qty', 'Debe asignar al menos una cantidad a una ubicación'));
       setRestoring(false);
       return;
     }
@@ -372,9 +378,9 @@ export default function OrdersPanel({ initialOrderId }: Props) {
       setShowRestoreModal(false);
       cacheRef.current[updated.order.id] = updated;
 
-      alert('Inventario restaurado exitosamente');
+      alert(t('pages.admin.orders.restore_modal.success_msg', 'Inventario restaurado exitosamente'));
     } catch (e: unknown) {
-      setRestoreError(e instanceof Error ? e.message : 'Error al restaurar inventario');
+      setRestoreError(e instanceof Error ? e.message : t('pages.admin.orders.restore_modal.error_generic', 'Error al restaurar inventario'));
     }
     setRestoring(false);
   };
@@ -406,26 +412,26 @@ export default function OrdersPanel({ initialOrderId }: Props) {
           <div className="p-3 flex flex-col gap-2" style={{ borderBottom: '1px solid var(--border-main)' }}>
             <input
               type="search"
-              placeholder="Buscar por # orden, nombre, teléfono..."
+              placeholder={t('pages.admin.orders.search_placeholder', 'Buscar por # orden, nombre, teléfono...')}
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1); setLoading(true); }}
               style={{ fontSize: '0.85rem' }}
             />
             <div className="flex gap-1 flex-wrap">
               {['', 'pending', 'confirmed', 'completed', 'cancelled'].map(s => (
-                <button
-                  key={s}
-                  onClick={() => { setStatusFilter(s); setPage(1); setLoading(true); }}
-                  className="badge cursor-pointer transition-colors"
-                  style={{
-                    padding: '3px 8px',
-                    background: statusFilter === s ? 'var(--text-main)' : 'transparent',
-                    color: statusFilter === s ? 'var(--btn-primary-text)' : 'var(--text-secondary)',
-                    border: `1px solid ${statusFilter === s ? 'var(--text-main)' : 'var(--border-main)'}`,
-                  }}
-                >
-                  {s ? t(`pages.order.status.${s}`, ORDER_STATUS_LABELS[s] || s) : t('pages.common.labels.all', 'Todas')}
-                </button>
+                  <button
+                    key={s}
+                    onClick={() => { setStatusFilter(s); setPage(1); setLoading(true); }}
+                    className="badge cursor-pointer transition-colors"
+                    style={{
+                      padding: '3px 8px',
+                      background: statusFilter === s ? 'var(--text-main)' : 'transparent',
+                      color: statusFilter === s ? 'var(--btn-primary-text)' : 'var(--text-secondary)',
+                      border: `1px solid ${statusFilter === s ? 'var(--text-main)' : 'var(--border-main)'}`,
+                    }}
+                  >
+                    {s ? t(`pages.order.status.${s}`, ORDER_STATUS_LABELS[s] || s) : t('pages.admin.orders.status_filter_all', 'Todas')}
+                  </button>
               ))}
             </div>
 
@@ -434,9 +440,9 @@ export default function OrdersPanel({ initialOrderId }: Props) {
           {/* Orders list */}
           <div className="flex-1 overflow-y-auto min-h-0 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
             {loading ? (
-              <div className="p-6 text-center" style={{ color: 'var(--text-muted)' }}>Cargando...</div>
+              <div className="p-6 text-center" style={{ color: 'var(--text-muted)' }}>{t('pages.common.status.loading', 'Cargando...')}</div>
             ) : orders.length === 0 ? (
-              <div className="p-6 text-center" style={{ color: 'var(--text-muted)' }}>No se encontraron órdenes.</div>
+              <div className="p-6 text-center" style={{ color: 'var(--text-muted)' }}>{t('pages.admin.orders.empty_list', 'No se encontraron órdenes.')}</div>
             ) : (
               orders.map(o => (
                 <div
@@ -465,7 +471,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                   <div className="flex justify-between items-center mt-1">
                     <span className="text-[10px] font-mono-stack" style={{ color: 'var(--text-muted)' }}>
                       {new Date(o.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: '2-digit' })}
-                      {' · '}{o.item_count} item{o.item_count !== 1 ? 's' : ''}
+                      {' · '}{t('pages.admin.orders.list.item_count', '{count} item{s}').replace('{count}', o.item_count.toString()).replace('{s}', o.item_count !== 1 ? 's' : '')}
                     </span>
                     <span className="price text-sm">${o.total_cop.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
                   </div>
@@ -478,7 +484,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
           {totalPages > 0 && (
             <div className="flex flex-col sm:flex-row justify-between items-center gap-2 p-3 bg-bg-page/10" style={{ borderTop: '1px solid var(--border-main)' }}>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono-stack text-text-muted uppercase">Mostrar</span>
+                <span className="text-[10px] font-mono-stack text-text-muted uppercase">{t('pages.common.labels.show', 'Mostrar')}</span>
                 <select 
                   value={pageSize}
                   onChange={e => {
@@ -528,7 +534,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
             <div className="flex items-center justify-center h-full" style={{ color: 'var(--text-muted)' }}>
               <div className="text-center">
                 <div className="text-5xl opacity-30 mb-3">📋</div>
-                <p className="font-display text-xl">Selecciona una orden</p>
+                <p className="font-display text-xl">{t('pages.admin.orders.detail.select_prompt', 'Selecciona una orden')}</p>
               </div>
             </div>
           )}
@@ -536,13 +542,13 @@ export default function OrdersPanel({ initialOrderId }: Props) {
           {fetchError && !loadingDetail && (
             <div className="flex flex-col items-center justify-center h-full text-hp-color p-8 text-center">
               <div className="text-5xl mb-4">⚠️</div>
-              <p className="font-display text-xl mb-2">Error al cargar la orden</p>
+              <p className="font-display text-xl mb-2">{t('pages.admin.orders.detail.error_title', 'Error al cargar la orden')}</p>
               <p className="text-sm font-mono-stack opacity-70 mb-6">{fetchError}</p>
               <button 
                 onClick={() => { setFetchError(null); }}
                 className="btn-secondary text-xs"
               >
-                CERRAR
+                {t('pages.admin.orders.detail.close_btn', 'CERRAR')}
               </button>
             </div>
           )}
@@ -559,7 +565,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                 onClick={() => { setMobileShowDetail(false); setDetail(null); }}
                 className="lg:hidden flex items-center gap-2 text-xs font-mono-stack text-gold-dark mb-4 hover:text-hp-color transition-colors"
               >
-                ← BACK TO ORDERS
+                {t('pages.admin.orders.detail.back_to_list', '← BACK TO ORDERS')}
               </button>
 
               {/* Order header */}
@@ -568,7 +574,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                   <h3 className="font-display text-3xl">{detail.order.order_number}</h3>
                   <p className="text-xs font-mono-stack" style={{ color: 'var(--text-muted)' }}>
                     {new Date(detail.order.created_at).toLocaleString('es-CO')}
-                    {detail.order.completed_at && ` · Completada: ${new Date(detail.order.completed_at).toLocaleString('es-CO')}`}
+                    {detail.order.completed_at && ` · ${t('pages.admin.orders.detail.confirmed_at', 'Completada: {date}').replace('{date}', new Date(detail.order.completed_at).toLocaleString('es-CO'))}`}
                   </p>
                 </div>
                 <div className="flex items-start gap-2">
@@ -602,17 +608,17 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                   </select>
                   {detail.order.status === 'pending' && (
                     <button onClick={openConfirmModal} className="btn-primary" style={{ fontSize: '0.85rem', padding: '0.35rem 1rem' }}>
-                      ✓ CONFIRMAR
+                      {t('pages.admin.orders.detail.confirm_btn', '✓ CONFIRMAR')}
                     </button>
                   )}
                   {detail.order.status === 'cancelled' && detail.order.confirmed_at && (
                     detail.order.inventory_restored ? (
                       <span className="px-3 py-1.5 rounded bg-status-nm/10 text-status-nm border border-status-nm/20 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5">
-                        <span className="text-xs">✓</span> {t('pages.order.inventory_restored', 'Inventario Restaurado')}
+                        <span className="text-xs">✓</span> {t('pages.admin.orders.detail.inventory_restored', 'Inventario Restaurado')}
                       </span>
                     ) : (
                       <button onClick={openRestoreModal} className="btn-primary" style={{ fontSize: '0.85rem', padding: '0.35rem 1rem', background: 'var(--status-nm)' }}>
-                        ♻ {t('pages.order.restore_inventory', 'RESTAURAR INVENTARIO')}
+                        ♻ {t('pages.admin.orders.detail.restore_inventory', 'RESTAURAR INVENTARIO')}
                       </button>
                     )
                   )}
@@ -623,11 +629,11 @@ export default function OrdersPanel({ initialOrderId }: Props) {
               {(detail.order.status === 'shipped' || detail.order.is_local_pickup || detail.order.tracking_number) && (
                 <div className="cardbox p-4 mb-4 bg-gold/5 border-gold/20">
                   <h4 className="text-xs font-mono-stack mb-3 text-gold-dark font-bold uppercase tracking-widest">
-                    {detail.order.is_local_pickup ? 'ENTREGA EN TIENDA' : 'INFORMACIÓN DE ENVÍO'}
+                    {detail.order.is_local_pickup ? t('pages.admin.orders.detail.tracking.local_pickup', 'ENTREGA EN TIENDA') : t('pages.admin.orders.detail.tracking.title', 'INFORMACIÓN DE ENVÍO')}
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-[10px] font-mono-stack text-text-muted block uppercase mb-1">Guía / Tracking Number</label>
+                      <label className="text-[10px] font-mono-stack text-text-muted block uppercase mb-1">{t('pages.admin.orders.detail.tracking.label', 'Guía / Tracking Number')}</label>
                       <div className="flex gap-2">
                         <input 
                           type="text" 
@@ -642,7 +648,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                       </div>
                     </div>
                     <div>
-                      <label className="text-[10px] font-mono-stack text-text-muted block uppercase mb-1">Link de Seguimiento</label>
+                      <label className="text-[10px] font-mono-stack text-text-muted block uppercase mb-1">{t('pages.admin.orders.detail.tracking.url', 'Link de Seguimiento')}</label>
                       <input 
                         type="url" 
                         defaultValue={detail.order.tracking_url || ''}
@@ -661,7 +667,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
               {/* Customer + Payment info */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                 <div className="cardbox p-3">
-                  <h4 className="text-xs font-mono-stack mb-2" style={{ color: 'var(--text-muted)' }}>CLIENTE</h4>
+                  <h4 className="text-xs font-mono-stack mb-2" style={{ color: 'var(--text-muted)' }}>{t('pages.admin.orders.detail.customer.title', 'CLIENTE')}</h4>
                   <Link href={`/admin/clients/${detail.customer.id}`} className="font-semibold text-gold-dark hover:underline transition-all block mb-1">
                     {detail.customer.first_name} {detail.customer.last_name} →
                   </Link>
@@ -696,14 +702,14 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                         style={{ fontSize: '0.8rem' }}
                       >
                         <span className="text-xl">💬</span>
-                        NOTIFICAR POR WHATSAPP
+                        {t('pages.admin.orders.detail.customer.notify_whatsapp', 'NOTIFICAR POR WHATSAPP')}
                       </a>
                     </div>
                   )}
                 </div>
                 <div className={`cardbox p-3 transition-all duration-300 ${!canEditMetadata ? 'opacity-70 grayscale-[0.8] bg-kraft-paper/30' : ''}`}>
                   <h4 className="text-xs font-mono-stack mb-2 flex items-center gap-2" style={{ color: 'var(--text-muted)' }}>
-                    PAGO {!canEditMetadata && <span className="text-[10px] bg-red-100 text-red-600 px-1 rounded flex items-center gap-0.5">🔒 BLOQUEADO</span>}
+                    {t('pages.admin.orders.detail.payment.title', 'PAGO')} {!canEditMetadata && <span className="text-[10px] bg-red-100 text-red-600 px-1 rounded flex items-center gap-0.5">{t('pages.admin.orders.detail.payment.locked', '🔒 BLOQUEADO')}</span>}
                   </h4>
                   <div className="mb-3">
                     <select 
@@ -720,11 +726,11 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                     </select>
                   </div>
                   <div className="flex justify-between items-center mt-2">
-                    <span className="text-xs font-mono-stack text-text-muted uppercase">Subtotal</span>
+                    <span className="text-xs font-mono-stack text-text-muted uppercase">{t('pages.admin.orders.detail.payment.subtotal', 'Subtotal')}</span>
                     <span className="text-sm font-semibold">${detail.order.subtotal_cop.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
                   </div>
                   <div className="flex justify-between items-center mt-2 pt-2 border-t border-kraft-dark/10">
-                    <span className="text-xs font-mono-stack text-text-muted uppercase">Envío</span>
+                    <span className="text-xs font-mono-stack text-text-muted uppercase">{t('pages.admin.orders.detail.payment.shipping', 'Envío')}</span>
                     <div className="flex items-center gap-1">
                       <span className="text-sm font-semibold">$</span>
                       <input 
@@ -739,7 +745,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                     </div>
                   </div>
                   <div className="price text-xl mt-3 border-t-2 border-gold/20 pt-2 flex justify-between items-center">
-                    <span className="text-xs font-mono-stack">TOTAL</span>
+                    <span className="text-xs font-mono-stack">{t('pages.admin.orders.detail.payment.total', 'TOTAL')}</span>
                     <span>
                       ${(detail.order.total_cop + (shippingCopEdit - detail.order.shipping_cop)).toLocaleString('en-US', { maximumFractionDigits: 0 })} COP
                     </span>
@@ -754,11 +760,11 @@ export default function OrdersPanel({ initialOrderId }: Props) {
 
               {/* Items */}
               <div className="flex items-center justify-between mb-3">
-                <h4 className="font-display text-xl">PRODUCTOS ({detail.items.length})</h4>
+                <h4 className="font-display text-xl">{t('pages.admin.orders.detail.items.title', 'PRODUCTOS ({count})').replace('{count}', detail.items.length.toString())}</h4>
                 {detail.order.status !== 'pending' && (
                   <span className="flex items-center gap-1.5 px-2 py-1 rounded bg-hp-color/10 text-status-hp text-[10px] font-bold uppercase tracking-wider border border-status-hp/20">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                    Inventario Bloqueado
+                    {t('pages.admin.orders.detail.items.locked', 'Inventario Bloqueado')}
                   </span>
                 )}
               </div>
@@ -804,7 +810,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
 
                       {/* Stock info */}
                       <div className="flex flex-col items-center gap-1">
-                        <span className="text-[9px] font-mono-stack" style={{ color: 'var(--text-muted)' }}>STOCK</span>
+                        <span className="text-[9px] font-mono-stack" style={{ color: 'var(--text-muted)' }}>{t('pages.admin.orders.detail.items.stock_label', 'STOCK')}</span>
                         <span className="text-sm font-mono-stack font-bold"
                           style={{ color: item.stock === 0 ? 'var(--status-hp)' : item.stock < 3 ? 'var(--status-mp)' : 'var(--text-main)' }}>
                           {item.stock}
@@ -813,7 +819,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
 
                       {/* Quantity controls */}
                       <div className="flex flex-col items-center gap-1">
-                        <span className="text-[9px] font-mono-stack" style={{ color: 'var(--text-muted)' }}>QTY</span>
+                        <span className="text-[9px] font-mono-stack" style={{ color: 'var(--text-muted)' }}>{t('pages.admin.orders.detail.items.qty_label', 'QTY')}</span>
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => setItemEdits(prev => ({ ...prev, [item.id]: Math.max(0, (prev[item.id] ?? item.quantity) - 1) }))}
@@ -849,7 +855,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                             }`}
                             style={{ background: 'var(--border-main)', border: 'none', borderRadius: 2 }}>+</button>
                         </div>
-                        {isZero && <span className="text-[8px] font-mono-stack" style={{ color: 'var(--status-hp)' }}>{isDeleted ? 'ELIMINADO' : 'REMOVIDO'}</span>}
+                        {isZero && <span className="text-[8px] font-mono-stack" style={{ color: 'var(--status-hp)' }}>{isDeleted ? t('pages.admin.orders.detail.items.deleted', 'ELIMINADO') : t('pages.admin.orders.detail.items.removed', 'REMOVIDO')}</span>}
                       </div>
  
                       {/* Price */}
@@ -864,7 +870,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                           }}
                           disabled={!canEditInventory}
                           className={`p-1 rounded transition-colors ${!canEditInventory ? 'opacity-30 cursor-not-allowed' : ''} ${isDeleted ? 'text-status-nm hover:text-status-nm/80' : 'text-hp-color/40 hover:text-hp-color'}`}
-                          title={isDeleted ? 'Restaurar' : 'Eliminar de la orden'}
+                          title={isDeleted ? t('pages.admin.orders.detail.items.restore_btn', 'Restaurar') : t('pages.admin.orders.detail.items.delete_btn', 'Eliminar de la orden')}
                         >
                           {isDeleted ? (
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
@@ -874,7 +880,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                         </button>
                         <div>
                           <span className="text-[9px] font-mono-stack block" style={{ color: 'var(--text-muted)' }}>
-                            ${item.unit_price_cop.toLocaleString('en-US', { maximumFractionDigits: 0 })} c/u
+                            {t('pages.admin.orders.detail.items.price_unit', '${price} ea').replace('${price}', item.unit_price_cop.toLocaleString('en-US', { maximumFractionDigits: 0 }))}
                           </span>
                           <span className="price text-sm">
                             ${(item.unit_price_cop * (isDeleted ? 0 : qty)).toLocaleString('en-US', { maximumFractionDigits: 0 })}
@@ -890,14 +896,14 @@ export default function OrdersPanel({ initialOrderId }: Props) {
               {detail.order.status === 'pending' && (
                 <div className="mt-6 mb-4 cardbox p-4 bg-ink-surface/30 border-dashed border-gold/30">
                   <h4 className="text-xs font-mono-stack mb-3 text-gold-dark font-bold uppercase tracking-widest flex items-center gap-2">
-                    <span className="text-lg">🎁</span> AGREGAR PRODUCTO / REGALO
+                    <span className="text-lg">🎁</span> {t('pages.admin.orders.detail.add_item.title', 'AGREGAR PRODUCTO / REGALO')}
                   </h4>
                   <div className="relative">
                     <input 
                       type="text"
                       value={productSearch}
                       onChange={e => setProductSearch(e.target.value)}
-                      placeholder="Buscar producto por nombre..."
+                      placeholder={t('pages.admin.orders.detail.add_item.placeholder', 'Buscar producto por nombre...')}
                       disabled={!canEditInventory}
                       className={`w-full text-sm p-3 border-kraft-dark/40 rounded shadow-inner transition-colors ${
                         !canEditInventory ? 'bg-zinc-100 text-text-muted cursor-not-allowed' : 'bg-white'
@@ -921,7 +927,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                             </div>
                             <div className="text-left flex-1 min-w-0">
                               <p className="text-xs font-bold truncate leading-tight">{p.name}</p>
-                              <p className="text-[10px] text-text-muted">{p.set_name} · {p.stock} en stock</p>
+                              <p className="text-[10px] text-text-muted">{p.set_name} · {t('components.search.status.in_stock', '{count} IN STOCK').replace('{count}', p.stock.toString())}</p>
                             </div>
                             <div className="text-xs font-mono-stack text-gold-dark font-bold">
                               ${p.price.toLocaleString('en-US', { maximumFractionDigits: 0 })}
@@ -937,7 +943,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
               {/* Staged Items Table */}
               {stagedItems.length > 0 && (
                 <div className="mb-6 space-y-2">
-                   <h5 className="text-[10px] font-mono-stack text-text-muted uppercase tracking-widest font-bold">Por agregar:</h5>
+                   <h5 className="text-[10px] font-mono-stack text-text-muted uppercase tracking-widest font-bold">{t('pages.admin.orders.detail.add_item.staged_label', 'Por agregar:')}</h5>
                    {stagedItems.map(si => (
                      <div key={si.product.id} className="flex gap-3 p-3 border-2 border-status-nm/30 rounded bg-status-nm/5">
                         <div className="w-8 flex-shrink-0">
@@ -948,7 +954,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                           <p className="text-[10px] text-text-muted">{si.product.set_name}</p>
                         </div>
                         <div className="flex flex-col items-center">
-                          <span className="text-[8px] text-text-muted">PESO ($)</span>
+                          <span className="text-[8px] text-text-muted">{t('pages.checkout.summary.total', 'TOTAL')} ($)</span>
                           <input 
                              type="number"
                              value={si.unit_price_cop}
@@ -957,7 +963,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                           />
                         </div>
                         <div className="flex flex-col items-center">
-                          <span className="text-[8px] text-text-muted">CANT</span>
+                          <span className="text-[8px] text-text-muted">{t('pages.admin.orders.detail.items.qty_label', 'CANT')}</span>
                           <input 
                              type="number"
                              value={si.quantity}
@@ -981,7 +987,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
               {hasEdits && detail.order.status !== 'completed' && detail.order.status !== 'confirmed' && detail.order.status !== 'cancelled' && (
                 <div className="mt-4 flex gap-3">
                   <button onClick={handleSaveChanges} disabled={saving} className="btn-primary flex-1" style={{ fontSize: '0.9rem' }}>
-                    {saving ? 'GUARDANDO...' : 'GUARDAR CAMBIOS'}
+                    {saving ? t('pages.admin.orders.detail.actions.saving', 'GUARDANDO...') : t('pages.admin.orders.detail.actions.save', 'GUARDAR CAMBIOS')}
                   </button>
                   <button onClick={() => {
                     const edits: Record<string, number> = {};
@@ -989,7 +995,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                     setItemEdits(edits);
                     setStagedItems([]);
                     setDeletedIds([]);
-                  }} className="btn-secondary" style={{ fontSize: '0.9rem' }}>DESCARTAR</button>
+                  }} className="btn-secondary" style={{ fontSize: '0.9rem' }}>{t('pages.admin.orders.detail.actions.discard', 'DESCARTAR')}</button>
                 </div>
               )}
             </>
@@ -1002,9 +1008,9 @@ export default function OrdersPanel({ initialOrderId }: Props) {
         <div className="fixed inset-0 z-[70] flex items-center justify-center px-4"
           style={{ background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(3px)' }}>
           <div className="card max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="font-display text-3xl mb-1">CONFIRMAR ORDEN</h3>
+            <h3 className="font-display text-3xl mb-1">{t('pages.admin.orders.confirm_modal.title', 'CONFIRMAR ORDEN')}</h3>
             <p className="text-xs font-mono-stack mb-4" style={{ color: 'var(--text-muted)' }}>
-              Selecciona de qué ubicación descontar el stock para cada producto.
+              {t('pages.admin.orders.confirm_modal.desc', 'Selecciona de qué ubicación descontar el stock para cada producto.')}
             </p>
 
             <div className="space-y-4">
@@ -1028,14 +1034,14 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                     </div>
 
                     {item.stored_in.filter(l => l.name.toLowerCase() !== 'pending').length === 0 ? (
-                      <p className="text-xs italic" style={{ color: 'var(--status-hp)' }}>⚠ Sin ubicaciones físicas de almacenamiento</p>
+                      <p className="text-xs italic" style={{ color: 'var(--status-hp)' }}>⚠ {t('pages.admin.orders.confirm_modal.no_locations', 'Sin ubicaciones físicas de almacenamiento')}</p>
                     ) : (
                       <div className="space-y-2">
                         {/* pending row */}
                         <div className="flex items-center justify-between gap-3 opacity-60 bg-status-hp/10 px-2 py-1.5 rounded border border-status-hp/20">
                            <div className="flex-1">
                              <span className="text-sm font-semibold">pending</span>
-                             <span className="text-[10px] uppercase ml-2 px-1 py-0.5 rounded bg-hp-color/20 text-status-hp font-mono-stack">AUTO</span>
+                             <span className="text-[10px] uppercase ml-2 px-1 py-0.5 rounded bg-hp-color/20 text-status-hp font-mono-stack">{t('pages.admin.orders.confirm_modal.auto_label', 'AUTO')}</span>
                            </div>
                            <div className="flex items-center gap-1">
                              <button disabled className="w-6 h-6 flex items-center justify-center text-xs opacity-50 bg-ink-surface border border-ink-border rounded-l-sm cursor-not-allowed">−</button>
@@ -1057,7 +1063,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                               <div className="flex-1">
                                 <span className="text-sm font-semibold">{loc.name}</span>
                                 <span className="text-xs font-mono-stack ml-2" style={{ color: 'var(--text-muted)' }}>
-                                  (disponible: {loc.quantity})
+                                  {t('pages.admin.orders.confirm_modal.available_label', '(disponible: {count})').replace('{count}', loc.quantity.toString())}
                                 </span>
                               </div>
                               <div className="flex items-center gap-1">
@@ -1096,13 +1102,13 @@ export default function OrdersPanel({ initialOrderId }: Props) {
 
             <div className="mt-6 p-4 border-2 border-dashed border-status-hp/30 rounded-lg bg-status-hp/5">
               <p className="text-sm font-semibold text-status-hp mb-3 uppercase tracking-wider text-center">
-                ⚠ ¿Estás seguro? Esto bloqueará el stock asignado.
+                {t('pages.admin.orders.confirm_modal.warning', '⚠ ¿Estás seguro? Esto bloqueará el stock asignado.')}
               </p>
               <div className="flex gap-3">
                 <button onClick={handleConfirm} disabled={confirming} className="btn-primary flex-1 py-3 bg-status-hp hover:bg-status-hp/90">
-                  {confirming ? 'PROCESANDO...' : '✓ CONFIRMAR ORDEN'}
+                  {confirming ? t('pages.admin.orders.confirm_modal.processing', 'PROCESANDO...') : t('pages.admin.orders.detail.confirm_btn', '✓ CONFIRMAR ORDEN')}
                 </button>
-                <button onClick={() => setShowConfirmModal(false)} className="btn-secondary px-6 py-3">CANCELAR</button>
+                <button onClick={() => setShowConfirmModal(false)} className="btn-secondary px-6 py-3">{t('pages.common.labels.cancel', 'CANCELAR')}</button>
               </div>
             </div>
           </div>
@@ -1113,9 +1119,9 @@ export default function OrdersPanel({ initialOrderId }: Props) {
         <div className="fixed inset-0 z-[70] flex items-center justify-center px-4"
           style={{ background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(3px)' }}>
           <div className="card max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="font-display text-3xl mb-1">RESTAURAR INVENTARIO</h3>
+            <h3 className="font-display text-3xl mb-1">{t('pages.admin.orders.restore_modal.title', 'RESTAURAR INVENTARIO')}</h3>
             <p className="text-xs font-mono-stack mb-4" style={{ color: 'var(--text-muted)' }}>
-              Selecciona a qué ubicaciones devolver los productos de esta orden cancelada.
+              {t('pages.admin.orders.restore_modal.desc', 'Selecciona a qué ubicaciones devolver los productos de esta orden cancelada.')}
             </p>
 
             <div className="space-y-4">
@@ -1149,7 +1155,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                                 <div className="flex-1">
                                   <span className="text-sm font-semibold">{as.name}</span>
                                   <span className="text-xs font-mono-stack ml-2" style={{ color: 'var(--text-muted)' }}>
-                                    (actual: {si?.quantity || 0})
+                                    ({t('pages.admin.orders.restore_modal.actual_label', 'actual:')} {si?.quantity || 0})
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-1">
@@ -1203,7 +1209,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                               }
                             }}
                           >
-                            <option value="">+ {t('pages.order.add_location', 'AÑADIR UBICACIÓN')}</option>
+                            <option value="">+ {t('pages.admin.orders.restore_modal.add_location', 'AÑADIR UBICACIÓN')}</option>
                             {allStorage
                               .filter(as => as.name.toLowerCase() !== 'pending' && !item.stored_in.some(si => si.stored_in_id === as.id) && productIncs[as.id] === undefined)
                               .map(as => (
@@ -1224,13 +1230,13 @@ export default function OrdersPanel({ initialOrderId }: Props) {
 
             <div className="mt-6 p-4 border-2 border-dashed border-status-nm/30 rounded-lg bg-status-nm/5">
               <p className="text-sm font-semibold text-status-nm mb-3 uppercase tracking-wider text-center">
-                Confirmar devolución de productos al inventario físico.
+                {t('pages.admin.orders.restore_modal.warning', 'Confirmar devolución de productos al inventario físico.')}
               </p>
               <div className="flex gap-3">
                 <button onClick={handleRestoreStock} disabled={restoring} className="btn-primary flex-1 py-3" style={{ background: 'var(--status-nm)' }}>
-                  {restoring ? 'RESTAURANDO...' : '✓ RESTAURAR INVENTARIO'}
+                  {restoring ? t('pages.admin.orders.restore_modal.processing', 'RESTAURANDO...') : t('pages.admin.orders.detail.restore_inventory', '✓ RESTAURAR INVENTARIO')}
                 </button>
-                <button onClick={() => setShowRestoreModal(false)} className="btn-secondary px-6 py-3">CANCELAR</button>
+                <button onClick={() => setShowRestoreModal(false)} className="btn-secondary px-6 py-3">{t('pages.common.labels.cancel', 'CANCELAR')}</button>
               </div>
             </div>
           </div>

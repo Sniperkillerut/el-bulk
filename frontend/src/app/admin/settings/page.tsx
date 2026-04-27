@@ -27,11 +27,11 @@ export default function AdminSettingsPage() {
         const currentFront = remoteLogger.currentLevel;
         setFrontendLogLevel(currentFront ? String(currentFront).toUpperCase() : 'INFO');
       } catch {
-        console.error('Failed to fetch log level');
+        console.error(t('pages.admin.settings.alerts.fetch_logs_failed', 'Failed to fetch log level'));
       }
     };
     fetchLogLevel();
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (settings) {
@@ -51,7 +51,7 @@ export default function AdminSettingsPage() {
     } catch (err: unknown) {
       const error = err as { message?: string };
       if (error.message?.includes('401')) logout();
-      else alert('Failed to update settings.');
+      else alert(t('pages.admin.settings.alerts.update_failed', 'Failed to update settings.'));
     } finally {
       setSaving(false);
     }
@@ -62,7 +62,7 @@ export default function AdminSettingsPage() {
       await adminUpdateLogLevel(level);
       setBackendLogLevel(level);
     } catch {
-      alert('Failed to update backend log level');
+      alert(t('pages.admin.settings.alerts.update_logs_failed', 'Failed to update backend log level'));
     }
   };
 
@@ -82,8 +82,8 @@ export default function AdminSettingsPage() {
   return (
     <div className="flex-1 flex flex-col p-3 min-h-0 max-w-7xl mx-auto w-full font-sans overflow-y-auto scrollbar-hide md:scrollbar-default">
       <AdminHeader 
-        title="GLOBAL SETTINGS" 
-        subtitle="System Configuration // Global Overrides"
+        title={t('pages.admin.settings.title', 'GLOBAL SETTINGS')} 
+        subtitle={t('pages.admin.settings.subtitle', 'System Configuration // Global Overrides')}
       />
 
       {editingSettings && (
@@ -97,7 +97,7 @@ export default function AdminSettingsPage() {
             
             <div className="grid sm:grid-cols-2 gap-6">
               <div className="card p-3 bg-white shadow-sm border-l-4 border-gold">
-                <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">USD to COP (TCGPlayer)</label>
+                <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">{t('pages.admin.settings.financial.tcgplayer_rate', 'USD to COP (TCGPlayer)')}</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted font-bold">$</span>
                   <input 
@@ -107,11 +107,11 @@ export default function AdminSettingsPage() {
                     onChange={e => setEditingSettings({ ...editingSettings, usd_to_cop_rate: parseFloat(e.target.value) })} 
                   />
                 </div>
-                <p className="text-[9px] mt-2 text-text-muted italic leading-tight">Multiplier for TCGPlayer Market prices in COP.</p>
+                <p className="text-[9px] mt-2 text-text-muted italic leading-tight">{t('pages.admin.settings.financial.tcgplayer_desc', 'Multiplier for TCGPlayer Market prices in COP.')}</p>
               </div>
 
               <div className="card p-3 bg-white shadow-sm border-l-4 border-amber-600">
-                <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">USD to COP (CardKingdom)</label>
+                <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">{t('pages.admin.settings.financial.ck_rate', 'USD to COP (CardKingdom)')}</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted font-bold">$</span>
                   <input 
@@ -121,11 +121,11 @@ export default function AdminSettingsPage() {
                     onChange={e => setEditingSettings({ ...editingSettings, ck_to_cop_rate: parseFloat(e.target.value) })} 
                   />
                 </div>
-                <p className="text-[9px] mt-2 text-text-muted italic leading-tight">Multiplier for CardKingdom USD prices in COP.</p>
+                <p className="text-[9px] mt-2 text-text-muted italic leading-tight">{t('pages.admin.settings.financial.ck_desc', 'Multiplier for CardKingdom USD prices in COP.')}</p>
               </div>
 
               <div className="card p-3 bg-white shadow-sm border-l-4 border-indigo-400">
-                <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">EUR to COP (Cardmarket)</label>
+                <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">{t('pages.admin.settings.financial.cm_rate', 'EUR to COP (Cardmarket)')}</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted font-bold">€</span>
                   <input 
@@ -135,13 +135,13 @@ export default function AdminSettingsPage() {
                     onChange={e => setEditingSettings({ ...editingSettings, eur_to_cop_rate: parseFloat(e.target.value) })} 
                   />
                 </div>
-                <p className="text-[9px] mt-2 text-text-muted italic leading-tight">Multiplier for Cardmarker Avg prices in COP.</p>
+                <p className="text-[9px] mt-2 text-text-muted italic leading-tight">{t('pages.admin.settings.financial.cm_desc', 'Multiplier for Cardmarket Avg prices in COP.')}</p>
               </div>
             </div>
 
             <div className="p-4 bg-gold/5 rounded-sm border border-gold/20">
               <p className="text-xs text-ink-deep font-mono-stack leading-relaxed">
-                <strong>Note:</strong> These rates are applied during inventory ingestion and price sync tasks. Manual price overrides on individual products remain priority over these global settings.
+                <strong>{t('pages.admin.settings.financial.note_title', 'Note:')}</strong> {t('pages.admin.settings.financial.note_text', 'These rates are applied during inventory ingestion and price sync tasks. Manual price overrides on individual products remain priority over these global settings.')}
               </p>
             </div>
           </section>
@@ -212,7 +212,7 @@ export default function AdminSettingsPage() {
         <section className="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
           <div className="flex items-center gap-4 border-b border-kraft-dark pb-3">
             <span className="text-3xl">🚀</span>
-            <h2 className="font-display text-3xl m-0 text-ink-deep">DISCOVERY & LOGISTICS ALGORITHMS</h2>
+            <h2 className="font-display text-3xl m-0 text-ink-deep">{t('pages.admin.settings.discovery.title', 'DISCOVERY & LOGISTICS ALGORITHMS')}</h2>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
@@ -235,7 +235,7 @@ export default function AdminSettingsPage() {
                 />
                 <span className="text-[10px] font-mono-stack uppercase opacity-60">{t('pages.admin.settings.days', 'Days')}</span>
               </div>
-              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">Products satisfying this threshold will display the 🔥 HOT badge.</p>
+              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">{t('pages.admin.settings.discovery.hot_desc', 'Products satisfying this threshold will display the 🔥 HOT badge.')}</p>
             </div>
 
             {/* New Threshold */}
@@ -250,12 +250,12 @@ export default function AdminSettingsPage() {
                 />
                 <span className="text-[10px] font-mono-stack uppercase opacity-60">{t('pages.admin.settings.days_since_creation', 'Days Since Creation')}</span>
               </div>
-              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">Products created within this window will display the 🆕 NEW badge.</p>
+              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">{t('pages.admin.settings.discovery.new_desc', 'Products created within this window will display the 🆕 NEW badge.')}</p>
             </div>
 
             {/* Bogotá Express Delivery */}
             <div className="card p-3 bg-white shadow-sm border-l-4 border-green-500">
-              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">Bogotá Express Delivery</label>
+              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">{t('pages.admin.settings.discovery.express_label', 'Bogotá Express Delivery')}</label>
               <div className="flex items-center gap-3 py-2">
                 <button
                   onClick={() => setEditingSettings({ ...editingSettings, delivery_priority_enabled: !editingSettings.delivery_priority_enabled })}
@@ -270,15 +270,15 @@ export default function AdminSettingsPage() {
                   />
                 </button>
                 <span className={`text-xs font-bold font-mono-stack ${editingSettings.delivery_priority_enabled ? 'text-green-600' : 'text-text-muted'}`}>
-                  {editingSettings.delivery_priority_enabled ? 'MASTER SWITCH: ON' : 'MASTER SWITCH: OFF'}
+                  {editingSettings.delivery_priority_enabled ? t('pages.admin.settings.discovery.express_on', 'MASTER SWITCH: ON') : t('pages.admin.settings.discovery.express_off', 'MASTER SWITCH: OFF')}
                 </span>
               </div>
-              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">When OFF, the delivery badge will show as OFFLINE regardless of hours.</p>
+              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">{t('pages.admin.settings.discovery.express_desc', 'When OFF, the delivery badge will show as OFFLINE regardless of hours.')}</p>
             </div>
 
             {/* Synergy Scout Price Limit */}
             <div className="card p-3 bg-white shadow-sm border-l-4 border-indigo-400">
-              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">Synergy Scout Price Limit (COP)</label>
+              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">{t('pages.admin.settings.discovery.synergy_label', 'Synergy Scout Price Limit (COP)')}</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted font-bold">$</span>
                 <input 
@@ -288,12 +288,12 @@ export default function AdminSettingsPage() {
                   onChange={e => setEditingSettings({ ...editingSettings, synergy_max_price_cop: parseFloat(e.target.value) || 0 })} 
                 />
               </div>
-              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">Max price for cards suggested in the Synergy Scout widget.</p>
+              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">{t('pages.admin.settings.discovery.synergy_desc', 'Max price for cards suggested in the Synergy Scout widget.')}</p>
             </div>
 
             {/* Shipping Fee */}
             <div className="card p-3 bg-white shadow-sm border-l-4 border-ink-deep">
-              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">Flat Shipping Fee (COP)</label>
+              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">{t('pages.admin.settings.discovery.shipping_label', 'Flat Shipping Fee (COP)')}</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted font-bold">$</span>
                 <input 
@@ -303,12 +303,12 @@ export default function AdminSettingsPage() {
                   onChange={e => setEditingSettings({ ...editingSettings, flat_shipping_fee_cop: parseFloat(e.target.value) || 0 })} 
                 />
               </div>
-              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">Standard fee applied to all shipping orders (ignored for local pickup).</p>
+              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">{t('pages.admin.settings.discovery.shipping_desc', 'Standard fee applied to all shipping orders (ignored for local pickup).')}</p>
             </div>
 
             {/* Priority Shipping Fee */}
             <div className="card p-3 bg-white shadow-sm border-l-4 border-gold">
-              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">Priority Shipping Fee (COP)</label>
+              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">{t('pages.admin.settings.discovery.priority_shipping_label', 'Priority Shipping Fee (COP)')}</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted font-bold">$</span>
                 <input 
@@ -318,7 +318,7 @@ export default function AdminSettingsPage() {
                   onChange={e => setEditingSettings({ ...editingSettings, priority_shipping_fee_cop: parseFloat(e.target.value) || 0 })} 
                 />
               </div>
-              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">Fee for Express/Priority delivery in Bogotá. Only applied if Express is selected.</p>
+              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">{t('pages.admin.settings.discovery.priority_shipping_desc', 'Fee for Express/Priority delivery in Bogotá. Only applied if Express is selected.')}</p>
             </div>
           </div>
         </section>
@@ -329,13 +329,13 @@ export default function AdminSettingsPage() {
         <section className="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-800">
           <div className="flex items-center gap-4 border-b border-kraft-dark pb-3">
             <span className="text-3xl">🛠️</span>
-            <h2 className="font-display text-3xl m-0 text-ink-deep">SYSTEM MAINTENANCE & DIAGNOSTICS</h2>
+            <h2 className="font-display text-3xl m-0 text-ink-deep">{t('pages.admin.settings.system.title', 'SYSTEM MAINTENANCE & DIAGNOSTICS')}</h2>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
             {/* Backend Logs */}
             <div className="card p-3 bg-white shadow-sm border-l-4 border-gold">
-              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">Backend Server Log Level</label>
+              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">{t('pages.admin.settings.system.backend_logs', 'Backend Server Log Level')}</label>
               <div className="flex flex-wrap gap-2">
                 {['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'OFF'].map(level => (
                   <button
@@ -351,12 +351,12 @@ export default function AdminSettingsPage() {
                   </button>
                 ))}
               </div>
-              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">Controls verbosity of the Go backend server logs. Changes apply instantly.</p>
+              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">{t('pages.admin.settings.system.backend_logs_desc', 'Controls verbosity of the Go backend server logs. Changes apply instantly.')}</p>
             </div>
 
             {/* Frontend Logs */}
             <div className="card p-3 bg-white shadow-sm border-l-4 border-indigo-400">
-              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">Frontend Client Log Level</label>
+              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">{t('pages.admin.settings.system.frontend_logs', 'Frontend Client Log Level')}</label>
               <div className="flex flex-wrap gap-2">
                 {['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'OFF'].map(level => (
                   <button
@@ -372,7 +372,7 @@ export default function AdminSettingsPage() {
                   </button>
                 ))}
               </div>
-              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">Controls local and remote logging for this browser session. Persisted in localStorage.</p>
+              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">{t('pages.admin.settings.system.frontend_logs_desc', 'Controls local and remote logging for this browser session. Persisted in localStorage.')}</p>
             </div>
           </div>
         </section>
@@ -382,7 +382,7 @@ export default function AdminSettingsPage() {
       <footer className="sticky bottom-2 mt-4 p-3 bg-ink-navy/95 backdrop-blur shadow-2xl rounded-xl border-x-4 border-t-2 border-gold flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 z-10">
         <div className="hidden md:block">
           <h4 className="text-gold font-display text-xl m-0 leading-none">{t('pages.admin.settings.save_btn', 'SAVE GLOBAL SETTINGS')}</h4>
-          <p className="text-[10px] text-gold/40 font-mono-stack uppercase mt-1">These changes will update your shop&apos;s currency rates and identity across all pages.</p>
+          <p className="text-[10px] text-gold/40 font-mono-stack uppercase mt-1">{t('pages.admin.settings.footer.save_desc', 'These changes will update your shop\'s currency rates and identity across all pages.')}</p>
         </div>
         
         <div className="flex flex-col sm:flex-row flex-1 gap-3 sm:gap-4">
@@ -391,11 +391,11 @@ export default function AdminSettingsPage() {
             className="flex-1 btn-primary py-4 text-lg shadow-gold/20 relative" 
             disabled={saving}
           >
-            {saving ? 'UPDATING CORE...' : 'SYNC ALL SYSTEM CONFIGURATION →'}
-            {success && <span className="absolute inset-0 flex items-center justify-center bg-emerald-600 rounded-sm font-bold animate-in fade-in zoom-in duration-300">✓ UPDATED SUCCESSFULLY</span>}
+            {saving ? t('pages.admin.settings.actions.updating', 'UPDATING CORE...') : t('pages.admin.settings.actions.sync', 'SYNC ALL SYSTEM CONFIGURATION →')}
+            {success && <span className="absolute inset-0 flex items-center justify-center bg-emerald-600 rounded-sm font-bold animate-in fade-in zoom-in duration-300">{t('pages.admin.settings.actions.success', '✓ UPDATED SUCCESSFULLY')}</span>}
           </button>
           <button onClick={() => setEditingSettings(settings)} className="btn-secondary px-8 font-bold border-white/20 text-white hover:bg-white/5 disabled:opacity-30" disabled={saving}>
-            RESET
+            {t('pages.common.buttons.reset', 'RESET')}
           </button>
         </div>
       </footer>

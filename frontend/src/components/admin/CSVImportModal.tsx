@@ -59,6 +59,7 @@ import {
 } from '@/lib/api';
 import { identifyFoilFromString, normalizeCondition } from '@/lib/mtg-logic';
 import CardImage from '@/components/CardImage';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface Props {
   storageLocations: StoredIn[];
@@ -84,6 +85,7 @@ const FIELDS = [
 ] as const;
 
 export default function CSVImportModal({ storageLocations, categories, onClose, onImported }: Props) {
+  const { t } = useLanguage();
   const [step, setStep] = useState<Step>('upload');
   const [csvData, setCsvData] = useState<Record<string, string>[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
@@ -465,9 +467,9 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
         <div className="p-6 border-b-4 border-border-main bg-bg-header flex justify-between items-center relative">
           <div>
             <h2 className="text-3xl font-black text-text-on-header tracking-tighter uppercase italic drop-shadow-md">
-              CSV IMPORT TOOL
+              {t('components.admin.csv_import.title', "COLLECTOR'S MANIFEST IMPORTER")}
             </h2>
-            <p className="text-text-on-header/60 text-sm font-medium">Bulk add products to the inventory manifest</p>
+            <p className="text-text-on-header/60 text-sm font-medium">{t('components.admin.csv_import.subtitle', 'Bulk add products to the inventory manifest')}</p>
           </div>
           <button
             onClick={onClose}
@@ -494,9 +496,9 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                 className="absolute inset-0 opacity-0 cursor-pointer z-10"
               />
               <div className="text-7xl mb-6 group-hover:scale-110 group-hover:rotate-6 transition-transform drop-shadow-xl">📄</div>
-              <h3 className="text-3xl font-black text-text-main mb-2 uppercase tracking-tight italic">Drop CSV File Here</h3>
-              <p className="text-text-muted font-bold uppercase tracking-widest text-[10px]">or click to browse your local archives</p>
-              <div className="mt-8 px-6 py-2 bg-accent-primary text-text-on-accent font-black uppercase text-xs tracking-widest shadow-lg">Select Master Manifest</div>
+              <h3 className="text-3xl font-black text-text-main mb-2 uppercase tracking-tight italic">{t('components.admin.csv_import.drop_zone.title', 'Drop Manifest Here')}</h3>
+              <p className="text-text-muted font-bold uppercase tracking-widest text-[10px]">{t('components.admin.csv_import.drop_zone.subtitle', 'or click to browse your local archives')}</p>
+              <div className="mt-8 px-6 py-2 bg-accent-primary text-text-on-accent font-black uppercase text-xs tracking-widest shadow-lg">{t('components.admin.csv_import.drop_zone.button', 'Select Master Manifest')}</div>
             </div>
           )}
 
@@ -505,10 +507,10 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
               <div className="mb-8 p-4 md:p-8 bg-bg-card border-2 border-border-main shadow-xl grid grid-cols-1 lg:grid-cols-2 gap-10 rounded-lg overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-accent-primary/5 -rotate-45 translate-x-16 -translate-y-16" />
                 <div>
-                  <h4 className="text-accent-primary font-black mb-6 uppercase text-sm tracking-[0.2em] italic">System Configuration</h4>
+                  <h4 className="text-accent-primary font-black mb-6 uppercase text-sm tracking-[0.2em] italic">{t('components.admin.csv_import.config.title', 'System Configuration')}</h4>
                   <div className="space-y-6">
                     <div>
-                      <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-3">Inventory Destination</label>
+                      <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-3">{t('components.admin.csv_import.config.destination_label', 'Inventory Destination')}</label>
                       <div className="flex gap-3">
                         <button
                           onClick={() => setImportDestination('singles')}
@@ -517,7 +519,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                             : 'bg-bg-page border-border-main text-text-secondary hover:border-accent-primary'
                             }`}
                         >
-                          Individual Singles
+                          {t('components.admin.csv_import.config.dest_singles', 'Individual Singles')}
                         </button>
                         <button
                           onClick={() => setImportDestination('deck')}
@@ -526,19 +528,19 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                             : 'bg-bg-page border-border-main text-text-secondary hover:border-accent-primary'
                             }`}
                         >
-                          Curated Deck
+                          {t('components.admin.csv_import.config.dest_deck', 'Curated Deck')}
                         </button>
                       </div>
                     </div>
 
                     {importDestination === 'deck' && (
                       <div className="animate-fade-up">
-                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">Manifest Identifier (Deck Name)</label>
+                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">{t('components.admin.csv_import.config.deck_name_label', 'Manifest Identifier (Deck Name)')}</label>
                         <input
                           type="text"
                           value={deckName}
                           onChange={(e) => setDeckName(e.target.value)}
-                          placeholder="e.g. MONO BLACK CONTROL"
+                          placeholder={t('components.admin.csv_import.config.deck_name_placeholder', 'e.g. MONO BLACK CONTROL')}
                           className="w-full bg-bg-page border-2 border-border-main p-4 text-text-main font-bold focus:border-accent-primary outline-none transition-all placeholder:text-text-muted/30 italic"
                         />
                       </div>
@@ -546,7 +548,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">TCG Framework</label>
+                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">{t('components.admin.csv_import.config.tcg_framework', 'TCG Framework')}</label>
                         <select
                           value={tcgType}
                           onChange={(e) => setTcgType(e.target.value)}
@@ -558,13 +560,13 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                         </select>
                       </div>
                       <div>
-                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">Vault Allocation</label>
+                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">{t('components.admin.csv_import.config.vault_allocation', 'Vault Allocation')}</label>
                         <select
                           value={defaultStorage}
                           onChange={(e) => setDefaultStorage(e.target.value)}
                           className="w-full bg-bg-page border-2 border-border-main p-3 text-text-main font-bold text-xs focus:border-accent-primary outline-none transition-all"
                         >
-                          <option value="" disabled>Select Storage Location</option>
+                          <option value="" disabled>{t('components.admin.csv_import.config.storage_placeholder', 'Select Storage Location')}</option>
                           {storageLocations.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                         </select>
                       </div>
@@ -572,7 +574,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">Main Language</label>
+                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">{t('components.admin.csv_import.config.language_label', 'Main Language')}</label>
                         <select
                           value={defaultLanguage}
                           onChange={(e) => setDefaultLanguage(e.target.value)}
@@ -584,7 +586,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                         </select>
                       </div>
                       <div>
-                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">Default Price Source</label>
+                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">{t('components.admin.csv_import.config.price_source_label', 'Default Price Source')}</label>
                         <select
                           value={defaultPriceSource}
                           onChange={(e) => setDefaultPriceSource(e.target.value as PriceSource)}
@@ -598,7 +600,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">Metadata Tagging (Bulk)</label>
+                      <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">{t('components.admin.csv_import.config.tagging_label', 'Metadata Tagging (Bulk)')}</label>
                       <div className="flex flex-wrap gap-2 p-4 bg-bg-page/50 border-2 border-border-main/50 rounded shadow-inner">
                         {categories.map(cat => (
                           <button
@@ -611,19 +613,20 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                             className={`px-3 py-1.5 text-[10px] font-black uppercase border-2 transition-all shadow-sm ${bulkCategoryIds.includes(cat.id)
                                 ? 'bg-accent-primary border-accent-primary text-text-on-accent'
                                 : 'bg-bg-card border-border-main text-text-secondary hover:border-accent-primary'
-                              }`}
+                                }`}
                           >
                             {cat.name}
                           </button>
                         ))}
-                        {categories.length === 0 && <span className="text-text-muted italic text-xs">No collections defined</span>}
+                        {categories.length === 0 && <span className="text-text-muted italic text-xs">{t('components.admin.csv_import.config.no_collections', 'No collections defined')}</span>}
                       </div>
                     </div>
                   </div>
                 </div>
+
                 <div className="border-l-4 border-border-main pl-10 relative">
-                   <div className="absolute top-1/2 left-0 w-4 h-4 bg-border-main rotate-45 -translate-x-[10px] -translate-y-1/2" />
-                  <h4 className="text-accent-primary font-black mb-6 uppercase text-sm tracking-[0.2em] italic">Column Topology Mapping</h4>
+                  <div className="absolute top-1/2 left-0 w-4 h-4 bg-border-main rotate-45 -translate-x-[10px] -translate-y-1/2" />
+                  <h4 className="text-accent-primary font-black mb-6 uppercase text-sm tracking-[0.2em] italic">{t('components.admin.csv_import.mapping.title', 'Column Topology Mapping')}</h4>
                   <div className="space-y-4">
                     {FIELDS.map(f => (
                       <div key={f.key} className="flex items-center gap-6 group/field">
@@ -652,13 +655,13 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                   onClick={() => setStep('upload')}
                   className="btn-secondary px-10 italic"
                 >
-                  Return
+                  {t('components.admin.csv_import.actions.return', 'Return')}
                 </button>
                 <button
                   onClick={handleStartPreview}
                   className="btn-primary px-12 italic"
                 >
-                  Generate Manifest
+                  {t('components.admin.csv_import.actions.generate', 'Generate Manifest')}
                 </button>
               </div>
             </div>
@@ -676,7 +679,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                       className="btn-secondary italic flex items-center gap-2 group/btn"
                     >
                       <span className="group-hover/btn:rotate-12 transition-transform">✨</span>
-                      {loading ? 'SYNTHESIZING...' : 'ENRICH WITH SCRYFALL'}
+                      {loading ? t('components.admin.csv_import.preview.enrich_loading', 'SCRYING ARCHIVES...') : t('components.admin.csv_import.preview.enrich_button', 'REVEAL HIDDEN KNOWLEDGE')}
                     </button>
                     {loading && (
                       <div className="flex items-center gap-4 px-6 border-l-2 border-border-main/30 ml-2">
@@ -686,12 +689,14 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                              style={{ width: `${(processedCount / previewData.length) * 100}%` }}
                            />
                         </div>
-                        <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">{Math.round((processedCount / previewData.length) * 100)}% Complete</span>
+                        <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">{Math.round((processedCount / previewData.length) * 100)}% {t('components.admin.csv_import.preview.complete', 'Complete')}</span>
                       </div>
                     )}
                   </div>
                   <div className="flex gap-3">
-                     <span className="text-[10px] font-black text-text-muted uppercase tracking-widest self-center border-r-2 border-border-main/30 pr-4 mr-1">Found {previewData.length} Signatures</span>
+                     <span className="text-[10px] font-black text-text-muted uppercase tracking-widest self-center border-r-2 border-border-main/30 pr-4 mr-1">
+                       {t('components.admin.csv_import.preview.found_count', 'Found {count} Signatures').replace('{count}', previewData.length.toString())}
+                     </span>
                   </div>
                 </div>
               </div>
@@ -700,15 +705,15 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                 <table className="w-full text-left border-collapse min-w-[1200px]">
                   <thead className="sticky top-0 z-20 bg-bg-header text-text-on-header text-[10px] font-black uppercase tracking-widest">
                     <tr>
-                      <th className="p-4 border-r border-border-main/20 w-20">Art</th>
-                      <th className="p-4 border-r border-border-main/20 w-[280px]">Product Info</th>
-                      <th className="p-4 border-r border-border-main/20 w-16 text-center">Lang</th>
-                      <th className="p-4 border-r border-border-main/20 w-16 text-center">Cond</th>
-                      <th className="p-4 border-r border-border-main/20 w-36">Treatment</th>
-                      <th className="p-4 border-r border-border-main/20 w-32">Vault</th>
-                      <th className="p-4 border-r border-border-main/20 w-48">Collections</th>
-                      <th className="p-4 border-r border-border-main/20 w-32">Reference</th>
-                      <th className="p-4 w-24 text-center">Qty</th>
+                      <th className="p-4 border-r border-border-main/20 w-20">{t('components.admin.csv_import.preview.table.art', 'Art')}</th>
+                      <th className="p-4 border-r border-border-main/20 w-[280px]">{t('components.admin.csv_import.preview.table.info', 'Product Info')}</th>
+                      <th className="p-4 border-r border-border-main/20 w-16 text-center">{t('components.admin.csv_import.preview.table.lang', 'Lang')}</th>
+                      <th className="p-4 border-r border-border-main/20 w-16 text-center">{t('components.admin.csv_import.preview.table.cond', 'Cond')}</th>
+                      <th className="p-4 border-r border-border-main/20 w-36">{t('components.admin.csv_import.preview.table.treatment', 'Treatment')}</th>
+                      <th className="p-4 border-r border-border-main/20 w-32">{t('components.admin.csv_import.preview.table.vault', 'Vault')}</th>
+                      <th className="p-4 border-r border-border-main/20 w-48">{t('components.admin.csv_import.preview.table.collections', 'Collections')}</th>
+                      <th className="p-4 border-r border-border-main/20 w-32">{t('components.admin.csv_import.preview.table.reference', 'Reference')}</th>
+                      <th className="p-4 w-24 text-center">{t('components.admin.csv_import.preview.table.qty', 'Qty')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border-main/10">
@@ -726,7 +731,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                                 enableModal={true}
                               />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center text-[10px] text-text-muted font-black uppercase text-center p-2 italic">Scanning...</div>
+                              <div className="w-full h-full flex items-center justify-center text-[10px] text-text-muted font-black uppercase text-center p-2 italic">{t('components.admin.csv_import.preview.scanning', 'Scanning...')}</div>
                             )}
                           </div>
                         </td>
@@ -735,7 +740,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                             <input
                               value={item.name || ''}
                               onChange={(e) => updatePreviewItem(idx, { name: e.target.value })}
-                              placeholder="Signature Key"
+                              placeholder={t('components.admin.csv_import.preview.placeholders.name', 'Signature Key')}
                               className="bg-transparent text-text-main font-black flex-1 text-xs focus:outline-none focus:bg-bg-page/50 px-2 border-b-2 border-border-main/30"
                             />
                             <button
@@ -755,7 +760,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                             <input
                               value={item.scryfall_id || ''}
                               onChange={(e) => updatePreviewItem(idx, { scryfall_id: e.target.value })}
-                              placeholder="System UUID"
+                              placeholder={t('components.admin.csv_import.preview.placeholders.uuid', 'System UUID')}
                               className="flex-1 bg-bg-page text-text-muted text-[10px] font-mono-stack text-center border-2 border-border-main/50 focus:outline-none focus:border-accent-primary py-1.5 rounded"
                               title="Scryfall ID"
                             />
@@ -763,13 +768,13 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                               <input
                                 value={item.set_code || ''}
                                 onChange={(e) => updatePreviewItem(idx, { set_code: e.target.value })}
-                                placeholder="SET"
+                                placeholder={t('components.admin.csv_import.preview.placeholders.set', 'SET')}
                                 className="bg-bg-page text-text-muted text-[10px] font-black uppercase w-10 text-center border-2 border-border-main/50 focus:outline-none focus:border-accent-primary py-1.5 rounded"
                               />
                               <input
                                 value={item.collector_number || ''}
                                 onChange={(e) => updatePreviewItem(idx, { collector_number: e.target.value })}
-                                placeholder="#"
+                                placeholder={t('components.admin.csv_import.preview.placeholders.number', '#')}
                                 className="bg-bg-page text-text-muted text-[10px] font-black uppercase w-12 text-center border-2 border-border-main/50 focus:outline-none focus:border-accent-primary py-1.5 rounded"
                               />
                             </div>
@@ -883,7 +888,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                   onClick={() => setStep('mapping')}
                   className="btn-secondary px-10 italic relative z-10"
                 >
-                  Return to Topology
+                  {t('components.admin.csv_import.actions.return_to_topology', 'Return to Topology')}
                 </button>
                 <div className="flex gap-4 relative z-10">
                   <button
@@ -891,7 +896,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                     disabled={loading || previewData.length === 0}
                     className="btn-primary px-16 py-4 italic shadow-2xl scale-110 active:scale-105"
                   >
-                    {loading ? 'COMMITING...' : '⚡ FINALIZE SHIPMENT'}
+                    {loading ? t('components.admin.csv_import.preview.enrich_loading', 'SCRYING ARCHIVES...') : t('components.admin.csv_import.actions.finalize', '⚡ FINALIZE SHIPMENT')}
                   </button>
                 </div>
               </div>
@@ -913,11 +918,11 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
               </div>
 
               <h3 className="text-5xl font-black text-text-main uppercase tracking-tighter mb-6 italic drop-shadow-lg">
-                STOCKING THE VAULT...
+                {t('components.admin.csv_import.importing.title', 'STOCKING THE VAULT...')}
               </h3>
               <div className="max-w-md space-y-4">
                 <p className="text-text-muted font-bold text-xl italic animate-pulse">
-                  &quot;Unpacking shipment and organizing archives&quot;
+                  {t('components.admin.csv_import.importing.subtitle', '"Unpacking shipment and organizing archives"')}
                 </p>
                 <div className="flex justify-center gap-2">
                   {[1, 2, 3, 4, 5].map(i => (
@@ -927,7 +932,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
               </div>
 
               <div className="mt-16 p-6 border-4 border-border-main bg-bg-header text-[12px] font-black text-text-on-header uppercase tracking-[0.3em] shadow-xl">
-                System Processing Manifest of {previewData.length} Records
+                {t('components.admin.csv_import.importing.status', 'System Processing Manifest of {count} Records').replace('{count}', previewData.length.toString())}
               </div>
             </div>
           )}
@@ -938,11 +943,11 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                  <span className="relative z-10">📦</span>
                  <div className="absolute inset-0 bg-accent-primary/20 blur-3xl rounded-full -z-10" />
               </div>
-              <h3 className="text-6xl font-black text-text-main uppercase mb-6 tracking-tighter italic drop-shadow-md">Manifest Success!</h3>
+              <h3 className="text-6xl font-black text-text-main uppercase mb-6 tracking-tighter italic drop-shadow-md">{t('components.admin.csv_import.summary.title', 'Manifest Success!')}</h3>
               <div className="max-w-xl mx-auto bg-bg-card p-10 border-4 border-border-main shadow-2xl relative mb-16 rounded-xl overflow-hidden">
                  <div className="absolute top-0 left-0 w-full h-2 bg-accent-primary" />
                  <p className="text-2xl text-text-muted mb-4 font-bold italic">
-                   Successfully archived <span className="text-accent-primary font-black text-4xl mx-2">{importResults.count}</span> SKU units.
+                   {t('components.admin.csv_import.summary.success_msg', 'Successfully archived {count} SKU units.').replace('{count}', importResults.count.toString())}
                  </p>
                  <div className="h-px bg-border-main/30 w-1/2 mx-auto my-6" />
                  <p className="text-sm text-text-muted font-black uppercase tracking-widest opacity-70 italic">{importResults.message}</p>
@@ -951,7 +956,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                 onClick={() => { onImported(); onClose(); }}
                 className="btn-primary px-20 py-8 text-xl italic shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:scale-110 active:scale-105 transition-all"
               >
-                Return to Command Deck
+                {t('components.admin.csv_import.summary.return_button', 'Return to Command Deck')}
               </button>
             </div>
           )}

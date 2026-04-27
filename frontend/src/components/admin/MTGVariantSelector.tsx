@@ -4,6 +4,7 @@ import {
   getTreatmentOptions, getArtOptions, getPromoOptions, getFoilOptions, ArtOption 
 } from '@/lib/mtg-logic';
 import { ScryfallCard, FoilTreatment, CardTreatment } from '@/lib/types';
+import { useLanguage } from '@/context/LanguageContext';
 
 export interface MTGVariantSelectorProps {
   tcg: string;
@@ -25,6 +26,7 @@ export default function MTGVariantSelector({
   tcg, setCode, setName, cardTreatment, collectorNumber, promoType, foilTreatment, scryfallId, prints,
   onTreatmentChange, onArtChange, onPromoChange, onFoilChange
 }: MTGVariantSelectorProps) {
+  const { t } = useLanguage();
   // Filter waterfalls
   const treatments = getTreatmentOptions(prints, setCode);
   const arts = getArtOptions(prints, setCode, cardTreatment);
@@ -149,7 +151,7 @@ export default function MTGVariantSelector({
 
       <div className="space-y-4 bg-ink-surface/30 p-4 rounded border border-ink-border h-fit">
         <div>
-          <h4 className="text-[10px] font-mono-stack uppercase text-gold mb-3">Identity Summary</h4>
+          <h4 className="text-[10px] font-mono-stack uppercase text-gold mb-3">{t('components.admin.variant_selector.identity_summary')}</h4>
           <div className="space-y-2 text-xs">
             <div className="flex justify-between border-b border-ink-border/50 pb-1">
               <span className="text-text-muted">Set:</span>

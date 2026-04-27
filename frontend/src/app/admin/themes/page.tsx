@@ -494,11 +494,11 @@ export default function AdminThemesPage() {
                   onToggle={() => setExpanded(p => ({...p, surface: !p.surface}))}
                 >
                   <div className="space-y-2">
-                    <ColorInput label="Global Page Background" value={form.bg_page} onChange={val => setForm({...form, bg_page: val})} />
-                    <ColorInput label="Navigation Header" value={form.bg_header} onChange={val => setForm({...form, bg_header: val})} />
-                    <ColorInput label="Card & Panel Surface" value={form.bg_surface} onChange={val => setForm({...form, bg_surface: val})} />
-                    <ColorInput label="Inner Card Background" value={form.bg_card} onChange={val => setForm({...form, bg_card: val})} />
-                    <ColorInput label="Borders & Dividers" value={form.border_main} onChange={val => setForm({...form, border_main: val})} />
+                    <ColorInput label={t('pages.admin.themes.labels.global_bg')} value={form.bg_page} onChange={val => setForm({...form, bg_page: val})} />
+                    <ColorInput label={t('pages.admin.themes.labels.navigation_header')} value={form.bg_header} onChange={val => setForm({...form, bg_header: val})} />
+                    <ColorInput label={t('pages.admin.themes.labels.card_panel_surface')} value={form.bg_surface} onChange={val => setForm({...form, bg_surface: val})} />
+                    <ColorInput label={t('pages.admin.themes.labels.inner_card_bg')} value={form.bg_card} onChange={val => setForm({...form, bg_card: val})} />
+                    <ColorInput label={t('pages.admin.themes.labels.borders_dividers')} value={form.border_main} onChange={val => setForm({...form, border_main: val})} />
                   </div>
                 </Collapsible>
 
@@ -509,13 +509,13 @@ export default function AdminThemesPage() {
                   onToggle={() => setExpanded(p => ({...p, signature: !p.signature}))}
                 >
                   <div className="space-y-2">
-                    <ColorInput label="Primary Accent Color" value={form.accent_primary} onChange={val => setForm({...form, accent_primary: val})} />
-                    <ColorInput label="Hover / Secondary Accent" value={form.accent_primary_hover} onChange={val => setForm({...form, accent_primary_hover: val})} />
-                    <ColorInput label="Text on Accent Backgrounds" value={form.text_on_accent} onChange={val => setForm({...form, text_on_accent: val})} />
-                    <ColorInput label="Text on Navigation Header" value={form.text_on_header} onChange={val => setForm({...form, text_on_header: val})} />
-                    <ColorInput label="Accent for Header Areas" value={form.accent_header} onChange={val => setForm({...form, accent_header: val})} />
-                    <ColorInput label="High Contrast HP (Header)" value={form.status_hp_header} onChange={val => setForm({...form, status_hp_header: val})} />
-                    <ColorInput label="Focus State Color" value={form.border_focus} onChange={val => setForm({...form, border_focus: val})} />
+                    <ColorInput label={t('pages.admin.themes.labels.primary_accent')} value={form.accent_primary} onChange={val => setForm({...form, accent_primary: val})} />
+                    <ColorInput label={t('pages.admin.themes.labels.hover_accent')} value={form.accent_primary_hover} onChange={val => setForm({...form, accent_primary_hover: val})} />
+                    <ColorInput label={t('pages.admin.themes.labels.text_on_accent')} value={form.text_on_accent} onChange={val => setForm({...form, text_on_accent: val})} />
+                    <ColorInput label={t('pages.admin.themes.labels.text_on_nav')} value={form.text_on_header} onChange={val => setForm({...form, text_on_header: val})} />
+                    <ColorInput label={t('pages.admin.themes.labels.accent_header')} value={form.accent_header} onChange={val => setForm({...form, accent_header: val})} />
+                    <ColorInput label={t('pages.admin.themes.labels.high_contrast_hp')} value={form.status_hp_header} onChange={val => setForm({...form, status_hp_header: val})} />
+                    <ColorInput label={t('pages.admin.themes.labels.focus_state')} value={form.border_focus} onChange={val => setForm({...form, border_focus: val})} />
                   </div>
                 </Collapsible>
 
@@ -527,18 +527,18 @@ export default function AdminThemesPage() {
                   <div className="space-y-4">
                     <div className="space-y-2">
                        <p className="text-[9px] font-bold text-text-muted uppercase tracking-widest pl-1">Primary Button</p>
-                       <ColorInput label="Button Background" value={form.btn_primary_bg} onChange={val => setForm({...form, btn_primary_bg: val})} />
-                       <ColorInput label="Button Text" value={form.btn_primary_text} onChange={val => setForm({...form, btn_primary_text: val})} />
+                       <ColorInput label={t('pages.admin.themes.labels.button_bg')} value={form.btn_primary_bg} onChange={val => setForm({...form, btn_primary_bg: val})} />
+                       <ColorInput label={t('pages.admin.themes.labels.button_text')} value={form.btn_primary_text} onChange={val => setForm({...form, btn_primary_text: val})} />
                     </div>
                     <div className="space-y-2">
                        <p className="text-[9px] font-bold text-text-muted uppercase tracking-widest pl-1">Secondary Button</p>
-                       <ColorInput label="Button Background" value={form.btn_secondary_bg} onChange={val => setForm({...form, btn_secondary_bg: val})} />
-                       <ColorInput label="Button Text" value={form.btn_secondary_text} onChange={val => setForm({...form, btn_secondary_text: val})} />
+                       <ColorInput label={t('pages.admin.themes.labels.button_bg')} value={form.btn_secondary_bg} onChange={val => setForm({...form, btn_secondary_bg: val})} />
+                       <ColorInput label={t('pages.admin.themes.labels.button_text')} value={form.btn_secondary_text} onChange={val => setForm({...form, btn_secondary_text: val})} />
                     </div>
                     <div className="space-y-2">
                        <p className="text-[9px] font-bold text-text-muted uppercase tracking-widest pl-1">Checkboxes</p>
-                       <ColorInput label="Checkbox Border" value={form.checkbox_border} onChange={val => setForm({...form, checkbox_border: val})} />
-                       <ColorInput label="Checkbox Checked BG" value={form.checkbox_checked} onChange={val => setForm({...form, checkbox_checked: val})} />
+                       <ColorInput label={t('pages.admin.themes.labels.checkbox_border')} value={form.checkbox_border} onChange={val => setForm({...form, checkbox_border: val})} />
+                       <ColorInput label={t('pages.admin.themes.labels.checkbox_checked_bg')} value={form.checkbox_checked} onChange={val => setForm({...form, checkbox_checked: val})} />
                     </div>
                   </div>
                 </Collapsible>
@@ -550,9 +550,9 @@ export default function AdminThemesPage() {
                   onToggle={() => setExpanded(p => ({...p, type: !p.type}))}
                 >
                   <div className="space-y-2">
-                    <ColorInput label="Primary Heading Text" value={form.text_main} onChange={val => setForm({...form, text_main: val})} />
-                    <ColorInput label="Secondary / Body Text" value={form.text_secondary} onChange={val => setForm({...form, text_secondary: val})} />
-                    <ColorInput label="Muted / Small Text" value={form.text_muted} onChange={val => setForm({...form, text_muted: val})} />
+                    <ColorInput label={t('pages.admin.themes.labels.primary_heading')} value={form.text_main} onChange={val => setForm({...form, text_main: val})} />
+                    <ColorInput label={t('pages.admin.themes.labels.secondary_text')} value={form.text_secondary} onChange={val => setForm({...form, text_secondary: val})} />
+                    <ColorInput label={t('pages.admin.themes.labels.muted_text')} value={form.text_muted} onChange={val => setForm({...form, text_muted: val})} />
                   </div>
                 </Collapsible>
 
@@ -563,11 +563,11 @@ export default function AdminThemesPage() {
                   onToggle={() => setExpanded(p => ({...p, logic: !p.logic}))}
                 >
                   <div className="space-y-2">
-                    <ColorInput label="Near Mint (NM) Status" value={form.status_nm} onChange={val => setForm({...form, status_nm: val})} />
-                    <ColorInput label="Lightly Played (LP) Status" value={form.status_lp} onChange={val => setForm({...form, status_lp: val})} />
-                    <ColorInput label="Moderately Played (MP) Status" value={form.status_mp} onChange={val => setForm({...form, status_mp: val})} />
-                    <ColorInput label="Heavily Played (HP) Status" value={form.status_hp} onChange={val => setForm({...form, status_hp: val})} />
-                    <ColorInput label="Damaged (DMG) Status" value={form.status_dmg} onChange={val => setForm({...form, status_dmg: val})} />
+                    <ColorInput label={t('pages.admin.themes.labels.nm_status')} value={form.status_nm} onChange={val => setForm({...form, status_nm: val})} />
+                    <ColorInput label={t('pages.admin.themes.labels.lp_status')} value={form.status_lp} onChange={val => setForm({...form, status_lp: val})} />
+                    <ColorInput label={t('pages.admin.themes.labels.mp_status')} value={form.status_mp} onChange={val => setForm({...form, status_mp: val})} />
+                    <ColorInput label={t('pages.admin.themes.labels.hp_status')} value={form.status_hp} onChange={val => setForm({...form, status_hp: val})} />
+                    <ColorInput label={t('pages.admin.themes.labels.dmg_status')} value={form.status_dmg} onChange={val => setForm({...form, status_dmg: val})} />
                   </div>
                 </Collapsible>
 
@@ -579,9 +579,9 @@ export default function AdminThemesPage() {
                   onToggle={() => setExpanded(p => ({...p, geometry: !p.geometry}))}
                 >
                   <div className="space-y-2">
-                    <LayoutPropertyInput label="Card Corner Rounding" value={form.radius_base} onChange={val => setForm({...form, radius_base: val})} helperText="(px/rem)" />
-                    <LayoutPropertyInput label="Internal Card Padding" value={form.padding_card} onChange={val => setForm({...form, padding_card: val})} helperText="(px/rem)" />
-                    <LayoutPropertyInput label="Grid Spacing (Gap)" value={form.gap_grid} onChange={val => setForm({...form, gap_grid: val})} helperText="(px/rem)" />
+                    <LayoutPropertyInput label={t('pages.admin.themes.labels.card_rounding')} value={form.radius_base} onChange={val => setForm({...form, radius_base: val})} helperText="(px/rem)" />
+                    <LayoutPropertyInput label={t('pages.admin.themes.labels.internal_card_padding')} value={form.padding_card} onChange={val => setForm({...form, padding_card: val})} helperText="(px/rem)" />
+                    <LayoutPropertyInput label={t('pages.admin.themes.labels.grid_spacing')} value={form.gap_grid} onChange={val => setForm({...form, gap_grid: val})} helperText="(px/rem)" />
                   </div>
                 </Collapsible>
 
@@ -593,10 +593,10 @@ export default function AdminThemesPage() {
                   onToggle={() => setExpanded(p => ({...p, advanced: !p.advanced}))}
                 >
                   <div className="space-y-2">
-                    <ImageUploadInput label="Background Overlay Image URL" value={form.bg_image_url || ''} onChange={val => setForm({...form, bg_image_url: val})} helperText="(Can be SVG data URI or absolute URL)" />
-                    <ColorInput label="Secondary Edge/Accent Color" value={form.accent_secondary || ''} onChange={val => setForm({...form, accent_secondary: val})} />
-                    <FontSelector label="Header Typography Family" value={form.font_heading || ''} onChange={val => setForm({...form, font_heading: val})} helperText="(Logos and Headings)" />
-                    <FontSelector label="Body Typography Family" value={form.font_body || ''} onChange={val => setForm({...form, font_body: val})} helperText="(UI and Content)" />
+                    <ImageUploadInput label={t('pages.admin.themes.labels.bg_overlay_url')} value={form.bg_image_url || ''} onChange={val => setForm({...form, bg_image_url: val})} helperText="(Can be SVG data URI or absolute URL)" />
+                    <ColorInput label={t('pages.admin.themes.labels.secondary_edge')} value={form.accent_secondary || ''} onChange={val => setForm({...form, accent_secondary: val})} />
+                    <FontSelector label={t('pages.admin.themes.labels.header_typography')} value={form.font_heading || ''} onChange={val => setForm({...form, font_heading: val})} helperText="(Logos and Headings)" />
+                    <FontSelector label={t('pages.admin.themes.labels.body_typography')} value={form.font_body || ''} onChange={val => setForm({...form, font_body: val})} helperText="(UI and Content)" />
                   </div>
                 </Collapsible>
               </div>
