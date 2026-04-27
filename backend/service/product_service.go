@@ -513,6 +513,28 @@ func (h *ProductService) UpdateStorage(ctx context.Context, id string, updates [
 
 	return h.GetStorage(ctx, id)
 }
+
+func (s *ProductService) BulkMoveStorage(ctx context.Context, req models.BulkMoveStorageRequest) error {
+	if req.TargetStorageID == "" {
+		return fmt.Errorf("target storage ID is required")
+	}
+	if len(req.Moves) == 0 {
+		return nil
+	}
+
+	err := s.Store.BulkMoveStorage(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	// Audit Log the batch action
+	s.Audit.LogAction(ctx, "BULK_MOVE_STORAGE", "product", "batch", models.JSONB{
+		"target_id":  req.TargetStorageID,
+		"move_count": len(req.Moves),
+	})
+
+	return nil
+}
 func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, source models.PriceSource, onProgress func(current, total int)) (int, error) {
 	logger.TraceCtx(ctx, "Entering ProductService.BulkUpdateSource | Count: %d | Source: %s", len(ids), source)
 	if len(ids) == 0 {
