@@ -367,3 +367,21 @@ func (h *ProductHandler) BulkUpdateSource(w http.ResponseWriter, r *http.Request
 		"count":   count,
 	})
 }
+
+func (h *ProductHandler) BulkMoveStorage(w http.ResponseWriter, r *http.Request) {
+	logger.TraceCtx(r.Context(), "Entering ProductHandler.BulkMoveStorage")
+	var req models.BulkMoveStorageRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.ErrorCtx(r.Context(), "Failed to decode bulk move storage input: %v", err)
+		render.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.Service.BulkMoveStorage(r.Context(), req); err != nil {
+		logger.ErrorCtx(r.Context(), "BulkMoveStorage failed: %v", err)
+		render.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	render.Success(w, map[string]string{"message": "Relocation complete"})
+}

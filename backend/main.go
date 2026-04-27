@@ -262,6 +262,7 @@ func main() {
 				r.Delete("/products/{id}", productHandler.Delete)
 				r.Get("/products/low-stock", productHandler.GetLowStock)
 				r.Put("/products/bulk-source", productHandler.BulkUpdateSource)
+				r.Post("/products/bulk-move-storage", productHandler.BulkMoveStorage)
 
 				// Product Storage
 				r.Get("/products/{id}/storage", productHandler.GetStorage)
