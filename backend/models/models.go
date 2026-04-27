@@ -156,10 +156,14 @@ func (p *Product) Redact(isAdmin bool) {
 		p.StoredIn = nil
 		p.CreatedAt = nil
 		p.UpdatedAt = nil
-		// Categories within product should also be redacted
+		
+		// Also redact categories if needed
 		for i := range p.Categories {
 			p.Categories[i].Redact(isAdmin)
 		}
+		
+		// If there are deck cards, they should also be redacted if they contain sensitive info
+		// (Currently they mostly contain metadata which is public)
 	}
 }
 
