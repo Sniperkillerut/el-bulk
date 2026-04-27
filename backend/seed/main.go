@@ -28,14 +28,23 @@ func main() {
 	database := db.Connect()
 	defer database.Close()
 
-	// Manual Phase Override (CLI) - Takes precedence over all environment logic
-	if *phase >= 0 {
-		logger.Info("🎯 Manual Phase Override detected: Running Phase #%d", *phase)
-		if err := runTask(database, *phase, *mode, *env, *clear); err != nil {
-			logger.Error("❌ Phase %d failed: %v", *phase, err)
+	// Manual Phase Override (CLI or Env) - Takes precedence over all environment logic
+	effectivePhase := *phase
+	if effectivePhase < 0 {
+		if ep := os.Getenv("SEED_PHASE"); ep != "" {
+			if val, err := strconv.Atoi(ep); err == nil {
+				effectivePhase = val
+			}
+		}
+	}
+
+	if effectivePhase >= 0 {
+		logger.Info("🎯 Manual Phase Override detected: Running Phase #%d", effectivePhase)
+		if err := runTask(database, effectivePhase, *mode, *env, *clear); err != nil {
+			logger.Error("❌ Phase %d failed: %v", effectivePhase, err)
 			os.Exit(1)
 		}
-		logger.Info("🏅 Phase %d completed successfully!", *phase)
+		logger.Info("🏅 Phase %d completed successfully!", effectivePhase)
 		return
 	}
 

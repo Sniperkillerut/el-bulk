@@ -14,10 +14,24 @@ import (
 func seedTranslations(db *sqlx.DB) error {
 	logger.Info("🌐 Seeding Storefront Translations...")
 
-	// Find the translations directory
-	basePath := filepath.Join("seed", "data", "translations")
-	if _, err := os.Stat(basePath); os.IsNotExist(err) {
-		basePath = filepath.Join("backend", "seed", "data", "translations")
+	// Find the translations directory with multiple fallbacks for different environments
+	searchPaths := []string{
+		filepath.Join("seed", "data", "translations"),         // Production (from Dockerfile)
+		filepath.Join("backend", "seed", "data", "translations"), // Local (from project root)
+		filepath.Join("data", "translations"),                 // Alternative production
+	}
+
+	basePath := ""
+	for _, p := range searchPaths {
+		if _, err := os.Stat(p); err == nil {
+			basePath = p
+			break
+		}
+	}
+
+	if basePath == "" {
+		// Final fallback for debugging
+		return fmt.Errorf("failed to find translations directory in any of: %v", searchPaths)
 	}
 
 	files, err := os.ReadDir(basePath)

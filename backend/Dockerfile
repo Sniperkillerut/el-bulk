@@ -45,6 +45,7 @@ COPY --from=builder /el-bulk-api .
 COPY --from=builder /el-bulk-seed .
 COPY --from=builder /app/db/schema ./db/schema
 COPY --from=builder /app/db/migrations ./db/migrations
+COPY --from=builder /app/seed/data ./seed/data
 
 # Optimizations for Cloud Run / Serverless memory limits
 # GOGC: Trigger GC more aggressively (default 100) to reduce memory peaks.
