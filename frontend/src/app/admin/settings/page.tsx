@@ -7,6 +7,7 @@ import { remoteLogger } from '@/lib/remoteLogger';
 import { useAdmin } from '@/hooks/useAdmin';
 import AdminHeader from '@/components/admin/AdminHeader';
 import { useLanguage } from '@/context/LanguageContext';
+import BusinessHoursEditor from '@/components/admin/BusinessHoursEditor';
 
 export default function AdminSettingsPage() {
   const { t } = useLanguage();
@@ -195,15 +196,10 @@ export default function AdminSettingsPage() {
                   />
                 </div>
                 
-                <div>
-                  <label className="text-[10px] font-mono-stack mb-1 block uppercase font-bold text-text-muted">{t('pages.admin.settings.hours_label', 'Business Hours')}</label>
-                  <input 
-                    type="text" 
-                    className="w-full bg-white p-3 text-sm font-bold rounded-sm border border-ink-border/20 outline-none focus:border-gold"
-                    value={editingSettings.contact_hours || ''} 
-                    onChange={e => setEditingSettings({ ...editingSettings, contact_hours: e.target.value })} 
-                  />
-                </div>
+                <BusinessHoursEditor 
+                  value={editingSettings.contact_hours || ''} 
+                  onChange={(val: string) => setEditingSettings({ ...editingSettings, contact_hours: val })} 
+                />
               </div>
             </div>
           </section>
@@ -264,7 +260,7 @@ export default function AdminSettingsPage() {
                 <button
                   onClick={() => setEditingSettings({ ...editingSettings, delivery_priority_enabled: !editingSettings.delivery_priority_enabled })}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ring-offset-2 focus:ring-2 ring-green-500 ${
-                    editingSettings.delivery_priority_enabled ? 'bg-green-500' : 'bg-ink-surface/20'
+                    editingSettings.delivery_priority_enabled ? 'bg-green-500' : 'bg-zinc-300'
                   }`}
                 >
                   <span

@@ -12,43 +12,36 @@ const DeliveryBadge: React.FC = () => {
 
   const checkIfOpen = (hoursStr: string): boolean => {
     try {
-      // Basic parser for "Mon - Sat: 11:00 AM - 7:00 PM"
+      if (!hoursStr || !hoursStr.startsWith('{')) return false;
+
       const now = new Date();
-      const bogotaTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Bogota"}));
+      const bogotaTime = new Date(now.toLocaleString("en-US", { timeZone: "America/Bogota" }));
       const day = bogotaTime.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+      const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      const today = days[day];
       
-      // Check if it's Sunday (Store usually closed on Sun based on "Mon - Sat")
-      if (day === 0 && !hoursStr.toLowerCase().includes('sun')) return false;
-
-      // Extract time part: "11:00 AM - 7:00 PM"
-      let timePart = hoursStr;
-      if (hoursStr.includes(':')) {
-         const parts = hoursStr.split(':');
-         // Join parts after the first colon in case there are multiple
-         timePart = parts.slice(1).join(':').trim();
-      }
-      
-      const [startStr, endStr] = timePart.split('-').map(s => s.trim());
-      
-      const parseTime = (str: string) => {
-        const [time, modifier] = str.split(' ');
-        const [hours, minutesStr] = time.split(':');
-        let hoursNum = Number(hours);
-        const minutes = Number(minutesStr) || 0;
-        
-        if (modifier === 'PM' && hoursNum < 12) hoursNum += 12;
-        if (modifier === 'AM' && hoursNum === 12) hoursNum = 0;
-        return hoursNum * 60 + minutes;
-      };
-
       const currentMinutes = bogotaTime.getHours() * 60 + bogotaTime.getMinutes();
-      const startMinutes = parseTime(startStr);
-      const endMinutes = parseTime(endStr);
 
-      return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+      const config = JSON.parse(hoursStr);
+      const dayConfig = config[today];
+      
+      if (!dayConfig || !dayConfig.open) return false;
+      
+      const parseHHmm = (str: string) => {
+        const [h, m] = str.split(':').map(Number);
+        return h * 60 + m;
+      };
+      
+      const startMin = parseHHmm(dayConfig.start);
+      const endMin = parseHHmm(dayConfig.end);
+      
+      if (startMin > endMin) { // Overnight shift support
+        return currentMinutes >= startMin || currentMinutes <= endMin;
+      }
+      return currentMinutes >= startMin && currentMinutes <= endMin;
     } catch (e) {
-      console.warn('Failed to parse delivery hours', e);
-      return true; // Fallback to true if manual override is enabled but hours are weird
+      console.warn('Failed to parse delivery hours JSON', e);
+      return false;
     }
   };
 
@@ -70,28 +63,29 @@ const DeliveryBadge: React.FC = () => {
 
     loadSettings();
     // Refresh every 2 minutes
-    const interval = setInterval(loadSettings, 2 * 60 * 1000);
+    // Refresh every 30 seconds for better responsiveness during testing
+    const interval = setInterval(loadSettings, 30 * 1000);
     return () => clearInterval(interval);
   }, []);
 
   const isActive = settings?.delivery_priority_enabled && isOpen;
 
   return (
-    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-sm border text-[10px] font-mono-stack font-bold tracking-wider transition-all duration-500 ${
+    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-none border font-mono-stack font-bold tracking-widest transition-all duration-300 select-none ${
       isActive 
-        ? 'bg-green-500/10 border-green-500/50 text-green-400 shadow-[0_0_15px_rgba(34,197,94,0.1)]' 
-        : 'bg-white/5 border-white/10 text-white/40'
+        ? 'bg-[#DCFCE7] border-[#86EFAC] text-[#166534] shadow-sm' 
+        : 'bg-[#FDFBF7]/80 border-[#E6DAC3] text-[#8B795C] backdrop-blur-sm'
     }`}>
-      <span className={`relative flex h-2 w-2`}>
+      <div className="relative flex h-2 w-2">
         {isActive && (
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#166534] opacity-20"></span>
         )}
-        <span className={`relative inline-flex rounded-full h-2 w-2 ${isActive ? 'bg-green-500' : 'bg-white/20'}`}></span>
-      </span>
-      <span>
+        <div className={`relative inline-flex rounded-none h-2 w-2 border ${isActive ? 'bg-[#166534] border-[#166534]' : 'bg-[#8B795C]/20 border-[#8B795C]/30'}`}></div>
+      </div>
+      <span className="text-[10px] uppercase whitespace-nowrap">
         {isActive 
-          ? t('components.delivery.available', 'BOGOTÁ EXPRESS: AVAILABLE NOW ⚡')
-          : t('components.delivery.offline', 'BOGOTÁ EXPRESS: CURRENTLY OFFLINE 📦')
+          ? t('components.delivery.available', 'BOGOTÁ EXPRESS: ACTIVE ⚡')
+          : t('components.delivery.offline', 'BOGOTÁ EXPRESS: INACTIVE 📦')
         }
       </span>
     </div>

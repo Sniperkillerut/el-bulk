@@ -2,6 +2,7 @@
 
 import HomeSearchBar from '@/components/HomeSearchBar';
 import { useLanguage } from '@/context/LanguageContext';
+import DeliveryBadge from '@/components/DeliveryBadge';
 
 export default function HeroSection() {
   const { t } = useLanguage();
@@ -30,9 +31,14 @@ export default function HeroSection() {
           <h1 className="font-display text-fluid-h2 text-text-main mb-1 tracking-tight hero-text-glow">
             EL BULK
           </h1>
-          <p className="text-sm md:text-lg text-text-main/70 font-bold uppercase tracking-[0.3em] mb-10 hero-text-glow">
+          <p className="text-sm md:text-lg text-text-main/70 font-bold uppercase tracking-[0.3em] mb-6 hero-text-glow">
             {t('pages.home.hero.tagline', 'Grow your collection')}
           </p>
+
+          {/* Delivery Status Indicator */}
+          <div className="mb-8 animate-fade-in delay-200">
+            <DeliveryBadge />
+          </div>
 
           {/* Simple Search Bar Area */}
           <div className="w-full max-w-6xl">
