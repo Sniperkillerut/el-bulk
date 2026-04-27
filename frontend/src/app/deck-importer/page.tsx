@@ -95,15 +95,24 @@ export default function DeckImporterPage() {
       const matchQty = cardName.match(/^(\d+)\s+(.*)/);
       if (matchQty) cardName = matchQty[2];
 
+      const bestMatch = match.matches?.[0];
+
       setWanted(prev => ({
         ...prev,
         [key]: {
-          card_name: cardName,
-          set_name: match.requested_set,
-          details: match.requested_cn ? `CN: ${match.requested_cn}` : undefined,
+          card_name: bestMatch?.name || cardName,
+          set_name: bestMatch?.set_name || match.requested_set,
+          details: match.requested_cn ? `CN: ${match.requested_cn}` : (bestMatch?.collector_number ? `CN: ${bestMatch.collector_number}` : undefined),
           quantity: quantity,
-          tcg: 'mtg',
-          original_line: match.raw_line
+          tcg: bestMatch?.tcg || 'mtg',
+          original_line: match.raw_line,
+          image_url: bestMatch?.image_url,
+          scryfall_id: bestMatch?.scryfall_id,
+          set_code: bestMatch?.set_code,
+          collector_number: bestMatch?.collector_number,
+          foil_treatment: bestMatch?.foil_treatment,
+          card_treatment: bestMatch?.card_treatment,
+          match_type: 'any' // Default to any unless they refine it
         }
       }));
     }

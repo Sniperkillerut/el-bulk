@@ -55,7 +55,14 @@ BEGIN
             details, 
             quantity,
             tcg,
-            status
+            status,
+            match_type,
+            scryfall_id,
+            image_url,
+            foil_treatment,
+            card_treatment,
+            set_code,
+            collector_number
         ) VALUES (
             v_customer_id, 
             p_customer_name, 
@@ -65,7 +72,14 @@ BEGIN
             v_card->>'details', 
             COALESCE((v_card->>'quantity')::INT, 1),
             COALESCE(v_card->>'tcg', 'mtg'),
-            'pending'
+            'pending',
+            COALESCE(v_card->>'match_type', 'any'),
+            v_card->>'scryfall_id',
+            v_card->>'image_url',
+            v_card->>'foil_treatment',
+            v_card->>'card_treatment',
+            v_card->>'set_code',
+            v_card->>'collector_number'
         );
         v_count := v_count + 1;
     END LOOP;

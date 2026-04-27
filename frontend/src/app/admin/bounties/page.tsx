@@ -523,15 +523,15 @@ export default function AdminBountiesPage() {
                     req.status === 'solved' ? 'bg-indigo-50/20 border-indigo-600 opacity-80 backdrop-grayscale' :
                     'bg-red-50/20 border-red-500 opacity-60'
                   }`}>
-                    {req.scryfall_id ? (
+                    {req.scryfall_id || req.image_url ? (
                       <div className="w-16 h-22 bg-kraft-paper rounded flex shrink-0 items-center justify-center overflow-hidden border border-kraft-dark/10 shadow-sm group relative">
                         <img 
-                          src={`https://api.scryfall.com/cards/${req.scryfall_id}?format=image&version=small`} 
+                          src={req.scryfall_id ? `https://api.scryfall.com/cards/${req.scryfall_id}?format=image&version=small` : req.image_url} 
                           alt={req.card_name}
                           className="w-full h-full object-cover transition-transform group-hover:scale-110"
                         />
                         <div className="absolute inset-0 bg-ink-deep/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                           <span className="text-[8px] font-bold text-white uppercase bg-ink-deep/60 px-1 rounded">EXACT</span>
+                           <span className="text-[8px] font-bold text-white uppercase bg-ink-deep/60 px-1 rounded">{req.match_type === 'exact' ? 'EXACT' : 'GENERIC'}</span>
                         </div>
                       </div>
                     ) : (

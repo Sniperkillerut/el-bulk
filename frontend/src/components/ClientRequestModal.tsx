@@ -36,6 +36,7 @@ export default function ClientRequestModal({ onClose, onSuccess }: ClientRequest
   });
 
   const [selectedPrint, setSelectedPrint] = useState<any | null>(null);
+  const [suggestion, setSuggestion] = useState<any | null>(null);
   const [matchType, setMatchType] = useState<'any' | 'exact'>('any');
 
   useEffect(() => {
@@ -46,16 +47,17 @@ export default function ClientRequestModal({ onClose, onSuccess }: ClientRequest
   }, [user, setFieldValue, form.customer_name]);
 
   const onSubmit = async (data: Record<string, string>) => {
+    const activePrint = selectedPrint || suggestion;
     await createClientRequest({
       ...data,
-      card_name: selectedPrint?.name || data.card_name,
+      card_name: activePrint?.name || data.card_name,
       quantity: parseInt(data.quantity || '1', 10),
       match_type: matchType,
-      scryfall_id: selectedPrint?.id,
+      scryfall_id: selectedPrint?.id, // Only send ID if exactly selected
       set_name: selectedPrint?.set_name || data.set_name,
       set_code: selectedPrint?.set || '',
       collector_number: selectedPrint?.collector_number || '',
-      image_url: selectedPrint?.image_uris?.normal || selectedPrint?.image_uris?.small || selectedPrint?.card_faces?.[0]?.image_uris?.normal,
+      image_url: activePrint?.image_uris?.normal || activePrint?.image_uris?.small || activePrint?.card_faces?.[0]?.image_uris?.normal,
       foil_treatment: selectedPrint?.finishes?.includes('foil') ? 'foil' : 'non_foil',
       card_treatment: selectedPrint?.border_color === 'borderless' ? 'borderless' : (selectedPrint?.frame_effects?.includes('showcase') ? 'showcase' : 'normal'),
     } as any);
@@ -121,6 +123,7 @@ export default function ClientRequestModal({ onClose, onSuccess }: ClientRequest
                     setSelectedPrint(print);
                     setMatchType(print ? 'exact' : 'any');
                   }}
+                  onSuggestion={(print) => setSuggestion(print)}
                 />
               </div>
             )}

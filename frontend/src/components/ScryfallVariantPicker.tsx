@@ -20,10 +20,11 @@ interface ScryfallPrint {
 interface Props {
   cardName: string;
   onSelect: (print: ScryfallPrint | null) => void; // null = "Any Version"
+  onSuggestion?: (print: ScryfallPrint) => void;
   selectedId?: string;
 }
 
-export default function ScryfallVariantPicker({ cardName, onSelect, selectedId }: Props) {
+export default function ScryfallVariantPicker({ cardName, onSelect, onSuggestion, selectedId }: Props) {
   const { t } = useLanguage();
   const [prints, setPrints] = useState<ScryfallPrint[]>([]);
   const [loading, setLoading] = useState(false);
@@ -31,7 +32,7 @@ export default function ScryfallVariantPicker({ cardName, onSelect, selectedId }
 
   useEffect(() => {
     if (!cardName || cardName.length < 3) {
-      setPrints([]);
+      if (prints.length > 0) setPrints([]);
       return;
     }
     const timer = setTimeout(() => {
@@ -41,13 +42,19 @@ export default function ScryfallVariantPicker({ cardName, onSelect, selectedId }
           if (r.status === 404) return { data: [] };
           return r.json();
         })
-        .then(data => setPrints(data.data || []))
+        .then(data => {
+          const results = data.data || [];
+          setPrints(results);
+          if (results.length > 0 && onSuggestion) {
+            onSuggestion(results[0]);
+          }
+        })
         .catch(() => setPrints([]))
         .finally(() => setLoading(false));
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [cardName]);
+  }, [cardName, onSuggestion]);
 
   const getImage = (p: ScryfallPrint) =>
     p.image_uris?.small ?? p.card_faces?.[0]?.image_uris?.small ?? '/placeholder-card.png';
