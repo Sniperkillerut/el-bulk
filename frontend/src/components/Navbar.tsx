@@ -27,7 +27,7 @@ const NavLink = ({ href, icon: Icon, label, colorClass = "", onClick }: { href: 
 export default function Navbar() {
   const { totalItems, openCart, isOpen, closeCart } = useCart();
   const { user, loading: userLoading, logout } = useUser();
-  const { locale, setLocale, t, availableLocales, hideSelector } = useLanguage();
+  const { locale, setLocale, t, availableLocales, hideSelector, getLocaleDisplay } = useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [tcgs, setTcgs] = useState<TCG[]>([]);
 
@@ -155,24 +155,31 @@ export default function Navbar() {
                 align="end"
                 trigger={
                   <button
-                    className="p-1.5 rounded-md transition-all flex flex-col items-center justify-center bg-transparent border border-border-main/30 cursor-pointer text-text-main group hover:border-text-main"
+                    className="p-1.5 rounded-md transition-all flex flex-col items-center justify-center bg-transparent border border-border-main/30 cursor-pointer text-text-main group hover:border-text-main min-w-[36px]"
                     title={t('pages.nav.tooltips.change_lang', 'Change language')}
                   >
-                    <span className="text-[10px] font-bold uppercase">{locale}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest">{locale}</span>
                   </button>
                 }
               >
-                <div className="p-1 w-32 bg-bg-kraft border border-border-plum rounded-sm shadow-xl">
-                  {availableLocales.map(loc => (
-                    <button
-                      key={loc}
-                      onClick={() => setLocale(loc)}
-                      className={`block w-full text-left text-xs px-3 py-2 rounded transition-colors bg-transparent border-none cursor-pointer ${locale === loc ? 'text-ink-plum font-bold bg-ink-plum/10' : 'text-ink-plum hover:bg-ink-plum/5'
+                <div className="p-1 min-w-[140px] bg-bg-kraft border border-border-plum rounded-sm shadow-xl flex flex-col gap-0.5">
+                  {availableLocales.map(loc => {
+                    const item = getLocaleDisplay(loc);
+                    
+                    return (
+                      <button
+                        key={loc}
+                        onClick={() => setLocale(loc)}
+                        className={`flex items-center gap-3 w-full text-left text-xs px-3 py-2 rounded transition-colors bg-transparent border-none cursor-pointer ${
+                          locale === loc ? 'text-ink-plum font-bold bg-ink-plum/10' : 'text-ink-plum hover:bg-ink-plum/5'
                         }`}
-                    >
-                      {loc === 'en' ? '🇺🇸 English' : loc === 'es' ? '🇪🇸 Español' : loc.toUpperCase()}
-                    </button>
-                  ))}
+                      >
+                        <span className="text-base leading-none inline-block w-5">{item.icon}</span>
+                        <span className="font-medium">{item.label}</span>
+                        {locale === loc && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-ink-plum" />}
+                      </button>
+                    );
+                  })}
                 </div>
               </Dropdown>
             )}

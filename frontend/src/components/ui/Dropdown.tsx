@@ -72,9 +72,9 @@ export default function Dropdown({
       </div>
 
       {isOpen && (
-        <div className={`absolute top-full ${alignmentClass} pt-1 min-w-[180px] z-50 animate-in fade-in slide-in-from-top-1 duration-200 ${dropdownClassName}`}>
+        <div className={`absolute top-full ${alignmentClass} pt-1 min-w-max z-50 animate-in fade-in slide-in-from-top-1 duration-200 ${dropdownClassName}`}>
           {children ? (
-            <div className="rounded-sm overflow-hidden border border-border-main shadow-xl bg-bg-surface">
+            <div className="rounded-sm overflow-hidden">
               {children}
             </div>
           ) : (

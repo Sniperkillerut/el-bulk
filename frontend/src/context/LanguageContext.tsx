@@ -13,6 +13,7 @@ interface LanguageContextType {
   isLoading: boolean;
   availableLocales: Locale[];
   hideSelector?: boolean;
+  getLocaleDisplay: (locale: Locale) => { label: string, icon: string };
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -96,6 +97,21 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return result;
   }, [translations, locale, allTranslations]);
 
+  const getLocaleDisplay = useCallback((loc: string) => {
+    const lKey = loc.toLowerCase();
+    
+    // Attempt to find native label first, then fallback to English translation
+    const label = allTranslations[lKey]?.[`system.locale.${lKey}.label`] || 
+                  allTranslations['en']?.[`system.locale.${lKey}.label`] || 
+                  '';
+    const icon = allTranslations[lKey]?.[`system.locale.${lKey}.icon`] || 
+                 allTranslations['en']?.[`system.locale.${lKey}.icon`] || 
+                 '';
+
+    if (label && icon) return { label, icon };
+    return { label: loc.toUpperCase(), icon: '🌐' };
+  }, [allTranslations]);
+
   return (
     <LanguageContext.Provider value={{ 
       locale, 
@@ -103,7 +119,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       t, 
       isLoading, 
       availableLocales,
-      hideSelector: settings?.hide_language_selector || false
+      hideSelector: settings?.hide_language_selector || false,
+      getLocaleDisplay
     }}>
       {children}
     </LanguageContext.Provider>
