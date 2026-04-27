@@ -19,6 +19,7 @@ ehthumbs.db
 Thumbs.db
 .agent/
 .superpowers/
+.bin/
 
 # IDEs
 .vscode/
