@@ -15,6 +15,7 @@ import CSVImportModal from '@/components/admin/CSVImportModal';
 import StorageManagerModal from '@/components/admin/modals/StorageManagerModal';
 import CategoryManagerModal from '@/components/admin/modals/CategoryManagerModal';
 import BulkSyncProgressModal from '@/components/admin/modals/BulkSyncProgressModal';
+import BulkMoveStorageModal from './BulkMoveStorageModal';
 import ProductTable from '@/components/admin/dashboard/ProductTable';
 import { useAdminProducts } from '@/hooks/useAdminProducts';
 import { useLanguage } from '@/context/LanguageContext';
@@ -50,6 +51,8 @@ export default function AdminDashboard() {
   const [isBulkSyncing, setIsBulkSyncing] = useState(false);
   const [isSelectingGlobal, setIsSelectingGlobal] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [showMoveModal, setShowMoveModal] = useState(false);
+  const [movingProducts, setMovingProducts] = useState<Product[]>([]);
 
   // Bulk Sync Modal State
   const [bulkSyncStatus, setBulkSyncStatus] = useState<'syncing' | 'success' | 'error'>('syncing');
@@ -192,13 +195,29 @@ export default function AdminDashboard() {
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
       link.setAttribute('download', `el_bulk_export_${new Date().toISOString().slice(0, 10)}.csv`);
-      link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     } catch (err) {
       console.error('Export failed:', err);
       alert(t('pages.admin.inventory.error_export', 'Failed to export CSV. Please try again.'));
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleOpenMoveModal = async () => {
+    if (selectedIds.length === 0) return;
+    setIsExporting(true);
+    try {
+      const data = await adminFetchProducts({ 
+        ids: selectedIds.join(','),
+        page_size: selectedIds.length 
+      });
+      setMovingProducts(data.products || []);
+      setShowMoveModal(true);
+    } catch {
+      alert(t('pages.admin.inventory.error_move_fetch', 'Failed to fetch products for relocation.'));
     } finally {
       setIsExporting(false);
     }
@@ -356,6 +375,12 @@ export default function AdminDashboard() {
             >
               {isExporting ? <div className="w-3 h-3 border-2 border-current border-t-transparent animate-spin rounded-full" /> : <span>⬇</span>}
               CSV EXPORT
+            </button>
+            <button 
+              onClick={handleOpenMoveModal}
+              className="btn-secondary !py-1 !px-3 !text-[10px] bg-accent-primary/10 border-accent-primary/20 text-accent-primary hover:bg-accent-primary hover:text-white transition-all flex items-center gap-1"
+            >
+              <span>📦</span> RELOCATE STORAGE
             </button>
             <button 
               onClick={() => setSelectedIds([])}
@@ -553,6 +578,15 @@ export default function AdminDashboard() {
           status={bulkSyncStatus}
           error={bulkSyncError}
           onClose={() => setIsBulkSyncing(false)}
+        />
+      )}
+
+      {showMoveModal && (
+        <BulkMoveStorageModal
+          isOpen={showMoveModal}
+          onClose={() => setShowMoveModal(false)}
+          selectedProducts={movingProducts}
+          onSuccess={() => { refreshProducts(); setSelectedIds([]); }}
         />
       )}
     </div>
