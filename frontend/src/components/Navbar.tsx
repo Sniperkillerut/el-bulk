@@ -57,9 +57,6 @@ export default function Navbar() {
             <span className="font-display text-2xl text-text-main leading-none tracking-tight group-hover:opacity-80 transition-opacity">
               EL BULK
             </span>
-            <span className="text-[9px] font-bold uppercase tracking-[0.2em] opacity-60 text-text-main">
-              Grow your collection
-            </span>
           </Link>
 
           {/* Unified Desktop Nav */}
