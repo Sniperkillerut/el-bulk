@@ -20,12 +20,24 @@ func main() {
 	env := flag.String("env", "development",
 		"Deployment environment: 'development' or 'production'")
 	clear := flag.Bool("clear", false, "Clear existing tables before seeding")
+	phase := flag.Int("phase", -1, "Target a specific seeding phase (0-4) instead of running the whole process")
 	flag.Parse()
 
 	rand.Seed(time.Now().UnixNano())
 
 	database := db.Connect()
 	defer database.Close()
+
+	// Manual Phase Override (CLI) - Takes precedence over all environment logic
+	if *phase >= 0 {
+		logger.Info("🎯 Manual Phase Override detected: Running Phase #%d", *phase)
+		if err := runTask(database, *phase, *mode, *env, *clear); err != nil {
+			logger.Error("❌ Phase %d failed: %v", *phase, err)
+			os.Exit(1)
+		}
+		logger.Info("🏅 Phase %d completed successfully!", *phase)
+		return
+	}
 
 	// Check for Cloud Run task index
 	taskIDStr := os.Getenv("CLOUD_RUN_TASK_INDEX")
@@ -161,6 +173,10 @@ func runTask(database *sqlx.DB, index int, mode, env string, clear bool) error {
 		}
 
 		return seedCRM(database, adminID, customers, bountyIDs)
+
+	case 5:
+		// --- Phase 2b: Translations Only ---
+		return seedTranslations(database)
 
 	default:
 		logger.Warn("⚠️ Unknown Task Index %d — doing nothing", index)
