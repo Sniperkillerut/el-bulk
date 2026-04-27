@@ -8,7 +8,7 @@ export default function HeroSection() {
   const { t } = useLanguage();
 
   return (
-    <section className="relative w-full bg-bg-page py-12 md:py-20 border-b border-border-main/20 overflow-hidden">
+    <section className="relative w-full bg-bg-page py-12 md:py-20 border-b border-border-main/20 z-50">
       {/* Fixed Background Layer */}
       <div 
         className="absolute inset-0 z-0 animate-fade-in duration-1000"
