@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Modal from '@/components/ui/Modal';
 import { Product, StorageLocation, StoredIn } from '@/lib/types';
 import { adminFetchStorage, adminBulkMoveStorage } from '@/lib/api';
-import { toast } from 'react-hot-toast';
+import { useToast } from '@/context/ToastContext';
 import { resolveLabel, FOIL_LABELS, TREATMENT_LABELS } from '@/lib/types';
 
 interface MoveItem {
@@ -26,19 +26,20 @@ export default function BulkMoveStorageModal({
   selectedProducts,
   onSuccess
 }: BulkMoveStorageModalProps) {
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [storageLocations, setStorageLocations] = useState<StoredIn[]>([]);
   const [targetStorageId, setTargetStorageId] = useState<string>('');
   const [moveItems, setMoveItems] = useState<MoveItem[]>([]);
 
-  const loadStorage = async () => {
+  const loadStorage = useCallback(async () => {
     try {
       const data = await adminFetchStorage();
       setStorageLocations(data);
     } catch {
       toast.error('Failed to load storage locations');
     }
-  };
+  }, [toast]);
 
   const initializeMoveItems = useCallback(() => {
     const items: MoveItem[] = [];
@@ -61,7 +62,7 @@ export default function BulkMoveStorageModal({
       loadStorage();
       initializeMoveItems();
     }
-  }, [isOpen, initializeMoveItems]);
+  }, [isOpen, initializeMoveItems, loadStorage]);
 
   const handleQuantityChange = (index: number, delta: number) => {
     setMoveItems(prev => prev.map((item, i) => {
@@ -101,8 +102,9 @@ export default function BulkMoveStorageModal({
       toast.success('Products relocated successfully');
       onSuccess();
       onClose();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to relocate products');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to relocate products';
+      toast.error(message);
     } finally {
       setLoading(false);
     }
