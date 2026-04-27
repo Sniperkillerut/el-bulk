@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/el-bulk/backend/models"
@@ -118,9 +117,9 @@ func TestProductHandler_ListTCGs(t *testing.T) {
 	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
-		rows := sqlmock.NewRows([]string{"id", "name", "is_active", "created_at"}).
-			AddRow("mtg", "Magic", true, time.Now())
-		mock.ExpectQuery("SELECT \\* FROM tcg WHERE is_active = true ORDER BY name").WillReturnRows(rows)
+		rows := sqlmock.NewRows([]string{"id", "name", "is_active", "item_count"}).
+			AddRow("mtg", "Magic", true, 10)
+		mock.ExpectQuery("(?is)SELECT t.*, COUNT\\(p.id\\) as item_count FROM tcg t LEFT JOIN product p ON t.id = p.tcg WHERE t.is_active = true GROUP BY t.id ORDER BY t.name").WillReturnRows(rows)
 
 		req, _ := http.NewRequest("GET", "/api/tcgs?active_only=true", nil)
 		rr := httptest.NewRecorder()

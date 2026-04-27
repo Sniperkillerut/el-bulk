@@ -228,7 +228,7 @@ func TestBountyHandler_ListRequests(t *testing.T) {
 
 	rows := sqlmock.NewRows([]string{"id", "customer_name", "customer_contact", "card_name"}).
 		AddRow("r1", "John Doe", "12345", "Black Lotus")
-	mock.ExpectQuery("SELECT id, customer_id, customer_name, customer_contact, card_name, set_name, details, status, created_at FROM client_request").WillReturnRows(rows)
+	mock.ExpectQuery("SELECT id, customer_id, customer_name, customer_contact, card_name, set_name, details, quantity, tcg, status, cancellation_reason, bounty_id, match_type, scryfall_id, created_at FROM client_request").WillReturnRows(rows)
 
 	req, _ := http.NewRequest("GET", "/api/admin/wanted/requests", nil)
 	rr := httptest.NewRecorder()

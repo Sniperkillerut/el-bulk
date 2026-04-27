@@ -26,31 +26,21 @@ func TestProductHandler_BuildFilters_Comprehensive(t *testing.T) {
 			h := &ProductHandler{Service: ps, DB: sqlxDB}
 			settingsService.ResetCache()
 
-			// 1. Total count
+			// 1. Settings (called first in ProductService.List)
+			mock.ExpectQuery("(?i)SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop_rate", "4000"))
+
+			// 2. Total count
 			mock.ExpectQuery("SELECT COUNT\\(\\*\\) FROM product p").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
-			// 2. Main list
+			// 3. Main list
 			mock.ExpectQuery("SELECT .* FROM view_product_enriched p").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("1"))
 
-			// Settings (now called after main query in List)
-			mock.ExpectQuery("(?i)SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop", "4000"))
-
-			// Note: populatePrices NO LONGER calls loadSettings because we passed it from handler
-
-			// 4. Enrichment: populateStorage
-			mock.ExpectQuery("(?i)SELECT .* FROM product_storage").WillReturnRows(sqlmock.NewRows([]string{"product_id", "stored_in_id", "name", "quantity"}).AddRow("1", "loc1", "Box 1", 10))
-
-			// 5. Enrichment: populateCategories
-			mock.ExpectQuery("(?i)SELECT .* FROM product_category pc JOIN custom_category c").
-				WithArgs("1").
-				WillReturnRows(sqlmock.NewRows([]string{"product_id", "id", "name", "slug", "show_badge", "is_active", "searchable"}).AddRow("1", "cat1", "Category 1", "cat1", true, true, true))
-
-			// 5b. Enrichment: populateCartCounts
+			// 4. Enrichment: populateCartCounts
 			mock.ExpectQuery("(?i)SELECT .* FROM \"order\" o").
 				WithArgs("1").
 				WillReturnRows(sqlmock.NewRows([]string{"product_id", "cart_count"}).AddRow("1", 0))
 			mock.ExpectQuery("(?is)SELECT product_id FROM order_item").WillReturnRows(sqlmock.NewRows([]string{"product_id"}))
 
-			// 6. Facets (1 call)
+			// 5. Facets (1 call)
 			mock.ExpectQuery("(?i)SELECT fn_get_product_facets").
 				WillReturnRows(sqlmock.NewRows([]string{"fn_get_product_facets"}).AddRow([]byte(`{}`)))
 
@@ -80,16 +70,13 @@ func TestProductHandler_AdminVsPublic(t *testing.T) {
 		h := &ProductHandler{Service: ps, DB: sqlxDB}
 		settingsService.ResetCache()
 
+		// 1. Settings
+		mock.ExpectQuery("(?i)SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop_rate", "4000"))
+
 		mock.ExpectQuery("(?i)SELECT COUNT\\(\\*\\) FROM product p LEFT JOIN tcg t").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 		mock.ExpectQuery("(?i)SELECT .* FROM view_product_enriched p LEFT JOIN tcg t").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("1"))
 
-		// Settings (now called after main query)
-		mock.ExpectQuery("(?i)SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop", "4000"))
-
-		// Enrichment (populatePrices)
-		mock.ExpectQuery("(?i)SELECT .* FROM product_storage").WillReturnRows(sqlmock.NewRows([]string{"product_id", "stored_in_id", "name", "quantity"}).AddRow("1", "loc1", "Box 1", 10))
-		mock.ExpectQuery("(?i)SELECT .* FROM product_category pc JOIN custom_category c").
-			WillReturnRows(sqlmock.NewRows([]string{"product_id", "id", "name", "slug", "show_badge", "is_active", "searchable"}).AddRow("1", "cat1", "Cat 1", "cat1", true, true, true))
+		// Enrichment
 		mock.ExpectQuery("(?i)SELECT .* FROM \"order\" o").
 			WillReturnRows(sqlmock.NewRows([]string{"product_id", "cart_count"}).AddRow("1", 0))
 		mock.ExpectQuery("(?is)SELECT product_id FROM order_item").WillReturnRows(sqlmock.NewRows([]string{"product_id"}))
@@ -115,16 +102,13 @@ func TestProductHandler_AdminVsPublic(t *testing.T) {
 		h := &ProductHandler{Service: ps, DB: sqlxDB}
 		settingsService.ResetCache()
 
+		// 1. Settings
+		mock.ExpectQuery("(?i)SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop_rate", "4000"))
+
 		mock.ExpectQuery("(?i)SELECT COUNT\\(\\*\\) FROM product p").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 		mock.ExpectQuery("(?i)SELECT .* FROM view_product_enriched p").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("1"))
 
-		// Settings (now called after main query)
-		mock.ExpectQuery("(?i)SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop", "4000"))
-
-		// Enrichment (populatePrices)
-		mock.ExpectQuery("(?i)SELECT .* FROM product_storage").WillReturnRows(sqlmock.NewRows([]string{"product_id", "stored_in_id", "name", "quantity"}).AddRow("1", "loc1", "Box 1", 10))
-		mock.ExpectQuery("(?i)SELECT .* FROM product_category pc JOIN custom_category c").
-			WillReturnRows(sqlmock.NewRows([]string{"product_id", "id", "name", "slug", "show_badge", "is_active", "searchable"}).AddRow("1", "cat1", "Cat 1", "cat1", true, true, true))
+		// Enrichment
 		mock.ExpectQuery("(?i)SELECT .* FROM \"order\" o").
 			WillReturnRows(sqlmock.NewRows([]string{"product_id", "cart_count"}).AddRow("1", 0))
 		mock.ExpectQuery("(?is)SELECT product_id FROM order_item").WillReturnRows(sqlmock.NewRows([]string{"product_id"}))

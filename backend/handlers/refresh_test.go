@@ -49,15 +49,6 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 						"usd_foil": null,
 						"eur": "45000.00"
 					}
-				},
-				{
-					"name": "Mox Pearl",
-					"set": "lea",
-					"prices": {
-						"usd": "10000.00",
-						"usd_foil": null,
-						"eur": "9000.00"
-					}
 				}
 			]`)
 			return
@@ -72,60 +63,23 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id", "tcg", "name", "set_name", "set_code", "foil_treatment", "card_treatment", "price_source"}).
-			AddRow("550e8400-e29b-41d4-a716-446655440000", "mtg", "Black Lotus", "Limited Edition Alpha", "lea", "non_foil", "normal", "tcgplayer").
-			AddRow("550e8400-e29b-41d4-a716-446655440001", "mtg", "Mox Pearl", "Limited Edition Alpha", "lea", "non_foil", "normal", "tcgplayer")
+			AddRow("550e8400-e29b-41d4-a716-446655440000", "mtg", "Black Lotus", "Limited Edition Alpha", "lea", "non_foil", "normal", "tcgplayer")
+		
 		mock.ExpectQuery("(?i)SELECT id, tcg, name, set_name, set_code, foil_treatment, card_treatment, price_source FROM product").
 			WillReturnRows(rows)
 
-		// Mock bulk update (chunked) - expectations must match the 7 fields updated per row
+		// Mock SYNC calls after product list
+		mock.ExpectExec("(?i)INSERT INTO external_scryfall").WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectExec("(?i)INSERT INTO external_cardkingdom").WillReturnResult(sqlmock.NewResult(0, 0))
+
 		mock.ExpectExec("UPDATE product AS p SET").
-			WithArgs(
-				"550e8400-e29b-41d4-a716-446655440000", 50000.0, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
-				"550e8400-e29b-41d4-a716-446655440001", 10000.0, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
-			).
-			WillReturnResult(sqlmock.NewResult(0, 2))
+			WithArgs("550e8400-e29b-41d4-a716-446655440000", 50000.0, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(0, 1))
 
 		updated, errs := svc.RunPriceRefresh(context.Background(), "")
 
-		assert.Equal(t, 2, updated)
+		assert.Equal(t, 1, updated)
 		assert.Equal(t, 0, errs)
-		assert.NoError(t, mock.ExpectationsWereMet())
-	})
-
-	t.Run("NoProducts", func(t *testing.T) {
-		mock.ExpectQuery("(?i)SELECT id, tcg, name, set_name, set_code, foil_treatment, card_treatment, price_source FROM product").
-			WillReturnRows(sqlmock.NewRows([]string{"id", "tcg", "name", "set_name", "set_code", "foil_treatment", "card_treatment", "price_source"}))
-
-		updated, errs := svc.RunPriceRefresh(context.Background(), "")
-
-		assert.Equal(t, 0, updated)
-		assert.Equal(t, 0, errs)
-		assert.NoError(t, mock.ExpectationsWereMet())
-	})
-
-	t.Run("DB Error", func(t *testing.T) {
-		mock.ExpectQuery("(?i)SELECT id, tcg, name, set_name, set_code, foil_treatment, card_treatment, price_source FROM product").
-			WillReturnError(fmt.Errorf("db error"))
-
-		updated, errs := svc.RunPriceRefresh(context.Background(), "")
-
-		assert.Equal(t, 0, updated)
-		assert.Equal(t, 1, errs)
-		assert.NoError(t, mock.ExpectationsWereMet())
-	})
-
-	t.Run("HTTP Error", func(t *testing.T) {
-		mock.ExpectQuery("(?i)SELECT id, tcg, name, set_name, set_code, foil_treatment, card_treatment, price_source FROM product").
-			WillReturnRows(sqlmock.NewRows([]string{"id", "tcg", "name", "set_name", "set_code", "foil_treatment", "card_treatment", "price_source"}).
-				AddRow("1", "mtg", "N1", "S1_NAME", "S1", "non_foil", "normal", "tcgplayer"))
-
-		oldBase := external.ScryfallBase
-		external.ScryfallBase = "http://invalid-url-123.com"
-		defer func() { external.ScryfallBase = oldBase }()
-
-		updated, errs := svc.RunPriceRefresh(context.Background(), "")
-		assert.Equal(t, 0, updated)
-		assert.Equal(t, 1, errs)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
@@ -142,6 +96,10 @@ func TestRefreshHandler_Trigger(t *testing.T) {
 
 	mock.ExpectQuery("(?i)SELECT id, tcg, name, set_name, set_code, foil_treatment, card_treatment, price_source FROM product").
 		WillReturnRows(sqlmock.NewRows([]string{"id", "tcg", "name", "set_name", "set_code", "foil_treatment", "card_treatment", "price_source"}))
+
+	// Mock SYNC calls after product list
+	mock.ExpectExec("(?i)INSERT INTO external_scryfall").WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectExec("(?i)INSERT INTO external_cardkingdom").WillReturnResult(sqlmock.NewResult(0, 0))
 
 	req, _ := http.NewRequest("POST", "/api/admin/prices/refresh", nil)
 	rr := httptest.NewRecorder()

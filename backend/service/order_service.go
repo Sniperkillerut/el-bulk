@@ -208,13 +208,13 @@ func (s *OrderService) GetOrderDetail(ctx context.Context, orderID string, isAdm
 func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input models.UpdateOrderInput) error {
 	logger.TraceCtx(ctx, "Entering OrderService.UpdateOrder | OrderID: %s | NewStatus: %v", orderID, input.Status)
 
-	oldOrder, _ := s.Store.GetByID(ctx, orderID)
-
 	tx, err := s.Store.DB.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
+
+	oldOrder, _ := s.Store.GetByID(ctx, orderID)
 
 	// 0. Check if inventory modification is allowed
 	var currentStatus string

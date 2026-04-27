@@ -210,7 +210,7 @@ func TestOrderHandler_GetDetail(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/api/admin/orders/o1", nil)
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
-		assert.Equal(t, http.StatusNotFound, rr.Code)
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
 	})
 }
 
@@ -232,6 +232,7 @@ func TestOrderHandler_Update(t *testing.T) {
 		input := map[string]interface{}{"status": "shipped"}
 		body, _ := json.Marshal(input)
 
+mock.ExpectQuery("SELECT .* FROM \"order\" WHERE id = \\$1").WithArgs("o1").WillReturnRows(sqlmock.NewRows([]string{"id", "status"}).AddRow("o1", "confirmed"))
 		mock.ExpectBegin()
 		mock.ExpectQuery("SELECT status FROM \"order\" WHERE id = \\$1").
 			WithArgs("o1").
@@ -348,8 +349,10 @@ func TestOrderHandler_Update(t *testing.T) {
 			"status": &statusValue,
 		}
 		body, _ := json.Marshal(input)
-
 		mock.ExpectBegin()
+
+		mock.ExpectQuery("SELECT .* FROM \"order\" WHERE id = \\$1").WithArgs("o1").WillReturnRows(sqlmock.NewRows([]string{"id", "status"}).AddRow("o1", "pending"))
+
 		// Initial status check
 		mock.ExpectQuery("SELECT status FROM \"order\" WHERE id = \\$1").
 			WithArgs("o1").

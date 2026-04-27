@@ -718,10 +718,14 @@ func (s *ProductService) EnrichCardLookupResults(ctx context.Context, results []
 	}
 
 	// Load CK Price Map
-	ckPriceMap, err := external.BuildCardKingdomPriceMap(ctx, s.Store.DB)
-	if err != nil {
-		logger.WarnCtx(ctx, "Failed to load CK price map for enrichment: %v", err)
-		return nil // Non-fatal, just no CK prices
+	var err error
+	var ckPriceMap map[string]*float64
+	if s.Store != nil && s.Store.DB != nil {
+		ckPriceMap, err = external.BuildCardKingdomPriceMap(ctx, s.Store.DB)
+		if err != nil {
+			logger.WarnCtx(ctx, "Failed to load CK price map for enrichment: %v", err)
+			return nil // Non-fatal, just no CK prices
+		}
 	}
 
 	// Load Set Mappings for ck_name
