@@ -1007,3 +1007,44 @@ func (s *ProductStore) GetByIDs(ctx context.Context, ids []string) ([]models.Pro
 
 	return products, nil
 }
+
+func (s *ProductStore) BulkMoveStorage(ctx context.Context, req models.BulkMoveStorageRequest) error {
+	return s.WithTransaction(ctx, func(tx *sqlx.Tx) error {
+		for _, move := range req.Moves {
+			if move.Quantity <= 0 {
+				continue
+			}
+
+			// 1. Decrement from source
+			_, err := tx.ExecContext(ctx, `
+				UPDATE product_storage 
+				SET quantity = quantity - $1 
+				WHERE product_id = $2 AND storage_id = $3
+			`, move.Quantity, move.ProductID, move.FromStorageID)
+			if err != nil {
+				return fmt.Errorf("failed to decrement source: %w", err)
+			}
+
+			// 2. Cleanup source if 0 (ensures clean DB)
+			_, err = tx.ExecContext(ctx, `
+				DELETE FROM product_storage 
+				WHERE product_id = $1 AND storage_id = $2 AND quantity = 0
+			`, move.ProductID, move.FromStorageID)
+			if err != nil {
+				return fmt.Errorf("failed to cleanup source: %w", err)
+			}
+
+			// 3. Increment target (Upsert)
+			_, err = tx.ExecContext(ctx, `
+				INSERT INTO product_storage (product_id, storage_id, quantity)
+				VALUES ($1, $2, $3)
+				ON CONFLICT (product_id, storage_id) 
+				DO UPDATE SET quantity = product_storage.quantity + EXCLUDED.quantity
+			`, move.ProductID, req.TargetStorageID, move.Quantity)
+			if err != nil {
+				return fmt.Errorf("failed to increment target: %w", err)
+			}
+		}
+		return nil
+	})
+}

@@ -120,3 +120,24 @@ func (s *BaseStore[T]) Delete(ctx context.Context, id string) error {
 	logger.DebugCtx(ctx, "[DB] Delete on %s took %v", s.TableName, time.Since(start))
 	return nil
 }
+
+func (s *BaseStore[T]) WithTransaction(ctx context.Context, fn func(tx *sqlx.Tx) error) error {
+	tx, err := s.DB.BeginTxx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		}
+	}()
+
+	if err := fn(tx); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
+}
