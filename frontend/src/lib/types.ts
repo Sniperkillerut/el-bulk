@@ -487,6 +487,8 @@ export interface Bounty {
   hide_price: boolean;
   quantity_needed: number;
   is_generic: boolean;
+  scryfall_id?: string;
+  set_code?: string;
   image_url?: string;
   price_source: PriceSource;
   price_reference?: number;
@@ -509,6 +511,8 @@ export interface BountyInput {
   hide_price: boolean;
   quantity_needed: number;
   is_generic: boolean;
+  scryfall_id?: string;
+  set_code?: string;
   image_url?: string;
   price_source: PriceSource;
   price_reference?: number;
@@ -530,6 +534,9 @@ export interface ClientRequest {
   bounty_id?: string;
   match_type: 'any' | 'exact';
   scryfall_id?: string;
+  image_url?: string;
+  foil_treatment?: FoilTreatment;
+  card_treatment?: CardTreatment;
   created_at: string;
 }
 
@@ -577,6 +584,9 @@ export interface BountyOffer {
   created_at: string;
   updated_at: string;
   bounty_name?: string;
+  bounty_image?: string;
+  bounty_foil?: string;
+  scryfall_id?: string;
   tcg?: string;
 }
 

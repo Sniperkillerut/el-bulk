@@ -19,9 +19,11 @@ type Bounty struct {
 	HidePrice       bool          `db:"hide_price"       json:"hide_price"`
 	QuantityNeeded  int           `db:"quantity_needed"  json:"quantity_needed"`
 	IsGeneric       bool          `db:"is_generic"       json:"is_generic"`
+	ScryfallID      *string       `db:"scryfall_id"      json:"scryfall_id,omitempty"`
 	ImageURL        *string       `db:"image_url"        json:"image_url,omitempty"`
 	PriceSource     string        `db:"price_source"     json:"price_source,omitempty"`
 	PriceReference  *float64      `db:"price_reference"  json:"price_reference,omitempty"`
+	SetCode         *string       `db:"set_code"         json:"set_code,omitempty"`
 	IsActive        bool          `db:"is_active"        json:"is_active"`
 	CreatedAt       *time.Time    `db:"created_at"       json:"created_at,omitempty"`
 	UpdatedAt       *time.Time    `db:"updated_at"       json:"updated_at,omitempty"`
@@ -54,9 +56,11 @@ type BountyInput struct {
 	HidePrice       bool          `json:"hide_price"`
 	QuantityNeeded  int           `json:"quantity_needed"`
 	IsGeneric       bool          `json:"is_generic"`
+	ScryfallID      *string       `json:"scryfall_id,omitempty"`
 	ImageURL        *string       `json:"image_url,omitempty"`
 	PriceSource     string        `json:"price_source"`
 	PriceReference  *float64      `json:"price_reference,omitempty"`
+	SetCode         *string       `json:"set_code,omitempty"`
 	IsActive        *bool         `json:"is_active,omitempty"`
 }
 

@@ -149,18 +149,33 @@ function RequestItem({ request, isSelected, onToggle }: { request: ClientRequest
         checked={isSelected}
         onChange={onToggle}
       />
+      {request.scryfall_id && (
+        <div className="w-10 h-14 bg-kraft-paper rounded flex shrink-0 items-center justify-center overflow-hidden border border-kraft-dark/10 shadow-sm">
+          <img 
+            src={`https://api.scryfall.com/cards/${request.scryfall_id}?format=image&version=small`} 
+            alt={request.card_name}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
       <div className="flex-1">
         <div className="flex justify-between items-start">
           <span className="text-sm font-bold text-ink-deep uppercase font-mono-stack">
             {request.customer_name}
-            {request.quantity > 1 && <span className="ml-2 text-gold-dark">x{request.quantity}</span>}
+            {request.quantity > 1 && <span className="ml-2 text-gold-dark font-black">x{request.quantity}</span>}
           </span>
           <span className="text-[10px] text-text-muted font-mono-stack opacity-60 font-bold">{new Date(request.created_at).toLocaleDateString()}</span>
         </div>
-        <SmartContactLink 
-          contact={request.customer_contact} 
-          className="text-xs text-gold-dark hover:underline font-mono-stack transition-all"
-        />
+        <div className="flex flex-col gap-1">
+          <SmartContactLink 
+            contact={request.customer_contact} 
+            className="text-xs text-gold-dark hover:underline font-mono-stack transition-all"
+          />
+          <span className="text-[9px] font-bold text-text-muted uppercase tracking-widest leading-none">
+            {request.set_name || 'Any Edition'}
+            {request.match_type === 'any' && <span className="text-blue-500 ml-1">• { 'Any Version' }</span>}
+          </span>
+        </div>
       </div>
     </label>
   );

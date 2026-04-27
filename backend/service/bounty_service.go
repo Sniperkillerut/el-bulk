@@ -19,7 +19,7 @@ func NewBountyService(s *store.BountyStore) *BountyService {
 }
 
 func (s *BountyService) ListBounties(ctx context.Context, activeParam string, isAdmin bool) ([]models.Bounty, error) {
-	bounties, err := s.Store.ListBounties(ctx, activeParam)
+	bounties, err := s.Store.ListBounties(ctx, activeParam, isAdmin)
 	if err != nil {
 		return nil, err
 	}
@@ -61,6 +61,21 @@ func (s *BountyService) DeleteBounty(ctx context.Context, id string) (int64, err
 
 func (s *BountyService) ListOffers(ctx context.Context) ([]models.BountyOffer, error) {
 	offers, err := s.Store.ListOffers(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if offers == nil {
+		offers = []models.BountyOffer{}
+	}
+	// Decrypt sensitive contact info for admin view
+	for i := range offers {
+		offers[i].CustomerContact = *crypto.DecryptSafe(&offers[i].CustomerContact)
+	}
+	return offers, nil
+}
+
+func (s *BountyService) ListOffersByBounty(ctx context.Context, bountyID string) ([]models.BountyOffer, error) {
+	offers, err := s.Store.ListOffersByBounty(ctx, bountyID)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +187,8 @@ func (s *BountyService) SubmitRequest(ctx context.Context, input models.ClientRe
 	result, err := s.Store.SubmitRequest(
 		ctx, input.CustomerName, input.CustomerContact, input.CardName,
 		input.SetName, input.Details, input.Quantity, input.TCG, userID,
-		input.MatchType, input.ScryfallID,
+		input.MatchType, input.ScryfallID, input.ImageURL, input.FoilTreatment, input.CardTreatment,
+		input.SetCode, input.CollectorNumber,
 	)
 	if err != nil {
 		return nil, err

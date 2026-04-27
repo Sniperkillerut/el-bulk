@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { adminCreateBounty, adminUpdateBounty } from '@/lib/api';
+import { adminCreateBounty, adminUpdateBounty, adminFetchBountyRequests, adminFetchBountyOffers } from '@/lib/api';
 import { Bounty, BountyInput, FoilTreatment, CardTreatment, Condition, TCG, ScryfallCard, Settings, PriceSource } from '@/lib/types';
 import { extractMTGMetadata, getScryfallImage, resolveFoilTreatment, findMatchingPrint, applyPrintPrices, resolveCardTreatment, getSuggestedPrice } from '@/lib/mtg-logic';
 import ScryfallPopulate from './product/ScryfallPopulate';
@@ -23,7 +23,7 @@ export const EMPTY_BOUNTY: BountyInput = {
   foil_treatment: 'non_foil', card_treatment: 'normal',
   collector_number: '', promo_type: '', language: 'en',
   target_price: 0, hide_price: false, quantity_needed: 1, image_url: '',
-  price_source: 'tcgplayer', price_reference: 0, is_generic: false
+  price_source: 'tcgplayer', price_reference: 0, is_generic: false, scryfall_id: ''
 };
 
 export default function BountyEditModal({
@@ -42,7 +42,7 @@ export default function BountyEditModal({
   
   useEffect(() => {
     if (editBounty) {
-      setForm({
+      const data = {
         name: editBounty.name,
         tcg: editBounty.tcg,
         set_name: editBounty.set_name || '',
@@ -59,14 +59,53 @@ export default function BountyEditModal({
         price_source: editBounty.price_source || 'tcgplayer',
         price_reference: editBounty.price_reference || 0,
         is_generic: editBounty.is_generic,
-        ...extractMTGMetadata(editBounty as unknown as ScryfallCard)
-      });
+        ...extractMTGMetadata(editBounty as unknown as ScryfallCard),
+        scryfall_id: editBounty.scryfall_id || '',
+        set_code: editBounty.set_code || '',
+      };
+      setForm(data);
+      if (data.collector_number) setCollectorNumber(data.collector_number as string);
+      if (data.set_code) setSetCode(data.set_code as string);
+      // Trigger auto-populate if we have an ID to fetch full details/prints
+      if (data.scryfall_id && data.tcg === 'mtg') {
+        setTimeout(() => handlePopulate(), 100);
+      }
     } else {
       setForm({ ...EMPTY_BOUNTY, ...initialData });
+      if (initialData?.collector_number) setCollectorNumber(initialData.collector_number);
+      if (initialData?.scryfall_id && initialData?.tcg === 'mtg') {
+         setTimeout(() => handlePopulate(), 100);
+      }
     }
     setFormError('');
-    setScryfallPrints([]);
   }, [editBounty, initialData]);
+
+  const [relatedRequests, setRelatedRequests] = useState<any[]>([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
+
+  const [relatedOffers, setRelatedOffers] = useState<any[]>([]);
+  const [loadingOffers, setLoadingOffers] = useState(false);
+
+  useEffect(() => {
+    if (editBounty) {
+      setLoadingRequests(true);
+      adminFetchBountyRequests(editBounty.id)
+        .then(data => {
+          setRelatedRequests(data);
+        })
+        .finally(() => setLoadingRequests(false));
+
+      setLoadingOffers(true);
+      adminFetchBountyOffers(editBounty.id)
+        .then(data => {
+          setRelatedOffers(data);
+        })
+        .finally(() => setLoadingOffers(false));
+    } else {
+      setRelatedRequests([]);
+      setRelatedOffers([]);
+    }
+  }, [editBounty]);
 
   const handleSave = async () => {
     if (!form.name || !form.tcg) {
@@ -99,15 +138,12 @@ export default function BountyEditModal({
     const name = forceSearchName || form.name.trim();
     const set = setCode.trim().toLowerCase();
     const cn = collectorNumber.trim();
-    if (!name && (!set || !cn)) return;
+    const scryfallId = form.scryfall_id;
+
+    if (!scryfallId && !name && (!set || !cn)) return;
 
     setLookingUp(true);
     try {
-      let searchQ = "";
-      if (set && cn) searchQ = `set:${set} cn:"${cn}"`;
-      else if (name) searchQ = `!"${name}"`;
-      else if (set) searchQ = `set:${set}`;
-
       const fetchAllPrints = async (q: string) => {
         let results: ScryfallCard[] = [];
         let nextUrl: string | null = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(q)}+game:paper&unique=prints&order=released`;
@@ -126,9 +162,31 @@ export default function BountyEditModal({
         return results;
       };
 
-      let prints = await fetchAllPrints(searchQ);
+      let prints: ScryfallCard[] = [];
+      
+      // 1. Direct ID lookup if possible
+      if (scryfallId) {
+        const r = await fetch(`https://api.scryfall.com/cards/${scryfallId}`);
+        if (r.ok) {
+          const card = await r.json();
+          prints = [card];
+        }
+      }
+
+      // 2. If no ID or ID fetch failed, search by name/set/cn
+      if (prints.length === 0) {
+        let searchQ = "";
+        if (set && cn) searchQ = `set:${set} cn:"${cn}"`;
+        else if (set && name) searchQ = `!"${name}" set:${set}`; // PRIORITIZE SET IF PROVIDED
+        else if (name) searchQ = `!"${name}"`;
+        else if (set) searchQ = `set:${set}`;
+        
+        prints = await fetchAllPrints(searchQ);
+      }
+
       if (prints.length === 0) throw new Error('No printings found for that search.');
 
+      // 3. Populate all oracle prints so the switcher works
       if (prints.length > 0) {
         const oracleId = (prints[0] as ScryfallCard).oracle_id;
         if (oracleId) {
@@ -139,7 +197,8 @@ export default function BountyEditModal({
 
       setScryfallPrints(prints);
       
-      let bestPrint = prints.find(p => p?.set?.toLowerCase() === set && p?.collector_number === cn);
+      let bestPrint = prints.find(p => p.id === scryfallId);
+      if (!bestPrint) bestPrint = prints.find(p => p?.set?.toLowerCase() === set && p?.collector_number === cn);
       if (!bestPrint && set) bestPrint = prints.find(p => p?.set?.toLowerCase() === set);
       if (!bestPrint) bestPrint = prints[0];
 
@@ -151,18 +210,26 @@ export default function BountyEditModal({
       const ref = applyPrintPrices(bestPrint, foil, form.price_source);
       const suggested = getSuggestedPrice(bestPrint, foil, form.price_source, settings);
 
-      setForm(f => ({
-        ...f,
-        name: bestPrint?.name || f.name,
-        set_name: bestPrint?.set_name || f.set_name,
-        image_url: getScryfallImage(bestPrint) || f.image_url,
-        card_treatment: treat,
-        foil_treatment: foil,
-        promo_type: promo,
-        price_reference: ref,
-        target_price: suggested !== undefined ? suggested : f.target_price,
-        ...extractMTGMetadata(bestPrint)
-      }));
+      setForm(f => {
+        // Only update treatments if they were 'normal'/'non_foil' and the print offers something more specific,
+        // or if we are populating for the first time.
+        const keepTreat = f.card_treatment && f.card_treatment !== 'normal';
+        const keepFoil = f.foil_treatment && f.foil_treatment !== 'non_foil';
+
+        return {
+          ...f,
+          name: bestPrint?.name || f.name,
+          set_name: bestPrint?.set_name || f.set_name,
+          image_url: getScryfallImage(bestPrint) || f.image_url,
+          card_treatment: keepTreat ? f.card_treatment : treat,
+          foil_treatment: keepFoil ? f.foil_treatment : foil,
+          promo_type: promo,
+          price_reference: ref,
+          target_price: suggested !== undefined ? suggested : f.target_price,
+          scryfall_id: bestPrint?.id || '',
+          ...extractMTGMetadata(bestPrint)
+        };
+      });
       setSetCode(bestPrint?.set || setCode);
       setCollectorNumber(bestPrint?.collector_number || collectorNumber);
 
@@ -216,6 +283,7 @@ export default function BountyEditModal({
       image_url: getScryfallImage(bestPrint) || f.image_url,
       price_reference: ref,
       target_price: suggested !== undefined ? suggested : f.target_price,
+      scryfall_id: bestPrint?.id || '',
       ...extractMTGMetadata(bestPrint)
     }));
     if (bestPrint?.collector_number) setCollectorNumber(bestPrint.collector_number);
@@ -235,6 +303,7 @@ export default function BountyEditModal({
       image_url: getScryfallImage(bestPrint) || f.image_url,
       price_reference: ref,
       target_price: suggested !== undefined ? suggested : f.target_price,
+      scryfall_id: bestPrint?.id || '',
       ...extractMTGMetadata(bestPrint)
     }));
   };
@@ -251,6 +320,7 @@ export default function BountyEditModal({
       image_url: getScryfallImage(bestPrint) || f.image_url,
       price_reference: ref,
       target_price: suggested !== undefined ? suggested : f.target_price,
+      scryfall_id: bestPrint?.id || '',
       ...extractMTGMetadata(bestPrint)
     }));
   };
@@ -264,7 +334,8 @@ export default function BountyEditModal({
       foil_treatment: f,
       image_url: getScryfallImage(bestPrint) || old.image_url,
       price_reference: ref,
-      target_price: suggested !== undefined ? suggested : old.target_price
+      target_price: suggested !== undefined ? suggested : old.target_price,
+      scryfall_id: bestPrint?.id || ''
     }));
   };
 
@@ -441,6 +512,102 @@ export default function BountyEditModal({
               <label htmlFor="hide_price" className="text-sm font-bold text-text-secondary cursor-pointer">{t('components.admin.bounty_modal.hide_price_label', 'Hide target price from public view')}</label>
             </div>
             <p className="text-xs text-text-muted pl-6">{t('components.admin.bounty_modal.hide_price_desc', 'If checked, users will see "Contact for Price" instead of your target COP value.')}</p>
+
+            {editBounty && (
+              <div className="mt-8 border-t border-ink-border/20 pt-6">
+                <h3 className="text-xs font-mono-stack uppercase text-text-muted tracking-widest mb-4">
+                  {t('components.admin.bounty_modal.linked_requests', 'LINKED CLIENT REQUESTS')} ({relatedRequests.length})
+                </h3>
+                {loadingRequests ? (
+                  <div className="text-xs text-text-muted animate-pulse font-mono uppercase tracking-widest p-4 text-center">
+                    {t('pages.common.labels.loading', 'Loading requests...')}
+                  </div>
+                ) : relatedRequests.length > 0 ? (
+                  <div className="bg-white/50 rounded overflow-hidden border border-ink-border/10">
+                    <table className="w-full text-[10px] font-mono-stack">
+                      <thead className="bg-ink-surface/30">
+                        <tr>
+                          <th className="px-3 py-2 text-left uppercase text-text-muted">{t('pages.common.labels.customer', 'Customer')}</th>
+                          <th className="px-3 py-2 text-left uppercase text-text-muted">{t('pages.profile.table.qty', 'Qty')}</th>
+                          <th className="px-3 py-2 text-left uppercase text-text-muted">{t('pages.profile.table.status', 'Status')}</th>
+                          <th className="px-3 py-2 text-left uppercase text-text-muted">{t('pages.common.labels.contact', 'Contact')}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-ink-border/10">
+                        {relatedRequests.map((req) => (
+                          <tr key={req.id} className="hover:bg-gold/5">
+                            <td className="px-3 py-2 font-bold">{req.customer_name}</td>
+                            <td className="px-3 py-2">{req.quantity}</td>
+                            <td className="px-3 py-2">
+                              <span className={`px-1 rounded ${
+                                req.status === 'accepted' ? 'bg-green-100 text-green-700' :
+                                req.status === 'solved' ? 'bg-blue-100 text-blue-700' :
+                                'bg-gray-100 text-gray-700'
+                              }`}>
+                                {req.status.toUpperCase()}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 text-text-muted">{req.customer_contact}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="p-4 border border-dashed border-ink-border/20 rounded text-center text-[10px] text-text-muted font-mono uppercase tracking-widest">
+                    {t('components.admin.bounty_modal.no_requests', 'No client requests linked to this bounty.')}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {editBounty && (
+              <div className="mt-8 border-t border-ink-border/20 pt-6">
+                <h3 className="text-xs font-mono-stack uppercase text-text-muted tracking-widest mb-4">
+                  {t('components.admin.bounty_modal.linked_offers', 'LINKED CLIENT OFFERS')} ({relatedOffers.length})
+                </h3>
+                {loadingOffers ? (
+                  <div className="text-xs text-text-muted animate-pulse font-mono uppercase tracking-widest p-4 text-center">
+                    {t('pages.common.labels.loading', 'Loading offers...')}
+                  </div>
+                ) : relatedOffers.length > 0 ? (
+                  <div className="bg-white/50 rounded overflow-hidden border border-ink-border/10">
+                    <table className="w-full text-[10px] font-mono-stack">
+                      <thead className="bg-ink-surface/30">
+                        <tr>
+                          <th className="px-3 py-2 text-left uppercase text-text-muted">{t('pages.common.labels.customer', 'Customer')}</th>
+                          <th className="px-3 py-2 text-left uppercase text-text-muted">{t('pages.profile.table.qty', 'Qty')}</th>
+                          <th className="px-3 py-2 text-left uppercase text-text-muted">{t('pages.profile.table.condition', 'Cond')}</th>
+                          <th className="px-3 py-2 text-left uppercase text-text-muted">{t('pages.profile.table.status', 'Status')}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-ink-border/10">
+                        {relatedOffers.map((offer) => (
+                          <tr key={offer.id} className="hover:bg-gold/5">
+                            <td className="px-3 py-2 font-bold">{offer.customer_name}</td>
+                            <td className="px-3 py-2">{offer.quantity}</td>
+                            <td className="px-3 py-2">{offer.condition}</td>
+                            <td className="px-3 py-2">
+                              <span className={`px-1 rounded ${
+                                offer.status === 'accepted' ? 'bg-green-100 text-green-700' :
+                                offer.status === 'fulfilled' ? 'bg-blue-100 text-blue-700' :
+                                'bg-gray-100 text-gray-700'
+                              }`}>
+                                {offer.status.toUpperCase()}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="p-4 border border-dashed border-ink-border/20 rounded text-center text-[10px] text-text-muted font-mono uppercase tracking-widest">
+                    {t('components.admin.bounty_modal.no_offers', 'No client offers linked to this bounty.')}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="w-full md:w-64 shrink-0 flex flex-col items-center">

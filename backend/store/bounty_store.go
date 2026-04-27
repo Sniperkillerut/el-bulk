@@ -19,32 +19,33 @@ func NewBountyStore(db *sqlx.DB) *BountyStore {
 	}
 }
 
-func (s *BountyStore) ListBounties(ctx context.Context, activeParam string) ([]models.Bounty, error) {
+func (s *BountyStore) ListBounties(ctx context.Context, activeParam string, isAdmin bool) ([]models.Bounty, error) {
 	bounties := []models.Bounty{}
 	query := `
 		SELECT 
 			b.id, b.name, b.tcg, b.set_name, b.condition, b.foil_treatment, b.card_treatment, b.collector_number, b.promo_type, b.language, b.target_price, 
-			b.hide_price, b.quantity_needed, b.is_generic, b.image_url, b.price_source, b.price_reference, b.is_active, b.created_at, b.updated_at
+			b.hide_price, b.quantity_needed, b.is_generic, b.image_url, b.price_source, b.price_reference, b.is_active, b.scryfall_id, b.set_code, b.created_at, b.updated_at
 		FROM bounty b
 		WHERE ($1 = '' OR b.is_active = ($1 = 'true'))
+		AND ($2 = true OR b.quantity_needed > 0)
 		ORDER BY b.created_at DESC
 	`
-	err := s.DB.SelectContext(ctx, &bounties, query, activeParam)
+	err := s.DB.SelectContext(ctx, &bounties, query, activeParam, isAdmin)
 	return bounties, err
 }
 
 func (s *BountyStore) CreateBounty(ctx context.Context, input models.BountyInput, isActive bool) (*models.Bounty, error) {
 	query := `
-		INSERT INTO bounty (name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, is_generic, image_url, price_source, price_reference, is_active)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, is_generic, image_url, price_source, price_reference, is_active, created_at, updated_at
+		INSERT INTO bounty (name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, is_generic, image_url, price_source, price_reference, is_active, scryfall_id, set_code)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, is_generic, image_url, price_source, price_reference, is_active, scryfall_id, set_code, created_at, updated_at
 	`
 	var bounty models.Bounty
 	err := s.DB.QueryRowxContext(ctx, query,
 		input.Name, input.TCG, input.SetName, input.Condition, input.FoilTreatment,
 		input.CardTreatment, input.CollectorNumber, input.PromoType, input.Language,
 		input.TargetPrice, input.HidePrice, input.QuantityNeeded, input.IsGeneric, input.ImageURL,
-		input.PriceSource, input.PriceReference, isActive,
+		input.PriceSource, input.PriceReference, isActive, input.ScryfallID, input.SetCode,
 	).StructScan(&bounty)
 	if err != nil {
 		return nil, err
@@ -58,16 +59,16 @@ func (s *BountyStore) UpdateBounty(ctx context.Context, id string, input models.
 		SET name = $1, tcg = $2, set_name = $3, condition = $4, foil_treatment = $5,
 		    card_treatment = $6, collector_number = $7, promo_type = $8, language = $9,
 		    target_price = $10, hide_price = $11, quantity_needed = $12, is_generic = $13, image_url = $14,
-		    price_source = $15, price_reference = $16, is_active = $17, updated_at = now()
-		WHERE id = $18
-		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, is_generic, image_url, price_source, price_reference, is_active, created_at, updated_at
+		    price_source = $15, price_reference = $16, is_active = $17, scryfall_id = $18, set_code = $19, updated_at = now()
+		WHERE id = $20
+		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, is_generic, image_url, price_source, price_reference, is_active, scryfall_id, set_code, created_at, updated_at
 	`
 	var bounty models.Bounty
 	err := s.DB.QueryRowxContext(ctx, query,
 		input.Name, input.TCG, input.SetName, input.Condition, input.FoilTreatment,
 		input.CardTreatment, input.CollectorNumber, input.PromoType, input.Language,
 		input.TargetPrice, input.HidePrice, input.QuantityNeeded, input.IsGeneric, input.ImageURL,
-		input.PriceSource, input.PriceReference, isActive, id,
+		input.PriceSource, input.PriceReference, isActive, input.ScryfallID, input.SetCode, id,
 	).StructScan(&bounty)
 	if err != nil {
 		return nil, err
@@ -99,6 +100,24 @@ func (s *BountyStore) ListOffers(ctx context.Context) ([]models.BountyOffer, err
 		ORDER BY o.created_at DESC
 	`
 	err := s.DB.SelectContext(ctx, &offers, query)
+	return offers, err
+}
+
+func (s *BountyStore) ListOffersByBounty(ctx context.Context, bountyID string) ([]models.BountyOffer, error) {
+	offers := []models.BountyOffer{}
+	query := `
+		SELECT 
+			o.id, o.bounty_id, o.customer_id, o.quantity, o.condition, o.status, o.notes, o.admin_notes, o.created_at, o.updated_at,
+			b.name as bounty_name,
+			c.first_name || ' ' || COALESCE(c.last_name, '') as customer_name,
+			COALESCE(c.phone, c.email) as customer_contact
+		FROM bounty_offer o
+		JOIN bounty b ON o.bounty_id = b.id
+		JOIN customer c ON o.customer_id = c.id
+		WHERE o.bounty_id = $1
+		ORDER BY o.created_at DESC
+	`
+	err := s.DB.SelectContext(ctx, &offers, query, bountyID)
 	return offers, err
 }
 
@@ -139,7 +158,7 @@ func (s *BountyStore) ListMeOffers(ctx context.Context, userID string) ([]models
 	query := `
 		SELECT 
 			o.id, o.bounty_id, o.customer_id, o.quantity, o.condition, o.status, o.notes, o.admin_notes, o.created_at, o.updated_at,
-			b.name as bounty_name
+			b.name as bounty_name, b.image_url as bounty_image, b.scryfall_id as scryfall_id, b.foil_treatment as bounty_foil
 		FROM bounty_offer o
 		JOIN bounty b ON o.bounty_id = b.id
 		WHERE o.customer_id = $1
@@ -172,10 +191,10 @@ func (s *BountyStore) ListRequests(ctx context.Context) ([]models.ClientRequest,
 	return requests, err
 }
 
-func (s *BountyStore) SubmitRequest(ctx context.Context, customerName, customerContact, cardName string, setName, details *string, quantity int, tcg string, userID *string, matchType string, scryfallID *string) ([]byte, error) {
+func (s *BountyStore) SubmitRequest(ctx context.Context, customerName, customerContact, cardName string, setName, details *string, quantity int, tcg string, userID *string, matchType string, scryfallID, imageURL, foilTreatment, cardTreatment, setCode, collectorNumber *string) ([]byte, error) {
 	var result []byte
-	err := s.DB.GetContext(ctx, &result, "SELECT fn_submit_client_request($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
-		customerName, customerContact, cardName, setName, details, quantity, tcg, userID, matchType, scryfallID)
+	err := s.DB.GetContext(ctx, &result, "SELECT fn_submit_client_request($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
+		customerName, customerContact, cardName, setName, details, quantity, tcg, userID, matchType, scryfallID, imageURL, foilTreatment, cardTreatment, setCode, collectorNumber)
 	return result, err
 }
 
@@ -191,6 +210,18 @@ func (s *BountyStore) SubmitRequestsBatch(ctx context.Context, input models.Clie
 }
 
 func (s *BountyStore) UpdateRequestStatus(ctx context.Context, id, status string) (*models.ClientRequest, error) {
+	if status == "pending" {
+		var result []byte
+		err := s.DB.GetContext(ctx, &result, "SELECT fn_revert_client_request($1::UUID)", id)
+		if err != nil {
+			return nil, err
+		}
+		var req models.ClientRequest
+		query := `SELECT ` + requestColumns + ` FROM client_request WHERE id = $1`
+		err = s.DB.GetContext(ctx, &req, query, id)
+		return &req, err
+	}
+
 	query := `
 		UPDATE client_request
 		SET status = $1
@@ -212,15 +243,13 @@ func (s *BountyStore) ListMeRequests(ctx context.Context, userID string) ([]mode
 }
 
 func (s *BountyStore) CancelMeRequest(ctx context.Context, id, userID, reason string) (int64, error) {
-	res, err := s.DB.ExecContext(ctx, `
-		UPDATE client_request 
-		SET status = 'not_needed', cancellation_reason = $1 
-		WHERE id = $2 AND customer_id = $3 AND (status = 'pending' OR status = 'accepted')
-	`, reason, id, userID)
+	_, err := s.DB.ExecContext(ctx, `SELECT fn_cancel_client_request($1::UUID, $2::UUID, $3::TEXT)`, id, userID, reason)
 	if err != nil {
 		return 0, err
 	}
-	return res.RowsAffected()
+	// Note: res.RowsAffected() might be tricky with SELECT function.
+	// Since the function RAISE EXCEPTION on unauthorized or missing, any non-error is a success.
+	return 1, nil
 }
 
 // ── New Bridge Methods ───────────────────────────────────
@@ -256,7 +285,7 @@ func (s *BountyStore) FulfillOffer(ctx context.Context, offerID string, requestI
 // ListRequestsByBounty returns all active requests linked to a specific bounty.
 func (s *BountyStore) ListRequestsByBounty(ctx context.Context, bountyID string) ([]models.ClientRequest, error) {
 	requests := []models.ClientRequest{}
-	query := `SELECT ` + requestColumns + ` FROM client_request WHERE bounty_id = $1 AND status IN ('accepted', 'pending') ORDER BY created_at ASC`
+	query := `SELECT ` + requestColumns + ` FROM client_request WHERE bounty_id = $1 AND status IN ('accepted', 'pending', 'solved') ORDER BY created_at ASC`
 	err := s.DB.SelectContext(ctx, &requests, query, bountyID)
 	return requests, err
 }

@@ -724,6 +724,24 @@ export async function adminDeleteBounty(id: string): Promise<void> {
   return apiFetch<void>(`/api/admin/bounties/${id}`, { method: 'DELETE' });
 }
 
+export async function adminFetchBountyRequests(id: string): Promise<import('./types').ClientRequest[]> {
+  try {
+    const data = await apiFetch<import('./types').ClientRequest[]>(`/api/admin/bounties/${id}/requests`, { cache: 'no-store' });
+    return data || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function adminFetchBountyOffers(id: string): Promise<import('./types').BountyOffer[]> {
+  try {
+    const data = await apiFetch<import('./types').BountyOffer[]>(`/api/admin/bounties/${id}/offers`, { cache: 'no-store' });
+    return data || [];
+  } catch {
+    return [];
+  }
+}
+
 export async function createBountyOffer(data: import('./types').BountyOfferInput): Promise<import('./types').BountyOffer> {
   return apiFetch<import('./types').BountyOffer>('/api/bounties/offers', {
     method: 'POST',
@@ -731,7 +749,7 @@ export async function createBountyOffer(data: import('./types').BountyOfferInput
   });
 }
 
-export async function adminFetchBountyOffers(): Promise<import('./types').BountyOffer[]> {
+export async function adminFetchAllBountyOffers(): Promise<import('./types').BountyOffer[]> {
   return apiFetch<import('./types').BountyOffer[]>('/api/admin/bounties/offers', { cache: 'no-store' });
 }
 

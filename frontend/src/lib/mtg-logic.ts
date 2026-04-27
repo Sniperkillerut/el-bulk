@@ -290,6 +290,7 @@ export function extractMTGMetadata(card: ScryfallCard | undefined) {
     rarity: card.rarity || '',
     cmc: card.cmc || 0,
     collector_number: card.collector_number || '',
+    set_code: card.set || '',
     promo_type: (card.promo_types || []).join(',') || 'none',
     is_legendary: card.type_line?.includes('Legendary') || false,
     is_land: card.type_line?.includes('Land') || false,

@@ -324,6 +324,7 @@ func main() {
 				r.Put("/bounties/offers/{id}/status", bountyHandler.UpdateOfferStatus)
 				r.Post("/bounties/offers/{id}/fulfill", bountyHandler.FulfillOffer)
 				r.Get("/bounties/{id}/requests", bountyHandler.ListRequestsByBounty)
+				r.Get("/bounties/{id}/offers", bountyHandler.ListOffersByBounty)
 				r.Get("/client-requests", bountyHandler.ListRequests)
 				r.Put("/client-requests/{id}/status", bountyHandler.UpdateRequestStatus)
 				r.Post("/client-requests/{id}/accept", bountyHandler.AcceptRequest)

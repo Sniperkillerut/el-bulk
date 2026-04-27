@@ -10,6 +10,7 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import OrderDetailsModal from '@/components/OrderDetailsModal';
 import { useLanguage } from '@/context/LanguageContext';
 import CancellationModal from '@/components/profile/CancellationModal';
+import CardImage from '@/components/CardImage';
 
 export default function ProfilePage() {
   const { user, loading: userLoading, updateProfile, loginWithGoogle } = useUser();
@@ -425,6 +426,7 @@ export default function ProfilePage() {
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="bg-bg-page/50 text-xs font-mono text-text-muted uppercase">
+                          <th className="px-6 py-4 font-medium tracking-wider w-16"></th>
                           <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.card', 'Card Name')}</th>
                           <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.set', 'Set')}</th>
                           <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.date', 'Date')}</th>
@@ -435,6 +437,19 @@ export default function ProfilePage() {
                       <tbody className="divide-y divide-border-main/50">
                         {requests.map((req) => (
                           <tr key={req.id} className="hover:bg-accent-primary/5 transition-colors group">
+                            <td className="px-6 py-4">
+                              <div className="w-10 h-14 bg-ink-border/10 rounded overflow-hidden relative shadow-sm">
+                                <CardImage 
+                                  imageUrl={req.image_url} 
+                                  name={req.card_name} 
+                                  tcg={req.tcg} 
+                                  scryfallId={req.scryfall_id}
+                                  foilTreatment={req.foil_treatment}
+                                  enableHover
+                                  enableModal
+                                />
+                              </div>
+                            </td>
                             <td className="px-6 py-4">
                               <span className="font-medium text-text-main">{req.card_name}</span>
                             </td>
@@ -486,6 +501,7 @@ export default function ProfilePage() {
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="bg-bg-page/50 text-xs font-mono text-text-muted uppercase">
+                          <th className="px-6 py-4 font-medium tracking-wider w-16"></th>
                           <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.bounty', 'Bounty')}</th>
                           <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.qty', 'Qty')}</th>
                           <th className="px-6 py-4 font-medium tracking-wider">{t('pages.profile.table.date', 'Date')}</th>
@@ -496,6 +512,19 @@ export default function ProfilePage() {
                       <tbody className="divide-y divide-border-main/50">
                         {offers.map((offer) => (
                           <tr key={offer.id} className="hover:bg-accent-primary/5 transition-colors group">
+                            <td className="px-6 py-4">
+                              <div className="w-10 h-14 bg-ink-border/10 rounded overflow-hidden relative shadow-sm">
+                                <CardImage 
+                                  imageUrl={offer.bounty_image} 
+                                  name={offer.bounty_name || ''} 
+                                  tcg={offer.tcg} 
+                                  scryfallId={offer.scryfall_id}
+                                  foilTreatment={offer.bounty_foil}
+                                  enableHover
+                                  enableModal
+                                />
+                              </div>
+                            </td>
                             <td className="px-6 py-4">
                               <span className="font-medium text-text-main">{offer.bounty_name}</span>
                               {offer.condition && <span className="ml-2 text-[10px] text-text-muted border border-border-main px-1 rounded">{offer.condition}</span>}

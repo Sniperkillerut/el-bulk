@@ -260,7 +260,7 @@ export default function AdminBountiesPage() {
                         <td className="p-2">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-14 bg-kraft-paper rounded flex shrink-0 items-center justify-center overflow-hidden border border-kraft-dark/10">
-                              <CardImage imageUrl={b.image_url} name={b.name} tcg={b.tcg} foilTreatment={b.foil_treatment} enableHover={true} />
+                              <CardImage imageUrl={b.image_url} name={b.name} tcg={b.tcg} foilTreatment={b.foil_treatment} scryfallId={b.scryfall_id} enableHover={true} />
                             </div>
                             <div className="min-w-0">
                               <div className="font-bold text-sm text-ink-deep leading-tight truncate">{b.name}</div>
@@ -493,55 +493,81 @@ export default function AdminBountiesPage() {
               {requests
                 .filter(req => onlyShowPendingRequests ? req.status !== 'solved' : true)
                 .map(req => (
-                <div id={req.id} key={req.id} className={`p-5 flex flex-col md:flex-row gap-4 md:gap-6 items-start md:items-center rounded-xl border border-kraft-dark/10 scroll-mt-24 shadow-sm border-l-4 ${
-                  req.status === 'pending' ? 'bg-white border-gold shadow-gold/5' : 
-                  req.status === 'accepted' ? 'bg-emerald-50/20 border-emerald-500' : 
-                  req.status === 'solved' ? 'bg-indigo-50/20 border-indigo-600 opacity-80 backdrop-grayscale' :
-                  'bg-red-50/20 border-red-500 opacity-60'
-                }`}>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-1">
-                      <div className="flex items-center gap-2">
-                        {req.quantity > 1 && <span className="bg-gold/20 text-gold-dark px-1.5 py-0.5 rounded text-sm font-bold font-mono-stack">{req.quantity}x</span>}
-                        <h3 className={`font-bold text-lg m-0 font-mono-stack ${req.status === 'solved' ? 'text-indigo-900' : 'text-ink-deep'}`}>{req.card_name}</h3>
+                  <div id={req.id} key={req.id} className={`p-5 flex flex-col md:flex-row gap-4 md:gap-6 items-start md:items-center rounded-xl border border-kraft-dark/10 scroll-mt-24 shadow-sm border-l-4 ${
+                    req.status === 'pending' ? 'bg-white border-gold shadow-gold/5' : 
+                    req.status === 'accepted' ? 'bg-emerald-50/20 border-emerald-500' : 
+                    req.status === 'solved' ? 'bg-indigo-50/20 border-indigo-600 opacity-80 backdrop-grayscale' :
+                    'bg-red-50/20 border-red-500 opacity-60'
+                  }`}>
+                    {req.scryfall_id ? (
+                      <div className="w-16 h-22 bg-kraft-paper rounded flex shrink-0 items-center justify-center overflow-hidden border border-kraft-dark/10 shadow-sm group relative">
+                        <img 
+                          src={`https://api.scryfall.com/cards/${req.scryfall_id}?format=image&version=small`} 
+                          alt={req.card_name}
+                          className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-ink-deep/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                           <span className="text-[8px] font-bold text-white uppercase bg-ink-deep/60 px-1 rounded">EXACT</span>
+                        </div>
                       </div>
-                      <span className="badge bg-gold/10 text-gold text-[8px] font-mono-stack px-1.5 py-0.5 rounded border border-gold/20">{req.tcg.toUpperCase()}</span>
-                      <span className={`badge ${
-                        req.status === 'pending' ? 'bg-gold text-ink-deep font-bold' : 
-                        req.status === 'accepted' ? 'bg-emerald-100 text-emerald-700' : 
-                        req.status === 'solved' ? 'bg-indigo-600 text-white shadow-sm' :
-                        req.status === 'not_needed' ? 'bg-purple-100 text-purple-700' :
-                        'bg-red-100 text-red-700'
-                      }`}>
-                        {req.status === 'solved' ? t('pages.admin.bounties.requests.complete_status', 'COMPLETE') : 
-                         req.status === 'not_needed' ? t('pages.admin.bounties.requests.not_needed_status', 'NO LONGER NEEDED') :
-                         t(`pages.common.status.${req.status}`, req.status).toUpperCase()}
-                      </span>
-                    </div>
-                    <p className="text-sm">
-                      {t('pages.admin.bounties.requests.client_label', 'Client:')} <strong>
-                        {req.customer_id ? (
-                          <Link href={`/admin/clients/${req.customer_id}`} className="inline-flex items-center gap-1 text-indigo-700 hover:text-indigo-900 underline decoration-indigo-300 hover:decoration-indigo-700 underline-offset-4 transition-all">
-                            {req.customer_name}
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-70"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                          </Link>
-                        ) : (
-                          req.customer_name
-                        )}
-                      </strong> - <SmartContactLink 
-                        contact={req.customer_contact} 
-                        className="text-gold-dark hover:underline font-bold transition-all"
-                      />
-                    </p>
-                    <p className="text-xs text-text-muted mt-2 italic border-l-2 border-kraft-dark/10 pl-3">&quot;{req.details || t('pages.admin.bounties.requests.no_details', 'No additional details provided.')}&quot;</p>
-                    {req.cancellation_reason && (
-                      <div className="mt-3 p-2 bg-purple-50 border border-purple-100 rounded text-xs">
-                        <span className="font-bold text-purple-800 uppercase text-[10px] block mb-1">{t('pages.admin.bounties.requests.cancellation_reason', 'Cancellation Reason:') || 'Cancellation Reason:'}</span>
-                        <p className="text-purple-900 font-medium italic">&quot;{req.cancellation_reason}&quot;</p>
+                    ) : (
+                      <div className="w-16 h-22 bg-kraft-paper/50 rounded flex shrink-0 items-center justify-center border border-dashed border-kraft-dark/20 text-text-muted">
+                        <span className="text-[8px] font-bold uppercase tracking-tighter text-center px-1">Any Version</span>
                       </div>
                     )}
-                    <p className="text-[10px] text-text-muted mt-3 uppercase tracking-widest font-mono-stack font-bold opacity-40">{t('pages.admin.bounties.requests.requested_date', 'Requested:')} {new Date(req.created_at).toLocaleString()}</p>
-                  </div>
+
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-1">
+                        <div className="flex items-center gap-2">
+                          {req.quantity > 1 && <span className="bg-gold/20 text-gold-dark px-1.5 py-0.5 rounded text-sm font-bold font-mono-stack">{req.quantity}x</span>}
+                          <h3 className={`font-bold text-lg m-0 font-mono-stack ${req.status === 'solved' ? 'text-indigo-900' : 'text-ink-deep'}`}>{req.card_name}</h3>
+                        </div>
+                        <span className="badge bg-gold/10 text-gold text-[8px] font-mono-stack px-1.5 py-0.5 rounded border border-gold/20">{req.tcg.toUpperCase()}</span>
+                        <span className={`badge ${
+                          req.status === 'pending' ? 'bg-gold text-ink-deep font-bold' : 
+                          req.status === 'accepted' ? 'bg-emerald-100 text-emerald-700' : 
+                          req.status === 'solved' ? 'bg-indigo-600 text-white shadow-sm' :
+                          req.status === 'not_needed' ? 'bg-purple-100 text-purple-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>
+                          {req.status === 'solved' ? t('pages.admin.bounties.requests.complete_status', 'COMPLETE') : 
+                           req.status === 'not_needed' ? t('pages.admin.bounties.requests.not_needed_status', 'NO LONGER NEEDED') :
+                           t(`pages.common.status.${req.status}`, req.status).toUpperCase()}
+                        </span>
+                        {req.match_type === 'exact' && (
+                          <span className="text-[8px] px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded font-bold uppercase tracking-tighter shadow-sm animate-pulse">
+                            {t('pages.common.labels.specific', 'SPECIFIC PRINT')}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm">
+                        {t('pages.admin.bounties.requests.client_label', 'Client:')} <strong>
+                          {req.customer_id ? (
+                            <Link href={`/admin/clients/${req.customer_id}`} className="inline-flex items-center gap-1 text-indigo-700 hover:text-indigo-900 underline decoration-indigo-300 hover:decoration-indigo-700 underline-offset-4 transition-all">
+                              {req.customer_name}
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-70"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                            </Link>
+                          ) : (
+                            req.customer_name
+                          )}
+                        </strong> - <SmartContactLink 
+                          contact={req.customer_contact} 
+                          className="text-gold-dark hover:underline font-bold transition-all"
+                        />
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] text-text-muted font-mono-stack uppercase font-bold opacity-60">{req.set_name || t('pages.common.labels.any_set', 'Any Set')}</span>
+                        {req.match_type === 'any' && <span className="text-[10px] text-blue-500 font-bold uppercase tracking-widest">• {t('pages.admin.bounties.generic_badge', 'ANY VERSION')}</span>}
+                      </div>
+                      <p className="text-xs text-text-muted mt-2 italic border-l-2 border-kraft-dark/10 pl-3">&quot;{req.details || t('pages.admin.bounties.requests.no_details', 'No additional details provided.')}&quot;</p>
+                      {req.cancellation_reason && (
+                        <div className="mt-3 p-2 bg-purple-50 border border-purple-100 rounded text-xs">
+                          <span className="font-bold text-purple-800 uppercase text-[10px] block mb-1">{t('pages.admin.bounties.requests.cancellation_reason', 'Cancellation Reason:') || 'Cancellation Reason:'}</span>
+                          <p className="text-purple-900 font-medium italic">&quot;{req.cancellation_reason}&quot;</p>
+                        </div>
+                      )}
+                      <p className="text-[10px] text-text-muted mt-3 uppercase tracking-widest font-mono-stack font-bold opacity-40">{t('pages.admin.bounties.requests.requested_date', 'Requested:')} {new Date(req.created_at).toLocaleString()}</p>
+                    </div>
                   
                   <div className="flex flex-col sm:flex-row md:flex-col gap-2 shrink-0 w-full md:w-auto">
                     {req.status === 'pending' && (

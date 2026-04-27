@@ -112,6 +112,18 @@ func (h *BountyHandler) ListOffers(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, offers)
 }
 
+func (h *BountyHandler) ListOffersByBounty(w http.ResponseWriter, r *http.Request) {
+	bountyID := chi.URLParam(r, "id")
+	logger.TraceCtx(r.Context(), "Entering BountyHandler.ListOffersByBounty | BountyID: %s", bountyID)
+	offers, err := h.Service.ListOffersByBounty(r.Context(), bountyID)
+	if err != nil {
+		logger.ErrorCtx(r.Context(), "Failed to list bounty offers for bounty %s: %v", bountyID, err)
+		render.Error(w, "Failed to fetch bounty offers", http.StatusInternalServerError)
+		return
+	}
+	render.Success(w, offers)
+}
+
 func (h *BountyHandler) SubmitOffer(w http.ResponseWriter, r *http.Request) {
 	logger.TraceCtx(r.Context(), "Entering BountyHandler.SubmitOffer")
 	var input models.BountyOfferInput

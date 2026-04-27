@@ -14,6 +14,7 @@ interface CardImageProps {
   height?: number | string;
   enableHover?: boolean;
   enableModal?: boolean;
+  scryfallId?: string | null;
 }
 
 const TCG_EMOJI: Record<string, string> = {
@@ -27,7 +28,8 @@ const TCG_EMOJI: Record<string, string> = {
 
 const CardImage = memo(function CardImage({ 
   imageUrl, name, tcg, foilTreatment, height, 
-  enableHover = false, enableModal = false 
+  enableHover = false, enableModal = false,
+  scryfallId
 }: CardImageProps) {
   const { foilEffectsEnabled } = useUI();
   const [prevUrl, setPrevUrl] = useState(imageUrl);
@@ -37,14 +39,17 @@ const CardImage = memo(function CardImage({
   const [rect, setRect] = useState<DOMRect | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Fallback to Scryfall if direct URL is missing but ID is present
+  const resolvedUrl = imageUrl || (scryfallId ? `https://api.scryfall.com/cards/${scryfallId}?format=image&version=normal` : null);
+
   // Sync: Reset error state when the URL changes (Derived state pattern)
   // This pattern is recommended by React 18+ for adjusting state based on prop changes
-  if (imageUrl !== prevUrl) {
-    setPrevUrl(imageUrl);
+  if (resolvedUrl !== prevUrl) {
+    setPrevUrl(resolvedUrl);
     setImgError(false);
   }
 
-  const showImage = imageUrl && !imgError;
+  const showImage = resolvedUrl && !imgError;
 
   const handleClick = (e: React.MouseEvent) => {
     if (showModal) return; // Prevent re-opening if already open (bubbles from portal)
@@ -84,7 +89,7 @@ const CardImage = memo(function CardImage({
     >
       {showImage ? (
         <img
-          src={imageUrl}
+          src={resolvedUrl as string}
           alt={name}
           loading="lazy"
           onClick={handleClick}
@@ -136,13 +141,13 @@ const CardImage = memo(function CardImage({
         <FoilOverlay treatment={foilTreatment} />
       )}
 
-      {isHovered && imageUrl && rect && (
-        <HoverPortal imageUrl={imageUrl} name={name} startRect={rect} foilTreatment={foilTreatment} />
+      {isHovered && resolvedUrl && rect && (
+        <HoverPortal imageUrl={resolvedUrl as string} name={name} startRect={rect} foilTreatment={foilTreatment} />
       )}
 
-      {showModal && imageUrl && typeof document !== 'undefined' && createPortal(
+      {showModal && resolvedUrl && typeof document !== 'undefined' && createPortal(
         <ImageModal 
-          imageUrl={imageUrl} 
+          imageUrl={resolvedUrl as string} 
           name={name} 
           foilTreatment={foilTreatment}
           onClose={() => setShowModal(false)} 

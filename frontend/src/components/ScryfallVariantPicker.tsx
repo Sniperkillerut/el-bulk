@@ -28,13 +28,16 @@ export default function ScryfallVariantPicker({ cardName, onSelect, selectedId }
 
   useEffect(() => {
     if (!cardName || cardName.length < 3) {
-      setPrints([]);
+      if (prints.length > 0) setPrints([]);
       return;
     }
     const timer = setTimeout(() => {
       setLoading(true);
-      fetch(`https://api.scryfall.com/cards/search?q=!"${encodeURIComponent(cardName)}"&unique=prints&order=released`)
-        .then(r => r.json())
+      fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(cardName)}&unique=prints&order=released`)
+        .then(r => {
+          if (r.status === 404) return { data: [] };
+          return r.json();
+        })
         .then(data => setPrints(data.data || []))
         .catch(() => setPrints([]))
         .finally(() => setLoading(false));

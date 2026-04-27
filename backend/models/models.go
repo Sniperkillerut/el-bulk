@@ -666,6 +666,11 @@ type ClientRequest struct {
 	BountyID           *string    `db:"bounty_id" json:"bounty_id,omitempty"`
 	MatchType          string     `db:"match_type" json:"match_type"`
 	ScryfallID         *string    `db:"scryfall_id" json:"scryfall_id,omitempty"`
+	ImageURL           *string    `db:"image_url" json:"image_url,omitempty"`
+	FoilTreatment      *string    `db:"foil_treatment" json:"foil_treatment,omitempty"`
+	CardTreatment      *string    `db:"card_treatment" json:"card_treatment,omitempty"`
+	SetCode            *string    `db:"set_code" json:"set_code,omitempty"`
+	CollectorNumber    *string    `db:"collector_number" json:"collector_number,omitempty"`
 	CreatedAt          *time.Time `db:"created_at" json:"created_at,omitempty"`
 }
 
@@ -682,6 +687,9 @@ type BountyOffer struct {
 	UpdatedAt  *time.Time `db:"updated_at" json:"updated_at,omitempty"`
 	// Join fields
 	BountyName      *string `db:"bounty_name" json:"bounty_name,omitempty"`
+	BountyImage     *string `db:"bounty_image" json:"bounty_image,omitempty"`
+	BountyFoil      *string `db:"bounty_foil"  json:"bounty_foil,omitempty"`
+	ScryfallID      *string `db:"scryfall_id"  json:"scryfall_id,omitempty"`
 	TCG             string  `db:"tcg"         json:"tcg"`
 	CustomerName    string  `db:"customer_name" json:"customer_name"`
 	CustomerContact string  `db:"customer_contact" json:"customer_contact,omitempty"`
@@ -698,6 +706,11 @@ type ClientRequestInput struct {
 	TCG             string  `json:"tcg"`
 	MatchType       string  `json:"match_type"`
 	ScryfallID      *string `json:"scryfall_id,omitempty"`
+	ImageURL        *string `json:"image_url,omitempty"`
+	FoilTreatment   *string `json:"foil_treatment,omitempty"`
+	CardTreatment   *string `json:"card_treatment,omitempty"`
+	SetCode         *string `json:"set_code,omitempty"`
+	CollectorNumber *string `json:"collector_number,omitempty"`
 }
 
 type ClientRequestBatchInput struct {
@@ -709,6 +722,12 @@ type ClientRequestBatchInput struct {
 		Details  *string `json:"details,omitempty"`
 		Quantity int     `json:"quantity"`
 		TCG      string  `json:"tcg"`
+		ScryfallID      *string `json:"scryfall_id,omitempty"`
+		ImageURL        *string `json:"image_url,omitempty"`
+		FoilTreatment   *string `json:"foil_treatment,omitempty"`
+		CardTreatment   *string `json:"card_treatment,omitempty"`
+		SetCode         *string `json:"set_code,omitempty"`
+		CollectorNumber *string `json:"collector_number,omitempty"`
 	} `json:"cards"`
 }
 
