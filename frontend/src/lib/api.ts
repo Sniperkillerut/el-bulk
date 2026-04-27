@@ -274,6 +274,13 @@ export async function adminBulkCreateProducts(req: import('./types').BulkCreateR
   });
 }
 
+export async function adminBulkMoveStorage(req: import('./types').BulkMoveStorageRequest): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>('/api/admin/products/bulk-move-storage', {
+    method: 'POST',
+    body: JSON.stringify(req),
+  });
+}
+
 export async function adminBulkUpdateSource(
   ids: string[], 
   source: import('./types').PriceSource,

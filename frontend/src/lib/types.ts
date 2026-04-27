@@ -766,3 +766,14 @@ export interface AuditLogListResponse {
   page: number;
   page_size: number;
 }
+
+export interface BulkMoveStorageRequest {
+  target_storage_id: string;
+  moves: MoveStorageItem[];
+}
+
+export interface MoveStorageItem {
+  product_id: string;
+  from_storage_id: string;
+  quantity: number;
+}
