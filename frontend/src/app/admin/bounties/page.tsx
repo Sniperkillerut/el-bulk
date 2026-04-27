@@ -425,8 +425,11 @@ export default function AdminBountiesPage() {
                     </div>
                     
                     <div className="flex flex-col gap-2 shrink-0 justify-center">
-                      {offer.status === 'pending' && (
+                      {offer.status === 'pending' && b && (
                         <button onClick={() => handleOpenResolveModal(offer, b)} className="btn-primary py-2 px-6 text-xs bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-500/20 font-bold uppercase tracking-widest">{t('pages.admin.bounties.resolve_btn', 'RESOLVE OFFER')}</button>
+                      )}
+                      {offer.status === 'pending' && !b && (
+                        <span className="text-[8px] font-bold text-red-500 uppercase text-center max-w-[100px]">{t('pages.admin.bounties.offers.missing_bounty', 'ERROR: BOUNTY DATA DISCONNECTED')}</span>
                       )}
                       {offer.status !== 'pending' && (
                         <button onClick={async () => { await adminUpdateBountyOfferStatus(offer.id, 'pending'); handleRefresh(); }} className="btn-secondary py-1 text-[10px] font-mono-stack font-bold">{t('pages.admin.bounties.revert_btn', 'REVERT TO PENDING')}</button>
