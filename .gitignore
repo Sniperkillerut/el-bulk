@@ -18,6 +18,7 @@ certs/
 ehthumbs.db
 Thumbs.db
 .agent/
+.superpowers/
 
 # IDEs
 .vscode/
