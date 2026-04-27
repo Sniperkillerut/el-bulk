@@ -8,10 +8,13 @@ interface ScryfallPrint {
   set: string;
   collector_number: string;
   image_uris?: { small: string; normal: string };
-  card_faces?: { image_uris?: { small: string } }[];
+  card_faces?: { image_uris?: { small: string; normal: string } }[];
   foil: boolean;
   nonfoil: boolean;
   finishes: string[];
+  border_color?: string;
+  frame_effects?: string[];
+  rarity?: string;
 }
 
 interface Props {
@@ -28,7 +31,7 @@ export default function ScryfallVariantPicker({ cardName, onSelect, selectedId }
 
   useEffect(() => {
     if (!cardName || cardName.length < 3) {
-      if (prints.length > 0) setPrints([]);
+      setPrints([]);
       return;
     }
     const timer = setTimeout(() => {

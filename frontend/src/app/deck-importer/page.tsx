@@ -14,6 +14,7 @@ import SetIcon from '@/components/SetIcon';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import { useForm } from '@/hooks/useForm';
+import ScryfallVariantPicker from '@/components/ScryfallVariantPicker';
 
 interface WantedItem {
   card_name: string;
@@ -22,6 +23,13 @@ interface WantedItem {
   quantity: number;
   tcg: string;
   original_line: string;
+  scryfall_id?: string;
+  image_url?: string;
+  set_code?: string;
+  collector_number?: string;
+  foil_treatment?: string;
+  card_treatment?: string;
+  match_type?: 'any' | 'exact';
 }
 
 export default function DeckImporterPage() {
@@ -40,6 +48,7 @@ export default function DeckImporterPage() {
   // Wanted list state
   const [wanted, setWanted] = useState<Record<string, WantedItem>>({});
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [customizingItem, setCustomizingItem] = useState<{key: string, item: WantedItem} | null>(null);
 
   const handleAnalyze = async () => {
     if (!list.trim()) return;
@@ -122,7 +131,14 @@ export default function DeckImporterPage() {
         set_name: w.set_name,
         details: w.details,
         quantity: w.quantity,
-        tcg: w.tcg
+        tcg: w.tcg,
+        scryfall_id: w.scryfall_id,
+        image_url: w.image_url,
+        set_code: w.set_code,
+        collector_number: w.collector_number,
+        foil_treatment: w.foil_treatment,
+        card_treatment: w.card_treatment,
+        match_type: w.match_type || 'any'
       }))
     };
 
@@ -316,13 +332,29 @@ export default function DeckImporterPage() {
 
               <div className="space-y-2 mb-6 max-h-[150px] overflow-y-auto custom-scrollbar">
                 {Object.entries(wanted).map(([key, w]) => (
-                  <div key={key} className="flex justify-between items-center text-xs font-mono-stack p-2 bg-ink-page/50 rounded border border-gold/10">
-                    <span className="text-gold-dark">{w.quantity}x {w.card_name}</span>
-                    <button onClick={() => {
-                      const newWanted = { ...wanted };
-                      delete newWanted[key];
-                      setWanted(newWanted);
-                    }} className="text-text-muted hover:text-red-400">✕</button>
+                  <div key={key} className="group relative flex justify-between items-center text-xs font-mono-stack p-2 bg-ink-page/50 rounded border border-gold/10 hover:border-gold/40 transition-all">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {w.image_url && <img src={w.image_url} className="w-6 h-8 object-cover rounded border border-gold/20" />}
+                      <div className="truncate">
+                        <p className="text-gold-dark font-bold leading-none mb-1">{w.quantity}x {w.card_name}</p>
+                        <p className="text-[9px] text-text-muted opacity-60 uppercase truncate">
+                          {w.match_type === 'exact' ? `${w.set_name} #${w.collector_number}` : 'Any Version'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <button 
+                        onClick={() => setCustomizingItem({ key, item: w })}
+                        className="text-[10px] text-gold-dark hover:text-gold opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        EDIT
+                      </button>
+                      <button onClick={() => {
+                        const newWanted = { ...wanted };
+                        delete newWanted[key];
+                        setWanted(newWanted);
+                      }} className="text-text-muted hover:text-red-400">✕</button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -399,6 +431,60 @@ export default function DeckImporterPage() {
           </Button>
         </form>
       </Modal>
+
+      {/* Item Customization Modal */}
+      {customizingItem && customizingItem.item && (
+        <Modal
+          isOpen={true}
+          onClose={() => setCustomizingItem(null)}
+          title={t('pages.deck_importer.customize.title', 'REFINE ACQUISITION')}
+        >
+          <div className="space-y-6">
+            <div className="flex gap-4 items-start p-4 bg-ink-surface/50 rounded-lg border border-gold/10">
+               <div className="w-16 h-20 bg-ink-page rounded flex-shrink-0 border border-gold/20 overflow-hidden shadow-sm">
+                  {customizingItem.item.image_url ? (
+                    <img src={customizingItem.item.image_url} alt={customizingItem.item.card_name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-2xl opacity-20">🎴</div>
+                  )}
+               </div>
+               <div>
+                  <h4 className="text-lg font-bold text-gold-dark">{customizingItem.item.card_name}</h4>
+                  <p className="text-[10px] font-mono-stack text-text-muted uppercase tracking-widest">{t('pages.deck_importer.customize.current', 'CURRENT SPEC:')} {customizingItem.item.match_type === 'exact' ? `${customizingItem.item.set_name} (#${customizingItem.item.collector_number})` : 'Any Version'}</p>
+               </div>
+            </div>
+
+            <ScryfallVariantPicker 
+              cardName={customizingItem.item.card_name}
+              selectedId={customizingItem.item.scryfall_id}
+              onSelect={(print) => {
+                if (!customizingItem) return;
+                const updatedItem: WantedItem = {
+                  ...customizingItem.item,
+                  scryfall_id: print?.id,
+                  match_type: print ? 'exact' : 'any',
+                  image_url: print?.image_uris?.normal || print?.image_uris?.small || print?.card_faces?.[0]?.image_uris?.normal,
+                  set_name: print?.set_name,
+                  set_code: print?.set,
+                  collector_number: print?.collector_number,
+                  foil_treatment: print?.finishes?.includes('foil') ? 'foil' : 'non_foil',
+                  card_treatment: print?.border_color === 'borderless' ? 'borderless' : (print?.frame_effects?.includes('showcase') ? 'showcase' : 'normal'),
+                };
+                setWanted(prev => ({ ...prev, [customizingItem.key]: updatedItem }));
+                setCustomizingItem({ key: customizingItem.key, item: updatedItem });
+              }}
+            />
+
+            <Button
+              fullWidth
+              onClick={() => setCustomizingItem(null)}
+              className="mt-4"
+            >
+              {t('pages.common.buttons.save', 'SAVE CHANGES')}
+            </Button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

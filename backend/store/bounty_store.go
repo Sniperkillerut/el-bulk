@@ -92,6 +92,10 @@ func (s *BountyStore) ListOffers(ctx context.Context) ([]models.BountyOffer, err
 		SELECT 
 			o.id, o.bounty_id, o.customer_id, o.quantity, o.condition, o.status, o.notes, o.admin_notes, o.created_at, o.updated_at,
 			b.name as bounty_name,
+			b.image_url as bounty_image,
+			b.tcg as tcg,
+			b.foil_treatment as bounty_foil,
+			b.scryfall_id as scryfall_id,
 			c.first_name || ' ' || COALESCE(c.last_name, '') as customer_name,
 			COALESCE(c.phone, c.email) as customer_contact
 		FROM bounty_offer o
@@ -109,6 +113,10 @@ func (s *BountyStore) ListOffersByBounty(ctx context.Context, bountyID string) (
 		SELECT 
 			o.id, o.bounty_id, o.customer_id, o.quantity, o.condition, o.status, o.notes, o.admin_notes, o.created_at, o.updated_at,
 			b.name as bounty_name,
+			b.image_url as bounty_image,
+			b.tcg as tcg,
+			b.foil_treatment as bounty_foil,
+			b.scryfall_id as scryfall_id,
 			c.first_name || ' ' || COALESCE(c.last_name, '') as customer_name,
 			COALESCE(c.phone, c.email) as customer_contact
 		FROM bounty_offer o

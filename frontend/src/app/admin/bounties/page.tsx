@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { 
   adminUpdateBounty, adminDeleteBounty, fetchBounties,
   adminFetchClientRequests, adminUpdateClientRequestStatus, adminFetchTCGs,
-  adminFetchBountyOffers, adminUpdateBountyOfferStatus, adminAcceptClientRequest,
+  adminFetchAllBountyOffers, adminUpdateBountyOfferStatus, adminAcceptClientRequest,
   adminFetchRequestsByBounty, adminFulfillBountyOffer
 } from '@/lib/api';
 import { Bounty, BountyInput, ClientRequest, TCG, BountyOffer } from '@/lib/types';
@@ -83,7 +83,7 @@ export default function AdminBountiesPage() {
         fetchBounties(),
         adminFetchClientRequests(),
         adminFetchTCGs(),
-        adminFetchBountyOffers()
+        adminFetchAllBountyOffers()
       ]);
       setBounties(bData || []);
       setRequests(rData || []);
@@ -244,6 +244,7 @@ export default function AdminBountiesPage() {
                     <th className="p-2 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted text-center font-bold hidden md:table-cell">{t('pages.admin.bounties.table.condition', 'Cond.')}</th>
                     <th className="p-2 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted font-bold">{t('pages.admin.bounties.table.target_price', 'Target Price')}</th>
                     <th className="p-2 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted text-center font-bold">{t('pages.admin.bounties.table.qty', 'Qty')}</th>
+                    <th className="p-2 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted text-center font-bold hidden md:table-cell">{t('pages.admin.bounties.table.bridge', 'Supply vs Demand')}</th>
                     <th className="p-2 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted text-center font-bold hidden md:table-cell">{t('pages.admin.bounties.table.status', 'Status')}</th>
                     <th className="p-2 font-mono-stack text-[10px] uppercase tracking-widest text-text-muted text-right font-bold">{t('pages.admin.bounties.table.actions', 'Actions')}</th>
                   </tr>
@@ -297,6 +298,17 @@ export default function AdminBountiesPage() {
                           {b.quantity_needed}
                         </td>
                         <td className="p-2 text-center hidden md:table-cell">
+                           <div className="flex justify-center items-center gap-2">
+                              <span className="badge bg-blue-50 text-blue-600 border-blue-100 text-[10px] font-bold" title="Demand (Client Requests)">
+                                👥 {requests.filter(r => r.bounty_id === b.id && (r.status === 'pending' || r.status === 'accepted')).length}
+                              </span>
+                              <span className="text-text-muted opacity-30">/</span>
+                              <span className="badge bg-gold/10 text-gold-dark border-gold/20 text-[10px] font-bold" title="Supply (User Offers)">
+                                📦 {offers.filter(o => o.bounty_id === b.id && o.status === 'pending').length}
+                              </span>
+                           </div>
+                        </td>
+                        <td className="p-2 text-center hidden md:table-cell">
                           {b.is_active ? (
                             <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-tighter">{t('pages.common.status.active_bounty', 'Active Bounty')}</span>
                           ) : (
@@ -344,13 +356,22 @@ export default function AdminBountiesPage() {
                 .filter(offer => onlyShowPendingOffers ? offer.status === 'pending' : true)
                 .map(offer => {
                 const b = bounties.find(b => b.id === offer.bounty_id);
-              if (!b) return null;
+                // Fallback to joined fields if bounty not in current list
+                const displayBounty = b || {
+                  id: offer.bounty_id,
+                  name: offer.bounty_name || 'Unknown Bounty',
+                  image_url: offer.bounty_image,
+                  tcg: offer.tcg || 'mtg',
+                  foil_treatment: offer.bounty_foil || 'non_foil',
+                  scryfall_id: offer.scryfall_id,
+                  is_active: false
+                };
               
               return (
                 <div id={offer.id} key={offer.id} className={`flex flex-col gap-0 border-l-4 ${offer.status === 'pending' ? 'border-gold shadow-lg shadow-gold/5' : offer.status === 'accepted' ? 'border-indigo-400 opacity-80' : 'border-red-400'} scroll-mt-24 rounded-lg overflow-hidden mb-4 bg-white border border-kraft-dark/10`}>
                   <div className={`p-5 flex flex-col md:flex-row gap-6 ${offer.status === 'pending' ? 'bg-white' : offer.status === 'accepted' ? 'bg-indigo-50/30' : 'bg-red-50/30'}`}>
                     <div className="w-16 h-20 bg-kraft-paper rounded flex shrink-0 items-center justify-center overflow-hidden border border-kraft-dark/10">
-                      <CardImage imageUrl={b.image_url} name={b.name} tcg={b.tcg} foilTreatment={b.foil_treatment} enableHover={true} />
+                      <CardImage imageUrl={displayBounty.image_url} name={displayBounty.name} tcg={displayBounty.tcg} foilTreatment={displayBounty.foil_treatment} enableHover={true} />
                     </div>
                     
                     <div className="flex-1">
@@ -375,7 +396,7 @@ export default function AdminBountiesPage() {
                       <div className="mt-3 flex flex-wrap gap-4 items-start">
                         <div className="flex-1 min-w-[200px] p-3 bg-kraft-paper/50 rounded border border-kraft-dark/20">
                           <p className="text-xs font-bold mb-1 uppercase tracking-tighter text-text-muted font-mono-stack">{t('pages.admin.bounties.offering_card', 'Offering Card:')}</p>
-                          <p className="text-sm font-bold">{b.name} <span className="font-normal text-text-muted text-xs">({b.set_name || t('pages.common.labels.any_set', 'Any Set')})</span></p>
+                          <p className="text-sm font-bold">{displayBounty.name} <span className="font-normal text-text-muted text-xs">({(displayBounty as any).set_name || t('pages.common.labels.any_set', 'Any Set')})</span></p>
                           <div className="flex gap-4 mt-1">
                             <p className="text-xs text-text-muted">{t('pages.admin.bounties.offers.condition', 'Condition:')} <strong className="text-ink-deep">{offer.condition}</strong></p>
                             <p className="text-xs text-text-muted">{t('pages.admin.bounties.offers.quantity', 'Quantity:')} <strong className="text-gold-dark font-mono-stack">{offer.quantity}</strong></p>
@@ -387,13 +408,13 @@ export default function AdminBountiesPage() {
                             <button 
                               onClick={() => setExpandedOfferId(expandedOfferId === offer.id ? null : offer.id)}
                               className={`text-[10px] font-mono-stack px-3 py-2 rounded-sm border transition-all flex items-center gap-2 ${
-                                requests.some(r => r.card_name.toLowerCase().includes(b.name.toLowerCase()))
+                                requests.some(r => r.card_name.toLowerCase().includes(displayBounty.name.toLowerCase()))
                                   ? 'bg-gold/5 border-gold/40 text-gold-dark hover:bg-gold/10'
                                   : 'bg-kraft-light/50 border-kraft-dark/20 text-text-muted opacity-50 cursor-not-allowed'
                               }`}
                             >
                               <span className="text-lg leading-none">{expandedOfferId === offer.id ? '−' : '+'}</span>
-                              {requests.filter(r => r.card_name.toLowerCase().includes(b.name.toLowerCase()) && (r.status === 'pending' || r.status === 'accepted')).length} {t('pages.admin.bounties.offers.waiting_clients', 'WAITING CLIENTS')}
+                              {requests.filter(r => r.card_name.toLowerCase().includes(displayBounty.name.toLowerCase()) && (r.status === 'pending' || r.status === 'accepted')).length} {t('pages.admin.bounties.offers.waiting_clients', 'WAITING CLIENTS')}
                             </button>
                           </div>
                         )}

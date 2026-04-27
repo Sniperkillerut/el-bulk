@@ -44,11 +44,14 @@ BEGIN
     IF v_bounty_id IS NULL THEN
         INSERT INTO bounty (
             name, tcg, set_name, quantity_needed, is_active, is_generic,
+            scryfall_id, image_url, set_code, collector_number,
             foil_treatment, card_treatment, language, hide_price, price_source
         ) VALUES (
             v_req.card_name, v_req.tcg, v_req.set_name, v_req.quantity,
             true, v_is_generic,
-            'non_foil', 'normal', 'en', false, 'tcgplayer'
+            v_req.scryfall_id, v_req.image_url, v_req.set_code, v_req.collector_number,
+            COALESCE(v_req.foil_treatment, 'non_foil'), COALESCE(v_req.card_treatment, 'normal'), 
+            'en', false, 'tcgplayer'
         )
         RETURNING id INTO v_bounty_id;
     ELSE
