@@ -45,6 +45,7 @@ func LookupCKPrice(scryfallID, name, ckEdition, variation string, isFoil bool, c
 	bestScore := -1
 	var bestPrice *float64
 
+	// Acquire shared lock for index access
 	ckCacheMutex.RLock()
 	potentialKeys := ckNameIndex[cleanName]
 	ckCacheMutex.RUnlock()
@@ -77,12 +78,13 @@ func LookupCKPrice(scryfallID, name, ckEdition, variation string, isFoil bool, c
 			case ckVariationEntry == "" || ckVariationEntry == "standard":
 				score = 2
 			default:
-				score = 1
+				score = 1 // exact edition, wrong variation
 			}
 		} else {
-			score = 0
+			score = 0 // cross-set fallback
 		}
 
+		// Update best: prefer higher score; break ties by lowest price.
 		if score > bestScore || (score == bestScore && *cp < *bestPrice) {
 			bestScore = score
 			bestPrice = cp
