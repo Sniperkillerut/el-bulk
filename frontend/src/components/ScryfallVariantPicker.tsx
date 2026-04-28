@@ -1,13 +1,16 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
+import Image from 'next/image';
 
-interface ScryfallPrint {
+export interface ScryfallPrint {
   id: string;
+  name: string; // Added name as it's used in ClientRequestModal
   set_name: string;
   set: string;
   collector_number: string;
   image_uris?: { small: string; normal: string };
+  oracle_id?: string;
   card_faces?: { image_uris?: { small: string; normal: string } }[];
   foil: boolean;
   nonfoil: boolean;
@@ -31,11 +34,11 @@ export default function ScryfallVariantPicker({ cardName, onSelect, onSuggestion
   const [anyVersion, setAnyVersion] = useState(true);
 
   useEffect(() => {
-    if (!cardName || cardName.length < 3) {
-      if (prints.length > 0) setPrints([]);
-      return;
-    }
     const timer = setTimeout(() => {
+      if (!cardName || cardName.length < 3) {
+        setPrints(prev => (prev.length > 0 ? [] : prev));
+        return;
+      }
       setLoading(true);
       fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(cardName)}&unique=prints&order=released`)
         .then(r => {
@@ -70,13 +73,12 @@ export default function ScryfallVariantPicker({ cardName, onSelect, onSuggestion
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
       {/* Any Version Toggle */}
-      <div 
+      <div
         onClick={toggleAnyVersion}
-        className={`p-4 rounded-xl border-2 transition-all cursor-pointer group ${
-          anyVersion 
-            ? 'border-gold bg-gold/5 shadow-md shadow-gold/10' 
+        className={`p-4 rounded-xl border-2 transition-all cursor-pointer group ${anyVersion
+            ? 'border-gold bg-gold/5 shadow-md shadow-gold/10'
             : 'border-kraft-dark/20 bg-kraft-light/30 hover:border-gold/40'
-        }`}
+          }`}
       >
         <div className="flex items-center gap-4">
           <div className={`w-10 h-6 rounded-full transition-colors relative flex-shrink-0 ${anyVersion ? 'bg-gold' : 'bg-kraft-dark/40'}`}>
@@ -102,21 +104,28 @@ export default function ScryfallVariantPicker({ cardName, onSelect, onSuggestion
           </h4>
           {loading && <span className="text-[8px] animate-pulse text-gold font-bold">SEARCHING SCryfall...</span>}
         </div>
-        
+
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 max-h-64 overflow-y-auto pr-2 no-scrollbar">
           {prints.map(p => (
             <button
               key={p.id}
               type="button"
               onClick={() => onSelect(p)}
-              className={`group relative rounded-lg overflow-hidden border-2 transition-all hover:scale-105 active:scale-95 ${
-                selectedId === p.id 
-                  ? 'border-gold shadow-lg shadow-gold/30 ring-2 ring-gold/20' 
+              className={`group relative rounded-lg overflow-hidden border-2 transition-all hover:scale-105 active:scale-95 ${selectedId === p.id
+                  ? 'border-gold shadow-lg shadow-gold/30 ring-2 ring-gold/20'
                   : 'border-transparent hover:border-gold/40 bg-kraft-dark/10'
-              }`}
+                }`}
               title={`${p.set_name} #${p.collector_number}`}
             >
-              <img src={getImage(p)} alt={p.set_name} className="w-full aspect-[2.5/3.5] object-cover" loading="lazy" />
+              <div className="relative w-full aspect-[2.5/3.5]">
+                <Image
+                  src={getImage(p)}
+                  alt={p.set_name}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 640px) 33vw, 25vw"
+                />
+              </div>
               <div className="absolute inset-0 bg-gradient-to-t from-ink-deep/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-1.5">
                 <p className="text-[7px] font-black text-white uppercase tracking-tighter leading-tight truncate">{p.set_name}</p>
                 <p className="text-[6px] font-mono-stack text-gold truncate">#{p.collector_number}</p>

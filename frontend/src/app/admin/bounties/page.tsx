@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { 
+import {
   adminUpdateBounty, adminDeleteBounty, fetchBounties,
   adminFetchClientRequests, adminUpdateClientRequestStatus, adminFetchTCGs,
   adminFetchAllBountyOffers, adminUpdateBountyOfferStatus, adminAcceptClientRequest,
@@ -32,15 +33,15 @@ export default function AdminBountiesPage() {
   const [requests, setRequests] = useState<ClientRequest[]>([]);
   const [offers, setOffers] = useState<BountyOffer[]>([]);
   const [tcgs, setTCGs] = useState<TCG[]>([]);
-  
+
   const [loading, setLoading] = useState(true);
   const [editingBounty, setEditingBounty] = useState<Bounty | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [initialBountyData, setInitialBountyData] = useState<Partial<BountyInput> | undefined>();
-  const [resolvingOffer, setResolvingOffer] = useState<{offer: BountyOffer, bounty: Bounty} | null>(null);
+  const [resolvingOffer, setResolvingOffer] = useState<{ offer: BountyOffer, bounty: Bounty } | null>(null);
   const [expandedOfferId, setExpandedOfferId] = useState<string | null>(null);
   const [selectedRequests, setSelectedRequests] = useState<Record<string, string[]>>({});
-  
+
   const [onlyShowActive, setOnlyShowActive] = useState(true);
   const [onlyShowPendingRequests, setOnlyShowPendingRequests] = useState(true);
   const [onlyShowPendingOffers, setOnlyShowPendingOffers] = useState(true);
@@ -60,14 +61,14 @@ export default function AdminBountiesPage() {
   // Scroll to element if parameter present when data loads
   useEffect(() => {
     if (scrollToId && !loading && (requests.length > 0 || offers.length > 0)) {
-       setTimeout(() => {
-           const el = document.getElementById(scrollToId);
-           if (el) {
-               el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-               el.classList.add('ring-4', 'ring-gold', 'scale-[1.01]', 'transition-all');
-               setTimeout(() => el.classList.remove('ring-4', 'ring-gold', 'scale-[1.01]'), 2000);
-           }
-       }, 500);
+      setTimeout(() => {
+        const el = document.getElementById(scrollToId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.classList.add('ring-4', 'ring-gold', 'scale-[1.01]', 'transition-all');
+          setTimeout(() => el.classList.remove('ring-4', 'ring-gold', 'scale-[1.01]'), 2000);
+        }
+      }, 500);
     }
   }, [loading, scrollToId, requests.length, offers.length]);
 
@@ -170,12 +171,12 @@ export default function AdminBountiesPage() {
 
   return (
     <div className="flex-1 flex flex-col p-3 min-h-0 max-w-7xl mx-auto w-full">
-      <AdminHeader 
-        title={t('pages.admin.bounties.title', 'WANTED / BOUNTIES')} 
+      <AdminHeader
+        title={t('pages.admin.bounties.title', 'WANTED / BOUNTIES')}
         subtitle={t('pages.admin.bounties.subtitle', 'Cards We Want to Buy // Client Requests')}
         actions={
-          <button 
-            onClick={() => { setEditingBounty(null); setInitialBountyData(undefined); setShowEditModal(true); }} 
+          <button
+            onClick={() => { setEditingBounty(null); setInitialBountyData(undefined); setShowEditModal(true); }}
             className="btn-primary px-8 flex items-center gap-2 shadow-lg shadow-gold/20"
           >
             <span className="text-xl">+</span> {t('pages.admin.bounties.add_btn', 'ADD NEW BOUNTY')}
@@ -191,13 +192,13 @@ export default function AdminBountiesPage() {
         ].map(tab => {
           const isActive = activeTab === tab.id;
           return (
-            <button 
+            <button
               key={tab.id}
               className={`
                 font-mono-stack text-xs px-3 py-2 md:px-6 md:py-3 transition-all uppercase tracking-widest whitespace-nowrap
                 rounded-t-md border-x relative -mb-px group border-t-4
-                ${isActive 
-                  ? 'text-ink-deep bg-white border-gold border-x-kraft-dark/30 border-b-white z-20 shadow-[0_0_25px_rgba(186,155,74,0.4),0_0_10px_rgba(186,155,74,0.2)] font-black' 
+                ${isActive
+                  ? 'text-ink-deep bg-white border-gold border-x-kraft-dark/30 border-b-white z-20 shadow-[0_0_25px_rgba(186,155,74,0.4),0_0_10px_rgba(186,155,74,0.2)] font-black'
                   : 'text-text-muted bg-kraft-dark/40 border-transparent border-x-kraft-dark/20 hover:text-ink-deep hover:bg-kraft-dark/60 font-bold'
                 }
               `}
@@ -225,16 +226,16 @@ export default function AdminBountiesPage() {
           <div className="space-y-6">
             <div className="flex items-center gap-4 px-2">
               <label className="flex items-center gap-2 cursor-pointer group">
-                <input 
-                  type="checkbox" 
-                  checked={onlyShowActive} 
+                <input
+                  type="checkbox"
+                  checked={onlyShowActive}
                   onChange={e => setOnlyShowActive(e.target.checked)}
                   className="accent-gold w-4 h-4 cursor-pointer"
                 />
                 <span className="text-[10px] uppercase font-mono-stack text-text-muted group-hover:text-ink-deep tracking-wider font-bold">{t('pages.admin.bounties.focus_mode', 'Focus Mode: Hide Solved History')}</span>
               </label>
             </div>
-            
+
             <div className="bg-white rounded-xl border border-kraft-dark/20 shadow-sm overflow-hidden">
               <table className="w-full text-left border-collapse">
                 <thead className="sticky top-0 z-10 bg-kraft-light backdrop-blur-md shadow-sm border-b border-kraft-dark/20">
@@ -253,8 +254,8 @@ export default function AdminBountiesPage() {
                   {bounties
                     .filter(b => onlyShowActive ? b.is_active : true)
                     .map(b => (
-                      <tr 
-                        key={b.id} 
+                      <tr
+                        key={b.id}
                         onClick={() => { if (b.is_active) { setEditingBounty(b); setShowEditModal(true); } }}
                         className={`group hover:bg-white transition-colors ${b.is_active ? 'cursor-pointer' : 'opacity-60 grayscale-[0.5]'}`}
                       >
@@ -298,15 +299,15 @@ export default function AdminBountiesPage() {
                           {b.quantity_needed}
                         </td>
                         <td className="p-2 text-center hidden md:table-cell">
-                           <div className="flex justify-center items-center gap-2">
-                              <span className="badge bg-blue-50 text-blue-600 border-blue-100 text-[10px] font-bold" title="Demand (Client Requests)">
-                                👥 {requests.filter(r => r.bounty_id === b.id && (r.status === 'pending' || r.status === 'accepted')).length}
-                              </span>
-                              <span className="text-text-muted opacity-30">/</span>
-                              <span className="badge bg-gold/10 text-gold-dark border-gold/20 text-[10px] font-bold" title="Supply (User Offers)">
-                                📦 {offers.filter(o => o.bounty_id === b.id && o.status === 'pending').length}
-                              </span>
-                           </div>
+                          <div className="flex justify-center items-center gap-2">
+                            <span className="badge bg-blue-50 text-blue-600 border-blue-100 text-[10px] font-bold" title="Demand (Client Requests)">
+                              👥 {requests.filter(r => r.bounty_id === b.id && (r.status === 'pending' || r.status === 'accepted')).length}
+                            </span>
+                            <span className="text-text-muted opacity-30">/</span>
+                            <span className="badge bg-gold/10 text-gold-dark border-gold/20 text-[10px] font-bold" title="Supply (User Offers)">
+                              📦 {offers.filter(o => o.bounty_id === b.id && o.status === 'pending').length}
+                            </span>
+                          </div>
                         </td>
                         <td className="p-2 text-center hidden md:table-cell">
                           {b.is_active ? (
@@ -320,10 +321,10 @@ export default function AdminBountiesPage() {
                             {b.is_active ? (
                               <>
                                 <button onClick={(e) => { e.stopPropagation(); setEditingBounty(b); setShowEditModal(true); }} className="p-2 text-text-muted hover:text-gold hover:bg-gold/5 rounded-full transition-all" title={t('pages.common.actions.edit', 'Edit')}>
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
                                 </button>
                                 <button onClick={(e) => { e.stopPropagation(); handleDeleteBounty(b.id, b.name); }} className="p-2 text-text-muted hover:text-red-500 hover:bg-red-50 rounded-full transition-all" title={t('pages.common.actions.delete', 'Delete')}>
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
                                 </button>
                               </>
                             ) : (
@@ -341,9 +342,9 @@ export default function AdminBountiesPage() {
           <div className="space-y-6 max-w-5xl">
             <div className="flex items-center gap-4 px-2">
               <label className="flex items-center gap-2 cursor-pointer group">
-                <input 
-                  type="checkbox" 
-                  checked={onlyShowPendingOffers} 
+                <input
+                  type="checkbox"
+                  checked={onlyShowPendingOffers}
                   onChange={e => setOnlyShowPendingOffers(e.target.checked)}
                   className="accent-gold w-4 h-4 cursor-pointer"
                 />
@@ -355,157 +356,155 @@ export default function AdminBountiesPage() {
               {offers
                 .filter(offer => onlyShowPendingOffers ? offer.status === 'pending' : true)
                 .map(offer => {
-                const b = bounties.find(b => b.id === offer.bounty_id);
-                // Fallback to joined fields if bounty not in current list
-                const displayBounty = b || {
-                  id: offer.bounty_id,
-                  name: offer.bounty_name || 'Unknown Bounty',
-                  image_url: offer.bounty_image,
-                  tcg: offer.tcg || 'mtg',
-                  foil_treatment: offer.bounty_foil || 'non_foil',
-                  scryfall_id: offer.scryfall_id,
-                  is_active: false
-                };
-              
-              return (
-                <div id={offer.id} key={offer.id} className={`flex flex-col gap-0 border-l-4 ${offer.status === 'pending' ? 'border-gold shadow-lg shadow-gold/5' : offer.status === 'accepted' ? 'border-indigo-400 opacity-80' : 'border-red-400'} scroll-mt-24 rounded-lg overflow-hidden mb-4 bg-white border border-kraft-dark/10`}>
-                  <div className={`p-5 flex flex-col md:flex-row gap-6 ${offer.status === 'pending' ? 'bg-white' : offer.status === 'accepted' ? 'bg-indigo-50/30' : 'bg-red-50/30'}`}>
-                    <div className="w-16 h-20 bg-kraft-paper rounded flex shrink-0 items-center justify-center overflow-hidden border border-kraft-dark/10">
-                      <CardImage imageUrl={displayBounty.image_url} name={displayBounty.name} tcg={displayBounty.tcg} foilTreatment={displayBounty.foil_treatment} enableHover={true} />
-                    </div>
-                    
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-1">
-                        <h3 className="font-bold text-lg m-0 text-ink-deep font-mono-stack">
-                          {t('pages.admin.bounties.offers.seller', 'Seller:')} {offer.customer_id ? (
-                            <Link href={`/admin/clients/${offer.customer_id}`} className="inline-flex items-center gap-1 text-indigo-700 hover:text-indigo-900 underline decoration-indigo-300 hover:decoration-indigo-700 underline-offset-4 transition-all">
-                              {offer.customer_name}
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-70"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                            </Link>
-                          ) : (
-                            offer.customer_name
-                          )}
-                        </h3>
-                        <span className={`badge ${offer.status === 'pending' ? 'bg-gold text-ink-deep font-bold' : offer.status === 'accepted' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-red-100 text-red-700'}`}>{t(`pages.common.status.${offer.status}`, offer.status).toUpperCase()}</span>
-                      </div>
-                      <SmartContactLink 
-                        contact={offer.customer_contact} 
-                        className="text-sm font-mono-stack text-gold-dark hover:underline font-bold transition-all"
-                      />
-                      
-                      <div className="mt-3 flex flex-wrap gap-4 items-start">
-                        <div className="flex-1 min-w-[200px] p-3 bg-kraft-paper/50 rounded border border-kraft-dark/20">
-                          <p className="text-xs font-bold mb-1 uppercase tracking-tighter text-text-muted font-mono-stack">{t('pages.admin.bounties.offering_card', 'Offering Card:')}</p>
-                          <p className="text-sm font-bold">{displayBounty.name} <span className="font-normal text-text-muted text-xs">({(displayBounty as any).set_name || t('pages.common.labels.any_set', 'Any Set')})</span></p>
-                          <div className="flex gap-4 mt-1">
-                            <p className="text-xs text-text-muted">{t('pages.admin.bounties.offers.condition', 'Condition:')} <strong className="text-ink-deep">{offer.condition}</strong></p>
-                            <p className="text-xs text-text-muted">{t('pages.admin.bounties.offers.quantity', 'Quantity:')} <strong className="text-gold-dark font-mono-stack">{offer.quantity}</strong></p>
-                          </div>
+                  const b = bounties.find(b => b.id === offer.bounty_id);
+                  // Fallback to joined fields if bounty not in current list
+                  const displayBounty: Partial<Bounty> = b || {
+                    id: offer.bounty_id,
+                    name: offer.bounty_name || 'Unknown Bounty',
+                    image_url: offer.bounty_image,
+                    tcg: offer.tcg || 'mtg',
+                    foil_treatment: offer.bounty_foil || 'non_foil',
+                    scryfall_id: offer.scryfall_id,
+                    set_name: offer.bounty_name?.includes('(') ? offer.bounty_name : undefined // Simple heuristic
+                  };
+
+                  return (
+                    <div id={offer.id} key={offer.id} className={`flex flex-col gap-0 border-l-4 ${offer.status === 'pending' ? 'border-gold shadow-lg shadow-gold/5' : offer.status === 'accepted' ? 'border-indigo-400 opacity-80' : 'border-red-400'} scroll-mt-24 rounded-lg overflow-hidden mb-4 bg-white border border-kraft-dark/10`}>
+                      <div className={`p-5 flex flex-col md:flex-row gap-6 ${offer.status === 'pending' ? 'bg-white' : offer.status === 'accepted' ? 'bg-indigo-50/30' : 'bg-red-50/30'}`}>
+                        <div className="w-16 h-20 bg-kraft-paper rounded flex shrink-0 items-center justify-center overflow-hidden border border-kraft-dark/10">
+                          <CardImage imageUrl={displayBounty.image_url || ''} name={displayBounty.name || 'Unknown'} tcg={displayBounty.tcg || 'mtg'} foilTreatment={displayBounty.foil_treatment || 'non_foil'} enableHover={true} />
                         </div>
 
-                        {offer.status === 'pending' && (
-                          <div className="shrink-0 pt-1">
-                            <button 
-                              onClick={() => setExpandedOfferId(expandedOfferId === offer.id ? null : offer.id)}
-                              className={`text-[10px] font-mono-stack px-3 py-2 rounded-sm border transition-all flex items-center gap-2 ${
-                                requests.some(r => r.card_name.toLowerCase().includes(displayBounty.name.toLowerCase()))
-                                  ? 'bg-gold/5 border-gold/40 text-gold-dark hover:bg-gold/10'
-                                  : 'bg-kraft-light/50 border-kraft-dark/20 text-text-muted opacity-50 cursor-not-allowed'
-                              }`}
-                            >
-                              <span className="text-lg leading-none">{expandedOfferId === offer.id ? '−' : '+'}</span>
-                              {requests.filter(r => r.card_name.toLowerCase().includes(displayBounty.name.toLowerCase()) && (r.status === 'pending' || r.status === 'accepted')).length} {t('pages.admin.bounties.offers.waiting_clients', 'WAITING CLIENTS')}
-                            </button>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-1">
+                            <h3 className="font-bold text-lg m-0 text-ink-deep font-mono-stack">
+                              {t('pages.admin.bounties.offers.seller', 'Seller:')} {offer.customer_id ? (
+                                <Link href={`/admin/clients/${offer.customer_id}`} className="inline-flex items-center gap-1 text-indigo-700 hover:text-indigo-900 underline decoration-indigo-300 hover:decoration-indigo-700 underline-offset-4 transition-all">
+                                  {offer.customer_name}
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-70"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
+                                </Link>
+                              ) : (
+                                offer.customer_name
+                              )}
+                            </h3>
+                            <span className={`badge ${offer.status === 'pending' ? 'bg-gold text-ink-deep font-bold' : offer.status === 'accepted' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-red-100 text-red-700'}`}>{t(`pages.common.status.${offer.status}`, offer.status).toUpperCase()}</span>
                           </div>
-                        )}
-                      </div>
+                          <SmartContactLink
+                            contact={offer.customer_contact}
+                            className="text-sm font-mono-stack text-gold-dark hover:underline font-bold transition-all"
+                          />
 
-                      {offer.notes && <p className="text-xs text-text-muted mt-2 italic shadow-inner bg-kraft-light/30 p-2 rounded">&quot;{offer.notes}&quot;</p>}
-                      <p className="text-[10px] text-text-muted mt-3 uppercase tracking-widest font-mono-stack opacity-60">{t('pages.admin.bounties.offers.submitted_on', 'Submitted on:')} {new Date(offer.created_at).toLocaleString()}</p>
-                    </div>
-                    
-                    <div className="flex flex-col gap-2 shrink-0 justify-center">
-                      {offer.status === 'pending' && b && (
-                        <button onClick={() => handleOpenResolveModal(offer, b)} className="btn-primary py-2 px-6 text-xs bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-500/20 font-bold uppercase tracking-widest">{t('pages.admin.bounties.resolve_btn', 'RESOLVE OFFER')}</button>
-                      )}
-                      {offer.status === 'pending' && !b && (
-                        <span className="text-[8px] font-bold text-red-500 uppercase text-center max-w-[100px]">{t('pages.admin.bounties.offers.missing_bounty', 'ERROR: BOUNTY DATA DISCONNECTED')}</span>
-                      )}
-                      {offer.status !== 'pending' && (
-                        <button onClick={async () => { await adminUpdateBountyOfferStatus(offer.id, 'pending'); handleRefresh(); }} className="btn-secondary py-1 text-[10px] font-mono-stack font-bold">{t('pages.admin.bounties.revert_btn', 'REVERT TO PENDING')}</button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Accordion List for Client Requests */}
-                  {expandedOfferId === offer.id && (
-                    <div className="bg-kraft-light/30 border-t border-kraft-dark/10 p-4 animate-in slide-in-from-top-2 duration-200">
-                      <div className="flex justify-between items-center mb-3">
-                        <h4 className="text-[10px] font-mono-stack uppercase text-text-muted font-bold">{t('pages.admin.bounties.offers.select_clients', 'Select Clients to Fulfill (Max {qty})', { qty: offer.quantity })}</h4>
-                        {(selectedRequests[offer.id]?.length || 0) > offer.quantity && (
-                          <span className="text-[10px] font-bold text-red-600 animate-pulse">{t('pages.admin.bounties.offers.over_limit', '⚠️ OVER QUANTITY LIMIT')}</span>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        {requests
-                          .filter(r => r.card_name.toLowerCase().includes(displayBounty.name.toLowerCase()) && (r.status === 'pending' || r.status === 'accepted'))
-                          .map(r => (
-                            <label key={r.id} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                              (selectedRequests[offer.id] || []).includes(r.id) 
-                                ? 'bg-white border-gold shadow-sm ring-1 ring-gold' 
-                                : 'bg-white/50 border-kraft-dark/10 hover:border-gold/30 hover:bg-white'
-                            }`}>
-                              <input 
-                                type="checkbox" 
-                                className="mt-1 accent-gold w-4 h-4 cursor-pointer"
-                                checked={(selectedRequests[offer.id] || []).includes(r.id)}
-                                onChange={e => {
-                                  const current = selectedRequests[offer.id] || [];
-                                  if (e.target.checked) {
-                                    setSelectedRequests({ ...selectedRequests, [offer.id]: [...current, r.id] });
-                                  } else {
-                                    setSelectedRequests({ ...selectedRequests, [offer.id]: current.filter(id => id !== r.id) });
-                                  }
-                                }}
-                              />
-                              <div className="flex-1">
-                                <div className="flex justify-between items-start">
-                                  <span className="text-sm font-bold flex items-center gap-2 text-ink-deep uppercase font-mono-stack">
-                                    {r.customer_id ? (
-                                      <Link href={`/admin/clients/${r.customer_id}`} className="inline-flex items-center gap-1 text-indigo-700 hover:text-indigo-900 underline decoration-indigo-300 hover:decoration-indigo-700 underline-offset-4 transition-all">
-                                        {r.customer_name}
-                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-70 mb-0.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                                      </Link>
-                                    ) : (
-                                      r.customer_name
-                                    )}
-                                    {r.status === 'accepted' && <span className="text-[8px] px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded uppercase tracking-tighter shadow-sm font-bold">{t('pages.common.labels.direct_demand', 'DIRECT DEMAND')}</span>}
-                                  </span>
-                                  <span className="text-[10px] text-text-muted font-mono-stack opacity-60 font-bold">{new Date(r.created_at).toLocaleDateString()}</span>
-                                </div>
-                                <SmartContactLink 
-                                  contact={r.customer_contact} 
-                                  className="text-xs text-gold-dark hover:underline font-mono-stack transition-all"
-                                />
+                          <div className="mt-3 flex flex-wrap gap-4 items-start">
+                            <div className="flex-1 min-w-[200px] p-3 bg-kraft-paper/50 rounded border border-kraft-dark/20">
+                              <p className="text-xs font-bold mb-1 uppercase tracking-tighter text-text-muted font-mono-stack">{t('pages.admin.bounties.offering_card', 'Offering Card:')}</p>
+                              <p className="text-sm font-bold">{displayBounty.name} <span className="font-normal text-text-muted text-xs">({displayBounty.set_name || t('pages.common.labels.any_set', 'Any Set')})</span></p>
+                              <div className="flex gap-4 mt-1">
+                                <p className="text-xs text-text-muted">{t('pages.admin.bounties.offers.condition', 'Condition:')} <strong className="text-ink-deep">{offer.condition}</strong></p>
+                                <p className="text-xs text-text-muted">{t('pages.admin.bounties.offers.quantity', 'Quantity:')} <strong className="text-gold-dark font-mono-stack">{offer.quantity}</strong></p>
                               </div>
-                            </label>
-                          ))
-                        }
+                            </div>
+
+                            {offer.status === 'pending' && (
+                              <div className="shrink-0 pt-1">
+                                <button
+                                  onClick={() => setExpandedOfferId(expandedOfferId === offer.id ? null : offer.id)}
+                                  className={`text-[10px] font-mono-stack px-3 py-2 rounded-sm border transition-all flex items-center gap-2 ${requests.some(r => r.card_name.toLowerCase().includes((displayBounty.name || '').toLowerCase()))
+                                      ? 'bg-gold/5 border-gold/40 text-gold-dark hover:bg-gold/10'
+                                      : 'bg-kraft-light/50 border-kraft-dark/20 text-text-muted opacity-50 cursor-not-allowed'
+                                    }`}
+                                >
+                                  <span className="text-lg leading-none">{expandedOfferId === offer.id ? '−' : '+'}</span>
+                                  {requests.filter(r => r.card_name.toLowerCase().includes((displayBounty.name || '').toLowerCase()) && (r.status === 'pending' || r.status === 'accepted')).length} {t('pages.admin.bounties.offers.waiting_clients', 'WAITING CLIENTS')}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {offer.notes && <p className="text-xs text-text-muted mt-2 italic shadow-inner bg-kraft-light/30 p-2 rounded">&quot;{offer.notes}&quot;</p>}
+                          <p className="text-[10px] text-text-muted mt-3 uppercase tracking-widest font-mono-stack opacity-60">{t('pages.admin.bounties.offers.submitted_on', 'Submitted on:')} {new Date(offer.created_at).toLocaleString()}</p>
+                        </div>
+
+                        <div className="flex flex-col gap-2 shrink-0 justify-center">
+                          {offer.status === 'pending' && b && (
+                            <button onClick={() => handleOpenResolveModal(offer, b)} className="btn-primary py-2 px-6 text-xs bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-500/20 font-bold uppercase tracking-widest">{t('pages.admin.bounties.resolve_btn', 'RESOLVE OFFER')}</button>
+                          )}
+                          {offer.status === 'pending' && !b && (
+                            <span className="text-[8px] font-bold text-red-500 uppercase text-center max-w-[100px]">{t('pages.admin.bounties.offers.missing_bounty', 'ERROR: BOUNTY DATA DISCONNECTED')}</span>
+                          )}
+                          {offer.status !== 'pending' && (
+                            <button onClick={async () => { await adminUpdateBountyOfferStatus(offer.id, 'pending'); handleRefresh(); }} className="btn-secondary py-1 text-[10px] font-mono-stack font-bold">{t('pages.admin.bounties.revert_btn', 'REVERT TO PENDING')}</button>
+                          )}
+                        </div>
                       </div>
+
+                      {/* Accordion List for Client Requests */}
+                      {expandedOfferId === offer.id && (
+                        <div className="bg-kraft-light/30 border-t border-kraft-dark/10 p-4 animate-in slide-in-from-top-2 duration-200">
+                          <div className="flex justify-between items-center mb-3">
+                            <h4 className="text-[10px] font-mono-stack uppercase text-text-muted font-bold">{t('pages.admin.bounties.offers.select_clients', 'Select Clients to Fulfill (Max {qty})', { qty: offer.quantity })}</h4>
+                            {(selectedRequests[offer.id]?.length || 0) > offer.quantity && (
+                              <span className="text-[10px] font-bold text-red-600 animate-pulse">{t('pages.admin.bounties.offers.over_limit', '⚠️ OVER QUANTITY LIMIT')}</span>
+                            )}
+                          </div>
+                          <div className="space-y-2">
+                            {requests
+                              .filter(r => r.card_name.toLowerCase().includes((displayBounty.name || '').toLowerCase()) && (r.status === 'pending' || r.status === 'accepted'))
+                              .map(r => (
+                                <label key={r.id} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${(selectedRequests[offer.id] || []).includes(r.id)
+                                    ? 'bg-white border-gold shadow-sm ring-1 ring-gold'
+                                    : 'bg-white/50 border-kraft-dark/10 hover:border-gold/30 hover:bg-white'
+                                  }`}>
+                                  <input
+                                    type="checkbox"
+                                    className="mt-1 accent-gold w-4 h-4 cursor-pointer"
+                                    checked={(selectedRequests[offer.id] || []).includes(r.id)}
+                                    onChange={e => {
+                                      const current = selectedRequests[offer.id] || [];
+                                      if (e.target.checked) {
+                                        setSelectedRequests({ ...selectedRequests, [offer.id]: [...current, r.id] });
+                                      } else {
+                                        setSelectedRequests({ ...selectedRequests, [offer.id]: current.filter(id => id !== r.id) });
+                                      }
+                                    }}
+                                  />
+                                  <div className="flex-1">
+                                    <div className="flex justify-between items-start">
+                                      <span className="text-sm font-bold flex items-center gap-2 text-ink-deep uppercase font-mono-stack">
+                                        {r.customer_id ? (
+                                          <Link href={`/admin/clients/${r.customer_id}`} className="inline-flex items-center gap-1 text-indigo-700 hover:text-indigo-900 underline decoration-indigo-300 hover:decoration-indigo-700 underline-offset-4 transition-all">
+                                            {r.customer_name}
+                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-70 mb-0.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
+                                          </Link>
+                                        ) : (
+                                          r.customer_name
+                                        )}
+                                        {r.status === 'accepted' && <span className="text-[8px] px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded uppercase tracking-tighter shadow-sm font-bold">{t('pages.common.labels.direct_demand', 'DIRECT DEMAND')}</span>}
+                                      </span>
+                                      <span className="text-[10px] text-text-muted font-mono-stack opacity-60 font-bold">{new Date(r.created_at).toLocaleDateString()}</span>
+                                    </div>
+                                    <SmartContactLink
+                                      contact={r.customer_contact}
+                                      className="text-xs text-gold-dark hover:underline font-mono-stack transition-all"
+                                    />
+                                  </div>
+                                </label>
+                              ))
+                            }
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                  );
+                })}
             </div>
           </div>
         ) : (
           <div className="space-y-6 max-w-5xl pb-12">
             <div className="flex items-center gap-4 px-2">
               <label className="flex items-center gap-2 cursor-pointer group">
-                <input 
-                  type="checkbox" 
-                  checked={onlyShowPendingRequests} 
+                <input
+                  type="checkbox"
+                  checked={onlyShowPendingRequests}
                   onChange={e => setOnlyShowPendingRequests(e.target.checked)}
                   className="accent-gold w-4 h-4 cursor-pointer"
                 />
@@ -517,21 +516,22 @@ export default function AdminBountiesPage() {
               {requests
                 .filter(req => onlyShowPendingRequests ? req.status !== 'solved' : true)
                 .map(req => (
-                  <div id={req.id} key={req.id} className={`p-5 flex flex-col md:flex-row gap-4 md:gap-6 items-start md:items-center rounded-xl border border-kraft-dark/10 scroll-mt-24 shadow-sm border-l-4 ${
-                    req.status === 'pending' ? 'bg-white border-gold shadow-gold/5' : 
-                    req.status === 'accepted' ? 'bg-emerald-50/20 border-emerald-500' : 
-                    req.status === 'solved' ? 'bg-indigo-50/20 border-indigo-600 opacity-80 backdrop-grayscale' :
-                    'bg-red-50/20 border-red-500 opacity-60'
-                  }`}>
+                  <div id={req.id} key={req.id} className={`p-5 flex flex-col md:flex-row gap-4 md:gap-6 items-start md:items-center rounded-xl border border-kraft-dark/10 scroll-mt-24 shadow-sm border-l-4 ${req.status === 'pending' ? 'bg-white border-gold shadow-gold/5' :
+                      req.status === 'accepted' ? 'bg-emerald-50/20 border-emerald-500' :
+                        req.status === 'solved' ? 'bg-indigo-50/20 border-indigo-600 opacity-80 backdrop-grayscale' :
+                          'bg-red-50/20 border-red-500 opacity-60'
+                    }`}>
                     {req.scryfall_id || req.image_url ? (
                       <div className="w-16 h-22 bg-kraft-paper rounded flex shrink-0 items-center justify-center overflow-hidden border border-kraft-dark/10 shadow-sm group relative">
-                        <img 
-                          src={req.scryfall_id ? `https://api.scryfall.com/cards/${req.scryfall_id}?format=image&version=small` : req.image_url} 
+                        <Image
+                          src={req.scryfall_id ? `https://api.scryfall.com/cards/${req.scryfall_id}?format=image&version=small` : (req.image_url || '/placeholder-card.png')}
                           alt={req.card_name}
-                          className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                          fill
+                          className="object-cover transition-transform group-hover:scale-110"
+                          sizes="64px"
                         />
                         <div className="absolute inset-0 bg-ink-deep/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                           <span className="text-[8px] font-bold text-white uppercase bg-ink-deep/60 px-1 rounded">{req.match_type === 'exact' ? 'EXACT' : 'GENERIC'}</span>
+                          <span className="text-[8px] font-bold text-white uppercase bg-ink-deep/60 px-1 rounded">{req.match_type === 'exact' ? 'EXACT' : 'GENERIC'}</span>
                         </div>
                       </div>
                     ) : (
@@ -547,16 +547,15 @@ export default function AdminBountiesPage() {
                           <h3 className={`font-bold text-lg m-0 font-mono-stack ${req.status === 'solved' ? 'text-indigo-900' : 'text-ink-deep'}`}>{req.card_name}</h3>
                         </div>
                         <span className="badge bg-gold/10 text-gold text-[8px] font-mono-stack px-1.5 py-0.5 rounded border border-gold/20">{req.tcg.toUpperCase()}</span>
-                        <span className={`badge ${
-                          req.status === 'pending' ? 'bg-gold text-ink-deep font-bold' : 
-                          req.status === 'accepted' ? 'bg-emerald-100 text-emerald-700' : 
-                          req.status === 'solved' ? 'bg-indigo-600 text-white shadow-sm' :
-                          req.status === 'not_needed' ? 'bg-purple-100 text-purple-700' :
-                          'bg-red-100 text-red-700'
-                        }`}>
-                          {req.status === 'solved' ? t('pages.admin.bounties.requests.complete_status', 'COMPLETE') : 
-                           req.status === 'not_needed' ? t('pages.admin.bounties.requests.not_needed_status', 'NO LONGER NEEDED') :
-                           t(`pages.common.status.${req.status}`, req.status).toUpperCase()}
+                        <span className={`badge ${req.status === 'pending' ? 'bg-gold text-ink-deep font-bold' :
+                            req.status === 'accepted' ? 'bg-emerald-100 text-emerald-700' :
+                              req.status === 'solved' ? 'bg-indigo-600 text-white shadow-sm' :
+                                req.status === 'not_needed' ? 'bg-purple-100 text-purple-700' :
+                                  'bg-red-100 text-red-700'
+                          }`}>
+                          {req.status === 'solved' ? t('pages.admin.bounties.requests.complete_status', 'COMPLETE') :
+                            req.status === 'not_needed' ? t('pages.admin.bounties.requests.not_needed_status', 'NO LONGER NEEDED') :
+                              t(`pages.common.status.${req.status}`, req.status).toUpperCase()}
                         </span>
                         {req.match_type === 'exact' && (
                           <span className="text-[8px] px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded font-bold uppercase tracking-tighter shadow-sm animate-pulse">
@@ -569,13 +568,13 @@ export default function AdminBountiesPage() {
                           {req.customer_id ? (
                             <Link href={`/admin/clients/${req.customer_id}`} className="inline-flex items-center gap-1 text-indigo-700 hover:text-indigo-900 underline decoration-indigo-300 hover:decoration-indigo-700 underline-offset-4 transition-all">
                               {req.customer_name}
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-70"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="opacity-70"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
                             </Link>
                           ) : (
                             req.customer_name
                           )}
-                        </strong> - <SmartContactLink 
-                          contact={req.customer_contact} 
+                        </strong> - <SmartContactLink
+                          contact={req.customer_contact}
                           className="text-gold-dark hover:underline font-bold transition-all"
                         />
                       </p>
@@ -592,26 +591,26 @@ export default function AdminBountiesPage() {
                       )}
                       <p className="text-[10px] text-text-muted mt-3 uppercase tracking-widest font-mono-stack font-bold opacity-40">{t('pages.admin.bounties.requests.requested_date', 'Requested:')} {new Date(req.created_at).toLocaleString()}</p>
                     </div>
-                  
-                  <div className="flex flex-col sm:flex-row md:flex-col gap-2 shrink-0 w-full md:w-auto">
-                    {req.status === 'pending' && (
-                      <button onClick={() => handleAcceptRequest(req)} className="btn-primary py-2 px-6 text-xs bg-emerald-600 hover:bg-emerald-500 shadow-md transition-all uppercase tracking-widest font-bold">{t('pages.admin.bounties.requests.accept_btn', 'ACCEPT & ADD BOUNTY')}</button>
-                    )}
-                    {(req.status === 'pending' || req.status === 'accepted') && (
-                      <button onClick={() => handleUpdateStatus(req.id, 'solved')} className="btn-secondary py-2 px-6 text-xs text-indigo-600 border-indigo-300 hover:bg-indigo-50 font-bold uppercase tracking-tighter">{t('pages.admin.bounties.requests.solve_btn', 'MARK AS SOLVED')}</button>
-                    )}
-                    {req.status === 'pending' && (
-                      <button onClick={() => handleUpdateStatus(req.id, 'rejected')} className="btn-secondary py-2 px-6 text-xs text-red-500 hover:bg-red-50">{t('pages.admin.bounties.requests.reject_btn', 'REJECT')}</button>
-                    )}
-                    {(req.status !== 'pending' && req.status !== 'solved') && (
-                      <button onClick={() => handleUpdateStatus(req.id, 'pending')} className="btn-secondary py-1 text-[10px] font-mono-stack font-bold">{t('pages.admin.bounties.revert_btn', 'REVERT TO PENDING')}</button>
-                    )}
-                    {req.status === 'solved' && (
-                      <span className="text-[10px] font-mono-stack text-indigo-400 font-bold leading-none text-right whitespace-pre-wrap">{t('pages.common.status.mission_complete', 'MISSION COMPLETE\nCARD DELIVERED')}</span>
-                    )}
+
+                    <div className="flex flex-col sm:flex-row md:flex-col gap-2 shrink-0 w-full md:w-auto">
+                      {req.status === 'pending' && (
+                        <button onClick={() => handleAcceptRequest(req)} className="btn-primary py-2 px-6 text-xs bg-emerald-600 hover:bg-emerald-500 shadow-md transition-all uppercase tracking-widest font-bold">{t('pages.admin.bounties.requests.accept_btn', 'ACCEPT & ADD BOUNTY')}</button>
+                      )}
+                      {(req.status === 'pending' || req.status === 'accepted') && (
+                        <button onClick={() => handleUpdateStatus(req.id, 'solved')} className="btn-secondary py-2 px-6 text-xs text-indigo-600 border-indigo-300 hover:bg-indigo-50 font-bold uppercase tracking-tighter">{t('pages.admin.bounties.requests.solve_btn', 'MARK AS SOLVED')}</button>
+                      )}
+                      {req.status === 'pending' && (
+                        <button onClick={() => handleUpdateStatus(req.id, 'rejected')} className="btn-secondary py-2 px-6 text-xs text-red-500 hover:bg-red-50">{t('pages.admin.bounties.requests.reject_btn', 'REJECT')}</button>
+                      )}
+                      {(req.status !== 'pending' && req.status !== 'solved') && (
+                        <button onClick={() => handleUpdateStatus(req.id, 'pending')} className="btn-secondary py-1 text-[10px] font-mono-stack font-bold">{t('pages.admin.bounties.revert_btn', 'REVERT TO PENDING')}</button>
+                      )}
+                      {req.status === 'solved' && (
+                        <span className="text-[10px] font-mono-stack text-indigo-400 font-bold leading-none text-right whitespace-pre-wrap">{t('pages.common.status.mission_complete', 'MISSION COMPLETE\nCARD DELIVERED')}</span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           </div>
         )}

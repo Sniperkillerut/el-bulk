@@ -4,6 +4,7 @@ import { FormState } from '../types';
 import { ScryfallCard, FoilTreatment, CardTreatment } from '@/lib/types';
 import MTGVariantSelector from '../../MTGVariantSelector';
 import { useLanguage } from '@/context/LanguageContext';
+import { getProxyImageUrl } from '@/lib/api';
 
 interface VariantTabProps {
   form: FormState;
@@ -44,7 +45,7 @@ export default function VariantTab({
                 >
                   {img ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={img} alt={p.set_name} className="w-full h-full object-cover" />
+                    <img src={getProxyImageUrl(img)} alt={p.set_name} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-ink-border/10 flex items-center justify-center text-[8px] font-mono-stack text-center p-1">
                       {p.set_name}

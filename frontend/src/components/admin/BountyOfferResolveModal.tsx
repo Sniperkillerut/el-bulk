@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { BountyOffer, Bounty, ClientRequest } from '@/lib/types';
 import CardImage from '@/components/CardImage';
 import SmartContactLink from '@/components/admin/SmartContactLink';
@@ -150,11 +151,13 @@ function RequestItem({ request, isSelected, onToggle }: { request: ClientRequest
         onChange={onToggle}
       />
       {request.scryfall_id && (
-        <div className="w-10 h-14 bg-kraft-paper rounded flex shrink-0 items-center justify-center overflow-hidden border border-kraft-dark/10 shadow-sm">
-          <img 
+        <div className="w-10 h-14 bg-kraft-paper rounded flex shrink-0 items-center justify-center overflow-hidden border border-kraft-dark/10 shadow-sm relative">
+          <Image 
             src={`https://api.scryfall.com/cards/${request.scryfall_id}?format=image&version=small`} 
             alt={request.card_name}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            sizes="40px"
           />
         </div>
       )}

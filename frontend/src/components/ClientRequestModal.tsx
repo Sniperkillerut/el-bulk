@@ -7,8 +7,7 @@ import { useForm } from '@/hooks/useForm';
 import { useLanguage } from '@/context/LanguageContext';
 import { useUser } from '@/context/UserContext';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import ScryfallVariantPicker from './ScryfallVariantPicker';
+import ScryfallVariantPicker, { type ScryfallPrint } from './ScryfallVariantPicker';
 
 interface ClientRequestModalProps {
   onClose: () => void;
@@ -16,7 +15,6 @@ interface ClientRequestModalProps {
 }
 
 export default function ClientRequestModal({ onClose, onSuccess }: ClientRequestModalProps) {
-  const router = useRouter();
   const { t } = useLanguage();
   const { user, loginWithGoogle } = useUser();
   const {
@@ -35,8 +33,8 @@ export default function ClientRequestModal({ onClose, onSuccess }: ClientRequest
     details: ''
   });
 
-  const [selectedPrint, setSelectedPrint] = useState<any | null>(null);
-  const [suggestion, setSuggestion] = useState<any | null>(null);
+  const [selectedPrint, setSelectedPrint] = useState<ScryfallPrint | null>(null);
+  const [suggestion, setSuggestion] = useState<ScryfallPrint | null>(null);
   const [matchType, setMatchType] = useState<'any' | 'exact'>('any');
 
   useEffect(() => {
@@ -49,7 +47,8 @@ export default function ClientRequestModal({ onClose, onSuccess }: ClientRequest
   const onSubmit = async (data: Record<string, string>) => {
     const activePrint = selectedPrint || suggestion;
     await createClientRequest({
-      ...data,
+      customer_name: data.customer_name,
+      customer_contact: data.customer_contact,
       card_name: activePrint?.name || data.card_name,
       quantity: parseInt(data.quantity || '1', 10),
       match_type: matchType,
@@ -57,10 +56,13 @@ export default function ClientRequestModal({ onClose, onSuccess }: ClientRequest
       set_name: selectedPrint?.set_name || data.set_name,
       set_code: selectedPrint?.set || '',
       collector_number: selectedPrint?.collector_number || '',
-      image_url: activePrint?.image_uris?.normal || activePrint?.image_uris?.small || activePrint?.card_faces?.[0]?.image_uris?.normal,
+      image_url: activePrint?.image_uris?.normal || activePrint?.image_uris?.normal || activePrint?.card_faces?.[0]?.image_uris?.normal,
       foil_treatment: selectedPrint?.finishes?.includes('foil') ? 'foil' : 'non_foil',
       card_treatment: selectedPrint?.border_color === 'borderless' ? 'borderless' : (selectedPrint?.frame_effects?.includes('showcase') ? 'showcase' : 'normal'),
-    } as any);
+      details: data.details,
+      tcg: 'mtg',
+      oracle_id: activePrint?.oracle_id
+    });
     onSuccess();
   };
 
@@ -174,7 +176,8 @@ export default function ClientRequestModal({ onClose, onSuccess }: ClientRequest
             loading={submitting}
             fullWidth
             size="lg"
-            className="py-4 font-black uppercase tracking-[0.2em] shadow-xl shadow-gold/20 text-lg"
+            className="py-4 font-black uppercase tracking-[0.2em] shadow-xl shadow-gold/20 text-lg disabled:opacity-50 disabled:grayscale"
+            disabled={!suggestion && !selectedPrint}
           >
             {t('components.client_request_modal.form.submit_btn', 'SUBMIT MISSION')}
           </Button>

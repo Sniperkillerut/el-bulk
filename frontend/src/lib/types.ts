@@ -452,6 +452,7 @@ export interface ScryfallCard {
     usd_foil?: string | null;
     usd_etched?: string | null;
     eur?: string | null;
+    eur_foil?: string | null;
   };
   finishes?: string[];
   frame_effects?: string[];
@@ -488,6 +489,7 @@ export interface Bounty {
   quantity_needed: number;
   is_generic: boolean;
   scryfall_id?: string;
+  oracle_id?: string;
   set_code?: string;
   image_url?: string;
   price_source: PriceSource;
@@ -512,6 +514,7 @@ export interface BountyInput {
   quantity_needed: number;
   is_generic: boolean;
   scryfall_id?: string;
+  oracle_id?: string;
   set_code?: string;
   image_url?: string;
   price_source: PriceSource;
@@ -534,6 +537,7 @@ export interface ClientRequest {
   bounty_id?: string;
   match_type: 'any' | 'exact';
   scryfall_id?: string;
+  oracle_id?: string;
   image_url?: string;
   foil_treatment?: FoilTreatment;
   card_treatment?: CardTreatment;
@@ -546,11 +550,17 @@ export interface ClientRequestInput {
   customer_contact: string;
   card_name: string;
   set_name?: string;
+  set_code?: string;
+  collector_number?: string;
+  image_url?: string;
+  foil_treatment?: FoilTreatment;
+  card_treatment?: CardTreatment;
   details?: string;
   quantity: number;
   tcg: string;
   match_type?: 'any' | 'exact';
   scryfall_id?: string;
+  oracle_id?: string;
 }
 
 export interface ClientRequestBatchInput {

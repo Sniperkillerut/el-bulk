@@ -4,6 +4,7 @@
 import { useState, useRef, useEffect, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { useUI } from '@/context/UIContext';
+import { getProxyImageUrl } from '@/lib/api';
 import ImageModal from './ImageModal';
 
 interface CardImageProps {
@@ -40,7 +41,8 @@ const CardImage = memo(function CardImage({
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Fallback to Scryfall if direct URL is missing but ID is present
-  const resolvedUrl = imageUrl || (scryfallId ? `https://api.scryfall.com/cards/${scryfallId}?format=image&version=normal` : null);
+  const rawUrl = imageUrl || (scryfallId ? `https://api.scryfall.com/cards/${scryfallId}?format=image&version=normal` : null);
+  const resolvedUrl = getProxyImageUrl(rawUrl);
 
   // Sync: Reset error state when the URL changes (Derived state pattern)
   // This pattern is recommended by React 18+ for adjusting state based on prop changes

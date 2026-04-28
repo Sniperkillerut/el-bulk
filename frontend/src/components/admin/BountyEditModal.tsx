@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { adminCreateBounty, adminUpdateBounty, adminFetchBountyRequests, adminFetchBountyOffers, adminFetchExternalPrice } from '@/lib/api';
-import { Bounty, BountyInput, FoilTreatment, CardTreatment, Condition, TCG, ScryfallCard, Settings, PriceSource } from '@/lib/types';
+import { Bounty, BountyInput, FoilTreatment, CardTreatment, Condition, TCG, ScryfallCard, Settings, PriceSource, ClientRequest, BountyOffer } from '@/lib/types';
 import { extractMTGMetadata, getScryfallImage, resolveFoilTreatment, findMatchingPrint, applyPrintPrices, resolveCardTreatment, getSuggestedPrice } from '@/lib/mtg-logic';
 import ScryfallPopulate from './product/ScryfallPopulate';
 import MTGVariantSelector from './MTGVariantSelector';
@@ -35,11 +35,203 @@ export default function BountyEditModal({
   const [lookingUp, setLookingUp] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
-  
+
   // Temporary fields for scryfall lookup
   const [setCode, setSetCode] = useState('');
   const [collectorNumber, setCollectorNumber] = useState('');
-  
+
+  const resolvePrice = useCallback(async (card: ScryfallCard | undefined, foil: FoilTreatment, source: PriceSource, treat: CardTreatment) => {
+    if (!card) return { ref: 0, suggested: 0 };
+
+    let ref = applyPrintPrices(card, foil, source);
+
+    if (source === 'cardkingdom') {
+      try {
+        const ck = await adminFetchExternalPrice(
+          card.name,
+          card.set || '',
+          card.set_name || '',
+          card.collector_number || '',
+          foil,
+          treat,
+          'cardkingdom',
+          card.id
+        );
+        if (ck && ck.price) {
+          ref = ck.price;
+        }
+      } catch (ckErr) {
+        console.warn('CK price fetch failed:', ckErr);
+      }
+    }
+
+    const suggested = getSuggestedPrice(card, foil, source, settings);
+    const finalSuggested = source === 'cardkingdom'
+      ? (Math.round((ref * (settings?.ck_to_cop_rate || settings?.usd_to_cop_rate || 0)) / 100) * 100)
+      : suggested;
+
+    return { ref, suggested: finalSuggested };
+  }, [settings]);
+
+  const [relatedRequests, setRelatedRequests] = useState<ClientRequest[]>([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
+
+  const [relatedOffers, setRelatedOffers] = useState<BountyOffer[]>([]);
+  const [loadingOffers, setLoadingOffers] = useState(false);
+
+  useEffect(() => {
+    if (editBounty) {
+      setLoadingRequests(true);
+      adminFetchBountyRequests(editBounty.id)
+        .then(data => {
+          setRelatedRequests(data);
+        })
+        .finally(() => setLoadingRequests(false));
+
+      setLoadingOffers(true);
+      adminFetchBountyOffers(editBounty.id)
+        .then(data => {
+          setRelatedOffers(data);
+        })
+        .finally(() => setLoadingOffers(false));
+    } else {
+      setRelatedRequests([]);
+      setRelatedOffers([]);
+    }
+  }, [editBounty]);
+
+  const handleSave = async () => {
+    if (!form.name || !form.tcg) {
+      setFormError(t('components.admin.bounty_modal.error_required', 'Name and TCG are required.'));
+      return;
+    }
+    setSaving(true);
+    setFormError('');
+    try {
+      const payload: BountyInput = {
+        ...form,
+        target_price: form.target_price || undefined,
+      };
+
+      if (editBounty) {
+        await adminUpdateBounty(editBounty.id, payload);
+      } else {
+        await adminCreateBounty(payload);
+      }
+      onSaved();
+    } catch (e: unknown) {
+      setFormError(e instanceof Error ? e.message : t('components.admin.bounty_modal.error_save', 'Failed to save bounty.'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePopulate = useCallback(async (forceSearchName?: string) => {
+    setFormError('');
+    const name = forceSearchName || form.name.trim();
+    const set = setCode.trim().toLowerCase();
+    const cn = collectorNumber.trim();
+    const scryfallId = form.scryfall_id;
+
+    if (!scryfallId && !name && (!set || !cn)) return;
+
+    setLookingUp(true);
+    try {
+      const fetchAllPrints = async (q: string) => {
+        let results: ScryfallCard[] = [];
+        let nextUrl: string | null = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(q)}+game:paper&unique=prints&order=released`;
+
+        while (nextUrl) {
+          const r = await fetch(nextUrl);
+          if (!r.ok) break;
+          const b = await r.json() as { data?: ScryfallCard[], has_more?: boolean, next_page?: string };
+          if (b.data) {
+            const paperOnly = (b.data as ScryfallCard[]).filter(c => !c.digital);
+            results = results.concat(paperOnly);
+          }
+          nextUrl = b.has_more ? (b.next_page as string) : null;
+          if (nextUrl) await new Promise(res => setTimeout(res, 100));
+        }
+        return results;
+      };
+
+      let prints: ScryfallCard[] = [];
+
+      // 1. Direct ID lookup if possible
+      if (scryfallId) {
+        const r = await fetch(`https://api.scryfall.com/cards/${scryfallId}`);
+        if (r.ok) {
+          const card = await r.json();
+          prints = [card];
+        }
+      }
+
+      // 2. If no ID or ID fetch failed, search by name/set/cn
+      if (prints.length === 0) {
+        let searchQ = "";
+        if (set && cn) searchQ = `set:${set} cn:"${cn}"`;
+        else if (set && name) searchQ = `!"${name}" set:${set}`; // PRIORITIZE SET IF PROVIDED
+        else if (name) searchQ = `!"${name}"`;
+        else if (set) searchQ = `set:${set}`;
+
+        prints = await fetchAllPrints(searchQ);
+      }
+
+      if (prints.length === 0) throw new Error('No printings found for that search.');
+
+      // 3. Populate all oracle prints so the switcher works
+      if (prints.length > 0) {
+        const oracleId = (prints[0] as ScryfallCard).oracle_id;
+        if (oracleId) {
+          const oraclePrints = await fetchAllPrints(`oracle_id:${oracleId}`);
+          if (oraclePrints.length > prints.length) prints = oraclePrints;
+        }
+      }
+
+      setScryfallPrints(prints);
+
+      let bestPrint = prints.find(p => p.id === scryfallId);
+      if (!bestPrint) bestPrint = prints.find(p => p?.set?.toLowerCase() === set && p?.collector_number === cn);
+      if (!bestPrint && set) bestPrint = prints.find(p => p?.set?.toLowerCase() === set);
+      if (!bestPrint) bestPrint = prints[0];
+
+      if (!bestPrint) throw new Error('Could not identify a matching print.');
+
+      const treat = resolveCardTreatment(bestPrint);
+      const foil = resolveFoilTreatment(bestPrint);
+      const promo = bestPrint.promo_types?.join(',') || 'none';
+      const { ref, suggested } = await resolvePrice(bestPrint, foil, form.price_source, treat);
+
+      setForm(f => {
+        // Only update treatments if they were 'normal'/'non_foil' and the print offers something more specific,
+        // or if we are populating for the first time.
+        const keepTreat = f.card_treatment && f.card_treatment !== 'normal';
+        const keepFoil = f.foil_treatment && f.foil_treatment !== 'non_foil';
+
+        return {
+          ...f,
+          name: bestPrint?.name || f.name,
+          set_name: bestPrint?.set_name || f.set_name,
+          image_url: getScryfallImage(bestPrint) || f.image_url,
+          card_treatment: keepTreat ? f.card_treatment : treat,
+          foil_treatment: keepFoil ? f.foil_treatment : foil,
+          promo_type: promo,
+          price_reference: ref,
+          target_price: suggested !== undefined ? suggested : f.target_price,
+          scryfall_id: bestPrint?.id || '',
+          ...extractMTGMetadata(bestPrint)
+        };
+      });
+      setSetCode(bestPrint?.set || setCode);
+      setCollectorNumber(bestPrint?.collector_number || collectorNumber);
+
+    } catch (e: unknown) {
+      setFormError(e instanceof Error ? e.message : 'Scryfall fetch failed');
+    } finally {
+      setLookingUp(false);
+    }
+  }, [form.name, form.scryfall_id, form.price_source, setCode, collectorNumber, resolvePrice]);
+
   useEffect(() => {
     if (editBounty) {
       const data = {
@@ -74,203 +266,11 @@ export default function BountyEditModal({
       setForm({ ...EMPTY_BOUNTY, ...initialData });
       if (initialData?.collector_number) setCollectorNumber(initialData.collector_number);
       if (initialData?.scryfall_id && initialData?.tcg === 'mtg') {
-         setTimeout(() => handlePopulate(), 100);
+        setTimeout(() => handlePopulate(), 100);
       }
     }
     setFormError('');
-  }, [editBounty, initialData]);
-
-  const [relatedRequests, setRelatedRequests] = useState<any[]>([]);
-  const [loadingRequests, setLoadingRequests] = useState(false);
-
-  const [relatedOffers, setRelatedOffers] = useState<any[]>([]);
-  const [loadingOffers, setLoadingOffers] = useState(false);
-
-  useEffect(() => {
-    if (editBounty) {
-      setLoadingRequests(true);
-      adminFetchBountyRequests(editBounty.id)
-        .then(data => {
-          setRelatedRequests(data);
-        })
-        .finally(() => setLoadingRequests(false));
-
-      setLoadingOffers(true);
-      adminFetchBountyOffers(editBounty.id)
-        .then(data => {
-          setRelatedOffers(data);
-        })
-        .finally(() => setLoadingOffers(false));
-    } else {
-      setRelatedRequests([]);
-      setRelatedOffers([]);
-    }
-  }, [editBounty]);
-
-  const resolvePrice = async (card: ScryfallCard | undefined, foil: FoilTreatment, source: PriceSource, treat: CardTreatment) => {
-    if (!card) return { ref: 0, suggested: 0 };
-    
-    let ref = applyPrintPrices(card, foil, source);
-    
-    if (source === 'cardkingdom') {
-      try {
-        const ck = await adminFetchExternalPrice(
-          card.name, 
-          card.set || '', 
-          card.set_name || '', 
-          card.collector_number || '', 
-          foil, 
-          treat, 
-          'cardkingdom',
-          card.id
-        );
-        if (ck && ck.price) {
-          ref = ck.price;
-        }
-      } catch (ckErr) {
-        console.warn('CK price fetch failed:', ckErr);
-      }
-    }
-
-    const suggested = getSuggestedPrice(card, foil, source, settings);
-    const finalSuggested = source === 'cardkingdom' 
-      ? (Math.round((ref * (settings?.ck_to_cop_rate || settings?.usd_to_cop_rate || 0)) / 100) * 100) 
-      : suggested;
-      
-    return { ref, suggested: finalSuggested };
-  };
-
-  const handleSave = async () => {
-    if (!form.name || !form.tcg) {
-      setFormError(t('components.admin.bounty_modal.error_required', 'Name and TCG are required.'));
-      return;
-    }
-    setSaving(true);
-    setFormError('');
-    try {
-      const payload: BountyInput = {
-        ...form,
-        target_price: form.target_price || undefined,
-      };
-
-      if (editBounty) {
-        await adminUpdateBounty(editBounty.id, payload);
-      } else {
-        await adminCreateBounty(payload);
-      }
-      onSaved();
-    } catch (e: unknown) {
-      setFormError(e instanceof Error ? e.message : t('components.admin.bounty_modal.error_save', 'Failed to save bounty.'));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handlePopulate = async (forceSearchName?: string) => {
-    setFormError('');
-    const name = forceSearchName || form.name.trim();
-    const set = setCode.trim().toLowerCase();
-    const cn = collectorNumber.trim();
-    const scryfallId = form.scryfall_id;
-
-    if (!scryfallId && !name && (!set || !cn)) return;
-
-    setLookingUp(true);
-    try {
-      const fetchAllPrints = async (q: string) => {
-        let results: ScryfallCard[] = [];
-        let nextUrl: string | null = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(q)}+game:paper&unique=prints&order=released`;
-        
-        while (nextUrl) {
-          const r = await fetch(nextUrl);
-          if (!r.ok) break;
-          const b = await r.json() as { data?: ScryfallCard[], has_more?: boolean, next_page?: string };
-          if (b.data) {
-            const paperOnly = (b.data as ScryfallCard[]).filter(c => !c.digital);
-            results = results.concat(paperOnly);
-          }
-          nextUrl = b.has_more ? (b.next_page as string) : null;
-          if (nextUrl) await new Promise(res => setTimeout(res, 100));
-        }
-        return results;
-      };
-
-      let prints: ScryfallCard[] = [];
-      
-      // 1. Direct ID lookup if possible
-      if (scryfallId) {
-        const r = await fetch(`https://api.scryfall.com/cards/${scryfallId}`);
-        if (r.ok) {
-          const card = await r.json();
-          prints = [card];
-        }
-      }
-
-      // 2. If no ID or ID fetch failed, search by name/set/cn
-      if (prints.length === 0) {
-        let searchQ = "";
-        if (set && cn) searchQ = `set:${set} cn:"${cn}"`;
-        else if (set && name) searchQ = `!"${name}" set:${set}`; // PRIORITIZE SET IF PROVIDED
-        else if (name) searchQ = `!"${name}"`;
-        else if (set) searchQ = `set:${set}`;
-        
-        prints = await fetchAllPrints(searchQ);
-      }
-
-      if (prints.length === 0) throw new Error('No printings found for that search.');
-
-      // 3. Populate all oracle prints so the switcher works
-      if (prints.length > 0) {
-        const oracleId = (prints[0] as ScryfallCard).oracle_id;
-        if (oracleId) {
-          const oraclePrints = await fetchAllPrints(`oracle_id:${oracleId}`);
-          if (oraclePrints.length > prints.length) prints = oraclePrints;
-        }
-      }
-
-      setScryfallPrints(prints);
-      
-      let bestPrint = prints.find(p => p.id === scryfallId);
-      if (!bestPrint) bestPrint = prints.find(p => p?.set?.toLowerCase() === set && p?.collector_number === cn);
-      if (!bestPrint && set) bestPrint = prints.find(p => p?.set?.toLowerCase() === set);
-      if (!bestPrint) bestPrint = prints[0];
-
-      if (!bestPrint) throw new Error('Could not identify a matching print.');
-      
-      const treat = resolveCardTreatment(bestPrint);
-      const foil = resolveFoilTreatment(bestPrint);
-      const promo = bestPrint.promo_types?.join(',') || 'none';
-      const { ref, suggested } = await resolvePrice(bestPrint, foil, form.price_source, treat);
-
-      setForm(f => {
-        // Only update treatments if they were 'normal'/'non_foil' and the print offers something more specific,
-        // or if we are populating for the first time.
-        const keepTreat = f.card_treatment && f.card_treatment !== 'normal';
-        const keepFoil = f.foil_treatment && f.foil_treatment !== 'non_foil';
-
-        return {
-          ...f,
-          name: bestPrint?.name || f.name,
-          set_name: bestPrint?.set_name || f.set_name,
-          image_url: getScryfallImage(bestPrint) || f.image_url,
-          card_treatment: keepTreat ? f.card_treatment : treat,
-          foil_treatment: keepFoil ? f.foil_treatment : foil,
-          promo_type: promo,
-          price_reference: ref,
-          target_price: suggested !== undefined ? suggested : f.target_price,
-          scryfall_id: bestPrint?.id || '',
-          ...extractMTGMetadata(bestPrint)
-        };
-      });
-      setSetCode(bestPrint?.set || setCode);
-      setCollectorNumber(bestPrint?.collector_number || collectorNumber);
-
-    } catch (e: unknown) {
-      setFormError(e instanceof Error ? e.message : 'Scryfall fetch failed');
-    } finally {
-      setLookingUp(false);
-    }
-  };
+  }, [editBounty, initialData, handlePopulate]);
 
 
   const handlePriceSourceChange = async (src: PriceSource) => {
@@ -303,7 +303,7 @@ export default function BountyEditModal({
     const bestPrint = findMatchingPrint(scryfallPrints, setCode, t, form.collector_number || '', form.promo_type || '', form.foil_treatment);
     const foil = bestPrint?.finishes?.includes('foil') ? 'foil' as FoilTreatment : 'non_foil' as FoilTreatment;
     const { ref, suggested } = await resolvePrice(bestPrint, foil, form.price_source, t);
-    
+
     setForm(f => ({
       ...f,
       card_treatment: t,
@@ -324,7 +324,7 @@ export default function BountyEditModal({
     setCollectorNumber(a);
     const foil = resolveFoilTreatment(bestPrint);
     const { ref, suggested } = await resolvePrice(bestPrint, foil, form.price_source, form.card_treatment);
-    
+
     setForm(f => ({
       ...f,
       collector_number: a,
@@ -342,7 +342,7 @@ export default function BountyEditModal({
     const bestPrint = findMatchingPrint(scryfallPrints, setCode, form.card_treatment, form.collector_number || '', p, form.foil_treatment);
     const foil = resolveFoilTreatment(bestPrint);
     const { ref, suggested } = await resolvePrice(bestPrint, foil, form.price_source, form.card_treatment);
-    
+
     setForm(f => ({
       ...f,
       promo_type: p,
@@ -381,7 +381,7 @@ export default function BountyEditModal({
               {editBounty ? t('components.admin.bounty_modal.title_edit', 'EDIT WANTED CARD') : t('components.admin.bounty_modal.title_add', 'ADD WANTED CARD')}
             </h2>
           </div>
-          <button onClick={onClose} 
+          <button onClick={onClose}
             className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-hp-color/10 text-text-muted hover:text-hp-color transition-all duration-300">
             ✕
           </button>
@@ -411,9 +411,9 @@ export default function BountyEditModal({
 
             {form.tcg === 'mtg' ? (
               <>
-                <ScryfallPopulate 
-                  name={form.name} 
-                  setCode={setCode} 
+                <ScryfallPopulate
+                  name={form.name}
+                  setCode={setCode}
                   collectorNumber={collectorNumber}
                   setName={form.set_name || ''}
                   scryfallPrints={scryfallPrints}
@@ -428,7 +428,7 @@ export default function BountyEditModal({
                   }}
                   onSetSearchChange={handleSetSearchChange}
                 />
-                
+
                 {scryfallPrints.length > 0 && (
                   <div className="mt-6 border-t border-ink-border/20 pt-6">
                     <MTGVariantSelector
@@ -451,10 +451,10 @@ export default function BountyEditModal({
               <div>
                 <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">{t('components.admin.bounty_modal.card_name', 'CARD NAME')}</label>
                 <input type="text" className="w-full text-lg font-bold" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder={t('components.admin.bounty_modal.name_placeholder', 'Entity Name')} />
-                
+
                 <label className="text-[10px] font-mono-stack mt-4 mb-1 block uppercase text-text-muted">{t('components.admin.bounty_modal.set_name', 'SET NAME / INFO')}</label>
                 <input type="text" className="w-full" value={form.set_name} onChange={e => setForm(f => ({ ...f, set_name: e.target.value }))} placeholder={t('components.admin.bounty_modal.set_placeholder', 'Optional Set Name')} />
-                
+
                 <label className="text-[10px] font-mono-stack mt-4 mb-1 block uppercase text-text-muted">{t('components.admin.bounty_modal.image_url', 'IMAGE URL')}</label>
                 <input type="text" className="w-full" value={form.image_url} onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))} placeholder={t('components.admin.bounty_modal.image_placeholder', 'https://...')} />
               </div>
@@ -485,33 +485,33 @@ export default function BountyEditModal({
                     <option value="cardmarket">{t('components.admin.bounty_modal.source_cardmarket', 'External: Cardmarket (EUR)')}</option>
                   </select>
                 </div>
-                
+
                 {form.price_source !== 'manual' ? (
                   <div>
                     <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">
                       {t('components.admin.bounty_modal.ref_price_label', 'REFERENCE PRICE ({source}) *', { source: (form.price_source === 'tcgplayer' || form.price_source === 'cardkingdom') ? 'USD' : 'EUR' })}
                     </label>
-                    <input 
-                      type="number" step="0.01" className="w-full font-mono bg-white/90 border-white/40" 
-                      value={form.price_reference || ''} 
+                    <input
+                      type="number" step="0.01" className="w-full font-mono bg-white/90 border-white/40"
+                      value={form.price_reference || ''}
                       onChange={e => {
                         const val = parseFloat(e.target.value) || 0;
                         const rate = form.price_source === 'tcgplayer' ? (settings?.usd_to_cop_rate || 0)
                           : form.price_source === 'cardkingdom' ? (settings?.ck_to_cop_rate || settings?.usd_to_cop_rate || 0)
-                          : (settings?.eur_to_cop_rate || 0);
+                            : (settings?.eur_to_cop_rate || 0);
                         setForm(f => ({ ...f, price_reference: val, target_price: Math.round(val * rate) }));
-                      }} 
+                      }}
                     />
                   </div>
                 ) : (
                   <div>
                     <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">{t('components.admin.bounty_modal.price_cop_label', 'PRICE (COP) *')}</label>
-                    <input 
-                      type="number" min="0" step="100" 
-                      className="w-full font-mono bg-white/90 border-white/40" 
-                      value={form.target_price || ''} 
-                      onChange={e => setForm(f => ({ ...f, target_price: parseFloat(e.target.value) }))} 
-                      placeholder="0" 
+                    <input
+                      type="number" min="0" step="100"
+                      className="w-full font-mono bg-white/90 border-white/40"
+                      value={form.target_price || ''}
+                      onChange={e => setForm(f => ({ ...f, target_price: parseFloat(e.target.value) }))}
+                      placeholder="0"
                     />
                   </div>
                 )}
@@ -524,7 +524,7 @@ export default function BountyEditModal({
 
               <div className="p-4 bg-ink-surface/30 rounded-sm border border-ink-border/50">
                 <label className="text-[10px] font-mono-stack mb-1 block uppercase text-text-muted">{t('components.admin.bounty_modal.is_generic', 'MATCH MODE')}</label>
-                <div 
+                <div
                   onClick={() => setForm(f => ({ ...f, is_generic: !f.is_generic }))}
                   className={`flex items-center gap-3 p-2 rounded-lg border-2 cursor-pointer transition-all ${form.is_generic ? 'border-gold bg-gold/5' : 'border-ink-border/20 bg-white/50'}`}
                 >
@@ -563,16 +563,15 @@ export default function BountyEditModal({
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-ink-border/10">
-                        {relatedRequests.map((req) => (
+                        {relatedRequests.map((req: ClientRequest) => (
                           <tr key={req.id} className="hover:bg-gold/5">
                             <td className="px-3 py-2 font-bold">{req.customer_name}</td>
                             <td className="px-3 py-2">{req.quantity}</td>
                             <td className="px-3 py-2">
-                              <span className={`px-1 rounded ${
-                                req.status === 'accepted' ? 'bg-green-100 text-green-700' :
-                                req.status === 'solved' ? 'bg-blue-100 text-blue-700' :
-                                'bg-gray-100 text-gray-700'
-                              }`}>
+                              <span className={`px-1 rounded ${req.status === 'accepted' ? 'bg-green-100 text-green-700' :
+                                  req.status === 'solved' ? 'bg-blue-100 text-blue-700' :
+                                    'bg-gray-100 text-gray-700'
+                                }`}>
                                 {req.status.toUpperCase()}
                               </span>
                             </td>
@@ -611,17 +610,16 @@ export default function BountyEditModal({
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-ink-border/10">
-                        {relatedOffers.map((offer) => (
+                        {relatedOffers.map((offer: BountyOffer) => (
                           <tr key={offer.id} className="hover:bg-gold/5">
                             <td className="px-3 py-2 font-bold">{offer.customer_name}</td>
                             <td className="px-3 py-2">{offer.quantity}</td>
                             <td className="px-3 py-2">{offer.condition}</td>
                             <td className="px-3 py-2">
-                              <span className={`px-1 rounded ${
-                                offer.status === 'accepted' ? 'bg-green-100 text-green-700' :
-                                offer.status === 'fulfilled' ? 'bg-blue-100 text-blue-700' :
-                                'bg-gray-100 text-gray-700'
-                              }`}>
+                              <span className={`px-1 rounded ${offer.status === 'accepted' ? 'bg-green-100 text-green-700' :
+                                  offer.status === 'fulfilled' ? 'bg-blue-100 text-blue-700' :
+                                    'bg-gray-100 text-gray-700'
+                                }`}>
                                 {offer.status.toUpperCase()}
                               </span>
                             </td>
@@ -641,12 +639,12 @@ export default function BountyEditModal({
 
           <div className="w-full md:w-64 shrink-0 flex flex-col items-center">
             <div className="relative aspect-[63/88] w-full max-w-[200px] bg-ink-border/5 rounded shadow-inner flex items-center justify-center overflow-hidden mb-6">
-              <CardImage 
-                imageUrl={form.image_url} 
-                name={form.name} 
-                tcg={form.tcg} 
-                foilTreatment={form.foil_treatment} 
-                enableHover={false} 
+              <CardImage
+                imageUrl={form.image_url}
+                name={form.name}
+                tcg={form.tcg}
+                foilTreatment={form.foil_treatment}
+                enableHover={false}
                 height="100%"
               />
             </div>
