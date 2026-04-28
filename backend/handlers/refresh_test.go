@@ -22,6 +22,8 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 	defer db.Close()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 	svc := testRefreshService(sqlxDB)
+	external.ResetScryfallCache()
+	external.ResetCardKingdomCache()
 
 	// 1. Mock Scryfall Bulk Data Index
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -62,18 +64,27 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 	defer func() { external.ScryfallBase = oldBase }()
 
 	t.Run("Success", func(t *testing.T) {
-		rows := sqlmock.NewRows([]string{"id", "tcg", "name", "set_name", "set_code", "foil_treatment", "card_treatment", "price_source"}).
-			AddRow("550e8400-e29b-41d4-a716-446655440000", "mtg", "Black Lotus", "Limited Edition Alpha", "lea", "non_foil", "normal", "tcgplayer")
+		rows := sqlmock.NewRows([]string{"id", "tcg", "name", "set_name", "set_code", "collector_number", "foil_treatment", "card_treatment", "price_source", "scryfall_id", "ck_set_name"}).
+			AddRow("550e8400-e29b-41d4-a716-446655440000", "mtg", "Black Lotus", "Limited Edition Alpha", "lea", "", "non_foil", "normal", "tcgplayer", "", "")
 		
-		mock.ExpectQuery("(?i)SELECT id, tcg, name, set_name, set_code, foil_treatment, card_treatment, price_source FROM product").
+		mock.ExpectQuery("(?i)SELECT .* FROM product p .*").
 			WillReturnRows(rows)
 
 		// Mock SYNC calls after product list
+		mock.ExpectExec("(?i)TRUNCATE TABLE external_scryfall").WillReturnResult(sqlmock.NewResult(0, 0))
 		mock.ExpectExec("(?i)INSERT INTO external_scryfall").WillReturnResult(sqlmock.NewResult(0, 1))
-		mock.ExpectExec("(?i)INSERT INTO external_cardkingdom").WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectQuery("(?i)SELECT .* FROM external_scryfall").
+			WillReturnRows(sqlmock.NewRows([]string{"scryfall_id", "name", "set_code", "collector_number", "price_usd", "price_usd_foil", "price_eur", "image_url"}).
+				AddRow("std_id", "Black Lotus", "lea", "1", 50000.0, nil, 45000.0, ""))
 
-		mock.ExpectExec("UPDATE product AS p SET").
-			WithArgs("550e8400-e29b-41d4-a716-446655440000", 50000.0, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		mock.ExpectQuery("(?i)SELECT .* FROM setting").
+			WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).
+				AddRow("usd_to_cop_rate", "4000").
+				AddRow("eur_to_cop_rate", "4500").
+				AddRow("ck_to_cop_rate", "3800"))
+
+		mock.ExpectExec("(?i)UPDATE product AS p SET.*").
+			WithArgs("550e8400-e29b-41d4-a716-446655440000", 50000.0, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
 		updated, errs := svc.RunPriceRefresh(context.Background(), "")
@@ -92,14 +103,39 @@ func TestRefreshHandler_Trigger(t *testing.T) {
 	defer db.Close()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 
-	h := testRefreshHandler(sqlxDB)
+	// Mock Scryfall API
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		if r.URL.Path == "/bulk-data" {
+			fmt.Fprintf(w, `{"data": [{"type": "default_cards", "download_uri": "%s/download"}]}`, "http://"+r.Host)
+		} else {
+			fmt.Fprintf(w, `[{"name": "Black Lotus", "set": "lea", "prices": {"usd": "50000.00"}}]`)
+		}
+	}))
+	defer server.Close()
+	oldBase := external.ScryfallBase
+	external.ScryfallBase = server.URL
+	defer func() { external.ScryfallBase = oldBase }()
 
-	mock.ExpectQuery("(?i)SELECT id, tcg, name, set_name, set_code, foil_treatment, card_treatment, price_source FROM product").
-		WillReturnRows(sqlmock.NewRows([]string{"id", "tcg", "name", "set_name", "set_code", "foil_treatment", "card_treatment", "price_source"}))
+	h := testRefreshHandler(sqlxDB)
+	external.ResetScryfallCache()
+	external.ResetCardKingdomCache()
+
+	mock.ExpectQuery("(?i)SELECT .* FROM product p .*").
+		WillReturnRows(sqlmock.NewRows([]string{"id", "tcg", "name", "set_name", "set_code", "collector_number", "foil_treatment", "card_treatment", "price_source", "scryfall_id", "ck_set_name"}).
+			AddRow("550e8400-e29b-41d4-a716-446655440000", "mtg", "Black Lotus", "Limited Edition Alpha", "lea", "", "non_foil", "normal", "tcgplayer", "", ""))
 
 	// Mock SYNC calls after product list
+	mock.ExpectExec("(?i)TRUNCATE TABLE external_scryfall").WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectExec("(?i)INSERT INTO external_scryfall").WillReturnResult(sqlmock.NewResult(0, 0))
-	mock.ExpectExec("(?i)INSERT INTO external_cardkingdom").WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectQuery("(?i)SELECT .* FROM external_scryfall").
+		WillReturnRows(sqlmock.NewRows([]string{"scryfall_id", "name", "set_code", "collector_number", "price_usd", "price_usd_foil", "price_eur", "image_url"}))
+
+	mock.ExpectQuery("(?i)SELECT .* FROM setting").
+		WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).
+			AddRow("usd_to_cop_rate", "4000").
+			AddRow("eur_to_cop_rate", "4500").
+			AddRow("ck_to_cop_rate", "3800"))
 
 	req, _ := http.NewRequest("POST", "/api/admin/prices/refresh", nil)
 	rr := httptest.NewRecorder()

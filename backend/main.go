@@ -135,6 +135,7 @@ func main() {
 	newsletterHandler := handlers.NewNewsletterHandler(newsletterService)
 	storageLocationHandler := handlers.NewStorageHandler(storageLocationService)
 	seoHandler := handlers.NewSeoHandler(seoService)
+	proxyHandler := handlers.NewProxyHandler()
 
 	// Initialize Storage Backend
 	var storageDriver storage.StorageDriver
@@ -226,6 +227,9 @@ func main() {
 		// Frontend logging
 		logHandler := handlers.NewLogHandler()
 		r.Post("/logs", logHandler.Receive)
+
+		// Image Proxy
+		r.Get("/proxy/image", proxyHandler.Image)
 
 		// User Auth
 		r.Route("/auth", func(r chi.Router) {

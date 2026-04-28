@@ -27,28 +27,31 @@ func LookupCKPrice(scryfallID, name, ckEdition, variation string, isFoil bool, c
 		foilSuffix = "foil"
 	}
 
-	// ── Step 1: scored name + edition + variation fallback ─────────────────────
-	name = strings.ToLower(strings.TrimSpace(name))
-	ckEdition = strings.ToLower(strings.TrimSpace(ckEdition))
-	variation = strings.ToLower(strings.TrimSpace(variation))
+	// ── Step 1: Direct Scryfall ID Lookup ──────────────────────────────────────
+	// This is the most precise link. If we have it, use it.
+	if scryfallID != "" {
+		if cp, ok := ckPriceMap["scry:"+scryfallID+":"+foilSuffix]; ok && cp != nil {
+			return cp
+		}
+	}
+
+	// ── Step 2: Scored Name + Edition + Variation fallback ─────────────────────
+	// For cases without an ID or where the ID link is missing in CK data.
+	cleanName := strings.ToLower(strings.TrimSpace(name))
+	cleanEdition := strings.ToLower(strings.TrimSpace(ckEdition))
+	cleanVariation := strings.ToLower(strings.TrimSpace(variation))
 
 	foilKeySuffix := "|" + foilSuffix
-
 	bestScore := -1
 	var bestPrice *float64
 
-	// Acquire shared lock for index access
 	ckCacheMutex.RLock()
-	potentialKeys := ckNameIndex[name]
+	potentialKeys := ckNameIndex[cleanName]
 	ckCacheMutex.RUnlock()
 
 	for _, k := range potentialKeys {
 		cp := ckPriceMap[k]
-		if cp == nil {
-			continue
-		}
-
-		if !strings.HasSuffix(k, foilKeySuffix) {
+		if cp == nil || !strings.HasSuffix(k, foilKeySuffix) {
 			continue
 		}
 
@@ -57,50 +60,32 @@ func LookupCKPrice(scryfallID, name, ckEdition, variation string, isFoil bool, c
 			continue
 		}
 		ckEditionEntry := strings.ToLower(parts[1])
-		ckVariation := strings.ToLower(parts[2])
+		ckVariationEntry := strings.ToLower(parts[2])
 
-		// Skip junk entries that are often mispriced relative to the actual card
-		if strings.Contains(ckVariation, "art card") ||
-			strings.Contains(ckVariation, "token") ||
-			strings.Contains(ckVariation, "gold-bordered") ||
-			strings.Contains(ckVariation, "placeholder") {
+		// Skip junk entries
+		if strings.Contains(ckVariationEntry, "art card") || strings.Contains(ckVariationEntry, "token") ||
+			strings.Contains(ckVariationEntry, "gold-bordered") || strings.Contains(ckVariationEntry, "placeholder") {
 			continue
 		}
 
-		// Exact edition match — NO fuzzy/substring matching to prevent cross-set leakage
-		editionMatches := ckEdition != "" && ckEditionEntry == ckEdition
-
+		editionMatches := cleanEdition != "" && ckEditionEntry == cleanEdition
 		var score int
 		if editionMatches {
 			switch {
-			case ckVariation == variation:
-				score = 3 // exact edition + exact variation
-			case ckVariation == "" || ckVariation == "standard":
-				score = 2 // exact edition + base/normal print
+			case ckVariationEntry == cleanVariation:
+				score = 3
+			case ckVariationEntry == "" || ckVariationEntry == "standard":
+				score = 2
 			default:
-				score = 1 // exact edition, wrong variation
+				score = 1
 			}
 		} else {
-			score = 0 // cross-set fallback (only fires when ckEdition is empty/unknown)
+			score = 0
 		}
 
-		// Update best: prefer higher score; break ties by lowest price.
 		if score > bestScore || (score == bestScore && *cp < *bestPrice) {
 			bestScore = score
 			bestPrice = cp
-		}
-	}
-
-	// ── Step 2: direct scryfall_id lookup ──────────────────────────────────────
-	// If we found a 'Perfect' match (Score 3 - specific variation), trust it above all else.
-	// Otherwise, use the Scryfall ID match as the primary fallback.
-	if bestScore == 3 {
-		return bestPrice
-	}
-
-	if scryfallID != "" {
-		if cp, ok := ckPriceMap["scry:"+scryfallID+":"+foilSuffix]; ok && cp != nil {
-			return cp
 		}
 	}
 

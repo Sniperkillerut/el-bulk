@@ -38,14 +38,21 @@ type CardKingdomResponse struct {
 	Data []CardKingdomProduct `json:"data"`
 }
 
-var ckClient = &http.Client{Timeout: 60 * time.Second}
-
 var (
 	ckCache      map[string]*float64
 	ckNameIndex  map[string][]string // name -> list of composite keys
 	ckCacheMutex sync.RWMutex
 	ckCacheTime  time.Time
 )
+
+// ResetCardKingdomCache clears the in-memory Card Kingdom cache (primarily for unit tests).
+func ResetCardKingdomCache() {
+	ckCacheMutex.Lock()
+	defer ckCacheMutex.Unlock()
+	ckCache = nil
+	ckNameIndex = nil
+	ckCacheTime = time.Time{}
+}
 
 const CacheDuration = 1 * time.Hour
 
@@ -218,7 +225,7 @@ func MapFoilTreatmentToCKVariation(foil models.FoilTreatment, treatment models.C
 	case models.TreatmentAlternateArt:
 		parts = append(parts, "alternate art")
 	case models.TreatmentLegacyBorder, "retro":
-		parts = append(parts, "retro")
+		parts = append(parts, "retro frame")
 	}
 
 	switch foil {
@@ -246,7 +253,12 @@ func SyncCardKingdomToDB(ctx context.Context, db *sqlx.DB, r io.Reader) error {
 	logger.InfoCtx(ctx, "Syncing CardKingdom pricelist to database...")
 
 	if r == nil {
-		resp, err := http.Get(CardKingdomPricelistURL)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, CardKingdomPricelistURL, nil)
+		if err != nil {
+			return fmt.Errorf("failed to create cardkingdom request: %w", err)
+		}
+
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			return fmt.Errorf("failed to download cardkingdom pricelist: %w", err)
 		}
@@ -289,16 +301,24 @@ func SyncCardKingdomToDB(ctx context.Context, db *sqlx.DB, r io.Reader) error {
 		batch = append(batch, p)
 
 		if len(batch) >= batchSize {
-			if err := flushCKBatch(ctx, db, batch); err != nil {
-				return err
+			batchCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+			if err := flushCKBatch(batchCtx, db, batch); err != nil {
+				cancel()
+				logger.ErrorCtx(ctx, "Failed to flush CK batch: %v. Continuing...", err)
+			} else {
+				cancel()
 			}
 			batch = batch[:0]
 		}
 	}
 
 	if len(batch) > 0 {
-		if err := flushCKBatch(ctx, db, batch); err != nil {
-			return err
+		batchCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		if err := flushCKBatch(batchCtx, db, batch); err != nil {
+			cancel()
+			logger.ErrorCtx(ctx, "Failed to flush final CK batch: %v", err)
+		} else {
+			cancel()
 		}
 	}
 

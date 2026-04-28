@@ -112,6 +112,9 @@ func LookupPokemonCard(ctx context.Context, name, setID string) (*CardLookupResu
 			SetName:         &card.Set.Name,
 			SetCode:         &card.Set.ID,
 			CollectorNumber: &card.Number,
+			FoilTreatment:   models.FoilNonFoil,
+			CardTreatment:   models.TreatmentNormal,
+			Language:        "en",
 		},
 	}, nil
 }

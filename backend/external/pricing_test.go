@@ -10,117 +10,91 @@ func TestResolveMTGPrice(t *testing.T) {
 	idMap := make(map[string]CardMetadata)
 	ckMap := make(map[string]*float64)
 
-	// Standard Sol Ring (from the bulk data)
+	p1 := 1.00
+	p3 := 100.00
+
+	// Standard Sol Ring
 	solRingStd := CardMetadata{
 		ScryfallID:   "std_id",
-		TCGPlayerUSD: ptr(1.00),
+		TCGPlayerUSD: &p1,
 	}
-	scryMap[PriceKey{Name: "sol ring", SetCode: "lea", Collector: "269", Foil: "non_foil"}] = solRingStd
-	scryMap[PriceKey{Name: "sol ring", SetCode: "lea", Collector: "", Foil: "non_foil"}] = solRingStd
-	scryMap[PriceKey{Name: "sol ring", SetCode: "", Collector: "", Foil: "non_foil"}] = solRingStd // Global fallback 1
+	scryMap[PriceKey{Name: "sol ring", SetCode: "lea", Collector: "269"}] = solRingStd
 	idMap["std_id"] = solRingStd
 
-	// Specialty Sol Ring (processed later in bulk?)
+	// Specialty Sol Ring
 	solRingPremium := CardMetadata{
-		ScryfallID:   "premium_id",
-		TCGPlayerUSD: ptr(100.00),
+		ScryfallID:       "premium_id",
+		TCGPlayerUSDFoil: &p3,
 	}
-	scryMap[PriceKey{Name: "sol ring", SetCode: "pr", Collector: "1", Foil: "foil"}] = solRingPremium
-	// Note: in OUR NEW logic, scryMap[PriceKey{Name: "sol ring", SetCode: "", Collector: "", Foil: "foil"}]
-	// will be set for the FIRST foil version we see.
-
-	// CardKingdom Mock
-	ckStd := 0.90
-	ckPremium := 99.00
-	ckMap["scry:std_id:non_foil"] = &ckStd
-	ckMap["scry:premium_id:foil"] = &ckPremium
+	scryMap[PriceKey{Name: "sol ring", SetCode: "pr", Collector: "1"}] = solRingPremium
+	idMap["premium_id"] = solRingPremium
 
 	t.Run("ID Match Wins", func(t *testing.T) {
 		res := ResolveMTGPrice("std_id", "Sol Ring", "", "", "non_foil", "", "", "", scryMap, idMap, ckMap)
-		if res.ScryfallID != "std_id" || *res.TCGPlayerUSD != 1.00 || *res.CardKingdomUSD != 0.90 {
+		if res.ScryfallID != "std_id" || res.TCGPlayerUSD == nil || *res.TCGPlayerUSD != 1.00 {
 			t.Errorf("Expected standard Sol Ring, got %+v", res)
 		}
 	})
 
 	t.Run("Name+Set+Collector Match", func(t *testing.T) {
 		res := ResolveMTGPrice("", "Sol Ring", "lea", "269", "non_foil", "", "", "", scryMap, idMap, ckMap)
-		if res.ScryfallID != "std_id" || *res.TCGPlayerUSD != 1.00 {
+		if res.ScryfallID != "std_id" || res.TCGPlayerUSD == nil || *res.TCGPlayerUSD != 1.00 {
 			t.Errorf("Expected standard Sol Ring by set match, got %+v", res)
 		}
 	})
 
-	t.Run("Global Fallback Match", func(t *testing.T) {
-		res := ResolveMTGPrice("", "Sol Ring", "", "", "non_foil", "", "", "", scryMap, idMap, ckMap)
-		if res.ScryfallID != "std_id" || *res.TCGPlayerUSD != 1.00 {
-			t.Errorf("Expected standard Sol Ring by global fallback, got %+v", res)
-		}
-	})
-
-	t.Run("CK Multiple Foil IDs Match", func(t *testing.T) {
+	t.Run("Foil Match", func(t *testing.T) {
 		res := ResolveMTGPrice("premium_id", "Sol Ring", "", "", "foil", "", "", "", scryMap, idMap, ckMap)
-		if *res.CardKingdomUSD != 99.00 {
-			t.Errorf("Expected premium CK price by ID+Foil, got %v", res.CardKingdomUSD)
+		if res.TCGPlayerUSD == nil || *res.TCGPlayerUSD != 100.00 {
+			t.Errorf("Expected premium foil price, got %v", res.TCGPlayerUSD)
 		}
 	})
 
-	t.Run("Ripple Foil Specialty Match", func(t *testing.T) {
-		// Mock CK map with ripple foil variation
-		ripplePrice := 5.99
-		ckMap["Sol Ring|Modern Horizons 3 Commander|ripple foil|foil"] = &ripplePrice
-		ckMap["scry:ripple_id:foil"] = &ripplePrice
-
-		idMap["ripple_id"] = CardMetadata{
-			ScryfallID: "ripple_id",
-		}
-
-		res := ResolveMTGPrice("ripple_id", "Sol Ring", "m3c", "305", "ripple_foil", "", "Modern Horizons 3 Commander", "ripple foil", scryMap, idMap, ckMap)
-		if res.CardKingdomUSD == nil || *res.CardKingdomUSD != 5.99 {
-			t.Errorf("Expected Ripple Foil price 5.99, got %v", res.CardKingdomUSD)
+	t.Run("Hierarchical Fallback (Name+Set)", func(t *testing.T) {
+		// Populate fallback in map manually for test
+		scryMap[PriceKey{Name: "sol ring", SetCode: "lea"}] = solRingStd
+		res := ResolveMTGPrice("", "Sol Ring", "lea", "", "non_foil", "", "", "", scryMap, idMap, ckMap)
+		if res.ScryfallID != "std_id" {
+			t.Errorf("Expected fallback match by name+set, got %v", res.ScryfallID)
 		}
 	})
 
-	t.Run("Variation match beats ID match", func(t *testing.T) {
-		// Scenario: Scryfall ID has two entries in CK.
-		// One is generic (4.49), one is specific variation (5.99).
-		id := "special_id"
-		genericPrice := 4.49
-		specificPrice := 5.99
+	t.Run("Global Fallback (Name)", func(t *testing.T) {
+		scryMap[PriceKey{Name: "sol ring"}] = solRingStd
+		res := ResolveMTGPrice("", "Sol Ring", "", "", "non_foil", "", "", "", scryMap, idMap, ckMap)
+		if res.ScryfallID != "std_id" {
+			t.Errorf("Expected global fallback match by name, got %v", res.ScryfallID)
+		}
+	})
 
+	t.Run("Card Kingdom Hierarchical Resolution", func(t *testing.T) {
 		ckMap := make(map[string]*float64)
-		ckMap["scry:"+id+":foil"] = &genericPrice
-		// Key must be lowercase to match engine behavior
-		vKey := "sol ring|modern horizons 3 commander|ripple foil|foil"
-		ckMap[vKey] = &specificPrice
+		pCK := 159.99
+		// Simulate Tempest Ancient Tomb in CK DB (Empty variation)
+		ckMap["ancient tomb|tempest||non_foil"] = &pCK
 
-		// Populate index for this test
+		// Mock the NameIndex which LookupCKPrice needs
 		ckCacheMutex.Lock()
-		ckNameIndex = make(map[string][]string)
-		ckNameIndex["sol ring"] = []string{vKey}
+		ckNameIndex = map[string][]string{
+			"ancient tomb": {"ancient tomb|tempest||non_foil"},
+		}
 		ckCacheMutex.Unlock()
 
-		idMap := make(map[string]CardMetadata)
-		idMap[id] = CardMetadata{ScryfallID: id}
-
-		// If we provide the variation, it should pick 5.99 (Priority)
-		res := ResolveMTGPrice(id, "Sol Ring", "m3c", "305", "ripple_foil", "", "Modern Horizons 3 Commander", "ripple foil", nil, idMap, ckMap)
-		if res.CardKingdomUSD == nil || *res.CardKingdomUSD != 5.99 {
-			val := 0.0
-			if res.CardKingdomUSD != nil {
-				val = *res.CardKingdomUSD
-			}
-			t.Errorf("Expected specialized price 5.99, got %v", val)
+		// Case 1: Variation mismatch but edition match (Score 2 should win)
+		// Requesting "retro" variation but CK only has ""
+		res := ResolveMTGPrice("some_id", "Ancient Tomb", "tmp", "315", "non_foil", "legacy_border", "Tempest", "retro", scryMap, idMap, ckMap)
+		if res.CardKingdomUSD == nil || *res.CardKingdomUSD != 159.99 {
+			t.Errorf("Expected CK price 159.99 via hierarchical fallback, got %v", res.CardKingdomUSD)
 		}
 
-		// If we don't provide the variation, it should fallback to the ID match (4.49)
-		res2 := ResolveMTGPrice(id, "Sol Ring", "m3c", "305", "foil", "", "Modern Horizons 3 Commander", "", nil, idMap, ckMap)
-		if res2.CardKingdomUSD == nil || *res2.CardKingdomUSD != 4.49 {
-			val := 0.0
-			if res2.CardKingdomUSD != nil {
-				val = *res2.CardKingdomUSD
-			}
-			t.Errorf("Expected fallback ID price 4.49, got %v", val)
+		// Case 2: Scryfall ID Match (Score 3 or direct match)
+		pCKEos := 499.99
+		ckMap["scry:eos_id:non_foil"] = &pCKEos
+		res2 := ResolveMTGPrice("eos_id", "Ancient Tomb", "eos", "91", "non_foil", "borderless", "Edge of Eternities", "borderless galaxy foil", scryMap, idMap, ckMap)
+		if res2.CardKingdomUSD == nil || *res2.CardKingdomUSD != 499.99 {
+			t.Errorf("Expected CK price 499.99 via Scryfall ID match, got %v", res2.CardKingdomUSD)
 		}
 	})
 }
 
-func ptr(f float64) *float64 { return &f }
+

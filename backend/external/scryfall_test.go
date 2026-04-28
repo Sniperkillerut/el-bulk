@@ -63,7 +63,7 @@ func TestLookupMTGCard(t *testing.T) {
 		res, err := LookupMTGCard(context.Background(), "584837f0-1709-467a-8df1-0b8dc08f9146", "", "", "", "non_foil")
 		assert.NoError(t, err)
 		assert.Equal(t, "Lightning Bolt", res.Name)
-		assert.Equal(t, "584837f0-1709-467a-8df1-0b8dc08f9146", *res.ScryfallID)
+		assert.Equal(t, "584837f0-1709-467a-8df1-0b8dc08f9146", res.ScryfallID)
 	})
 
 	t.Run("Exact Match", func(t *testing.T) {
@@ -183,8 +183,8 @@ func TestBatchLookupMTGCard(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		ids := []CardIdentifier{
-			{Name: "Card 1", Set: "m11"},
-			{Name: "Card 2", Set: "m11"},
+			{Name: "Card 1", SetCode: "m11"},
+			{Name: "Card 2", SetCode: "m11"},
 		}
 		res, err := BatchLookupMTGCard(context.Background(), ids)
 		assert.NoError(t, err)
