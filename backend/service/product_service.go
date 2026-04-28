@@ -563,7 +563,7 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 					}
 					idents = append(idents, external.CardIdentifier{
 						Name:            row.Name,
-						Set:             setCode,
+						SetCode:         setCode,
 						CollectorNumber: row.CollectorNumber,
 					})
 				}
@@ -595,7 +595,6 @@ func (s *ProductService) BulkUpdateSource(ctx context.Context, ids []string, sou
 						Name:      strings.ToLower(r.Name),
 						SetCode:   strings.ToLower(pSetCode),
 						Collector: pCN,
-						Foil:      strings.ToLower(string(r.MTGMetadata.FoilTreatment)),
 					}
 					scryNameBatch[pk] = meta
 				}

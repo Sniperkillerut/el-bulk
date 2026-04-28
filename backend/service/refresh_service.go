@@ -134,34 +134,44 @@ func (s *RefreshService) GetSuggestedPrice(ctx context.Context, scryfallID, name
 	}
 
 	// 3. Resolve curated metadata and use 'ground truth' textures from Scryfall
-	groundFoil := string(res.FoilTreatment)
-	groundTreatment := string(res.CardTreatment)
+	// Fall back to requested foil/treatment if Scryfall doesn't specify one
+	resFoil := string(res.FoilTreatment)
+	resTreatment := string(res.CardTreatment)
+
+	finalFoil := foil
+	if finalFoil == "" {
+		finalFoil = resFoil
+	}
+	finalTreatment := treatment
+	if finalTreatment == "" {
+		finalTreatment = resTreatment
+	}
 
 	if ckEdition == "" {
 		ckEdition = external.NormalizeCKEdition(setName)
 	}
-	variation := external.MapFoilTreatmentToCKVariation(models.FoilTreatment(groundFoil), models.CardTreatment(groundTreatment))
+	variation := external.MapFoilTreatmentToCKVariation(models.FoilTreatment(finalFoil), models.CardTreatment(finalTreatment))
 
 	// 4. Unified Resolve (Single Source of Truth)
 	pResult := external.ResolveMTGPrice(
-		scryfallID, name, set, collector, groundFoil, groundTreatment,
+		scryfallID, name, set, collector, finalFoil, finalTreatment,
 		ckEdition, variation,
 		nil, scryBatch, ckMap,
 	)
 
-	// 5. Select requested price
+	// 5. Select requested price (Use unified resolved fields)
 	switch source {
 	case "cardkingdom":
 		if pResult.CardKingdomUSD != nil {
 			return pResult.CardKingdomUSD, nil
 		}
 	case "cardmarket":
-		if pResult.Metadata != nil {
-			return pResult.Metadata.CardmarketEUR, nil
+		if pResult.CardmarketEUR != nil {
+			return pResult.CardmarketEUR, nil
 		}
 	case "tcgplayer":
-		if pResult.Metadata != nil {
-			return pResult.Metadata.TCGPlayerUSD, nil
+		if pResult.TCGPlayerUSD != nil {
+			return pResult.TCGPlayerUSD, nil
 		}
 	}
 
