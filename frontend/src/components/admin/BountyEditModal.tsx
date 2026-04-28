@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { adminCreateBounty, adminUpdateBounty, adminFetchBountyRequests, adminFetchBountyOffers } from '@/lib/api';
+import { adminCreateBounty, adminUpdateBounty, adminFetchBountyRequests, adminFetchBountyOffers, adminFetchExternalPrice } from '@/lib/api';
 import { Bounty, BountyInput, FoilTreatment, CardTreatment, Condition, TCG, ScryfallCard, Settings, PriceSource } from '@/lib/types';
 import { extractMTGMetadata, getScryfallImage, resolveFoilTreatment, findMatchingPrint, applyPrintPrices, resolveCardTreatment, getSuggestedPrice } from '@/lib/mtg-logic';
 import ScryfallPopulate from './product/ScryfallPopulate';
@@ -107,6 +107,39 @@ export default function BountyEditModal({
     }
   }, [editBounty]);
 
+  const resolvePrice = async (card: ScryfallCard | undefined, foil: FoilTreatment, source: PriceSource, treat: CardTreatment) => {
+    if (!card) return { ref: 0, suggested: 0 };
+    
+    let ref = applyPrintPrices(card, foil, source);
+    
+    if (source === 'cardkingdom') {
+      try {
+        const ck = await adminFetchExternalPrice(
+          card.name, 
+          card.set || '', 
+          card.set_name || '', 
+          card.collector_number || '', 
+          foil, 
+          treat, 
+          'cardkingdom',
+          card.id
+        );
+        if (ck && ck.price) {
+          ref = ck.price;
+        }
+      } catch (ckErr) {
+        console.warn('CK price fetch failed:', ckErr);
+      }
+    }
+
+    const suggested = getSuggestedPrice(card, foil, source, settings);
+    const finalSuggested = source === 'cardkingdom' 
+      ? (Math.round((ref * (settings?.ck_to_cop_rate || settings?.usd_to_cop_rate || 0)) / 100) * 100) 
+      : suggested;
+      
+    return { ref, suggested: finalSuggested };
+  };
+
   const handleSave = async () => {
     if (!form.name || !form.tcg) {
       setFormError(t('components.admin.bounty_modal.error_required', 'Name and TCG are required.'));
@@ -207,8 +240,7 @@ export default function BountyEditModal({
       const treat = resolveCardTreatment(bestPrint);
       const foil = resolveFoilTreatment(bestPrint);
       const promo = bestPrint.promo_types?.join(',') || 'none';
-      const ref = applyPrintPrices(bestPrint, foil, form.price_source);
-      const suggested = getSuggestedPrice(bestPrint, foil, form.price_source, settings);
+      const { ref, suggested } = await resolvePrice(bestPrint, foil, form.price_source, treat);
 
       setForm(f => {
         // Only update treatments if they were 'normal'/'non_foil' and the print offers something more specific,
@@ -241,11 +273,10 @@ export default function BountyEditModal({
   };
 
 
-  const handlePriceSourceChange = (src: PriceSource) => {
+  const handlePriceSourceChange = async (src: PriceSource) => {
+    const bestPrint = findMatchingPrint(scryfallPrints, setCode, form.card_treatment, form.collector_number || '', form.promo_type || '', form.foil_treatment);
+    const { ref, suggested } = await resolvePrice(bestPrint, form.foil_treatment, src, form.card_treatment);
     setForm(f => {
-      const bestPrint = findMatchingPrint(scryfallPrints, setCode, f.card_treatment, f.collector_number || '', f.promo_type || '', f.foil_treatment);
-      const ref = applyPrintPrices(bestPrint, f.foil_treatment, src);
-      const suggested = getSuggestedPrice(bestPrint, f.foil_treatment, src, settings);
       return {
         ...f,
         price_source: src,
@@ -255,11 +286,10 @@ export default function BountyEditModal({
     });
   };
 
-  const handleSetSearchChange = (newSet: string) => {
+  const handleSetSearchChange = async (newSet: string) => {
     const bestPrint = findMatchingPrint(scryfallPrints, newSet, form.card_treatment, form.collector_number || '', form.promo_type || '', form.foil_treatment);
     setSetCode(newSet);
-    const ref = applyPrintPrices(bestPrint, form.foil_treatment, form.price_source);
-    const suggested = getSuggestedPrice(bestPrint, form.foil_treatment, form.price_source, settings);
+    const { ref, suggested } = await resolvePrice(bestPrint, form.foil_treatment, form.price_source, form.card_treatment);
     setForm(f => ({
       ...f,
       set_name: bestPrint?.set_name || f.set_name,
@@ -269,10 +299,10 @@ export default function BountyEditModal({
     }));
   };
 
-  const handleTreatmentChange = (t: CardTreatment) => {
+  const handleTreatmentChange = async (t: CardTreatment) => {
     const bestPrint = findMatchingPrint(scryfallPrints, setCode, t, form.collector_number || '', form.promo_type || '', form.foil_treatment);
-    const ref = applyPrintPrices(bestPrint, bestPrint?.finishes?.includes('foil') ? 'foil' : 'non_foil', form.price_source);
-    const suggested = getSuggestedPrice(bestPrint, bestPrint?.finishes?.includes('foil') ? 'foil' : 'non_foil', form.price_source, settings);
+    const foil = bestPrint?.finishes?.includes('foil') ? 'foil' as FoilTreatment : 'non_foil' as FoilTreatment;
+    const { ref, suggested } = await resolvePrice(bestPrint, foil, form.price_source, t);
     
     setForm(f => ({
       ...f,
@@ -289,17 +319,17 @@ export default function BountyEditModal({
     if (bestPrint?.collector_number) setCollectorNumber(bestPrint.collector_number);
   };
 
-  const handleArtChange = (a: string) => {
+  const handleArtChange = async (a: string) => {
     const bestPrint = findMatchingPrint(scryfallPrints, setCode, form.card_treatment, a, form.promo_type || '', form.foil_treatment);
     setCollectorNumber(a);
-    const ref = applyPrintPrices(bestPrint, resolveFoilTreatment(bestPrint), form.price_source);
-    const suggested = getSuggestedPrice(bestPrint, resolveFoilTreatment(bestPrint), form.price_source, settings);
+    const foil = resolveFoilTreatment(bestPrint);
+    const { ref, suggested } = await resolvePrice(bestPrint, foil, form.price_source, form.card_treatment);
     
     setForm(f => ({
       ...f,
       collector_number: a,
       promo_type: (bestPrint?.promo_types || []).join(',') || 'none',
-      foil_treatment: resolveFoilTreatment(bestPrint),
+      foil_treatment: foil,
       image_url: getScryfallImage(bestPrint) || f.image_url,
       price_reference: ref,
       target_price: suggested !== undefined ? suggested : f.target_price,
@@ -308,15 +338,15 @@ export default function BountyEditModal({
     }));
   };
 
-  const handlePromoChange = (p: string) => {
+  const handlePromoChange = async (p: string) => {
     const bestPrint = findMatchingPrint(scryfallPrints, setCode, form.card_treatment, form.collector_number || '', p, form.foil_treatment);
-    const ref = applyPrintPrices(bestPrint, resolveFoilTreatment(bestPrint), form.price_source);
-    const suggested = getSuggestedPrice(bestPrint, resolveFoilTreatment(bestPrint), form.price_source, settings);
+    const foil = resolveFoilTreatment(bestPrint);
+    const { ref, suggested } = await resolvePrice(bestPrint, foil, form.price_source, form.card_treatment);
     
     setForm(f => ({
       ...f,
       promo_type: p,
-      foil_treatment: resolveFoilTreatment(bestPrint),
+      foil_treatment: foil,
       image_url: getScryfallImage(bestPrint) || f.image_url,
       price_reference: ref,
       target_price: suggested !== undefined ? suggested : f.target_price,
@@ -325,10 +355,9 @@ export default function BountyEditModal({
     }));
   };
 
-  const handleFoilChange = (f: FoilTreatment) => {
+  const handleFoilChange = async (f: FoilTreatment) => {
     const bestPrint = findMatchingPrint(scryfallPrints, setCode, form.card_treatment, form.collector_number || '', form.promo_type || '', f);
-    const ref = applyPrintPrices(bestPrint, f, form.price_source);
-    const suggested = getSuggestedPrice(bestPrint, f, form.price_source, settings);
+    const { ref, suggested } = await resolvePrice(bestPrint, f, form.price_source, form.card_treatment);
     setForm(old => ({
       ...old,
       foil_treatment: f,

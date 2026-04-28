@@ -21,8 +21,11 @@ import (
 
 var ScryfallBase = "https://api.scryfall.com"
 
-// scryfallClient is a shared HTTP client with a reasonable timeout.
-var scryfallClient = &http.Client{Timeout: 30 * time.Second}
+// scryfallLookupClient is used for individual card lookups and small metadata requests.
+var scryfallLookupClient = &http.Client{Timeout: 30 * time.Second}
+
+// scryfallBulkClient is used for massive bulk data downloads that require long-lived streams.
+var scryfallBulkClient = &http.Client{Timeout: 0}
 
 // scryfallCard is the minimal subset of the Scryfall card object we need.
 type scryfallCard struct {
@@ -257,7 +260,7 @@ func BatchLookupMTGCard(ctx context.Context, identifiers []CardIdentifier) ([]Ca
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Accept", "application/json")
 
-		resp, err := scryfallClient.Do(req)
+		resp, err := scryfallLookupClient.Do(req)
 		if err != nil {
 			return nil, err
 		}
@@ -304,7 +307,7 @@ func scryfallGet(ctx context.Context, reqURL string, foilTreatment string) (*Car
 
 	time.Sleep(100 * time.Millisecond) // Respect rate limits
 
-	resp, err := scryfallClient.Do(req)
+	resp, err := scryfallLookupClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -670,7 +673,7 @@ func BuildPriceMap(ctx context.Context, db *sqlx.DB) (map[PriceKey]CardMetadata,
 
 func FetchBulkDataURL(ctx context.Context, client *http.Client) (string, error) {
 	if client == nil {
-		client = scryfallClient
+		client = scryfallLookupClient
 	}
 	metaReq, _ := http.NewRequestWithContext(ctx, http.MethodGet, ScryfallBase+"/bulk-data", nil)
 	metaReq.Header.Set("User-Agent", "ElBulkTCGStore/1.0 (contact@elbulk.com)")
@@ -703,7 +706,7 @@ func DownloadBulkData(ctx context.Context, client *http.Client) (io.ReadCloser, 
 	}
 
 	if client == nil {
-		client = scryfallClient
+		client = scryfallBulkClient
 	}
 	dlReq, _ := http.NewRequestWithContext(ctx, http.MethodGet, downloadURL, nil)
 	dlReq.Header.Set("User-Agent", "ElBulkTCGStore/1.0 (contact@elbulk.com)")
@@ -737,7 +740,7 @@ func FetchSets(ctx context.Context) ([]ScryfallSet, error) {
 	req.Header.Set("User-Agent", "ElBulkTCGStore/1.0 (contact@elbulk.com)")
 	req.Header.Set("Accept", "application/json")
 
-	resp, err := scryfallClient.Do(req)
+	resp, err := scryfallLookupClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -791,7 +794,7 @@ func BatchLookupMTG(ctx context.Context, scryfallIDs []string) (map[string]CardM
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Accept", "application/json")
 
-		resp, err := scryfallClient.Do(req)
+		resp, err := scryfallLookupClient.Do(req)
 		if err != nil {
 			return nil, fmt.Errorf("scryfall collection page %d: %w", start/pageSize+1, err)
 		}

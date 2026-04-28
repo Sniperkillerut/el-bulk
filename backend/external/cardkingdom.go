@@ -326,7 +326,10 @@ func flushCKBatch(ctx context.Context, db *sqlx.DB, batch []CardKingdomProduct) 
 	for i, p := range batch {
 		var sid *string
 		if p.ScryfallID != "" {
-			sid = &p.ScryfallID
+			cleanID := strings.Trim(p.ScryfallID, "\"")
+			if len(cleanID) == 36 {
+				sid = &cleanID
+			}
 		}
 		var price *float64
 		if p.PriceRetail != "" {
