@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/el-bulk/backend/external"
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/store"
 	"github.com/el-bulk/backend/utils/crypto"
+	"github.com/el-bulk/backend/utils/logger"
 )
 
 type BountyService struct {
@@ -16,6 +18,13 @@ type BountyService struct {
 
 func NewBountyService(s *store.BountyStore) *BountyService {
 	return &BountyService{Store: s}
+}
+
+func ptrString(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }
 
 func (s *BountyService) ListBounties(ctx context.Context, activeParam string, isAdmin bool) ([]models.Bounty, error) {
@@ -184,11 +193,41 @@ func (s *BountyService) SubmitRequest(ctx context.Context, input models.ClientRe
 		input.MatchType = "any"
 	}
 
+	// NEW: Strict MTG Normalization
+	if input.TCG == "mtg" {
+		lookup, err := external.LookupMTGCard(ctx, 
+			ptrString(input.ScryfallID), 
+			input.CardName, 
+			ptrString(input.SetCode), 
+			ptrString(input.CollectorNumber), 
+			ptrString(input.FoilTreatment))
+		
+		if err != nil {
+			logger.WarnCtx(ctx, "Submission rejected: MTG card not found on Scryfall: %s", input.CardName)
+			return nil, fmt.Errorf("invalid MTG card: %s not found on Scryfall", input.CardName)
+		}
+
+		// Use canonical data
+		input.CardName = lookup.Name
+		input.ScryfallID = &lookup.ScryfallID
+		input.OracleID = &lookup.OracleID
+		input.ImageURL = &lookup.ImageURL
+		if input.MatchType == "exact" {
+			input.SetCode = lookup.SetCode
+			input.SetName = lookup.SetName
+			input.CollectorNumber = lookup.CollectorNumber
+			ft := string(lookup.FoilTreatment)
+			input.FoilTreatment = &ft
+			ct := string(lookup.CardTreatment)
+			input.CardTreatment = &ct
+		}
+	}
+
 	result, err := s.Store.SubmitRequest(
 		ctx, input.CustomerName, input.CustomerContact, input.CardName,
 		input.SetName, input.Details, input.Quantity, input.TCG, userID,
 		input.MatchType, input.ScryfallID, input.ImageURL, input.FoilTreatment, input.CardTreatment,
-		input.SetCode, input.CollectorNumber,
+		input.SetCode, input.CollectorNumber, input.OracleID,
 	)
 	if err != nil {
 		return nil, err
@@ -204,6 +243,43 @@ func (s *BountyService) SubmitRequest(ctx context.Context, input models.ClientRe
 func (s *BountyService) SubmitRequestsBatch(ctx context.Context, input models.ClientRequestBatchInput, userID *string) (*models.ClientRequestBatchResponse, error) {
 	if input.CustomerName == "" || input.CustomerContact == "" || len(input.Cards) == 0 {
 		return nil, fmt.Errorf("customer_name, customer_contact, and at least one card are required")
+	}
+
+	// NEW: Strict MTG Normalization for Batch
+	for i := range input.Cards {
+		card := &input.Cards[i]
+		if card.TCG == "" {
+			card.TCG = "mtg"
+		}
+
+		if card.TCG == "mtg" {
+			lookup, err := external.LookupMTGCard(ctx, 
+				ptrString(card.ScryfallID), 
+				card.CardName, 
+				ptrString(card.SetCode), 
+				ptrString(card.CollectorNumber), 
+				ptrString(card.FoilTreatment))
+			
+			if err != nil {
+				logger.WarnCtx(ctx, "Batch item rejected: MTG card not found on Scryfall: %s", card.CardName)
+				return nil, fmt.Errorf("invalid MTG card in batch: %s not found on Scryfall", card.CardName)
+			}
+
+			// Use canonical data
+			card.CardName = lookup.Name
+			card.ScryfallID = &lookup.ScryfallID
+			card.OracleID = &lookup.OracleID
+			card.ImageURL = &lookup.ImageURL
+			
+			// For batch imports (deck importer), we usually have more specific data
+			card.SetCode = lookup.SetCode
+			card.SetName = lookup.SetName
+			card.CollectorNumber = lookup.CollectorNumber
+			ft := string(lookup.FoilTreatment)
+			card.FoilTreatment = &ft
+			ct := string(lookup.CardTreatment)
+			card.CardTreatment = &ct
+		}
 	}
 
 	result, err := s.Store.SubmitRequestsBatch(ctx, input, userID)

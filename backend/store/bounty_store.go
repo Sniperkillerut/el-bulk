@@ -199,10 +199,10 @@ func (s *BountyStore) ListRequests(ctx context.Context) ([]models.ClientRequest,
 	return requests, err
 }
 
-func (s *BountyStore) SubmitRequest(ctx context.Context, customerName, customerContact, cardName string, setName, details *string, quantity int, tcg string, userID *string, matchType string, scryfallID, imageURL, foilTreatment, cardTreatment, setCode, collectorNumber *string) ([]byte, error) {
+func (s *BountyStore) SubmitRequest(ctx context.Context, customerName, customerContact, cardName string, setName, details *string, quantity int, tcg string, userID *string, matchType string, scryfallID, imageURL, foilTreatment, cardTreatment, setCode, collectorNumber, oracleID *string) ([]byte, error) {
 	var result []byte
-	err := s.DB.GetContext(ctx, &result, "SELECT fn_submit_client_request($1::TEXT, $2::TEXT, $3::TEXT, $4::TEXT, $5::TEXT, $6::INTEGER, $7::TEXT, $8::UUID, $9::TEXT, $10::TEXT, $11::TEXT, $12::TEXT, $13::TEXT, $14::TEXT, $15::TEXT)",
-		customerName, customerContact, cardName, setName, details, quantity, tcg, userID, matchType, scryfallID, imageURL, foilTreatment, cardTreatment, setCode, collectorNumber)
+	err := s.DB.GetContext(ctx, &result, "SELECT fn_submit_client_request($1::TEXT, $2::TEXT, $3::TEXT, $4::TEXT, $5::TEXT, $6::INTEGER, $7::TEXT, $8::UUID, $9::TEXT, $10::TEXT, $11::TEXT, $12::TEXT, $13::TEXT, $14::TEXT, $15::TEXT, $16::UUID)",
+		customerName, customerContact, cardName, setName, details, quantity, tcg, userID, matchType, scryfallID, imageURL, foilTreatment, cardTreatment, setCode, collectorNumber, oracleID)
 	return result, err
 }
 

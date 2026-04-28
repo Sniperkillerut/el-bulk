@@ -20,6 +20,7 @@ type Bounty struct {
 	QuantityNeeded  int           `db:"quantity_needed"  json:"quantity_needed"`
 	IsGeneric       bool          `db:"is_generic"       json:"is_generic"`
 	ScryfallID      *string       `db:"scryfall_id"      json:"scryfall_id,omitempty"`
+	OracleID        *string       `db:"oracle_id"       json:"oracle_id,omitempty"`
 	ImageURL        *string       `db:"image_url"        json:"image_url,omitempty"`
 	PriceSource     string        `db:"price_source"     json:"price_source,omitempty"`
 	PriceReference  *float64      `db:"price_reference"  json:"price_reference,omitempty"`
@@ -57,6 +58,7 @@ type BountyInput struct {
 	QuantityNeeded  int           `json:"quantity_needed"`
 	IsGeneric       bool          `json:"is_generic"`
 	ScryfallID      *string       `json:"scryfall_id,omitempty"`
+	OracleID        *string       `json:"oracle_id,omitempty"`
 	ImageURL        *string       `json:"image_url,omitempty"`
 	PriceSource     string        `json:"price_source"`
 	PriceReference  *float64      `json:"price_reference,omitempty"`
