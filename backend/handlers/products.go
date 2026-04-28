@@ -207,15 +207,21 @@ func (h *ProductHandler) BulkCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var validProducts []models.ProductInput
 	for i, p := range req.Products {
 		if err := p.Validate(); err != nil {
-			logger.ErrorCtx(r.Context(), "Validation failed for product at index %d: %v", i, err)
-			render.Error(w, fmt.Sprintf("Validation failed at index %d: %v", i, err), http.StatusBadRequest)
-			return
+			logger.WarnCtx(r.Context(), "Validation failed for product at index %d: %v. Skipping.", i, err)
+			continue
 		}
+		validProducts = append(validProducts, p)
 	}
 
-	count, err := h.Service.BulkCreate(r.Context(), req.Products, req.CategoryIDs)
+	if len(validProducts) == 0 && len(req.Products) > 0 {
+		render.Error(w, "No valid products provided", http.StatusBadRequest)
+		return
+	}
+
+	count, err := h.Service.BulkCreate(r.Context(), validProducts, req.CategoryIDs)
 	if err != nil {
 		logger.ErrorCtx(r.Context(), "BulkCreate failed: %v", err)
 		render.Error(w, "Bulk import failed", http.StatusInternalServerError)

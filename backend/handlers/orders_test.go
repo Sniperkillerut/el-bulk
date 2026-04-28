@@ -232,8 +232,8 @@ func TestOrderHandler_Update(t *testing.T) {
 		input := map[string]interface{}{"status": "shipped"}
 		body, _ := json.Marshal(input)
 
-mock.ExpectQuery("SELECT .* FROM \"order\" WHERE id = \\$1").WithArgs("o1").WillReturnRows(sqlmock.NewRows([]string{"id", "status"}).AddRow("o1", "confirmed"))
 		mock.ExpectBegin()
+		mock.ExpectQuery("SELECT .* FROM \"order\" WHERE id = \\$1").WithArgs("o1").WillReturnRows(sqlmock.NewRows([]string{"id", "status"}).AddRow("o1", "confirmed"))
 		mock.ExpectQuery("SELECT status FROM \"order\" WHERE id = \\$1").
 			WithArgs("o1").
 			WillReturnRows(sqlmock.NewRows([]string{"status"}).AddRow("confirmed"))
@@ -350,7 +350,6 @@ mock.ExpectQuery("SELECT .* FROM \"order\" WHERE id = \\$1").WithArgs("o1").Will
 		}
 		body, _ := json.Marshal(input)
 		mock.ExpectBegin()
-
 		mock.ExpectQuery("SELECT .* FROM \"order\" WHERE id = \\$1").WithArgs("o1").WillReturnRows(sqlmock.NewRows([]string{"id", "status"}).AddRow("o1", "pending"))
 
 		// Initial status check

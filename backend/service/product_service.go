@@ -128,15 +128,7 @@ func (s *ProductService) Create(ctx context.Context, input models.ProductInput) 
 		return nil, err
 	}
 
-	settings, _ := s.Settings.GetSettings(ctx)
-	products := []models.Product{*product}
-
-	// Enrichment is highly recommended but non-terminal for a successful POST
-	if err := s.EnrichProducts(ctx, products, settings, true); err != nil {
-		logger.WarnCtx(ctx, "Partial enrichment failure for product %s: %v", product.ID, err)
-	}
-
-	return &products[0], nil
+	return product, nil
 }
 
 func (s *ProductService) Update(ctx context.Context, id string, input models.ProductInput) (*models.Product, error) {

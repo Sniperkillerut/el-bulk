@@ -106,14 +106,18 @@ func TestProductHandler_Create(t *testing.T) {
 		input := models.ProductInput{Name: "New Product", TCG: "mtg", Category: "singles"}
 		body, _ := json.Marshal(input)
 
-		mock.ExpectQuery("(?i)INSERT INTO product").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("p-new"))
+		mock.ExpectQuery("SELECT upserted_id FROM fn_bulk_upsert_product").
+			WithArgs(sqlmock.AnyArg()).
+			WillReturnRows(sqlmock.NewRows([]string{"upserted_id"}).AddRow("p-new"))
 
-		mock.ExpectExec("(?i)DELETE FROM product_category").WillReturnResult(sqlmock.NewResult(0, 0)) // Categories DELETE
-		mock.ExpectExec("(?i)DELETE FROM product_storage").WillReturnResult(sqlmock.NewResult(0, 0))  // Storage DELETE
+		// GetByID calls
+		mock.ExpectQuery("SELECT fn_get_product_detail").
+			WithArgs("p-new").
+			WillReturnRows(sqlmock.NewRows([]string{"fn_get_product_detail"}).AddRow([]byte(`{"id":"p-new","name":"New Product"}`)))
 
 		mock.ExpectQuery("(?i)SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop_rate", "4000"))
 
-		// Enrichment
+		// Enrichment (inside GetByID)
 		mock.ExpectQuery("(?is)SELECT .* FROM \"order\" o").WithArgs("p-new").WillReturnRows(sqlmock.NewRows([]string{"product_id", "cart_count"}).AddRow("p-new", 0))
 		mock.ExpectQuery("(?is)SELECT product_id FROM order_item").WithArgs("p-new").WillReturnRows(sqlmock.NewRows([]string{"product_id"}))
 

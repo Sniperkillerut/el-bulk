@@ -511,10 +511,12 @@ func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input mo
 		return err
 	}
 
-	s.Audit.LogAction(ctx, "UPDATE_ORDER", "order", orderID, models.JSONB{
-		"before": oldOrder,
-		"after":  input,
-	})
+	if s.Audit != nil {
+		s.Audit.LogAction(ctx, "UPDATE_ORDER", "order", orderID, models.JSONB{
+			"before": oldOrder,
+			"after":  input,
+		})
+	}
 
 	logger.InfoCtx(ctx, "Order %s updated successfully", orderID)
 	return nil
