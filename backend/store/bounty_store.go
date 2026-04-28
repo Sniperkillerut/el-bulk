@@ -190,7 +190,7 @@ func (s *BountyStore) CancelMeOffer(ctx context.Context, id, userID string) (int
 
 // ── Client Requests ─────────────────────────────────────
 
-const requestColumns = `id, customer_id, customer_name, customer_contact, card_name, set_name, details, quantity, tcg, status, cancellation_reason, bounty_id, match_type, scryfall_id, created_at`
+const requestColumns = `id, customer_id, customer_name, customer_contact, card_name, set_name, details, quantity, tcg, status, cancellation_reason, bounty_id, match_type, scryfall_id, oracle_id, image_url, foil_treatment, card_treatment, set_code, collector_number, created_at, updated_at`
 
 func (s *BountyStore) ListRequests(ctx context.Context) ([]models.ClientRequest, error) {
 	requests := []models.ClientRequest{}

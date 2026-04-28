@@ -677,6 +677,7 @@ type ClientRequest struct {
 	SetCode            *string    `db:"set_code" json:"set_code,omitempty"`
 	CollectorNumber    *string    `db:"collector_number" json:"collector_number,omitempty"`
 	CreatedAt          *time.Time `db:"created_at" json:"created_at,omitempty"`
+	UpdatedAt          *time.Time `db:"updated_at" json:"updated_at,omitempty"`
 }
 
 type BountyOffer struct {
