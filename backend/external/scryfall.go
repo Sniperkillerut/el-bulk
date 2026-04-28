@@ -13,13 +13,12 @@ import (
 	"time"
 
 	"bytes"
+	"sync"
+
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
-	"sync"
 )
-
-var ScryfallBase = "https://api.scryfall.com"
 
 // scryfallLookupClient is used for individual card lookups and small metadata requests.
 var scryfallLookupClient = &http.Client{Timeout: 30 * time.Second}
@@ -30,6 +29,7 @@ var scryfallBulkClient = &http.Client{Timeout: 0}
 // scryfallCard is the minimal subset of the Scryfall card object we need.
 type scryfallCard struct {
 	ID              string `json:"id"`
+	OracleID        string `json:"oracle_id"`
 	Name            string `json:"name"`
 	CollectorNumber string `json:"collector_number"`
 	SetName         string `json:"set_name"`
@@ -84,7 +84,7 @@ type scryfallCard struct {
 type CardIdentifier struct {
 	ScryfallID      string `json:"id,omitempty"`
 	Name            string `json:"name,omitempty"`
-	Set             string `json:"set,omitempty"`
+	SetCode         string `json:"set_code,omitempty"`
 	CollectorNumber string `json:"collector_number,omitempty"`
 	Foil            string `json:"foil,omitempty"`
 }
@@ -114,32 +114,6 @@ func (c *scryfallCard) bestImageURL() string {
 	return ""
 }
 
-// ToCardMetadata converts a lookup result to the pricing metadata format.
-func (r *CardLookupResult) ToCardMetadata() CardMetadata {
-	sid := ""
-	if r.MTGMetadata.ScryfallID != nil {
-		sid = *r.MTGMetadata.ScryfallID
-	}
-	oracle := ""
-	if r.MTGMetadata.OracleText != nil {
-		oracle = *r.MTGMetadata.OracleText
-	}
-	typeLine := ""
-	if r.MTGMetadata.TypeLine != nil {
-		typeLine = *r.MTGMetadata.TypeLine
-	}
-
-	return CardMetadata{
-		TCGPlayerUSD:  r.PriceTCGPlayer,
-		CardmarketEUR: r.PriceCardmarket,
-		Legalities:    r.MTGMetadata.Legalities,
-		OracleText:    oracle,
-		ScryfallID:    sid,
-		TypeLine:      typeLine,
-		ImageURL:      r.ImageURL,
-	}
-}
-
 // parsePrice converts a nullable Scryfall price string to *float64.
 func parsePrice(s *string) *float64 {
 	if s == nil || *s == "" {
@@ -154,18 +128,40 @@ func parsePrice(s *string) *float64 {
 
 // scryfallPrices extracts TCGPlayer and Cardmarket prices appropriate for the
 // given foil treatment. foilTreatment should be one of the foil_treatment_type values.
+// scryfallPrices extracts TCGPlayer and Cardmarket prices appropriate for the
+// given foil treatment. foilTreatment should be one of the foil_treatment_type values.
 func (c *scryfallCard) scryfallPrices(foilTreatment string) (tcgUSD, cmEUR *float64) {
+	foilTreatment = strings.ToLower(foilTreatment)
+
+	// 1. Try to get the exact price for the requested treatment
 	switch foilTreatment {
 	case "etched_foil":
 		tcgUSD = parsePrice(c.Prices.USDEtched)
-		cmEUR = parsePrice(c.Prices.EURFoil) // Cardmarket doesn't distinguish etched
-	case "foil", "holo_foil", "ripple_foil", "galaxy_foil", "platinum_foil":
-		tcgUSD = parsePrice(c.Prices.USDFoil)
-		cmEUR = parsePrice(c.Prices.EURFoil)
-	default: // non_foil
+		cmEUR = parsePrice(c.Prices.EURFoil) // Cardmarket typically uses EURFoil for all foil types
+	case "non_foil", "":
 		tcgUSD = parsePrice(c.Prices.USD)
 		cmEUR = parsePrice(c.Prices.EUR)
+	default:
+		// Generic foil or specialized foil (surge, galaxy, etc.)
+		tcgUSD = parsePrice(c.Prices.USDFoil)
+		cmEUR = parsePrice(c.Prices.EURFoil)
 	}
+
+	// 2. Intelligent Fallback: If we requested a foil price but that specific
+	// field is empty, try the standard foil field (or vice versa).
+	// This handles cards that only have one type of foil finish.
+	if foilTreatment != "non_foil" && foilTreatment != "" {
+		if tcgUSD == nil {
+			tcgUSD = parsePrice(c.Prices.USDFoil)
+			if tcgUSD == nil {
+				tcgUSD = parsePrice(c.Prices.USDEtched)
+			}
+		}
+		if cmEUR == nil {
+			cmEUR = parsePrice(c.Prices.EURFoil)
+		}
+	}
+
 	return
 }
 
@@ -184,13 +180,19 @@ func LookupMTGCard(ctx context.Context, scryfallID, name, setCode, collectorNumb
 	if scryfallID != "" {
 		res, err := scryfallGet(ctx, fmt.Sprintf("%s/cards/%s", ScryfallBase, url.PathEscape(scryfallID)), foilTreatment)
 		if err == nil {
-			// VALIDATION: Ensure the card found by ID actually matches the required foliage.
-			// This fixes "polluted" IDs in the database where a non-foil ID was saved for a foil product.
-			if string(res.FoilTreatment) == strings.ToLower(foilTreatment) {
+			// VALIDATION: Ensure the card found by ID actually matches the required finish.
+			// Normalizes empty/non_foil to ensure consistency.
+			requestedFinish := strings.ToLower(foilTreatment)
+			if requestedFinish == "" {
+				requestedFinish = "non_foil"
+			}
+			foundFinish := string(res.FoilTreatment)
+
+			if foundFinish == requestedFinish {
 				return res, nil
 			}
 			logger.WarnCtx(ctx, "Self-Healing: Scryfall ID %s finish mismatch (%s vs %s). Forcing resolution by name.",
-				scryfallID, res.FoilTreatment, foilTreatment)
+				scryfallID, foundFinish, requestedFinish)
 		}
 	}
 
@@ -280,7 +282,7 @@ func BatchLookupMTGCard(ctx context.Context, identifiers []CardIdentifier) ([]Ca
 			requestedFoil := ""
 			for _, id := range chunk {
 				if (id.ScryfallID != "" && id.ScryfallID == card.ID) ||
-					(id.Set != "" && strings.EqualFold(id.Set, card.Set) && id.CollectorNumber != "" && id.CollectorNumber == card.CollectorNumber) {
+					(id.SetCode != "" && strings.EqualFold(id.SetCode, card.Set) && id.CollectorNumber != "" && id.CollectorNumber == card.CollectorNumber) {
 					requestedFoil = id.Foil
 					break
 				}
@@ -381,6 +383,8 @@ func mapScryfallToResult(card *scryfallCard, foilTreatment string) *CardLookupRe
 
 	return &CardLookupResult{
 		Name:            card.Name,
+		ScryfallID:      card.ID,
+		OracleID:        card.OracleID,
 		ImageURL:        imageURL,
 		PriceTCGPlayer:  tcgUSD,
 		PriceCardmarket: cmEUR,
@@ -570,38 +574,21 @@ type ScryfallBulkCard struct {
 	CardKingdomFoilID *string `json:"card_kingdom_foil_id"`
 }
 
-// PriceKey uniquely identifies a card+foil combination for the in-memory map.
-type PriceKey struct {
-	Name      string // lowercase
-	SetCode   string // lowercase; empty = any set
-	Collector string // NEW: collector number
-	Foil      string // foil_treatment value
-}
-
-// CardMetadata holds extracted USD/EUR prices and MTG card data for one PriceKey.
-type CardMetadata struct {
-	// Non-foil prices (TCGPlayer / Cardmarket)
-	TCGPlayerUSD  *float64
-	CardmarketEUR *float64
-	// Foil prices — populated by BatchLookupMTG; callers should pick based on FoilTreatment
-	TCGPlayerUSDFoil  *float64
-	CardmarketEURFoil *float64
-	Legalities        models.JSONB
-	OracleText        string
-	ScryfallID        string
-	TypeLine          string
-	ImageURL          string
-	CardKingdomID     string
-	// Foil CK ID (card_kingdom_foil_id from Scryfall)
-	CardKingdomFoilID string
-}
-
 var (
 	scryCache      map[PriceKey]CardMetadata
 	idCache        map[string]CardMetadata // NEW: Fast ID lookup
 	scryCacheMutex sync.RWMutex
 	scryCacheTime  time.Time
 )
+
+// ResetScryfallCache clears the in-memory Scryfall cache (primarily for unit tests).
+func ResetScryfallCache() {
+	scryCacheMutex.Lock()
+	defer scryCacheMutex.Unlock()
+	scryCache = nil
+	idCache = nil
+	scryCacheTime = time.Time{}
+}
 
 // BuildPriceMap loads Scryfall metadata from the external_scryfall table.
 // Uses an in-memory cache valid for 1 hour.
@@ -654,12 +641,31 @@ func BuildPriceMap(ctx context.Context, db *sqlx.DB) (map[PriceKey]CardMetadata,
 			ImageURL:         r.ImageURL,
 		}
 
+		// 1. Exact Match Key (Name + Set + Collector)
 		key := PriceKey{
 			Name:      strings.ToLower(r.Name),
 			SetCode:   strings.ToLower(r.SetCode),
 			Collector: r.CollectorNumber,
 		}
 		priceMap[key] = meta
+
+		// 2. Fallback: Name + Set (Highest priority printing in set)
+		setKey := PriceKey{
+			Name:    strings.ToLower(r.Name),
+			SetCode: strings.ToLower(r.SetCode),
+		}
+		if _, ok := priceMap[setKey]; !ok {
+			priceMap[setKey] = meta
+		}
+
+		// 3. Fallback: Name Global (Highest priority printing found)
+		nameKey := PriceKey{
+			Name: strings.ToLower(r.Name),
+		}
+		if _, ok := priceMap[nameKey]; !ok {
+			priceMap[nameKey] = meta
+		}
+
 		localIdCache[r.ScryfallID] = meta
 	}
 
