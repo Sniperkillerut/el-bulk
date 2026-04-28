@@ -16,6 +16,10 @@ CREATE TABLE IF NOT EXISTS bounty (
   price_source      TEXT NOT NULL DEFAULT 'manual',
   price_reference   NUMERIC(12, 2),
   is_active         BOOLEAN NOT NULL DEFAULT true,
+  is_generic        BOOLEAN NOT NULL DEFAULT false,
+  scryfall_id       UUID,
+  oracle_id         UUID,
+  set_code          TEXT,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -23,3 +27,4 @@ CREATE TABLE IF NOT EXISTS bounty (
 -- Indices
 CREATE INDEX IF NOT EXISTS idx_bounty_tcg ON bounty(tcg);
 CREATE INDEX IF NOT EXISTS idx_bounty_search ON bounty USING gin(to_tsvector('english', name || ' ' || COALESCE(set_name, '')));
+CREATE INDEX IF NOT EXISTS idx_bounty_scryfall_id ON bounty(scryfall_id);
