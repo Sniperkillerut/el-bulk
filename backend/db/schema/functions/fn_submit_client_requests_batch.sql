@@ -3,7 +3,7 @@
 CREATE OR REPLACE FUNCTION fn_submit_client_requests_batch(
     p_customer_name TEXT,
     p_customer_contact TEXT,
-    p_cards JSONB, -- Array of objects: {card_name, set_name, details, quantity, tcg}
+    p_cards JSONB, -- Array of objects: {card_name, set_name, details, quantity, tcg, scryfall_id, oracle_id, ...}
     p_customer_id UUID DEFAULT NULL
 ) RETURNS JSONB AS $$
 DECLARE
@@ -58,6 +58,7 @@ BEGIN
             status,
             match_type,
             scryfall_id,
+            oracle_id,
             image_url,
             foil_treatment,
             card_treatment,
@@ -67,14 +68,15 @@ BEGIN
             v_customer_id, 
             p_customer_name, 
             p_customer_contact, 
-            v_card->>'card_name', 
+            trim(v_card->>'card_name'), 
             v_card->>'set_name', 
             v_card->>'details', 
             COALESCE((v_card->>'quantity')::INT, 1),
-            COALESCE(v_card->>'tcg', 'mtg'),
+            COALESCE(lower(trim(v_card->>'tcg')), 'mtg'),
             'pending',
             COALESCE(v_card->>'match_type', 'any'),
             v_card->>'scryfall_id',
+            (v_card->>'oracle_id')::UUID,
             v_card->>'image_url',
             v_card->>'foil_treatment',
             v_card->>'card_treatment',

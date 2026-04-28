@@ -15,7 +15,8 @@ CREATE OR REPLACE FUNCTION fn_submit_client_request(
     p_foil_treatment TEXT DEFAULT NULL,
     p_card_treatment TEXT DEFAULT NULL,
     p_set_code TEXT DEFAULT NULL,
-    p_collector_number TEXT DEFAULT NULL
+    p_collector_number TEXT DEFAULT NULL,
+    p_oracle_id UUID DEFAULT NULL
 ) RETURNS JSONB AS $$
 DECLARE
     v_customer_id UUID := p_customer_id;
@@ -38,7 +39,7 @@ BEGIN
             v_last_name := trim(substring(p_customer_name from char_length(v_first_name) + 1));
         
             IF v_last_name = '' THEN
-                v_last_name := '-'; -- Last name is REQUIRED in our schema, so use a hyphen as placeholder if only one name given
+                v_last_name := '-'; -- Last name is REQUIRED in our schema
             END IF;
 
             INSERT INTO customer (
@@ -55,14 +56,14 @@ BEGIN
         END IF;
     END IF;
 
-    -- Insert the request (customer_id will be NULL if no match found, which is fine for anonymous requests)
+    -- Insert the request
     INSERT INTO client_request (
         customer_id, customer_name, customer_contact, card_name, set_name, details, quantity, tcg, status,
-        match_type, scryfall_id, image_url, foil_treatment, card_treatment, set_code, collector_number
+        match_type, scryfall_id, image_url, foil_treatment, card_treatment, set_code, collector_number, oracle_id
     )
     VALUES (
-        v_customer_id, p_customer_name, p_customer_contact, p_card_name, p_set_name, p_details, p_quantity, p_tcg, 'pending',
-        p_match_type, p_scryfall_id, p_image_url, p_foil_treatment, p_card_treatment, p_set_code, p_collector_number
+        v_customer_id, p_customer_name, p_customer_contact, trim(p_card_name), p_set_name, p_details, p_quantity, lower(trim(p_tcg)), 'pending',
+        p_match_type, p_scryfall_id, p_image_url, p_foil_treatment, p_card_treatment, p_set_code, p_collector_number, p_oracle_id
     )
     RETURNING id, created_at INTO v_request_id, v_created_at;
     
@@ -71,14 +72,15 @@ BEGIN
         'customer_id', v_customer_id,
         'customer_name', p_customer_name,
         'customer_contact', p_customer_contact,
-        'card_name', p_card_name,
+        'card_name', trim(p_card_name),
         'set_name', p_set_name,
         'details', p_details,
         'quantity', p_quantity,
-        'tcg', p_tcg,
+        'tcg', lower(trim(p_tcg)),
         'status', 'pending',
         'match_type', p_match_type,
         'scryfall_id', p_scryfall_id,
+        'oracle_id', p_oracle_id,
         'image_url', p_image_url,
         'foil_treatment', p_foil_treatment,
         'card_treatment', p_card_treatment,

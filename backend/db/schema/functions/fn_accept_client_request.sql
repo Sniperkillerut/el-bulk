@@ -1,6 +1,6 @@
 -- fn_accept_client_request
 -- Atomically accepts a client_request:
---   1. Find an existing active bounty matching card identity (exact or generic).
+--   1. Find an existing active bounty matching card identity (via oracle_id or scryfall_id).
 --   2. If none, create a new bounty.
 --   3. Link the request to the bounty, increment bounty.quantity_needed, set request status = 'accepted'.
 CREATE OR REPLACE FUNCTION fn_accept_client_request(
@@ -20,23 +20,30 @@ BEGIN
     v_is_generic := (v_req.match_type = 'any');
 
     IF v_is_generic THEN
-        -- Find existing generic bounty (name + tcg match, is_generic = true)
+        -- Find existing generic bounty (oracle_id match preferred, fallback to name)
         SELECT id INTO v_bounty_id
         FROM bounty
-        WHERE lower(name) = lower(v_req.card_name)
-          AND tcg = v_req.tcg
-          AND is_generic = true
+        WHERE is_generic = true
           AND is_active = true
+          AND (
+            (oracle_id IS NOT NULL AND v_req.oracle_id IS NOT NULL AND oracle_id = v_req.oracle_id)
+            OR 
+            (lower(trim(name)) = lower(trim(v_req.card_name)) AND tcg = v_req.tcg)
+          )
+        ORDER BY (oracle_id IS NOT NULL AND v_req.oracle_id IS NOT NULL AND oracle_id = v_req.oracle_id) DESC, created_at DESC
         LIMIT 1;
     ELSE
-        -- Find existing specific bounty (name + set_name + tcg, is_generic = false)
+        -- Find existing specific bounty (scryfall_id match preferred)
         SELECT id INTO v_bounty_id
         FROM bounty
-        WHERE lower(name) = lower(v_req.card_name)
-          AND tcg = v_req.tcg
-          AND is_generic = false
+        WHERE is_generic = false
           AND is_active = true
-          AND (set_name IS NOT DISTINCT FROM v_req.set_name)
+          AND (
+            (scryfall_id IS NOT NULL AND v_req.scryfall_id IS NOT NULL AND scryfall_id = v_req.scryfall_id)
+            OR
+            (lower(trim(name)) = lower(trim(v_req.card_name)) AND tcg = v_req.tcg AND (set_name IS NOT DISTINCT FROM v_req.set_name))
+          )
+        ORDER BY (scryfall_id IS NOT NULL AND v_req.scryfall_id IS NOT NULL AND scryfall_id = v_req.scryfall_id) DESC, created_at DESC
         LIMIT 1;
     END IF;
 
@@ -44,12 +51,12 @@ BEGIN
     IF v_bounty_id IS NULL THEN
         INSERT INTO bounty (
             name, tcg, set_name, quantity_needed, is_active, is_generic,
-            scryfall_id, image_url, set_code, collector_number,
+            scryfall_id, oracle_id, image_url, set_code, collector_number,
             foil_treatment, card_treatment, language, hide_price, price_source
         ) VALUES (
-            v_req.card_name, v_req.tcg, v_req.set_name, v_req.quantity,
+            trim(v_req.card_name), v_req.tcg, v_req.set_name, v_req.quantity,
             true, v_is_generic,
-            v_req.scryfall_id, v_req.image_url, v_req.set_code, v_req.collector_number,
+            v_req.scryfall_id, v_req.oracle_id, v_req.image_url, v_req.set_code, v_req.collector_number,
             COALESCE(v_req.foil_treatment, 'non_foil'), COALESCE(v_req.card_treatment, 'normal'), 
             'en', false, 'tcgplayer'
         )
