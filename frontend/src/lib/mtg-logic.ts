@@ -272,13 +272,16 @@ export function getTreatmentType(card: ScryfallCard): CardTreatment {
 export function applyPrintPrices(card: ScryfallCard | undefined, foil: FoilTreatment, source: PriceSource, currentPriceReference?: number | string): number {
   if (!card) return 0;
   const p = card.prices || {};
+  
   if (source === 'tcgplayer') {
-    if (foil === 'foil') return parseFloat(p.usd_foil || '0');
     if (foil === 'etched_foil') return parseFloat(p.usd_etched || '0');
+    if (foil !== 'non_foil' && foil !== '') return parseFloat(p.usd_foil || '0');
     return parseFloat(p.usd || '0');
   } else if (source === 'cardmarket') {
+    if (foil !== 'non_foil' && foil !== '') return parseFloat(p.eur_foil || p.eur || '0');
     return parseFloat(p.eur || '0');
   }
+  
   return currentPriceReference !== undefined ? Number(currentPriceReference) : 0;
 }
 

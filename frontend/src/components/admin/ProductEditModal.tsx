@@ -192,7 +192,8 @@ export default function ProductEditModal({
           form.collector_number || '',
           form.foil_treatment || '',
           form.card_treatment || '',
-          form.price_source
+          form.price_source,
+          form.scryfall_id
         );
         if (isMounted && res.price !== undefined) {
           setForm(f => ({ ...f, price_reference: res.price }));
@@ -217,7 +218,8 @@ export default function ProductEditModal({
     form.collector_number,
     form.foil_treatment,
     form.card_treatment,
-    form.price_source
+    form.price_source,
+    form.scryfall_id
   ]);
 
   // AUTO-SYNC: Trigger Scryfall fetch in background if essential metadata is missing

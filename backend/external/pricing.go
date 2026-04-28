@@ -1,79 +1,138 @@
 package external
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
 	"strings"
+	"time"
+
+	"github.com/jmoiron/sqlx"
 )
 
-// ResolvedPrices holds the results from all pricing sources for a single card.
-type ResolvedPrices struct {
-	ScryfallID     string
-	TCGPlayerUSD   *float64
-	CardmarketEUR  *float64
-	CardKingdomUSD *float64
-	Metadata       *CardMetadata // Full Scryfall metadata if found
-}
+var (
+	// HTTP Client for API requests
+	externalClient = &http.Client{
+		Timeout: 10 * time.Second,
+	}
 
-// ResolveMTGPrice is the single source of truth for MTG pricing resolution.
-// It implements the mandatory hierarchy:
-// 1. Scryfall ID (exact match)
-// 2. Name | Set | Collector (exact printing match)
-// 3. Name | Set | Foil | Variant (hierarchical fallback)
+	ScryfallBase = "https://api.scryfall.com"
+)
+
+// ResolveMTGPrice handles single-card resolution with hierarchical fallback.
 func ResolveMTGPrice(
 	sid, name, setCode, cn, foil, cardTreatment, ckEdition, ckVariation string,
 	scryMap map[PriceKey]CardMetadata,
 	idMap map[string]CardMetadata,
 	ckMap map[string]*float64,
 ) ResolvedPrices {
-	result := ResolvedPrices{}
+	return ResolveMTGPriceBatch(sid, name, setCode, cn, foil, cardTreatment, ckEdition, ckVariation, scryMap, idMap, ckMap)
+}
 
-	// Normalization
-	sid = strings.TrimSpace(sid)
-	nameAttr := strings.ToLower(strings.TrimSpace(name))
-	setAttr := strings.ToLower(strings.TrimSpace(setCode))
-	cnAttr := strings.TrimSpace(cn)
-	foilAttr := strings.ToLower(strings.TrimSpace(foil))
-	isFoil := foilAttr != "" && foilAttr != "non_foil"
+// ResolveMTGPriceBatch (Batch Resolution for RefreshService)
+// This version uses pre-loaded maps to avoid N+1 database queries during bulk sync.
+func ResolveMTGPriceBatch(
+	sid, name, setCode, cn, foil, cardTreatment, ckEdition, ckVariation string,
+	scryMap map[PriceKey]CardMetadata,
+	idMap map[string]CardMetadata,
+	ckMap map[string]*float64,
+) ResolvedPrices {
+	var result ResolvedPrices
+	foil = strings.ToLower(foil)
 
-	// ── Step 1: Scryfall ID Match (Highest Priority) ──────────────────────────
+	// 1. Resolve curated metadata from Scryfall
 	var meta CardMetadata
 	found := false
+
+	// Try ID lookup first
 	if sid != "" {
 		meta, found = idMap[sid]
 	}
 
-	// ── Step 2: Name | Set | Collector (Exact Printing Match) ──────────────────
-	if !found && nameAttr != "" && setAttr != "" && cnAttr != "" {
-		key := PriceKey{Name: nameAttr, SetCode: setAttr, Collector: cnAttr, Foil: foilAttr}
+	// Step 2: Name | Set | Collector (Exact printing)
+	if !found && name != "" && setCode != "" && cn != "" {
+		key := PriceKey{
+			Name:      strings.ToLower(name),
+			SetCode:   strings.ToLower(setCode),
+			Collector: cn,
+		}
 		meta, found = scryMap[key]
 	}
 
-	// ── Step 3: Name | Set | Foil (Edition Fallback) ──────────────────────────
-	if !found && nameAttr != "" && setAttr != "" {
-		key := PriceKey{Name: nameAttr, SetCode: setAttr, Collector: "", Foil: foilAttr}
+	// Step 3: Name | Set (Hierarchical fallback)
+	if !found && name != "" && setCode != "" {
+		key := PriceKey{
+			Name:    strings.ToLower(name),
+			SetCode: strings.ToLower(setCode),
+		}
 		meta, found = scryMap[key]
 	}
 
-	// ── Step 4: Name | Foil (Global Fallback) ──────────────────────────────────
-	if !found && nameAttr != "" {
-		key := PriceKey{Name: nameAttr, SetCode: "", Collector: "", Foil: foilAttr}
+	// Step 4: Name (Global Fallback)
+	if !found && name != "" {
+		key := PriceKey{
+			Name: strings.ToLower(name),
+		}
 		meta, found = scryMap[key]
 	}
 
 	if found {
 		result.ScryfallID = meta.ScryfallID
-		result.TCGPlayerUSD = meta.TCGPlayerUSD
-		result.CardmarketEUR = meta.CardmarketEUR
-		// If the specific foil price exists in metadata (from BatchLookup), use it.
-		// Note: BuildPriceMap already handles some of this in the TCGPlayerUSD field.
 		result.Metadata = &meta
+		// Pick relevant price based on foil
+		if foil != "non_foil" && foil != "" {
+			result.TCGPlayerUSD = meta.TCGPlayerUSDFoil
+			result.CardmarketEUR = meta.CardmarketEURFoil
+
+			// Intelligent Fallback: if we want foil but scryfall only has one price field populated
+			if result.TCGPlayerUSD == nil {
+				result.TCGPlayerUSD = meta.TCGPlayerUSD
+			}
+			if result.CardmarketEUR == nil {
+				result.CardmarketEUR = meta.CardmarketEUR
+			}
+		} else {
+			result.TCGPlayerUSD = meta.TCGPlayerUSD
+			result.CardmarketEUR = meta.CardmarketEUR
+		}
 	}
 
-	// ── CardKingdom Resolution ───────────────────────────────────────────────
-	if name != "" {
-		// Delegate ALL CK resolution to LookupCKPrice to ensure consistent hierarchy
-		// (Perfect matches > ID matches > Heuristic matches).
+	// 2. Resolve Card Kingdom Price (Independent source)
+	if ckMap != nil {
+		isFoil := (foil != "non_foil" && foil != "")
 		result.CardKingdomUSD = LookupCKPrice(sid, name, ckEdition, ckVariation, isFoil, ckMap)
 	}
 
 	return result
+}
+
+// FetchLiveScryfallCard (Optional: Live fallback if cache misses)
+func FetchLiveScryfallCard(ctx context.Context, sid string) (*CardMetadata, error) {
+	if sid == "" {
+		return nil, fmt.Errorf("empty scryfall id")
+	}
+
+	resp, err := externalClient.Get(fmt.Sprintf("%s/cards/%s", ScryfallBase, sid))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("scryfall api returned %d", resp.StatusCode)
+	}
+
+	var c CardMetadata
+	if err := json.NewDecoder(resp.Body).Decode(&c); err != nil {
+		return nil, err
+	}
+
+	return &c, nil
+}
+
+// UpdatePricesFromDB updates the provided models.Product with latest prices.
+func UpdatePricesFromDB(ctx context.Context, db *sqlx.DB, product interface{}) error {
+	// Legacy bridge stub
+	return nil
 }
