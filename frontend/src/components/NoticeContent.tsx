@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { fetchProduct } from '@/lib/api';
+import { fetchProduct, getProxyImageUrl } from '@/lib/api';
 import { Product } from '@/lib/types';
 import { basicSanitize } from '@/lib/htmlUtils';
 
@@ -21,7 +21,8 @@ export default function NoticeContent({ html }: NoticeContentProps) {
   const activeFetchId = useRef<string | null>(null);
 
   useEffect(() => {
-    setIsMounted(true);
+    // Avoid synchronous setState in effect to prevent cascading renders
+    Promise.resolve().then(() => setIsMounted(true));
     
     const content = contentRef.current;
     if (!content) return;
@@ -49,7 +50,7 @@ export default function NoticeContent({ html }: NoticeContentProps) {
         if (activeFetchId.current === cardId) {
           setHoveredCard({ product, rect: target.getBoundingClientRect() });
         }
-      } catch (err) {
+      } catch {
         // Silently fail if card not found
       }
     };
@@ -121,7 +122,7 @@ function CardHoverPortal({ product, startRect }: { product: Product; startRect: 
   return createPortal(
     <div style={style}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={product.image_url} alt={product.name} className="w-full h-auto object-contain" />
+      <img src={getProxyImageUrl(product.image_url)} alt={product.name} className="w-full h-auto object-contain" />
       <div className="p-3 border-t border-gold/30 bg-ink-navy text-white">
         <div className="text-xs font-bold font-display uppercase tracking-wider">{product.name}</div>
         <div className="text-[10px] opacity-60 uppercase font-mono-stack">{product.set_name}</div>

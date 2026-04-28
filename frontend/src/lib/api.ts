@@ -969,3 +969,40 @@ export async function adminDeleteLocale(locale: string): Promise<void> {
     method: 'DELETE'
   });
 }
+// ---------------------------------------------------------------------------
+// Image Proxy
+// ---------------------------------------------------------------------------
+
+export function getProxyImageUrl(url: string | null | undefined): string {
+  if (!url) return '';
+  
+  // If it's already a local URL or a data URL, return as is
+  if (url.startsWith('/') || url.startsWith('data:') || url.startsWith('blob:')) {
+    return url;
+  }
+
+  // Selective Proxying: Only proxy domains known to have CORS issues
+  // Scryfall and PokemonTCG.io usually support CORS natively.
+  const proxyNeeded = [
+    'lorcana-api.com',
+    'cardboardcrack.com',
+    'dragonshield.com',
+    'unsplash.com',
+    'shopify.com'
+  ];
+
+  const needsProxy = proxyNeeded.some(domain => url.includes(domain));
+  if (!needsProxy) {
+    return url;
+  }
+
+  const base = API_BASE || (typeof window !== 'undefined' ? window.location.origin : '');
+  
+  // Don't proxy if it's already pointing to our API
+  if (base && url.startsWith(base)) {
+    return url;
+  }
+
+  // Use proxy for external images to bypass CORS
+  return `${base}/api/proxy/image?url=${encodeURIComponent(url)}`;
+}

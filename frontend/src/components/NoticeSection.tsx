@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Notice } from '@/lib/types';
-import { fetchNotices } from '@/lib/api';
+import { fetchNotices, getProxyImageUrl } from '@/lib/api';
 import { useLanguage } from '@/context/LanguageContext';
 import { stripHtml } from '@/lib/htmlUtils';
 
@@ -47,7 +47,7 @@ export default function NoticeSection() {
               <div className="md:w-1/3 h-48 md:h-auto relative overflow-hidden bg-kraft-light">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
-                  src={notice.featured_image_url} 
+                  src={getProxyImageUrl(notice.featured_image_url)} 
                   alt={notice.title}
                   className="w-full h-full object-cover transition-transform hover:scale-105 duration-500"
                 />
