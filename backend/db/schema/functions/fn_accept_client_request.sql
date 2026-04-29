@@ -39,11 +39,11 @@ BEGIN
         WHERE is_generic = false
           AND is_active = true
           AND (
-            (scryfall_id IS NOT NULL AND v_req.scryfall_id IS NOT NULL AND scryfall_id = v_req.scryfall_id)
+            (scryfall_id IS NOT NULL AND v_req.scryfall_id IS NOT NULL AND v_req.scryfall_id != '' AND scryfall_id = v_req.scryfall_id::UUID)
             OR
             (lower(trim(name)) = lower(trim(v_req.card_name)) AND tcg = v_req.tcg AND (set_name IS NOT DISTINCT FROM v_req.set_name))
           )
-        ORDER BY (scryfall_id IS NOT NULL AND v_req.scryfall_id IS NOT NULL AND scryfall_id = v_req.scryfall_id) DESC, created_at DESC
+        ORDER BY (scryfall_id IS NOT NULL AND v_req.scryfall_id IS NOT NULL AND v_req.scryfall_id != '' AND scryfall_id = v_req.scryfall_id::UUID) DESC, created_at DESC
         LIMIT 1;
     END IF;
 
@@ -56,7 +56,7 @@ BEGIN
         ) VALUES (
             trim(v_req.card_name), v_req.tcg, v_req.set_name, v_req.quantity,
             true, v_is_generic,
-            v_req.scryfall_id, v_req.oracle_id, v_req.image_url, v_req.set_code, v_req.collector_number,
+            NULLIF(v_req.scryfall_id, '')::UUID, v_req.oracle_id, v_req.image_url, v_req.set_code, v_req.collector_number,
             COALESCE(v_req.foil_treatment, 'non_foil'), COALESCE(v_req.card_treatment, 'normal'), 
             'en', false, 'tcgplayer'
         )

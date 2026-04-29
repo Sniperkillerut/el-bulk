@@ -56,7 +56,7 @@ BEGIN
         ) VALUES (
             trim(v_req.card_name), v_req.tcg, v_req.set_name, v_req.quantity,
             true, v_is_generic,
-            v_req.scryfall_id::UUID, v_req.oracle_id, v_req.image_url, v_req.set_code, v_req.collector_number,
+            NULLIF(v_req.scryfall_id, '')::UUID, v_req.oracle_id, v_req.image_url, v_req.set_code, v_req.collector_number,
             COALESCE(v_req.foil_treatment, 'non_foil'), COALESCE(v_req.card_treatment, 'normal'), 
             'en', false, 'tcgplayer'
         )
