@@ -1,5 +1,6 @@
--- Place Order
--- Handles customer upsert, order creation, and item population in one transaction.
+-- Fix fn_place_order missing JSON boolean coalescing
+-- When is_priority or is_local_pickup is omitted from order_meta JSON, it evaluates to NULL.
+-- This violates the NOT NULL constraints on the order table.
 CREATE OR REPLACE FUNCTION fn_place_order(
     customer_data jsonb,
     order_items_data jsonb,

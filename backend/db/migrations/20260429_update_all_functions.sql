@@ -1,4 +1,4 @@
-﻿-- Updating all functions and triggers
+-- Updating all functions and triggers
 -- fn_accept_client_request
 -- Atomically accepts a client_request:
 --   1. Find an existing active bounty matching card identity (via oracle_id or scryfall_id).
@@ -828,8 +828,8 @@ BEGIN
         (order_meta->>'shipping_cop')::numeric,
         (order_meta->>'tax_cop')::numeric,
         (order_meta->>'total_cop')::numeric,
-        (order_meta->>'is_local_pickup')::boolean,
-        (order_meta->>'is_priority')::boolean,
+        COALESCE((order_meta->>'is_local_pickup')::boolean, false),
+        COALESCE((order_meta->>'is_priority')::boolean, false),
         order_meta->>'notes'
     )
     RETURNING id, "order".order_number INTO v_order_id, v_order_num;
