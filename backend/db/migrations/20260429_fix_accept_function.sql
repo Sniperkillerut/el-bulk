@@ -1,4 +1,4 @@
-﻿-- fn_accept_client_request
+-- fn_accept_client_request
 -- Atomically accepts a client_request:
 --   1. Find an existing active bounty matching card identity (via oracle_id or scryfall_id).
 --   2. If none, create a new bounty.

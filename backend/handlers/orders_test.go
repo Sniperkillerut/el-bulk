@@ -362,15 +362,6 @@ func TestOrderHandler_Update(t *testing.T) {
 			WithArgs("cancelled", sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), "o1").
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
-		// Pending storage ID query
-		mock.ExpectQuery("SELECT id FROM storage_location WHERE name = 'pending'").
-			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("pending_loc_id"))
-
-		// Pending storage quantity cleanup
-		mock.ExpectExec("(?i)UPDATE product_storage ps SET quantity = GREATEST").
-			WithArgs("o1", "pending_loc_id").
-			WillReturnResult(sqlmock.NewResult(0, 1))
-
 		mock.ExpectCommit()
 
 		// For GetDetail call inside Update
@@ -560,13 +551,6 @@ func TestOrderHandler_CancelMe(t *testing.T) {
 		mock.ExpectBegin()
 		mock.ExpectExec("UPDATE \"order\" SET status = 'cancelled'").
 			WithArgs(orderID, userID).
-			WillReturnResult(sqlmock.NewResult(0, 1))
-
-		mock.ExpectQuery("SELECT id FROM storage_location WHERE name = 'pending'").
-			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("pending_loc_id"))
-
-		mock.ExpectExec("(?i)UPDATE product_storage ps SET quantity = GREATEST").
-			WithArgs(orderID, "pending_loc_id").
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
 		mock.ExpectCommit()

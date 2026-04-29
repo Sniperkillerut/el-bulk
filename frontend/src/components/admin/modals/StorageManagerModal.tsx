@@ -25,6 +25,10 @@ export default function StorageManagerModal({
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
+    if (newName.trim().toLowerCase() === 'pending') {
+      alert("The name 'pending' is reserved for system use.");
+      return;
+    }
     await onCreate(newName);
     setNewName('');
   };
@@ -77,15 +81,23 @@ export default function StorageManagerModal({
                     </span>
                   </div>
                   <div className="flex gap-2">
-                    <button 
-                      onClick={() => { setEditingId(loc.id); setEditingName(loc.name); }} 
-                      className="btn-secondary px-3 py-1 text-xs"
-                    >EDIT</button>
-                    <button 
-                      onClick={() => onDelete(loc.id, loc.name, loc.item_count || 0)} 
-                      className="px-3 py-1 text-xs border border-hp-color text-hp-color hover:bg-hp-color hover:text-white transition-colors" 
-                      style={{ borderRadius: 4 }}
-                    >DELETE</button>
+                    {loc.name !== 'pending' ? (
+                      <>
+                        <button 
+                          onClick={() => { setEditingId(loc.id); setEditingName(loc.name); }} 
+                          className="btn-secondary px-3 py-1 text-xs"
+                        >EDIT</button>
+                        <button 
+                          onClick={() => onDelete(loc.id, loc.name, loc.item_count || 0)} 
+                          className="px-3 py-1 text-xs border border-hp-color text-hp-color hover:bg-hp-color hover:text-white transition-colors" 
+                          style={{ borderRadius: 4 }}
+                        >DELETE</button>
+                      </>
+                    ) : (
+                      <span className="text-[10px] font-mono-stack text-gold-dark uppercase font-bold px-2 py-1 bg-gold/10 border border-gold/20 rounded-md">
+                        🔒 SYSTEM PROTECTED
+                      </span>
+                    )}
                   </div>
                 </>
               )}

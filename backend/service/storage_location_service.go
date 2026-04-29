@@ -43,25 +43,38 @@ func (s *StorageLocationService) Update(ctx context.Context, id, name string) er
 	if name == "" {
 		return fmt.Errorf("name is required")
 	}
-	before, _ := s.Store.GetByID(ctx, id)
-	err := s.Store.Update(ctx, id, name)
+	before, err := s.Store.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if before.Name == "pending" {
+		return fmt.Errorf("the pending storage location cannot be modified")
+	}
+
+	err = s.Store.Update(ctx, id, name)
 	if err == nil {
 		after, _ := s.Store.GetByID(ctx, id)
 		s.Audit.LogAction(ctx, "UPDATE_STORAGE", "storage", id, models.JSONB{
 			"before": before,
-			"after":  after, // Captured full updated storage snapshot
+			"after":  after,
 		})
 	}
 	return err
 }
 
 func (s *StorageLocationService) Delete(ctx context.Context, id string) error {
-	before, _ := s.Store.GetByID(ctx, id)
+	before, err := s.Store.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if before.Name == "pending" {
+		return fmt.Errorf("the pending storage location cannot be deleted")
+	}
 
 	// Deep Capture: Get all stock mappings before they are cascaded away
 	mappings, _ := s.Store.GetStockMappings(ctx, id)
 
-	err := s.Store.Delete(ctx, id)
+	err = s.Store.Delete(ctx, id)
 	if err == nil {
 		s.Audit.LogAction(ctx, "DELETE_STORAGE", "storage", id, models.JSONB{
 			"deleted":        before,

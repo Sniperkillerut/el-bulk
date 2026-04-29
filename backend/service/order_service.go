@@ -265,27 +265,6 @@ func (s *OrderService) UpdateOrder(ctx context.Context, orderID string, input mo
 		if err != nil {
 			return fmt.Errorf("failed to update order info: %w", err)
 		}
-
-		// If moved from pending to cancelled, release the reserved stock from the 'pending' location
-		if input.Status != nil && *input.Status == "cancelled" && currentStatus == "pending" {
-			var pendingID string
-			err = tx.GetContext(ctx, &pendingID, `SELECT id FROM storage_location WHERE name = 'pending'`)
-			if err != nil {
-				return fmt.Errorf("failed to get pending storage id: %w", err)
-			}
-
-			_, err = tx.ExecContext(ctx, `
-				UPDATE product_storage ps
-				SET quantity = GREATEST(0, ps.quantity - oi.quantity)
-				FROM order_item oi
-				WHERE oi.order_id = $1
-				  AND ps.product_id = oi.product_id
-				  AND ps.storage_id = $2`,
-				orderID, pendingID)
-			if err != nil {
-				return fmt.Errorf("failed to clear pending inventory: %w", err)
-			}
-		}
 	}
 
 	// 2. Update existing item quantities
@@ -595,25 +574,6 @@ func (s *OrderService) CancelMe(ctx context.Context, orderID, userID string) err
 	rows, _ := res.RowsAffected()
 	if rows == 0 {
 		return fmt.Errorf("order cannot be cancelled or not found")
-	}
-
-	// Release reserved stock from 'pending' location
-	var pendingID string
-	err = tx.GetContext(ctx, &pendingID, `SELECT id FROM storage_location WHERE name = 'pending'`)
-	if err != nil {
-		return fmt.Errorf("failed to get pending storage id: %w", err)
-	}
-
-	_, err = tx.ExecContext(ctx, `
-		UPDATE product_storage ps
-		SET quantity = GREATEST(0, ps.quantity - oi.quantity)
-		FROM order_item oi
-		WHERE oi.order_id = $1
-		  AND ps.product_id = oi.product_id
-		  AND ps.storage_id = $2`,
-		orderID, pendingID)
-	if err != nil {
-		return fmt.Errorf("failed to clear pending inventory: %w", err)
 	}
 
 	return tx.Commit()
