@@ -113,6 +113,7 @@
   --duration-slow: 500ms;
   --ease-out: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-in-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-mechanical: cubic-bezier(0.19, 1, 0.22, 1);
 
   /* Fluid Typography Tokens */
   --h1-size: clamp(2.5rem, 8vw - 1rem, 5.5rem);
@@ -255,7 +256,7 @@ body {
   overflow-x: clip;
   /* Subtle kraft paper noise texture or custom theme background */
   background-image:
-    var(--theme-bg-image, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E"));
+    var(--theme-bg-image, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E"));
   background-repeat: repeat;
 }
 

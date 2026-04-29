@@ -52,9 +52,14 @@ export default function BountyCard({ bounty, delay = 0 }: BountyCardProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono opacity-50 text-text-muted" title={t('pages.common.tooltips.quantity_needed', 'Quantity needed')}>
-              ×{bounty.quantity_needed}
-            </span>
+            <div className="flex items-center gap-1">
+              <span className="text-[10px] font-mono opacity-50 text-text-muted" title={t('pages.common.tooltips.quantity_needed', 'Quantity needed')}>
+                ×{bounty.quantity_needed}
+              </span>
+              {bounty.quantity_needed >= 10 && (
+                <span className="flex h-1.5 w-1.5 rounded-full bg-hp-color animate-pulse" title={t('pages.bounties.labels.high_priority', 'High Priority')} />
+              )}
+            </div>
             <button 
               className="btn-primary text-[0.8rem] px-[0.8rem] py-[0.3rem]"
             >
