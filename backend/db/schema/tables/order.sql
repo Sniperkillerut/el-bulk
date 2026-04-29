@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS "order" (
   tracking_number TEXT,
   tracking_url   TEXT,
   is_local_pickup BOOLEAN NOT NULL DEFAULT false,
+  is_priority    BOOLEAN NOT NULL DEFAULT false,
   inventory_restored BOOLEAN NOT NULL DEFAULT false,
   notes          TEXT,
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
