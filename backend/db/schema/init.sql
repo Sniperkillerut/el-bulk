@@ -44,6 +44,9 @@
 \i functions/fn_fulfill_bounty_offer.sql
 \i functions/fn_get_product_facets.sql
 \i functions/fn_submit_client_request.sql
+\i functions/fn_submit_client_requests_batch.sql
+\i functions/fn_accept_client_request.sql
+\i functions/fn_cancel_client_request.sql
 \i functions/fn_submit_bounty_offer.sql
 \i functions/fn_restore_order_stock.sql
 
