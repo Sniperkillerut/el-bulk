@@ -6,6 +6,38 @@ import { fetchPublicSettings } from '@/lib/api';
 import { PublicSettings } from '@/lib/types';
 import { useLanguage } from '@/context/LanguageContext';
 
+function BusinessHours({ hoursJson, t }: { hoursJson: string, t: any }) {
+  try {
+    const hours = JSON.parse(hoursJson);
+    const dayOrder = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+    
+    return (
+      <div className="space-y-1.5 mt-2 max-w-[240px]">
+        {dayOrder.map(day => {
+          const schedule = hours[day];
+          if (!schedule) return null;
+          
+          return (
+            <div key={day} className="flex justify-between items-center text-sm">
+              <span className="font-mono-stack uppercase text-text-muted text-[10px] w-8">
+                {t(`common.days.${day}.short`, day.toUpperCase())}
+              </span>
+              <div className="flex-1 border-b border-dotted border-kraft-dark mx-2 h-3" />
+              <span className="font-bold text-ink-deep min-w-[85px] text-right">
+                {schedule.open 
+                  ? `${schedule.start} - ${schedule.end}` 
+                  : t('common.hours.closed', 'CLOSED')}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  } catch (e) {
+    return <p className="font-semibold text-ink-deep whitespace-pre-wrap">{hoursJson}</p>;
+  }
+}
+
 export default function ContactPage() {
   const [settings, setSettings] = useState<PublicSettings | undefined>(undefined);
   const { t } = useLanguage();
@@ -62,9 +94,7 @@ export default function ContactPage() {
             
             <div>
               <p className="text-xs font-mono-stack mb-1 text-text-muted">{t('pages.contact.info.hours', 'HOURS')}</p>
-              <p className="font-semibold text-ink-deep whitespace-pre-wrap">
-                {settings.contact_hours}
-              </p>
+              <BusinessHours hoursJson={settings.contact_hours} t={t} />
             </div>
 
             <div className="pt-4 mt-4 border-t border-dashed border-kraft-dark">
@@ -119,12 +149,7 @@ export default function ContactPage() {
         </div>
       </div>
 
-      <div className="mt-12 card bg-ink-card p-4 h-64 grayscale transition-all hover:grayscale-0 flex items-center justify-center overflow-hidden border border-kraft-dark">
-         <div className="text-center opacity-30 select-none">
-           <p className="font-display text-4xl m-0">{t('pages.contact.map.placeholder', 'MAP INTEGRATION')}</p>
-           <p className="text-xs font-mono-stack mt-2">GEO_COORDINATES: 4.66542, -74.05739</p>
-         </div>
-      </div>
+      {/* Map integration hidden for future use */}
     </div>
   );
 }
