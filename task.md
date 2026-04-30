@@ -1,0 +1,23 @@
+- [x] **Task 1: Global Polish**
+  - Apply `paper-texture` to all `.cardbox` and `.card` elements in `globals.css`.
+  - Ensure the SVG noise is subtle but tangible.
+- [x] **Task 2: Haptic Motion**
+  - Standardize all buttons and interactive elements to use the new `--ease-mechanical` transition.
+  - Apply this to `.btn-primary`, `.btn-secondary`, and `.card:hover`.
+- [x] **Task 3: Bounty Transformation**
+  - Redesign `frontend/src/app/bounties/page.tsx` to look like a "Wanted" board.
+  - Use variable "Heat" indicators based on quantity needed.
+  - Use `Bebas Neue` for a bold, impactful header.
+- [x] **Task 4: Postal Notifications**
+  - Update the order status component in `frontend/src/app/profile` or `frontend/src/app/order` to use a "Shipment Progress" timeline.
+  - Use monospaced fonts and "stamped" aesthetics for status updates.
+- [x] **Task 5: Cart Animations**
+  - Implement a "Stamping" effect when adding items to the cart.
+  - Add a "Package" pulse animation to the cart icon.
+- [x] **Task 6: Unboxing Experience**
+  - Transform order confirmation into an "opening package" animation.
+  - Implement the "Success Stamp" slam effect.
+- [x] **Task 7: Collection Tracker (Binder View)**
+  - Implement `BinderView` component with 3x3 pocket grid.
+  - Add "Owned" toggle and completionist progress tracking.
+  - Integrate binder view into collection pages.

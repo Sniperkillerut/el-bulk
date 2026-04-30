@@ -44,8 +44,18 @@ export default async function CollectionPage({ params: rawParams, searchParams: 
   
   try {
     categories = await fetchCategories();
-    products = await fetchProducts({ page, page_size: 20, collection: params.slug });
-  } catch { }
+    
+    const isBinder = searchParams?.view === 'binder';
+    const pageSize = isBinder ? 1000 : 20;
+    
+    products = await fetchProducts({ 
+      page: isBinder ? 1 : page, 
+      page_size: pageSize, 
+      collection: params.slug 
+    });
+  } catch (err) {
+    console.error(`[CollectionPage] Fetch error:`, err);
+  }
 
   const category = categories.find((c: CustomCategory) => c.slug === params.slug);
 

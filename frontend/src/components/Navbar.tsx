@@ -30,10 +30,19 @@ export default function Navbar() {
   const { locale, setLocale, t, availableLocales, hideSelector, getLocaleDisplay } = useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [tcgs, setTcgs] = useState<TCG[]>([]);
+  const [isPulsing, setIsPulsing] = useState(false);
 
   useEffect(() => {
     fetchTCGs(true).then(setTcgs);
   }, []);
+
+  useEffect(() => {
+    if (totalItems > 0) {
+      setIsPulsing(true);
+      const timer = setTimeout(() => setIsPulsing(false), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [totalItems]);
 
   const singlesItems = tcgs.map(tcg => ({
     label: `${tcg.name} ${t('pages.nav.main.singles', 'Singles')}`,
@@ -186,7 +195,7 @@ export default function Navbar() {
             <button
               id="cart-toggle"
               onClick={isOpen ? closeCart : openCart}
-              className="relative p-2 rounded-md transition-colors bg-transparent border border-border-main/30 cursor-pointer text-text-main hover:border-text-main group"
+              className={`relative p-2 rounded-md transition-all bg-transparent border border-border-main/30 cursor-pointer text-text-main hover:border-text-main group ${isPulsing ? 'animate-package-pulse border-accent-primary scale-110 shadow-lg' : ''}`}
               aria-label={isOpen ? t('pages.cart.drawer.close', 'Close cart') : t('pages.cart.drawer.title', 'Open cart')}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -195,7 +204,7 @@ export default function Navbar() {
                 <path d="M16 10a4 4 0 01-8 0" />
               </svg>
               {totalItems > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-accent-rose text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full shadow-sm">
+                <span className={`absolute -top-1.5 -right-1.5 bg-accent-rose text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full shadow-sm transition-transform duration-300 ${isPulsing ? 'scale-125' : ''}`}>
                   {totalItems}
                 </span>
               )}

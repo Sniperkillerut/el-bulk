@@ -21,18 +21,18 @@ export default function PublicBountiesClient({ initialBounties }: { initialBount
   return (
     <>
       <div className="max-w-4xl mx-auto text-center mb-16 animate-in slide-in-from-bottom-5 fade-in duration-700">
-        <h1 className="font-display text-fluid-h1 tracking-[0.01em] text-text-main leading-[0.82] mb-6 drop-shadow-sm">
-          {t('pages.bounties.page.title', 'WANTED / BOUNTIES').split('/').map((word, i) => (
-            <span key={i}>
-              {i > 0 && <span className="text-accent-primary opacity-60"> / </span>}
-              {word}
-              {i === 0 && <br/>}
-            </span>
-          ))}
+        <div className="inline-block px-3 py-1 bg-hp-color text-white font-mono-stack text-[10px] mb-6 rotate-[-1deg] uppercase tracking-[0.3em] shadow-sm">
+          {t('pages.bounties.tags.wanted', 'URGENT LOGISTICS / HIGH PRIORITY')}
+        </div>
+        <h1 className="font-display text-fluid-h1 tracking-tighter text-text-main leading-[0.85] mb-8 drop-shadow-sm uppercase">
+          {t('pages.bounties.page.title', 'WANTED / BOUNTIES')}
         </h1>
-        <p className="text-text-secondary text-lg md:text-xl max-w-2xl mx-auto tracking-normal opacity-90">
-          {t('pages.bounties.page.subtitle', "We are actively looking to buy the cards below. If you have them, reach out to us! Can't find what you are looking for? Send us a card request!")}
-        </p>
+        <div className="relative inline-block">
+          <p className="text-text-secondary text-lg md:text-xl max-w-2xl mx-auto tracking-tight opacity-90 font-medium">
+            {t('pages.bounties.page.subtitle', "We are actively looking to buy the cards below. If you have them, reach out to us! Can't find what you are looking for? Send us a card request!")}
+          </p>
+          <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-24 h-1 bg-accent-primary/30" />
+        </div>
       </div>
 
       <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-6 animate-in fade-in duration-1000 delay-150 fill-mode-both">

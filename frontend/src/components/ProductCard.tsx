@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Product } from '@/lib/types';
 import { useCart } from '@/lib/CartContext';
@@ -18,6 +19,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart();
+  const [isAdding, setIsAdding] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { t } = useLanguage();
@@ -37,8 +39,27 @@ export default function ProductCard({ product }: ProductCardProps) {
     openProductModal(product);
   };
 
+  const handleAdd = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (outOfStock) return;
+    
+    setIsAdding(true);
+    addItem(product);
+    setTimeout(() => setIsAdding(false), 800);
+  };
+
   return (
-    <div className="card flex flex-col overflow-hidden animate-fade-up" data-theme-area="product-card">
+    <div className="card flex flex-col overflow-hidden animate-fade-up relative" data-theme-area="product-card">
+      {/* Stamping Overlay */}
+      {isAdding && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none overflow-hidden">
+          <div className="bg-hp-color text-white px-6 py-3 font-display text-5xl rotate-[-12deg] animate-stamp shadow-2xl border-4 border-white/30 backdrop-blur-sm">
+            {t('pages.product.labels.stamped', 'RECEIVED')}
+          </div>
+        </div>
+      )}
+
       <a 
         href={href} 
         onClick={handleOpenModal} 
@@ -113,7 +134,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               </span>
               <button
                 id={`add-to-cart-${product.id}`}
-                onClick={() => !outOfStock && addItem(product)}
+                onClick={handleAdd}
                 disabled={outOfStock}
                 className="btn-primary text-[0.8rem] px-4 py-2 sm:px-[0.8rem] sm:py-[0.3rem] flex-1 sm:flex-initial"
                 style={{ opacity: outOfStock ? 0.4 : 1, cursor: outOfStock ? 'not-allowed' : 'pointer' }}
