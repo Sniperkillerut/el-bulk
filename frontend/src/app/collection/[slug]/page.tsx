@@ -9,7 +9,8 @@ type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 export async function generateMetadata({ params: rawParams }: { params: PageParams }): Promise<Metadata> {
   const params = await rawParams;
   try {
-    const category = (await fetchCategories()).find((c: CustomCategory) => c.slug === params.slug);
+    const categories = await fetchCategories();
+    const category = categories.find((c: CustomCategory) => c.slug === params.slug);
     return {
       title: category ? `${category.name} - El Bulk` : 'Collection - El Bulk',
     };

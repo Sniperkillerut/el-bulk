@@ -55,7 +55,7 @@ services:
       backend:
         condition: service_healthy
     env_file:
-      - ./frontend/.env.local
+      - ./.worktrees/ux-audit/frontend/.env.local
     environment:
       WATCHPACK_POLLING: "true"
       CHOKIDAR_USEPOLLING: "true"
@@ -64,7 +64,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./frontend:/app
+      - ./.worktrees/ux-audit/frontend:/app
       - /app/node_modules
       - /app/.next
 

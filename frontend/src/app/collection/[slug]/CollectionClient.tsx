@@ -54,7 +54,7 @@ export default function CollectionClient({
   return (
     <div className="centered-container px-4 py-8">
       {/* Dynamic Header */}
-      <div className="flex flex-col sm:flex-row items-baseline justify-between border-b-2 border-border-main/20 pb-4 mb-8">
+      <div className="mx-auto max-w-[1200px] w-full flex flex-col sm:flex-row items-baseline justify-between border-b-2 border-border-main/20 pb-4 mb-8 px-6 md:px-10">
         <div>
           <div className="text-xs font-mono-stack text-text-muted">
             <Link href="/" className="hover:text-accent-primary transition-colors">{t('pages.common.labels.home', 'HOME')}</Link> / {t('pages.common.labels.collection', 'COLLECTION')}

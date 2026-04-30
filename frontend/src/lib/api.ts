@@ -996,13 +996,7 @@ export function getProxyImageUrl(url: string | null | undefined): string {
     return url;
   }
 
-  const base = API_BASE || (typeof window !== 'undefined' ? window.location.origin : '');
-  
-  // Don't proxy if it's already pointing to our API
-  if (base && url.startsWith(base)) {
-    return url;
-  }
-
-  // Use proxy for external images to bypass CORS
-  return `${base}/api/proxy/image?url=${encodeURIComponent(url)}`;
+  // Always use a relative path for the image proxy to ensure it works in both SSR and client
+  // without hardcoding internal or external hostnames.
+  return `/api/proxy/image?url=${encodeURIComponent(url)}`;
 }
