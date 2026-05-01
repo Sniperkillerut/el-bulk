@@ -9,16 +9,27 @@ interface PageProps {
   searchParams: Promise<{ productId?: string }>;
 }
 
-export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
-  const { productId } = await searchParams;
-  const productMetadata = await getSharedProductMetadata(productId || null);
-  
-  if (productMetadata) return productMetadata;
+export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
+  try {
+    const { productId } = await searchParams;
+    const { tcg } = await params;
+    
+    if (productId) {
+      const productMetadata = await getSharedProductMetadata(productId);
+      if (productMetadata) return productMetadata;
+    }
 
-  return {
-    title: 'Singles Collection — El Bulk',
-    description: 'Browse our massive selection of TCG singles. MTG, Pokémon, Lorcana and more.'
-  };
+    return {
+      title: `${tcg.toUpperCase()} Singles — El Bulk`,
+      description: `Browse our collection of ${tcg.toUpperCase()} singles at El Bulk Bogotá. Secure shipping and evaluation.`
+    };
+  } catch (error) {
+    console.error('[Metadata] Error in generateMetadata (Singles):', error);
+    return {
+      title: 'Singles Collection — El Bulk',
+      description: 'Browse our massive selection of TCG singles. MTG, Pokémon, Lorcana and more.'
+    };
+  }
 }
 
 export default async function SinglesPage({ params }: PageProps) {

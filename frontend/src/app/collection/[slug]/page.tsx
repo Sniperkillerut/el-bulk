@@ -8,14 +8,16 @@ type PageParams = Promise<{ slug: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export async function generateMetadata({ params: rawParams, searchParams: rawSearchParams }: { params: PageParams; searchParams: SearchParams }): Promise<Metadata> {
-  const params = await rawParams;
-  const searchParams = await rawSearchParams;
-  const productId = typeof searchParams.productId === 'string' ? searchParams.productId : undefined;
-
-  const productMetadata = await getSharedProductMetadata(productId || null);
-  if (productMetadata) return productMetadata;
-
   try {
+    const params = await rawParams;
+    const searchParams = await rawSearchParams;
+    const productId = typeof searchParams.productId === 'string' ? searchParams.productId : undefined;
+
+    if (productId) {
+      const productMetadata = await getSharedProductMetadata(productId);
+      if (productMetadata) return productMetadata;
+    }
+
     const categories = await fetchCategories();
     const category = categories.find((c: CustomCategory) => c.slug === params.slug);
     
@@ -40,7 +42,8 @@ export async function generateMetadata({ params: rawParams, searchParams: rawSea
         images: ['/og-image.png'],
       },
     };
-  } catch {
+  } catch (error) {
+    console.error('[Metadata] Error in generateMetadata (Collection):', error);
     return { title: 'Collection - El Bulk' };
   }
 }

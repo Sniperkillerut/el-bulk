@@ -13,13 +13,26 @@ export function formatProductDescription(product: Product): string {
 export async function getSharedProductMetadata(productId: string | null): Promise<Metadata | null> {
   if (!productId) return null;
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://elbulk.com';
+
   try {
     const product = await fetchProduct(productId);
-    if (!product) return null;
+    if (!product) {
+      console.warn(`[Metadata] Product not found: ${productId}`);
+      return null;
+    }
 
-    const title = `${product.name} — El Bulk TCG`;
+    const title = `${product.name} - ${product.set_name} | El Bulk TCG`;
     const description = formatProductDescription(product);
-    const imageUrl = product.image_url;
+    
+    // Ensure image URL is absolute for crawlers
+    let imageUrl = product.image_url;
+    if (imageUrl && !imageUrl.startsWith('http')) {
+      imageUrl = `${siteUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+    }
+    
+    // Fallback if no product image
+    const finalImageUrl = imageUrl || `${siteUrl}/og-image.png`;
 
     return {
       title,
@@ -27,17 +40,19 @@ export async function getSharedProductMetadata(productId: string | null): Promis
       openGraph: {
         title,
         description,
-        images: imageUrl ? [{ url: imageUrl, alt: product.name }] : [],
+        images: [finalImageUrl],
+        type: 'website',
+        url: `${siteUrl}/product/${product.id}`, // Canonical link to the product
       },
       twitter: {
         card: 'summary_large_image',
         title,
         description,
-        images: imageUrl ? [imageUrl] : [],
+        images: [finalImageUrl],
       },
     };
   } catch (error) {
-    console.error('Failed to fetch metadata for product:', productId, error);
+    console.error(`[Metadata] Error fetching for ${productId}:`, error);
     return null;
   }
 }

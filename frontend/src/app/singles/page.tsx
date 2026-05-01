@@ -8,15 +8,25 @@ interface PageProps {
 }
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
-  const { productId } = await searchParams;
-  const productMetadata = await getSharedProductMetadata(productId || null);
-  
-  if (productMetadata) return productMetadata;
+  try {
+    const { productId } = await searchParams;
+    
+    if (productId) {
+      const productMetadata = await getSharedProductMetadata(productId);
+      if (productMetadata) return productMetadata;
+    }
 
-  return {
-    title: 'Singles Collection — El Bulk',
-    description: 'Browse our massive selection of TCG singles. MTG, Pokémon, Lorcana and more.'
-  };
+    return {
+      title: 'Singles Collection — El Bulk',
+      description: 'Browse our massive selection of TCG singles. MTG, Pokémon, Lorcana and more.'
+    };
+  } catch (error) {
+    console.error('[Metadata] Error in generateMetadata (Root Singles):', error);
+    return {
+      title: 'Singles Collection — El Bulk',
+      description: 'Browse our massive selection of TCG singles. MTG, Pokémon, Lorcana and more.'
+    };
+  }
 }
 
 // Enable dynamic rendering via fetch or dynamic functions as per PPR rules
