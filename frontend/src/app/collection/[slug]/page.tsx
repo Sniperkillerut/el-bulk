@@ -11,8 +11,27 @@ export async function generateMetadata({ params: rawParams }: { params: PagePara
   try {
     const categories = await fetchCategories();
     const category = categories.find((c: CustomCategory) => c.slug === params.slug);
+    
+    if (!category) return { title: 'Collection - El Bulk' };
+
+    const title = `${category.name} - El Bulk`;
+    const description = `Explore our collection of ${category.name} at El Bulk. Singles, sealed products, and more. Secure shipping from Bogotá.`;
+
     return {
-      title: category ? `${category.name} - El Bulk` : 'Collection - El Bulk',
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        images: ['/og-image.png'],
+        type: 'website',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: ['/og-image.png'],
+      },
     };
   } catch {
     return { title: 'Collection - El Bulk' };
