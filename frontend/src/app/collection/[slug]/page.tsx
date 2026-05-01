@@ -9,7 +9,8 @@ type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 export async function generateMetadata({ params: rawParams }: { params: PageParams }): Promise<Metadata> {
   const params = await rawParams;
   try {
-    const category = (await fetchCategories()).find((c: CustomCategory) => c.slug === params.slug);
+    const categories = await fetchCategories();
+    const category = categories.find((c: CustomCategory) => c.slug === params.slug);
     return {
       title: category ? `${category.name} - El Bulk` : 'Collection - El Bulk',
     };
@@ -44,8 +45,18 @@ export default async function CollectionPage({ params: rawParams, searchParams: 
   
   try {
     categories = await fetchCategories();
-    products = await fetchProducts({ page, page_size: 20, collection: params.slug });
-  } catch { }
+    
+    const isBinder = searchParams?.view === 'binder';
+    const pageSize = isBinder ? 1000 : 20;
+    
+    products = await fetchProducts({ 
+      page: isBinder ? 1 : page, 
+      page_size: pageSize, 
+      collection: params.slug 
+    });
+  } catch (err) {
+    console.error(`[CollectionPage] Fetch error:`, err);
+  }
 
   const category = categories.find((c: CustomCategory) => c.slug === params.slug);
 

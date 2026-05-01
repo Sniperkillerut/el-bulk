@@ -14,7 +14,9 @@ import * as api from '@/lib/api'
 
 // Mock the API using the alias
 vi.mock('@/lib/api', () => ({
+  fetchCollections: vi.fn(),
   fetchProducts: vi.fn().mockResolvedValue({ products: [], total: 0, facets: {} }),
+  getProxyImageUrl: vi.fn((url) => url),
 }))
 
 vi.mock('next/navigation', () => ({

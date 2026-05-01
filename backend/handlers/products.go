@@ -36,7 +36,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 
 	isAdmin, _ := r.Context().Value(middleware.IsAdminKey).(bool)
-	maxPageSize := 100
+	maxPageSize := 1000
 	if isAdmin {
 		maxPageSize = 5000
 	}

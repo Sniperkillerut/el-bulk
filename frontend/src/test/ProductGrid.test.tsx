@@ -11,6 +11,8 @@ vi.mock('@/lib/api', () => ({
   fetchTCGs: vi.fn().mockResolvedValue([]),
   fetchTranslations: vi.fn().mockResolvedValue({}),
   fetchSettings: vi.fn().mockResolvedValue({}),
+  fetchFacets: vi.fn(),
+  getProxyImageUrl: vi.fn((url) => url),
 }))
 
 vi.mock('next/navigation', () => ({

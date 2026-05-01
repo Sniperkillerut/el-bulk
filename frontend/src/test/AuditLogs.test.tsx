@@ -9,6 +9,9 @@ vi.mock('@/lib/api', async () => {
   return {
     ...actual,
     adminFetchAuditLogs: vi.fn(),
+    fetchTranslations: vi.fn().mockResolvedValue({}),
+    fetchSettings: vi.fn().mockResolvedValue({}),
+    getProxyImageUrl: vi.fn((url) => url),
   }
 })
 

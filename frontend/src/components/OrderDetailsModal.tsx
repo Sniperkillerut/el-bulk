@@ -116,45 +116,76 @@ export default function OrderDetailsModal({ orderId, isOpen, onClose, onOrderCan
         ) : detail ? (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
             {/* Status Header */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-5 rounded-2xl border border-border-main bg-bg-page/40 shadow-inner backdrop-blur-sm relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-2 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity">
-                <span className="text-8xl font-display leading-none">EB</span>
+            {/* Shipment Progress Timeline */}
+            <div className="p-6 rounded-2xl border border-border-main bg-bg-page/40 shadow-inner backdrop-blur-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 opacity-[0.03]">
+                <span className="text-6xl font-display leading-none">EB-POST</span>
               </div>
               
               <div className="relative z-10">
-                <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-2">{t('pages.order.modal.status_label', 'Order Status')}</p>
-                <div className="flex items-center gap-2.5">
-                  <div className={`w-3 h-3 rounded-full shadow-[0_0_10px_rgba(0,0,0,0.2)] ${
-                    detail.order.status === 'completed' ? 'bg-green-400 shadow-green-400/40' :
-                    detail.order.status === 'pending' ? 'bg-yellow-400 shadow-yellow-400/40' :
-                    detail.order.status === 'cancelled' ? 'bg-red-400 shadow-red-400/40' : 'bg-blue-400 shadow-blue-400/40'
-                  }`} />
-                  <span className="font-display text-2xl text-text-main tracking-tight uppercase">
-                    {t(`pages.order.status.${detail.order.status}`, ORDER_STATUS_LABELS[detail.order.status] || detail.order.status)}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="md:border-l border-border-main/50 md:pl-6 relative z-10">
-                <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-2">{t('pages.order.modal.date_label', 'Transaction Date')}</p>
-                <p className="text-text-main font-medium">
-                   {new Date(detail.order.created_at).toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US', { 
-                    year: 'numeric', month: 'short', day: 'numeric'
+                <div className="flex justify-between items-center mb-10 relative px-2">
+                  {/* Progress Line */}
+                  <div className="absolute top-4 left-0 w-full h-[2px] bg-border-main/30 z-0" />
+                  <div 
+                    className="absolute top-4 left-0 h-[2px] bg-accent-primary transition-all duration-1000 ease-out z-0" 
+                    style={{ 
+                      width: detail.order.status === 'completed' ? '100%' : 
+                             detail.order.status === 'shipped' || detail.order.status === 'ready_for_pickup' ? '66%' :
+                             detail.order.status === 'confirmed' ? '33%' : '0%' 
+                    }} 
+                  />
+
+                  {/* Steps */}
+                  {[
+                    { key: 'pending', label: t('pages.order.status.pending', 'RECEIVED'), icon: '📥' },
+                    { key: 'confirmed', label: t('pages.order.status.confirmed', 'STAMPED'), icon: '📜' },
+                    { key: 'dispatched', label: t('pages.order.status.shipped', 'DISPATCHED'), icon: '🚚' },
+                    { key: 'completed', label: t('pages.order.status.completed', 'ARRIVED'), icon: '🏁' }
+                  ].map((step, i, arr) => {
+                    const isCompleted = (step.key === 'pending') || 
+                                       (step.key === 'confirmed' && ['confirmed', 'shipped', 'ready_for_pickup', 'completed'].includes(detail.order.status)) ||
+                                       (step.key === 'dispatched' && ['shipped', 'ready_for_pickup', 'completed'].includes(detail.order.status)) ||
+                                       (step.key === 'completed' && detail.order.status === 'completed');
+                    
+                    const isCurrent = (step.key === detail.order.status) || 
+                                     (step.key === 'dispatched' && (detail.order.status === 'shipped' || detail.order.status === 'ready_for_pickup'));
+
+                    return (
+                      <div key={step.key} className="flex flex-col items-center relative z-10">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs transition-all duration-500 border-2 ${
+                          isCompleted ? 'bg-accent-primary border-accent-primary text-text-on-accent' : 
+                          'bg-bg-surface border-border-main text-text-muted'
+                        } ${isCurrent ? 'ring-4 ring-accent-primary/20 scale-110' : ''}`}>
+                          {isCompleted ? '✓' : i + 1}
+                        </div>
+                        <span className={`mt-3 font-mono text-[9px] uppercase tracking-widest font-bold ${isCurrent ? 'text-accent-primary' : 'text-text-muted'}`}>
+                          {step.label}
+                        </span>
+                      </div>
+                    );
                   })}
-                   <span className="text-text-muted ml-2 text-sm font-normal">
-                    {new Date(detail.order.created_at).toLocaleTimeString(locale === 'es' ? 'es-ES' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
-                   </span>
-                </p>
-              </div>
-              
-              <div className="md:border-l border-border-main md:pl-6 relative z-10">
-                <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-2">{t('pages.order.modal.amount_label', 'Total Amount')}</p>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-accent-primary text-sm font-bold">$</span>
-                  <p className="text-3xl font-display text-accent-primary leading-none">
-                    {detail.order.total_cop.toLocaleString('es-CO')}
-                  </p>
-                  <span className="text-[10px] font-mono text-text-muted ml-0.5 tracking-tighter">{t('pages.common.currency.cop', 'COP')}</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-border-main/20">
+                  <div>
+                    <p className="text-[9px] font-mono text-text-muted uppercase tracking-[0.2em] mb-2">{t('pages.order.modal.tracking_info', 'LOGISTICS DETAILS')}</p>
+                    <div className="flex items-center gap-3">
+                      <div className="bg-accent-primary/10 px-3 py-1 rounded border border-accent-primary/20">
+                        <span className="font-mono text-xs font-bold text-accent-primary">#{detail.order.order_number}</span>
+                      </div>
+                      <span className="text-xs font-mono text-text-secondary uppercase">
+                        {t(`pages.order.status.${detail.order.status}`, ORDER_STATUS_LABELS[detail.order.status] || detail.order.status)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="md:text-right">
+                    <p className="text-[9px] font-mono text-text-muted uppercase tracking-[0.2em] mb-2">{t('pages.order.modal.date_label', 'DATE OF DISPATCH')}</p>
+                    <p className="text-xs font-mono text-text-secondary">
+                      {new Date(detail.order.created_at).toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US', { 
+                        year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

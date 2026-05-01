@@ -12,6 +12,7 @@ vi.mock('@/lib/api', () => ({
   adminFetchStorage: vi.fn().mockResolvedValue([]),
   fetchTranslations: vi.fn().mockResolvedValue({}),
   fetchSettings: vi.fn().mockResolvedValue({}),
+  getProxyImageUrl: vi.fn((url) => url),
 }));
 
 const mockOrders = [
