@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { fetchProduct } from '@/lib/api';
 import ProductDetailClient from './ProductDetailClient';
+import { formatProductDescription } from '@/lib/metadata';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -11,7 +12,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const product = await fetchProduct(id);
     const title = `${product.name} - ${product.set_name} | El Bulk TCG`;
-    const description = `Buy ${product.name} from ${product.set_name}. Condition: ${product.condition}, Foil: ${product.foil_treatment}. Fast shipping from El Bulk.`;
+    const description = formatProductDescription(product);
     
     return {
       title,
@@ -19,14 +20,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       openGraph: {
         title,
         description,
-        images: product.image_url ? [product.image_url] : [],
+        images: product.image_url ? [product.image_url] : ['/og-image.png'],
         type: 'website',
       },
       twitter: {
         card: 'summary_large_image',
         title,
         description,
-        images: product.image_url ? [product.image_url] : [],
+        images: product.image_url ? [product.image_url] : ['/og-image.png'],
       },
     };
   } catch {
