@@ -44,10 +44,11 @@ describe('HomeSearchBar', () => {
     vi.clearAllMocks()
     vi.mocked(useLanguage).mockReturnValue({
       t: (key: string, fallback?: string) => fallback || key,
-      locale: "en",
+      locale: 'en',
       setLocale: vi.fn(),
+      getLocaleDisplay: vi.fn((l) => l.toUpperCase()),
       isLoading: false,
-      availableLocales: ["en", "es"],
+      availableLocales: ['en', 'es'],
     })
   })
 
