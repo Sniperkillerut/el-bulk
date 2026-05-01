@@ -28,6 +28,7 @@ declare global {
 }
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://elbulk.com'),
   title: 'El Bulk — TCG Store',
   description: 'Your local Magic: The Gathering, Pokémon, Lorcana and One Piece card shop in Bogotá. Buy singles, sealed product, and sell us your bulk with secure evaluation.',
   keywords: ['MTG', 'Magic the Gathering', 'Pokemon', 'Lorcana', 'TCG', 'card store', 'singles', 'sealed', 'bulk', 'Bogota', 'Colombia'],
