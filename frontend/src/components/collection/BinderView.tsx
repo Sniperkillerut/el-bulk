@@ -82,7 +82,7 @@ const BinderView: React.FC<BinderViewProps> = ({ products, setName }) => {
   const renderCover = () => (
     <div className="w-full h-full binder-leather binder-cover-front flex flex-col items-center justify-center text-accent-primary p-12 text-center relative">
       <div className="absolute inset-4 border-2 border-accent-primary/30 rounded-sm pointer-events-none" />
-      <div className="font-display text-5xl md:text-7xl mb-4 drop-shadow-lg text-[#c9a063]">ARCHIVE</div>
+      <div className="font-display text-5xl md:text-7xl mb-4 drop-shadow-lg text-[#c9a063]">{setName.toUpperCase()}</div>
       <div className="w-24 h-1 bg-[#c9a063] mb-6" />
       <div className="text-[8px] md:text-xs font-mono tracking-[0.3em] uppercase opacity-70">Vault Series // 2024</div>
     </div>
@@ -92,80 +92,53 @@ const BinderView: React.FC<BinderViewProps> = ({ products, setName }) => {
   const isBookOpen = currentSpread > 0 && currentSpread <= numPages;
 
   return (
-    <div className="flex flex-col items-center py-10 md:py-20 w-full min-h-[900px] bg-[#111]">
-      <div className="flex justify-between items-center w-full max-w-[1000px] mb-12 px-6">
-        <div>
-          <h2 className="text-white/40 font-mono text-xs uppercase tracking-[0.5em] mb-1">{setName} Registry</h2>
-          <p className="text-[#c9a063]/60 font-mono text-[9px] uppercase tracking-[0.3em]">Module {currentSpread + 1} / {numPages + 2}</p>
-        </div>
-        <div className="flex gap-4">
-          <button
-            onClick={(e) => { e.stopPropagation(); handlePageChange(currentSpread - 1); }}
-            className="px-6 py-2 bg-white/5 hover:bg-white/10 text-white/40 hover:text-white/80 font-mono text-[10px] uppercase tracking-[0.2em] transition-all rounded-sm"
-          >
-            Prev
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); handlePageChange(currentSpread + 1); }}
-            className="px-6 py-2 bg-white/5 hover:bg-white/10 text-white/40 hover:text-white/80 font-mono text-[10px] uppercase tracking-[0.2em] transition-all rounded-sm"
-          >
-            Next
-          </button>
-        </div>
-      </div>
-
+    <div className="flex flex-col items-center py-4 w-full min-h-[700px]">
       <div className="binder-perspective">
-        {isBookOpen && (
-          <>
-            <div className="md:hidden absolute left-0 w-full h-full snap-start pointer-events-none" />
-            <div className="md:hidden absolute left-[var(--page-width)] w-full h-full snap-start pointer-events-none" />
-          </>
-        )}
+        <div
+          className="binder-book"
+          style={{
+            transform: currentSpread === 0
+              ? `translateX(calc(var(--page-width) / -2))`
+              : (currentSpread > numPages ? `translateX(calc(var(--page-width) / 2))` : 'translateX(0)')
+          }}
+        >
 
-        <div className={`binder-book ${isBookOpen ? 'binder-book-open' : ''} ${currentSpread === numPages + 1 ? 'binder-book-closed-back' : ''}`}>
 
-          {Array.from({ length: numPages + 1 }).map((_, i) => {
-            const isFlipped = i < currentSpread;
-            const zIndex = isFlipped ? i : (numPages - i);
+          {/* Page Stack anchored to the spine at 50% */}
+          <div className="binder-page-stack">
+            {Array.from({ length: numPages + 1 }).map((_, i) => {
+              const isFlipped = i < currentSpread;
+              const zIndex = isFlipped ? i : (numPages - i);
 
-            return (
-              <div
-                key={i}
-                className="binder-page"
-                style={{
-                  zIndex,
-                  transform: isFlipped ? 'rotateY(-180deg)' : 'rotateY(0deg)',
-                }}
-                onClick={() => handlePageChange(isFlipped ? i : i + 1)}
-              >
-                <div className="binder-page-face binder-page-face-front">
-                  {i === 0 ? renderCover() : (i === numPages ? <div className="w-full h-full binder-leather rounded-r-lg" /> : renderGrid(i * 2))}
+              return (
+                <div
+                  key={i}
+                  className="binder-page"
+                  style={{
+                    zIndex,
+                    transform: isFlipped ? 'rotateY(-180deg)' : 'rotateY(0deg)',
+                  }}
+                  onClick={() => handlePageChange(isFlipped ? i : i + 1)}
+                >
+                  <div className="binder-page-face binder-page-face-front">
+                    {i === 0 ? renderCover() : (i === numPages ? <div className="w-full h-full binder-leather rounded-r-lg" /> : renderGrid(i * 2))}
+                  </div>
+                  <div className="binder-page-face binder-page-face-back">
+                    {i === numPages ? (
+                      <div className="w-full h-full binder-leather rounded-l-lg" />
+                    ) : (
+                      renderGrid(i * 2 + 1)
+                    )}
+                  </div>
                 </div>
-                <div className="binder-page-face binder-page-face-back">
-                  {i === numPages ? (
-                    <div className="w-full h-full binder-leather rounded-l-lg" />
-                  ) : (
-                    renderGrid(i * 2 + 1)
-                  )}
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
 
           <div className="binder-rings">
             {[1, 2, 3, 4, 5, 6].map(idx => <div key={idx} className="binder-ring" />)}
           </div>
         </div>
-      </div>
-
-      <div className="mt-24 flex gap-4">
-        {Array.from({ length: numPages + 1 }).map((_, i) => (
-          <div
-            key={i}
-            onClick={() => setCurrentSpread(i)}
-            className={`w-2 h-2 rounded-full cursor-pointer transition-all ${i === currentSpread ? 'bg-[#c9a063] w-10' : 'bg-white/10'}`}
-          />
-        ))}
       </div>
     </div>
   );
