@@ -6,6 +6,7 @@ import { Notice } from '@/lib/types';
 import NoticeContent from '@/components/NoticeContent';
 import NewsletterForm from '@/components/NewsletterForm';
 import { useLanguage } from '@/context/LanguageContext';
+import IsClient from '@/components/IsClient';
 
 interface Props {
   notice: Notice;
@@ -35,9 +36,11 @@ export default function NoticeDetailClient({ notice }: Props) {
             <Link href="/notices" className="text-[10px] font-mono-stack font-bold text-accent-primary hover:opacity-80 flex items-center gap-2 transition-colors uppercase">
               {t('pages.notices.detail.back_btn', '← BACK TO ALL NOTICES')}
             </Link>
-            <div className="text-[10px] font-mono-stack font-bold px-3 py-1 bg-bg-surface text-text-secondary border border-border-main self-start uppercase">
-              {t('pages.notices.detail.published_on', 'Published on {date}', { date: new Date(notice.created_at).toLocaleDateString(locale === 'en' ? 'en-US' : 'es-ES', { month: 'long', day: 'numeric', year: 'numeric' }) })}
-            </div>
+            <IsClient fallback={<div className="h-4 w-32 bg-bg-surface animate-pulse" />}>
+              <div className="text-[10px] font-mono-stack font-bold px-3 py-1 bg-bg-surface text-text-secondary border border-border-main self-start uppercase">
+                {t('pages.notices.detail.published_on', 'Published on {date}', { date: new Date(notice.created_at).toLocaleDateString(locale === 'en' ? 'en-US' : 'es-ES', { month: 'long', day: 'numeric', year: 'numeric' }) })}
+              </div>
+            </IsClient>
             <h1 className="font-display text-4xl sm:text-5xl md:text-6xl uppercase leading-[0.85] max-w-4xl text-text-main drop-shadow-sm">
               {notice.title}
             </h1>
@@ -71,53 +74,55 @@ export default function NoticeDetailClient({ notice }: Props) {
               <div className="flex items-center gap-3">
                 <span className="text-[10px] font-mono-stack font-bold text-text-muted uppercase tracking-wider">{t('pages.notices.detail.share_label', 'SHARE:')}</span>
                 
-                <div className="flex gap-2">
-                  {/* Facebook */}
-                  <a 
-                    href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-bg-surface border border-border-main hover:border-accent-primary hover:text-accent-primary transition-all text-text-secondary"
-                    title="Share on Facebook"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
-                  </a>
+                <IsClient>
+                  <div className="flex gap-2">
+                    {/* Facebook */}
+                    <a 
+                      href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-bg-surface border border-border-main hover:border-accent-primary hover:text-accent-primary transition-all text-text-secondary"
+                      title="Share on Facebook"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                    </a>
 
-                  {/* WhatsApp */}
-                  <a 
-                    href={`https://api.whatsapp.com/send?text=${shareTitle}%20${shareUrl}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-bg-surface border border-border-main hover:border-green-500 hover:text-green-500 transition-all text-text-secondary"
-                    title="Share on WhatsApp"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                  </a>
+                    {/* WhatsApp */}
+                    <a 
+                      href={`https://api.whatsapp.com/send?text=${shareTitle}%20${shareUrl}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-bg-surface border border-border-main hover:border-green-500 hover:text-green-500 transition-all text-text-secondary"
+                      title="Share on WhatsApp"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                    </a>
 
-                  {/* X (Twitter) */}
-                  <a 
-                    href={`https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareTitle}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-bg-surface border border-border-main hover:border-text-main hover:text-text-main transition-all text-text-secondary"
-                    title="Share on X"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4l11.733 16h4.267l-11.733 -16z"></path><path d="M4 20l6.768 -6.768"></path><path d="M13.232 10.768l6.768 -6.768"></path></svg>
-                  </a>
+                    {/* X (Twitter) */}
+                    <a 
+                      href={`https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareTitle}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-bg-surface border border-border-main hover:border-text-main hover:text-text-main transition-all text-text-secondary"
+                      title="Share on X"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4l11.733 16h4.267l-11.733 -16z"></path><path d="M4 20l6.768 -6.768"></path><path d="M13.232 10.768l6.768 -6.768"></path></svg>
+                    </a>
 
-                  {/* Copy Link */}
-                  <button 
-                    onClick={handleCopyLink}
-                    className={`w-8 h-8 flex items-center justify-center rounded-full bg-bg-surface border transition-all ${copied ? 'border-accent-primary text-accent-primary' : 'border-border-main text-text-secondary hover:border-accent-primary hover:text-accent-primary'}`}
-                    title={copied ? "Copied!" : "Copy Link"}
-                  >
-                    {copied ? (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    ) : (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                    )}
-                  </button>
-                </div>
+                    {/* Copy Link */}
+                    <button 
+                      onClick={handleCopyLink}
+                      className={`w-8 h-8 flex items-center justify-center rounded-full bg-bg-surface border transition-all ${copied ? 'border-accent-primary text-accent-primary' : 'border-border-main text-text-secondary hover:border-accent-primary hover:text-accent-primary'}`}
+                      title={copied ? "Copied!" : "Copy Link"}
+                    >
+                      {copied ? (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      ) : (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                      )}
+                    </button>
+                  </div>
+                </IsClient>
               </div>
             </div>
           </main>

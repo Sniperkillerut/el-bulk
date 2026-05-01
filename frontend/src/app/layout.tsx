@@ -117,7 +117,7 @@ async function RootProviders({ children }: { children: React.ReactNode }) {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${bebas.variable} ${spaceMono.variable}`} suppressHydrationWarning>
-      <body suppressHydrationWarning>
+      <body>
         <RemoteLogManager />
         
         <Suspense fallback={<div className="min-h-screen bg-bg-page animate-pulse" />}>
@@ -202,18 +202,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           />
         )}
 
-        {process.env.NEXT_PUBLIC_META_PIXEL_ID && (
-          <noscript suppressHydrationWarning>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              height="1"
-              width="1"
-              style={{ display: 'none' }}
-              src={`https://www.facebook.com/tr?id=${process.env.NEXT_PUBLIC_META_PIXEL_ID}&ev=PageView&noscript=1`}
-              alt=""
-            />
-          </noscript>
-        )}
       </body>
     </html>
   );

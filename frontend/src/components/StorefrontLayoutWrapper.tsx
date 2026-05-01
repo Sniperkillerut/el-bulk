@@ -1,5 +1,7 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import IsClient from './IsClient';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from './Navbar';
@@ -10,10 +12,17 @@ import { useLanguage } from '@/context/LanguageContext';
 
 export default function StorefrontLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isAdmin = pathname?.startsWith('/admin');
   const { t } = useLanguage();
+  const [mounted, setMounted] = useState(false);
 
-  if (isAdmin) {
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isAdmin = pathname?.startsWith('/admin');
+
+  // Defer the layout decision until after hydration to avoid mismatch
+  if (mounted && isAdmin) {
     return <>{children}</>;
   }
 
@@ -40,7 +49,7 @@ export default function StorefrontLayoutWrapper({ children }: { children: React.
             {t('pages.layout.footer.slogan', 'We buy bulk. We sell singles. We love cardboard.')}
           </p>
           <p className="text-xs text-text-muted font-mono flex flex-wrap justify-center gap-x-3 gap-y-1">
-            <span>© {new Date().getFullYear()} El Bulk</span>
+            <span>© <IsClient fallback="2026">{new Date().getFullYear()}</IsClient> El Bulk</span>
             <span className="opacity-30">•</span>
             <Link href="/about" className="hover:text-gold transition-colors underline decoration-border-main underline-offset-4">{t('pages.about.title_short', 'About')}</Link>
             <span className="opacity-30">•</span>
