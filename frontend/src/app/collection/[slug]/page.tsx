@@ -2,12 +2,19 @@ import { Metadata } from 'next';
 import { fetchProducts, fetchCategories } from '@/lib/api';
 import { ProductListResponse, CustomCategory } from '@/lib/types';
 import CollectionClient from './CollectionClient';
+import { getSharedProductMetadata } from '@/lib/metadata';
 
 type PageParams = Promise<{ slug: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-export async function generateMetadata({ params: rawParams }: { params: PageParams }): Promise<Metadata> {
+export async function generateMetadata({ params: rawParams, searchParams: rawSearchParams }: { params: PageParams; searchParams: SearchParams }): Promise<Metadata> {
   const params = await rawParams;
+  const searchParams = await rawSearchParams;
+  const productId = typeof searchParams.productId === 'string' ? searchParams.productId : undefined;
+
+  const productMetadata = await getSharedProductMetadata(productId || null);
+  if (productMetadata) return productMetadata;
+
   try {
     const categories = await fetchCategories();
     const category = categories.find((c: CustomCategory) => c.slug === params.slug);
