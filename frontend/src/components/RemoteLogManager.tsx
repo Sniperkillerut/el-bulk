@@ -9,6 +9,17 @@ export default function RemoteLogManager() {
       // Prevent duplicate logging for errors already captured and tagged
       if (event.error?._remoteLogged) return;
 
+      // Filter out non-actionable "Script error." which usually comes from 
+      // third-party scripts or browser-injected scripts (like FB in-app browser).
+      // Also filter out React hydration error #418 which is common in mobile browsers.
+      if (
+        event.message === 'Script error.' || 
+        event.message.includes('React error #418') ||
+        (!event.filename && event.lineno === 0)
+      ) {
+        return;
+      }
+
       remoteLogger.error(`Unhandled Error: ${event.message}`, {
         filename: event.filename,
         lineno: event.lineno,
