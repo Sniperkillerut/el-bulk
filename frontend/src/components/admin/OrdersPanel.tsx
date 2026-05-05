@@ -894,7 +894,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
 
               {/* Add New Product Search */}
               {detail.order.status === 'pending' && (
-                <div className="mt-6 mb-4 cardbox p-4 bg-ink-surface/30 border-dashed border-gold/30">
+                <div className="mt-6 mb-4 cardbox p-4 bg-ink-surface/30 border-dashed border-gold/30 !overflow-visible">
                   <h4 className="text-xs font-mono-stack mb-3 text-gold-dark font-bold uppercase tracking-widest flex items-center gap-2">
                     <span className="text-lg">🎁</span> {t('pages.admin.orders.detail.add_item.title', 'AGREGAR PRODUCTO / REGALO')}
                   </h4>
