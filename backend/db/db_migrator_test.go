@@ -37,6 +37,10 @@ func TestMigrate(t *testing.T) {
 
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 
+	// Expect global migration lock
+	mock.ExpectBegin()
+	mock.ExpectExec("SELECT pg_advisory_xact_lock").WithArgs(1112).WillReturnResult(sqlmock.NewResult(1, 1))
+
 	// Expect query for applied migrations
 	mock.ExpectQuery("SELECT name FROM migration").WillReturnRows(sqlmock.NewRows([]string{"name"}))
 
@@ -44,6 +48,9 @@ func TestMigrate(t *testing.T) {
 	mock.ExpectBegin()
 	mock.ExpectExec("CREATE TABLE test").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectExec("INSERT INTO migration").WithArgs(migrationFile).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+
+	// Expect global lock release
 	mock.ExpectCommit()
 
 	err = Migrate(sqlxDB)
@@ -66,8 +73,12 @@ func TestMigrate_DBError(t *testing.T) {
 	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	
+	mock.ExpectBegin()
+	mock.ExpectExec("SELECT pg_advisory_xact_lock").WithArgs(1112).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	mock.ExpectQuery("SELECT name FROM migration").WillReturnError(assert.AnError)
+	mock.ExpectRollback()
 
 	err = Migrate(sqlxDB)
 	assert.Error(t, err)
@@ -115,8 +126,15 @@ func TestInitialize(t *testing.T) {
 
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 
+	// Expect initialization transaction and lock
+	mock.ExpectBegin()
+	mock.ExpectExec("SELECT pg_advisory_xact_lock").WithArgs(1111).WillReturnResult(sqlmock.NewResult(1, 1))
+
 	// Expect schema execution
 	mock.ExpectExec("CREATE TABLE schema_test").WillReturnResult(sqlmock.NewResult(1, 1))
+
+	// Expect commit
+	mock.ExpectCommit()
 
 	err = Initialize(sqlxDB)
 	assert.NoError(t, err)
@@ -145,8 +163,12 @@ func TestInitialize_InvalidPath(t *testing.T) {
 	os.Chdir(tempDir)
 	defer os.Chdir(oldCwd)
 
-	db, _, _ := sqlmock.New()
+	db, mock, _ := sqlmock.New()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
+	
+	mock.ExpectBegin()
+	mock.ExpectExec("SELECT pg_advisory_xact_lock").WithArgs(1111).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectRollback()
 
 	err := Initialize(sqlxDB)
 	assert.Error(t, err)

@@ -250,7 +250,20 @@ func Initialize(db *sqlx.DB) error {
 		return err
 	}
 
-	logger.InfoCtx(ctx, "Initializing database schema from %s", initPath)
+	logger.InfoCtx(ctx, "Initializing database schema from %s (with lock)", initPath)
+
+	// Start a transaction for the entire initialization to acquire an advisory lock
+	tx, err := db.Beginx()
+	if err != nil {
+		return fmt.Errorf("failed to start initialization transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	// Acquire a transaction-level advisory lock (arbitrary ID 1111)
+	if _, err := tx.ExecContext(ctx, "SELECT pg_advisory_xact_lock($1)", 1111); err != nil {
+		return fmt.Errorf("failed to acquire schema initialization lock: %v", err)
+	}
+
 	lines := strings.Split(string(content), "\n")
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
@@ -260,26 +273,22 @@ func Initialize(db *sqlx.DB) error {
 				return fmt.Errorf("invalid path in schema file: %s", sqlFile)
 			}
 			fileStart := time.Now()
-			err := executeSQLFile(db, filepath.Join(schemaDir, sqlFile))
+			err := executeSQLFileTx(tx, filepath.Join(schemaDir, sqlFile))
 			if err != nil {
 				return fmt.Errorf("failed to execute schema file %s: %v", sqlFile, err)
 			}
 			logger.TraceCtx(ctx, "Initialized schema component: %s (took %v)", sqlFile, time.Since(fileStart))
 		}
 	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit initialization transaction: %v", err)
+	}
+
 	logger.InfoCtx(ctx, "Schema initialization completed in %v", time.Since(start))
 	return nil
 }
 
-func executeSQLFile(db *sqlx.DB, path string) error {
-	content, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-
-	_, err = db.ExecContext(context.Background(), string(content))
-	return err
-}
 
 func Migrate(db *sqlx.DB) error {
 	ctx := context.Background()
@@ -294,8 +303,20 @@ func Migrate(db *sqlx.DB) error {
 		return err
 	}
 
+	// Start a transaction to acquire a global advisory lock for the migration process
+	lockTx, err := db.Beginx()
+	if err != nil {
+		return fmt.Errorf("failed to start migration lock transaction: %v", err)
+	}
+	defer lockTx.Rollback()
+
+	// Acquire a transaction-level advisory lock (arbitrary ID 1112)
+	if _, err := lockTx.ExecContext(ctx, "SELECT pg_advisory_xact_lock($1)", 1112); err != nil {
+		return fmt.Errorf("failed to acquire migration lock: %v", err)
+	}
+
 	var applied []string
-	err = db.SelectContext(ctx, &applied, "SELECT name FROM migration")
+	err = lockTx.SelectContext(ctx, &applied, "SELECT name FROM migration")
 	if err != nil {
 		return fmt.Errorf("failed to fetch applied migrations: %v", err)
 	}
@@ -339,6 +360,11 @@ func Migrate(db *sqlx.DB) error {
 			logger.DebugCtx(ctx, "Successfully applied migration %s in %v", f.Name(), time.Since(migStart))
 			count++
 		}
+	}
+
+	// Release the global lock by committing the lock transaction
+	if err := lockTx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit migration lock transaction: %v", err)
 	}
 
 	if count > 0 {
