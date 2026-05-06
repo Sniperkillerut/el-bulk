@@ -56,7 +56,10 @@ export default function Dropdown({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <div className="flex items-center gap-1 cursor-pointer">
+      <div 
+        className="flex items-center gap-1 cursor-pointer"
+        onClick={() => setIsOpen(!isOpen)}
+      >
         {trigger || label}
         {!trigger && (
           <svg 

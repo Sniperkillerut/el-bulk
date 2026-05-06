@@ -44,15 +44,21 @@ export default function Navbar() {
     }
   }, [totalItems]);
 
-  const singlesItems = tcgs.map(tcg => ({
-    label: `${tcg.name} ${t('pages.nav.main.singles', 'Singles')}`,
-    href: `/${tcg.id}/singles`,
-  }));
+  const singlesItems = [
+    { label: t('pages.nav.main.view_all', 'View All Singles'), href: '/singles' },
+    ...tcgs.map(tcg => ({
+      label: `${tcg.name} ${t('pages.nav.main.singles', 'Singles')}`,
+      href: `/${tcg.id}/singles`,
+    }))
+  ];
 
-  const sealedItems = tcgs.map(tcg => ({
-    label: `${tcg.name} ${t('pages.nav.main.sealed', 'Sealed')}`,
-    href: `/${tcg.id}/sealed`,
-  }));
+  const sealedItems = [
+    { label: t('pages.nav.main.view_all_sealed', 'View All Sealed'), href: '/sealed' },
+    ...tcgs.map(tcg => ({
+      label: `${tcg.name} ${t('pages.nav.main.sealed', 'Sealed')}`,
+      href: `/${tcg.id}/sealed`,
+    }))
+  ];
 
   return (
     <>
@@ -72,21 +78,21 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center gap-4 xl:gap-6">
             <div className="flex items-center gap-4 pr-4 border-r border-border-plum/30">
               <Dropdown
-                trigger={<button className="flex flex-col items-center gap-1 bg-transparent border-none cursor-pointer group text-text-main">
+                trigger={<Link href="/singles" className="flex flex-col items-center gap-1 bg-transparent border-none cursor-pointer group text-text-main no-underline">
                   <div className="p-1 rounded-md group-hover:bg-text-main/5 transition-colors">
                     <LineIcons.Singles />
                   </div>
                   <span className="text-[10px] font-bold uppercase tracking-tighter opacity-70 group-hover:opacity-100">{t('pages.nav.main.singles', 'Singles')}</span>
-                </button>}
+                </Link>}
                 items={singlesItems}
               />
               <Dropdown
-                trigger={<button className="flex flex-col items-center gap-1 bg-transparent border-none cursor-pointer group text-text-main">
+                trigger={<Link href="/sealed" className="flex flex-col items-center gap-1 bg-transparent border-none cursor-pointer group text-text-main no-underline">
                   <div className="p-1 rounded-md group-hover:bg-text-main/5 transition-colors">
                     <LineIcons.Sealed />
                   </div>
                   <span className="text-[10px] font-bold uppercase tracking-tighter opacity-70 group-hover:opacity-100">{t('pages.nav.main.sealed', 'Sealed')}</span>
-                </button>}
+                </Link>}
                 items={sealedItems}
               />
               <NavLink href="/accessories" icon={LineIcons.Accessories} label={t('pages.nav.main.accessories', 'Accessories')} />
