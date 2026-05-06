@@ -24,9 +24,9 @@ export default function Skeleton({
   // Kraft paper aesthetic: subtle gradient plus a "rough" grain look if possible
   const kraftSkeletonStyle: React.CSSProperties = {
     ...baseStyle,
-    background: 'linear-gradient(90deg, var(--kraft-light) 25%, var(--kraft-mid) 50%, var(--kraft-light) 75%)',
+    background: 'linear-gradient(90deg, var(--bg-page-dark) 25%, var(--bg-page) 50%, var(--bg-page-dark) 75%)',
     backgroundSize: '200% 100%',
-    animation: 'skeleton-shimmer 1.5s infinite ease-in-out',
+    animation: 'shimmer 0.8s infinite ease-in-out',
   };
 
   if (variant === 'card') {
