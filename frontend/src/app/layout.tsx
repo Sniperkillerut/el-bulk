@@ -117,7 +117,7 @@ async function RootProviders({ children }: { children: React.ReactNode }) {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${bebas.variable} ${spaceMono.variable}`} suppressHydrationWarning>
-      <body>
+      <body suppressHydrationWarning>
         <RemoteLogManager />
         
         <Suspense fallback={<div className="min-h-screen bg-bg-page animate-pulse" />}>

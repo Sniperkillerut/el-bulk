@@ -8,7 +8,7 @@ export default function ProductCardSkeleton() {
         <Skeleton height="100%" borderRadius="0" />
         
         {/* Floating Category Badges placeholders */}
-        <div className="absolute top-2 left-2 flex flex-col gap-1">
+        <div className="absolute top-[38px] left-2 flex flex-col gap-1">
           <Skeleton width="50px" height="14px" borderRadius="var(--radius-sm)" />
           <Skeleton width="40px" height="14px" borderRadius="var(--radius-sm)" />
         </div>

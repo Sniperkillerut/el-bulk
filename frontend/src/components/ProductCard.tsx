@@ -69,14 +69,14 @@ export default function ProductCard({ product }: ProductCardProps) {
         <CardImage imageUrl={product.image_url} name={product.name} tcg={product.tcg} foilTreatment={product.foil_treatment} />
         
         {/* Product Badges (Hot/New) */}
-        <div className="absolute top-2 right-2 z-10 flex flex-col gap-1">
+        <div className="absolute top-[38px] right-2 z-10 flex flex-col gap-1">
           {product.is_hot && <HotBadge />}
           {product.is_new && <NewBadge />}
         </div>
 
         {/* Floating Categories */}
         {product.categories && product.categories.length > 0 && (
-          <div className="absolute top-2 left-2 z-10 flex flex-col gap-1 pointer-events-none">
+          <div className="absolute top-[38px] left-2 z-10 flex flex-col gap-1 pointer-events-none">
             {product.categories.map(c => (
               <span key={c.id} className="badge shadow-lg backdrop-blur-md" 
                     style={{ 
