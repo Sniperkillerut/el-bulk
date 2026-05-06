@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import useSWR from 'swr';
 import { fetchProducts, fetchCategories } from '@/lib/api';
 import ProductCard from '@/components/ProductCard';
+import ProductCardSkeleton from './skeletons/ProductCardSkeleton';
 import { FOIL_LABELS, TREATMENT_LABELS, TCG_LABELS, CustomCategory } from '@/lib/types';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -528,10 +529,8 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
           {loading ? (
             <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="card p-3 flex flex-col gap-2">
-                  <div className="skeleton" style={{ height: 160 }} />
-                  <div className="skeleton" style={{ height: 14, width: '80%' }} />
-                  <div className="skeleton" style={{ height: 12, width: '50%' }} />
+                <div key={i} style={{ animationDelay: `${i * 0.05}s` }} className="animate-fade-up">
+                  <ProductCardSkeleton />
                 </div>
               ))}
             </div>
@@ -541,8 +540,12 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
               <p className="text-sm">{t('pages.inventory.grid.status.no_results_desc', 'Try clearing your filters or check back later.')}</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fade-up">
-              {products.map(p => <ProductCard key={p.id} product={p} />)}
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {products.map((p, i) => (
+                <div key={p.id} style={{ animationDelay: `${i * 0.05}s` }} className="animate-fade-up">
+                  <ProductCard product={p} />
+                </div>
+              ))}
             </div>
           )}
 

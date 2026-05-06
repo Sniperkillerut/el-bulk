@@ -50,7 +50,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <div className="card flex flex-col overflow-hidden animate-fade-up relative" data-theme-area="product-card">
+    <div className="card flex flex-col overflow-hidden relative" data-theme-area="product-card">
       {/* Stamping Overlay */}
       {isAdding && (
         <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none overflow-hidden">
