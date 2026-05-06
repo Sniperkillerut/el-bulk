@@ -9,6 +9,7 @@ import (
 	"github.com/el-bulk/backend/middleware"
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/service"
+	"github.com/el-bulk/backend/utils/httputil"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/el-bulk/backend/utils/render"
 	"github.com/go-chi/chi/v5"
@@ -60,6 +61,10 @@ func (h *BountyHandler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *BountyHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	logger.TraceCtx(r.Context(), "Entering BountyHandler.Update | ID: %s", id)
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Bounty ID format", http.StatusBadRequest)
+		return
+	}
 	var input models.BountyInput
 	if err := decodeJSON(r, &input); err != nil {
 		logger.ErrorCtx(r.Context(), "Failed to decode bounty update for %s: %v", id, err)
@@ -84,6 +89,10 @@ func (h *BountyHandler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *BountyHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	logger.TraceCtx(r.Context(), "Entering BountyHandler.Delete | ID: %s", id)
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Bounty ID format", http.StatusBadRequest)
+		return
+	}
 	count, err := h.Service.DeleteBounty(r.Context(), id)
 	if err != nil {
 		logger.ErrorCtx(r.Context(), "Failed to delete bounty: %v", err)
@@ -115,6 +124,10 @@ func (h *BountyHandler) ListOffers(w http.ResponseWriter, r *http.Request) {
 func (h *BountyHandler) ListOffersByBounty(w http.ResponseWriter, r *http.Request) {
 	bountyID := chi.URLParam(r, "id")
 	logger.TraceCtx(r.Context(), "Entering BountyHandler.ListOffersByBounty | BountyID: %s", bountyID)
+	if err := httputil.ValidateUUID(bountyID); err != nil {
+		render.Error(w, "Invalid Bounty ID format", http.StatusBadRequest)
+		return
+	}
 	offers, err := h.Service.ListOffersByBounty(r.Context(), bountyID)
 	if err != nil {
 		logger.ErrorCtx(r.Context(), "Failed to list bounty offers for bounty %s: %v", bountyID, err)
@@ -130,6 +143,11 @@ func (h *BountyHandler) SubmitOffer(w http.ResponseWriter, r *http.Request) {
 	if err := decodeJSON(r, &input); err != nil {
 		logger.ErrorCtx(r.Context(), "Failed to decode offer input: %v", err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := httputil.ValidateUUID(input.BountyID); err != nil {
+		render.Error(w, "Invalid Bounty ID format", http.StatusBadRequest)
 		return
 	}
 
@@ -152,6 +170,10 @@ func (h *BountyHandler) SubmitOffer(w http.ResponseWriter, r *http.Request) {
 func (h *BountyHandler) UpdateOfferStatus(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	logger.TraceCtx(r.Context(), "Entering BountyHandler.UpdateOfferStatus | ID: %s", id)
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Offer ID format", http.StatusBadRequest)
+		return
+	}
 	var input models.UpdateBountyOfferStatusInput
 	if err := decodeJSON(r, &input); err != nil {
 		logger.ErrorCtx(r.Context(), "Failed to decode offer status update for %s: %v", id, err)
@@ -195,6 +217,13 @@ func (h *BountyHandler) CreateRequest(w http.ResponseWriter, r *http.Request) {
 		logger.ErrorCtx(r.Context(), "Failed to decode client request input: %v", err)
 		render.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
+	}
+
+	if input.CustomerID != nil && *input.CustomerID != "" {
+		if err := httputil.ValidateUUID(*input.CustomerID); err != nil {
+			render.Error(w, "Invalid Customer ID format", http.StatusBadRequest)
+			return
+		}
 	}
 
 	var userID *string
@@ -241,6 +270,10 @@ func (h *BountyHandler) CreateRequestsBatch(w http.ResponseWriter, r *http.Reque
 func (h *BountyHandler) UpdateRequestStatus(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	logger.TraceCtx(r.Context(), "Entering BountyHandler.UpdateRequestStatus | ID: %s", id)
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Request ID format", http.StatusBadRequest)
+		return
+	}
 	var input models.UpdateClientRequestStatusInput
 	if err := decodeJSON(r, &input); err != nil {
 		logger.ErrorCtx(r.Context(), "Failed to decode client request status update for %s: %v", id, err)
@@ -271,6 +304,10 @@ func (h *BountyHandler) UpdateRequestStatus(w http.ResponseWriter, r *http.Reque
 func (h *BountyHandler) AcceptRequest(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	logger.TraceCtx(r.Context(), "Entering BountyHandler.AcceptRequest | ID: %s", id)
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Request ID format", http.StatusBadRequest)
+		return
+	}
 	result, err := h.Service.AcceptRequest(r.Context(), id)
 	if err != nil {
 		logger.ErrorCtx(r.Context(), "Failed to accept request %s: %v", id, err)
@@ -283,6 +320,10 @@ func (h *BountyHandler) AcceptRequest(w http.ResponseWriter, r *http.Request) {
 func (h *BountyHandler) FulfillOffer(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	logger.TraceCtx(r.Context(), "Entering BountyHandler.FulfillOffer | ID: %s", id)
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Offer ID format", http.StatusBadRequest)
+		return
+	}
 	var input models.FulfillOfferInput
 	if err := decodeJSON(r, &input); err != nil {
 		logger.ErrorCtx(r.Context(), "Failed to decode fulfill offer input for %s: %v", id, err)
@@ -301,6 +342,10 @@ func (h *BountyHandler) FulfillOffer(w http.ResponseWriter, r *http.Request) {
 func (h *BountyHandler) ListRequestsByBounty(w http.ResponseWriter, r *http.Request) {
 	bountyID := chi.URLParam(r, "id")
 	logger.TraceCtx(r.Context(), "Entering BountyHandler.ListRequestsByBounty | BountyID: %s", bountyID)
+	if err := httputil.ValidateUUID(bountyID); err != nil {
+		render.Error(w, "Invalid Bounty ID format", http.StatusBadRequest)
+		return
+	}
 	requests, err := h.Service.ListRequestsByBounty(r.Context(), bountyID)
 	if err != nil {
 		logger.ErrorCtx(r.Context(), "Failed to list requests for bounty %s: %v", bountyID, err)
@@ -336,6 +381,10 @@ func (h *BountyHandler) CancelMeOffer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := chi.URLParam(r, "id")
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Offer ID format", http.StatusBadRequest)
+		return
+	}
 	if err := h.Service.CancelMeOffer(r.Context(), id, userID); err != nil {
 		logger.ErrorCtx(r.Context(), "Failed to cancel user bounty offer %s for user %s: %v", id, userID, err)
 		render.Error(w, "Offer cannot be cancelled. It may not exist, belong to you, or is already being processed.", http.StatusBadRequest)
@@ -370,6 +419,10 @@ func (h *BountyHandler) CancelMeRequest(w http.ResponseWriter, r *http.Request) 
 	}
 
 	id := chi.URLParam(r, "id")
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Request ID format", http.StatusBadRequest)
+		return
+	}
 	var input models.CancelMeRequestInput
 	if err := decodeJSON(r, &input); err != nil {
 		input.Reason = "Unspecified"

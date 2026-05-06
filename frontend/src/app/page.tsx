@@ -1,8 +1,28 @@
 import { fetchProducts, fetchCategories, fetchTCGs, fetchBounties } from '@/lib/api';
 import HomePageClient from './HomePageClient';
 import { CustomCategory } from '@/lib/types';
+import { Metadata } from 'next';
+import { getSharedProductMetadata } from '@/lib/metadata';
 
-export default async function HomePage() {
+type Props = {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const params = await searchParams;
+  const productId = params.productId;
+
+  if (typeof productId === 'string' && productId) {
+    const productMetadata = await getSharedProductMetadata(productId);
+    if (productMetadata) return productMetadata;
+  }
+
+  return {};
+}
+
+export default async function HomePage(props: Props) {
+  const searchParams = await props.searchParams;
+  const productId = searchParams.productId;
   let categories: CustomCategory[] = [];
   let tcgs: import('@/lib/types').TCG[] = [];
   let collections: { category: import('@/lib/types').CustomCategory; products: import('@/lib/types').Product[] }[] = [];

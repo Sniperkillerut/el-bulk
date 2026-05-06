@@ -1,16 +1,26 @@
 import { Metadata } from 'next';
 import { fetchBounties } from '@/lib/api';
 import PublicBountiesClient from '@/app/bounties/bounties-client';
+import { getSharedProductMetadata } from '@/lib/metadata';
 
-export const metadata: Metadata = {
-  title: 'Wanted Cards - El Bulk TCG',
-  description: 'Cards we are actively looking to buy. Check our bounty list and sell to us!',
-};
+interface PageProps {
+  searchParams: Promise<{ productId?: string }>;
+}
 
-// Cache values are managed via fetch/unstable_cache under PPR
+export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
+  const { productId } = await searchParams;
+  const productMetadata = await getSharedProductMetadata(productId || null);
+  
+  if (productMetadata) return productMetadata;
 
+  return {
+    title: 'Wanted Cards - El Bulk TCG',
+    description: 'Cards we are actively looking to buy. Check our bounty list and sell to us!',
+  };
+}
 
-export default async function BountiesPage() {
+export default async function BountiesPage(props: PageProps) {
+  const searchParams = await props.searchParams;
   const bounties = await fetchBounties({ active: true }).catch(() => []);
 
   return (

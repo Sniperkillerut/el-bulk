@@ -2,13 +2,20 @@ import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { fetchNoticeBySlug } from '@/lib/api';
 import NoticeDetailClient from './NoticeDetailClient';
+import { getSharedProductMetadata } from '@/lib/metadata';
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ productId?: string }>;
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { slug } = await params;
+  const { productId } = await searchParams;
+
+  const productMetadata = await getSharedProductMetadata(productId || null);
+  if (productMetadata) return productMetadata;
+
   try {
     const notice = await fetchNoticeBySlug(slug);
     const title = `${notice.title} | El Bulk News`;

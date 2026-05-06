@@ -3,12 +3,14 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
-	"github.com/el-bulk/backend/utils/render"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/el-bulk/backend/utils/httputil"
+	"github.com/el-bulk/backend/utils/render"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -206,6 +208,10 @@ func (h *AdminHandler) UndoAuditAction(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	if id == "" {
 		render.Error(w, "Audit log ID is required", http.StatusBadRequest)
+		return
+	}
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Audit Log ID format", http.StatusBadRequest)
 		return
 	}
 

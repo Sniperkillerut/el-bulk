@@ -7,6 +7,7 @@ import (
 	"github.com/el-bulk/backend/middleware"
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/crypto"
+	"github.com/el-bulk/backend/utils/httputil"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/el-bulk/backend/utils/render"
 	"github.com/go-chi/chi/v5"
@@ -59,6 +60,10 @@ func (h *CustomerAdminHandler) GetCustomerDetail(w http.ResponseWriter, r *http.
 	logger.TraceCtx(r.Context(), "Entering CustomerAdminHandler.GetCustomerDetail | ID: %s", id)
 	if id == "" {
 		render.Error(w, "ID is required", http.StatusBadRequest)
+		return
+	}
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Customer ID format", http.StatusBadRequest)
 		return
 	}
 
@@ -139,6 +144,10 @@ func (h *CustomerAdminHandler) AddNote(w http.ResponseWriter, r *http.Request) {
 	logger.TraceCtx(r.Context(), "Entering CustomerAdminHandler.AddNote | CustomerID: %s", id)
 	if id == "" {
 		render.Error(w, "ID is required", http.StatusBadRequest)
+		return
+	}
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Customer ID format", http.StatusBadRequest)
 		return
 	}
 

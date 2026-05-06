@@ -7,10 +7,10 @@ import (
 
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/service"
+	"github.com/el-bulk/backend/utils/httputil"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/el-bulk/backend/utils/render"
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 )
 
 type NoticeHandler struct {
@@ -97,7 +97,7 @@ func (h *NoticeHandler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *NoticeHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	logger.TraceCtx(r.Context(), "Entering NoticeHandler.Update | ID: %s", id)
-	if _, err := uuid.Parse(id); err != nil {
+	if err := httputil.ValidateUUID(id); err != nil {
 		render.Error(w, "Valid UUID is required", http.StatusBadRequest)
 		return
 	}
@@ -123,7 +123,7 @@ func (h *NoticeHandler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *NoticeHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	logger.TraceCtx(r.Context(), "Entering NoticeHandler.Delete | ID: %s", id)
-	if _, err := uuid.Parse(id); err != nil {
+	if err := httputil.ValidateUUID(id); err != nil {
 		render.Error(w, "Valid UUID is required", http.StatusBadRequest)
 		return
 	}
