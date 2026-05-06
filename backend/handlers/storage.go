@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/el-bulk/backend/service"
+	"github.com/el-bulk/backend/utils/httputil"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/el-bulk/backend/utils/render"
 	"github.com/go-chi/chi/v5"
@@ -52,6 +53,10 @@ func (h *StorageHandler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *StorageHandler) Update(w http.ResponseWriter, r *http.Request) {
 	logger.TraceCtx(r.Context(), "Entering StorageHandler.Update")
 	id := chi.URLParam(r, "id")
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Storage ID format", http.StatusBadRequest)
+		return
+	}
 	var input struct {
 		Name string `json:"name"`
 	}
@@ -71,6 +76,10 @@ func (h *StorageHandler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *StorageHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	logger.TraceCtx(r.Context(), "Entering StorageHandler.Delete")
 	id := chi.URLParam(r, "id")
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Storage ID format", http.StatusBadRequest)
+		return
+	}
 	if err := h.Service.Delete(r.Context(), id); err != nil {
 		render.Error(w, "Failed to delete location", http.StatusInternalServerError)
 		return

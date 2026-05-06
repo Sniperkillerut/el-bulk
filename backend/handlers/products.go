@@ -99,6 +99,10 @@ func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, "Product ID is required", http.StatusBadRequest)
 		return
 	}
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Product ID format", http.StatusBadRequest)
+		return
+	}
 	isAdmin, _ := r.Context().Value(middleware.IsAdminKey).(bool)
 
 	product, err := h.Service.GetByID(r.Context(), id, isAdmin)
@@ -163,6 +167,10 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, "Product ID is required", http.StatusBadRequest)
 		return
 	}
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Product ID format", http.StatusBadRequest)
+		return
+	}
 	var input models.ProductInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		logger.ErrorCtx(r.Context(), "Failed to decode update input for %s: %v", id, err)
@@ -185,6 +193,10 @@ func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	logger.TraceCtx(r.Context(), "Entering ProductHandler.Delete | ID: %s", id)
 	if id == "" {
 		render.Error(w, "Product ID is required", http.StatusBadRequest)
+		return
+	}
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Product ID format", http.StatusBadRequest)
 		return
 	}
 	if err := h.Service.Delete(r.Context(), id); err != nil {
@@ -272,6 +284,10 @@ func (h *ProductHandler) GetLowStock(w http.ResponseWriter, r *http.Request) {
 
 func (h *ProductHandler) GetStorage(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Product ID format", http.StatusBadRequest)
+		return
+	}
 	items, err := h.Service.GetStorage(r.Context(), id)
 	if err != nil {
 		logger.ErrorCtx(r.Context(), "GetStorage %s failed: %v", id, err)
@@ -284,6 +300,10 @@ func (h *ProductHandler) GetStorage(w http.ResponseWriter, r *http.Request) {
 func (h *ProductHandler) UpdateStorage(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	logger.TraceCtx(r.Context(), "Entering ProductHandler.UpdateStorage | ID: %s", id)
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Product ID format", http.StatusBadRequest)
+		return
+	}
 	var updates []models.ProductStorage
 	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
 		logger.ErrorCtx(r.Context(), "Failed to decode storage update for %s: %v", id, err)

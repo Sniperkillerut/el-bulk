@@ -107,6 +107,11 @@ func (h *OrderHandler) GetDetail(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	logger.TraceCtx(r.Context(), "Entering OrderHandler.GetDetail | ID: %s", id)
 
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Order ID format", http.StatusBadRequest)
+		return
+	}
+
 	detail, err := h.Service.GetOrderDetail(r.Context(), id, true)
 	if err != nil {
 		logger.ErrorCtx(r.Context(), "GetOrderDetail failed for %s: %v", id, err)
@@ -121,6 +126,11 @@ func (h *OrderHandler) GetDetail(w http.ResponseWriter, r *http.Request) {
 func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	logger.TraceCtx(r.Context(), "Entering OrderHandler.Update | ID: %s", id)
+
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Order ID format", http.StatusBadRequest)
+		return
+	}
 
 	var input models.UpdateOrderInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -142,6 +152,11 @@ func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *OrderHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	logger.TraceCtx(r.Context(), "Entering OrderHandler.Confirm | ID: %s", id)
+
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Order ID format", http.StatusBadRequest)
+		return
+	}
 
 	var input models.ConfirmOrderInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -173,6 +188,11 @@ func (h *OrderHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 func (h *OrderHandler) RestoreStock(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	logger.TraceCtx(r.Context(), "Entering OrderHandler.RestoreStock | ID: %s", id)
+
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Order ID format", http.StatusBadRequest)
+		return
+	}
 
 	var input struct {
 		Increments []models.StockDecrement `json:"increments"`
@@ -221,6 +241,10 @@ func (h *OrderHandler) GetMeDetail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := chi.URLParam(r, "id")
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Order ID format", http.StatusBadRequest)
+		return
+	}
 	detail, err := h.Service.GetOrderDetail(r.Context(), id, false)
 	if err != nil {
 		render.Error(w, "Order not found or database error", http.StatusNotFound)
@@ -246,6 +270,10 @@ func (h *OrderHandler) CancelMe(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := chi.URLParam(r, "id")
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Order ID format", http.StatusBadRequest)
+		return
+	}
 
 	if err := h.Service.CancelMe(r.Context(), id, userID); err != nil {
 		logger.ErrorCtx(r.Context(), "User order cancel error for %s (userID: %s): %v", id, userID, err)

@@ -10,6 +10,7 @@ import (
 	"github.com/el-bulk/backend/middleware"
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/service"
+	"github.com/el-bulk/backend/utils/httputil"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/el-bulk/backend/utils/render"
 	"github.com/go-chi/chi/v5"
@@ -80,6 +81,10 @@ func (h *CategoriesHandler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *CategoriesHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	logger.TraceCtx(r.Context(), "Entering CategoriesHandler.Update | ID: %s", id)
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Category ID format", http.StatusBadRequest)
+		return
+	}
 	var input models.CustomCategoryInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		logger.ErrorCtx(r.Context(), "Failed to decode category update for %s: %v", id, err)
@@ -136,6 +141,10 @@ func (h *CategoriesHandler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *CategoriesHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	logger.TraceCtx(r.Context(), "Entering CategoriesHandler.Delete | ID: %s", id)
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Category ID format", http.StatusBadRequest)
+		return
+	}
 	err := h.Service.Delete(r.Context(), id)
 	if err != nil {
 		if err.Error() == "no rows deleted" {

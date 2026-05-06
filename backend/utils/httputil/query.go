@@ -3,7 +3,15 @@ package httputil
 import (
 	"net/http"
 	"strconv"
+
+	"github.com/google/uuid"
 )
+
+// ValidateUUID checks if a string is a valid UUID.
+func ValidateUUID(id string) error {
+	_, err := uuid.Parse(id)
+	return err
+}
 
 // GetIntParam gets an integer parameter from the query string with a default value.
 func GetIntParam(r *http.Request, key string, defaultValue int) int {
