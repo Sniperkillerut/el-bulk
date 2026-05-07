@@ -14,7 +14,7 @@ import VersionDisplay from '@/components/VersionDisplay';
 
 export default function AdminSidebar() {
   const pathname = usePathname();
-  const { token, logout } = useAdmin();
+  const { token, settings, logout } = useAdmin();
   const { t } = useLanguage();
   const { adminSidebarOpen, adminSidebarSlim, toggleAdminSidebarSlim, setAdminSidebarOpen } = useUI();
 
