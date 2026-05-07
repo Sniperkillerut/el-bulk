@@ -34,11 +34,11 @@ func TestProductHandler_List_FiltersInactiveTCG(t *testing.T) {
 
 	// 3. Main list query
 	mock.ExpectQuery("(?i)SELECT .* FROM view_product_enriched p").
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "tcg"}).AddRow("1", "Black Lotus", "mtg"))
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "tcg"}).AddRow("550e8400-e29b-41d4-a716-446655440001", "Black Lotus", "550e8400-e29b-41d4-a716-446655440003"))
 
 	// 4. Enrichment (inside List)
 	mock.ExpectQuery("(?i)SELECT .* FROM \"order\" o").
-		WillReturnRows(sqlmock.NewRows([]string{"product_id", "cart_count"}).AddRow("1", 0))
+		WillReturnRows(sqlmock.NewRows([]string{"product_id", "cart_count"}).AddRow("550e8400-e29b-41d4-a716-446655440001", 0))
 	mock.ExpectQuery("(?is)SELECT product_id FROM order_item").WillReturnRows(sqlmock.NewRows([]string{"product_id"}))
 
 	// 5. Facets query
@@ -65,13 +65,13 @@ func TestProductHandler_GetByID_Public_FiltersInactiveTCG(t *testing.T) {
 
 	// Mocking a scenario where product is not found (e.g. inactive)
 	mock.ExpectQuery("(?is)SELECT fn_get_product_detail").
-		WithArgs("123").
+		WithArgs("550e8400-e29b-41d4-a716-446655440004").
 		WillReturnError(sql.ErrNoRows)
 
 	r := chi.NewRouter()
 	r.Get("/api/products/{id}", h.GetByID)
 
-	req, _ := http.NewRequest("GET", "/api/products/123", nil)
+	req, _ := http.NewRequest("GET", "/api/products/550e8400-e29b-41d4-a716-446655440004", nil)
 	rr := httptest.NewRecorder()
 
 	r.ServeHTTP(rr, req)

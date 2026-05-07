@@ -18,7 +18,7 @@ func TestCustomerAdminHandler_ListCustomers(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 	h := &CustomerAdminHandler{DB: sqlxDB}
 
-	mock.ExpectQuery("SELECT c.*").WillReturnRows(sqlmock.NewRows([]string{"id", "first_name", "last_name"}).AddRow("c1", "John", "Doe"))
+	mock.ExpectQuery("SELECT c.*").WillReturnRows(sqlmock.NewRows([]string{"id", "first_name", "last_name"}).AddRow("550e8400-e29b-41d4-a716-446655440010", "John", "Doe"))
 
 	req := httptest.NewRequest("GET", "/admin/customers", nil)
 	rr := httptest.NewRecorder()
@@ -33,16 +33,17 @@ func TestCustomerAdminHandler_GetCustomerDetail(t *testing.T) {
 	h := &CustomerAdminHandler{DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
-		mock.ExpectQuery("SELECT \\* FROM customer WHERE id = \\$1").WithArgs("c1").WillReturnRows(sqlmock.NewRows([]string{"id", "first_name", "last_name", "email"}).AddRow("c1", "John", "Doe", "john@example.com"))
-		mock.ExpectQuery("SELECT \\* FROM \"order\" WHERE customer_id = \\$1").WithArgs("c1").WillReturnRows(sqlmock.NewRows([]string{"id"}))
-		mock.ExpectQuery("SELECT n.*, a.username as admin_name FROM customer_note").WithArgs("c1").WillReturnRows(sqlmock.NewRows([]string{"id"}))
-		mock.ExpectQuery("SELECT EXISTS").WithArgs("c1", "john@example.com").WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
-		mock.ExpectQuery("SELECT \\* FROM client_request").WithArgs("c1", "john@example.com").WillReturnRows(sqlmock.NewRows([]string{"id"}))
-		mock.ExpectQuery("SELECT o.*, b.name as bounty_name FROM bounty_offer").WithArgs("c1").WillReturnRows(sqlmock.NewRows([]string{"id"}))
+		customerID := "550e8400-e29b-41d4-a716-446655440010"
+		mock.ExpectQuery("SELECT \\* FROM customer WHERE id = \\$1").WithArgs(customerID).WillReturnRows(sqlmock.NewRows([]string{"id", "first_name", "last_name", "email"}).AddRow(customerID, "John", "Doe", "john@example.com"))
+		mock.ExpectQuery("SELECT \\* FROM \"order\" WHERE customer_id = \\$1").WithArgs(customerID).WillReturnRows(sqlmock.NewRows([]string{"id"}))
+		mock.ExpectQuery("SELECT n.*, a.username as admin_name FROM customer_note").WithArgs(customerID).WillReturnRows(sqlmock.NewRows([]string{"id"}))
+		mock.ExpectQuery("SELECT EXISTS").WithArgs(customerID, "john@example.com").WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
+		mock.ExpectQuery("SELECT \\* FROM client_request").WithArgs(customerID, "john@example.com").WillReturnRows(sqlmock.NewRows([]string{"id"}))
+		mock.ExpectQuery("SELECT o.*, b.name as bounty_name FROM bounty_offer").WithArgs(customerID).WillReturnRows(sqlmock.NewRows([]string{"id"}))
 
 		r := chi.NewRouter()
 		r.Get("/admin/customers/{id}", h.GetCustomerDetail)
-		req := httptest.NewRequest("GET", "/admin/customers/c1", nil)
+		req := httptest.NewRequest("GET", "/admin/customers/"+customerID, nil)
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 
@@ -50,11 +51,12 @@ func TestCustomerAdminHandler_GetCustomerDetail(t *testing.T) {
 	})
 
 	t.Run("Not Found", func(t *testing.T) {
-		mock.ExpectQuery("SELECT \\* FROM customer WHERE id = \\$1").WithArgs("nonexistent").WillReturnError(assert.AnError)
+		customerID := "550e8400-e29b-41d4-a716-446655449999"
+		mock.ExpectQuery("SELECT \\* FROM customer WHERE id = \\$1").WithArgs(customerID).WillReturnError(assert.AnError)
 
 		r := chi.NewRouter()
 		r.Get("/admin/customers/{id}", h.GetCustomerDetail)
-		req := httptest.NewRequest("GET", "/admin/customers/nonexistent", nil)
+		req := httptest.NewRequest("GET", "/admin/customers/"+customerID, nil)
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 
@@ -68,12 +70,13 @@ func TestCustomerAdminHandler_AddNote(t *testing.T) {
 	h := &CustomerAdminHandler{DB: sqlxDB}
 
 	t.Run("Success", func(t *testing.T) {
-		mock.ExpectExec("INSERT INTO customer_note").WithArgs("c1", nil, "Test note", nil).WillReturnResult(sqlmock.NewResult(1, 1))
+		customerID := "550e8400-e29b-41d4-a716-446655440010"
+		mock.ExpectExec("INSERT INTO customer_note").WithArgs(customerID, nil, "Test note", nil).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		body, _ := json.Marshal(map[string]string{"content": "Test note"})
 		r := chi.NewRouter()
 		r.Post("/admin/customers/{id}/notes", h.AddNote)
-		req := httptest.NewRequest("POST", "/admin/customers/c1/notes", bytes.NewBuffer(body))
+		req := httptest.NewRequest("POST", "/admin/customers/"+customerID+"/notes", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 

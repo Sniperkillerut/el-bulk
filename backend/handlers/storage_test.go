@@ -24,7 +24,7 @@ func TestStorageHandler_List(t *testing.T) {
 	h := testStorageHandler(sqlxDB)
 
 	t.Run("Success", func(t *testing.T) {
-		mock.ExpectQuery("SELECT .* FROM storage_location").WillReturnRows(sqlmock.NewRows([]string{"id", "name", "item_count"}).AddRow("1", "Shelf", 10))
+		mock.ExpectQuery("SELECT .* FROM storage_location").WillReturnRows(sqlmock.NewRows([]string{"id", "name", "item_count"}).AddRow("550e8400-e29b-41d4-a716-446655440005", "Shelf", 10))
 		req, _ := http.NewRequest("GET", "/api/admin/storage", nil)
 		rr := httptest.NewRecorder()
 		h.List(rr, req)
@@ -51,7 +51,7 @@ func TestStorageHandler_Create(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		input := models.StoredIn{Name: "New Box"}
 		body, _ := json.Marshal(input)
-		mock.ExpectQuery("INSERT INTO storage_location").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("5"))
+		mock.ExpectQuery("INSERT INTO storage_location").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("550e8400-e29b-41d4-a716-446655440006"))
 
 		req, _ := http.NewRequest("POST", "/api/admin/storage", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
@@ -80,26 +80,30 @@ func TestStorageHandler_Update(t *testing.T) {
 	h := testStorageHandler(sqlxDB)
 
 	t.Run("Success", func(t *testing.T) {
+		storageID := "550e8400-e29b-41d4-a716-446655440005"
 		input := models.StoredIn{Name: "Updated Name"}
 		body, _ := json.Marshal(input)
+		mock.ExpectQuery("SELECT id, name FROM storage_location WHERE id = \\$1").WithArgs(storageID).WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(storageID, "Old Name"))
 		mock.ExpectExec("UPDATE storage_location").WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectQuery("SELECT id, name FROM storage_location WHERE id = \\$1").WithArgs(storageID).WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(storageID, "Updated Name"))
 
 		r := chi.NewRouter()
 		r.Put("/api/admin/storage/{id}", h.Update)
-		req, _ := http.NewRequest("PUT", "/api/admin/storage/1", bytes.NewBuffer(body))
+		req, _ := http.NewRequest("PUT", "/api/admin/storage/"+storageID, bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusOK, rr.Code)
 	})
 
 	t.Run("DB Error", func(t *testing.T) {
+		storageID := "550e8400-e29b-41d4-a716-446655440005"
 		input := models.StoredIn{Name: "Updated Name"}
 		body, _ := json.Marshal(input)
 		mock.ExpectExec("UPDATE storage_location").WillReturnError(fmt.Errorf("db error"))
 
 		r := chi.NewRouter()
 		r.Put("/api/admin/storage/{id}", h.Update)
-		req, _ := http.NewRequest("PUT", "/api/admin/storage/1", bytes.NewBuffer(body))
+		req, _ := http.NewRequest("PUT", "/api/admin/storage/"+storageID, bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusBadRequest, rr.Code)
@@ -115,20 +119,24 @@ func TestStorageHandler_Delete(t *testing.T) {
 	h := testStorageHandler(sqlxDB)
 
 	t.Run("Success", func(t *testing.T) {
+		storageID := "550e8400-e29b-41d4-a716-446655440005"
+		mock.ExpectQuery("SELECT id, name FROM storage_location WHERE id = \\$1").WithArgs(storageID).WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(storageID, "Shelf"))
+		mock.ExpectQuery("SELECT product_id, storage_id, quantity FROM product_storage WHERE storage_id = \\$1").WithArgs(storageID).WillReturnRows(sqlmock.NewRows([]string{"product_id", "storage_id", "quantity"}))
 		mock.ExpectExec("DELETE FROM storage_location").WillReturnResult(sqlmock.NewResult(0, 1))
 		r := chi.NewRouter()
 		r.Delete("/api/admin/storage/{id}", h.Delete)
-		req, _ := http.NewRequest("DELETE", "/api/admin/storage/1", nil)
+		req, _ := http.NewRequest("DELETE", "/api/admin/storage/"+storageID, nil)
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusOK, rr.Code)
 	})
 
 	t.Run("DB Error", func(t *testing.T) {
+		storageID := "550e8400-e29b-41d4-a716-446655440005"
 		mock.ExpectExec("DELETE FROM storage_location").WillReturnError(fmt.Errorf("db error"))
 		r := chi.NewRouter()
 		r.Delete("/api/admin/storage/{id}", h.Delete)
-		req, _ := http.NewRequest("DELETE", "/api/admin/storage/1", nil)
+		req, _ := http.NewRequest("DELETE", "/api/admin/storage/"+storageID, nil)
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)

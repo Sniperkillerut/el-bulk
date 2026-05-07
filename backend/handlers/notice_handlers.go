@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/service"
@@ -112,7 +113,11 @@ func (h *NoticeHandler) Update(w http.ResponseWriter, r *http.Request) {
 	res, err := h.Service.Update(r.Context(), id, input)
 	if err != nil {
 		logger.ErrorCtx(r.Context(), "Error updating notice %s: %v", id, err)
-		render.Error(w, "Notice not found or database error", http.StatusInternalServerError)
+		status := http.StatusInternalServerError
+		if err.Error() == "no rows updated" || strings.Contains(err.Error(), "no rows in result set") {
+			status = http.StatusNotFound
+		}
+		render.Error(w, "Notice not found or database error", status)
 		return
 	}
 
@@ -130,7 +135,11 @@ func (h *NoticeHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.Service.Delete(r.Context(), id); err != nil {
 		logger.ErrorCtx(r.Context(), "Error deleting notice %s: %v", id, err)
-		render.Error(w, "Database error", http.StatusInternalServerError)
+		status := http.StatusInternalServerError
+		if strings.Contains(err.Error(), "no rows deleted") {
+			status = http.StatusNotFound
+		}
+		render.Error(w, "Database error", status)
 		return
 	}
 

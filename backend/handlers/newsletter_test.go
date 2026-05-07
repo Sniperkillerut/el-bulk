@@ -45,7 +45,7 @@ func TestNewsletterHandler_Subscribe(t *testing.T) {
 
 	t.Run("Subscribed with Customer Match", func(t *testing.T) {
 		email := "cust@example.com"
-		custID := "c-123"
+		custID := "550e8400-e29b-41d4-a716-446655440010"
 		mock.ExpectQuery("SELECT COUNT\\(\\*\\) FROM newsletter_subscriber").WithArgs(email).WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
 		mock.ExpectQuery("SELECT id FROM customer").WithArgs(email).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(custID))
 		mock.ExpectExec("INSERT INTO newsletter_subscriber").WithArgs(email, custID).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -81,7 +81,7 @@ func TestNewsletterHandler_AdminGetSubscribers(t *testing.T) {
 	h := testNewsletterHandler(sqlxDB)
 
 	mock.ExpectQuery("SELECT n.*, c.first_name, c.last_name").WillReturnRows(sqlmock.NewRows([]string{"email", "customer_id", "first_name", "last_name"}).
-		AddRow("test@example.com", "c1", "John", "Doe"))
+		AddRow("test@example.com", "550e8400-e29b-41d4-a716-446655440010", "John", "Doe"))
 
 	req := httptest.NewRequest("GET", "/admin/newsletter/subscribers", nil)
 	rr := httptest.NewRecorder()

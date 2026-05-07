@@ -29,7 +29,7 @@ func TestProductHandler_BulkCreate_Errors(t *testing.T) {
 	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
 	t.Run("SP Error", func(t *testing.T) {
-		inputs := []models.ProductInput{{Name: "P1", TCG: "mtg", Category: "singles"}}
+		inputs := []models.ProductInput{{Name: "P1", TCG: "550e8400-e29b-41d4-a716-446655440003", Category: "singles"}}
 		reqBody := struct {
 			Products []models.ProductInput `json:"products"`
 		}{Products: inputs}
@@ -55,20 +55,20 @@ func TestProductHandler_UpdateStorage_Errors(t *testing.T) {
 	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
 	t.Run("Tx Begin Error", func(t *testing.T) {
-		updates := []models.ProductStorage{{StorageID: "loc1", Quantity: 5}}
+		updates := []models.ProductStorage{{StorageID: "550e8400-e29b-41d4-a716-446655440005", Quantity: 5}}
 		body, _ := json.Marshal(updates)
 		mock.ExpectBegin().WillReturnError(fmt.Errorf("tx error"))
 
 		r := chi.NewRouter()
 		r.Put("/api/admin/products/{id}/storage", h.UpdateStorage)
-		req, _ := http.NewRequest("PUT", "/api/admin/products/p1/storage", bytes.NewBuffer(body))
+		req, _ := http.NewRequest("PUT", "/api/admin/products/550e8400-e29b-41d4-a716-446655440001/storage", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)
 	})
 
 	t.Run("Delete Error", func(t *testing.T) {
-		updates := []models.ProductStorage{{StorageID: "loc1", Quantity: 5}}
+		updates := []models.ProductStorage{{StorageID: "550e8400-e29b-41d4-a716-446655440005", Quantity: 5}}
 		body, _ := json.Marshal(updates)
 		mock.ExpectBegin()
 		mock.ExpectExec("DELETE FROM product_storage").WillReturnError(fmt.Errorf("db error"))
@@ -76,7 +76,7 @@ func TestProductHandler_UpdateStorage_Errors(t *testing.T) {
 
 		r := chi.NewRouter()
 		r.Put("/api/admin/products/{id}/storage", h.UpdateStorage)
-		req, _ := http.NewRequest("PUT", "/api/admin/products/p1/storage", bytes.NewBuffer(body))
+		req, _ := http.NewRequest("PUT", "/api/admin/products/550e8400-e29b-41d4-a716-446655440001/storage", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)
@@ -98,7 +98,7 @@ func TestProductHandler_Delete_Errors(t *testing.T) {
 		mock.ExpectExec("DELETE FROM product").WillReturnError(fmt.Errorf("db error"))
 		r := chi.NewRouter()
 		r.Delete("/api/admin/products/{id}", h.Delete)
-		req, _ := http.NewRequest("DELETE", "/api/admin/products/p1", nil)
+		req, _ := http.NewRequest("DELETE", "/api/admin/products/550e8400-e29b-41d4-a716-446655440001", nil)
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)
@@ -118,7 +118,7 @@ func TestProductHandler_ListTCGs(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id", "name", "is_active", "item_count"}).
-			AddRow("mtg", "Magic", true, 10)
+			AddRow("550e8400-e29b-41d4-a716-446655440003", "Magic", true, 10)
 		mock.ExpectQuery("(?is)SELECT t.*, COUNT\\(p.id\\) as item_count FROM tcg t LEFT JOIN product p ON t.id = p.tcg WHERE t.is_active = true GROUP BY t.id ORDER BY t.name").WillReturnRows(rows)
 
 		req, _ := http.NewRequest("GET", "/api/tcgs?active_only=true", nil)
@@ -148,7 +148,7 @@ func TestProductHandler_BulkCreate_Extra(t *testing.T) {
 	h := &ProductHandler{Service: ps, DB: sqlxDB}
 
 	t.Run("Skip Invalid", func(t *testing.T) {
-		inputs := []models.ProductInput{{Name: ""}, {Name: "P1", TCG: "mtg", Category: "singles"}}
+		inputs := []models.ProductInput{{Name: ""}, {Name: "P1", TCG: "550e8400-e29b-41d4-a716-446655440003", Category: "singles"}}
 		reqBody := struct {
 			Products []models.ProductInput `json:"products"`
 		}{Products: inputs}
@@ -165,7 +165,7 @@ func TestProductHandler_BulkCreate_Extra(t *testing.T) {
 	})
 
 	t.Run("Insert Error", func(t *testing.T) {
-		inputs := []models.ProductInput{{Name: "P1", TCG: "mtg", Category: "singles"}}
+		inputs := []models.ProductInput{{Name: "P1", TCG: "550e8400-e29b-41d4-a716-446655440003", Category: "singles"}}
 		reqBody := struct {
 			Products []models.ProductInput `json:"products"`
 		}{Products: inputs}

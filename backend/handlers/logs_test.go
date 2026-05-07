@@ -17,7 +17,7 @@ func TestLogHandler_Receive(t *testing.T) {
 		log := FrontendLog{
 			Level:   "info",
 			Message: "Test message",
-			Context: map[string]interface{}{"user_id": "123"},
+			Context: map[string]interface{}{"user_id": "550e8400-e29b-41d4-a716-446655440010"},
 		}
 		body, _ := json.Marshal(log)
 

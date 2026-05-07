@@ -65,7 +65,7 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id", "tcg", "name", "set_name", "set_code", "collector_number", "foil_treatment", "card_treatment", "price_source", "scryfall_id", "ck_set_name"}).
-			AddRow("550e8400-e29b-41d4-a716-446655440000", "mtg", "Black Lotus", "Limited Edition Alpha", "lea", "", "non_foil", "normal", "tcgplayer", "", "")
+			AddRow("550e8400-e29b-41d4-a716-446655440000", "mtg", "Black Lotus", "Limited Edition Alpha", "lea", "1", "non_foil", "normal", "tcgplayer", "std_id", "")
 		
 		mock.ExpectQuery("(?i)SELECT .* FROM product p .*").
 			WillReturnRows(rows)
@@ -123,7 +123,7 @@ func TestRefreshHandler_Trigger(t *testing.T) {
 
 	mock.ExpectQuery("(?i)SELECT .* FROM product p .*").
 		WillReturnRows(sqlmock.NewRows([]string{"id", "tcg", "name", "set_name", "set_code", "collector_number", "foil_treatment", "card_treatment", "price_source", "scryfall_id", "ck_set_name"}).
-			AddRow("550e8400-e29b-41d4-a716-446655440000", "mtg", "Black Lotus", "Limited Edition Alpha", "lea", "", "non_foil", "normal", "tcgplayer", "", ""))
+			AddRow("550e8400-e29b-41d4-a716-446655440000", "mtg", "Black Lotus", "Limited Edition Alpha", "lea", "1", "non_foil", "normal", "tcgplayer", "std_id", ""))
 
 	// Mock SYNC calls after product list
 	mock.ExpectExec("(?i)TRUNCATE TABLE external_scryfall").WillReturnResult(sqlmock.NewResult(0, 0))

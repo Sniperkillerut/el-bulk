@@ -32,7 +32,7 @@ func TestCategoriesHandler_List(t *testing.T) {
 	t.Run("Admin List", func(t *testing.T) {
 		now := time.Now()
 		rows := sqlmock.NewRows([]string{"id", "name", "slug", "is_active", "show_badge", "searchable", "created_at", "item_count"}).
-			AddRow("c1", "Cat 1", "cat-1", true, true, true, now, 5)
+			AddRow("550e8400-e29b-41d4-a716-446655440007", "Cat 1", "cat-1", true, true, true, now, 5)
 
 		mock.ExpectQuery("(?i)SELECT .* FROM custom_category c.*LEFT JOIN product_category pc").WillReturnRows(rows)
 
@@ -52,7 +52,7 @@ func TestCategoriesHandler_List(t *testing.T) {
 		now := time.Now()
 		mock.ExpectQuery("(?i)SELECT .* FROM custom_category c.*LEFT JOIN product_category pc.*WHERE .* HAVING COUNT.*").
 			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "slug", "is_active", "show_badge", "searchable", "created_at", "item_count"}).
-				AddRow("c1", "Cat 1", "cat-1", true, true, true, now, 5))
+				AddRow("550e8400-e29b-41d4-a716-446655440007", "Cat 1", "cat-1", true, true, true, now, 5))
 
 		req, _ := http.NewRequest("GET", "/api/categories", nil)
 		rr := httptest.NewRecorder()
@@ -82,7 +82,7 @@ func TestCategoriesHandler_Create(t *testing.T) {
 		mock.ExpectQuery("INSERT INTO custom_category").
 			WithArgs(nil, "New Category", "new-category", true, true, true, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "slug", "is_active", "show_badge", "searchable", "bg_color", "text_color", "icon", "created_at"}).
-				AddRow("c2", "New Category", "new-category", true, true, true, nil, nil, nil, time.Now()))
+				AddRow("550e8400-e29b-41d4-a716-446655440008", "New Category", "new-category", true, true, true, nil, nil, nil, time.Now()))
 
 		req, _ := http.NewRequest("POST", "/api/admin/categories", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
@@ -112,16 +112,17 @@ func TestCategoriesHandler_Update(t *testing.T) {
 	h := &CategoriesHandler{Service: service.NewCategoryService(store.NewCategoryStore(sqlxDB), &NopAuditer{})}
 
 	t.Run("Success", func(t *testing.T) {
+		categoryID := "550e8400-e29b-41d4-a716-446655440007"
 		input := models.CustomCategoryInput{Name: "Updated Cat"}
 		body, _ := json.Marshal(input)
 
 		mock.ExpectQuery("(?i)UPDATE custom_category SET .* WHERE id = \\$3").
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), "c1").
-			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow("c1", "Updated Cat"))
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), categoryID).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(categoryID, "Updated Cat"))
 
 		r := chi.NewRouter()
 		r.Put("/api/admin/categories/{id}", h.Update)
-		req, _ := http.NewRequest("PUT", "/api/admin/categories/c1", bytes.NewBuffer(body))
+		req, _ := http.NewRequest("PUT", "/api/admin/categories/"+categoryID, bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 
@@ -129,13 +130,14 @@ func TestCategoriesHandler_Update(t *testing.T) {
 	})
 
 	t.Run("DB General Error", func(t *testing.T) {
+		categoryID := "550e8400-e29b-41d4-a716-446655440009"
 		input := models.CustomCategoryInput{Name: "Unknown"}
 		body, _ := json.Marshal(input)
 		mock.ExpectQuery("UPDATE custom_category").WillReturnError(fmt.Errorf("db error"))
 
 		r := chi.NewRouter()
 		r.Put("/api/admin/categories/{id}", h.Update)
-		req, _ := http.NewRequest("PUT", "/api/admin/categories/unknown", bytes.NewBuffer(body))
+		req, _ := http.NewRequest("PUT", "/api/admin/categories/"+categoryID, bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)
@@ -151,13 +153,14 @@ func TestCategoriesHandler_Delete(t *testing.T) {
 	h := &CategoriesHandler{Service: service.NewCategoryService(store.NewCategoryStore(sqlxDB), &NopAuditer{})}
 
 	t.Run("Success", func(t *testing.T) {
+		categoryID := "550e8400-e29b-41d4-a716-446655440007"
 		mock.ExpectExec("DELETE FROM custom_category").
-			WithArgs("c1").
+			WithArgs(categoryID).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
 		r := chi.NewRouter()
 		r.Delete("/api/admin/categories/{id}", h.Delete)
-		req, _ := http.NewRequest("DELETE", "/api/admin/categories/c1", nil)
+		req, _ := http.NewRequest("DELETE", "/api/admin/categories/"+categoryID, nil)
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 
@@ -165,10 +168,11 @@ func TestCategoriesHandler_Delete(t *testing.T) {
 	})
 
 	t.Run("Error", func(t *testing.T) {
+		categoryID := "550e8400-e29b-41d4-a716-446655440007"
 		mock.ExpectExec("DELETE FROM custom_category").WillReturnError(fmt.Errorf("db error"))
 		r := chi.NewRouter()
 		r.Delete("/api/admin/categories/{id}", h.Delete)
-		req, _ := http.NewRequest("DELETE", "/api/admin/categories/c1", nil)
+		req, _ := http.NewRequest("DELETE", "/api/admin/categories/"+categoryID, nil)
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)

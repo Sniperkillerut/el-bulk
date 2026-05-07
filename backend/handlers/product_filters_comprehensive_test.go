@@ -31,13 +31,14 @@ func TestProductHandler_BuildFilters_Comprehensive(t *testing.T) {
 
 			// 2. Total count
 			mock.ExpectQuery("SELECT COUNT\\(\\*\\) FROM product p").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+			productID := "550e8400-e29b-41d4-a716-446655440001"
 			// 3. Main list
-			mock.ExpectQuery("SELECT .* FROM view_product_enriched p").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("1"))
+			mock.ExpectQuery("SELECT .* FROM view_product_enriched p").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(productID))
 
 			// 4. Enrichment: populateCartCounts
 			mock.ExpectQuery("(?i)SELECT .* FROM \"order\" o").
-				WithArgs("1").
-				WillReturnRows(sqlmock.NewRows([]string{"product_id", "cart_count"}).AddRow("1", 0))
+				WithArgs(productID).
+				WillReturnRows(sqlmock.NewRows([]string{"product_id", "cart_count"}).AddRow(productID, 0))
 			mock.ExpectQuery("(?is)SELECT product_id FROM order_item").WillReturnRows(sqlmock.NewRows([]string{"product_id"}))
 
 			// 5. Facets (1 call)
@@ -51,9 +52,9 @@ func TestProductHandler_BuildFilters_Comprehensive(t *testing.T) {
 		})
 	}
 
-	testFilters("Multiple Filters", "?tcg=mtg&category=singles&foil=foil,non_foil&rarity=rare&condition=NM,LP&language=en&search=lotus")
+	testFilters("Multiple Filters", "?tcg=550e8400-e29b-41d4-a716-446655440003&category=singles&foil=foil,non_foil&rarity=rare&condition=NM,LP&language=en&search=lotus")
 	testFilters("Color Filter", "?color=W,U,B")
-	testFilters("Storage Filter", "?storage_id=loc1")
+	testFilters("Storage Filter", "?storage_id=550e8400-e29b-41d4-a716-446655440005")
 	testFilters("Collection Filter", "?collection=my-deck")
 	testFilters("Treatment Filter", "?treatment=borderless,extendedart")
 }
@@ -73,12 +74,13 @@ func TestProductHandler_AdminVsPublic(t *testing.T) {
 		// 1. Settings
 		mock.ExpectQuery("(?i)SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop_rate", "4000"))
 
+		productID := "550e8400-e29b-41d4-a716-446655440001"
 		mock.ExpectQuery("(?i)SELECT COUNT\\(\\*\\) FROM product p LEFT JOIN tcg t").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
-		mock.ExpectQuery("(?i)SELECT .* FROM view_product_enriched p LEFT JOIN tcg t").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("1"))
+		mock.ExpectQuery("(?i)SELECT .* FROM view_product_enriched p LEFT JOIN tcg t").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(productID))
 
 		// Enrichment
 		mock.ExpectQuery("(?i)SELECT .* FROM \"order\" o").
-			WillReturnRows(sqlmock.NewRows([]string{"product_id", "cart_count"}).AddRow("1", 0))
+			WillReturnRows(sqlmock.NewRows([]string{"product_id", "cart_count"}).AddRow(productID, 0))
 		mock.ExpectQuery("(?is)SELECT product_id FROM order_item").WillReturnRows(sqlmock.NewRows([]string{"product_id"}))
 
 		// Facets
@@ -105,12 +107,13 @@ func TestProductHandler_AdminVsPublic(t *testing.T) {
 		// 1. Settings
 		mock.ExpectQuery("(?i)SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop_rate", "4000"))
 
+		productID := "550e8400-e29b-41d4-a716-446655440001"
 		mock.ExpectQuery("(?i)SELECT COUNT\\(\\*\\) FROM product p").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
-		mock.ExpectQuery("(?i)SELECT .* FROM view_product_enriched p").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("1"))
+		mock.ExpectQuery("(?i)SELECT .* FROM view_product_enriched p").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(productID))
 
 		// Enrichment
 		mock.ExpectQuery("(?i)SELECT .* FROM \"order\" o").
-			WillReturnRows(sqlmock.NewRows([]string{"product_id", "cart_count"}).AddRow("1", 0))
+			WillReturnRows(sqlmock.NewRows([]string{"product_id", "cart_count"}).AddRow(productID, 0))
 		mock.ExpectQuery("(?is)SELECT product_id FROM order_item").WillReturnRows(sqlmock.NewRows([]string{"product_id"}))
 
 		// Facets

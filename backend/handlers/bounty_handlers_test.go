@@ -25,7 +25,7 @@ func TestBountyHandler_List(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id", "name", "tcg", "is_active", "created_at", "updated_at"}).
-			AddRow("b1", "Black Lotus", "mtg", true, time.Now(), time.Now())
+			AddRow("550e8400-e29b-41d4-a716-446655440030", "Black Lotus", "550e8400-e29b-41d4-a716-446655440003", true, time.Now(), time.Now())
 		mock.ExpectQuery("SELECT .* FROM bounty").WillReturnRows(rows)
 
 		req, _ := http.NewRequest("GET", "/api/bounties", nil)
@@ -40,7 +40,7 @@ func TestBountyHandler_List(t *testing.T) {
 		targetPrice := 100.0
 		priceReference := 90.0
 		rows := sqlmock.NewRows([]string{"id", "name", "tcg", "target_price", "hide_price", "price_source", "price_reference", "is_active", "created_at", "updated_at"}).
-			AddRow("b1", "Black Lotus", "mtg", &targetPrice, true, "source", &priceReference, true, &now, &now)
+			AddRow("550e8400-e29b-41d4-a716-446655440030", "Black Lotus", "550e8400-e29b-41d4-a716-446655440003", &targetPrice, true, "source", &priceReference, true, &now, &now)
 		mock.ExpectQuery("SELECT .* FROM bounty").WillReturnRows(rows)
 
 		req, _ := http.NewRequest("GET", "/api/bounties", nil)
@@ -71,15 +71,17 @@ func TestBountyHandler_Create(t *testing.T) {
 	h := testBountyHandler(sqlxDB)
 
 	t.Run("Success", func(t *testing.T) {
+		tcgID := "550e8400-e29b-41d4-a716-446655440003"
+		bountyID := "550e8400-e29b-41d4-a716-446655440030"
 		input := models.BountyInput{
 			Name: "Black Lotus",
-			TCG:  "mtg",
+			TCG:  tcgID,
 		}
 		body, _ := json.Marshal(input)
 
 		mock.ExpectQuery("INSERT INTO bounty").
 			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "tcg"}).
-				AddRow("b1", "Black Lotus", "mtg"))
+				AddRow(bountyID, "Black Lotus", tcgID))
 
 		req, _ := http.NewRequest("POST", "/api/admin/bounties", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
@@ -109,16 +111,17 @@ func TestBountyHandler_Update(t *testing.T) {
 	h := testBountyHandler(sqlxDB)
 
 	t.Run("Success", func(t *testing.T) {
+		bountyID := "550e8400-e29b-41d4-a716-446655440030"
 		input := models.BountyInput{Name: "Updated Lotus"}
 		body, _ := json.Marshal(input)
 
 		mock.ExpectQuery("UPDATE bounty").
 			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).
-				AddRow("b1", "Updated Lotus"))
+				AddRow(bountyID, "Updated Lotus"))
 
 		r := chi.NewRouter()
 		r.Put("/api/admin/bounties/{id}", h.Update)
-		req, _ := http.NewRequest("PUT", "/api/admin/bounties/b1", bytes.NewBuffer(body))
+		req, _ := http.NewRequest("PUT", "/api/admin/bounties/"+bountyID, bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 
@@ -135,8 +138,11 @@ func TestBountyHandler_SubmitOffer(t *testing.T) {
 	h := testBountyHandler(sqlxDB)
 
 	t.Run("Success", func(t *testing.T) {
+		bountyID := "550e8400-e29b-41d4-a716-446655440030"
+		offerID := "550e8400-e29b-41d4-a716-446655440040"
+		customerID := "550e8400-e29b-41d4-a716-446655440010"
 		input := models.BountyOfferInput{
-			BountyID:        "b1",
+			BountyID:        bountyID,
 			CustomerName:    "John Doe",
 			CustomerContact: "12345",
 			Quantity:        1,
@@ -145,7 +151,7 @@ func TestBountyHandler_SubmitOffer(t *testing.T) {
 
 		mock.ExpectQuery("SELECT fn_submit_bounty_offer").
 			WillReturnRows(sqlmock.NewRows([]string{"fn_submit_bounty_offer"}).
-				AddRow([]byte(`{"id":"o1","bounty_id":"b1","customer_id":"c1","quantity":1}`)))
+				AddRow([]byte(`{"id":"` + offerID + `","bounty_id":"` + bountyID + `","customer_id":"` + customerID + `","quantity":1}`)))
 
 		req, _ := http.NewRequest("POST", "/api/bounties/offer", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
@@ -164,6 +170,7 @@ func TestBountyHandler_CreateRequest(t *testing.T) {
 	h := testBountyHandler(sqlxDB)
 
 	t.Run("Success", func(t *testing.T) {
+		requestID := "550e8400-e29b-41d4-a716-446655440050"
 		input := models.ClientRequestInput{
 			CustomerName:    "John Doe",
 			CustomerContact: "12345",
@@ -173,7 +180,7 @@ func TestBountyHandler_CreateRequest(t *testing.T) {
 
 		mock.ExpectQuery("SELECT fn_submit_client_request").
 			WillReturnRows(sqlmock.NewRows([]string{"fn_submit_client_request"}).
-				AddRow([]byte(`{"id":"r1","customer_name":"John Doe","card_name":"Black Lotus"}`)))
+				AddRow([]byte(`{"id":"` + requestID + `","customer_name":"John Doe","card_name":"Black Lotus"}`)))
 
 		req, _ := http.NewRequest("POST", "/api/wanted/request", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
@@ -189,7 +196,7 @@ func TestBountyHandler_ListOffers(t *testing.T) {
 	h := testBountyHandler(sqlxDB)
 
 	rows := sqlmock.NewRows([]string{"id", "bounty_id", "customer_id", "customer_contact"}).
-		AddRow("o1", "b1", "c1", "12345")
+		AddRow("550e8400-e29b-41d4-a716-446655440040", "550e8400-e29b-41d4-a716-446655440030", "550e8400-e29b-41d4-a716-446655440010", "12345")
 	mock.ExpectQuery("SELECT .* FROM bounty_offer").WillReturnRows(rows)
 
 	req, _ := http.NewRequest("GET", "/api/admin/bounties/offers", nil)
@@ -205,15 +212,16 @@ func TestBountyHandler_UpdateOfferStatus(t *testing.T) {
 	h := testBountyHandler(sqlxDB)
 
 	t.Run("Success", func(t *testing.T) {
+		offerID := "550e8400-e29b-41d4-a716-446655440040"
 		input := models.UpdateBountyOfferStatusInput{Status: "accepted"}
 		body, _ := json.Marshal(input)
 
-		mock.ExpectExec("UPDATE bounty_offer").WithArgs("accepted", "o1").WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectQuery("SELECT .* FROM bounty_offer").WithArgs("o1").WillReturnRows(sqlmock.NewRows([]string{"id", "status", "customer_contact"}).AddRow("o1", "accepted", "12345"))
+		mock.ExpectExec("UPDATE bounty_offer").WithArgs("accepted", offerID).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectQuery("SELECT .* FROM bounty_offer").WithArgs(offerID).WillReturnRows(sqlmock.NewRows([]string{"id", "status", "customer_contact"}).AddRow(offerID, "accepted", "12345"))
 
 		r := chi.NewRouter()
 		r.Put("/api/admin/bounties/offers/{id}/status", h.UpdateOfferStatus)
-		req, _ := http.NewRequest("PUT", "/api/admin/bounties/offers/o1/status", bytes.NewBuffer(body))
+		req, _ := http.NewRequest("PUT", "/api/admin/bounties/offers/"+offerID+"/status", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 
@@ -227,7 +235,7 @@ func TestBountyHandler_ListRequests(t *testing.T) {
 	h := testBountyHandler(sqlxDB)
 
 	rows := sqlmock.NewRows([]string{"id", "customer_name", "customer_contact", "card_name"}).
-		AddRow("r1", "John Doe", "12345", "Black Lotus")
+		AddRow("550e8400-e29b-41d4-a716-446655440050", "John Doe", "12345", "Black Lotus")
 	mock.ExpectQuery("SELECT .* FROM client_request").WillReturnRows(rows)
 
 	req, _ := http.NewRequest("GET", "/api/admin/wanted/requests", nil)
@@ -243,14 +251,15 @@ func TestBountyHandler_UpdateRequestStatus(t *testing.T) {
 	h := testBountyHandler(sqlxDB)
 
 	t.Run("Success", func(t *testing.T) {
+		requestID := "550e8400-e29b-41d4-a716-446655440050"
 		input := models.UpdateClientRequestStatusInput{Status: "solved"}
 		body, _ := json.Marshal(input)
 
-		mock.ExpectQuery("UPDATE client_request").WithArgs("solved", "r1").WillReturnRows(sqlmock.NewRows([]string{"id", "status"}).AddRow("r1", "solved"))
+		mock.ExpectQuery("UPDATE client_request").WithArgs("solved", requestID).WillReturnRows(sqlmock.NewRows([]string{"id", "status"}).AddRow(requestID, "solved"))
 
 		r := chi.NewRouter()
 		r.Put("/api/admin/wanted/requests/{id}/status", h.UpdateRequestStatus)
-		req, _ := http.NewRequest("PUT", "/api/admin/wanted/requests/r1/status", bytes.NewBuffer(body))
+		req, _ := http.NewRequest("PUT", "/api/admin/wanted/requests/"+requestID+"/status", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 
@@ -263,11 +272,12 @@ func TestBountyHandler_Delete(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	h := testBountyHandler(sqlxDB)
 
-	mock.ExpectExec("DELETE FROM bounty").WithArgs("b1").WillReturnResult(sqlmock.NewResult(1, 1))
+	bountyID := "550e8400-e29b-41d4-a716-446655440030"
+	mock.ExpectExec("DELETE FROM bounty").WithArgs(bountyID).WillReturnResult(sqlmock.NewResult(1, 1))
 
 	r := chi.NewRouter()
 	r.Delete("/api/admin/bounties/{id}", h.Delete)
-	req, _ := http.NewRequest("DELETE", "/api/admin/bounties/b1", nil)
+	req, _ := http.NewRequest("DELETE", "/api/admin/bounties/"+bountyID, nil)
 	rr := httptest.NewRecorder()
 	r.ServeHTTP(rr, req)
 

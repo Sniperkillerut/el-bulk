@@ -28,7 +28,7 @@ func TestTCGHandler_List(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id", "name", "is_active", "created_at", "item_count"}).
-			AddRow("mtg", "Magic", true, time.Now(), 0)
+			AddRow("550e8400-e29b-41d4-a716-446655440003", "Magic", true, time.Now(), 0)
 		mock.ExpectQuery("(?i)SELECT t.*, COUNT\\(p.id\\) as item_count FROM tcg t LEFT JOIN product p ON t.id = p.tcg GROUP BY t.id ORDER BY t.name").WillReturnRows(rows)
 
 		req, _ := http.NewRequest("GET", "/api/admin/tcgs", nil)
@@ -55,9 +55,10 @@ func TestTCGHandler_Create(t *testing.T) {
 	h := &TCGHandler{Service: service.NewTCGService(store.NewTCGStore(sqlxDB), nil)}
 
 	t.Run("Success", func(t *testing.T) {
-		input := models.TCGInput{ID: "one", Name: "One Piece"}
+		tcgID := "550e8400-e29b-41d4-a716-446655440020"
+		input := models.TCGInput{ID: tcgID, Name: "One Piece"}
 		body, _ := json.Marshal(input)
-		mock.ExpectQuery("INSERT INTO tcg").WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow("one", "One Piece"))
+		mock.ExpectQuery("INSERT INTO tcg").WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(tcgID, "One Piece"))
 
 		req, _ := http.NewRequest("POST", "/api/admin/tcgs", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
@@ -73,7 +74,7 @@ func TestTCGHandler_Create(t *testing.T) {
 	})
 
 	t.Run("Missing Fields", func(t *testing.T) {
-		input := models.TCGInput{ID: "one"} // Missing Name
+		input := models.TCGInput{ID: "550e8400-e29b-41d4-a716-446655440020"} // Missing Name
 		body, _ := json.Marshal(input)
 		req, _ := http.NewRequest("POST", "/api/admin/tcgs", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
@@ -82,7 +83,8 @@ func TestTCGHandler_Create(t *testing.T) {
 	})
 
 	t.Run("DB Error", func(t *testing.T) {
-		input := models.TCGInput{ID: "one", Name: "One Piece"}
+		tcgID := "550e8400-e29b-41d4-a716-446655440020"
+		input := models.TCGInput{ID: tcgID, Name: "One Piece"}
 		body, _ := json.Marshal(input)
 		mock.ExpectQuery("INSERT INTO tcg").WillReturnError(fmt.Errorf("conflict"))
 
@@ -102,26 +104,28 @@ func TestTCGHandler_Update(t *testing.T) {
 	h := &TCGHandler{Service: service.NewTCGService(store.NewTCGStore(sqlxDB), nil)}
 
 	t.Run("Success", func(t *testing.T) {
+		tcgID := "550e8400-e29b-41d4-a716-446655440003"
 		input := models.TCGInput{Name: "New Name", IsActive: true}
 		body, _ := json.Marshal(input)
-		mock.ExpectQuery("UPDATE tcg").WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow("mtg", "New Name"))
+		mock.ExpectQuery("UPDATE tcg").WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(tcgID, "New Name"))
 
 		r := chi.NewRouter()
 		r.Put("/api/admin/tcgs/{id}", h.Update)
-		req, _ := http.NewRequest("PUT", "/api/admin/tcgs/mtg", bytes.NewBuffer(body))
+		req, _ := http.NewRequest("PUT", "/api/admin/tcgs/"+tcgID, bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusOK, rr.Code)
 	})
 
 	t.Run("DB Error (Not Found)", func(t *testing.T) {
+		tcgID := "550e8400-e29b-41d4-a716-446655440003"
 		input := models.TCGInput{Name: "New Name", IsActive: true}
 		body, _ := json.Marshal(input)
 		mock.ExpectQuery("UPDATE tcg").WillReturnError(fmt.Errorf("not found"))
 
 		r := chi.NewRouter()
 		r.Put("/api/admin/tcgs/{id}", h.Update)
-		req, _ := http.NewRequest("PUT", "/api/admin/tcgs/mtg", bytes.NewBuffer(body))
+		req, _ := http.NewRequest("PUT", "/api/admin/tcgs/"+tcgID, bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusNotFound, rr.Code)
@@ -137,46 +141,50 @@ func TestTCGHandler_Delete(t *testing.T) {
 	h := &TCGHandler{Service: service.NewTCGService(store.NewTCGStore(sqlxDB), nil)}
 
 	t.Run("Success", func(t *testing.T) {
+		tcgID := "550e8400-e29b-41d4-a716-446655440003"
 		mock.ExpectQuery("SELECT COUNT.* FROM product").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
 		mock.ExpectExec("DELETE FROM tcg").WillReturnResult(sqlmock.NewResult(0, 1))
 
 		r := chi.NewRouter()
 		r.Delete("/api/admin/tcgs/{id}", h.Delete)
-		req, _ := http.NewRequest("DELETE", "/api/admin/tcgs/mtg", nil)
+		req, _ := http.NewRequest("DELETE", "/api/admin/tcgs/"+tcgID, nil)
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusOK, rr.Code)
 	})
 
 	t.Run("Conflict", func(t *testing.T) {
+		tcgID := "550e8400-e29b-41d4-a716-446655440003"
 		mock.ExpectQuery("SELECT COUNT.* FROM product").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 
 		r := chi.NewRouter()
 		r.Delete("/api/admin/tcgs/{id}", h.Delete)
-		req, _ := http.NewRequest("DELETE", "/api/admin/tcgs/mtg", nil)
+		req, _ := http.NewRequest("DELETE", "/api/admin/tcgs/"+tcgID, nil)
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusConflict, rr.Code)
 	})
 
 	t.Run("DB Error Checking", func(t *testing.T) {
+		tcgID := "550e8400-e29b-41d4-a716-446655440003"
 		mock.ExpectQuery("SELECT COUNT.* FROM product").WillReturnError(fmt.Errorf("db error"))
 
 		r := chi.NewRouter()
 		r.Delete("/api/admin/tcgs/{id}", h.Delete)
-		req, _ := http.NewRequest("DELETE", "/api/admin/tcgs/mtg", nil)
+		req, _ := http.NewRequest("DELETE", "/api/admin/tcgs/"+tcgID, nil)
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)
 	})
 
 	t.Run("DB Error Deleting", func(t *testing.T) {
+		tcgID := "550e8400-e29b-41d4-a716-446655440003"
 		mock.ExpectQuery("SELECT COUNT.* FROM product").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
 		mock.ExpectExec("DELETE FROM tcg").WillReturnError(fmt.Errorf("db error"))
 
 		r := chi.NewRouter()
 		r.Delete("/api/admin/tcgs/{id}", h.Delete)
-		req, _ := http.NewRequest("DELETE", "/api/admin/tcgs/mtg", nil)
+		req, _ := http.NewRequest("DELETE", "/api/admin/tcgs/"+tcgID, nil)
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)
