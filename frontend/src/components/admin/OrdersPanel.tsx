@@ -1005,110 +1005,121 @@ export default function OrdersPanel({ initialOrderId }: Props) {
 
       {/* Confirm Order Modal */}
       {showConfirmModal && detail && (
+      {/* Confirm Order Modal */}
+      {showConfirmModal && detail && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center px-4"
           style={{ background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(3px)' }}>
-          <div className="card max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="font-display text-3xl mb-1">{t('pages.admin.orders.confirm_modal.title', 'CONFIRMAR ORDEN')}</h3>
-            <p className="text-xs font-mono-stack mb-4" style={{ color: 'var(--text-muted)' }}>
-              {t('pages.admin.orders.confirm_modal.desc', 'Selecciona de qué ubicación descontar el stock para cada producto.')}
-            </p>
-
-            <div className="space-y-4">
-              {detail.items.filter(i => i.quantity > 0 && i.product_id).map(item => {
-                const productDecs = decrements[item.product_id!] || {};
-                const totalAssigned = Object.values(productDecs).reduce((s, v) => s + v, 0);
-                const isComplete = totalAssigned === item.quantity;
-
-                return (
-                  <div key={item.id} className="cardbox p-4" style={{ borderColor: isComplete ? 'var(--status-nm)' : 'var(--border-main)' }}>
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <p className="font-semibold text-sm">{item.product_name}</p>
-                        {item.product_set && <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{item.product_set}</p>}
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xs font-mono-stack" style={{ color: isComplete ? 'var(--status-nm)' : 'var(--status-mp)' }}>
-                          {totalAssigned} / {item.quantity}
-                        </span>
-                      </div>
-                    </div>
-
-                    {item.stored_in.filter(l => l.name.toLowerCase() !== 'pending').length === 0 ? (
-                      <p className="text-xs italic" style={{ color: 'var(--status-hp)' }}>⚠ {t('pages.admin.orders.confirm_modal.no_locations', 'Sin ubicaciones físicas de almacenamiento')}</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {/* pending row */}
-                        <div className="flex items-center justify-between gap-3 opacity-60 bg-status-hp/10 px-2 py-1.5 rounded border border-status-hp/20">
-                           <div className="flex-1">
-                             <span className="text-sm font-semibold">pending</span>
-                             <span className="text-[10px] uppercase ml-2 px-1 py-0.5 rounded bg-hp-color/20 text-status-hp font-mono-stack">{t('pages.admin.orders.confirm_modal.auto_label', 'AUTO')}</span>
-                           </div>
-                           <div className="flex items-center gap-1">
-                             <button disabled className="w-6 h-6 flex items-center justify-center text-xs opacity-50 bg-ink-surface border border-ink-border rounded-l-sm cursor-not-allowed">−</button>
-                             <input
-                               type="number" 
-                               value={Math.max(0, item.quantity - totalAssigned)}
-                               disabled
-                               className="w-12 px-1 py-0 text-center text-xs font-mono-stack border-y border-ink-border bg-white focus:outline-none opacity-50 cursor-not-allowed [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                               style={{ height: 24, padding: '0 2px' }}
-                             />
-                             <button disabled className="w-6 h-6 flex items-center justify-center text-xs opacity-50 bg-ink-surface border border-ink-border rounded-r-sm cursor-not-allowed">+</button>
-                           </div>
-                        </div>
-
-                        {item.stored_in.filter((loc: StorageLocation) => loc.name.toLowerCase() !== 'pending').map((loc: StorageLocation) => {
-                          const val = productDecs[loc.stored_in_id] || 0;
-                          return (
-                            <div key={loc.stored_in_id} className="flex items-center justify-between gap-3">
-                              <div className="flex-1">
-                                <span className="text-sm font-semibold">{loc.name}</span>
-                                <span className="text-xs font-mono-stack ml-2" style={{ color: 'var(--text-muted)' }}>
-                                  {t('pages.admin.orders.confirm_modal.available_label', '(disponible: {count})').replace('{count}', loc.quantity.toString())}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <button
-                                  onClick={() => setDecrement(item.product_id!, loc.stored_in_id, val - 1)}
-                                  className="w-6 h-6 flex items-center justify-center text-xs"
-                                  style={{ background: 'var(--ink-border)', border: 'none', borderRadius: 2, cursor: 'pointer' }}
-                                  disabled={val <= 0}>−</button>
-                                <input
-                                  type="number" min={0} max={loc.quantity}
-                                  value={val || ''}
-                                  onChange={e => setDecrement(item.product_id!, loc.stored_in_id, Math.min(parseInt(e.target.value) || 0, loc.quantity))}
-                                  className="w-12 text-center text-sm font-mono-stack"
-                                  style={{ height: 24, padding: '0 2px' }}
-                                  placeholder="0"
-                                />
-                                <button
-                                  onClick={() => setDecrement(item.product_id!, loc.stored_in_id, Math.min(val + 1, loc.quantity))}
-                                  className="w-6 h-6 flex items-center justify-center text-xs"
-                                  style={{ background: 'var(--ink-border)', border: 'none', borderRadius: 2, cursor: 'pointer' }}
-                                  disabled={val >= loc.quantity}>+</button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+          <div className="card max-w-2xl w-full flex flex-col max-h-[90vh] overflow-hidden">
+            {/* Header */}
+            <div className="p-6 pb-0 shrink-0">
+              <h3 className="font-display text-3xl mb-1">{t('pages.admin.orders.confirm_modal.title', 'CONFIRMAR ORDEN')}</h3>
+              <p className="text-xs font-mono-stack mb-4" style={{ color: 'var(--text-muted)' }}>
+                {t('pages.admin.orders.confirm_modal.desc', 'Selecciona de qué ubicación descontar el stock para cada producto.')}
+              </p>
             </div>
 
-            {confirmError && (
-              <p className="text-sm font-mono-stack mt-3" style={{ color: 'var(--status-hp)' }}>{confirmError}</p>
-            )}
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-6 pt-0 custom-scrollbar">
+              <div className="space-y-4">
+                {detail.items.filter(i => i.quantity > 0 && i.product_id).map(item => {
+                  const productDecs = decrements[item.product_id!] || {};
+                  const totalAssigned = Object.values(productDecs).reduce((s, v) => s + v, 0);
+                  const isComplete = totalAssigned === item.quantity;
 
-            <div className="mt-6 p-4 border-2 border-dashed border-status-hp/30 rounded-lg bg-status-hp/5">
-              <p className="text-sm font-semibold text-status-hp mb-3 uppercase tracking-wider text-center">
-                {t('pages.admin.orders.confirm_modal.warning', '⚠ ¿Estás seguro? Esto bloqueará el stock asignado.')}
-              </p>
-              <div className="flex gap-3">
-                <button onClick={handleConfirm} disabled={confirming} className="btn-primary flex-1 py-3 bg-status-hp hover:bg-status-hp/90">
-                  {confirming ? t('pages.admin.orders.confirm_modal.processing', 'PROCESANDO...') : t('pages.admin.orders.detail.confirm_btn', '✓ CONFIRMAR ORDEN')}
-                </button>
-                <button onClick={() => setShowConfirmModal(false)} className="btn-secondary px-6 py-3">{t('pages.common.labels.cancel', 'CANCELAR')}</button>
+                  return (
+                    <div key={item.id} className="cardbox p-4" style={{ borderColor: isComplete ? 'var(--status-nm)' : 'var(--border-main)' }}>
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <p className="font-semibold text-sm">{item.product_name}</p>
+                          {item.product_set && <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{item.product_set}</p>}
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs font-mono-stack" style={{ color: isComplete ? 'var(--status-nm)' : 'var(--status-mp)' }}>
+                            {totalAssigned} / {item.quantity}
+                          </span>
+                        </div>
+                      </div>
+
+                      {item.stored_in.filter(l => l.name.toLowerCase() !== 'pending').length === 0 ? (
+                        <p className="text-xs italic" style={{ color: 'var(--status-hp)' }}>⚠ {t('pages.admin.orders.confirm_modal.no_locations', 'Sin ubicaciones físicas de almacenamiento')}</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {/* pending row */}
+                          <div className="flex items-center justify-between gap-3 opacity-60 bg-status-hp/10 px-2 py-1.5 rounded border border-status-hp/20">
+                             <div className="flex-1">
+                               <span className="text-sm font-semibold">pending</span>
+                               <span className="text-[10px] uppercase ml-2 px-1 py-0.5 rounded bg-hp-color/20 text-status-hp font-mono-stack">{t('pages.admin.orders.confirm_modal.auto_label', 'AUTO')}</span>
+                             </div>
+                             <div className="flex items-center gap-1">
+                               <button disabled className="w-6 h-6 flex items-center justify-center text-xs opacity-50 bg-ink-surface border border-ink-border rounded-l-sm cursor-not-allowed">−</button>
+                               <input
+                                 type="number" 
+                                 value={Math.max(0, item.quantity - totalAssigned)}
+                                 disabled
+                                 className="w-12 px-1 py-0 text-center text-xs font-mono-stack border-y border-ink-border bg-white focus:outline-none opacity-50 cursor-not-allowed [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                 style={{ height: 24, padding: '0 2px' }}
+                                />
+                               <button disabled className="w-6 h-6 flex items-center justify-center text-xs opacity-50 bg-ink-surface border border-ink-border rounded-r-sm cursor-not-allowed">+</button>
+                             </div>
+                          </div>
+
+                          {item.stored_in.filter((loc: StorageLocation) => loc.name.toLowerCase() !== 'pending').map((loc: StorageLocation) => {
+                            const val = productDecs[loc.stored_in_id] || 0;
+                            return (
+                              <div key={loc.stored_in_id} className="flex items-center justify-between gap-3">
+                                <div className="flex-1">
+                                  <span className="text-sm font-semibold">{loc.name}</span>
+                                  <span className="text-xs font-mono-stack ml-2" style={{ color: 'var(--text-muted)' }}>
+                                    {t('pages.admin.orders.confirm_modal.available_label', '(disponible: {count})').replace('{count}', loc.quantity.toString())}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={() => setDecrement(item.product_id!, loc.stored_in_id, val - 1)}
+                                    className="w-6 h-6 flex items-center justify-center text-xs"
+                                    style={{ background: 'var(--ink-border)', border: 'none', borderRadius: 2, cursor: 'pointer' }}
+                                    disabled={val <= 0}>−</button>
+                                  <input
+                                    type="number" min={0} max={loc.quantity}
+                                    value={val || ''}
+                                    onChange={e => setDecrement(item.product_id!, loc.stored_in_id, Math.min(parseInt(e.target.value) || 0, loc.quantity))}
+                                    className="w-12 text-center text-sm font-mono-stack"
+                                    style={{ height: 24, padding: '0 2px' }}
+                                    placeholder="0"
+                                  />
+                                  <button
+                                    onClick={() => setDecrement(item.product_id!, loc.stored_in_id, Math.min(val + 1, loc.quantity))}
+                                    className="w-6 h-6 flex items-center justify-center text-xs"
+                                    style={{ background: 'var(--ink-border)', border: 'none', borderRadius: 2, cursor: 'pointer' }}
+                                    disabled={val >= loc.quantity}>+</button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {confirmError && (
+                <p className="text-sm font-mono-stack mt-3" style={{ color: 'var(--status-hp)' }}>{confirmError}</p>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 pt-0 shrink-0">
+              <div className="mt-2 p-4 border-2 border-dashed border-status-hp/30 rounded-lg bg-status-hp/5">
+                <p className="text-sm font-semibold text-status-hp mb-3 uppercase tracking-wider text-center">
+                  {t('pages.admin.orders.confirm_modal.warning', '⚠ ¿Estás seguro? Esto bloqueará el stock asignado.')}
+                </p>
+                <div className="flex gap-3">
+                  <button onClick={handleConfirm} disabled={confirming} className="btn-primary flex-1 py-3 bg-status-hp hover:bg-status-hp/90">
+                    {confirming ? t('pages.admin.orders.confirm_modal.processing', 'PROCESANDO...') : t('pages.admin.orders.detail.confirm_btn', '✓ CONFIRMAR ORDEN')}
+                  </button>
+                  <button onClick={() => setShowConfirmModal(false)} className="btn-secondary px-6 py-3">{t('pages.common.labels.cancel', 'CANCELAR')}</button>
+                </div>
               </div>
             </div>
           </div>
@@ -1118,125 +1129,134 @@ export default function OrdersPanel({ initialOrderId }: Props) {
       {showRestoreModal && detail && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center px-4"
           style={{ background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(3px)' }}>
-          <div className="card max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="font-display text-3xl mb-1">{t('pages.admin.orders.restore_modal.title', 'RESTAURAR INVENTARIO')}</h3>
-            <p className="text-xs font-mono-stack mb-4" style={{ color: 'var(--text-muted)' }}>
-              {t('pages.admin.orders.restore_modal.desc', 'Selecciona a qué ubicaciones devolver los productos de esta orden cancelada.')}
-            </p>
-
-            <div className="space-y-4">
-              {detail.items.filter(i => i.quantity > 0 && i.product_id).map(item => {
-                const productIncs = increments[item.product_id!] || {};
-                const totalAssigned = Object.values(productIncs).reduce((s, v) => s + v, 0);
-                const isComplete = totalAssigned === item.quantity;
-
-                return (
-                  <div key={item.id} className="cardbox p-4" style={{ borderColor: isComplete ? 'var(--status-nm)' : 'var(--border-main)' }}>
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <p className="font-semibold text-sm">{item.product_name}</p>
-                        {item.product_set && <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{item.product_set}</p>}
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xs font-mono-stack" style={{ color: isComplete ? 'var(--status-nm)' : 'var(--status-mp)' }}>
-                          {totalAssigned} / {item.quantity}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        {allStorage
-                          .filter(as => as.name.toLowerCase() !== 'pending' && (item.stored_in.some(si => si.stored_in_id === as.id) || productIncs[as.id] !== undefined))
-                          .map(as => {
-                            const si = item.stored_in.find(s => s.stored_in_id === as.id);
-                            const val = productIncs[as.id] || 0;
-                            return (
-                              <div key={as.id} className="flex items-center justify-between gap-3">
-                                <div className="flex-1">
-                                  <span className="text-sm font-semibold">{as.name}</span>
-                                  <span className="text-xs font-mono-stack ml-2" style={{ color: 'var(--text-muted)' }}>
-                                    ({t('pages.admin.orders.restore_modal.actual_label', 'actual:')} {si?.quantity || 0})
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <button
-                                    onClick={() => setIncrement(item.product_id!, as.id, val - 1)}
-                                    className="w-6 h-6 flex items-center justify-center text-xs"
-                                    style={{ background: 'var(--ink-border)', border: 'none', borderRadius: 2, cursor: 'pointer' }}
-                                    disabled={val <= 0}>−</button>
-                                  <input
-                                    type="number" min={0} max={item.quantity}
-                                    value={val || ''}
-                                    onChange={e => {
-                                      const newVal = Math.max(0, parseInt(e.target.value) || 0);
-                                      const otherTotal = totalAssigned - val;
-                                      const allowed = Math.max(0, item.quantity - otherTotal);
-                                      setIncrement(item.product_id!, as.id, Math.min(newVal, allowed));
-                                    }}
-                                    className="w-12 text-center text-sm font-mono-stack"
-                                    style={{ height: 24, padding: '0 2px' }}
-                                    placeholder="0"
-                                  />
-                                  <button
-                                    onClick={() => {
-                                      if (totalAssigned < item.quantity) {
-                                        setIncrement(item.product_id!, as.id, val + 1);
-                                      }
-                                    }}
-                                    className="w-6 h-6 flex items-center justify-center text-xs"
-                                    style={{ 
-                                      background: 'var(--ink-border)', 
-                                      border: 'none', 
-                                      borderRadius: 2, 
-                                      cursor: totalAssigned >= item.quantity ? 'not-allowed' : 'pointer',
-                                      opacity: totalAssigned >= item.quantity ? 0.5 : 1
-                                    }}
-                                    disabled={totalAssigned >= item.quantity}
-                                  >+</button>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        
-                        {/* Add Location Dropdown */}
-                        <div className="mt-2 pt-2 border-t border-border-main/10 flex justify-end">
-                          <select 
-                            className="text-[10px] bg-transparent border-none text-gold-dark font-bold cursor-pointer outline-none hover:text-hp-color transition-colors"
-                            value=""
-                            onChange={e => {
-                              if (e.target.value) {
-                                setIncrement(item.product_id!, e.target.value, 0);
-                              }
-                            }}
-                          >
-                            <option value="">+ {t('pages.admin.orders.restore_modal.add_location', 'AÑADIR UBICACIÓN')}</option>
-                            {allStorage
-                              .filter(as => as.name.toLowerCase() !== 'pending' && !item.stored_in.some(si => si.stored_in_id === as.id) && productIncs[as.id] === undefined)
-                              .map(as => (
-                                <option key={as.id} value={as.id}>{as.name}</option>
-                              ))
-                            }
-                          </select>
-                        </div>
-                    </div>
-                  </div>
-                );
-              })}
+          <div className="card max-w-2xl w-full flex flex-col max-h-[90vh] overflow-hidden">
+            {/* Header */}
+            <div className="p-6 pb-0 shrink-0">
+              <h3 className="font-display text-3xl mb-1">{t('pages.admin.orders.restore_modal.title', 'RESTAURAR INVENTARIO')}</h3>
+              <p className="text-xs font-mono-stack mb-4" style={{ color: 'var(--text-muted)' }}>
+                {t('pages.admin.orders.restore_modal.desc', 'Selecciona a qué ubicaciones devolver los productos de esta orden cancelada.')}
+              </p>
             </div>
 
-            {restoreError && (
-              <p className="text-sm font-mono-stack mt-3" style={{ color: 'var(--status-hp)' }}>{restoreError}</p>
-            )}
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-6 pt-0 custom-scrollbar">
+              <div className="space-y-4">
+                {detail.items.filter(i => i.quantity > 0 && i.product_id).map(item => {
+                  const productIncs = increments[item.product_id!] || {};
+                  const totalAssigned = Object.values(productIncs).reduce((s, v) => s + v, 0);
+                  const isComplete = totalAssigned === item.quantity;
 
-            <div className="mt-6 p-4 border-2 border-dashed border-status-nm/30 rounded-lg bg-status-nm/5">
-              <p className="text-sm font-semibold text-status-nm mb-3 uppercase tracking-wider text-center">
-                {t('pages.admin.orders.restore_modal.warning', 'Confirmar devolución de productos al inventario físico.')}
-              </p>
-              <div className="flex gap-3">
-                <button onClick={handleRestoreStock} disabled={restoring} className="btn-primary flex-1 py-3" style={{ background: 'var(--status-nm)' }}>
-                  {restoring ? t('pages.admin.orders.restore_modal.processing', 'RESTAURANDO...') : t('pages.admin.orders.detail.restore_inventory', '✓ RESTAURAR INVENTARIO')}
-                </button>
-                <button onClick={() => setShowRestoreModal(false)} className="btn-secondary px-6 py-3">{t('pages.common.labels.cancel', 'CANCELAR')}</button>
+                  return (
+                    <div key={item.id} className="cardbox p-4" style={{ borderColor: isComplete ? 'var(--status-nm)' : 'var(--border-main)' }}>
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <p className="font-semibold text-sm">{item.product_name}</p>
+                          {item.product_set && <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{item.product_set}</p>}
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs font-mono-stack" style={{ color: isComplete ? 'var(--status-nm)' : 'var(--status-mp)' }}>
+                            {totalAssigned} / {item.quantity}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                          {allStorage
+                            .filter(as => as.name.toLowerCase() !== 'pending' && (item.stored_in.some(si => si.stored_in_id === as.id) || productIncs[as.id] !== undefined))
+                            .map(as => {
+                              const si = item.stored_in.find(s => s.stored_in_id === as.id);
+                              const val = productIncs[as.id] || 0;
+                              return (
+                                <div key={as.id} className="flex items-center justify-between gap-3">
+                                  <div className="flex-1">
+                                    <span className="text-sm font-semibold">{as.name}</span>
+                                    <span className="text-xs font-mono-stack ml-2" style={{ color: 'var(--text-muted)' }}>
+                                      ({t('pages.admin.orders.restore_modal.actual_label', 'actual:')} {si?.quantity || 0})
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      onClick={() => setIncrement(item.product_id!, as.id, val - 1)}
+                                      className="w-6 h-6 flex items-center justify-center text-xs"
+                                      style={{ background: 'var(--ink-border)', border: 'none', borderRadius: 2, cursor: 'pointer' }}
+                                      disabled={val <= 0}>−</button>
+                                    <input
+                                      type="number" min={0} max={item.quantity}
+                                      value={val || ''}
+                                      onChange={e => {
+                                        const newVal = Math.max(0, parseInt(e.target.value) || 0);
+                                        const otherTotal = totalAssigned - val;
+                                        const allowed = Math.max(0, item.quantity - otherTotal);
+                                        setIncrement(item.product_id!, as.id, Math.min(newVal, allowed));
+                                      }}
+                                      className="w-12 text-center text-sm font-mono-stack"
+                                      style={{ height: 24, padding: '0 2px' }}
+                                      placeholder="0"
+                                    />
+                                    <button
+                                      onClick={() => {
+                                        if (totalAssigned < item.quantity) {
+                                          setIncrement(item.product_id!, as.id, val + 1);
+                                        }
+                                      }}
+                                      className="w-6 h-6 flex items-center justify-center text-xs"
+                                      style={{ 
+                                        background: 'var(--ink-border)', 
+                                        border: 'none', 
+                                        borderRadius: 2, 
+                                        cursor: totalAssigned >= item.quantity ? 'not-allowed' : 'pointer',
+                                        opacity: totalAssigned >= item.quantity ? 0.5 : 1
+                                      }}
+                                      disabled={totalAssigned >= item.quantity}
+                                    >+</button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          
+                          {/* Add Location Dropdown */}
+                          <div className="mt-2 pt-2 border-t border-border-main/10 flex justify-end">
+                            <select 
+                              className="text-[10px] bg-transparent border-none text-gold-dark font-bold cursor-pointer outline-none hover:text-hp-color transition-colors"
+                              value=""
+                              onChange={e => {
+                                if (e.target.value) {
+                                  setIncrement(item.product_id!, e.target.value, 0);
+                                }
+                              }}
+                            >
+                              <option value="">+ {t('pages.admin.orders.restore_modal.add_location', 'AÑADIR UBICACIÓN')}</option>
+                              {allStorage
+                                .filter(as => as.name.toLowerCase() !== 'pending' && !item.stored_in.some(si => si.stored_in_id === as.id) && productIncs[as.id] === undefined)
+                                .map(as => (
+                                  <option key={as.id} value={as.id}>{as.name}</option>
+                                ))
+                              }
+                            </select>
+                          </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {restoreError && (
+                <p className="text-sm font-mono-stack mt-3" style={{ color: 'var(--status-hp)' }}>{restoreError}</p>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 pt-0 shrink-0">
+              <div className="mt-2 p-4 border-2 border-dashed border-status-nm/30 rounded-lg bg-status-nm/5">
+                <p className="text-sm font-semibold text-status-nm mb-3 uppercase tracking-wider text-center">
+                  {t('pages.admin.orders.restore_modal.warning', 'Confirmar devolución de productos al inventario físico.')}
+                </p>
+                <div className="flex gap-3">
+                  <button onClick={handleRestoreStock} disabled={restoring} className="btn-primary flex-1 py-3" style={{ background: 'var(--status-nm)' }}>
+                    {restoring ? t('pages.admin.orders.restore_modal.processing', 'RESTAURANDO...') : t('pages.admin.orders.detail.restore_inventory', '✓ RESTAURAR INVENTARIO')}
+                  </button>
+                  <button onClick={() => setShowRestoreModal(false)} className="btn-secondary px-6 py-3">{t('pages.common.labels.cancel', 'CANCELAR')}</button>
+                </div>
               </div>
             </div>
           </div>
