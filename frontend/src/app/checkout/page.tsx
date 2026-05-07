@@ -162,27 +162,74 @@ function CheckoutFormInner({ user, settings }: { user: UserProfile, settings?: P
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>{t('pages.checkout.form.first_name', 'FIRST NAME')} *</label>
-                <input type="text" value={form.first_name} onChange={e => set('first_name', e.target.value)} placeholder={t('pages.checkout.placeholders.first_name', 'Juan')} required />
+                <input 
+                  type="text" 
+                  name="first_name"
+                  autoComplete="given-name"
+                  value={form.first_name} 
+                  onChange={e => set('first_name', e.target.value)} 
+                  placeholder={t('pages.checkout.placeholders.first_name', 'Juan')} 
+                  required 
+                />
               </div>
               <div>
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>{t('pages.checkout.form.last_name', 'LAST NAME')} *</label>
-                <input type="text" value={form.last_name} onChange={e => set('last_name', e.target.value)} placeholder={t('pages.checkout.placeholders.last_name', 'Perez')} required />
+                <input 
+                  type="text" 
+                  name="last_name"
+                  autoComplete="family-name"
+                  value={form.last_name} 
+                  onChange={e => set('last_name', e.target.value)} 
+                  placeholder={t('pages.checkout.placeholders.last_name', 'Perez')} 
+                  required 
+                />
               </div>
               <div>
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>{t('pages.checkout.form.phone', 'PHONE / WHATSAPP')} *</label>
-                <input type="tel" value={form.phone} onChange={e => set('phone', e.target.value)} placeholder={t('pages.checkout.placeholders.phone', '3001234567')} required />
+                <input 
+                  type="tel" 
+                  name="phone"
+                  autoComplete="tel"
+                  value={form.phone} 
+                  onChange={e => set('phone', e.target.value)} 
+                  placeholder={t('pages.checkout.placeholders.phone', '3001234567')} 
+                  required 
+                />
               </div>
               <div>
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>{t('pages.checkout.form.email', 'EMAIL')} *</label>
-                <input type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder={t('pages.checkout.placeholders.email', 'correo@ejemplo.com')} required />
+                <input 
+                  type="email" 
+                  name="email"
+                  autoComplete="email"
+                  value={form.email} 
+                  onChange={e => set('email', e.target.value)} 
+                  placeholder={t('pages.checkout.placeholders.email', 'correo@ejemplo.com')} 
+                  required 
+                />
               </div>
               <div>
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>{t('pages.checkout.form.id_number', 'ID NUMBER / CEDULA')} *</label>
-                <input type="number" value={form.id_number} onChange={e => set('id_number', e.target.value)} placeholder={t('pages.checkout.placeholders.id', '1234567890')} required />
+                <input 
+                  type="number" 
+                  name="id_number"
+                  value={form.id_number} 
+                  onChange={e => set('id_number', e.target.value)} 
+                  placeholder={t('pages.checkout.placeholders.id', '1234567890')} 
+                  required 
+                />
               </div>
               <div>
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>{t('pages.checkout.form.address', 'ADDRESS')} *</label>
-                <input type="text" value={form.address} onChange={e => set('address', e.target.value)} placeholder={t('pages.checkout.placeholders.address', 'Cra 1 # 2-3')} required />
+                <input 
+                  type="text" 
+                  name="address"
+                  autoComplete="street-address"
+                  value={form.address} 
+                  onChange={e => set('address', e.target.value)} 
+                  placeholder={t('pages.checkout.placeholders.address', 'Cra 1 # 2-3')} 
+                  required 
+                />
               </div>
             </div>
 
