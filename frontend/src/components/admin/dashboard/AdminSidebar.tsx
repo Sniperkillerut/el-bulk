@@ -2,6 +2,7 @@
 
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
 import { adminFetchStats } from '@/lib/api';
@@ -111,14 +112,33 @@ export default function AdminSidebar() {
       ${adminSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
     `}>
       {/* Sidebar Header */}
-      <div className={`p-6 border-b border-ink-border ${adminSidebarSlim ? 'flex justify-center p-4' : ''}`}>
-        <Link href="/admin/dashboard" className="flex items-center gap-2 no-underline">
-          <div className="bg-gold rounded-sm px-2 py-1">
-            <span className="font-display text-xl text-ink-deep leading-none uppercase">
-              {adminSidebarSlim ? 'EB' : 'EL BULK'}
-            </span>
-          </div>
-          {!adminSidebarSlim && <span className="font-mono-stack text-[10px] text-text-on-header/50">ADMIN_CORE</span>}
+      <div className={`p-6 border-b border-ink-border ${adminSidebarSlim ? 'flex justify-center p-3' : ''}`}>
+        <Link href="/admin/dashboard" className="flex items-center gap-3 no-underline group">
+          {settings?.store_logo_url ? (
+            <div className={`relative shrink-0 overflow-hidden ${adminSidebarSlim ? 'w-10 h-10' : 'w-8 h-8'}`}>
+              <Image
+                src={settings.store_logo_url}
+                alt="Logo"
+                fill
+                className="object-contain"
+                sizes={adminSidebarSlim ? "40px" : "32px"}
+              />
+            </div>
+          ) : (
+            <div className="bg-gold rounded-sm px-2 py-1">
+              <span className="font-display text-xl text-ink-deep leading-none uppercase">
+                {adminSidebarSlim ? 'EB' : 'EL BULK'}
+              </span>
+            </div>
+          )}
+          {!adminSidebarSlim && (
+            <div className="flex flex-col">
+              <span className="font-display text-xl text-text-on-header leading-none uppercase tracking-tight group-hover:text-gold transition-colors">
+                EL BULK
+              </span>
+              <span className="font-mono-stack text-[8px] text-text-on-header/40 tracking-[0.2em]">ADMIN_CORE</span>
+            </div>
+          )}
         </Link>
       </div>
 

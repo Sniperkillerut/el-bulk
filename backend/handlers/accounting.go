@@ -176,6 +176,9 @@ func (h *AccountingHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 		filename = fmt.Sprintf("accounting_from_%s.csv", startDate)
 	} else if endDate != "" {
 		filename = fmt.Sprintf("accounting_to_%s.csv", endDate)
+	} else {
+		// If both empty, use a clear name
+		filename = fmt.Sprintf("accounting_full_export_%s.csv", time.Now().Format("2006-01-02"))
 	}
 
 	w.Header().Set("Content-Type", "text/csv")

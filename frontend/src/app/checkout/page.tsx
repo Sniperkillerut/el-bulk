@@ -164,6 +164,7 @@ function CheckoutFormInner({ user, settings }: { user: UserProfile, settings?: P
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>{t('pages.checkout.form.first_name', 'FIRST NAME')} *</label>
                 <input 
                   type="text" 
+                  id="first_name"
                   name="first_name"
                   autoComplete="given-name"
                   value={form.first_name} 
@@ -176,6 +177,7 @@ function CheckoutFormInner({ user, settings }: { user: UserProfile, settings?: P
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>{t('pages.checkout.form.last_name', 'LAST NAME')} *</label>
                 <input 
                   type="text" 
+                  id="last_name"
                   name="last_name"
                   autoComplete="family-name"
                   value={form.last_name} 
@@ -188,6 +190,7 @@ function CheckoutFormInner({ user, settings }: { user: UserProfile, settings?: P
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>{t('pages.checkout.form.phone', 'PHONE / WHATSAPP')} *</label>
                 <input 
                   type="tel" 
+                  id="phone"
                   name="phone"
                   autoComplete="tel"
                   value={form.phone} 
@@ -200,6 +203,7 @@ function CheckoutFormInner({ user, settings }: { user: UserProfile, settings?: P
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>{t('pages.checkout.form.email', 'EMAIL')} *</label>
                 <input 
                   type="email" 
+                  id="email"
                   name="email"
                   autoComplete="email"
                   value={form.email} 
@@ -212,6 +216,7 @@ function CheckoutFormInner({ user, settings }: { user: UserProfile, settings?: P
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>{t('pages.checkout.form.id_number', 'ID NUMBER / CEDULA')} *</label>
                 <input 
                   type="number" 
+                  id="id_number"
                   name="id_number"
                   value={form.id_number} 
                   onChange={e => set('id_number', e.target.value)} 
@@ -223,6 +228,7 @@ function CheckoutFormInner({ user, settings }: { user: UserProfile, settings?: P
                 <label className="text-xs font-mono-stack mb-1 block" style={{ color: 'var(--text-muted)' }}>{t('pages.checkout.form.address', 'ADDRESS')} *</label>
                 <input 
                   type="text" 
+                  id="address"
                   name="address"
                   autoComplete="street-address"
                   value={form.address} 
