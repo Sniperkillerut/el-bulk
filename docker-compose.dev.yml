@@ -4,7 +4,7 @@ services:
     container_name: el_bulk_db
     restart: unless-stopped
     env_file:
-      - .env
+      - .env.local
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./backend/db/schema:/schema
@@ -30,7 +30,6 @@ services:
       db:
         condition: service_healthy
     env_file:
-      - .env
       - .env.local
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
@@ -44,6 +43,8 @@ services:
       start_period: 60s
     volumes:
       - ./backend:/app
+      - ${APPDATA}/gcloud:/root/.config/gcloud:ro
+      - /app/tmp
 
   frontend:
     build:
@@ -55,10 +56,11 @@ services:
       backend:
         condition: service_healthy
     env_file:
-      - ./frontend/.env.local
+      - .env.local
     environment:
       WATCHPACK_POLLING: "true"
       CHOKIDAR_USEPOLLING: "true"
+      PORT: "3000"
       NEXT_WDS_SOCKET_PORT: "3000"
       NEXT_PUBLIC_HMR_PORT: "3000"
     ports:

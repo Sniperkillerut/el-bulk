@@ -71,6 +71,9 @@ func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 		DeliveryPriorityEnabled *bool    `json:"delivery_priority_enabled"`
 		PriorityShippingFeeCOP  *float64 `json:"priority_shipping_fee_cop"`
 		SynergyMaxPriceCOP      *float64 `json:"synergy_max_price_cop"`
+		ReceiptAutoEmail        *bool    `json:"receipt_auto_email"`
+		ReceiptFooterText       *string  `json:"receipt_footer_text"`
+		StoreLogoURL            *string  `json:"store_logo_url"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		render.Error(w, "invalid request body", http.StatusBadRequest)
@@ -207,6 +210,31 @@ func (h *SettingsHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if input.PriorityShippingFeeCOP != nil {
 		if err := h.Service.Upsert(r.Context(), "priority_shipping_fee_cop", strconv.FormatFloat(*input.PriorityShippingFeeCOP, 'f', 2, 64)); err != nil {
 			logger.ErrorCtx(r.Context(), "Failed to update priority_shipping_fee_cop: %v", err)
+			render.Error(w, "Update failed", http.StatusInternalServerError)
+			return
+		}
+	}
+	if input.ReceiptAutoEmail != nil {
+		val := "false"
+		if *input.ReceiptAutoEmail {
+			val = "true"
+		}
+		if err := h.Service.Upsert(r.Context(), "receipt_auto_email", val); err != nil {
+			logger.ErrorCtx(r.Context(), "Failed to update receipt_auto_email: %v", err)
+			render.Error(w, "Update failed", http.StatusInternalServerError)
+			return
+		}
+	}
+	if input.ReceiptFooterText != nil {
+		if err := h.Service.Upsert(r.Context(), "receipt_footer_text", *input.ReceiptFooterText); err != nil {
+			logger.ErrorCtx(r.Context(), "Failed to update receipt_footer_text: %v", err)
+			render.Error(w, "Update failed", http.StatusInternalServerError)
+			return
+		}
+	}
+	if input.StoreLogoURL != nil {
+		if err := h.Service.Upsert(r.Context(), "store_logo_url", *input.StoreLogoURL); err != nil {
+			logger.ErrorCtx(r.Context(), "Failed to update store_logo_url: %v", err)
 			render.Error(w, "Update failed", http.StatusInternalServerError)
 			return
 		}

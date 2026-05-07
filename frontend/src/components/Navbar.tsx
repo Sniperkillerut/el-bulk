@@ -31,9 +31,17 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [tcgs, setTcgs] = useState<TCG[]>([]);
   const [isPulsing, setIsPulsing] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTCGs(true).then(setTcgs);
+    import('@/lib/api').then(({ fetchPublicSettings }) => {
+      fetchPublicSettings().then(settings => {
+        if (settings?.store_logo_url) {
+          setLogoUrl(settings.store_logo_url);
+        }
+      });
+    });
   }, []);
 
   useEffect(() => {
@@ -68,7 +76,18 @@ export default function Navbar() {
       >
         <div className="w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14 max-w-[var(--content-max-width)] mx-auto">
           {/* Logo Section */}
-          <Link href="/" className="flex flex-col no-underline shrink-0 group">
+          <Link href="/" className="flex items-center no-underline shrink-0 group gap-3">
+            {logoUrl && (
+              <div className="relative h-8 w-8 sm:h-10 sm:w-10">
+                <Image
+                  src={logoUrl}
+                  alt="Store Logo"
+                  fill
+                  className="object-contain group-hover:scale-105 transition-transform"
+                  sizes="(max-width: 640px) 32px, 40px"
+                />
+              </div>
+            )}
             <span className="font-display text-2xl text-text-main leading-none tracking-tight group-hover:opacity-80 transition-opacity">
               EL BULK
             </span>

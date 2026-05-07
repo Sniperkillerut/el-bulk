@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: isProd,
-  turbopack: {},
+  // turbopack: {},
   images: {
     unoptimized: true,
     remotePatterns: [
@@ -70,7 +70,7 @@ const nextConfig: NextConfig = {
 };
 
 if (isDev) {
-  nextConfig.turbopack = {};
+  // nextConfig.turbopack = {};
   nextConfig.webpack = (config) => {
     config.watchOptions = {
       poll: 800,

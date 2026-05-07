@@ -19,7 +19,7 @@ func BenchmarkUpdateOrder_AddedItems(b *testing.B) {
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 
 	orderStore := store.NewOrderStore(sqlxDB)
-	orderService := NewOrderService(orderStore, nil, nil, nil, nil)
+	orderService := NewOrderService(orderStore, nil, nil, nil, nil, NewPDFService(), NewEmailService())
 
 	ctx := context.Background()
 	orderID := "test-order-id"

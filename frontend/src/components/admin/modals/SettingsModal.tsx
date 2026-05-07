@@ -129,6 +129,40 @@ export default function SettingsModal({
               {t('components.admin.settings_modal.notes.localization')}
             </p>
           </div>
+
+          {/* Receipts & Branding */}
+          <div className="space-y-6 md:col-span-2">
+            <div className="flex items-center gap-3 border-b border-border-main pb-2 mb-4">
+              <span className="text-2xl">🧾</span>
+              <h4 className="text-lg font-display text-text-main m-0">{t('components.admin.settings_modal.sections.receipts', 'RECIBOS Y MARCA')}</h4>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="p-4 bg-bg-surface border border-border-main rounded flex items-center justify-between group cursor-pointer" onClick={() => setEditingSettings({ ...editingSettings, receipt_auto_email: !editingSettings.receipt_auto_email })}>
+                <div>
+                  <label className="text-xs font-mono-stack block uppercase tracking-tighter text-text-muted">{t('components.admin.settings_modal.labels.auto_email', 'Envío Automático')}</label>
+                  <p className="text-sm font-bold m-0">{t('components.admin.settings_modal.labels.receipt_auto_email_desc', 'Enviar recibo por correo al confirmar')}</p>
+                </div>
+                <div className={`w-10 h-6 rounded-full transition-all relative ${editingSettings.receipt_auto_email ? 'bg-gold' : 'bg-bg-header/20'}`}>
+                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${editingSettings.receipt_auto_email ? 'left-5' : 'left-1'}`} />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-mono-stack mb-1 block uppercase tracking-tighter text-text-muted">{t('components.admin.settings_modal.labels.logo_url', 'URL del Logo')}</label>
+                <input type="text" className="bg-bg-page w-full p-2 text-sm border border-border-main rounded" value={editingSettings.store_logo_url || ''} onChange={e => setEditingSettings({ ...editingSettings, store_logo_url: e.target.value })} placeholder="https://..." />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="text-xs font-mono-stack mb-1 block uppercase tracking-tighter text-text-muted">{t('components.admin.settings_modal.labels.footer_text', 'Texto del Pie de Página')}</label>
+                <textarea 
+                  className="bg-bg-page w-full p-2 text-sm border border-border-main rounded min-h-[80px] outline-none focus:border-gold transition-colors" 
+                  value={editingSettings.receipt_footer_text || ''} 
+                  onChange={e => setEditingSettings({ ...editingSettings, receipt_footer_text: e.target.value })} 
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 mt-12 bg-bg-header/5 p-4 -mx-4 md:-mx-8 -mb-4 md:-mb-8 mt-8 border-t border-border-main">

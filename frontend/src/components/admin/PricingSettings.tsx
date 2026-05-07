@@ -19,7 +19,10 @@ export default function PricingSettings({ }: PricingSettingsProps) {
     flat_shipping_fee_cop: 0,
     hot_sales_threshold: 0,
     hot_days_threshold: 0,
-    new_days_threshold: 0
+    new_days_threshold: 0,
+    receipt_auto_email: true,
+    receipt_footer_text: '',
+    store_logo_url: ''
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

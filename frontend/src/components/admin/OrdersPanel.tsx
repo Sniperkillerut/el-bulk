@@ -13,6 +13,7 @@ import {
 } from '@/lib/types';
 import CardImage from '@/components/CardImage';
 import { useLanguage } from '@/context/LanguageContext';
+import { LineIcons } from '@/components/ui/LineIcons';
 
 interface Props {
   initialOrderId?: string | null;
@@ -706,6 +707,22 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                       </a>
                     </div>
                   )}
+
+                  {/* PDF Receipt Button */}
+                  {detail.order.status !== 'pending' && detail.order.status !== 'cancelled' && (
+                    <div className="mt-2">
+                      <a 
+                        href={`${process.env.NEXT_PUBLIC_API_URL}/api/admin/orders/${detail.order.id}/receipt`}
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="btn-secondary w-full py-2 flex items-center justify-center gap-2 border-gold-dark/30 text-gold-dark hover:bg-gold/5"
+                        style={{ fontSize: '0.8rem' }}
+                      >
+                        <LineIcons.Receipt className="w-5 h-5" />
+                        {t('pages.admin.orders.detail.customer.print_receipt', 'RECIBO PDF')}
+                      </a>
+                    </div>
+                  )}
                 </div>
                 <div className={`cardbox p-3 transition-all duration-300 ${!canEditMetadata ? 'opacity-70 grayscale-[0.8] bg-kraft-paper/30' : ''}`}>
                   <h4 className="text-xs font-mono-stack mb-2 flex items-center gap-2" style={{ color: 'var(--text-muted)' }}>
@@ -1007,7 +1024,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
       {showConfirmModal && detail && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center px-4"
           style={{ background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(3px)' }}>
-          <div className="card max-w-2xl w-full flex flex-col max-h-[90vh] overflow-hidden">
+          <div className="card max-w-2xl w-full flex flex-col max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div className="p-6 pb-0 shrink-0">
               <h3 className="font-display text-3xl mb-1">{t('pages.admin.orders.confirm_modal.title', 'CONFIRMAR ORDEN')}</h3>
@@ -1127,7 +1144,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
       {showRestoreModal && detail && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center px-4"
           style={{ background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(3px)' }}>
-          <div className="card max-w-2xl w-full flex flex-col max-h-[90vh] overflow-hidden">
+          <div className="card max-w-2xl w-full flex flex-col max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div className="p-6 pb-0 shrink-0">
               <h3 className="font-display text-3xl mb-1">{t('pages.admin.orders.restore_modal.title', 'RESTAURAR INVENTARIO')}</h3>

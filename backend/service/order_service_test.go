@@ -48,7 +48,7 @@ func TestOrderService_ConfirmOrder(t *testing.T) {
 	productStore := store.NewProductStore(sqlxDB)
 	mockAudit := new(MockAuditService)
 	// We need 5 args for NewOrderService: s, ps, cs, settings, audit
-	s := NewOrderService(orderStore, productStore, nil, nil, mockAudit)
+	s := NewOrderService(orderStore, productStore, nil, nil, mockAudit, NewPDFService(), NewEmailService())
 
 	t.Run("ConfirmOrder Success", func(t *testing.T) {
 		orderID := "o-1"
@@ -78,7 +78,7 @@ func TestOrderService_RestoreStock(t *testing.T) {
 	orderStore := store.NewOrderStore(sqlxDB)
 	productStore := store.NewProductStore(sqlxDB)
 	mockAudit := new(MockAuditService)
-	s := NewOrderService(orderStore, productStore, nil, nil, mockAudit)
+	s := NewOrderService(orderStore, productStore, nil, nil, mockAudit, NewPDFService(), NewEmailService())
 
 	t.Run("RestoreStock Success", func(t *testing.T) {
 		orderID := "o-1"
@@ -106,7 +106,7 @@ func TestOrderService_ListOrders(t *testing.T) {
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	orderStore := store.NewOrderStore(sqlxDB)
-	s := NewOrderService(orderStore, nil, nil, nil, nil)
+	s := NewOrderService(orderStore, nil, nil, nil, nil, NewPDFService(), NewEmailService())
 
 	t.Run("ListOrders Success", func(t *testing.T) {
 		// GetOrderCount calls SELECT COUNT(*) FROM view_order_list o

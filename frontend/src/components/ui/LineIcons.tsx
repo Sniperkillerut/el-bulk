@@ -51,5 +51,13 @@ export const LineIcons = {
       <circle cx="12" cy="12" r="6" />
       <circle cx="12" cy="12" r="2" />
     </svg>
+  ),
+  Receipt: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z" />
+      <path d="M16 8h-6" />
+      <path d="M16 12H8" />
+      <path d="M13 16H8" />
+    </svg>
   )
 };

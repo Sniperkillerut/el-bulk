@@ -70,6 +70,9 @@ export default function PricingTab({
 		try {
 			const res = await fetch('/api/admin/upload', {
 				method: 'POST',
+				headers: {
+					'X-Requested-With': 'XMLHttpRequest',
+				},
 				body: formData,
 			});
 

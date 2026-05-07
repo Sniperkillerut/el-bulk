@@ -184,6 +184,37 @@ func (h *OrderHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 	h.GetDetail(w, r)
 }
 
+// GET /api/admin/orders/{id}/receipt — generate and download PDF receipt
+func (h *OrderHandler) DownloadReceipt(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	logger.TraceCtx(r.Context(), "Entering OrderHandler.DownloadReceipt | ID: %s", id)
+
+	if err := httputil.ValidateUUID(id); err != nil {
+		render.Error(w, "Invalid Order ID format", http.StatusBadRequest)
+		return
+	}
+
+	detail, err := h.Service.GetOrderDetail(r.Context(), id, true)
+	if err != nil {
+		logger.ErrorCtx(r.Context(), "GetOrderDetail failed for receipt %s: %v", id, err)
+		render.Error(w, fmt.Sprintf("Order error: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	settings, _ := h.Service.Settings.GetSettings(r.Context())
+
+	pdfBytes, err := h.Service.PDF.GenerateOrderReceipt(r.Context(), *detail, settings)
+	if err != nil {
+		logger.ErrorCtx(r.Context(), "PDF generation failed for %s: %v", id, err)
+		render.Error(w, "PDF generation error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"receipt-%s.pdf\"", detail.Order.OrderNumber))
+	w.Write(pdfBytes)
+}
+
 // POST /api/admin/orders/{id}/restore — manually restore stock for a cancelled order
 func (h *OrderHandler) RestoreStock(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")

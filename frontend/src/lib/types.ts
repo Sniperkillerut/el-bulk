@@ -90,6 +90,7 @@ export interface PublicSettings {
   delivery_priority_enabled?: boolean;
   priority_shipping_fee_cop?: number;
   synergy_max_price_cop?: number;
+  store_logo_url?: string;
 }
 
 /** Full settings — only available to the admin panel via GET /api/admin/settings. */
@@ -101,6 +102,8 @@ export interface Settings extends PublicSettings {
   hot_sales_threshold: number;
   hot_days_threshold: number;
   new_days_threshold: number;
+  receipt_auto_email: boolean;
+  receipt_footer_text: string;
 }
 
 export interface FacetItem {

@@ -31,7 +31,7 @@ func TestOrderHandler_Create(t *testing.T) {
 	orderStore := store.NewOrderStore(sqlxDB)
 	customerStore := store.NewCustomerStore(sqlxDB)
 	productStore := store.NewProductStore(sqlxDB)
-	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil)
+	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil, service.NewPDFService(), service.NewEmailService())
 	h := NewOrderHandler(orderService)
 
 	t.Run("Success", func(t *testing.T) {
@@ -145,7 +145,7 @@ func TestOrderHandler_List(t *testing.T) {
 	orderStore := store.NewOrderStore(sqlxDB)
 	customerStore := store.NewCustomerStore(sqlxDB)
 	productStore := store.NewProductStore(sqlxDB)
-	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil)
+	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil, service.NewPDFService(), service.NewEmailService())
 	h := NewOrderHandler(orderService)
 
 	t.Run("List Admin", func(t *testing.T) {
@@ -176,7 +176,7 @@ func TestOrderHandler_GetDetail(t *testing.T) {
 	orderStore := store.NewOrderStore(sqlxDB)
 	customerStore := store.NewCustomerStore(sqlxDB)
 	productStore := store.NewProductStore(sqlxDB)
-	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil)
+	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil, service.NewPDFService(), service.NewEmailService())
 	h := NewOrderHandler(orderService)
 
 	t.Run("Success", func(t *testing.T) {
@@ -229,7 +229,7 @@ func TestOrderHandler_Update(t *testing.T) {
 		orderStore := store.NewOrderStore(sqlxDB)
 		customerStore := store.NewCustomerStore(sqlxDB)
 		productStore := store.NewProductStore(sqlxDB)
-		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil)
+		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil, service.NewPDFService(), service.NewEmailService())
 		h := NewOrderHandler(orderService)
 
 		orderID := "550e8400-e29b-41d4-a716-446655440010"
@@ -281,7 +281,7 @@ func TestOrderHandler_Update(t *testing.T) {
 		orderStore := store.NewOrderStore(sqlxDB)
 		customerStore := store.NewCustomerStore(sqlxDB)
 		productStore := store.NewProductStore(sqlxDB)
-		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil)
+		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil, service.NewPDFService(), service.NewEmailService())
 		h := NewOrderHandler(orderService)
 
 		mock.ExpectBegin().WillReturnError(fmt.Errorf("tx error"))
@@ -304,7 +304,7 @@ func TestOrderHandler_Update(t *testing.T) {
 		orderStore := store.NewOrderStore(sqlxDB)
 		customerStore := store.NewCustomerStore(sqlxDB)
 		productStore := store.NewProductStore(sqlxDB)
-		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil)
+		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil, service.NewPDFService(), service.NewEmailService())
 		h := NewOrderHandler(orderService)
 
 		orderID := "550e8400-e29b-41d4-a716-446655440010"
@@ -341,7 +341,7 @@ func TestOrderHandler_Update(t *testing.T) {
 		orderStore := store.NewOrderStore(sqlxDB)
 		customerStore := store.NewCustomerStore(sqlxDB)
 		productStore := store.NewProductStore(sqlxDB)
-		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil)
+		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil, service.NewPDFService(), service.NewEmailService())
 		h := NewOrderHandler(orderService)
 
 		orderID := "550e8400-e29b-41d4-a716-446655440010"
@@ -378,7 +378,7 @@ func TestOrderHandler_Update(t *testing.T) {
 		orderStore := store.NewOrderStore(sqlxDB)
 		customerStore := store.NewCustomerStore(sqlxDB)
 		productStore := store.NewProductStore(sqlxDB)
-		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil)
+		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil, service.NewPDFService(), service.NewEmailService())
 		h := NewOrderHandler(orderService)
 
 		orderID := "550e8400-e29b-41d4-a716-446655440010"
@@ -414,7 +414,7 @@ func TestOrderHandler_Update(t *testing.T) {
 		orderStore := store.NewOrderStore(sqlxDB)
 		customerStore := store.NewCustomerStore(sqlxDB)
 		productStore := store.NewProductStore(sqlxDB)
-		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil)
+		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil, service.NewPDFService(), service.NewEmailService())
 		h := NewOrderHandler(orderService)
 
 		orderID := "550e8400-e29b-41d4-a716-446655440010"
@@ -464,7 +464,7 @@ func TestOrderHandler_Update(t *testing.T) {
 		orderStore := store.NewOrderStore(sqlxDB)
 		customerStore := store.NewCustomerStore(sqlxDB)
 		productStore := store.NewProductStore(sqlxDB)
-		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil)
+		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil, service.NewPDFService(), service.NewEmailService())
 		h := NewOrderHandler(orderService)
 
 		orderID := "550e8400-e29b-41d4-a716-446655440010"
@@ -501,7 +501,7 @@ func TestOrderHandler_Confirm(t *testing.T) {
 		orderStore := store.NewOrderStore(sqlxDB)
 		customerStore := store.NewCustomerStore(sqlxDB)
 		productStore := store.NewProductStore(sqlxDB)
-		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil)
+		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil, service.NewPDFService(), service.NewEmailService())
 		h := NewOrderHandler(orderService)
 
 		orderID := "550e8400-e29b-41d4-a716-446655440010"
@@ -542,7 +542,7 @@ func TestOrderHandler_Confirm(t *testing.T) {
 		orderStore := store.NewOrderStore(sqlxDB)
 		customerStore := store.NewCustomerStore(sqlxDB)
 		productStore := store.NewProductStore(sqlxDB)
-		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil)
+		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil, service.NewPDFService(), service.NewEmailService())
 		h := NewOrderHandler(orderService)
 		orderID := "550e8400-e29b-41d4-a716-446655440010"
 		input := models.ConfirmOrderInput{
@@ -575,7 +575,7 @@ func TestOrderHandler_Confirm(t *testing.T) {
 		orderStore := store.NewOrderStore(sqlxDB)
 		customerStore := store.NewCustomerStore(sqlxDB)
 		productStore := store.NewProductStore(sqlxDB)
-		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil)
+		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil, service.NewPDFService(), service.NewEmailService())
 		h := NewOrderHandler(orderService)
 
 		orderID := "550e8400-e29b-41d4-a716-446655440010"
@@ -604,7 +604,7 @@ func TestOrderHandler_RestoreStock(t *testing.T) {
 		orderStore := store.NewOrderStore(sqlxDB)
 		customerStore := store.NewCustomerStore(sqlxDB)
 		productStore := store.NewProductStore(sqlxDB)
-		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil)
+		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil, service.NewPDFService(), service.NewEmailService())
 		h := NewOrderHandler(orderService)
 
 		orderID := "550e8400-e29b-41d4-a716-446655440010"
@@ -645,7 +645,7 @@ func TestOrderHandler_RestoreStock(t *testing.T) {
 		orderStore := store.NewOrderStore(sqlxDB)
 		customerStore := store.NewCustomerStore(sqlxDB)
 		productStore := store.NewProductStore(sqlxDB)
-		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil)
+		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil, service.NewPDFService(), service.NewEmailService())
 		h := NewOrderHandler(orderService)
 		orderID := "550e8400-e29b-41d4-a716-446655440010"
 		body := []byte(`{"increments": []}`)
@@ -672,7 +672,7 @@ func TestOrderHandler_CancelMe(t *testing.T) {
 		orderStore := store.NewOrderStore(sqlxDB)
 		customerStore := store.NewCustomerStore(sqlxDB)
 		productStore := store.NewProductStore(sqlxDB)
-		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil)
+		orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, nil, service.NewPDFService(), service.NewEmailService())
 		h := NewOrderHandler(orderService)
 
 		userID := "550e8400-e29b-41d4-a716-446655440011"

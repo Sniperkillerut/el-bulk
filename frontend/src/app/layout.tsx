@@ -27,46 +27,63 @@ declare global {
   }
 }
 
-export const metadata: Metadata = {
-  metadataBase: new URL('https://elbulk.com'),
-  title: 'El Bulk — TCG Store',
-  description: 'Your local Magic: The Gathering, Pokémon, Lorcana and One Piece card shop in Bogotá. Buy singles, sealed product, and sell us your bulk with secure evaluation.',
-  keywords: ['MTG', 'Magic the Gathering', 'Pokemon', 'Lorcana', 'TCG', 'card store', 'singles', 'sealed', 'bulk', 'Bogota', 'Colombia'],
-  authors: [{ name: 'El Bulk Collective' }],
-  openGraph: {
+export async function generateMetadata(): Promise<Metadata> {
+  let logoUrl = '/og-image.png'; // Default
+  try {
+    const settings = await fetchPublicSettings({ cache: 'no-store' }).catch(() => null);
+    if (settings?.store_logo_url) {
+      logoUrl = settings.store_logo_url;
+    }
+  } catch {
+    // Fallback on error
+  }
+
+  return {
+    metadataBase: new URL('https://elbulk.com'),
     title: 'El Bulk — TCG Store',
-    description: 'Premier destination for TCG enthusiasts. Secure buying, selling, and trading in Bogotá.',
-    url: 'https://elbulk.com',
-    siteName: 'El Bulk',
-    images: [
-      {
-        url: '/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'El Bulk Storefront',
-      },
-    ],
-    locale: 'es_CO',
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'El Bulk — TCG Store',
-    description: 'Premier destination for TCG enthusiasts. Secure buying, selling, and trading in Bogotá.',
-    images: ['/og-image.png'],
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+    description: 'Your local Magic: The Gathering, Pokémon, Lorcana and One Piece card shop in Bogotá. Buy singles, sealed product, and sell us your bulk with secure evaluation.',
+    keywords: ['MTG', 'Magic the Gathering', 'Pokemon', 'Lorcana', 'TCG', 'card store', 'singles', 'sealed', 'bulk', 'Bogota', 'Colombia'],
+    authors: [{ name: 'El Bulk Collective' }],
+    icons: {
+      icon: logoUrl,
+      shortcut: logoUrl,
+      apple: logoUrl,
+    },
+    openGraph: {
+      title: 'El Bulk — TCG Store',
+      description: 'Premier destination for TCG enthusiasts. Secure buying, selling, and trading in Bogotá.',
+      url: 'https://elbulk.com',
+      siteName: 'El Bulk',
+      images: [
+        {
+          url: logoUrl,
+          width: 1200,
+          height: 630,
+          alt: 'El Bulk Storefront',
+        },
+      ],
+      locale: 'es_CO',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: 'El Bulk — TCG Store',
+      description: 'Premier destination for TCG enthusiasts. Secure buying, selling, and trading in Bogotá.',
+      images: [logoUrl],
+    },
+    robots: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
     },
-  },
-};
+  };
+}
 
 import { LanguageProvider } from '@/context/LanguageContext';
 

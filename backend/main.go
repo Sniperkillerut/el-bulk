@@ -96,8 +96,10 @@ func main() {
 
 	// Initialize Services
 	settingsService := service.NewSettingsService(settingsStore, auditService)
+	pdfService := service.NewPDFService()
+	emailService := service.NewEmailService()
 	productService := service.NewProductService(productStore, tcgStore, settingsService, auditService)
-	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, auditService)
+	orderService := service.NewOrderService(orderStore, productStore, customerStore, settingsService, auditService, pdfService, emailService)
 	categoryService := service.NewCategoryService(categoryStore, auditService)
 	refreshService := service.NewRefreshService(refreshStore, settingsService)
 	tcgService := service.NewTCGService(tcgStore, refreshService)
@@ -324,6 +326,7 @@ func main() {
 				r.Get("/orders/{id}", orderHandler.GetDetail)
 				r.Put("/orders/{id}", orderHandler.Update)
 				r.Post("/orders/{id}/confirm", orderHandler.Confirm)
+				r.Get("/orders/{id}/receipt", orderHandler.DownloadReceipt)
 				r.Post("/orders/{id}/restore", orderHandler.RestoreStock)
 
 				// Bounties & Client Requests CRUD

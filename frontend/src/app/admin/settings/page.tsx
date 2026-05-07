@@ -14,9 +14,51 @@ export default function AdminSettingsPage() {
   const { token, settings, refreshSettings, loading, logout } = useAdmin();
   const [editingSettings, setEditingSettings] = useState<Settings | undefined>();
   const [saving, setSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [backendLogLevel, setBackendLogLevel] = useState<string>('INFO');
   const [frontendLogLevel, setFrontendLogLevel] = useState<string>('INFO');
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert(t('components.admin.product_modal.pricing.upload_size_error', 'File too large (Max 5MB)'));
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    setIsUploading(true);
+    try {
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(error || 'Upload failed');
+      }
+
+      const data = await res.json();
+      if (editingSettings) {
+        setEditingSettings({ ...editingSettings, store_logo_url: data.url });
+      }
+      alert(t('components.admin.product_modal.pricing.upload_success', 'Logo uploaded! Remember to save settings to persist.'));
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      alert(t('components.admin.product_modal.pricing.upload_error', 'Failed to upload logo: {error}', { error: message }));
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
+    }
+  };
 
   useEffect(() => {
     const fetchLogLevel = async () => {
@@ -319,6 +361,85 @@ export default function AdminSettingsPage() {
                 />
               </div>
               <p className="text-[9px] mt-2 text-text-muted italic leading-tight">{t('pages.admin.settings.discovery.priority_shipping_desc', 'Fee for Express/Priority delivery in Bogotá. Only applied if Express is selected.')}</p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Receipts & Branding Section */}
+      {editingSettings && (
+        <section className="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-7 duration-700">
+          <div className="flex items-center gap-4 border-b border-kraft-dark pb-3">
+            <span className="text-3xl">🧾</span>
+            <h2 className="font-display text-3xl m-0 text-ink-deep">{t('pages.admin.settings.receipts.title', 'RECEIPTS & BRANDING')}</h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="card p-3 bg-white shadow-sm border-l-4 border-gold">
+              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">{t('pages.admin.settings.receipts.auto_email', 'Auto-Email Receipts')}</label>
+              <div className="flex items-center gap-3 py-2">
+                <button
+                  onClick={() => setEditingSettings({ ...editingSettings, receipt_auto_email: !editingSettings.receipt_auto_email })}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ring-offset-2 focus:ring-2 ring-gold ${
+                    editingSettings.receipt_auto_email ? 'bg-gold' : 'bg-zinc-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      editingSettings.receipt_auto_email ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+                <span className={`text-xs font-bold font-mono-stack ${editingSettings.receipt_auto_email ? 'text-gold' : 'text-text-muted'}`}>
+                  {editingSettings.receipt_auto_email ? t('pages.admin.settings.receipts.auto_email_on', 'AUTO-SEND: ON') : t('pages.admin.settings.receipts.auto_email_off', 'AUTO-SEND: OFF')}
+                </span>
+              </div>
+              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">{t('pages.admin.settings.receipts.auto_email_desc', 'Automatically send PDF receipt via email when an order is confirmed.')}</p>
+            </div>
+
+            <div className="card p-3 bg-white shadow-sm border-l-4 border-ink-navy">
+              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">{t('pages.admin.settings.receipts.logo_label', 'Store Logo URL')}</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  className="flex-1 bg-white p-3 text-sm font-bold rounded-sm border border-ink-border/20 outline-none focus:border-gold"
+                  placeholder="https://example.com/logo.png"
+                  value={editingSettings.store_logo_url || ''} 
+                  onChange={e => setEditingSettings({ ...editingSettings, store_logo_url: e.target.value })} 
+                />
+                <label className={`shrink-0 w-12 h-12 flex items-center justify-center rounded border transition-all cursor-pointer ${isUploading ? 'bg-ink-border animate-pulse' : 'bg-white border-ink-border hover:border-gold hover:text-gold'}`} title={t('components.admin.product_modal.pricing.upload_btn_tooltip', 'Upload Logo')}>
+                  {isUploading ? (
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="17 8 12 3 7 8"></polyline>
+                      <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                  )}
+                  <input type="file" className="hidden" accept="image/*" onChange={handleUpload} disabled={isUploading} />
+                </label>
+              </div>
+              {editingSettings.store_logo_url && (
+                <div className="mt-3 p-2 bg-ink-surface/5 rounded-sm flex items-center justify-center border border-dashed border-ink-border/20">
+                  <img src={editingSettings.store_logo_url} alt="Logo Preview" className="max-h-12 object-contain" />
+                </div>
+              )}
+              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">{t('pages.admin.settings.receipts.logo_desc', 'Public URL for the store logo. Used in PDF headers and emails. You can upload an image directly to your cloud storage.')}</p>
+            </div>
+
+            <div className="md:col-span-2 card p-3 bg-white shadow-sm border-l-4 border-indigo-400">
+              <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">{t('pages.admin.settings.receipts.footer_label', 'PDF Receipt Footer Text')}</label>
+              <textarea 
+                className="w-full bg-white p-3 text-sm font-bold rounded-sm border border-ink-border/20 outline-none focus:border-gold min-h-[100px]"
+                placeholder={t('pages.admin.settings.receipts.footer_placeholder', 'Thank you for your purchase!')}
+                value={editingSettings.receipt_footer_text || ''} 
+                onChange={e => setEditingSettings({ ...editingSettings, receipt_footer_text: e.target.value })} 
+              />
+              <p className="text-[9px] mt-2 text-text-muted italic leading-tight">{t('pages.admin.settings.receipts.footer_desc', 'Custom message displayed at the bottom of every generated PDF receipt.')}</p>
             </div>
           </div>
         </section>

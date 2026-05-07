@@ -58,10 +58,10 @@ func (s *SettingsService) GetSettings(ctx context.Context) (models.Settings, err
 		USDToCOPRate:            4200,
 		EURToCOPRate:            4600,
 		CKToCOPRate:             4000,
-		ContactAddress:          "Cra. 15 # 76-54, Local 201, Centro Comercial Unilago, Bogotá",
+		ContactAddress:          "SOON - Bogotá",
 		ContactPhone:            "+57 300 000 0000",
-		ContactEmail:            "contact@el-bulk.co",
-		ContactInstagram:        "el-bulk",
+		ContactEmail:            "admnin@elbulk.co",
+		ContactInstagram:        "elbulk",
 		ContactHours:            "Mon - Sat: 11:00 AM - 7:00 PM",
 		FlatShippingFeeCOP:      20000,
 		HotSalesThreshold:       3,
@@ -69,9 +69,11 @@ func (s *SettingsService) GetSettings(ctx context.Context) (models.Settings, err
 		NewDaysThreshold:        10,
 		DefaultLocale:           "en",
 		HideLanguageSelector:    false,
-		DeliveryPriorityEnabled: true,
+		DeliveryPriorityEnabled: false,
 		PriorityShippingFeeCOP:  30000,
-		SynergyMaxPriceCOP:      2000,
+		SynergyMaxPriceCOP:      999999999,
+		ReceiptAutoEmail:        false,
+		ReceiptFooterText:       "Thank you for your purchase at El Bulk! If you have any questions, contact us at admin@elbulk.com",
 	}
 
 	raw, err := s.Store.GetAll(ctx)
@@ -137,6 +139,12 @@ func (s *SettingsService) GetSettings(ctx context.Context) (models.Settings, err
 			if f, err := strconv.ParseFloat(val, 64); err == nil {
 				settings.PriorityShippingFeeCOP = f
 			}
+		case "receipt_auto_email":
+			settings.ReceiptAutoEmail = val == "true"
+		case "receipt_footer_text":
+			settings.ReceiptFooterText = val
+		case "store_logo_url":
+			settings.StoreLogoURL = val
 		}
 	}
 

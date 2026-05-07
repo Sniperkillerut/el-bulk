@@ -4,7 +4,7 @@ tmp_dir = "tmp"
 [build]
   bin = "./tmp/main"
   cmd = "go build -o ./tmp/main ."
-  delay = 1000
+  delay = 500
   exclude_dir = ["assets", "tmp", "vendor", "test", "uploads", "public"]
   exclude_regex = ["_test.go"]
   exclude_unchanged = false
@@ -13,10 +13,10 @@ tmp_dir = "tmp"
   include_ext = ["go", "tpl", "tmpl", "html", "sql"]
   kill_delay = "0s"
   log = "build-errors.log"
-  send_interrupt = false
-  stop_on_error = true
   poll = true
   poll_interval = 500
+  send_interrupt = false
+  stop_on_error = true
 
 [color]
   app = ""

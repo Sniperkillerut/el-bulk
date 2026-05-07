@@ -1,7 +1,7 @@
 ## =======================================
 ## Stage: dev (local development with Air)
 ## =======================================
-FROM golang:1.25-alpine AS dev
+FROM golang:1.26-alpine AS dev
 WORKDIR /app
 RUN apk add --no-cache git curl
 # Install Air via fixed version binary for stability
@@ -14,7 +14,7 @@ ENTRYPOINT ["air"]
 ## =======================================
 ## Stage: builder (compile binary)
 ## =======================================
-FROM golang:1.25-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 WORKDIR /app
 

@@ -305,6 +305,11 @@ type Settings struct {
 	DeliveryPriorityEnabled bool    `json:"delivery_priority_enabled"`
 	PriorityShippingFeeCOP  float64 `json:"priority_shipping_fee_cop"`
 	SynergyMaxPriceCOP      float64 `json:"synergy_max_price_cop"`
+
+	// PDF Receipts & Branding
+	ReceiptAutoEmail  bool   `json:"receipt_auto_email"`
+	ReceiptFooterText string `json:"receipt_footer_text"`
+	StoreLogoURL      string `json:"store_logo_url"`
 }
 
 // PublicSettings is the safe subset of Settings returned by the public /api/settings endpoint.
@@ -321,6 +326,7 @@ type PublicSettings struct {
 	HideLanguageSelector    bool    `json:"hide_language_selector"`
 	DeliveryPriorityEnabled bool    `json:"delivery_priority_enabled"`
 	PriorityShippingFeeCOP  float64 `json:"priority_shipping_fee_cop"`
+	StoreLogoURL            string  `json:"store_logo_url"`
 }
 
 // ToPublic returns the public-safe subset of Settings.
@@ -337,6 +343,7 @@ func (s Settings) ToPublic() PublicSettings {
 		HideLanguageSelector:    s.HideLanguageSelector,
 		DeliveryPriorityEnabled: s.DeliveryPriorityEnabled,
 		PriorityShippingFeeCOP:  s.PriorityShippingFeeCOP,
+		StoreLogoURL:            s.StoreLogoURL,
 	}
 }
 

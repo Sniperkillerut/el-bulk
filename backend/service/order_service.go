@@ -22,15 +22,19 @@ type OrderService struct {
 	CustomerStore *store.CustomerStore
 	Settings      SettingsProvider
 	Audit         Auditer
+	PDF           *PDFService
+	Email         *EmailService
 }
 
-func NewOrderService(s *store.OrderStore, ps *store.ProductStore, cs *store.CustomerStore, settings SettingsProvider, audit Auditer) *OrderService {
+func NewOrderService(s *store.OrderStore, ps *store.ProductStore, cs *store.CustomerStore, settings SettingsProvider, audit Auditer, pdf *PDFService, email *EmailService) *OrderService {
 	return &OrderService{
 		Store:         s,
 		ProductStore:  ps,
 		CustomerStore: cs,
 		Settings:      settings,
 		Audit:         audit,
+		PDF:           pdf,
+		Email:         email,
 	}
 }
 
@@ -507,10 +511,58 @@ func (s *OrderService) ConfirmOrder(ctx context.Context, orderID string, decreme
 		return err
 	}
 	err = s.Store.ConfirmOrder(ctx, orderID, string(jsonData))
-	if err == nil && s.Audit != nil {
+	if err != nil {
+		return err
+	}
+
+	if s.Audit != nil {
 		s.Audit.LogAction(ctx, "CONFIRM_ORDER", "order", orderID, models.JSONB{"decrements": decrements})
 	}
-	return err
+
+	// Trigger automated receipt email in background
+	go func() {
+		if s.Settings == nil || s.PDF == nil || s.Email == nil {
+			return
+		}
+
+		bgCtx := context.Background()
+		settings, err := s.Settings.GetSettings(bgCtx)
+		if err != nil {
+			logger.ErrorCtx(bgCtx, "Background task: failed to get settings: %v", err)
+			return
+		}
+
+		if !settings.ReceiptAutoEmail {
+			return
+		}
+
+		detail, err := s.GetOrderDetail(bgCtx, orderID, true)
+		if err != nil {
+			logger.ErrorCtx(bgCtx, "Background task: failed to get order detail: %v", err)
+			return
+		}
+
+		if detail.Customer.Email == nil || *detail.Customer.Email == "" {
+			logger.DebugCtx(bgCtx, "Background task: no customer email, skipping receipt")
+			return
+		}
+
+		pdfBytes, err := s.PDF.GenerateOrderReceipt(bgCtx, *detail, settings)
+		if err != nil {
+			logger.ErrorCtx(bgCtx, "Background task: failed to generate PDF: %v", err)
+			return
+		}
+
+		subject := fmt.Sprintf("Order Confirmation - %s", detail.Order.OrderNumber)
+		body := fmt.Sprintf("Hello %s,<br><br>Thank you for your order! Please find your receipt attached.<br><br>Team El Bulk", detail.Customer.FirstName)
+
+		err = s.Email.SendWithAttachment(bgCtx, *detail.Customer.Email, subject, body, "receipt.pdf", pdfBytes)
+		if err != nil {
+			logger.ErrorCtx(bgCtx, "Background task: failed to send email: %v", err)
+		}
+	}()
+
+	return nil
 }
 
 func (s *OrderService) RestoreStock(ctx context.Context, orderID string, increments []models.StockDecrement) error {
