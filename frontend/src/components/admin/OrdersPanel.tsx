@@ -1005,8 +1005,6 @@ export default function OrdersPanel({ initialOrderId }: Props) {
 
       {/* Confirm Order Modal */}
       {showConfirmModal && detail && (
-      {/* Confirm Order Modal */}
-      {showConfirmModal && detail && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center px-4"
           style={{ background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(3px)' }}>
           <div className="card max-w-2xl w-full flex flex-col max-h-[90vh] overflow-hidden">
