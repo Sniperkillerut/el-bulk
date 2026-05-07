@@ -31,7 +31,7 @@ func (h *AccountingHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 	// Orders: Income (One row per product) + Outcome (Cost Basis)
 	orderQuery := `
 		SELECT 
-			o.completed_at as date, 
+			COALESCE(o.completed_at, o.created_at) as date, 
 			'Order Item' as type, 
 			o.order_number as ref, 
 			oi.product_name || ' (x' || oi.quantity || ') (Order ' || o.order_number || ')' as detail, 
@@ -44,18 +44,18 @@ func (h *AccountingHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 		WHERE o.status = 'completed'
 	`
 	if startDate != "" {
-		orderQuery += fmt.Sprintf(" AND o.completed_at >= $%d", len(args)+1)
+		orderQuery += fmt.Sprintf(" AND COALESCE(o.completed_at, o.created_at) >= $%d", len(args)+1)
 		args = append(args, startDate)
 	}
 	if endDate != "" {
-		orderQuery += fmt.Sprintf(" AND o.completed_at <= $%d", len(args)+1)
+		orderQuery += fmt.Sprintf(" AND COALESCE(o.completed_at, o.created_at) <= $%d", len(args)+1)
 		args = append(args, endDate)
 	}
 
 	// Bounty Offers: Outcome (Expense of acquiring stock)
 	offerQuery := `
 		SELECT 
-			o.created_at as date, 
+			COALESCE(o.created_at, NOW()) as date, 
 			'Bounty Offer' as type, 
 			b.name as ref, 
 			b.name || ' (from ' || c.first_name || ' ' || COALESCE(c.last_name, '') || ')' as detail, 
@@ -79,7 +79,7 @@ func (h *AccountingHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 	// Client Requests: Income
 	requestQuery := `
 		SELECT 
-			r.created_at as date, 
+			COALESCE(r.created_at, NOW()) as date, 
 			'Client Request' as type, 
 			r.card_name as ref, 
 			r.card_name || ' (for ' || r.customer_name || ')' as detail, 
@@ -102,7 +102,7 @@ func (h *AccountingHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 	// Initial Stocking: Estimation of investment for non-bounty stock
 	stockQuery := `
 		SELECT 
-			p.updated_at as date, 
+			COALESCE(p.updated_at, p.created_at, NOW()) as date, 
 			'Initial Stocking' as type, 
 			p.name as ref, 
 			p.name || ' (Estimated Inventory Investment)' as detail, 
@@ -128,11 +128,11 @@ func (h *AccountingHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 		  AND p.cost_basis_cop > 0
 	`
 	if startDate != "" {
-		stockQuery += fmt.Sprintf(" AND p.updated_at >= $%d", len(args)+1)
+		stockQuery += fmt.Sprintf(" AND COALESCE(p.updated_at, p.created_at) >= $%d", len(args)+1)
 		args = append(args, startDate)
 	}
 	if endDate != "" {
-		stockQuery += fmt.Sprintf(" AND p.updated_at <= $%d", len(args)+1)
+		stockQuery += fmt.Sprintf(" AND COALESCE(p.updated_at, p.created_at) <= $%d", len(args)+1)
 		args = append(args, endDate)
 	}
 
@@ -151,13 +151,13 @@ func (h *AccountingHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 	`, orderQuery, offerQuery, requestQuery, stockQuery)
 
 	type Row struct {
-		Date    time.Time `db:"date"`
-		Type    string    `db:"type"`
-		Ref     string    `db:"ref"`
-		Detail  string    `db:"detail"`
-		Income  float64   `db:"income"`
-		Outcome float64   `db:"outcome"`
-		Notes   string    `db:"notes"`
+		Date    *time.Time `db:"date"`
+		Type    string     `db:"type"`
+		Ref     string     `db:"ref"`
+		Detail  string     `db:"detail"`
+		Income  float64    `db:"income"`
+		Outcome float64    `db:"outcome"`
+		Notes   string     `db:"notes"`
 	}
 
 	var rows []Row
@@ -189,8 +189,12 @@ func (h *AccountingHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 
 	// Write rows
 	for _, row := range rows {
+		dateStr := ""
+		if row.Date != nil {
+			dateStr = row.Date.Format("2006-01-02 15:04:05")
+		}
 		writer.Write([]string{
-			row.Date.Format("2006-01-02 15:04:05"),
+			dateStr,
 			row.Type,
 			row.Ref,
 			row.Detail,
