@@ -99,6 +99,7 @@ type MTGMetadata struct {
 	FullArt       bool     `db:"full_art"          json:"full_art"`
 	Textless      bool     `db:"textless"          json:"textless"`
 	PromoType     *string  `db:"promo_type"         json:"promo_type,omitempty"`
+	FrameEffects  JSONB    `db:"frame_effects"      json:"frame_effects,omitempty"`
 	ScryfallID    *string  `db:"scryfall_id"        json:"scryfall_id,omitempty"`
 	OracleID      *string  `db:"oracle_id"          json:"oracle_id,omitempty"`
 	Legalities    JSONB    `db:"legalities"         json:"legalities,omitempty"`
@@ -681,6 +682,7 @@ type ClientRequest struct {
 	ImageURL           *string    `db:"image_url" json:"image_url,omitempty"`
 	FoilTreatment      *string    `db:"foil_treatment" json:"foil_treatment,omitempty"`
 	CardTreatment      *string    `db:"card_treatment" json:"card_treatment,omitempty"`
+	FrameEffects       JSONB      `db:"frame_effects" json:"frame_effects,omitempty"`
 	SetCode            *string    `db:"set_code" json:"set_code,omitempty"`
 	CollectorNumber    *string    `db:"collector_number" json:"collector_number,omitempty"`
 	CreatedAt          *time.Time `db:"created_at" json:"created_at,omitempty"`
@@ -722,6 +724,7 @@ type ClientRequestInput struct {
 	ImageURL        *string `json:"image_url,omitempty"`
 	FoilTreatment   *string `json:"foil_treatment,omitempty"`
 	CardTreatment   *string `json:"card_treatment,omitempty"`
+	FrameEffects    JSONB   `json:"frame_effects,omitempty"`
 	SetCode         *string `json:"set_code,omitempty"`
 	CollectorNumber *string `json:"collector_number,omitempty"`
 	OracleID        *string `json:"oracle_id,omitempty"`
@@ -741,6 +744,7 @@ type ClientRequestBatchInput struct {
 		ImageURL        *string `json:"image_url,omitempty"`
 		FoilTreatment   *string `json:"foil_treatment,omitempty"`
 		CardTreatment   *string `json:"card_treatment,omitempty"`
+		FrameEffects    JSONB   `json:"frame_effects,omitempty"`
 		SetCode         *string `json:"set_code,omitempty"`
 		CollectorNumber *string `json:"collector_number,omitempty"`
 	} `json:"cards"`
