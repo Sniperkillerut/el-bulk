@@ -590,7 +590,7 @@ export default function ProductEditModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4"
       style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(12px)' }}>
       <div className="card p-0 w-full max-w-6xl max-h-[94vh] flex flex-col border-white/20 shadow-2xl animate-in fade-in zoom-in duration-300" 
-        style={{ position: 'relative', background: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(20px)', overflow: 'hidden' }}>
+        style={{ position: 'relative', background: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(20px)', overflow: 'visible' }}>
 
         <div className="flex items-center justify-between p-3 md:p-6 pb-2 border-b border-ink-border/5">
           <div className="flex flex-col">
@@ -793,7 +793,7 @@ export default function ProductEditModal({
                  <label className="text-[10px] font-mono-stack uppercase tracking-tighter opacity-50" style={{ color: 'var(--text-muted)' }}>{t('components.admin.product_modal.image_preview_label', 'IMAGE PREVIEW')}</label>
                  <span className="text-[10px] font-mono-stack px-2 py-0.5 rounded-full font-bold shadow-sm" style={{ background: 'var(--nm-color)', color: 'white' }}>{form.condition}</span>
               </div>
-              <div className="card p-2 bg-white/40 border-white/30 backdrop-blur-sm overflow-hidden group mb-8 shadow-xl">
+              <div className="card p-2 bg-white/40 border-white/30 backdrop-blur-sm overflow-visible group mb-8 shadow-xl">
                 <div className="relative aspect-[63/88] w-full bg-ink-border/5 rounded shadow-inner flex items-center justify-center overflow-hidden">
                   <CardImage imageUrl={form.image_url} name={form.name} tcg={form.tcg} foilTreatment={form.foil_treatment} />
                 </div>

@@ -461,7 +461,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[1000] flex items-center justify-center p-4">
-      <div className="bg-bg-page border-4 border-border-main rounded-lg shadow-[0_0_50px_rgba(0,0,0,0.6)] w-full max-w-[95vw] flex flex-col max-h-[95vh] relative overflow-hidden">
+      <div className="bg-bg-page border-4 border-border-main rounded-lg shadow-[0_0_50px_rgba(0,0,0,0.6)] w-full max-w-[95vw] flex flex-col max-h-[95vh] relative overflow-visible">
         <div className="absolute top-0 left-0 w-full h-1 bg-accent-primary" />
         {/* Header */}
         <div className="p-6 border-b-4 border-border-main bg-bg-header flex justify-between items-center relative">

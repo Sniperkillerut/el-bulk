@@ -628,7 +628,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
 
               {/* Tracking Info (if shipped or local pickup) */}
               {(detail.order.status === 'shipped' || detail.order.is_local_pickup || detail.order.tracking_number) && (
-                <div className="cardbox p-4 mb-4 bg-gold/5 border-gold/20">
+                <div className="cardbox overflow-visible p-4 mb-4 bg-gold/5 border-gold/20">
                   <h4 className="text-xs font-mono-stack mb-3 text-gold-dark font-bold uppercase tracking-widest">
                     {detail.order.is_local_pickup ? t('pages.admin.orders.detail.tracking.local_pickup', 'ENTREGA EN TIENDA') : t('pages.admin.orders.detail.tracking.title', 'INFORMACIÓN DE ENVÍO')}
                   </h4>
@@ -667,7 +667,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
 
               {/* Customer + Payment info */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                <div className="cardbox p-3">
+                <div className="cardbox overflow-visible p-3">
                   <h4 className="text-xs font-mono-stack mb-2" style={{ color: 'var(--text-muted)' }}>{t('pages.admin.orders.detail.customer.title', 'CLIENTE')}</h4>
                   <Link href={`/admin/clients/${detail.customer.id}`} className="font-semibold text-gold-dark hover:underline transition-all block mb-1">
                     {detail.customer.first_name} {detail.customer.last_name} →
@@ -724,7 +724,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                     </div>
                   )}
                 </div>
-                <div className={`cardbox p-3 transition-all duration-300 ${!canEditMetadata ? 'opacity-70 grayscale-[0.8] bg-kraft-paper/30' : ''}`}>
+                <div className={`cardbox overflow-visible p-3 transition-all duration-300 ${!canEditMetadata ? 'opacity-70 grayscale-[0.8] bg-kraft-paper/30' : ''}`}>
                   <h4 className="text-xs font-mono-stack mb-2 flex items-center gap-2" style={{ color: 'var(--text-muted)' }}>
                     {t('pages.admin.orders.detail.payment.title', 'PAGO')} {!canEditMetadata && <span className="text-[10px] bg-red-100 text-red-600 px-1 rounded flex items-center gap-0.5">{t('pages.admin.orders.detail.payment.locked', '🔒 BLOQUEADO')}</span>}
                   </h4>
@@ -1042,7 +1042,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                   const isComplete = totalAssigned === item.quantity;
 
                   return (
-                    <div key={item.id} className="cardbox p-4" style={{ borderColor: isComplete ? 'var(--status-nm)' : 'var(--border-main)' }}>
+                    <div key={item.id} className="cardbox overflow-visible p-4" style={{ borderColor: isComplete ? 'var(--status-nm)' : 'var(--border-main)' }}>
                       <div className="flex justify-between items-start mb-3">
                         <div>
                           <p className="font-semibold text-sm">{item.product_name}</p>
@@ -1162,7 +1162,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                   const isComplete = totalAssigned === item.quantity;
 
                   return (
-                    <div key={item.id} className="cardbox p-4" style={{ borderColor: isComplete ? 'var(--status-nm)' : 'var(--border-main)' }}>
+                    <div key={item.id} className="cardbox overflow-visible p-4" style={{ borderColor: isComplete ? 'var(--status-nm)' : 'var(--border-main)' }}>
                       <div className="flex justify-between items-start mb-3">
                         <div>
                           <p className="font-semibold text-sm">{item.product_name}</p>
