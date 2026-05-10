@@ -469,6 +469,7 @@ export default function ProductEditModal({
 
         return {
           ...f, 
+          ...extractMTGMetadata(bestPrint),
           name: bestPrint?.name || f.name,
           set_code: bestPrint?.set || f.set_code, 
           set_name: bestPrint?.set_name || f.set_name,
@@ -480,7 +481,6 @@ export default function ProductEditModal({
           foil_treatment: foilToSet,
           image_url: getScryfallImage(bestPrint) || f.image_url,
           price_reference: applyPrintPrices(bestPrint, foilToSet, f.price_source, f.price_reference),
-          ...extractMTGMetadata(bestPrint)
         };
       });
 
@@ -494,59 +494,64 @@ export default function ProductEditModal({
   const handleSetSearchChange = (newSet: string) => {
     const bestPrint = findMatchingPrint(scryfallPrints, newSet, form.card_treatment, form.collector_number, form.promo_type, form.foil_treatment);
     setForm(f => ({
-      ...f, set_code: newSet, set_name: bestPrint?.set_name || f.set_name,
+      ...f,
+      ...extractMTGMetadata(bestPrint),
+      set_code: newSet, set_name: bestPrint?.set_name || f.set_name,
       foil_treatment: resolveFoilTreatment(bestPrint) as FoilTreatment,
       scryfall_id: bestPrint?.id || f.scryfall_id,
       image_url: getScryfallImage(bestPrint) || f.image_url,
       price_reference: applyPrintPrices(bestPrint, f.foil_treatment, f.price_source, f.price_reference),
-      ...extractMTGMetadata(bestPrint)
     }));
   };
 
   const handleTreatmentChange = (newTreatment: CardTreatment) => {
     const bestPrint = findMatchingPrint(scryfallPrints, form.set_code, newTreatment, form.collector_number, form.promo_type, form.foil_treatment);
     setForm(f => ({
-      ...f, card_treatment: newTreatment,
+      ...f,
+      ...extractMTGMetadata(bestPrint),
+      card_treatment: newTreatment,
       foil_treatment: resolveFoilTreatment(bestPrint) as FoilTreatment,
       scryfall_id: bestPrint?.id || f.scryfall_id,
       image_url: getScryfallImage(bestPrint) || f.image_url,
       price_reference: applyPrintPrices(bestPrint, f.foil_treatment, f.price_source, f.price_reference),
-      ...extractMTGMetadata(bestPrint)
     }));
   };
 
   const handleArtChange = (newArt: string) => {
     const bestPrint = findMatchingPrint(scryfallPrints, form.set_code, form.card_treatment, newArt, form.promo_type, form.foil_treatment);
     setForm(f => ({
-      ...f, collector_number: newArt,
+      ...f,
+      ...extractMTGMetadata(bestPrint),
+      collector_number: newArt,
       foil_treatment: resolveFoilTreatment(bestPrint) as FoilTreatment,
       scryfall_id: bestPrint?.id || f.scryfall_id,
       image_url: getScryfallImage(bestPrint) || f.image_url,
       price_reference: applyPrintPrices(bestPrint, f.foil_treatment, f.price_source, f.price_reference),
-      ...extractMTGMetadata(bestPrint)
     }));
   };
 
   const handlePromoChange = (newPromo: string) => {
     const bestPrint = findMatchingPrint(scryfallPrints, form.set_code, form.card_treatment, form.collector_number, newPromo, form.foil_treatment);
     setForm(f => ({
-      ...f, promo_type: newPromo,
+      ...f,
+      ...extractMTGMetadata(bestPrint),
+      promo_type: newPromo,
       foil_treatment: resolveFoilTreatment(bestPrint) as FoilTreatment,
       scryfall_id: bestPrint?.id || f.scryfall_id,
       image_url: getScryfallImage(bestPrint) || f.image_url,
       price_reference: applyPrintPrices(bestPrint, f.foil_treatment, f.price_source, f.price_reference),
-      ...extractMTGMetadata(bestPrint)
     }));
   };
 
   const handleFoilChange = (newFoil: FoilTreatment) => {
     const bestPrint = findMatchingPrint(scryfallPrints, form.set_code, form.card_treatment, form.collector_number, form.promo_type, newFoil);
     setForm(f => ({
-      ...f, foil_treatment: newFoil,
+      ...f,
+      ...extractMTGMetadata(bestPrint),
+      foil_treatment: newFoil,
       scryfall_id: bestPrint?.id || f.scryfall_id,
       image_url: getScryfallImage(bestPrint) || f.image_url,
       price_reference: applyPrintPrices(bestPrint, newFoil, f.price_source, f.price_reference),
-      ...extractMTGMetadata(bestPrint)
     }));
   };
 
@@ -556,6 +561,7 @@ export default function ProductEditModal({
     
     setForm(f => ({
       ...f,
+      ...extractMTGMetadata(p),
       name: p.name || f.name,
       set_code: p.set || f.set_code,
       set_name: p.set_name || f.set_name,
@@ -566,7 +572,6 @@ export default function ProductEditModal({
       scryfall_id: p.id,
       image_url: getScryfallImage(p) || f.image_url,
       price_reference: applyPrintPrices(p, foil as FoilTreatment, f.price_source, f.price_reference),
-      ...extractMTGMetadata(p)
     }));
   };
 

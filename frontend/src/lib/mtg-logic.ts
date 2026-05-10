@@ -437,3 +437,28 @@ export function getDeckAnalytics(cards: DeckCard[]) {
 
   return { total, counts, summary, groups };
 }
+
+/**
+ * Filters a comma-separated string of promo tags to remove redundant or misleading
+ * information based on the current card's treatment and foil finish.
+ */
+export function filterPromoTags(promoType: string | undefined, foilTreatment: string, cardTreatment: string): string[] {
+  if (!promoType || promoType === 'none') return [];
+  const foilTags = ['ripplefoil', 'galaxyfoil', 'surgefoil', 'glossy', 'etched', 'oilslick', 'textured', 'stepandcompleat', 'confettifoil', 'neonink', 'doublerainbow', 'platinumfoil', 'foil'];
+  
+  return promoType.split(',').filter(t => {
+    const s = t?.trim();
+    if (!s) return false;
+    const normalized = s.toLowerCase().replace(/[^a-z0-9]/g, '');
+    
+    // Filter out foil-related tags if the product is non-foil
+    if (foilTreatment === 'non_foil' && foilTags.includes(normalized)) return false;
+    
+    // Filter out redundant treatment tags
+    if (normalized === 'showcase' && cardTreatment === 'showcase') return false;
+    if (normalized === 'extendedart' && cardTreatment === 'extended_art') return false;
+    if (normalized === 'borderless' && cardTreatment === 'borderless') return false;
+    
+    return true;
+  });
+}

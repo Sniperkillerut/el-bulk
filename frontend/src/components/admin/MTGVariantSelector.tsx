@@ -174,6 +174,12 @@ export default function MTGVariantSelector({
                 {foilTreatment.replace(/_/g, ' ').toUpperCase()}
               </span>
             </div>
+            <div className="flex justify-between border-b border-ink-border/50 pb-1">
+              <span className="text-text-muted">Promo:</span>
+              <span className={promoType && promoType !== 'none' ? 'text-gold italic' : ''}>
+                {(promoType || 'STANDARD').replace(/_/g, ' ').toUpperCase()}
+              </span>
+            </div>
             {scryfallId && (
               <div className="flex flex-col gap-0.5 pt-1">
                 <span className="text-text-muted text-[10px] uppercase font-mono-stack">Scryfall ID:</span>

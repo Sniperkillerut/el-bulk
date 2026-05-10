@@ -11,6 +11,7 @@ import { HotBadge, NewBadge, CONDITION_MAP } from './Badges';
 import SetIcon from './SetIcon';
 import LegalityBadge from './LegalityBadge';
 import ManaText from './ManaText';
+import { filterPromoTags } from '@/lib/mtg-logic';
 
 interface ProductDetailsProps {
   product: Product;
@@ -105,11 +106,11 @@ export default function ProductDetails({ product, idPrefix, showViewFullPage, on
               {CONDITION_MAP[product.condition.toLowerCase()] || product.condition}
             </span>
           )}
-          {product.promo_type && product.promo_type !== 'none' && (
-            <span className="badge bg-status-hp text-white border-none">
-              {resolveLabel(product.promo_type, {})}
+          {filterPromoTags(product.promo_type, product.foil_treatment, product.card_treatment).map(t => (
+            <span key={t} className="badge bg-ink-surface text-text-secondary border border-kraft-dark uppercase">
+              {resolveLabel(t, {})}
             </span>
-          )}
+          ))}
           {product.foil_treatment !== 'non_foil' && (
             <span className="badge badge-foil">✦ {t(`pages.product.finish.${product.foil_treatment}`, FOIL_LABELS[product.foil_treatment] || product.foil_treatment)}</span>
           )}

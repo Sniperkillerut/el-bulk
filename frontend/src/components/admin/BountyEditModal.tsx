@@ -210,6 +210,7 @@ export default function BountyEditModal({
 
         return {
           ...f,
+          ...extractMTGMetadata(bestPrint),
           name: bestPrint?.name || f.name,
           set_name: bestPrint?.set_name || f.set_name,
           image_url: getScryfallImage(bestPrint) || f.image_url,
@@ -219,7 +220,6 @@ export default function BountyEditModal({
           price_reference: ref,
           target_price: suggested !== undefined ? suggested : f.target_price,
           scryfall_id: bestPrint?.id || '',
-          ...extractMTGMetadata(bestPrint)
         };
       });
       setSetCode(bestPrint?.set || setCode);
@@ -306,6 +306,7 @@ export default function BountyEditModal({
 
     setForm(f => ({
       ...f,
+      ...extractMTGMetadata(bestPrint),
       card_treatment: t,
       collector_number: bestPrint?.collector_number || f.collector_number,
       promo_type: (bestPrint?.promo_types || []).join(',') || 'none',
@@ -314,7 +315,6 @@ export default function BountyEditModal({
       price_reference: ref,
       target_price: suggested !== undefined ? suggested : f.target_price,
       scryfall_id: bestPrint?.id || '',
-      ...extractMTGMetadata(bestPrint)
     }));
     if (bestPrint?.collector_number) setCollectorNumber(bestPrint.collector_number);
   };
@@ -327,6 +327,7 @@ export default function BountyEditModal({
 
     setForm(f => ({
       ...f,
+      ...extractMTGMetadata(bestPrint),
       collector_number: a,
       promo_type: (bestPrint?.promo_types || []).join(',') || 'none',
       foil_treatment: foil,
@@ -334,7 +335,6 @@ export default function BountyEditModal({
       price_reference: ref,
       target_price: suggested !== undefined ? suggested : f.target_price,
       scryfall_id: bestPrint?.id || '',
-      ...extractMTGMetadata(bestPrint)
     }));
   };
 
@@ -345,13 +345,13 @@ export default function BountyEditModal({
 
     setForm(f => ({
       ...f,
+      ...extractMTGMetadata(bestPrint),
       promo_type: p,
       foil_treatment: foil,
       image_url: getScryfallImage(bestPrint) || f.image_url,
       price_reference: ref,
       target_price: suggested !== undefined ? suggested : f.target_price,
       scryfall_id: bestPrint?.id || '',
-      ...extractMTGMetadata(bestPrint)
     }));
   };
 

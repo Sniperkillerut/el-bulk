@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Product, TCG_SHORT, FOIL_LABELS, TREATMENT_LABELS, resolveLabel, Settings } from '@/lib/types';
+import { filterPromoTags } from '@/lib/mtg-logic';
 import CardImage from '@/components/CardImage';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -114,11 +115,11 @@ export function ProductTableRow({ product: p, selected, onSelect, onEdit, onDele
               {resolveLabel(p.card_treatment, TREATMENT_LABELS)}
             </span>
           )}
-          {p.promo_type && p.promo_type !== 'none' && p.promo_type !== '' && (
-            <span className="text-[9px] font-mono-stack px-1.5 py-0.5 bg-ink-deep/5 text-ink-deep border border-ink-deep/20 rounded-sm font-bold uppercase tracking-tighter">
-              {p.promo_type.split(',').map(s => resolveLabel(s.trim(), {})).join(' / ')}
+          {filterPromoTags(p.promo_type, p.foil_treatment, p.card_treatment).map(t => (
+            <span key={t} className="text-[9px] font-mono-stack px-1.5 py-0.5 bg-ink-deep/5 text-ink-deep border border-ink-deep/20 rounded-sm font-bold uppercase tracking-tighter">
+              {resolveLabel(t, {})}
             </span>
-          )}
+          ))}
           {p.foil_treatment && p.foil_treatment !== 'non_foil' && (
             <span className="text-[9px] font-mono-stack px-1.5 py-0.5 bg-hp-color/5 text-hp-color border border-hp-color/20 rounded-sm font-bold uppercase tracking-tighter">
               {FOIL_LABELS[p.foil_treatment] || resolveLabel(p.foil_treatment, {})}
