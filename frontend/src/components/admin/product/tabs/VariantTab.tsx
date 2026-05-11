@@ -132,6 +132,18 @@ export default function VariantTab({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-3">
+              {form.frame_effects && form.frame_effects.length > 0 && (
+                <div>
+                  <label className="text-[9px] font-mono-stack mb-1 block uppercase text-text-muted">{t('components.admin.product_modal.variant.frame_effects_label', 'Frame Effects')}</label>
+                  <div className="flex flex-wrap gap-1">
+                    {form.frame_effects.map(fe => (
+                      <span key={fe} className="text-[9px] font-mono-stack px-1.5 py-0.5 bg-gold/5 text-gold border border-gold/20 rounded-sm font-bold uppercase tracking-tighter">
+                        {fe}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div>
                 <label className="text-[9px] font-mono-stack mb-1 block uppercase text-text-muted">{t('components.admin.product_modal.variant.type_line_label', 'Type Line')}</label>
                 <input type="text" className="w-full text-xs py-1" value={form.type_line} onChange={e => onUpdate({ type_line: e.target.value })} />

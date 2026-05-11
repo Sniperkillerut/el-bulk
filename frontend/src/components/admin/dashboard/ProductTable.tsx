@@ -110,11 +110,16 @@ export function ProductTableRow({ product: p, selected, onSelect, onEdit, onDele
       </td>
       <td className="hidden lg:table-cell">
         <div className="flex flex-wrap gap-1 max-w-[160px]">
-          {p.card_treatment && p.card_treatment !== 'normal' && (
+          {p.card_treatment && p.card_treatment !== 'normal' && !p.frame_effects?.includes(p.card_treatment.replace('_', '')) && (
             <span className="text-[9px] font-mono-stack px-1.5 py-0.5 bg-gold/5 text-gold border border-gold/20 rounded-sm font-bold uppercase tracking-tighter">
               {resolveLabel(p.card_treatment, TREATMENT_LABELS)}
             </span>
           )}
+          {p.frame_effects?.map(fe => (
+            <span key={fe} className="text-[9px] font-mono-stack px-1.5 py-0.5 bg-gold/5 text-gold border border-gold/20 rounded-sm font-bold uppercase tracking-tighter">
+              {resolveLabel(fe, TREATMENT_LABELS)}
+            </span>
+          ))}
           {filterPromoTags(p.promo_type, p.foil_treatment, p.card_treatment).map(t => (
             <span key={t} className="text-[9px] font-mono-stack px-1.5 py-0.5 bg-ink-deep/5 text-ink-deep border border-ink-deep/20 rounded-sm font-bold uppercase tracking-tighter">
               {resolveLabel(t, {})}

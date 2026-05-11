@@ -180,6 +180,18 @@ export default function MTGVariantSelector({
                 {(promoType || 'STANDARD').replace(/_/g, ' ').toUpperCase()}
               </span>
             </div>
+            {prints.find(p => p.collector_number === collectorNumber)?.frame_effects?.length ? (
+              <div className="flex flex-col gap-1 pt-1 border-b border-ink-border/50 pb-1">
+                <span className="text-text-muted">Frame Effects:</span>
+                <div className="flex flex-wrap gap-1">
+                  {prints.find(p => p.collector_number === collectorNumber)?.frame_effects?.map(fe => (
+                    <span key={fe} className="text-[9px] font-mono-stack px-1.5 py-0.5 bg-gold/5 text-gold border border-gold/20 rounded-sm font-bold uppercase tracking-tighter">
+                      {fe}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
             {scryfallId && (
               <div className="flex flex-col gap-0.5 pt-1">
                 <span className="text-text-muted text-[10px] uppercase font-mono-stack">Scryfall ID:</span>
