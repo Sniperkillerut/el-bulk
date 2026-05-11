@@ -319,13 +319,56 @@ export function applyPrintPrices(card: ScryfallCard | undefined, foil: FoilTreat
   return currentPriceReference !== undefined ? Number(currentPriceReference) : 0;
 }
 
-export function extractMTGMetadata(card: ScryfallCard | undefined) {
-  if (!card) return {};
+export interface MTGMetadata {
+  language: string;
+  color_identity: string;
+  rarity: string;
+  cmc: number | '';
+  collector_number: string;
+  set_code: string;
+  promo_type: string;
+  is_legendary: boolean;
+  is_land: boolean;
+  is_basic_land: boolean;
+  oracle_text: string;
+  artist: string;
+  type_line: string;
+  border_color: string;
+  frame: string;
+  full_art: boolean;
+  textless: boolean;
+  frame_effects: string[];
+}
+
+export function extractMTGMetadata(card: ScryfallCard | undefined): MTGMetadata {
+  const defaults: MTGMetadata = {
+    language: 'en',
+    color_identity: '',
+    rarity: '',
+    cmc: 0,
+    collector_number: '',
+    set_code: '',
+    promo_type: '',
+    is_legendary: false,
+    is_land: false,
+    is_basic_land: false,
+    oracle_text: '',
+    artist: '',
+    type_line: '',
+    border_color: '',
+    frame: '',
+    full_art: false,
+    textless: false,
+    frame_effects: []
+  };
+
+  if (!card) return defaults;
+  
   return {
     language: 'en',
     color_identity: card.color_identity?.join('') || '',
     rarity: card.rarity || '',
-    cmc: card.cmc || 0,
+    cmc: card.cmc ?? 0,
     collector_number: card.collector_number || '',
     set_code: card.set || '',
     promo_type: (card.promo_types || []).join(',') || 'none',

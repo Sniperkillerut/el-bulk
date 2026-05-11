@@ -238,12 +238,16 @@ export default function BountyEditModal({
   useEffect(() => {
     if (editBounty) {
       const data = {
+        ...extractMTGMetadata(editBounty as unknown as ScryfallCard),
         name: editBounty.name,
         tcg: editBounty.tcg,
         set_name: editBounty.set_name || '',
         condition: editBounty.condition || 'NM',
         foil_treatment: editBounty.foil_treatment,
         card_treatment: editBounty.card_treatment || 'normal',
+        collector_number: editBounty.collector_number || '',
+        promo_type: editBounty.promo_type || '',
+        language: editBounty.language || 'en',
         target_price: editBounty.target_price || 0,
         hide_price: editBounty.hide_price,
         quantity_needed: editBounty.quantity_needed,
@@ -251,8 +255,9 @@ export default function BountyEditModal({
         price_source: editBounty.price_source || 'tcgplayer',
         price_reference: editBounty.price_reference || 0,
         is_generic: editBounty.is_generic,
-        ...extractMTGMetadata(editBounty as unknown as ScryfallCard),
         scryfall_id: editBounty.scryfall_id || '',
+        frame_effects: editBounty.frame_effects || [],
+        set_code: editBounty.set_code || '',
       };
       setForm(data);
       if (data.collector_number) setCollectorNumber(data.collector_number as string);
