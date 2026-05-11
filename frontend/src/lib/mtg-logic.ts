@@ -55,13 +55,13 @@ export function resolveFoilTreatment(card: ScryfallCard | undefined, preferredFi
   if (!card) return 'non_foil';
   const pt = card.promo_types || [];
   const finishes = card.finishes || [];
-  
+
   // 0. If preferredFinish is valid for this card, keep it
   if (preferredFinish) {
     if (preferredFinish === 'non_foil' && finishes.includes('nonfoil')) return 'non_foil';
     if (preferredFinish === 'foil' && finishes.includes('foil')) return 'foil';
     if (preferredFinish === 'etched_foil' && finishes.includes('etched')) return 'etched_foil';
-    
+
     // For specialized foils, check if the promo tag is present
     const specializedFoils: Record<FoilTreatment, string> = {
       'oil_slick': 'oilslick',
@@ -77,7 +77,7 @@ export function resolveFoilTreatment(card: ScryfallCard | undefined, preferredFi
       'platinum_foil': 'platinumfoil',
       'holo_foil': 'holofoil'
     };
-    
+
     const tag = specializedFoils[preferredFinish];
     if (tag && pt.includes(tag)) return preferredFinish;
   }
@@ -98,7 +98,8 @@ export function resolveFoilTreatment(card: ScryfallCard | undefined, preferredFi
   // 2. Check finishes
   if (finishes.includes('etched')) return 'etched_foil';
   if (finishes.includes('foil')) return 'foil';
-  
+
+  // 3. Fallback to non-foil (covers both explicit 'nonfoil' and cases where no finish is specified)
   return 'non_foil';
 }
 
@@ -108,16 +109,16 @@ export function resolveFoilTreatment(card: ScryfallCard | undefined, preferredFi
  */
 export function getInitialFoilTreatment(card: ScryfallCard | undefined): FoilTreatment {
   if (!card) return 'non_foil';
-  
+
   const finishes = card.finishes || [];
   if (finishes.includes('nonfoil')) return 'non_foil';
-  
+
   const resolved = resolveFoilTreatment(card);
   if (resolved !== 'non_foil') return resolved;
-  
+
   if (finishes.length === 1 && finishes.includes('foil')) return 'foil';
   if (finishes.length === 1 && finishes.includes('etched')) return 'etched_foil';
-  
+
   return 'non_foil';
 }
 
@@ -127,7 +128,7 @@ export function getInitialFoilTreatment(card: ScryfallCard | undefined): FoilTre
 export function identifyFoilFromString(str: string | undefined): FoilTreatment {
   if (!str) return 'non_foil';
   const s = str.toLowerCase().trim();
-  
+
   if (s.includes('ripple')) return 'ripple_foil';
   if (s.includes('platinum')) return 'platinum_foil';
   if (s.includes('galaxy')) return 'galaxy_foil';
@@ -141,7 +142,7 @@ export function identifyFoilFromString(str: string | undefined): FoilTreatment {
   if (s.includes('etched')) return 'etched_foil';
   if (s.includes('glossy')) return 'glossy';
   if (s.includes('holo')) return 'holo_foil';
-  
+
   if (s.includes('foil')) return 'foil';
   return 'non_foil';
 }
@@ -280,7 +281,7 @@ export function getFoilOptions(prints: ScryfallCard[], set: string, treatment: C
     if (finishes.includes('nonfoil')) options.add('non_foil');
     if (finishes.includes('foil')) options.add('foil');
     if (finishes.includes('etched')) options.add('etched_foil');
-    
+
     // Also resolve via tags for specialized foils
     const r = resolveFoilTreatment(p);
     if (r !== 'non_foil' && r !== 'foil' && r !== 'etched_foil') {
@@ -305,7 +306,7 @@ export function getTreatmentType(card: ScryfallCard): CardTreatment {
 export function applyPrintPrices(card: ScryfallCard | undefined, foil: FoilTreatment, source: PriceSource, currentPriceReference?: number | string): number {
   if (!card) return 0;
   const p = card.prices || {};
-  
+
   if (source === 'tcgplayer') {
     if (foil === 'etched_foil') return parseFloat(p.usd_etched || '0');
     if (foil !== 'non_foil' && foil !== '') return parseFloat(p.usd_foil || '0');
@@ -314,7 +315,7 @@ export function applyPrintPrices(card: ScryfallCard | undefined, foil: FoilTreat
     if (foil !== 'non_foil' && foil !== '') return parseFloat(p.eur_foil || p.eur || '0');
     return parseFloat(p.eur || '0');
   }
-  
+
   return currentPriceReference !== undefined ? Number(currentPriceReference) : 0;
 }
 
@@ -450,9 +451,9 @@ export function getDeckAnalytics(cards: DeckCard[]) {
       groups.Other.push(card);
       return;
     }
-    
+
     const typeLine = card.type_line.split(/[—\-]/)[0].toLowerCase();
-    
+
     if (typeLine.includes('land')) { counts.Lands += card.quantity; groups.Lands.push(card); }
     else if (typeLine.includes('creature')) { counts.Creatures += card.quantity; groups.Creatures.push(card); }
     else if (typeLine.includes('instant')) { counts.Instants += card.quantity; groups.Instants.push(card); }
@@ -479,20 +480,20 @@ export function getDeckAnalytics(cards: DeckCard[]) {
 export function filterPromoTags(promoType: string | undefined, foilTreatment: string, cardTreatment: string): string[] {
   if (!promoType || promoType === 'none') return [];
   const foilTags = ['ripplefoil', 'galaxyfoil', 'surgefoil', 'glossy', 'etched', 'oilslick', 'textured', 'stepandcompleat', 'confettifoil', 'neonink', 'doublerainbow', 'platinumfoil', 'foil'];
-  
+
   return promoType.split(',').filter(t => {
     const s = t?.trim();
     if (!s) return false;
     const normalized = s.toLowerCase().replace(/[^a-z0-9]/g, '');
-    
+
     // Filter out foil-related tags if the product is non-foil
     if (foilTreatment === 'non_foil' && foilTags.includes(normalized)) return false;
-    
+
     // Filter out redundant treatment tags
     if (normalized === 'showcase' && cardTreatment === 'showcase') return false;
     if (normalized === 'extendedart' && cardTreatment === 'extended_art') return false;
     if (normalized === 'borderless' && cardTreatment === 'borderless') return false;
-    
+
     return true;
   });
 }
