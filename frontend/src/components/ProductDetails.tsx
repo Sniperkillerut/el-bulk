@@ -129,6 +129,18 @@ export default function ProductDetails({ product, idPrefix, showViewFullPage, on
               {t('pages.product.details.full_art', 'FULL ART')}
             </span>
           )}
+          {/* Frame Effects (Storybook, etc.) */}
+          {product.frame_effects?.filter(fe => {
+            const normalized = fe.toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (normalized === 'showcase' && product.card_treatment === 'showcase') return false;
+            if (normalized === 'extendedart' && product.card_treatment === 'extended_art') return false;
+            if (normalized === 'borderless' && product.card_treatment === 'borderless') return false;
+            return true;
+          }).map(fe => (
+            <span key={fe} className="badge bg-bg-surface text-text-secondary border border-border-main uppercase">
+              {resolveLabel(fe, {})}
+            </span>
+          ))}
         </div>
 
         {product.tcg === 'mtg' && product.category === 'singles' && (

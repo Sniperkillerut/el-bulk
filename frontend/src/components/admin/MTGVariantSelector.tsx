@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+
 import { 
   getTreatmentOptions, getArtOptions, getPromoOptions, getFoilOptions, ArtOption 
 } from '@/lib/mtg-logic';
@@ -30,8 +32,27 @@ export default function MTGVariantSelector({
   // Filter waterfalls
   const treatments = getTreatmentOptions(prints, setCode);
   const arts = getArtOptions(prints, setCode, cardTreatment);
-  const promos = getPromoOptions(prints, setCode, cardTreatment, collectorNumber);
+  const { promos, hasStandard } = getPromoOptions(prints, setCode, cardTreatment, collectorNumber);
   const foils = getFoilOptions(prints, setCode, cardTreatment, collectorNumber, promoType || '');
+
+  // Auto-select foil if only one option exists
+  useEffect(() => {
+    if (foils.length === 1 && foilTreatment !== foils[0]) {
+      onFoilChange(foils[0]);
+    }
+  }, [foils, foilTreatment, onFoilChange]);
+
+  // Auto-select promo if only one option exists (either standard or a single promo)
+  useEffect(() => {
+    // Case 1: Only a single specialized promo exists and NO standard version
+    if (promos.length === 1 && !hasStandard && promoType !== promos[0]) {
+      onPromoChange(promos[0]);
+    }
+    // Case 2: Standard is the only option and NO specialized promos exist
+    if (promos.length === 0 && hasStandard && promoType !== 'none') {
+      onPromoChange('none');
+    }
+  }, [promos, hasStandard, promoType, onPromoChange]);
 
   // If no prints loaded, show message
   if (prints.length === 0 && tcg === 'mtg') {
@@ -90,16 +111,18 @@ export default function MTGVariantSelector({
         <div>
           <label className="text-[10px] font-mono-stack mb-2 block uppercase text-text-muted">3. Promo Version</label>
           <div className="flex flex-wrap gap-2">
-            {promos.length > 0 ? (
+            {promos.length > 0 || hasStandard ? (
               <>
-                <button
-                  onClick={(e) => { e.preventDefault(); onPromoChange('none'); }}
-                  className={`px-3 py-1 rounded-sm border text-[10px] font-mono-stack transition-all ${
-                    (!promoType || promoType === 'none' || promoType === '') ? 'bg-gold text-black border-gold shadow-[0_0_8px_rgba(212,175,55,0.3)]' : 'bg-ink-surface border-ink-border text-text-muted hover:border-gold/50'
-                  }`}
-                >
-                  STANDARD
-                </button>
+                {hasStandard && (
+                  <button
+                    onClick={(e) => { e.preventDefault(); onPromoChange('none'); }}
+                    className={`px-3 py-1 rounded-sm border text-[10px] font-mono-stack transition-all ${
+                      (!promoType || promoType === 'none' || promoType === '') ? 'bg-gold text-black border-gold shadow-[0_0_8px_rgba(212,175,55,0.3)]' : 'bg-ink-surface border-ink-border text-text-muted hover:border-gold/50'
+                    }`}
+                  >
+                    STANDARD
+                  </button>
+                )}
                 {promos.map((p: string) => (
                   <button
                     key={p}
@@ -185,7 +208,14 @@ export default function MTGVariantSelector({
             {scryfallId && (
               <div className="flex flex-col gap-0.5 pt-1">
                 <span className="text-text-muted text-[10px] uppercase font-mono-stack">Scryfall ID:</span>
-                <span className="font-mono-stack text-[9px] opacity-60 break-all">{scryfallId}</span>
+                <a 
+                  href={`https://scryfall.com/card/${scryfallId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono-stack text-[9px] opacity-60 hover:opacity-100 hover:text-gold transition-all break-all no-underline"
+                >
+                  {scryfallId}
+                </a>
               </div>
             )}
           </div>

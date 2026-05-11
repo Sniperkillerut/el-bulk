@@ -232,20 +232,30 @@ export function getArtOptions(prints: ScryfallCard[], set: string, treatment: Ca
 /**
  * Filter waterfall: 3. Get promo types for a chosen treatment + art (cn)
  */
-export function getPromoOptions(prints: ScryfallCard[], set: string, treatment: CardTreatment, cn: string): string[] {
+export function getPromoOptions(prints: ScryfallCard[], set: string, treatment: CardTreatment, cn: string): { promos: string[], hasStandard: boolean } {
   const options = new Set<string>();
+  let hasStandard = false;
+  
   prints
     .filter(p => !set || p.set?.toLowerCase() === set.toLowerCase() && resolveCardTreatment(p) === treatment && (p.collector_number === cn || !cn))
     .forEach(p => {
-      (p.promo_types || [])
-        .forEach(pt => {
-          // Filter redundant tags that are already covered by treatment or are standard UI-implied tags
-          const redundantTags = ['showcase', 'borderless', 'normal'];
-          if (redundantTags.includes(pt)) return;
-          options.add(pt);
-        });
+      const pt = p.promo_types || [];
+      const redundantTags = ['showcase', 'borderless', 'normal', 'boosterfun'];
+      
+      // A print supports 'Standard' if it has no promo tags, or only redundant ones,
+      // or if it explicitly has a nonfoil version (even if it has other promo tags).
+      const nonRedundant = pt.filter(t => !redundantTags.includes(t));
+      if (nonRedundant.length === 0) {
+        hasStandard = true;
+      }
+
+      nonRedundant.forEach(t => options.add(t));
     });
-  return Array.from(options);
+
+  return { 
+    promos: Array.from(options),
+    hasStandard 
+  };
 }
 
 /**
@@ -559,6 +569,7 @@ export function filterPromoTags(promoType: string | undefined, foilTreatment: st
     if (normalized === 'showcase' && cardTreatment === 'showcase') return false;
     if (normalized === 'extendedart' && cardTreatment === 'extended_art') return false;
     if (normalized === 'borderless' && cardTreatment === 'borderless') return false;
+    if (normalized === 'boosterfun') return false;
 
     return true;
   });

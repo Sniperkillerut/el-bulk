@@ -58,7 +58,23 @@ export default function ProductModal({ productId, initialProduct, onClose }: Pro
       onClose={onClose} 
       maxWidth="max-w-5xl" 
       showHeader={true}
-      title={product?.name || t('pages.common.status.loading', 'Loading...')}
+      title={
+        <div className="flex items-center gap-3">
+          <span>{product?.name || t('pages.common.status.loading', 'Loading...')}</span>
+          {product?.scryfall_id && (
+            <a 
+              href={`https://scryfall.com/card/${product.scryfall_id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-[9px] lowercase tracking-tight opacity-20 hover:opacity-100 hover:text-gold transition-all cursor-pointer no-underline"
+              title={t('pages.product.details.visit_scryfall', 'Visit Scryfall Page')}
+              onClick={(e) => e.stopPropagation()}
+            >
+              scryfall id: {product.scryfall_id}
+            </a>
+          )}
+        </div>
+      }
       containerClassName="bg-bg-surface border border-border-main shadow-2xl overflow-hidden"
       bodyClassName="md:overflow-hidden"
     >

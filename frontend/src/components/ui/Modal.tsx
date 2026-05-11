@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react';
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title?: string;
+  title?: React.ReactNode;
   children: React.ReactNode;
   maxWidth?: string; // e.g. 'max-w-md', 'max-w-2xl', 'max-w-5xl'
   showHeader?: boolean;
