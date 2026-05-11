@@ -91,37 +91,27 @@ export default function MTGVariantSelector({
           <label className="text-[10px] font-mono-stack mb-2 block uppercase text-text-muted">3. Promo Version</label>
           <div className="flex flex-wrap gap-2">
             {promos.length > 0 ? (
-              promos.length === 1 && (!promoType || promoType === 'none' || promoType === '') ? (
-                <div className="px-3 py-1 rounded-sm border border-ink-border bg-ink-surface/50 text-[10px] font-mono-stack text-text-muted uppercase">
-                  Standard Version
-                </div>
-              ) : promos.length > 0 ? (
-                <>
+              <>
+                <button
+                  onClick={(e) => { e.preventDefault(); onPromoChange('none'); }}
+                  className={`px-3 py-1 rounded-sm border text-[10px] font-mono-stack transition-all ${
+                    (!promoType || promoType === 'none' || promoType === '') ? 'bg-gold text-black border-gold shadow-[0_0_8px_rgba(212,175,55,0.3)]' : 'bg-ink-surface border-ink-border text-text-muted hover:border-gold/50'
+                  }`}
+                >
+                  STANDARD
+                </button>
+                {promos.map((p: string) => (
                   <button
-                    onClick={(e) => { e.preventDefault(); onPromoChange('none'); }}
+                    key={p}
+                    onClick={(e) => { e.preventDefault(); onPromoChange(p); }}
                     className={`px-3 py-1 rounded-sm border text-[10px] font-mono-stack transition-all ${
-                      (!promoType || promoType === 'none' || promoType === '') ? 'bg-gold text-black border-gold shadow-[0_0_8px_rgba(212,175,55,0.3)]' : 'bg-ink-surface border-ink-border text-text-muted hover:border-gold/50'
+                      (promoType === p || (promoType || '').split(',').includes(p)) ? 'bg-gold text-black border-gold shadow-[0_0_8px_rgba(212,175,55,0.3)]' : 'bg-ink-surface border-ink-border text-text-muted hover:border-gold/50'
                     }`}
                   >
-                    STANDARD
+                    {p.toUpperCase()}
                   </button>
-                  {promos.map((p: string) => (
-                    <button
-                      key={p}
-                      onClick={(e) => { e.preventDefault(); onPromoChange(p); }}
-                      className={`px-3 py-1 rounded-sm border text-[10px] font-mono-stack transition-all ${
-                        (promoType === p || (promoType || '').split(',').includes(p)) ? 'bg-gold text-black border-gold shadow-[0_0_8px_rgba(212,175,55,0.3)]' : 'bg-ink-surface border-ink-border text-text-muted hover:border-gold/50'
-                      }`}
-                    >
-                      {p.toUpperCase()}
-                    </button>
-                  ))}
-                </>
-              ) : (
-                <div className="px-3 py-1 rounded-sm border border-ink-border bg-ink-surface/50 text-[10px] font-mono-stack text-text-muted uppercase">
-                  Standard Version
-                </div>
-              )
+                ))}
+              </>
             ) : (
               <div className="px-3 py-1 rounded-sm border border-ink-border bg-ink-surface/50 text-[10px] font-mono-stack text-text-muted uppercase">
                 Standard Version
