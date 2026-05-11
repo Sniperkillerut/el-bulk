@@ -30,6 +30,28 @@ func (j *JSONB) Scan(value interface{}) error {
 	return json.Unmarshal(b, &j)
 }
 
+// StringArray is a slice of strings that can be scanned from and to a Postgres JSONB column.
+type StringArray []string
+
+func (s StringArray) Value() (driver.Value, error) {
+	if s == nil {
+		return nil, nil
+	}
+	return json.Marshal(s)
+}
+
+func (s *StringArray) Scan(value interface{}) error {
+	if value == nil {
+		*s = nil
+		return nil
+	}
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+	return json.Unmarshal(b, &s)
+}
+
 type FoilTreatment string
 type CardTreatment string
 
@@ -99,9 +121,9 @@ type MTGMetadata struct {
 	FullArt       bool     `db:"full_art"          json:"full_art"`
 	Textless      bool     `db:"textless"          json:"textless"`
 	PromoType     *string  `db:"promo_type"         json:"promo_type,omitempty"`
-	FrameEffects  JSONB    `db:"frame_effects"      json:"frame_effects,omitempty"`
-	ScryfallID    *string  `db:"scryfall_id"        json:"scryfall_id,omitempty"`
-	OracleID      *string  `db:"oracle_id"          json:"oracle_id,omitempty"`
+	FrameEffects  StringArray `db:"frame_effects"      json:"frame_effects,omitempty"`
+	ScryfallID    *string     `db:"scryfall_id"        json:"scryfall_id,omitempty"`
+	OracleID      *string     `db:"oracle_id"          json:"oracle_id,omitempty"`
 	Legalities    JSONB    `db:"legalities"         json:"legalities,omitempty"`
 }
 
@@ -395,6 +417,7 @@ type Facets struct {
 	Condition   map[string]int `json:"condition"`
 	Foil        map[string]int `json:"foil"`
 	Treatment   map[string]int `json:"treatment"`
+	FrameEffects map[string]int `json:"frame_effects"`
 	Rarity      map[string]int `json:"rarity"`
 	Language    map[string]int `json:"language"`
 	Color       map[string]int `json:"color"`
@@ -682,7 +705,7 @@ type ClientRequest struct {
 	ImageURL           *string    `db:"image_url" json:"image_url,omitempty"`
 	FoilTreatment      *string    `db:"foil_treatment" json:"foil_treatment,omitempty"`
 	CardTreatment      *string    `db:"card_treatment" json:"card_treatment,omitempty"`
-	FrameEffects       JSONB      `db:"frame_effects" json:"frame_effects,omitempty"`
+	FrameEffects       StringArray `db:"frame_effects" json:"frame_effects,omitempty"`
 	SetCode            *string    `db:"set_code" json:"set_code,omitempty"`
 	CollectorNumber    *string    `db:"collector_number" json:"collector_number,omitempty"`
 	CreatedAt          *time.Time `db:"created_at" json:"created_at,omitempty"`
@@ -723,9 +746,9 @@ type ClientRequestInput struct {
 	ScryfallID      *string `json:"scryfall_id,omitempty"`
 	ImageURL        *string `json:"image_url,omitempty"`
 	FoilTreatment   *string `json:"foil_treatment,omitempty"`
-	CardTreatment   *string `json:"card_treatment,omitempty"`
-	FrameEffects    JSONB   `json:"frame_effects,omitempty"`
-	SetCode         *string `json:"set_code,omitempty"`
+	CardTreatment   *string     `json:"card_treatment,omitempty"`
+	FrameEffects    StringArray `json:"frame_effects,omitempty"`
+	SetCode         *string     `json:"set_code,omitempty"`
 	CollectorNumber *string `json:"collector_number,omitempty"`
 	OracleID        *string `json:"oracle_id,omitempty"`
 }
@@ -743,9 +766,9 @@ type ClientRequestBatchInput struct {
 		OracleID        *string `json:"oracle_id,omitempty"`
 		ImageURL        *string `json:"image_url,omitempty"`
 		FoilTreatment   *string `json:"foil_treatment,omitempty"`
-		CardTreatment   *string `json:"card_treatment,omitempty"`
-		FrameEffects    JSONB   `json:"frame_effects,omitempty"`
-		SetCode         *string `json:"set_code,omitempty"`
+		CardTreatment   *string     `json:"card_treatment,omitempty"`
+		FrameEffects    StringArray `json:"frame_effects,omitempty"`
+		SetCode         *string     `json:"set_code,omitempty"`
 		CollectorNumber *string `json:"collector_number,omitempty"`
 	} `json:"cards"`
 }

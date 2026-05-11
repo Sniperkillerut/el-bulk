@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS client_request (
   bounty_id         UUID REFERENCES bounty(id) ON DELETE SET NULL,
   match_type        TEXT NOT NULL DEFAULT 'any' CHECK (match_type IN ('any', 'exact')),
   scryfall_id       TEXT,
+  frame_effects     JSONB,
   oracle_id         UUID,
   cancellation_reason TEXT,
   

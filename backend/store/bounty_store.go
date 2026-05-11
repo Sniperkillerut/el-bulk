@@ -23,7 +23,7 @@ func (s *BountyStore) ListBounties(ctx context.Context, activeParam string, isAd
 	bounties := []models.Bounty{}
 	query := `
 		SELECT 
-			b.id, b.name, b.tcg, b.set_name, b.condition, b.foil_treatment, b.card_treatment, b.collector_number, b.promo_type, b.language, b.target_price, 
+			b.id, b.name, b.tcg, b.set_name, b.condition, b.foil_treatment, b.card_treatment, b.collector_number, b.promo_type, b.frame_effects, b.language, b.target_price, 
 			b.hide_price, b.quantity_needed, b.is_generic, b.image_url, b.price_source, b.price_reference, b.is_active, b.scryfall_id, b.set_code, b.created_at, b.updated_at
 		FROM bounty b
 		WHERE ($1 = '' OR b.is_active = ($1 = 'true'))
@@ -36,14 +36,14 @@ func (s *BountyStore) ListBounties(ctx context.Context, activeParam string, isAd
 
 func (s *BountyStore) CreateBounty(ctx context.Context, input models.BountyInput, isActive bool) (*models.Bounty, error) {
 	query := `
-		INSERT INTO bounty (name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, is_generic, image_url, price_source, price_reference, is_active, scryfall_id, set_code)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
-		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, is_generic, image_url, price_source, price_reference, is_active, scryfall_id, set_code, created_at, updated_at
+		INSERT INTO bounty (name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, frame_effects, language, target_price, hide_price, quantity_needed, is_generic, image_url, price_source, price_reference, is_active, scryfall_id, set_code)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, frame_effects, language, target_price, hide_price, quantity_needed, is_generic, image_url, price_source, price_reference, is_active, scryfall_id, set_code, created_at, updated_at
 	`
 	var bounty models.Bounty
 	err := s.DB.QueryRowxContext(ctx, query,
 		input.Name, input.TCG, input.SetName, input.Condition, input.FoilTreatment,
-		input.CardTreatment, input.CollectorNumber, input.PromoType, input.Language,
+		input.CardTreatment, input.CollectorNumber, input.PromoType, input.FrameEffects, input.Language,
 		input.TargetPrice, input.HidePrice, input.QuantityNeeded, input.IsGeneric, input.ImageURL,
 		input.PriceSource, input.PriceReference, isActive, input.ScryfallID, input.SetCode,
 	).StructScan(&bounty)
@@ -57,16 +57,16 @@ func (s *BountyStore) UpdateBounty(ctx context.Context, id string, input models.
 	query := `
 		UPDATE bounty
 		SET name = $1, tcg = $2, set_name = $3, condition = $4, foil_treatment = $5,
-		    card_treatment = $6, collector_number = $7, promo_type = $8, language = $9,
-		    target_price = $10, hide_price = $11, quantity_needed = $12, is_generic = $13, image_url = $14,
-		    price_source = $15, price_reference = $16, is_active = $17, scryfall_id = $18, set_code = $19, updated_at = now()
-		WHERE id = $20
-		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, language, target_price, hide_price, quantity_needed, is_generic, image_url, price_source, price_reference, is_active, scryfall_id, set_code, created_at, updated_at
+		    card_treatment = $6, collector_number = $7, promo_type = $8, frame_effects = $9, language = $10,
+		    target_price = $11, hide_price = $12, quantity_needed = $13, is_generic = $14, image_url = $15,
+		    price_source = $16, price_reference = $17, is_active = $18, scryfall_id = $19, set_code = $20, updated_at = now()
+		WHERE id = $21
+		RETURNING id, name, tcg, set_name, condition, foil_treatment, card_treatment, collector_number, promo_type, frame_effects, language, target_price, hide_price, quantity_needed, is_generic, image_url, price_source, price_reference, is_active, scryfall_id, set_code, created_at, updated_at
 	`
 	var bounty models.Bounty
 	err := s.DB.QueryRowxContext(ctx, query,
 		input.Name, input.TCG, input.SetName, input.Condition, input.FoilTreatment,
-		input.CardTreatment, input.CollectorNumber, input.PromoType, input.Language,
+		input.CardTreatment, input.CollectorNumber, input.PromoType, input.FrameEffects, input.Language,
 		input.TargetPrice, input.HidePrice, input.QuantityNeeded, input.IsGeneric, input.ImageURL,
 		input.PriceSource, input.PriceReference, isActive, input.ScryfallID, input.SetCode, id,
 	).StructScan(&bounty)
@@ -190,7 +190,7 @@ func (s *BountyStore) CancelMeOffer(ctx context.Context, id, userID string) (int
 
 // ── Client Requests ─────────────────────────────────────
 
-const requestColumns = `id, customer_id, customer_name, customer_contact, card_name, set_name, details, quantity, tcg, status, cancellation_reason, bounty_id, match_type, scryfall_id, oracle_id, image_url, foil_treatment, card_treatment, set_code, collector_number, created_at, updated_at`
+const requestColumns = `id, customer_id, customer_name, customer_contact, card_name, set_name, details, quantity, tcg, status, cancellation_reason, bounty_id, match_type, scryfall_id, oracle_id, image_url, foil_treatment, card_treatment, frame_effects, set_code, collector_number, created_at, updated_at`
 
 func (s *BountyStore) ListRequests(ctx context.Context) ([]models.ClientRequest, error) {
 	requests := []models.ClientRequest{}
@@ -199,10 +199,11 @@ func (s *BountyStore) ListRequests(ctx context.Context) ([]models.ClientRequest,
 	return requests, err
 }
 
-func (s *BountyStore) SubmitRequest(ctx context.Context, customerName, customerContact, cardName string, setName, details *string, quantity int, tcg string, userID *string, matchType string, scryfallID, imageURL, foilTreatment, cardTreatment, setCode, collectorNumber, oracleID *string) ([]byte, error) {
+func (s *BountyStore) SubmitRequest(ctx context.Context, customerName, customerContact, cardName string, setName, details *string, quantity int, tcg string, userID *string, matchType string, scryfallID, imageURL, foilTreatment, cardTreatment, setCode, collectorNumber, oracleID *string, frameEffects models.StringArray) ([]byte, error) {
 	var result []byte
-	err := s.DB.GetContext(ctx, &result, "SELECT fn_submit_client_request($1::TEXT, $2::TEXT, $3::TEXT, $4::TEXT, $5::TEXT, $6::INTEGER, $7::TEXT, $8::UUID, $9::TEXT, $10::TEXT, $11::TEXT, $12::TEXT, $13::TEXT, $14::TEXT, $15::TEXT, $16::UUID)",
-		customerName, customerContact, cardName, setName, details, quantity, tcg, userID, matchType, scryfallID, imageURL, foilTreatment, cardTreatment, setCode, collectorNumber, oracleID)
+	feJSON, _ := json.Marshal(frameEffects)
+	err := s.DB.GetContext(ctx, &result, "SELECT fn_submit_client_request($1::TEXT, $2::TEXT, $3::TEXT, $4::TEXT, $5::TEXT, $6::INTEGER, $7::TEXT, $8::UUID, $9::TEXT, $10::TEXT, $11::TEXT, $12::TEXT, $13::TEXT, $14::TEXT, $15::TEXT, $16::UUID, $17::JSONB)",
+		customerName, customerContact, cardName, setName, details, quantity, tcg, userID, matchType, scryfallID, imageURL, foilTreatment, cardTreatment, setCode, collectorNumber, oracleID, string(feJSON))
 	return result, err
 }
 

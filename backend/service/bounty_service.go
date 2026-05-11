@@ -220,6 +220,7 @@ func (s *BountyService) SubmitRequest(ctx context.Context, input models.ClientRe
 			input.FoilTreatment = &ft
 			ct := string(lookup.CardTreatment)
 			input.CardTreatment = &ct
+			input.FrameEffects = lookup.FrameEffects
 		}
 	}
 
@@ -227,7 +228,7 @@ func (s *BountyService) SubmitRequest(ctx context.Context, input models.ClientRe
 		ctx, input.CustomerName, input.CustomerContact, input.CardName,
 		input.SetName, input.Details, input.Quantity, input.TCG, userID,
 		input.MatchType, input.ScryfallID, input.ImageURL, input.FoilTreatment, input.CardTreatment,
-		input.SetCode, input.CollectorNumber, input.OracleID,
+		input.SetCode, input.CollectorNumber, input.OracleID, input.FrameEffects,
 	)
 	if err != nil {
 		return nil, err
@@ -279,6 +280,7 @@ func (s *BountyService) SubmitRequestsBatch(ctx context.Context, input models.Cl
 			card.FoilTreatment = &ft
 			ct := string(lookup.CardTreatment)
 			card.CardTreatment = &ct
+			card.FrameEffects = lookup.FrameEffects
 		}
 	}
 

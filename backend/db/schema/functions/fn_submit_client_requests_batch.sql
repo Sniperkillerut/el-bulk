@@ -62,6 +62,7 @@ BEGIN
             image_url,
             foil_treatment,
             card_treatment,
+            frame_effects,
             set_code,
             collector_number
         ) VALUES (
@@ -80,6 +81,7 @@ BEGIN
             v_card->>'image_url',
             v_card->>'foil_treatment',
             v_card->>'card_treatment',
+            v_card->'frame_effects',
             v_card->>'set_code',
             v_card->>'collector_number'
         );

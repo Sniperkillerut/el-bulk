@@ -31,6 +31,7 @@ export const EMPTY_FORM: FormState = {
   is_legendary: false, is_historic: false, is_land: false, is_basic_land: false,
   art_variation: '', oracle_text: '', artist: '', type_line: '',
   border_color: '', frame: '', full_art: false, textless: false,
+  frame_effects: [],
   storage_items: [], deck_cards: []
 };
 
@@ -107,7 +108,8 @@ export default function ProductEditModal({
       frame: frame,
       promo_types: promoTypes,
       finishes: finishes,
-      promo: p.card_treatment === 'promo'
+      promo: p.card_treatment === 'promo',
+      frame_effects: p.frame_effects || []
     };
   };
 
@@ -152,6 +154,7 @@ export default function ProductEditModal({
         full_art: editProduct.full_art,
         textless: editProduct.textless,
         scryfall_id: editProduct.scryfall_id || '',
+        frame_effects: editProduct.frame_effects || [],
         storage_items: editProduct.stored_in?.map(s => ({ stored_in_id: s.stored_in_id, quantity: s.quantity })) || [],
         deck_cards: editProduct.deck_cards || [],
       });
@@ -292,6 +295,7 @@ export default function ProductEditModal({
         full_art: form.full_art, 
         textless: form.textless,
         scryfall_id: form.scryfall_id || undefined,
+        frame_effects: form.frame_effects || undefined,
         deck_cards: form.deck_cards,
         storage_items: productStorage.map(s => ({ 
           stored_in_id: s.stored_in_id, 

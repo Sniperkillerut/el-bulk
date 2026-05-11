@@ -23,7 +23,8 @@ export const EMPTY_BOUNTY: BountyInput = {
   foil_treatment: 'non_foil', card_treatment: 'normal',
   collector_number: '', promo_type: '', language: 'en',
   target_price: 0, hide_price: false, quantity_needed: 1, image_url: '',
-  price_source: 'tcgplayer', price_reference: 0, is_generic: false, scryfall_id: ''
+  price_source: 'tcgplayer', price_reference: 0, is_generic: false, scryfall_id: '',
+  frame_effects: []
 };
 
 export default function BountyEditModal({
@@ -111,6 +112,7 @@ export default function BountyEditModal({
       const payload: BountyInput = {
         ...form,
         target_price: form.target_price || undefined,
+        frame_effects: form.frame_effects || undefined,
       };
 
       if (editBounty) {
@@ -220,6 +222,7 @@ export default function BountyEditModal({
           price_reference: ref,
           target_price: suggested !== undefined ? suggested : f.target_price,
           scryfall_id: bestPrint?.id || '',
+          frame_effects: bestPrint?.frame_effects || [],
         };
       });
       setSetCode(bestPrint?.set || setCode);
@@ -253,6 +256,7 @@ export default function BountyEditModal({
         is_generic: editBounty.is_generic,
         ...extractMTGMetadata(editBounty as unknown as ScryfallCard),
         scryfall_id: editBounty.scryfall_id || '',
+        frame_effects: editBounty.frame_effects || [],
         set_code: editBounty.set_code || '',
       };
       setForm(data);

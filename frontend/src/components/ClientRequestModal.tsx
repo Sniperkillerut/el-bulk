@@ -59,6 +59,7 @@ export default function ClientRequestModal({ onClose, onSuccess }: ClientRequest
       image_url: activePrint?.image_uris?.normal || activePrint?.image_uris?.normal || activePrint?.card_faces?.[0]?.image_uris?.normal,
       foil_treatment: selectedPrint?.finishes?.includes('foil') ? 'foil' : 'non_foil',
       card_treatment: selectedPrint?.border_color === 'borderless' ? 'borderless' : (selectedPrint?.frame_effects?.includes('showcase') ? 'showcase' : 'normal'),
+      frame_effects: selectedPrint?.frame_effects || [],
       details: data.details,
       tcg: 'mtg',
       oracle_id: activePrint?.oracle_id

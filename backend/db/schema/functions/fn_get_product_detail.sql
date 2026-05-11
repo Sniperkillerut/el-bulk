@@ -45,7 +45,8 @@ BEGIN
             'card_treatment', dc.card_treatment,
             'rarity', dc.rarity,
             'art_variation', dc.art_variation,
-            'scryfall_id', dc.scryfall_id
+            'scryfall_id', dc.scryfall_id,
+            'frame_effects', dc.frame_effects
         ))
         FROM deck_card dc
         WHERE dc.product_id = p_id
