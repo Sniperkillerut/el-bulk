@@ -51,12 +51,38 @@ export function resolveArtVariation(card: ScryfallCard): string {
   return '';
 }
 
-export function resolveFoilTreatment(card: ScryfallCard | undefined): FoilTreatment {
+export function resolveFoilTreatment(card: ScryfallCard | undefined, preferredFinish?: FoilTreatment): FoilTreatment {
   if (!card) return 'non_foil';
   const pt = card.promo_types || [];
   const finishes = card.finishes || [];
   
-  // 1. Check specialized foil tags FIRST (these are specifically about the print's UNIQUE foil)
+  // 0. If preferredFinish is valid for this card, keep it
+  if (preferredFinish) {
+    if (preferredFinish === 'non_foil' && finishes.includes('nonfoil')) return 'non_foil';
+    if (preferredFinish === 'foil' && finishes.includes('foil')) return 'foil';
+    if (preferredFinish === 'etched_foil' && finishes.includes('etched')) return 'etched_foil';
+    
+    // For specialized foils, check if the promo tag is present
+    const specializedFoils: Record<FoilTreatment, string> = {
+      'oil_slick': 'oilslick',
+      'step_and_compleat': 'stepandcompleat',
+      'galaxy_foil': 'galaxyfoil',
+      'surge_foil': 'surgefoil',
+      'textured_foil': 'textured',
+      'confetti_foil': 'confettifoil',
+      'neon_ink': 'neonink',
+      'double_rainbow': 'doublerainbow',
+      'glossy': 'glossy',
+      'ripple_foil': 'ripplefoil',
+      'platinum_foil': 'platinumfoil',
+      'holo_foil': 'holofoil'
+    };
+    
+    const tag = specializedFoils[preferredFinish];
+    if (tag && pt.includes(tag)) return preferredFinish;
+  }
+
+  // 1. Check specialized foil tags
   if (pt.includes('oilslick')) return 'oil_slick';
   if (pt.includes('stepandcompleat')) return 'step_and_compleat';
   if (pt.includes('galaxyfoil')) return 'galaxy_foil';
@@ -73,7 +99,6 @@ export function resolveFoilTreatment(card: ScryfallCard | undefined): FoilTreatm
   if (finishes.includes('etched')) return 'etched_foil';
   if (finishes.includes('foil')) return 'foil';
   
-  // 3. Fallback to non-foil (covers both explicit 'nonfoil' and cases where no finish is specified)
   return 'non_foil';
 }
 

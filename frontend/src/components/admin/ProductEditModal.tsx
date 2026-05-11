@@ -514,7 +514,8 @@ export default function ProductEditModal({
       ...f,
       ...extractMTGMetadata(bestPrint),
       card_treatment: newTreatment,
-      foil_treatment: resolveFoilTreatment(bestPrint) as FoilTreatment,
+      promo_type: f.promo_type, // Preserve current promo
+      foil_treatment: resolveFoilTreatment(bestPrint, f.foil_treatment) as FoilTreatment,
       scryfall_id: bestPrint?.id || f.scryfall_id,
       image_url: getScryfallImage(bestPrint) || f.image_url,
       price_reference: applyPrintPrices(bestPrint, f.foil_treatment, f.price_source, f.price_reference),
@@ -527,7 +528,8 @@ export default function ProductEditModal({
       ...f,
       ...extractMTGMetadata(bestPrint),
       collector_number: newArt,
-      foil_treatment: resolveFoilTreatment(bestPrint) as FoilTreatment,
+      promo_type: f.promo_type, // Preserve current promo
+      foil_treatment: resolveFoilTreatment(bestPrint, f.foil_treatment) as FoilTreatment,
       scryfall_id: bestPrint?.id || f.scryfall_id,
       image_url: getScryfallImage(bestPrint) || f.image_url,
       price_reference: applyPrintPrices(bestPrint, f.foil_treatment, f.price_source, f.price_reference),
@@ -536,15 +538,18 @@ export default function ProductEditModal({
 
   const handlePromoChange = (newPromo: string) => {
     const bestPrint = findMatchingPrint(scryfallPrints, form.set_code, form.card_treatment, form.collector_number, newPromo, form.foil_treatment);
-    setForm(f => ({
-      ...f,
-      ...extractMTGMetadata(bestPrint),
-      promo_type: newPromo,
-      foil_treatment: resolveFoilTreatment(bestPrint) as FoilTreatment,
-      scryfall_id: bestPrint?.id || f.scryfall_id,
-      image_url: getScryfallImage(bestPrint) || f.image_url,
-      price_reference: applyPrintPrices(bestPrint, f.foil_treatment, f.price_source, f.price_reference),
-    }));
+    setForm(f => {
+      const meta = extractMTGMetadata(bestPrint);
+      return {
+        ...f,
+        ...meta,
+        promo_type: newPromo === 'none' ? '' : newPromo,
+        foil_treatment: resolveFoilTreatment(bestPrint, f.foil_treatment) as FoilTreatment,
+        scryfall_id: bestPrint?.id || f.scryfall_id,
+        image_url: getScryfallImage(bestPrint) || f.image_url,
+        price_reference: applyPrintPrices(bestPrint, f.foil_treatment, f.price_source, f.price_reference),
+      };
+    });
   };
 
   const handleFoilChange = (newFoil: FoilTreatment) => {
@@ -552,6 +557,7 @@ export default function ProductEditModal({
     setForm(f => ({
       ...f,
       ...extractMTGMetadata(bestPrint),
+      promo_type: f.promo_type, // Preserve current promo
       foil_treatment: newFoil,
       scryfall_id: bestPrint?.id || f.scryfall_id,
       image_url: getScryfallImage(bestPrint) || f.image_url,
@@ -561,7 +567,7 @@ export default function ProductEditModal({
 
   const handleSelectPrint = (p: ScryfallCard) => {
     const treatment = getTreatmentType(p);
-    const foil = resolveFoilTreatment(p);
+    const foil = resolveFoilTreatment(p, form.foil_treatment);
     
     setForm(f => ({
       ...f,
@@ -571,7 +577,7 @@ export default function ProductEditModal({
       set_name: p.set_name || f.set_name,
       card_treatment: treatment,
       collector_number: p.collector_number || f.collector_number,
-      promo_type: p.promo_types?.join(',') || 'none',
+      promo_type: f.promo_type, // Keep current promo if selecting from prints gallery
       foil_treatment: foil as FoilTreatment,
       scryfall_id: p.id,
       image_url: getScryfallImage(p) || f.image_url,
