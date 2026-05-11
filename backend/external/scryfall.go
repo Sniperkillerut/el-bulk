@@ -413,6 +413,7 @@ func mapScryfallToResult(card *scryfallCard, foilTreatment string) *CardLookupRe
 			PromoType:       promoType,
 			ScryfallID:      &card.ID,
 			Legalities:      castLegalities(card.Legalities),
+			FrameEffects:    card.FrameEffects,
 		},
 	}
 }
@@ -570,6 +571,7 @@ type ScryfallBulkCard struct {
 		EUR       *string `json:"eur"`
 		EURFoil   *string `json:"eur_foil"`
 	} `json:"prices"`
+	FrameEffects      []string `json:"frame_effects"`
 	CardKingdomID     *string `json:"card_kingdom_id"`
 	CardKingdomFoilID *string `json:"card_kingdom_foil_id"`
 }
@@ -913,8 +915,8 @@ func SyncScryfallToDB(ctx context.Context, db *sqlx.DB, r io.Reader) error {
 
 func flushScryBatch(ctx context.Context, db *sqlx.DB, batch []ScryfallBulkCard) error {
 	query := `
-		INSERT INTO external_scryfall (scryfall_id, name, set_code, collector_number, price_usd, price_usd_foil, price_eur, image_url)
-		VALUES (:scryfall_id, :name, :set_code, :collector_number, :price_usd, :price_usd_foil, :price_eur, :image_url)
+		INSERT INTO external_scryfall (scryfall_id, name, set_code, collector_number, price_usd, price_usd_foil, price_eur, image_url, frame_effects)
+		VALUES (:scryfall_id, :name, :set_code, :collector_number, :price_usd, :price_usd_foil, :price_eur, :image_url, :frame_effects)
 	`
 	type row struct {
 		ScryfallID      string   `db:"scryfall_id"`
@@ -925,6 +927,7 @@ func flushScryBatch(ctx context.Context, db *sqlx.DB, batch []ScryfallBulkCard) 
 		PriceUSDFoil    *float64 `db:"price_usd_foil"`
 		PriceEUR        *float64 `db:"price_eur"`
 		ImageURL        string   `db:"image_url"`
+		FrameEffects    string   `db:"frame_effects"`
 	}
 
 	rows := make([]row, len(batch))
@@ -938,6 +941,11 @@ func flushScryBatch(ctx context.Context, db *sqlx.DB, batch []ScryfallBulkCard) 
 			PriceUSDFoil:    parsePrice(c.Prices.USDFoil),
 			PriceEUR:        parsePrice(c.Prices.EUR),
 			ImageURL:        c.ImageURIs.Normal,
+			FrameEffects:    "[]", // Default to empty array
+		}
+		if len(c.FrameEffects) > 0 {
+			feJSON, _ := json.Marshal(c.FrameEffects)
+			rows[i].FrameEffects = string(feJSON)
 		}
 	}
 

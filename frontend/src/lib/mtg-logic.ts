@@ -21,7 +21,15 @@ export function resolveCardTreatment(card: ScryfallCard): CardTreatment {
   if (fe.includes('serialized')) return 'serialized';
   if (pt.includes('stepandcompleat')) return 'step_and_compleat';
   if (pt.includes('judgegift')) return 'judge_promo';
-  if (fe.includes('showcase')) return 'showcase';
+  if (fe.includes('showcase')) {
+    if (pt.includes('enchantingtales')) return 'enchanting_tales';
+    if (pt.includes('mysticalarchive')) return 'mystical_archive';
+    if (pt.includes('sketch')) return 'sketch';
+    if (pt.includes('equinox')) return 'equinox';
+    if (pt.includes('eternalnight')) return 'eternal_night';
+    if (pt.includes('neonink')) return 'neon_ink';
+    return 'showcase';
+  }
   if (card.border_color === 'borderless') return 'borderless';
   if (fe.includes('extendedart')) return 'extended_art';
   if (fe.includes('retro')) return 'retro_frame';
@@ -305,6 +313,7 @@ export function extractMTGMetadata(card: ScryfallCard | undefined) {
     frame: card.frame || '',
     full_art: card.full_art || false,
     textless: card.textless || false,
+    frame_effects: card.frame_effects || [],
   };
 }
 

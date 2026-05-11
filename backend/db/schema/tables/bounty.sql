@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS bounty (
   is_active         BOOLEAN NOT NULL DEFAULT true,
   is_generic        BOOLEAN NOT NULL DEFAULT false,
   scryfall_id       UUID,
+  frame_effects     JSONB,
   oracle_id         UUID,
   set_code          TEXT,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),

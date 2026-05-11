@@ -63,6 +63,7 @@ export default async function CollectionPage({ params: rawParams, searchParams: 
       condition: {},
       foil: {},
       treatment: {},
+      frame_effects: {},
       rarity: {},
       language: {},
       color: {},

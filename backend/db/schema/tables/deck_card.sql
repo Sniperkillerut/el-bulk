@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS deck_card (
   full_art          BOOLEAN NOT NULL DEFAULT false,
   textless          BOOLEAN NOT NULL DEFAULT false,
   scryfall_id       UUID,
+  frame_effects     JSONB,
   legalities        JSONB,
   promo_type        TEXT,
   image_url         TEXT,

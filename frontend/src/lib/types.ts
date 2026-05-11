@@ -19,6 +19,7 @@ export interface DeckCard {
   rarity?: string;
   art_variation?: string;
   scryfall_id?: string;
+  frame_effects?: string[];
 }
 
 export interface Product {
@@ -69,6 +70,7 @@ export interface Product {
   textless: boolean;
   scryfall_id?: string;
   legalities?: Record<string, string>;
+  frame_effects?: string[];
 
   created_at: string;
   updated_at: string;
@@ -116,6 +118,7 @@ export interface Facets {
   condition: Record<string, number>;
   foil: Record<string, number>;
   treatment: Record<string, number>;
+  frame_effects: Record<string, number>;
   rarity: Record<string, number>;
   language: Record<string, number>;
   color: Record<string, number>;
@@ -180,6 +183,12 @@ export const TREATMENT_LABELS: Record<string, string> = {
   extended_art: 'Extended Art',
   borderless: 'Borderless',
   showcase: 'Showcase',
+  enchanting_tales: 'Enchanting Tales',
+  mystical_archive: 'Mystical Archive',
+  sketch: 'Sketch',
+  equinox: 'Equinox',
+  eternal_night: 'Eternal Night',
+  neon_ink: 'Neon Ink',
   legacy_border: 'Classic Border',
   retro_frame: 'Retro Frame',
   textless: 'Textless',
@@ -486,6 +495,7 @@ export interface Bounty {
   card_treatment: CardTreatment;
   collector_number?: string;
   promo_type?: string;
+  frame_effects?: string[];
   language: string;
   target_price?: number;
   hide_price: boolean;
@@ -511,6 +521,7 @@ export interface BountyInput {
   card_treatment: CardTreatment;
   collector_number?: string;
   promo_type?: string;
+  frame_effects?: string[];
   language: string;
   target_price?: number;
   hide_price: boolean;
@@ -544,6 +555,7 @@ export interface ClientRequest {
   image_url?: string;
   foil_treatment?: FoilTreatment;
   card_treatment?: CardTreatment;
+  frame_effects?: string[];
   created_at: string;
 }
 
@@ -558,6 +570,7 @@ export interface ClientRequestInput {
   image_url?: string;
   foil_treatment?: FoilTreatment;
   card_treatment?: CardTreatment;
+  frame_effects?: string[];
   details?: string;
   quantity: number;
   tcg: string;

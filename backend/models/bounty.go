@@ -14,6 +14,7 @@ type Bounty struct {
 	CardTreatment   CardTreatment `db:"card_treatment"   json:"card_treatment"`
 	CollectorNumber *string       `db:"collector_number" json:"collector_number,omitempty"`
 	PromoType       *string       `db:"promo_type"       json:"promo_type,omitempty"`
+	FrameEffects    JSONB         `db:"frame_effects"    json:"frame_effects,omitempty"`
 	Language        string        `db:"language"         json:"language"`
 	TargetPrice     *float64      `db:"target_price"     json:"target_price,omitempty"`
 	HidePrice       bool          `db:"hide_price"       json:"hide_price"`
@@ -52,6 +53,7 @@ type BountyInput struct {
 	CardTreatment   CardTreatment `json:"card_treatment"`
 	CollectorNumber *string       `json:"collector_number,omitempty"`
 	PromoType       *string       `json:"promo_type,omitempty"`
+	FrameEffects    JSONB         `json:"frame_effects,omitempty"`
 	Language        string        `json:"language"`
 	TargetPrice     *float64      `json:"target_price,omitempty"`
 	HidePrice       bool          `json:"hide_price"`

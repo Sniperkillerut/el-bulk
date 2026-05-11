@@ -21,7 +21,8 @@ CREATE OR REPLACE FUNCTION fn_get_product_facets(
     p_is_legendary TEXT DEFAULT '',
     p_is_land TEXT DEFAULT '',
     p_is_historic TEXT DEFAULT '',
-    p_format TEXT DEFAULT ''
+    p_format TEXT DEFAULT '',
+    p_frame_effects TEXT DEFAULT ''
 ) RETURNS JSONB AS $$
 DECLARE
     result JSONB;
@@ -34,6 +35,7 @@ DECLARE
     v_collection_arr TEXT[];
     v_set_name_arr TEXT[];
     v_format_arr TEXT[];
+    v_frame_effects_arr TEXT[];
 BEGIN
     -- Pre-parse filters into arrays for faster matching
     v_foil_arr := CASE WHEN p_foil = '' THEN NULL ELSE string_to_array(LOWER(p_foil), ',') END;
@@ -45,6 +47,7 @@ BEGIN
     v_collection_arr := CASE WHEN p_collection = '' THEN NULL ELSE string_to_array(LOWER(p_collection), ',') END;
     v_set_name_arr := CASE WHEN p_set_name = '' THEN NULL ELSE string_to_array(p_set_name, ',') END;
     v_format_arr := CASE WHEN p_format = '' THEN NULL ELSE string_to_array(LOWER(p_format), ',') END;
+    v_frame_effects_arr := CASE WHEN p_frame_effects = '' THEN NULL ELSE string_to_array(LOWER(p_frame_effects), ',') END;
 
     WITH base_products AS MATERIALIZED (
         SELECT p.*
@@ -74,7 +77,8 @@ BEGIN
             p_is_legendary != '' as has_legendary,
             p_is_land != '' as has_land,
             p_is_historic != '' as has_historic,
-            v_format_arr IS NOT NULL as has_format
+            v_format_arr IS NOT NULL as has_format,
+            v_frame_effects_arr IS NOT NULL as has_frame_effects
     ),
     all_filtered AS (
         SELECT *,
@@ -106,7 +110,13 @@ BEGIN
                    THEN (SELECT bool_and(legalities->>f = 'legal') FROM unnest(v_format_arr) f)
                    ELSE EXISTS (SELECT 1 FROM unnest(v_format_arr) f WHERE legalities->>f = 'legal')
                    END
-               )) as match_format
+               )) as match_format,
+               (v_frame_effects_arr IS NULL OR (
+                   CASE WHEN p_filter_logic = 'and'
+                   THEN (SELECT bool_and(EXISTS (SELECT 1 FROM jsonb_array_elements_text(frame_effects) AS fe WHERE fe = f)) FROM unnest(v_frame_effects_arr) f)
+                   ELSE EXISTS (SELECT 1 FROM jsonb_array_elements_text(frame_effects) AS fe WHERE fe = ANY(v_frame_effects_arr))
+                   END
+               )) as match_frame_effects
         FROM base_products
     ),
     -- Always AND across dimensions (both OR and AND mode)
@@ -123,7 +133,8 @@ BEGIN
                (NOT (SELECT has_legendary FROM active_filters) OR match_legendary) AND
                (NOT (SELECT has_land FROM active_filters) OR match_land) AND
                (NOT (SELECT has_historic FROM active_filters) OR match_historic) AND
-               (NOT (SELECT has_format FROM active_filters) OR match_format)
+               (NOT (SELECT has_format FROM active_filters) OR match_format) AND
+               (NOT (SELECT has_frame_effects FROM active_filters) OR match_frame_effects)
                as match_all_filters
         FROM all_filtered
     ),
@@ -165,8 +176,12 @@ BEGIN
                END as others_set,
                -- Match others for Format
                CASE WHEN p_filter_logic = 'and' THEN match_all_filters
-               ELSE (NOT (SELECT has_foil FROM active_filters) OR match_foil) AND (NOT (SELECT has_treatment FROM active_filters) OR match_treatment) AND (NOT (SELECT has_condition FROM active_filters) OR match_condition) AND (NOT (SELECT has_rarity FROM active_filters) OR match_rarity) AND (NOT (SELECT has_language FROM active_filters) OR match_language) AND (NOT (SELECT has_color FROM active_filters) OR match_color) AND (NOT (SELECT has_collection FROM active_filters) OR match_collection) AND (NOT (SELECT has_set FROM active_filters) OR match_set) AND (NOT (SELECT has_legendary FROM active_filters) OR match_legendary) AND (NOT (SELECT has_land FROM active_filters) OR match_land) AND (NOT (SELECT has_historic FROM active_filters) OR match_historic)
-               END as others_format
+               ELSE (NOT (SELECT has_foil FROM active_filters) OR match_foil) AND (NOT (SELECT has_treatment FROM active_filters) OR match_treatment) AND (NOT (SELECT has_condition FROM active_filters) OR match_condition) AND (NOT (SELECT has_rarity FROM active_filters) OR match_rarity) AND (NOT (SELECT has_language FROM active_filters) OR match_language) AND (NOT (SELECT has_color FROM active_filters) OR match_color) AND (NOT (SELECT has_collection FROM active_filters) OR match_collection) AND (NOT (SELECT has_set FROM active_filters) OR match_set) AND (NOT (SELECT has_legendary FROM active_filters) OR match_legendary) AND (NOT (SELECT has_land FROM active_filters) OR match_land) AND (NOT (SELECT has_historic FROM active_filters) OR match_historic) AND (NOT (SELECT has_frame_effects FROM active_filters) OR match_frame_effects)
+               END as others_format,
+               -- Match others for Frame Effects
+               CASE WHEN p_filter_logic = 'and' THEN match_all_filters
+               ELSE (NOT (SELECT has_foil FROM active_filters) OR match_foil) AND (NOT (SELECT has_treatment FROM active_filters) OR match_treatment) AND (NOT (SELECT has_condition FROM active_filters) OR match_condition) AND (NOT (SELECT has_rarity FROM active_filters) OR match_rarity) AND (NOT (SELECT has_language FROM active_filters) OR match_language) AND (NOT (SELECT has_color FROM active_filters) OR match_color) AND (NOT (SELECT has_collection FROM active_filters) OR match_collection) AND (NOT (SELECT has_set FROM active_filters) OR match_set) AND (NOT (SELECT has_legendary FROM active_filters) OR match_legendary) AND (NOT (SELECT has_land FROM active_filters) OR match_land) AND (NOT (SELECT has_historic FROM active_filters) OR match_historic) AND (NOT (SELECT has_format FROM active_filters) OR match_format)
+               END as others_frame_effects
         FROM filter_matches
     ),
     f_condition AS (
@@ -247,6 +262,11 @@ BEGIN
         SELECT f as val, COUNT(*) as c FROM dimension_matches, unnest(ARRAY['commander', 'modern', 'standard', 'legacy', 'vintage', 'pauper', 'pioneer']) f
         WHERE legalities->>f = 'legal' AND others_format
         GROUP BY val
+    ),
+    f_frame_effects AS (
+        SELECT fe as val, COUNT(*) as c FROM dimension_matches, jsonb_array_elements_text(frame_effects) fe
+        WHERE others_frame_effects
+        GROUP BY val
     )
     SELECT jsonb_build_object(
         'condition', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_condition),
@@ -255,6 +275,7 @@ BEGIN
         'language', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_language),
         'color', (SELECT jsonb_build_object('W', w, 'U', u, 'B', b, 'R', r, 'G', g, 'C', c) FROM f_color),
         'treatment', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_treatment),
+        'frame_effects', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_frame_effects),
         'collection', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_collection),
         'set_name', (SELECT COALESCE(jsonb_agg(jsonb_build_object('id', val, 'label', val, 'count', c)), '[]'::jsonb) FROM f_set_name),
         'is_legendary', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_legendary),

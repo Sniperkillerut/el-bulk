@@ -54,6 +54,7 @@ type ProductFilterParams struct {
 	IsLand      string
 	IsHistoric  string
 	Format      string
+	FrameEffects string
 
 	// Exchange rates for on-the-fly price sorting
 	USDRate float64
@@ -120,10 +121,10 @@ func (s *ProductStore) SelectEnriched(ctx context.Context, query string, args ..
 
 func (s *ProductStore) GetFacets(ctx context.Context, params ProductFilterParams, isAdmin bool) (models.Facets, error) {
 	// Generate cache key from params
-	cacheKey := fmt.Sprintf("facets:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v",
+	cacheKey := fmt.Sprintf("facets:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v",
 		params.TCG, params.Category, params.Search, params.StorageID, params.Foil, params.Treatment, params.Condition,
 		params.Rarity, params.Language, params.Color, params.Collection, params.SetName, params.InStock, params.FilterLogic, isAdmin,
-		params.IsLegendary, params.IsLand, params.IsHistoric, params.Format)
+		params.IsLegendary, params.IsLand, params.IsHistoric, params.Format, params.FrameEffects)
 
 	if !isAdmin {
 		if cached, ok := s.facetCache.Get(cacheKey); ok {
@@ -134,12 +135,12 @@ func (s *ProductStore) GetFacets(ctx context.Context, params ProductFilterParams
 
 	var result []byte
 	start := time.Now()
-	query := "SELECT fn_get_product_facets($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)"
+	query := "SELECT fn_get_product_facets($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)"
 	logger.TraceCtx(ctx, "[DB] Executing GetFacets: %s", query)
 	err := s.DB.GetContext(ctx, &result, query,
 		params.TCG, params.Category, params.Search, params.StorageID, params.Foil, params.Treatment, params.Condition,
 		params.Rarity, params.Language, params.Color, params.Collection, params.SetName, params.InStock, params.FilterLogic, isAdmin,
-		params.IsLegendary, params.IsLand, params.IsHistoric, params.Format)
+		params.IsLegendary, params.IsLand, params.IsHistoric, params.Format, params.FrameEffects)
 
 	if err != nil {
 		logger.ErrorCtx(ctx, "[DB] GetFacets failed: %v", err)
@@ -395,13 +396,13 @@ func (s *ProductStore) SaveDeckCards(ctx context.Context, productID string, card
 		return nil
 	}
 
-	query := "INSERT INTO deck_card (product_id, name, set_code, collector_number, quantity, type_line, image_url, foil_treatment, card_treatment, rarity, art_variation, scryfall_id) VALUES "
-	values := make([]interface{}, 0, len(cards)*12)
+	query := "INSERT INTO deck_card (product_id, name, set_code, collector_number, quantity, type_line, image_url, foil_treatment, card_treatment, rarity, art_variation, scryfall_id, frame_effects) VALUES "
+	values := make([]interface{}, 0, len(cards)*13)
 	placeholders := make([]string, 0, len(cards))
 
 	for i, c := range cards {
-		placeholders = append(placeholders, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)", i*12+1, i*12+2, i*12+3, i*12+4, i*12+5, i*12+6, i*12+7, i*12+8, i*12+9, i*12+10, i*12+11, i*12+12))
-		values = append(values, productID, c.Name, c.SetCode, c.CollectorNumber, c.Quantity, c.TypeLine, c.ImageURL, c.FoilTreatment, c.CardTreatment, c.Rarity, c.ArtVariation, c.ScryfallID)
+		placeholders = append(placeholders, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)", i*13+1, i*13+2, i*13+3, i*13+4, i*13+5, i*13+6, i*13+7, i*13+8, i*13+9, i*13+10, i*13+11, i*13+12, i*13+13))
+		values = append(values, productID, c.Name, c.SetCode, c.CollectorNumber, c.Quantity, c.TypeLine, c.ImageURL, c.FoilTreatment, c.CardTreatment, c.Rarity, c.ArtVariation, c.ScryfallID, c.FrameEffects)
 	}
 
 	query += strings.Join(placeholders, ", ")
@@ -468,9 +469,9 @@ func (s *ProductStore) CreateProduct(ctx context.Context, input models.ProductIn
 		price_reference, price_source, price_cop_override,
 		stock, cost_basis_cop, image_url, description, collector_number, promo_type,
 		language, color_identity, rarity, cmc, is_legendary, is_historic, is_land, is_basic_land, art_variation,
-		oracle_text, artist, type_line, border_color, frame, full_art, textless, scryfall_id
+		oracle_text, artist, type_line, border_color, frame, full_art, textless, scryfall_id, frame_effects
 	) VALUES (
-		$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34
+		$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35
 	) RETURNING *`
 
 	err := s.DB.QueryRowxContext(ctx, query,
@@ -479,7 +480,7 @@ func (s *ProductStore) CreateProduct(ctx context.Context, input models.ProductIn
 		input.PriceReference, input.PriceSource, input.PriceCOPOverride,
 		input.Stock, input.CostBasis, input.ImageURL, input.Description, input.CollectorNumber, input.PromoType,
 		input.Language, input.ColorIdentity, input.Rarity, input.CMC, input.IsLegendary, input.IsHistoric, input.IsLand, input.IsBasicLand, input.ArtVariation,
-		input.OracleText, input.Artist, input.TypeLine, input.BorderColor, input.Frame, input.FullArt, input.Textless, input.ScryfallID,
+		input.OracleText, input.Artist, input.TypeLine, input.BorderColor, input.Frame, input.FullArt, input.Textless, input.ScryfallID, input.FrameEffects,
 	).StructScan(&product)
 
 	logger.DebugCtx(ctx, "[DB] CreateProduct result: %+v | Error: %v", product.ID, err)
@@ -500,8 +501,8 @@ func (s *ProductStore) UpdateProduct(ctx context.Context, id string, input model
 		price_reference=$9, price_source=$10, price_cop_override=$11,
 		stock=$12, cost_basis_cop=$13, image_url=$14, description=$15, collector_number=$16, promo_type=$17,
 		language=$18, color_identity=$19, rarity=$20, cmc=$21, is_legendary=$22, is_historic=$23, is_land=$24, is_basic_land=$25, art_variation=$26,
-		oracle_text=$27, artist=$28, type_line=$29, border_color=$30, frame=$31, full_art=$32, textless=$33, scryfall_id=$34
-	WHERE id=$35 RETURNING *`
+		oracle_text=$27, artist=$28, type_line=$29, border_color=$30, frame=$31, full_art=$32, textless=$33, scryfall_id=$34, frame_effects=$35
+	WHERE id=$36 RETURNING *`
 
 	err := s.DB.QueryRowxContext(ctx, query,
 		input.Name, input.TCG, input.Category, input.SetName, input.SetCode, input.Condition,
@@ -509,7 +510,7 @@ func (s *ProductStore) UpdateProduct(ctx context.Context, id string, input model
 		input.PriceReference, input.PriceSource, input.PriceCOPOverride,
 		input.Stock, input.CostBasis, input.ImageURL, input.Description, input.CollectorNumber, input.PromoType,
 		input.Language, input.ColorIdentity, input.Rarity, input.CMC, input.IsLegendary, input.IsHistoric, input.IsLand, input.IsBasicLand, input.ArtVariation,
-		input.OracleText, input.Artist, input.TypeLine, input.BorderColor, input.Frame, input.FullArt, input.Textless, input.ScryfallID,
+		input.OracleText, input.Artist, input.TypeLine, input.BorderColor, input.Frame, input.FullArt, input.Textless, input.ScryfallID, input.FrameEffects,
 		id,
 	).StructScan(&product)
 
@@ -756,6 +757,21 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 			placeholder := fmt.Sprintf("$%d", len(args)+1)
 			conds = append(conds, "p.color_identity ILIKE "+placeholder)
 			args = append(args, "%"+strings.ToUpper(v)+"%")
+		}
+		joinOp := " OR "
+		if isAndMode {
+			joinOp = " AND "
+		}
+		conditions = append(conditions, "("+strings.Join(conds, joinOp)+")")
+	}
+
+	if params.FrameEffects != "" {
+		vals := strings.Split(params.FrameEffects, ",")
+		var conds []string
+		for _, v := range vals {
+			placeholder := fmt.Sprintf("$%d", len(args)+1)
+			conds = append(conds, "p.frame_effects ? "+placeholder)
+			args = append(args, strings.ToLower(v))
 		}
 		joinOp := " OR "
 		if isAndMode {

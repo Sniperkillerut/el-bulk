@@ -40,7 +40,7 @@ BEGIN
             image_url, description, language, color_identity, rarity, cmc,
             is_legendary, is_historic, is_land, is_basic_land, art_variation,
             oracle_text, artist, type_line, border_color, frame, full_art, textless,
-            scryfall_id, legalities, cost_basis_cop, updated_at
+            scryfall_id, legalities, cost_basis_cop, frame_effects, updated_at
         )
         VALUES (
             COALESCE(p_id, gen_random_uuid()),
@@ -78,6 +78,7 @@ BEGIN
             (item->>'scryfall_id')::uuid,
             item->'legalities',
             COALESCE((COALESCE(item->>'cost_basis_cop', item->>'cost_basis'))::numeric, 0),
+            item->'frame_effects',
             now()
         )
         ON CONFLICT (id) DO UPDATE SET
@@ -115,6 +116,7 @@ BEGIN
             scryfall_id = EXCLUDED.scryfall_id,
             legalities = EXCLUDED.legalities,
             cost_basis_cop = CASE WHEN is_import THEN product.cost_basis_cop + EXCLUDED.cost_basis_cop ELSE EXCLUDED.cost_basis_cop END,
+            frame_effects = EXCLUDED.frame_effects,
             updated_at = now()
         RETURNING id INTO p_id;
 
@@ -176,7 +178,7 @@ BEGIN
                 product_id, name, set_code, set_name, collector_number, rarity, quantity, 
                 language, type_line, color_identity, cmc, is_legendary, is_historic, is_land, is_basic_land,
                 art_variation, oracle_text, artist, border_color, frame, full_art, textless, promo_type,
-                image_url, legalities, foil_treatment, card_treatment, scryfall_id
+                image_url, legalities, foil_treatment, card_treatment, scryfall_id, frame_effects
             )
             SELECT 
                 p_id,
@@ -206,7 +208,8 @@ BEGIN
                 dc->'legalities',
                 COALESCE(dc->>'foil_treatment', 'non_foil'),
                 COALESCE(dc->>'card_treatment', 'normal'),
-                (dc->>'scryfall_id')::uuid
+                (dc->>'scryfall_id')::uuid,
+                dc->'frame_effects'
             FROM jsonb_array_elements(item->'deck_cards') AS dc;
         END IF;
 

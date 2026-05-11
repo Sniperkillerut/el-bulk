@@ -29,6 +29,7 @@ const mockFacets: Facets = {
   condition: {},
   foil: {},
   treatment: {},
+  frame_effects: {},
   rarity: {},
   language: {},
   color: {},

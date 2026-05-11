@@ -25,6 +25,8 @@
 \i tables/bounty_offer.sql
 \i tables/theme.sql
 \i tables/translation.sql
+\i tables/external_scryfall.sql
+\i tables/external_cardkingdom.sql
 
 -- 3. Dependent Tables
 \i tables/product.sql

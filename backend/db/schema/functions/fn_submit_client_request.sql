@@ -16,7 +16,8 @@ CREATE OR REPLACE FUNCTION fn_submit_client_request(
     p_card_treatment TEXT DEFAULT NULL,
     p_set_code TEXT DEFAULT NULL,
     p_collector_number TEXT DEFAULT NULL,
-    p_oracle_id UUID DEFAULT NULL
+    p_oracle_id UUID DEFAULT NULL,
+    p_frame_effects JSONB DEFAULT NULL
 ) RETURNS JSONB AS $$
 DECLARE
     v_customer_id UUID := p_customer_id;
@@ -59,11 +60,11 @@ BEGIN
     -- Insert the request
     INSERT INTO client_request (
         customer_id, customer_name, customer_contact, card_name, set_name, details, quantity, tcg, status,
-        match_type, scryfall_id, image_url, foil_treatment, card_treatment, set_code, collector_number, oracle_id
+        match_type, scryfall_id, image_url, foil_treatment, card_treatment, frame_effects, set_code, collector_number, oracle_id
     )
     VALUES (
         v_customer_id, p_customer_name, p_customer_contact, trim(p_card_name), p_set_name, p_details, p_quantity, lower(trim(p_tcg)), 'pending',
-        p_match_type, p_scryfall_id, p_image_url, p_foil_treatment, p_card_treatment, p_set_code, p_collector_number, p_oracle_id
+        p_match_type, p_scryfall_id, p_image_url, p_foil_treatment, p_card_treatment, p_frame_effects, p_set_code, p_collector_number, p_oracle_id
     )
     RETURNING id, created_at INTO v_request_id, v_created_at;
     
@@ -84,6 +85,7 @@ BEGIN
         'image_url', p_image_url,
         'foil_treatment', p_foil_treatment,
         'card_treatment', p_card_treatment,
+        'frame_effects', p_frame_effects,
         'set_code', p_set_code,
         'collector_number', p_collector_number,
         'created_at', v_created_at
