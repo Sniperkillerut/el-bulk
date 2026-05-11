@@ -1,6 +1,31 @@
 import { FoilTreatment, CardTreatment, ScryfallCard, PriceSource, DeckCard, Condition } from './types';
 
 /**
+ * Mapping from Scryfall specialized finish tags to internal FoilTreatment values.
+ */
+export const SPECIALIZED_FOIL_MAP: Record<string, FoilTreatment> = {
+  'ripplefoil': 'ripple_foil',
+  'surgefoil': 'surge_foil',
+  'galaxyfoil': 'galaxy_foil',
+  'oilslick': 'oil_slick',
+  'stepandcompleat': 'step_and_compleat',
+  'textured': 'textured_foil',
+  'confettifoil': 'confetti_foil',
+  'doublerainbow': 'double_rainbow',
+  'neonink': 'neon_ink',
+  'platinumfoil': 'platinum_foil',
+  'glossy': 'glossy',
+  'holofoil': 'holo_foil',
+  'etched': 'etched_foil',
+  'foil': 'foil'
+};
+
+/**
+ * Tags that mandate a specific foil finish and exclude non-foil.
+ */
+export const EXCLUSIVE_FOIL_TAGS = Object.keys(SPECIALIZED_FOIL_MAP);
+
+/**
  * Extracts the best image URL from a Scryfall card object,
  * handling double-faced cards as well.
  */
@@ -63,37 +88,14 @@ export function resolveFoilTreatment(card: ScryfallCard | undefined, preferredFi
     if (preferredFinish === 'etched_foil' && finishes.includes('etched')) return 'etched_foil';
 
     // For specialized foils, check if the promo tag is present
-    const specializedFoils: Record<FoilTreatment, string> = {
-      'oil_slick': 'oilslick',
-      'step_and_compleat': 'stepandcompleat',
-      'galaxy_foil': 'galaxyfoil',
-      'surge_foil': 'surgefoil',
-      'textured_foil': 'textured',
-      'confetti_foil': 'confettifoil',
-      'neon_ink': 'neonink',
-      'double_rainbow': 'doublerainbow',
-      'glossy': 'glossy',
-      'ripple_foil': 'ripplefoil',
-      'platinum_foil': 'platinumfoil',
-      'holo_foil': 'holofoil'
-    };
-
-    const tag = specializedFoils[preferredFinish];
+    const tag = Object.keys(SPECIALIZED_FOIL_MAP).find(k => SPECIALIZED_FOIL_MAP[k] === preferredFinish);
     if (tag && pt.includes(tag)) return preferredFinish;
   }
 
-  // 1. Check specialized foil tags
-  if (pt.includes('oilslick')) return 'oil_slick';
-  if (pt.includes('stepandcompleat')) return 'step_and_compleat';
-  if (pt.includes('galaxyfoil')) return 'galaxy_foil';
-  if (pt.includes('surgefoil')) return 'surge_foil';
-  if (pt.includes('textured')) return 'textured_foil';
-  if (pt.includes('confettifoil')) return 'confetti_foil';
-  if (pt.includes('neonink')) return 'neon_ink';
-  if (pt.includes('doublerainbow')) return 'double_rainbow';
-  if (pt.includes('glossy')) return 'glossy';
-  if (pt.includes('ripplefoil')) return 'ripple_foil';
-  if (pt.includes('platinumfoil')) return 'platinum_foil';
+  // 1. Check specialized foil tags using global map
+  for (const [tag, treatment] of Object.entries(SPECIALIZED_FOIL_MAP)) {
+    if (pt.includes(tag)) return treatment;
+  }
 
   // 2. Check finishes
   if (finishes.includes('etched')) return 'etched_foil';
@@ -129,21 +131,15 @@ export function identifyFoilFromString(str: string | undefined): FoilTreatment {
   if (!str) return 'non_foil';
   const s = str.toLowerCase().trim();
 
-  if (s.includes('ripple')) return 'ripple_foil';
-  if (s.includes('platinum')) return 'platinum_foil';
-  if (s.includes('galaxy')) return 'galaxy_foil';
-  if (s.includes('surge')) return 'surge_foil';
-  if (s.includes('textured')) return 'textured_foil';
-  if (s.includes('confetti')) return 'confetti_foil';
-  if (s.includes('oilslick')) return 'oil_slick';
-  if (s.includes('stepandcompleat')) return 'step_and_compleat';
-  if (s.includes('neonink')) return 'neon_ink';
-  if (s.includes('doublerainbow')) return 'double_rainbow';
-  if (s.includes('etched')) return 'etched_foil';
-  if (s.includes('glossy')) return 'glossy';
-  if (s.includes('holo')) return 'holo_foil';
+  // Check specialized foils using global map
+  for (const [tag, treatment] of Object.entries(SPECIALIZED_FOIL_MAP)) {
+    // Some tags are shorter in common parlance (e.g. 'ripple' vs 'ripplefoil')
+    // but the map has the full Scryfall tags. We'll check if the tag is in the string.
+    if (s.includes(tag) || (tag.endsWith('foil') && s.includes(tag.replace('foil', '')))) {
+      return treatment;
+    }
+  }
 
-  if (s.includes('foil')) return 'foil';
   return 'non_foil';
 }
 
@@ -278,20 +274,47 @@ export function getFoilOptions(prints: ScryfallCard[], set: string, treatment: C
 
   finalMatches.forEach(p => {
     const finishes = p.finishes || [];
-    if (finishes.includes('nonfoil')) options.add('non_foil');
-    if (finishes.includes('foil')) options.add('foil');
-    if (finishes.includes('etched')) options.add('etched_foil');
+    const pt = p.promo_types || [];
 
-    // Also resolve via tags for specialized foils
-    const r = resolveFoilTreatment(p);
-    if (r !== 'non_foil' && r !== 'foil' && r !== 'etched_foil') {
-      options.add(r as FoilTreatment);
+    if (finishes.includes('nonfoil')) {
+      // Exclude non-foil if an exclusive foil promo is selected (like ripplefoil)
+      const promoTags = (promo || '').split(',').map(t => t.trim());
+      const hasExclusiveTag = promoTags.some(t => EXCLUSIVE_FOIL_TAGS.includes(t));
+      
+      if (!hasExclusiveTag || !promo || promo === 'none') {
+        options.add('non_foil');
+      }
+    }
+    
+    if (finishes.includes('foil') || finishes.includes('etched')) {
+      const resolved = resolveFoilTreatment(p);
+      if (resolved === 'foil' || resolved === 'etched_foil') {
+        // For standard foil/etched, check if the promo selection is standard
+        // or if it's one of these basic foil finishes.
+        const promoTags = (promo || '').split(',').map(t => t.trim());
+        if (!promo || promo === 'none' || promoTags.includes('foil') || promoTags.includes('etched')) {
+          options.add(resolved);
+        }
+      } else {
+        // It's a specialized foil (ripple_foil, etc.)
+        // We only show it if the corresponding promo tag is selected
+        const matchingTag = Object.keys(SPECIALIZED_FOIL_MAP).find(tag => SPECIALIZED_FOIL_MAP[tag] === resolved);
+        const promoTags = (promo || '').split(',').map(t => t.trim());
+        if (matchingTag && promoTags.includes(matchingTag)) {
+          options.add(resolved);
+        }
+      }
     }
   });
 
-  // Ensure non_foil is ALWAYS an option if the set of prints suggests it might be available,
-  // or as a basic fallback if no finishes are explicitly listed.
-  if (options.size === 0) options.add('non_foil');
+  // If no specialized foils or standard foils matched the current promo selection,
+  // we only add non_foil as a fallback if at least one print actually supports it.
+  if (options.size === 0) {
+    const supportsNonFoil = finalMatches.some(p => (p.finishes || []).includes('nonfoil'));
+    if (supportsNonFoil) {
+      options.add('non_foil');
+    }
+  }
 
   return Array.from(options);
 }
@@ -522,7 +545,7 @@ export function getDeckAnalytics(cards: DeckCard[]) {
  */
 export function filterPromoTags(promoType: string | undefined, foilTreatment: string, cardTreatment: string): string[] {
   if (!promoType || promoType === 'none') return [];
-  const foilTags = ['ripplefoil', 'galaxyfoil', 'surgefoil', 'glossy', 'etched', 'oilslick', 'textured', 'stepandcompleat', 'confettifoil', 'neonink', 'doublerainbow', 'platinumfoil', 'foil'];
+  const foilTags = EXCLUSIVE_FOIL_TAGS;
 
   return promoType.split(',').filter(t => {
     const s = t?.trim();
