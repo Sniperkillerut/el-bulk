@@ -229,10 +229,11 @@ export function getPromoOptions(prints: ScryfallCard[], set: string, treatment: 
     .filter(p => !set || p.set?.toLowerCase() === set.toLowerCase() && resolveCardTreatment(p) === treatment && (p.collector_number === cn || !cn))
     .forEach(p => {
       const pt = p.promo_types || [];
-      const redundantTags = ['showcase', 'borderless', 'normal', 'boosterfun'];
+      // Filter out structural tags (already handled by treatment selector) 
+      // AND foil tags (handled by foil selector, not promo selector)
+      const redundantTags = ['showcase', 'borderless', 'normal', 'boosterfun', ...EXCLUSIVE_FOIL_TAGS];
       
-      // A print supports 'Standard' if it has no promo tags, or only redundant ones,
-      // or if it explicitly has a nonfoil version (even if it has other promo tags).
+      // A print supports 'Standard' if it has no promo tags, or only redundant ones
       const nonRedundant = pt.filter(t => !redundantTags.includes(t));
       if (nonRedundant.length === 0) {
         hasStandard = true;
@@ -276,11 +277,10 @@ export function getFoilOptions(prints: ScryfallCard[], set: string, treatment: C
     const pt = p.promo_types || [];
 
     if (finishes.includes('nonfoil')) {
-      // Exclude non-foil if an exclusive foil promo is selected (like ripplefoil)
-      const promoTags = (promo || '').split(',').map(t => t.trim());
-      const hasExclusiveTag = promoTags.some(t => EXCLUSIVE_FOIL_TAGS.includes(t));
+      // Exclude non-foil if the card has an exclusive foil tag (surgefoil, galaxyfoil, etc.)
+      const hasExclusiveTag = pt.some(t => EXCLUSIVE_FOIL_TAGS.includes(t));
       
-      if (!hasExclusiveTag || !promo || promo === 'none') {
+      if (!hasExclusiveTag) {
         options.add('non_foil');
       }
     }
@@ -288,18 +288,13 @@ export function getFoilOptions(prints: ScryfallCard[], set: string, treatment: C
     if (finishes.includes('foil') || finishes.includes('etched')) {
       const resolved = resolveFoilTreatment(p);
       if (resolved === 'foil' || resolved === 'etched_foil') {
-        // For standard foil/etched, check if the promo selection is standard
-        // or if it's one of these basic foil finishes.
-        const promoTags = (promo || '').split(',').map(t => t.trim());
-        if (!promo || promo === 'none' || promoTags.includes('foil') || promoTags.includes('etched')) {
-          options.add(resolved);
-        }
+        options.add(resolved);
       } else {
-        // It's a specialized foil (ripple_foil, etc.)
-        // We only show it if the corresponding promo tag is selected
+        // It's a specialized foil (surge_foil, ripple_foil, etc.)
+        // Show it if the card itself has the matching promo tag — these are card properties,
+        // not user-selectable promos (e.g. surgefoil co-exists with universesbeyond on the same card)
         const matchingTag = Object.keys(SPECIALIZED_FOIL_MAP).find(tag => SPECIALIZED_FOIL_MAP[tag] === resolved);
-        const promoTags = (promo || '').split(',').map(t => t.trim());
-        if (matchingTag && promoTags.includes(matchingTag)) {
+        if (matchingTag && pt.includes(matchingTag)) {
           options.add(resolved);
         }
       }

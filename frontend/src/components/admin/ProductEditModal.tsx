@@ -533,16 +533,18 @@ export default function ProductEditModal({
     setForm(f => {
       const meta = extractMTGMetadata(bestPrint);
       const currentPromoValid = !f.promo_type || f.promo_type === 'none' || f.promo_type.split(',').every(t => (bestPrint?.promo_types || []).includes(t.trim()));
+      // Don't carry over previous foil — new art may require a completely different foil type
+      const newFoil = resolveFoilTreatment(bestPrint) as FoilTreatment;
       
       return {
         ...f,
         ...meta,
         collector_number: newArt,
         promo_type: (currentPromoValid ? f.promo_type : meta.promo_type) || '',
-        foil_treatment: resolveFoilTreatment(bestPrint, f.foil_treatment) as FoilTreatment,
+        foil_treatment: newFoil,
         scryfall_id: bestPrint?.id || f.scryfall_id,
         image_url: getScryfallImage(bestPrint) || f.image_url,
-        price_reference: applyPrintPrices(bestPrint, f.foil_treatment, f.price_source, f.price_reference),
+        price_reference: applyPrintPrices(bestPrint, newFoil, f.price_source, f.price_reference),
       };
     });
   };
