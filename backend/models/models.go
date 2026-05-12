@@ -109,6 +109,7 @@ type MTGMetadata struct {
 	Rarity        *string  `db:"rarity"            json:"rarity,omitempty"`
 	CMC           *float64 `db:"cmc"               json:"cmc,omitempty"`
 	IsLegendary   bool     `db:"is_legendary"      json:"is_legendary"`
+	IsPrepared    bool     `db:"is_prepared"       json:"is_prepared"`
 	IsHistoric    bool     `db:"is_historic"       json:"is_historic"`
 	IsLand        bool     `db:"is_land"           json:"is_land"`
 	IsBasicLand   bool     `db:"is_basic_land"     json:"is_basic_land"`

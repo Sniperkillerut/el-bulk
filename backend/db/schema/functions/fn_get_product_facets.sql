@@ -237,7 +237,7 @@ BEGIN
         SELECT 'true' as val, COUNT(*) as c FROM dimension_matches WHERE is_historic = true AND others_foil AND others_treatment AND others_rarity AND others_language AND others_color AND others_collection AND others_set AND others_condition AND others_format
     ),
     f_prepared AS (
-        SELECT 'true' as val, COUNT(*) as c FROM dimension_matches WHERE oracle_text ILIKE '%prepared%' AND others_foil AND others_treatment AND others_rarity AND others_language AND others_color AND others_collection AND others_set AND others_condition AND others_format
+        SELECT 'true' as val, COUNT(*) as c FROM dimension_matches WHERE is_prepared = true AND others_foil AND others_treatment AND others_rarity AND others_language AND others_color AND others_collection AND others_set AND others_condition AND others_format
     ),
     f_full_art AS (
         SELECT 'true' as val, COUNT(*) as c FROM dimension_matches WHERE full_art = true AND others_foil AND others_treatment AND others_rarity AND others_language AND others_color AND others_collection AND others_set AND others_condition AND others_format

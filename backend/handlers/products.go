@@ -68,6 +68,8 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 		IsPrepared:     q.Get("is_prepared"),
 		LandType:       q.Get("land_type"),
 		Format:         q.Get("format"),
+		CardTypes:      q.Get("card_types"),
+		FrameEffects:   q.Get("frame_effects"),
 		Page:           page,
 		PageSize:       pageSize,
 		Offset:         offset,

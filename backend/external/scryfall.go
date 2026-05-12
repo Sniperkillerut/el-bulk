@@ -77,6 +77,7 @@ type scryfallCard struct {
 	Finishes          []string          `json:"finishes"`
 	FrameEffects      []string          `json:"frame_effects"`
 	Legalities        map[string]string `json:"legalities"`
+	Keywords          []string          `json:"keywords"`
 	CardKingdomID     *string           `json:"card_kingdom_id"`
 	CardKingdomFoilID *string           `json:"card_kingdom_foil_id"`
 }
@@ -428,6 +429,14 @@ func mapScryfallToResult(card *scryfallCard, foilTreatment string) *CardLookupRe
 			Rarity:          &card.Rarity,
 			CMC:             &card.CMC,
 			IsLegendary:     isLegendary,
+			IsPrepared:      func() bool {
+				for _, kw := range card.Keywords {
+					if strings.EqualFold(kw, "Prepare") || strings.EqualFold(kw, "Prepared") {
+						return true
+					}
+				}
+				return false
+			}(),
 			IsHistoric:      isHistoric,
 			IsLand:          strings.Contains(lowerType, "land"),
 			IsBasicLand:     strings.Contains(lowerType, "basic land"),

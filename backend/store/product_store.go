@@ -733,7 +733,7 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 	}
 
 	if params.IsPrepared == "true" {
-		conditions = append(conditions, "p.oracle_text ILIKE '%prepared%'")
+		conditions = append(conditions, "p.is_prepared = true")
 	}
 
 	switch params.LandType {
