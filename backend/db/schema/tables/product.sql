@@ -42,7 +42,9 @@ CREATE TABLE IF NOT EXISTS product (
   textless          BOOLEAN NOT NULL DEFAULT false,
   scryfall_id       UUID,
   frame_effects     JSONB,
+  card_types        JSONB,
   legalities        JSONB, -- { "commander": "legal", "modern": "banned", ... }
+  price_cop         NUMERIC(12, 2), -- Materialized price in COP
 
   -- Generated Full-Text Search Vector
   search_vector tsvector GENERATED ALWAYS AS (

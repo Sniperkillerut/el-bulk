@@ -130,6 +130,14 @@ export interface Facets {
   is_land?: Record<string, number>;
   full_art?: Record<string, number>;
   textless?: Record<string, number>;
+  is_basic_land?: Record<string, number>;
+  is_creature?: Record<string, number>;
+  is_sorcery?: Record<string, number>;
+  is_instant?: Record<string, number>;
+  is_artifact?: Record<string, number>;
+  is_enchantment?: Record<string, number>;
+  is_planeswalker?: Record<string, number>;
+  is_non_basic_land?: Record<string, number>;
   format?: Record<string, number>;
   card_types?: Record<string, number>;
 }

@@ -242,6 +242,30 @@ BEGIN
     f_textless AS (
         SELECT 'true' as val, COUNT(*) as c FROM dimension_matches WHERE textless = true AND others_foil AND others_treatment AND others_rarity AND others_language AND others_color AND others_collection AND others_set AND others_condition AND others_format
     ),
+    f_basic_land AS (
+        SELECT 'true' as val, COUNT(*) as c FROM dimension_matches WHERE is_basic_land = true AND others_foil AND others_treatment AND others_rarity AND others_language AND others_color AND others_collection AND others_set AND others_condition AND others_format
+    ),
+    f_creature AS (
+        SELECT 'true' as val, COUNT(*) as c FROM dimension_matches WHERE card_types @> '["Creature"]'::jsonb AND others_foil AND others_treatment AND others_rarity AND others_language AND others_color AND others_collection AND others_set AND others_condition AND others_format
+    ),
+    f_sorcery AS (
+        SELECT 'true' as val, COUNT(*) as c FROM dimension_matches WHERE card_types @> '["Sorcery"]'::jsonb AND others_foil AND others_treatment AND others_rarity AND others_language AND others_color AND others_collection AND others_set AND others_condition AND others_format
+    ),
+    f_instant AS (
+        SELECT 'true' as val, COUNT(*) as c FROM dimension_matches WHERE card_types @> '["Instant"]'::jsonb AND others_foil AND others_treatment AND others_rarity AND others_language AND others_color AND others_collection AND others_set AND others_condition AND others_format
+    ),
+    f_artifact AS (
+        SELECT 'true' as val, COUNT(*) as c FROM dimension_matches WHERE card_types @> '["Artifact"]'::jsonb AND others_foil AND others_treatment AND others_rarity AND others_language AND others_color AND others_collection AND others_set AND others_condition AND others_format
+    ),
+    f_enchantment AS (
+        SELECT 'true' as val, COUNT(*) as c FROM dimension_matches WHERE card_types @> '["Enchantment"]'::jsonb AND others_foil AND others_treatment AND others_rarity AND others_language AND others_color AND others_collection AND others_set AND others_condition AND others_format
+    ),
+    f_planeswalker AS (
+        SELECT 'true' as val, COUNT(*) as c FROM dimension_matches WHERE card_types @> '["Planeswalker"]'::jsonb AND others_foil AND others_treatment AND others_rarity AND others_language AND others_color AND others_collection AND others_set AND others_condition AND others_format
+    ),
+    f_non_basic_land AS (
+        SELECT 'true' as val, COUNT(*) as c FROM dimension_matches WHERE is_land = true AND is_basic_land = false AND others_foil AND others_treatment AND others_rarity AND others_language AND others_color AND others_collection AND others_set AND others_condition AND others_format
+    ),
     f_format AS (
         SELECT f as val, COUNT(*) as c FROM dimension_matches, unnest(ARRAY['commander', 'modern', 'standard', 'legacy', 'vintage', 'pauper', 'pioneer']) f
         WHERE legalities->>f = 'legal' AND others_format GROUP BY val
@@ -273,6 +297,14 @@ BEGIN
         'is_historic', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_historic),
         'full_art', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_full_art),
         'textless', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_textless),
+        'is_basic_land', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_basic_land),
+        'is_creature', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_creature),
+        'is_sorcery', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_sorcery),
+        'is_instant', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_instant),
+        'is_artifact', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_artifact),
+        'is_enchantment', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_enchantment),
+        'is_planeswalker', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_planeswalker),
+        'is_non_basic_land', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_non_basic_land),
         'format', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_format)
     ) INTO result;
 
