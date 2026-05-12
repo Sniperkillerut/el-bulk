@@ -211,7 +211,7 @@ func (h *OrderHandler) DownloadReceipt(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/pdf")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"receipt-%s.pdf\"", detail.Order.OrderNumber))
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s_Order_%s.pdf\"", detail.Order.CreatedAt.Format("2006-01-02"), detail.Order.OrderNumber))
 	w.Write(pdfBytes)
 }
 

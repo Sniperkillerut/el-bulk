@@ -107,6 +107,18 @@ describe('mtg-logic', () => {
       expect(promos).not.toContain('showcase');
       expect(promos).not.toContain('borderless');
     });
+
+    it('should filter out exclusive foil tags', () => {
+      const cardWithFoilTags: ScryfallCard = {
+        ...mockCard,
+        promo_types: ['surgefoil', 'universesbeyond', 'galaxyfoil']
+      };
+      const { promos } = getPromoOptions([cardWithFoilTags], 'sld', 'normal', '1');
+      expect(promos).toHaveLength(1);
+      expect(promos).toContain('universesbeyond');
+      expect(promos).not.toContain('surgefoil');
+      expect(promos).not.toContain('galaxyfoil');
+    });
   });
 
   describe('findMatchingPrint', () => {
@@ -172,6 +184,31 @@ describe('mtg-logic', () => {
       // Etched foil is only shown when the promo tag matches; with invalid_promo it relaxes to cn match
       // which supports non_foil and etched finishes, but etched requires matching promo or 'none'
       expect(options.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should show specialized foils when card has matching promo_type', () => {
+      const surgeFoilPrint: ScryfallCard = {
+        ...mockCard,
+        collector_number: '3',
+        promo_types: ['surgefoil', 'universesbeyond'],
+        finishes: ['foil']
+      };
+      // Searching with the universesbeyond promo
+      const options = getFoilOptions([surgeFoilPrint], 'sld', 'normal', '3', 'universesbeyond');
+      expect(options).toContain('surge_foil');
+      expect(options).not.toContain('foil');
+    });
+
+    it('should exclude non_foil when an exclusive foil tag is present', () => {
+      const galaxyFoilPrint: ScryfallCard = {
+        ...mockCard,
+        collector_number: '4',
+        promo_types: ['galaxyfoil'],
+        finishes: ['nonfoil', 'foil'] // even if Scryfall weirdly includes nonfoil
+      };
+      const options = getFoilOptions([galaxyFoilPrint], 'sld', 'normal', '4', 'none');
+      expect(options).not.toContain('non_foil');
+      expect(options).toContain('galaxy_foil');
     });
   });
 
