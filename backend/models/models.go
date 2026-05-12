@@ -428,6 +428,7 @@ type Facets struct {
 	Collection  map[string]int `json:"collection"`
 	SetName     []FacetItem    `json:"set_name"`
 	IsLegendary map[string]int `json:"is_legendary"`
+	IsPrepared  map[string]int `json:"is_prepared"`
 	IsLand      map[string]int `json:"is_land"`
 	LandType    map[string]int `json:"land_type"`
 	FullArt     map[string]int `json:"full_art"`

@@ -20,6 +20,7 @@ interface FiltersState {
   setName: string[];
   inStock: boolean;
   isLegendary: string;
+  isPrepared: string;
   isLand: string;
   isHistoric: string;
   landType: string;
@@ -56,6 +57,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
     setName: [],
     inStock: true,
     isLegendary: '',
+    isPrepared: '',
     isLand: '',
     isHistoric: '',
     landType: '',
@@ -105,6 +107,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
     sort_dir: sortDir || undefined,
     logic: logic !== 'or' ? logic : undefined,
     is_legendary: filters.isLegendary || undefined,
+    is_prepared: filters.isPrepared || undefined,
     is_land: filters.isLand || undefined,
     is_historic: filters.isHistoric || undefined,
     full_art: filters.fullArt || undefined,
@@ -159,7 +162,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
     setFilters(prev => {
       if (key === 'search') return { ...prev, search: value as string };
       if (key === 'inStock') return { ...prev, inStock: value as boolean };
-      if (key === 'isLegendary' || key === 'isLand' || key === 'isHistoric' || key === 'fullArt' || key === 'textless' || key === 'landType') {
+      if (key === 'isLegendary' || key === 'isPrepared' || key === 'isLand' || key === 'isHistoric' || key === 'fullArt' || key === 'textless' || key === 'landType') {
         return { ...prev, [key]: prev[key as keyof FiltersState] === value ? '' : value as string };
       }
       const current = prev[key] as string[];
@@ -426,64 +429,44 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                     initialOpen={false}
                     items={[
                       { id: 'true', label: t('grid.filters.legendary', 'Legendary') },
+                      { id: 'prepared', label: t('grid.filters.prepared', 'Prepared') },
                       { id: 'historic', label: t('grid.filters.historic', 'Historic') },
                       { id: 'land', label: t('grid.filters.land', 'Land') },
                       { id: 'basicLand', label: t('grid.filters.basicLand', 'Basic Land') },
                       { id: 'nonBasicLand', label: t('grid.filters.nonBasicLand', 'Non-Basic Land') },
-                      { id: 'fullArt', label: t('grid.filters.fullArt', 'Full Art') },
-                      { id: 'textless', label: t('grid.filters.textless', 'Textless') },
-                      { id: 'creature', label: t('grid.filters.creature', 'Creature') },
-                      { id: 'sorcery', label: t('grid.filters.sorcery', 'Sorcery') },
-                      { id: 'instant', label: t('grid.filters.instant', 'Instant') },
-                      { id: 'artifact', label: t('grid.filters.artifact', 'Artifact') },
-                      { id: 'enchantment', label: t('grid.filters.enchantment', 'Enchantment') },
-                      { id: 'planeswalker', label: t('grid.filters.planeswalker', 'Planeswalker') }
-                    ]}
+                       { id: 'fullArt', label: t('grid.filters.fullArt', 'Full Art') },
+                       { id: 'textless', label: t('grid.filters.textless', 'Textless') }
+                     ]}
                     selected={[
                       filters.isLegendary === 'true' ? 'true' : '',
+                      filters.isPrepared === 'true' ? 'prepared' : '',
                       filters.isHistoric === 'true' ? 'historic' : '',
                       filters.isLand === 'true' ? 'land' : '',
                       filters.landType === 'basic' ? 'basicLand' : '',
                       filters.landType === 'non-basic' ? 'nonBasicLand' : '',
-                      filters.fullArt === 'true' ? 'fullArt' : '',
-                      filters.textless === 'true' ? 'textless' : '',
-                      filters.cardTypes.includes('Creature') ? 'creature' : '',
-                      filters.cardTypes.includes('Sorcery') ? 'sorcery' : '',
-                      filters.cardTypes.includes('Instant') ? 'instant' : '',
-                      filters.cardTypes.includes('Artifact') ? 'artifact' : '',
-                      filters.cardTypes.includes('Enchantment') ? 'enchantment' : '',
-                      filters.cardTypes.includes('Planeswalker') ? 'planeswalker' : ''
-                    ].filter(Boolean)}
+                       filters.fullArt === 'true' ? 'fullArt' : '',
+                       filters.textless === 'true' ? 'textless' : ''
+                     ].filter(Boolean)}
                     onToggle={(id) => {
                       if (id === 'true') toggleFilter('isLegendary', 'true');
+                      if (id === 'prepared') toggleFilter('isPrepared', 'true');
                       if (id === 'historic') toggleFilter('isHistoric', 'true');
                       if (id === 'land') toggleFilter('isLand', 'true');
                       if (id === 'basicLand') toggleFilter('landType', 'basic');
                       if (id === 'nonBasicLand') toggleFilter('landType', 'non-basic');
-                      if (id === 'fullArt') toggleFilter('fullArt', 'true');
-                      if (id === 'textless') toggleFilter('textless', 'true');
-                      if (id === 'creature') toggleFilter('cardTypes', 'Creature');
-                      if (id === 'sorcery') toggleFilter('cardTypes', 'Sorcery');
-                      if (id === 'instant') toggleFilter('cardTypes', 'Instant');
-                      if (id === 'artifact') toggleFilter('cardTypes', 'Artifact');
-                      if (id === 'enchantment') toggleFilter('cardTypes', 'Enchantment');
-                      if (id === 'planeswalker') toggleFilter('cardTypes', 'Planeswalker');
-                    }}
+                       if (id === 'fullArt') toggleFilter('fullArt', 'true');
+                       if (id === 'textless') toggleFilter('textless', 'true');
+                     }}
                     counts={{
                       'true': facets?.is_legendary?.['true'] || 0,
+                      'prepared': facets?.is_prepared?.['true'] || 0,
                       'historic': facets?.is_historic?.['true'] || 0,
                       'land': facets?.is_land?.['true'] || 0,
                       'basicLand': facets?.land_type?.['basic'] || 0,
                       'nonBasicLand': facets?.land_type?.['non-basic'] || 0,
-                      'fullArt': facets?.full_art?.['true'] || 0,
-                      'textless': facets?.textless?.['true'] || 0,
-                      'creature': facets?.card_types?.['Creature'] || 0,
-                      'sorcery': facets?.card_types?.['Sorcery'] || 0,
-                      'instant': facets?.card_types?.['Instant'] || 0,
-                      'artifact': facets?.card_types?.['Artifact'] || 0,
-                      'enchantment': facets?.card_types?.['Enchantment'] || 0,
-                      'planeswalker': facets?.card_types?.['Planeswalker'] || 0
-                    }}
+                       'fullArt': facets?.full_art?.['true'] || 0,
+                       'textless': facets?.textless?.['true'] || 0
+                     }}
                     isRefetching={isRefetching}
                   />
                 )}
@@ -499,10 +482,9 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                       { id: 'Artifact', label: t('grid.filters.types.artifact', 'Artifact') },
                       { id: 'Enchantment', label: t('grid.filters.types.enchantment', 'Enchantment') },
                       { id: 'Planeswalker', label: t('grid.filters.types.planeswalker', 'Planeswalker') },
-                      { id: 'Land', label: t('grid.filters.types.land', 'Land') },
-                      { id: 'Battle', label: t('grid.filters.types.battle', 'Battle') },
-                      { id: 'Tribal', label: t('grid.filters.types.tribal', 'Tribal') }
-                    ]}
+                       { id: 'Battle', label: t('grid.filters.types.battle', 'Battle') },
+                       { id: 'Kindred', label: t('grid.filters.types.kindred', 'Kindred') }
+                     ]}
                     selected={filters.cardTypes}
                     onToggle={(val) => toggleFilter('cardTypes', val)}
                     counts={facets?.card_types}
@@ -539,9 +521,9 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                   isRefetching={isRefetching}
                 />
 
-                {(filters.search || filters.foil.length > 0 || filters.treatment.length > 0 || filters.condition.length > 0 || filters.collection.length > 0 || filters.rarity.length > 0 || filters.language.length > 0 || filters.color.length > 0 || filters.setName.length > 0 || filters.isLegendary || filters.isLand || filters.landType || filters.isHistoric || filters.fullArt || filters.textless || filters.format.length > 0 || filters.cardTypes.length > 0) && (
+                {(filters.search || filters.foil.length > 0 || filters.treatment.length > 0 || filters.condition.length > 0 || filters.collection.length > 0 || filters.rarity.length > 0 || filters.language.length > 0 || filters.color.length > 0 || filters.setName.length > 0 || filters.isLegendary || filters.isPrepared || filters.isLand || filters.landType || filters.isHistoric || filters.fullArt || filters.textless || filters.format.length > 0 || filters.cardTypes.length > 0) && (
                   <button
-                    onClick={() => { setFilters({ search: '', foil: [], treatment: [], condition: [], collection: [], rarity: [], language: [], color: [], setName: [], inStock: true, isLegendary: '', isLand: '', landType: '', isHistoric: '', fullArt: '', textless: '', format: [], cardTypes: [] }); setPage(1); }}
+                    onClick={() => { setFilters({ search: '', foil: [], treatment: [], condition: [], collection: [], rarity: [], language: [], color: [], setName: [], inStock: true, isLegendary: '', isPrepared: '', isLand: '', landType: '', isHistoric: '', fullArt: '', textless: '', format: [], cardTypes: [] }); setPage(1); }}
                     className="btn-secondary w-full mt-4"
                     style={{ fontSize: '0.85rem', padding: '0.4rem' }}
                   >

@@ -65,6 +65,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 		IsHistoric:     q.Get("is_historic"),
 		FullArt:        q.Get("full_art"),
 		Textless:       q.Get("textless"),
+		IsPrepared:     q.Get("is_prepared"),
 		LandType:       q.Get("land_type"),
 		Format:         q.Get("format"),
 		Page:           page,

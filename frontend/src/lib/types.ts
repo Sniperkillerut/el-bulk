@@ -126,18 +126,12 @@ export interface Facets {
   set_name?: FacetItem[];
   in_stock?: number;
   is_legendary?: Record<string, number>;
+  is_prepared?: Record<string, number>;
   is_historic?: Record<string, number>;
   is_land?: Record<string, number>;
+  land_type?: Record<string, number>;
   full_art?: Record<string, number>;
   textless?: Record<string, number>;
-  is_basic_land?: Record<string, number>;
-  is_creature?: Record<string, number>;
-  is_sorcery?: Record<string, number>;
-  is_instant?: Record<string, number>;
-  is_artifact?: Record<string, number>;
-  is_enchantment?: Record<string, number>;
-  is_planeswalker?: Record<string, number>;
-  is_non_basic_land?: Record<string, number>;
   format?: Record<string, number>;
   card_types?: Record<string, number>;
 }

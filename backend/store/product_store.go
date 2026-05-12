@@ -53,6 +53,7 @@ type ProductFilterParams struct {
 	IsLegendary    string
 	IsLand         string
 	IsHistoric     string
+	IsPrepared     string
 	LandType       string
 	Format         string
 	FrameEffects   string
@@ -729,6 +730,10 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 		conditions = append(conditions, "p.textless = true")
 	case "false":
 		conditions = append(conditions, "p.textless = false")
+	}
+
+	if params.IsPrepared == "true" {
+		conditions = append(conditions, "p.oracle_text ILIKE '%prepared%'")
 	}
 
 	switch params.LandType {

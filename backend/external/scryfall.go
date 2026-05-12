@@ -335,14 +335,26 @@ func ExtractCoreTypes(typeLine string) []string {
 		return nil
 	}
 
-	coreTypes := []string{"Creature", "Instant", "Sorcery", "Artifact", "Enchantment", "Planeswalker", "Land", "Battle", "Tribal"}
+	coreTypes := []string{"Creature", "Instant", "Sorcery", "Artifact", "Enchantment", "Planeswalker", "Land", "Battle", "Tribal", "Kindred"}
 	var result []string
 
 	for _, ct := range coreTypes {
 		matched, _ := regexp.MatchString(`(?i)\b`+ct+`\b`, typeLine)
 		if matched {
+			// Normalize Tribal to Kindred for the UI if desired, but for now let's keep both
+			// so the filter works with either string if they select it.
 			result = append(result, ct)
 		}
+	}
+	// Post-process: If Tribal is present, also add Kindred for UI consistency if not already there
+	hasTribal := false
+	hasKindred := false
+	for _, r := range result {
+		if strings.EqualFold(r, "Tribal") { hasTribal = true }
+		if strings.EqualFold(r, "Kindred") { hasKindred = true }
+	}
+	if hasTribal && !hasKindred {
+		result = append(result, "Kindred")
 	}
 	return result
 }
