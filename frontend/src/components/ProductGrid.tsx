@@ -117,7 +117,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
     card_types: filters.cardTypes.join(',') || undefined,
   }), [tcg, category, page, pageSize, debouncedSearch, filters, sortBy, sortDir, logic]);
 
-  const { data: res, isLoading: loadingResult } = useSWR(
+  const { data: res, isLoading: loadingResult, isValidating: isRefetching } = useSWR(
     ['/api/products', fetcherArgs],
     ([, args]) => fetchProducts(args),
     {
@@ -129,7 +129,6 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
   const products = res?.products || [];
   const total = res?.total || 0;
   const facets = res?.facets || null;
-  const isRefetching = !!(loadingResult && res); // New data is being fetched but we have old data
   const loading = loadingResult && !res; // Only show main loading on first fetch
 
   useEffect(() => {
@@ -434,9 +433,9 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                       { id: 'land', label: t('grid.filters.land', 'Land') },
                       { id: 'basicLand', label: t('grid.filters.basicLand', 'Basic Land') },
                       { id: 'nonBasicLand', label: t('grid.filters.nonBasicLand', 'Non-Basic Land') },
-                       { id: 'fullArt', label: t('grid.filters.fullArt', 'Full Art') },
-                       { id: 'textless', label: t('grid.filters.textless', 'Textless') }
-                     ]}
+                      { id: 'fullArt', label: t('grid.filters.fullArt', 'Full Art') },
+                      { id: 'textless', label: t('grid.filters.textless', 'Textless') }
+                    ]}
                     selected={[
                       filters.isLegendary === 'true' ? 'true' : '',
                       filters.isPrepared === 'true' ? 'prepared' : '',
@@ -444,9 +443,9 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                       filters.isLand === 'true' ? 'land' : '',
                       filters.landType === 'basic' ? 'basicLand' : '',
                       filters.landType === 'non-basic' ? 'nonBasicLand' : '',
-                       filters.fullArt === 'true' ? 'fullArt' : '',
-                       filters.textless === 'true' ? 'textless' : ''
-                     ].filter(Boolean)}
+                      filters.fullArt === 'true' ? 'fullArt' : '',
+                      filters.textless === 'true' ? 'textless' : ''
+                    ].filter(Boolean)}
                     onToggle={(id) => {
                       if (id === 'true') toggleFilter('isLegendary', 'true');
                       if (id === 'prepared') toggleFilter('isPrepared', 'true');
@@ -454,9 +453,9 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                       if (id === 'land') toggleFilter('isLand', 'true');
                       if (id === 'basicLand') toggleFilter('landType', 'basic');
                       if (id === 'nonBasicLand') toggleFilter('landType', 'non-basic');
-                       if (id === 'fullArt') toggleFilter('fullArt', 'true');
-                       if (id === 'textless') toggleFilter('textless', 'true');
-                     }}
+                      if (id === 'fullArt') toggleFilter('fullArt', 'true');
+                      if (id === 'textless') toggleFilter('textless', 'true');
+                    }}
                     counts={{
                       'true': facets?.is_legendary?.['true'] || 0,
                       'prepared': facets?.is_prepared?.['true'] || 0,
@@ -464,9 +463,9 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                       'land': facets?.is_land?.['true'] || 0,
                       'basicLand': facets?.land_type?.['basic'] || 0,
                       'nonBasicLand': facets?.land_type?.['non-basic'] || 0,
-                       'fullArt': facets?.full_art?.['true'] || 0,
-                       'textless': facets?.textless?.['true'] || 0
-                     }}
+                      'fullArt': facets?.full_art?.['true'] || 0,
+                      'textless': facets?.textless?.['true'] || 0
+                    }}
                     isRefetching={isRefetching}
                   />
                 )}
