@@ -1,3 +1,40 @@
+-- Migration: Add card_types array to MTG-related tables and backfill
+
+ALTER TABLE product ADD COLUMN IF NOT EXISTS card_types TEXT[] DEFAULT '{}';
+ALTER TABLE client_request ADD COLUMN IF NOT EXISTS card_types TEXT[] DEFAULT '{}';
+ALTER TABLE deck_card ADD COLUMN IF NOT EXISTS card_types TEXT[] DEFAULT '{}';
+
+-- Backfill script to extract core types from existing type_line
+-- Core MTG types: Creature, Instant, Sorcery, Artifact, Enchantment, Planeswalker, Land, Battle, Tribal
+CREATE OR REPLACE FUNCTION extract_mtg_card_types(type_line TEXT) RETURNS TEXT[] AS $$
+DECLARE
+    result TEXT[] := '{}';
+BEGIN
+    IF type_line IS NULL THEN
+        RETURN result;
+    END IF;
+
+    IF type_line ~* '\bCreature\b' THEN result := array_append(result, 'Creature'); END IF;
+    IF type_line ~* '\bInstant\b' THEN result := array_append(result, 'Instant'); END IF;
+    IF type_line ~* '\bSorcery\b' THEN result := array_append(result, 'Sorcery'); END IF;
+    IF type_line ~* '\bArtifact\b' THEN result := array_append(result, 'Artifact'); END IF;
+    IF type_line ~* '\bEnchantment\b' THEN result := array_append(result, 'Enchantment'); END IF;
+    IF type_line ~* '\bPlaneswalker\b' THEN result := array_append(result, 'Planeswalker'); END IF;
+    IF type_line ~* '\bLand\b' THEN result := array_append(result, 'Land'); END IF;
+    IF type_line ~* '\bBattle\b' THEN result := array_append(result, 'Battle'); END IF;
+    IF type_line ~* '\bTribal\b' THEN result := array_append(result, 'Tribal'); END IF;
+
+    RETURN result;
+END;
+$$ LANGUAGE plpgsql;
+
+UPDATE product SET card_types = extract_mtg_card_types(type_line) WHERE type_line IS NOT NULL;
+UPDATE client_request SET card_types = extract_mtg_card_types(type_line) WHERE type_line IS NOT NULL;
+UPDATE deck_card SET card_types = extract_mtg_card_types(type_line) WHERE type_line IS NOT NULL;
+
+DROP FUNCTION extract_mtg_card_types(TEXT);
+
+
 -- fn_get_product_facets
 -- Returns a JSONB object containing counts for Condition, Foil, Treatment, Rarity, Language, Color, Collection, and Set.
 -- Filter logic: always AND across dimensions. OR/AND mode only affects within-dimension

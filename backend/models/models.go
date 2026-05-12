@@ -115,8 +115,9 @@ type MTGMetadata struct {
 	ArtVariation  *string  `db:"art_variation"     json:"art_variation,omitempty"`
 	OracleText    *string  `db:"oracle_text"       json:"oracle_text,omitempty"`
 	Artist        *string  `db:"artist"            json:"artist,omitempty"`
-	TypeLine      *string  `db:"type_line"         json:"type_line,omitempty"`
-	BorderColor   *string  `db:"border_color"      json:"border_color,omitempty"`
+	TypeLine      *string     `db:"type_line"         json:"type_line,omitempty"`
+	CardTypes     StringArray `db:"card_types"        json:"card_types,omitempty"`
+	BorderColor   *string     `db:"border_color"      json:"border_color,omitempty"`
 	Frame         *string  `db:"frame"             json:"frame,omitempty"`
 	FullArt       bool     `db:"full_art"          json:"full_art"`
 	Textless      bool     `db:"textless"          json:"textless"`
@@ -417,6 +418,7 @@ type Facets struct {
 	Condition   map[string]int `json:"condition"`
 	Foil        map[string]int `json:"foil"`
 	Treatment   map[string]int `json:"treatment"`
+	CardTypes   map[string]int `json:"card_types"`
 	FrameEffects map[string]int `json:"frame_effects"`
 	Rarity      map[string]int `json:"rarity"`
 	Language    map[string]int `json:"language"`

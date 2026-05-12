@@ -23,6 +23,7 @@ interface FiltersState {
   isLand: string;
   isHistoric: string;
   format: string[];
+  cardTypes: string[];
 }
 
 interface ProductGridProps {
@@ -53,7 +54,8 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
     isLegendary: '',
     isLand: '',
     isHistoric: '',
-    format: []
+    format: [],
+    cardTypes: []
   });
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
@@ -99,6 +101,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
     is_land: filters.isLand || undefined,
     is_historic: filters.isHistoric || undefined,
     format: filters.format.join(',') || undefined,
+    card_types: filters.cardTypes.join(',') || undefined,
   }), [tcg, category, page, debouncedSearch, filters, sortBy, sortDir, logic]);
 
   const { data: res, isLoading: loadingResult } = useSWR(
@@ -409,7 +412,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
 
                 {tcg?.toLowerCase() === 'mtg' && (
                   <FilterSection
-                    title="Type"
+                    title="Properties"
                     initialOpen={false}
                     items={[
                       { id: 'true', label: t('grid.filters.legendary', 'Legendary') },
@@ -433,14 +436,22 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
 
                 {tcg?.toLowerCase() === 'mtg' && (
                   <FilterSection
-                    title="Structure"
+                    title="Card Type"
                     initialOpen={false}
                     items={[
-                      { id: 'true', label: t('grid.filters.land', 'Land Only') }
+                      { id: 'Creature', label: t('grid.filters.types.creature', 'Creature') },
+                      { id: 'Instant', label: t('grid.filters.types.instant', 'Instant') },
+                      { id: 'Sorcery', label: t('grid.filters.types.sorcery', 'Sorcery') },
+                      { id: 'Artifact', label: t('grid.filters.types.artifact', 'Artifact') },
+                      { id: 'Enchantment', label: t('grid.filters.types.enchantment', 'Enchantment') },
+                      { id: 'Planeswalker', label: t('grid.filters.types.planeswalker', 'Planeswalker') },
+                      { id: 'Land', label: t('grid.filters.types.land', 'Land') },
+                      { id: 'Battle', label: t('grid.filters.types.battle', 'Battle') },
+                      { id: 'Tribal', label: t('grid.filters.types.tribal', 'Tribal') }
                     ]}
-                    selected={filters.isLand === 'true' ? ['true'] : []}
-                    onToggle={() => toggleFilter('isLand', 'true')}
-                    counts={facets?.is_land}
+                    selected={filters.cardTypes}
+                    onToggle={(val) => toggleFilter('cardTypes', val)}
+                    counts={facets?.card_types}
                     isRefetching={isRefetching}
                   />
                 )}
@@ -474,9 +485,9 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                   isRefetching={isRefetching}
                 />
 
-                {(filters.search || filters.foil.length > 0 || filters.treatment.length > 0 || filters.condition.length > 0 || filters.collection.length > 0 || filters.rarity.length > 0 || filters.language.length > 0 || filters.color.length > 0 || filters.setName.length > 0 || filters.isLegendary || filters.isLand || filters.isHistoric || filters.format.length > 0) && (
+                {(filters.search || filters.foil.length > 0 || filters.treatment.length > 0 || filters.condition.length > 0 || filters.collection.length > 0 || filters.rarity.length > 0 || filters.language.length > 0 || filters.color.length > 0 || filters.setName.length > 0 || filters.isLegendary || filters.isHistoric || filters.format.length > 0 || filters.cardTypes.length > 0) && (
                   <button
-                    onClick={() => { setFilters({ search: '', foil: [], treatment: [], condition: [], collection: [], rarity: [], language: [], color: [], setName: [], inStock: true, isLegendary: '', isLand: '', isHistoric: '', format: [] }); setPage(1); }}
+                    onClick={() => { setFilters({ search: '', foil: [], treatment: [], condition: [], collection: [], rarity: [], language: [], color: [], setName: [], inStock: true, isLegendary: '', isLand: '', isHistoric: '', format: [], cardTypes: [] }); setPage(1); }}
                     className="btn-secondary w-full mt-4"
                     style={{ fontSize: '0.85rem', padding: '0.4rem' }}
                   >

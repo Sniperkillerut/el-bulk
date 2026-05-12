@@ -55,6 +55,7 @@ type ProductFilterParams struct {
 	IsHistoric  string
 	Format      string
 	FrameEffects string
+	CardTypes   string
 
 	// Exchange rates for on-the-fly price sorting
 	USDRate float64
@@ -135,12 +136,12 @@ func (s *ProductStore) GetFacets(ctx context.Context, params ProductFilterParams
 
 	var result []byte
 	start := time.Now()
-	query := "SELECT fn_get_product_facets($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)"
+	query := "SELECT fn_get_product_facets($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)"
 	logger.TraceCtx(ctx, "[DB] Executing GetFacets: %s", query)
 	err := s.DB.GetContext(ctx, &result, query,
 		params.TCG, params.Category, params.Search, params.StorageID, params.Foil, params.Treatment, params.Condition,
 		params.Rarity, params.Language, params.Color, params.Collection, params.SetName, params.InStock, params.FilterLogic, isAdmin,
-		params.IsLegendary, params.IsLand, params.IsHistoric, params.Format, params.FrameEffects)
+		params.IsLegendary, params.IsLand, params.IsHistoric, params.Format, params.FrameEffects, params.CardTypes)
 
 	if err != nil {
 		logger.ErrorCtx(ctx, "[DB] GetFacets failed: %v", err)
@@ -772,6 +773,21 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 			placeholder := fmt.Sprintf("$%d", len(args)+1)
 			conds = append(conds, "p.frame_effects ? "+placeholder)
 			args = append(args, strings.ToLower(v))
+		}
+		joinOp := " OR "
+		if isAndMode {
+			joinOp = " AND "
+		}
+		conditions = append(conditions, "("+strings.Join(conds, joinOp)+")")
+	}
+
+	if params.CardTypes != "" {
+		vals := strings.Split(params.CardTypes, ",")
+		var conds []string
+		for _, v := range vals {
+			placeholder := fmt.Sprintf("$%d", len(args)+1)
+			conds = append(conds, placeholder+" = ANY(p.card_types)")
+			args = append(args, v)
 		}
 		joinOp := " OR "
 		if isAndMode {

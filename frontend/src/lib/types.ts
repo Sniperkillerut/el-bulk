@@ -129,6 +129,7 @@ export interface Facets {
   is_historic?: Record<string, number>;
   is_land?: Record<string, number>;
   format?: Record<string, number>;
+  card_types?: Record<string, number>;
 }
 
 export interface ProductListResponse {

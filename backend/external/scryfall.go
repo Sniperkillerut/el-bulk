@@ -1,6 +1,7 @@
 package external
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -8,12 +9,11 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
-	"time"
-
-	"bytes"
 	"sync"
+	"time"
 
 	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/utils/logger"
@@ -330,6 +330,23 @@ func scryfallGet(ctx context.Context, reqURL string, foilTreatment string) (*Car
 	return mapScryfallToResult(&card, foilTreatment), nil
 }
 
+func ExtractCoreTypes(typeLine string) []string {
+	if typeLine == "" {
+		return nil
+	}
+
+	coreTypes := []string{"Creature", "Instant", "Sorcery", "Artifact", "Enchantment", "Planeswalker", "Land", "Battle", "Tribal"}
+	var result []string
+
+	for _, ct := range coreTypes {
+		matched, _ := regexp.MatchString(`(?i)\b`+ct+`\b`, typeLine)
+		if matched {
+			result = append(result, ct)
+		}
+	}
+	return result
+}
+
 func mapScryfallToResult(card *scryfallCard, foilTreatment string) *CardLookupResult {
 	imageURL := card.bestImageURL()
 	tcgUSD, cmEUR := card.scryfallPrices(foilTreatment)
@@ -406,6 +423,7 @@ func mapScryfallToResult(card *scryfallCard, foilTreatment string) *CardLookupRe
 			OracleText:      &oracle,
 			Artist:          &artist,
 			TypeLine:        &typeLine,
+			CardTypes:       ExtractCoreTypes(typeLine),
 			BorderColor:     &card.BorderColor,
 			Frame:           &card.Frame,
 			FullArt:         card.FullArt,
