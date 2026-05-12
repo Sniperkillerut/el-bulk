@@ -19,19 +19,13 @@ interface FiltersState {
   color: string[];
   setName: string[];
   inStock: boolean;
-  isLegendary: string;
-  isLand: string;
-  isHistoric: string;
+   isLegendary: string;
+   isLand: string;
+   isHistoric: string;
+  isBasicLand: string;
+  isNonBasicLand: string;
   fullArt: string;
   textless: string;
-  isBasicLand: string;
-  isCreature: string;
-  isSorcery: string;
-  isInstant: string;
-  isArtifact: string;
-  isEnchantment: string;
-  isPlaneswalker: string;
-  isNonBasicLand: string;
   format: string[];
   cardTypes: string[];
 }
@@ -65,16 +59,10 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
     isLegendary: '',
     isLand: '',
     isHistoric: '',
+    isBasicLand: '',
+    isNonBasicLand: '',
     fullArt: '',
     textless: '',
-    isBasicLand: '',
-    isCreature: '',
-    isSorcery: '',
-    isInstant: '',
-    isArtifact: '',
-    isEnchantment: '',
-    isPlaneswalker: '',
-    isNonBasicLand: '',
     format: [],
     cardTypes: []
   });
@@ -124,12 +112,6 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
     full_art: filters.fullArt || undefined,
     textless: filters.textless || undefined,
     is_basic_land: filters.isBasicLand || undefined,
-    is_creature: filters.isCreature || undefined,
-    is_sorcery: filters.isSorcery || undefined,
-    is_instant: filters.isInstant || undefined,
-    is_artifact: filters.isArtifact || undefined,
-    is_enchantment: filters.isEnchantment || undefined,
-    is_planeswalker: filters.isPlaneswalker || undefined,
     is_non_basic_land: filters.isNonBasicLand || undefined,
     format: filters.format.join(',') || undefined,
     card_types: filters.cardTypes.join(',') || undefined,
@@ -180,7 +162,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
     setFilters(prev => {
       if (key === 'search') return { ...prev, search: value as string };
       if (key === 'inStock') return { ...prev, inStock: value as boolean };
-      if (key === 'isLegendary' || key === 'isLand' || key === 'isHistoric' || key === 'fullArt' || key === 'textless' || key === 'isBasicLand' || key === 'isCreature' || key === 'isSorcery' || key === 'isInstant' || key === 'isArtifact' || key === 'isEnchantment' || key === 'isPlaneswalker' || key === 'isNonBasicLand') {
+      if (key === 'isLegendary' || key === 'isLand' || key === 'isHistoric' || key === 'fullArt' || key === 'textless' || key === 'isBasicLand' || key === 'isNonBasicLand') {
         return { ...prev, [key]: prev[key as keyof FiltersState] === value ? '' : value as string };
       }
       const current = prev[key] as string[];
@@ -468,12 +450,12 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                       filters.isNonBasicLand === 'true' ? 'nonBasicLand' : '',
                       filters.fullArt === 'true' ? 'fullArt' : '',
                       filters.textless === 'true' ? 'textless' : '',
-                      filters.isCreature === 'true' ? 'creature' : '',
-                      filters.isSorcery === 'true' ? 'sorcery' : '',
-                      filters.isInstant === 'true' ? 'instant' : '',
-                      filters.isArtifact === 'true' ? 'artifact' : '',
-                      filters.isEnchantment === 'true' ? 'enchantment' : '',
-                      filters.isPlaneswalker === 'true' ? 'planeswalker' : ''
+                      filters.cardTypes.includes('Creature') ? 'creature' : '',
+                      filters.cardTypes.includes('Sorcery') ? 'sorcery' : '',
+                      filters.cardTypes.includes('Instant') ? 'instant' : '',
+                      filters.cardTypes.includes('Artifact') ? 'artifact' : '',
+                      filters.cardTypes.includes('Enchantment') ? 'enchantment' : '',
+                      filters.cardTypes.includes('Planeswalker') ? 'planeswalker' : ''
                     ].filter(Boolean)}
                     onToggle={(id) => {
                       if (id === 'true') toggleFilter('isLegendary', 'true');
@@ -483,12 +465,12 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                       if (id === 'nonBasicLand') toggleFilter('isNonBasicLand', 'true');
                       if (id === 'fullArt') toggleFilter('fullArt', 'true');
                       if (id === 'textless') toggleFilter('textless', 'true');
-                      if (id === 'creature') toggleFilter('isCreature', 'true');
-                      if (id === 'sorcery') toggleFilter('isSorcery', 'true');
-                      if (id === 'instant') toggleFilter('isInstant', 'true');
-                      if (id === 'artifact') toggleFilter('isArtifact', 'true');
-                      if (id === 'enchantment') toggleFilter('isEnchantment', 'true');
-                      if (id === 'planeswalker') toggleFilter('isPlaneswalker', 'true');
+                      if (id === 'creature') toggleFilter('cardTypes', 'Creature');
+                      if (id === 'sorcery') toggleFilter('cardTypes', 'Sorcery');
+                      if (id === 'instant') toggleFilter('cardTypes', 'Instant');
+                      if (id === 'artifact') toggleFilter('cardTypes', 'Artifact');
+                      if (id === 'enchantment') toggleFilter('cardTypes', 'Enchantment');
+                      if (id === 'planeswalker') toggleFilter('cardTypes', 'Planeswalker');
                     }}
                     counts={{
                       'true': facets?.is_legendary?.['true'] || 0,
@@ -498,12 +480,12 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                       'nonBasicLand': facets?.is_non_basic_land?.['true'] || 0,
                       'fullArt': facets?.full_art?.['true'] || 0,
                       'textless': facets?.textless?.['true'] || 0,
-                      'creature': facets?.is_creature?.['true'] || 0,
-                      'sorcery': facets?.is_sorcery?.['true'] || 0,
-                      'instant': facets?.is_instant?.['true'] || 0,
-                      'artifact': facets?.is_artifact?.['true'] || 0,
-                      'enchantment': facets?.is_enchantment?.['true'] || 0,
-                      'planeswalker': facets?.is_planeswalker?.['true'] || 0
+                      'creature': facets?.card_types?.['Creature'] || 0,
+                      'sorcery': facets?.card_types?.['Sorcery'] || 0,
+                      'instant': facets?.card_types?.['Instant'] || 0,
+                      'artifact': facets?.card_types?.['Artifact'] || 0,
+                      'enchantment': facets?.card_types?.['Enchantment'] || 0,
+                      'planeswalker': facets?.card_types?.['Planeswalker'] || 0
                     }}
                     isRefetching={isRefetching}
                   />
@@ -560,9 +542,9 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                   isRefetching={isRefetching}
                 />
 
-                {(filters.search || filters.foil.length > 0 || filters.treatment.length > 0 || filters.condition.length > 0 || filters.collection.length > 0 || filters.rarity.length > 0 || filters.language.length > 0 || filters.color.length > 0 || filters.setName.length > 0 || filters.isLegendary || filters.isLand || filters.isBasicLand || filters.isNonBasicLand || filters.isHistoric || filters.fullArt || filters.textless || filters.isCreature || filters.isSorcery || filters.isInstant || filters.isArtifact || filters.isEnchantment || filters.isPlaneswalker || filters.format.length > 0 || filters.cardTypes.length > 0) && (
+                {(filters.search || filters.foil.length > 0 || filters.treatment.length > 0 || filters.condition.length > 0 || filters.collection.length > 0 || filters.rarity.length > 0 || filters.language.length > 0 || filters.color.length > 0 || filters.setName.length > 0 || filters.isLegendary || filters.isLand || filters.isBasicLand || filters.isNonBasicLand || filters.isHistoric || filters.fullArt || filters.textless || filters.format.length > 0 || filters.cardTypes.length > 0) && (
                   <button
-                    onClick={() => { setFilters({ search: '', foil: [], treatment: [], condition: [], collection: [], rarity: [], language: [], color: [], setName: [], inStock: true, isLegendary: '', isLand: '', isBasicLand: '', isNonBasicLand: '', isHistoric: '', fullArt: '', textless: '', isCreature: '', isSorcery: '', isInstant: '', isArtifact: '', isEnchantment: '', isPlaneswalker: '', format: [], cardTypes: [] }); setPage(1); }}
+                    onClick={() => { setFilters({ search: '', foil: [], treatment: [], condition: [], collection: [], rarity: [], language: [], color: [], setName: [], inStock: true, isLegendary: '', isLand: '', isBasicLand: '', isNonBasicLand: '', isHistoric: '', fullArt: '', textless: '', format: [], cardTypes: [] }); setPage(1); }}
                     className="btn-secondary w-full mt-4"
                     style={{ fontSize: '0.85rem', padding: '0.4rem' }}
                   >

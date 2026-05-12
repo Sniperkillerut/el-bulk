@@ -201,14 +201,14 @@ func seedMTGSingles(db *sqlx.DB, cats CategoryMap, storage StorageMap) ([]string
 				rarity, is_legendary, is_historic, is_land, is_basic_land,
 				art_variation, oracle_text, artist, type_line, border_color, frame,
 				full_art, textless, promo_type, cmc, color_identity, scryfall_id, legalities,
-				created_at
+				card_types, created_at
 			) VALUES (
 				$1, 'mtg', 'singles', $2, $3, $4, $5, $6, $7, $8, $9, $10,
 				$11, $12, $13, $14,
 				$15, $16, $17, $18, $19,
 				$20, $21, $22, $23, $24, $25,
 				$26, $27, $28, $29, $30, $31, $32,
-				$33
+				$33, $34
 			) RETURNING id
 		`,
 			res.Name, res.SetName, res.SetCode, res.CollectorNumber, cond,
@@ -217,7 +217,7 @@ func seedMTGSingles(db *sqlx.DB, cats CategoryMap, storage StorageMap) ([]string
 			res.Rarity, res.IsLegendary, res.IsHistoric, res.IsLand, res.IsBasicLand,
 			res.ArtVariation, res.OracleText, res.Artist, res.TypeLine, res.BorderColor, res.Frame,
 			res.FullArt, res.Textless, res.PromoType, res.CMC, res.ColorIdentity, res.ScryfallID, res.Legalities,
-			createdAt,
+			res.CardTypes, createdAt,
 		)
 
 		if err != nil {

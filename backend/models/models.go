@@ -429,17 +429,10 @@ type Facets struct {
 	SetName     []FacetItem    `json:"set_name"`
 	IsLegendary map[string]int `json:"is_legendary"`
 	IsLand      map[string]int `json:"is_land"`
-	IsHistoric  map[string]int `json:"is_historic"`
+	IsBasicLand map[string]int `json:"is_basic_land"`
+	IsNonBasicLand map[string]int `json:"is_non_basic_land"`
 	FullArt     map[string]int `json:"full_art"`
 	Textless    map[string]int `json:"textless"`
-	IsBasicLand map[string]int `json:"is_basic_land"`
-	IsCreature  map[string]int `json:"is_creature"`
-	IsSorcery   map[string]int `json:"is_sorcery"`
-	IsInstant   map[string]int `json:"is_instant"`
-	IsArtifact  map[string]int `json:"is_artifact"`
-	IsEnchantment map[string]int `json:"is_enchantment"`
-	IsPlaneswalker map[string]int `json:"is_planeswalker"`
-	IsNonBasicLand map[string]int `json:"is_non_basic_land"`
 	Format      map[string]int `json:"format"`
 }
 

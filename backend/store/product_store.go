@@ -53,19 +53,13 @@ type ProductFilterParams struct {
 	IsLegendary    string
 	IsLand         string
 	IsHistoric     string
+	IsBasicLand    string
+	IsNonBasicLand string
 	Format         string
 	FrameEffects   string
 	CardTypes      string
 	FullArt        string
 	Textless       string
-	IsBasicLand    string
-	IsCreature     string
-	IsSorcery      string
-	IsInstant      string
-	IsArtifact     string
-	IsEnchantment  string
-	IsPlaneswalker string
-	IsNonBasicLand string
 
 	// Exchange rates for on-the-fly price sorting
 	USDRate float64
@@ -737,44 +731,14 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 	case "false":
 		conditions = append(conditions, "p.textless = false")
 	}
-+
+
 	switch params.IsBasicLand {
 	case "true":
 		conditions = append(conditions, "p.is_basic_land = true")
 	case "false":
 		conditions = append(conditions, "p.is_basic_land = false")
 	}
-+
-	switch params.IsCreature {
-	case "true":
-		conditions = append(conditions, "p.card_types @> '[\"Creature\"]'::jsonb")
-	}
-+
-	switch params.IsSorcery {
-	case "true":
-		conditions = append(conditions, "p.card_types @> '[\"Sorcery\"]'::jsonb")
-	}
-+
-	switch params.IsInstant {
-	case "true":
-		conditions = append(conditions, "p.card_types @> '[\"Instant\"]'::jsonb")
-	}
-+
-	switch params.IsArtifact {
-	case "true":
-		conditions = append(conditions, "p.card_types @> '[\"Artifact\"]'::jsonb")
-	}
-+
-	switch params.IsEnchantment {
-	case "true":
-		conditions = append(conditions, "p.card_types @> '[\"Enchantment\"]'::jsonb")
-	}
-+
-	switch params.IsPlaneswalker {
-	case "true":
-		conditions = append(conditions, "p.card_types @> '[\"Planeswalker\"]'::jsonb")
-	}
-+
+
 	switch params.IsNonBasicLand {
 	case "true":
 		conditions = append(conditions, "p.is_land = true AND p.is_basic_land = false")
@@ -852,7 +816,7 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 		var conds []string
 		for _, v := range vals {
 			placeholder := fmt.Sprintf("$%d", len(args)+1)
-			conds = append(conds, placeholder+" = ANY(p.card_types)")
+			conds = append(conds, "p.card_types ? "+placeholder)
 			args = append(args, v)
 		}
 		joinOp := " OR "
