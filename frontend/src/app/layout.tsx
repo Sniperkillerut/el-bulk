@@ -44,11 +44,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: 'Your local Magic: The Gathering, Pokémon, Lorcana and One Piece card shop in Bogotá. Buy singles, sealed product, and sell us your bulk with secure evaluation.',
     keywords: ['MTG', 'Magic the Gathering', 'Pokemon', 'Lorcana', 'TCG', 'card store', 'singles', 'sealed', 'bulk', 'Bogota', 'Colombia'],
     authors: [{ name: 'El Bulk Collective' }],
-    icons: {
-      icon: logoUrl,
-      shortcut: logoUrl,
-      apple: logoUrl,
-    },
+    // Favicon is handled by static icon.png and apple-icon.png in app directory
     openGraph: {
       title: 'El Bulk — TCG Store',
       description: 'Premier destination for TCG enthusiasts. Secure buying, selling, and trading in Bogotá.',
