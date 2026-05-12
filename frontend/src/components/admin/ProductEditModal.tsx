@@ -374,12 +374,12 @@ export default function ProductEditModal({
     setProductStorage(prev => prev.map(loc => loc.stored_in_id === id ? { ...loc, quantity: Math.max(0, qty) } : loc));
   };
 
-  const handlePopulate = async (forceSearchName?: string) => {
+  const handlePopulate = async (forceSearchName?: string, nameOnly?: boolean) => {
     setFormError('');
     const name = forceSearchName || form.name.trim();
-    const set = form.set_code.trim().toLowerCase();
-    const cn = form.collector_number.trim();
-    const sid = form.scryfall_id?.trim();
+    const set = nameOnly ? '' : form.set_code.trim().toLowerCase();
+    const cn = nameOnly ? '' : form.collector_number.trim();
+    const sid = nameOnly ? '' : form.scryfall_id?.trim();
     if (!name && !sid && (!set || !cn)) return;
 
     setLookingUp(true); 
@@ -721,7 +721,8 @@ export default function ProductEditModal({
             onPopulate={() => handlePopulate()}
             onCardSelect={(card: ScryfallCard) => {
               setForm(f => ({ ...f, name: card.name }));
-              handlePopulate(card.name);
+              setScryfallPrints([]);
+              handlePopulate(card.name, true);
             }}
             onSetSearchChange={handleSetSearchChange}
           />
