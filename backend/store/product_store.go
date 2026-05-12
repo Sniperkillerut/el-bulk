@@ -53,8 +53,7 @@ type ProductFilterParams struct {
 	IsLegendary    string
 	IsLand         string
 	IsHistoric     string
-	IsBasicLand    string
-	IsNonBasicLand string
+	LandType       string
 	Format         string
 	FrameEffects   string
 	CardTypes      string
@@ -732,15 +731,10 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 		conditions = append(conditions, "p.textless = false")
 	}
 
-	switch params.IsBasicLand {
-	case "true":
+	switch params.LandType {
+	case "basic":
 		conditions = append(conditions, "p.is_basic_land = true")
-	case "false":
-		conditions = append(conditions, "p.is_basic_land = false")
-	}
-
-	switch params.IsNonBasicLand {
-	case "true":
+	case "non-basic":
 		conditions = append(conditions, "p.is_land = true AND p.is_basic_land = false")
 	}
 

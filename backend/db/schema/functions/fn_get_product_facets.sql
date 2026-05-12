@@ -242,11 +242,10 @@ BEGIN
     f_textless AS (
         SELECT 'true' as val, COUNT(*) as c FROM dimension_matches WHERE textless = true AND others_foil AND others_treatment AND others_rarity AND others_language AND others_color AND others_collection AND others_set AND others_condition AND others_format
     ),
-    f_basic_land AS (
-        SELECT 'true' as val, COUNT(*) as c FROM dimension_matches WHERE is_basic_land = true AND others_foil AND others_treatment AND others_rarity AND others_language AND others_color AND others_collection AND others_set AND others_condition AND others_format
-    ),
-    f_non_basic_land AS (
-        SELECT 'true' as val, COUNT(*) as c FROM dimension_matches WHERE is_land = true AND is_basic_land = false AND others_foil AND others_treatment AND others_rarity AND others_language AND others_color AND others_color AND others_collection AND others_set AND others_condition AND others_format
+    f_land_type AS (
+        SELECT 'basic' as val, COUNT(*) as c FROM dimension_matches WHERE is_basic_land = true AND others_foil AND others_treatment AND others_rarity AND others_language AND others_color AND others_collection AND others_set AND others_condition AND others_format
+        UNION ALL
+        SELECT 'non-basic' as val, COUNT(*) as c FROM dimension_matches WHERE is_land = true AND is_basic_land = false AND others_foil AND others_treatment AND others_rarity AND others_language AND others_color AND others_collection AND others_set AND others_condition AND others_format
     ),
     f_format AS (
         SELECT f as val, COUNT(*) as c FROM dimension_matches, unnest(ARRAY['commander', 'modern', 'standard', 'legacy', 'vintage', 'pauper', 'pioneer']) f
@@ -279,8 +278,7 @@ BEGIN
         'is_historic', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_historic),
         'full_art', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_full_art),
         'textless', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_textless),
-        'is_basic_land', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_basic_land),
-        'is_non_basic_land', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_non_basic_land),
+        'land_type', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_land_type),
         'format', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_format)
     ) INTO result;
 

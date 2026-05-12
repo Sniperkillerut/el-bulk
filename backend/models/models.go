@@ -429,8 +429,7 @@ type Facets struct {
 	SetName     []FacetItem    `json:"set_name"`
 	IsLegendary map[string]int `json:"is_legendary"`
 	IsLand      map[string]int `json:"is_land"`
-	IsBasicLand map[string]int `json:"is_basic_land"`
-	IsNonBasicLand map[string]int `json:"is_non_basic_land"`
+	LandType    map[string]int `json:"land_type"`
 	FullArt     map[string]int `json:"full_art"`
 	Textless    map[string]int `json:"textless"`
 	Format      map[string]int `json:"format"`

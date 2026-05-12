@@ -19,11 +19,10 @@ interface FiltersState {
   color: string[];
   setName: string[];
   inStock: boolean;
-   isLegendary: string;
-   isLand: string;
-   isHistoric: string;
-  isBasicLand: string;
-  isNonBasicLand: string;
+  isLegendary: string;
+  isLand: string;
+  isHistoric: string;
+  landType: string;
   fullArt: string;
   textless: string;
   format: string[];
@@ -59,8 +58,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
     isLegendary: '',
     isLand: '',
     isHistoric: '',
-    isBasicLand: '',
-    isNonBasicLand: '',
+    landType: '',
     fullArt: '',
     textless: '',
     format: [],
@@ -111,8 +109,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
     is_historic: filters.isHistoric || undefined,
     full_art: filters.fullArt || undefined,
     textless: filters.textless || undefined,
-    is_basic_land: filters.isBasicLand || undefined,
-    is_non_basic_land: filters.isNonBasicLand || undefined,
+    land_type: filters.landType || undefined,
     format: filters.format.join(',') || undefined,
     card_types: filters.cardTypes.join(',') || undefined,
   }), [tcg, category, page, pageSize, debouncedSearch, filters, sortBy, sortDir, logic]);
@@ -162,7 +159,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
     setFilters(prev => {
       if (key === 'search') return { ...prev, search: value as string };
       if (key === 'inStock') return { ...prev, inStock: value as boolean };
-      if (key === 'isLegendary' || key === 'isLand' || key === 'isHistoric' || key === 'fullArt' || key === 'textless' || key === 'isBasicLand' || key === 'isNonBasicLand') {
+      if (key === 'isLegendary' || key === 'isLand' || key === 'isHistoric' || key === 'fullArt' || key === 'textless' || key === 'landType') {
         return { ...prev, [key]: prev[key as keyof FiltersState] === value ? '' : value as string };
       }
       const current = prev[key] as string[];
@@ -446,8 +443,8 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                       filters.isLegendary === 'true' ? 'true' : '',
                       filters.isHistoric === 'true' ? 'historic' : '',
                       filters.isLand === 'true' ? 'land' : '',
-                      filters.isBasicLand === 'true' ? 'basicLand' : '',
-                      filters.isNonBasicLand === 'true' ? 'nonBasicLand' : '',
+                      filters.landType === 'basic' ? 'basicLand' : '',
+                      filters.landType === 'non-basic' ? 'nonBasicLand' : '',
                       filters.fullArt === 'true' ? 'fullArt' : '',
                       filters.textless === 'true' ? 'textless' : '',
                       filters.cardTypes.includes('Creature') ? 'creature' : '',
@@ -461,8 +458,8 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                       if (id === 'true') toggleFilter('isLegendary', 'true');
                       if (id === 'historic') toggleFilter('isHistoric', 'true');
                       if (id === 'land') toggleFilter('isLand', 'true');
-                      if (id === 'basicLand') toggleFilter('isBasicLand', 'true');
-                      if (id === 'nonBasicLand') toggleFilter('isNonBasicLand', 'true');
+                      if (id === 'basicLand') toggleFilter('landType', 'basic');
+                      if (id === 'nonBasicLand') toggleFilter('landType', 'non-basic');
                       if (id === 'fullArt') toggleFilter('fullArt', 'true');
                       if (id === 'textless') toggleFilter('textless', 'true');
                       if (id === 'creature') toggleFilter('cardTypes', 'Creature');
@@ -476,8 +473,8 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                       'true': facets?.is_legendary?.['true'] || 0,
                       'historic': facets?.is_historic?.['true'] || 0,
                       'land': facets?.is_land?.['true'] || 0,
-                      'basicLand': facets?.is_basic_land?.['true'] || 0,
-                      'nonBasicLand': facets?.is_non_basic_land?.['true'] || 0,
+                      'basicLand': facets?.land_type?.['basic'] || 0,
+                      'nonBasicLand': facets?.land_type?.['non-basic'] || 0,
                       'fullArt': facets?.full_art?.['true'] || 0,
                       'textless': facets?.textless?.['true'] || 0,
                       'creature': facets?.card_types?.['Creature'] || 0,
@@ -542,9 +539,9 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                   isRefetching={isRefetching}
                 />
 
-                {(filters.search || filters.foil.length > 0 || filters.treatment.length > 0 || filters.condition.length > 0 || filters.collection.length > 0 || filters.rarity.length > 0 || filters.language.length > 0 || filters.color.length > 0 || filters.setName.length > 0 || filters.isLegendary || filters.isLand || filters.isBasicLand || filters.isNonBasicLand || filters.isHistoric || filters.fullArt || filters.textless || filters.format.length > 0 || filters.cardTypes.length > 0) && (
+                {(filters.search || filters.foil.length > 0 || filters.treatment.length > 0 || filters.condition.length > 0 || filters.collection.length > 0 || filters.rarity.length > 0 || filters.language.length > 0 || filters.color.length > 0 || filters.setName.length > 0 || filters.isLegendary || filters.isLand || filters.landType || filters.isHistoric || filters.fullArt || filters.textless || filters.format.length > 0 || filters.cardTypes.length > 0) && (
                   <button
-                    onClick={() => { setFilters({ search: '', foil: [], treatment: [], condition: [], collection: [], rarity: [], language: [], color: [], setName: [], inStock: true, isLegendary: '', isLand: '', isBasicLand: '', isNonBasicLand: '', isHistoric: '', fullArt: '', textless: '', format: [], cardTypes: [] }); setPage(1); }}
+                    onClick={() => { setFilters({ search: '', foil: [], treatment: [], condition: [], collection: [], rarity: [], language: [], color: [], setName: [], inStock: true, isLegendary: '', isLand: '', landType: '', isHistoric: '', fullArt: '', textless: '', format: [], cardTypes: [] }); setPage(1); }}
                     className="btn-secondary w-full mt-4"
                     style={{ fontSize: '0.85rem', padding: '0.4rem' }}
                   >
