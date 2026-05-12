@@ -29,7 +29,6 @@ END;
 $$ LANGUAGE plpgsql;
 
 UPDATE product SET card_types = extract_mtg_card_types(type_line) WHERE type_line IS NOT NULL;
-UPDATE client_request SET card_types = extract_mtg_card_types(type_line) WHERE type_line IS NOT NULL;
 UPDATE deck_card SET card_types = extract_mtg_card_types(type_line) WHERE type_line IS NOT NULL;
 
 DROP FUNCTION extract_mtg_card_types(TEXT);
