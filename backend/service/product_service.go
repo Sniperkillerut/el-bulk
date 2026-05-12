@@ -13,6 +13,7 @@ import (
 	"github.com/el-bulk/backend/store"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
+	"golang.org/x/sync/errgroup"
 )
 
 type ProductService struct {
@@ -42,19 +43,29 @@ func (s *ProductService) List(ctx context.Context, params store.ProductFilterPar
 		params.CKRate = settings.CKToCOPRate
 	}
 
-	products, total, err := s.Store.ListWithFilters(ctx, params)
-	if err != nil {
+	var products []models.Product
+	var total int
+	var facets models.Facets
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		var err error
+		products, total, err = s.Store.ListWithFilters(gCtx, params)
+		return err
+	})
+
+	g.Go(func() error {
+		var err error
+		facets, err = s.Store.GetFacets(gCtx, params, isAdmin)
+		return err
+	})
+
+	if err := g.Wait(); err != nil {
 		return models.ProductListResponse{}, err
 	}
-
-	// Settings already fetched above for sorting
 
 	if err := s.EnrichProducts(ctx, products, settings, isAdmin); err != nil {
-		return models.ProductListResponse{}, err
-	}
-
-	facets, err := s.Store.GetFacets(ctx, params, isAdmin)
-	if err != nil {
 		return models.ProductListResponse{}, err
 	}
 
