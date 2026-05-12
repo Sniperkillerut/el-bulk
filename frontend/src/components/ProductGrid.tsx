@@ -5,7 +5,7 @@ import useSWR from 'swr';
 import { fetchProducts, fetchCategories } from '@/lib/api';
 import ProductCard from '@/components/ProductCard';
 import ProductCardSkeleton from './skeletons/ProductCardSkeleton';
-import { FOIL_LABELS, TREATMENT_LABELS, TCG_LABELS, CustomCategory } from '@/lib/types';
+import { FOIL_LABELS, TREATMENT_LABELS, resolveLabel, TCG_LABELS, CustomCategory } from '@/lib/types';
 import { useLanguage } from '@/context/LanguageContext';
 
 interface FiltersState {
@@ -330,7 +330,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
 
                 <FilterSection
                   title="Version"
-                  items={Object.entries(TREATMENT_LABELS).map(([id, label]) => ({ id, label: t(`pages.product.version.${id}`, label) }))}
+                  items={Object.entries(TREATMENT_LABELS).map(([id, label]) => ({ id, label: resolveLabel(id, TREATMENT_LABELS) }))}
                   selected={filters.treatment}
                   onToggle={(val) => toggleFilter('treatment', val)}
                   counts={facets?.treatment}

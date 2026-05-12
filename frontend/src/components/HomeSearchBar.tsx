@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { fetchProducts } from '@/lib/api';
-import { Product, TCG_SHORT, FOIL_LABELS, TREATMENT_LABELS } from '@/lib/types';
+import { Product, TCG_SHORT, FOIL_LABELS, TREATMENT_LABELS, resolveLabel } from '@/lib/types';
 import { useCart } from '@/lib/CartContext';
 import CardImage from './CardImage';
 import { openProductModal } from './ProductModalManager';
@@ -117,7 +117,7 @@ export default function HomeSearchBar({ placeholder }: HomeSearchBarProps) {
                         )}
                         {product.card_treatment && product.card_treatment !== 'normal' && (
                           <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-rose/10 text-accent-rose border border-accent-rose/20 font-bold">
-                            {TREATMENT_LABELS[product.card_treatment] || product.card_treatment}
+                            {resolveLabel(product.card_treatment, TREATMENT_LABELS)}
                           </span>
                         )}
                       </div>

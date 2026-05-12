@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/lib/CartContext';
 import { useUser } from '@/context/UserContext';
 import { createOrder, fetchPublicSettings } from '@/lib/api';
-import { PAYMENT_METHODS, FOIL_LABELS, TREATMENT_LABELS, PublicSettings, CartItem, UserProfile } from '@/lib/types';
+import { PAYMENT_METHODS, FOIL_LABELS, TREATMENT_LABELS, resolveLabel, PublicSettings, CartItem, UserProfile } from '@/lib/types';
 import CardImage from '@/components/CardImage';
 import SynergyScout from '@/components/SynergyScout';
 import { useLanguage } from '@/context/LanguageContext';
@@ -351,7 +351,7 @@ function CheckoutFormInner({ user, settings }: { user: UserProfile, settings?: P
                 const badges: string[] = [];
                 if (p.condition) badges.push(t(`pages.product.condition.${p.condition.toLowerCase()}`, p.condition));
                 if (p.foil_treatment && p.foil_treatment !== 'non_foil') badges.push(t(`pages.product.finish.${p.foil_treatment}`, FOIL_LABELS[p.foil_treatment] || p.foil_treatment));
-                if (p.card_treatment && p.card_treatment !== 'normal') badges.push(t(`pages.product.version.${p.card_treatment}`, TREATMENT_LABELS[p.card_treatment] || p.card_treatment));
+                if (p.card_treatment && p.card_treatment !== 'normal') badges.push(resolveLabel(p.card_treatment, TREATMENT_LABELS));
 
                 return (
                   <div key={p.id} className="flex gap-3 pb-3" style={{ borderBottom: '1px solid var(--ink-border)' }}>

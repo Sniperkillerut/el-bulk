@@ -664,18 +664,6 @@
     "value": "Etched Foil"
   },
   {
-    "key": "pages.product.version.normal",
-    "value": "Regular"
-  },
-  {
-    "key": "pages.product.version.borderless",
-    "value": "Borderless"
-  },
-  {
-    "key": "pages.product.version.showcase",
-    "value": "Showcase"
-  },
-  {
     "key": "tcg.mtg",
     "value": "Magic: The Gathering"
   },

@@ -107,6 +107,11 @@ export default function VariantTab({
             <div>
               <label className="text-[9px] font-mono-stack mb-1 block uppercase text-text-muted">{t('components.admin.product_modal.variant.colors_label', 'Colors')}</label>
               <input type="text" className="w-full text-xs py-1" value={form.color_identity} onChange={e => onUpdate({ color_identity: e.target.value })} />
+              <div className="flex gap-1 mt-1 h-4">
+                {form.color_identity?.split(',').filter(Boolean).map(c => (
+                  <i key={c} className={`ms ms-${c.trim().toLowerCase()} ms-cost ms-shadow text-[0.8rem]`} />
+                ))}
+              </div>
             </div>
             <div>
               <label className="text-[9px] font-mono-stack mb-1 block uppercase text-text-muted">{t('components.admin.product_modal.variant.cmc_label', 'CMC')}</label>

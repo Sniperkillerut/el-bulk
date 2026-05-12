@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { 
   getTreatmentOptions, getArtOptions, getPromoOptions, getFoilOptions, ArtOption 
 } from '@/lib/mtg-logic';
-import { ScryfallCard, FoilTreatment, CardTreatment } from '@/lib/types';
+import { ScryfallCard, FoilTreatment, CardTreatment, TREATMENT_LABELS, resolveLabel } from '@/lib/types';
 import { useLanguage } from '@/context/LanguageContext';
 
 export interface MTGVariantSelectorProps {
@@ -30,10 +30,10 @@ export default function MTGVariantSelector({
 }: MTGVariantSelectorProps) {
   const { t } = useLanguage();
   // Filter waterfalls
-  const treatments = getTreatmentOptions(prints, setCode);
-  const arts = getArtOptions(prints, setCode, cardTreatment);
-  const { promos, hasStandard } = getPromoOptions(prints, setCode, cardTreatment, collectorNumber);
-  const foils = getFoilOptions(prints, setCode, cardTreatment, collectorNumber, promoType || '');
+  const treatments = useMemo(() => getTreatmentOptions(prints, setCode), [prints, setCode]);
+  const arts = useMemo(() => getArtOptions(prints, setCode, cardTreatment), [prints, setCode, cardTreatment]);
+  const { promos, hasStandard } = useMemo(() => getPromoOptions(prints, setCode, cardTreatment, collectorNumber), [prints, setCode, cardTreatment, collectorNumber]);
+  const foils = useMemo(() => getFoilOptions(prints, setCode, cardTreatment, collectorNumber, promoType || ''), [prints, setCode, cardTreatment, collectorNumber, promoType]);
 
   // Auto-select foil if only one option exists
   useEffect(() => {
@@ -49,7 +49,7 @@ export default function MTGVariantSelector({
       onPromoChange(promos[0]);
     }
     // Case 2: Standard is the only option and NO specialized promos exist
-    if (promos.length === 0 && hasStandard && promoType !== 'none') {
+    if (promos.length === 0 && hasStandard && promoType && promoType !== 'none') {
       onPromoChange('none');
     }
   }, [promos, hasStandard, promoType, onPromoChange]);
@@ -80,7 +80,7 @@ export default function MTGVariantSelector({
                     : 'bg-ink-surface border-ink-border text-text-muted hover:border-gold/50'
                 }`}
               >
-                {t.replace(/_/g, ' ').toUpperCase()}
+                {resolveLabel(t, TREATMENT_LABELS).toUpperCase()}
               </button>
             ))}
           </div>
@@ -178,19 +178,34 @@ export default function MTGVariantSelector({
               <span>{collectorNumber}</span>
             </div>
             <div className="flex justify-between border-b border-ink-border/50 pb-1">
+              <span className="text-text-muted">Identity:</span>
+              <div className="flex gap-0.5 items-center">
+                {prints.find(p => p.collector_number === collectorNumber)?.color_identity?.length ? (
+                  prints.find(p => p.collector_number === collectorNumber)?.color_identity?.map(c => (
+                    <span key={c} className="flex flex-col items-center gap-0">
+                      <i className={`ms ms-${c.toLowerCase()} ms-cost ms-shadow text-[0.9rem]`} />
+                      <span className="text-[6px] font-bold opacity-100 mt-[-2px]">{c.toUpperCase()}</span>
+                    </span>
+                  ))
+                ) : (
+                  <i className="ms ms-c ms-cost ms-shadow text-[0.9rem]" />
+                )}
+              </div>
+            </div>
+            <div className="flex justify-between border-b border-ink-border/50 pb-1">
               <span className="text-text-muted">Treatment:</span>
-              <span>{cardTreatment.replace(/_/g, ' ').toUpperCase()}</span>
+              <span className="font-bold">{resolveLabel(cardTreatment, TREATMENT_LABELS).toUpperCase()}</span>
             </div>
             <div className="flex justify-between border-b border-ink-border/50 pb-1">
               <span className="text-text-muted">Foil:</span>
-              <span className={foilTreatment !== 'non_foil' ? 'text-gold italic' : ''}>
-                {foilTreatment.replace(/_/g, ' ').toUpperCase()}
+              <span className={foilTreatment !== 'non_foil' ? 'text-gold italic font-bold' : ''}>
+                {resolveLabel(foilTreatment, {}).toUpperCase()}
               </span>
             </div>
             <div className="flex justify-between border-b border-ink-border/50 pb-1">
               <span className="text-text-muted">Promo:</span>
-              <span className={promoType && promoType !== 'none' ? 'text-gold italic' : ''}>
-                {(promoType || 'STANDARD').replace(/_/g, ' ').toUpperCase()}
+              <span className={promoType && promoType !== 'none' ? 'text-gold italic font-bold' : ''}>
+                {(resolveLabel(promoType || 'none', TREATMENT_LABELS) || 'STANDARD').toUpperCase()}
               </span>
             </div>
             {prints.find(p => p.collector_number === collectorNumber)?.frame_effects?.length ? (

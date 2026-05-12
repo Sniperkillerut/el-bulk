@@ -656,18 +656,6 @@
     "value": "Etched Foil"
   },
   {
-    "key": "pages.product.version.normal",
-    "value": "Regular"
-  },
-  {
-    "key": "pages.product.version.borderless",
-    "value": "Sem Borda"
-  },
-  {
-    "key": "pages.product.version.showcase",
-    "value": "Showcase"
-  },
-  {
     "key": "tcg.mtg",
     "value": "Magic: The Gathering"
   },

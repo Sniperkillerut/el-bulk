@@ -8,7 +8,7 @@ import {
 } from '@/lib/api';
 import {
   OrderWithCustomer, OrderDetail,
-  ORDER_STATUS_LABELS, PAYMENT_METHODS, FOIL_LABELS, TREATMENT_LABELS, StorageLocation,
+  ORDER_STATUS_LABELS, PAYMENT_METHODS, FOIL_LABELS, TREATMENT_LABELS, resolveLabel, StorageLocation,
   Product, StoredIn
 } from '@/lib/types';
 import CardImage from '@/components/CardImage';
@@ -793,7 +793,7 @@ export default function OrdersPanel({ initialOrderId }: Props) {
                   const badges: string[] = [];
                   if (item.condition) badges.push(item.condition);
                   if (item.foil_treatment && item.foil_treatment !== 'non_foil') badges.push(FOIL_LABELS[item.foil_treatment] || item.foil_treatment);
-                  if (item.card_treatment && item.card_treatment !== 'normal') badges.push(TREATMENT_LABELS[item.card_treatment] || item.card_treatment);
+                  if (item.card_treatment && item.card_treatment !== 'normal') badges.push(resolveLabel(item.card_treatment, TREATMENT_LABELS));
 
                   return (
                     <div key={item.id} className="flex gap-3 p-3 border border-border-main rounded transition-opacity"

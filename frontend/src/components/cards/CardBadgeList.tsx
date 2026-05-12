@@ -1,5 +1,5 @@
 import { ConditionBadge, FoilBadge } from '../Badges';
-import { TREATMENT_LABELS } from '@/lib/types';
+import { TREATMENT_LABELS, resolveLabel } from '@/lib/types';
 import { useLanguage } from '@/context/LanguageContext';
 
 interface CardBadgeListProps {
@@ -26,19 +26,19 @@ export default function CardBadgeList({
       
       {treatment && treatment !== 'normal' && (
         <span className="badge opacity-80" style={{ background: 'var(--bg-header)', color: 'white', borderColor: 'var(--bg-page-dark)' }}>
-          {t(`pages.product.version.${treatment}`, TREATMENT_LABELS[treatment] || treatment)}
+          {resolveLabel(treatment, TREATMENT_LABELS)}
         </span>
       )}
       
       {textless && (
         <span className="badge" style={{ background: 'var(--status-hp)', color: 'white', opacity: 0.15, border: '1px solid var(--status-hp)' }}>
-          {t('pages.product.version.textless', 'TEXTLESS')}
+          {resolveLabel('textless', TREATMENT_LABELS)}
         </span>
       )}
       
       {fullArt && treatment !== 'full_art' && (
         <span className="badge" style={{ background: 'var(--status-nm)', color: 'white', opacity: 0.15, border: '1px solid var(--status-nm)' }}>
-          {t('pages.product.version.full_art', 'FULL ART')}
+          {resolveLabel('full_art', TREATMENT_LABELS)}
         </span>
       )}
       
