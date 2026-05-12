@@ -184,7 +184,6 @@ export default function MTGVariantSelector({
                   prints.find(p => p.collector_number === collectorNumber)?.color_identity?.map(c => (
                     <span key={c} className="flex flex-col items-center gap-0">
                       <i className={`ms ms-${c.toLowerCase()} ms-cost ms-shadow text-[0.9rem]`} />
-                      <span className="text-[6px] font-bold opacity-100 mt-[-2px]">{c.toUpperCase()}</span>
                     </span>
                   ))
                 ) : (

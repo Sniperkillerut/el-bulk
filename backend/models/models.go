@@ -430,6 +430,8 @@ type Facets struct {
 	IsLegendary map[string]int `json:"is_legendary"`
 	IsLand      map[string]int `json:"is_land"`
 	IsHistoric  map[string]int `json:"is_historic"`
+	FullArt     map[string]int `json:"full_art"`
+	Textless    map[string]int `json:"textless"`
 	Format      map[string]int `json:"format"`
 }
 

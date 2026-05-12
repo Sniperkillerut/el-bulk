@@ -103,6 +103,13 @@ func seedMTGSingles(db *sqlx.DB, cats CategoryMap, storage StorageMap) ([]string
 		{Name: "Elesh Norn, Mother of Machines", SetCode: "one"},
 		{Name: "The Wandering Emperor", SetCode: "neo"},
 		{Name: "Kaito Shizuki", SetCode: "neo"},
+
+		// ── Full Art & Textless ──────────────────────────────────
+		{Name: "Mountain", SetCode: "unf", CollectorNumber: "242"},
+		{Name: "Forest", SetCode: "ust", CollectorNumber: "216"},
+		{Name: "Cryptic Command", SetCode: "p09", CollectorNumber: "1"},
+		{Name: "Lightning Bolt", SetCode: "p11", CollectorNumber: "1"},
+		{Name: "Hallowed Fountain", SetCode: "exp", CollectorNumber: "16"},
 	}
 
 	// All treatments, conditions, foils, languages, price sources to rotate through

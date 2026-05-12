@@ -50,12 +50,14 @@ type ProductFilterParams struct {
 	IDs []string
 
 	// MTG Metadata Filters
-	IsLegendary string
-	IsLand      string
-	IsHistoric  string
-	Format      string
+	IsLegendary  string
+	IsLand       string
+	IsHistoric   string
+	Format       string
 	FrameEffects string
-	CardTypes   string
+	CardTypes    string
+	FullArt      string
+	Textless     string
 
 	// Exchange rates for on-the-fly price sorting
 	USDRate float64
@@ -712,6 +714,20 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 		conditions = append(conditions, "p.is_historic = true")
 	case "false":
 		conditions = append(conditions, "p.is_historic = false")
+	}
+
+	switch params.FullArt {
+	case "true":
+		conditions = append(conditions, "p.full_art = true")
+	case "false":
+		conditions = append(conditions, "p.full_art = false")
+	}
+
+	switch params.Textless {
+	case "true":
+		conditions = append(conditions, "p.textless = true")
+	case "false":
+		conditions = append(conditions, "p.textless = false")
 	}
 
 	// Multi-value fields: OR in broad mode, AND in narrow mode

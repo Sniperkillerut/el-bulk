@@ -63,6 +63,8 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 		IsLegendary:    q.Get("is_legendary"),
 		IsLand:         q.Get("is_land"),
 		IsHistoric:     q.Get("is_historic"),
+		FullArt:        q.Get("full_art"),
+		Textless:       q.Get("textless"),
 		Format:         q.Get("format"),
 		Page:           page,
 		PageSize:       pageSize,

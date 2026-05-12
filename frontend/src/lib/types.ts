@@ -128,6 +128,8 @@ export interface Facets {
   is_legendary?: Record<string, number>;
   is_historic?: Record<string, number>;
   is_land?: Record<string, number>;
+  full_art?: Record<string, number>;
+  textless?: Record<string, number>;
   format?: Record<string, number>;
   card_types?: Record<string, number>;
 }

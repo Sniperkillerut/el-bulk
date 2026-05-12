@@ -48,7 +48,6 @@ export default function ProductDetails({ product, idPrefix, showViewFullPage, on
         {filtered.map((c, idx) => (
           <span key={`${c}-${idx}`} className="flex flex-col items-center gap-0">
             <i className={`ms ms-${c} ms-cost ms-shadow text-[1.1rem]`} />
-            <span className="text-[7px] font-bold opacity-100 mt-[-2px]">{c.toUpperCase()}</span>
           </span>
         ))}
       </div>

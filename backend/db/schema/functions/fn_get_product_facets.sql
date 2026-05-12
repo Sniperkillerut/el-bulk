@@ -236,6 +236,12 @@ BEGIN
     f_historic AS (
         SELECT 'true' as val, COUNT(*) as c FROM dimension_matches WHERE is_historic = true AND others_foil AND others_treatment AND others_rarity AND others_language AND others_color AND others_collection AND others_set AND others_condition AND others_format
     ),
+    f_full_art AS (
+        SELECT 'true' as val, COUNT(*) as c FROM dimension_matches WHERE full_art = true AND others_foil AND others_treatment AND others_rarity AND others_language AND others_color AND others_collection AND others_set AND others_condition AND others_format
+    ),
+    f_textless AS (
+        SELECT 'true' as val, COUNT(*) as c FROM dimension_matches WHERE textless = true AND others_foil AND others_treatment AND others_rarity AND others_language AND others_color AND others_collection AND others_set AND others_condition AND others_format
+    ),
     f_format AS (
         SELECT f as val, COUNT(*) as c FROM dimension_matches, unnest(ARRAY['commander', 'modern', 'standard', 'legacy', 'vintage', 'pauper', 'pioneer']) f
         WHERE legalities->>f = 'legal' AND others_format GROUP BY val
@@ -265,6 +271,8 @@ BEGIN
         'is_legendary', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_legendary),
         'is_land', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_land),
         'is_historic', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_historic),
+        'full_art', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_full_art),
+        'textless', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_textless),
         'format', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_format)
     ) INTO result;
 

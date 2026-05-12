@@ -22,6 +22,8 @@ interface FiltersState {
   isLegendary: string;
   isLand: string;
   isHistoric: string;
+  fullArt: string;
+  textless: string;
   format: string[];
   cardTypes: string[];
 }
@@ -55,6 +57,8 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
     isLegendary: '',
     isLand: '',
     isHistoric: '',
+    fullArt: '',
+    textless: '',
     format: [],
     cardTypes: []
   });
@@ -101,6 +105,8 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
     is_legendary: filters.isLegendary || undefined,
     is_land: filters.isLand || undefined,
     is_historic: filters.isHistoric || undefined,
+    full_art: filters.fullArt || undefined,
+    textless: filters.textless || undefined,
     format: filters.format.join(',') || undefined,
     card_types: filters.cardTypes.join(',') || undefined,
   }), [tcg, category, page, pageSize, debouncedSearch, filters, sortBy, sortDir, logic]);
@@ -150,7 +156,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
     setFilters(prev => {
       if (key === 'search') return { ...prev, search: value as string };
       if (key === 'inStock') return { ...prev, inStock: value as boolean };
-      if (key === 'isLegendary' || key === 'isLand' || key === 'isHistoric') {
+      if (key === 'isLegendary' || key === 'isLand' || key === 'isHistoric' || key === 'fullArt' || key === 'textless') {
         return { ...prev, [key]: prev[key as keyof FiltersState] === value ? '' : value as string };
       }
       const current = prev[key] as string[];
@@ -417,19 +423,31 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                     initialOpen={false}
                     items={[
                       { id: 'true', label: t('grid.filters.legendary', 'Legendary') },
-                      { id: 'historic', label: t('grid.filters.historic', 'Historic') }
+                      { id: 'historic', label: t('grid.filters.historic', 'Historic') },
+                      { id: 'land', label: t('grid.filters.land', 'Land') },
+                      { id: 'fullArt', label: t('grid.filters.fullArt', 'Full Art') },
+                      { id: 'textless', label: t('grid.filters.textless', 'Textless') }
                     ]}
                     selected={[
                       filters.isLegendary === 'true' ? 'true' : '',
-                      filters.isHistoric === 'true' ? 'historic' : ''
+                      filters.isHistoric === 'true' ? 'historic' : '',
+                      filters.isLand === 'true' ? 'land' : '',
+                      filters.fullArt === 'true' ? 'fullArt' : '',
+                      filters.textless === 'true' ? 'textless' : ''
                     ].filter(Boolean)}
                     onToggle={(id) => {
                       if (id === 'true') toggleFilter('isLegendary', 'true');
                       if (id === 'historic') toggleFilter('isHistoric', 'true');
+                      if (id === 'land') toggleFilter('isLand', 'true');
+                      if (id === 'fullArt') toggleFilter('fullArt', 'true');
+                      if (id === 'textless') toggleFilter('textless', 'true');
                     }}
                     counts={{
                       'true': facets?.is_legendary?.['true'] || 0,
-                      'historic': facets?.is_historic?.['true'] || 0
+                      'historic': facets?.is_historic?.['true'] || 0,
+                      'land': facets?.is_land?.['true'] || 0,
+                      'fullArt': facets?.full_art?.['true'] || 0,
+                      'textless': facets?.textless?.['true'] || 0
                     }}
                     isRefetching={isRefetching}
                   />
@@ -486,9 +504,9 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
                   isRefetching={isRefetching}
                 />
 
-                {(filters.search || filters.foil.length > 0 || filters.treatment.length > 0 || filters.condition.length > 0 || filters.collection.length > 0 || filters.rarity.length > 0 || filters.language.length > 0 || filters.color.length > 0 || filters.setName.length > 0 || filters.isLegendary || filters.isHistoric || filters.format.length > 0 || filters.cardTypes.length > 0) && (
+                {(filters.search || filters.foil.length > 0 || filters.treatment.length > 0 || filters.condition.length > 0 || filters.collection.length > 0 || filters.rarity.length > 0 || filters.language.length > 0 || filters.color.length > 0 || filters.setName.length > 0 || filters.isLegendary || filters.isLand || filters.isHistoric || filters.fullArt || filters.textless || filters.format.length > 0 || filters.cardTypes.length > 0) && (
                   <button
-                    onClick={() => { setFilters({ search: '', foil: [], treatment: [], condition: [], collection: [], rarity: [], language: [], color: [], setName: [], inStock: true, isLegendary: '', isLand: '', isHistoric: '', format: [], cardTypes: [] }); setPage(1); }}
+                    onClick={() => { setFilters({ search: '', foil: [], treatment: [], condition: [], collection: [], rarity: [], language: [], color: [], setName: [], inStock: true, isLegendary: '', isLand: '', isHistoric: '', fullArt: '', textless: '', format: [], cardTypes: [] }); setPage(1); }}
                     className="btn-secondary w-full mt-4"
                     style={{ fontSize: '0.85rem', padding: '0.4rem' }}
                   >
