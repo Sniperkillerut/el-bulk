@@ -40,6 +40,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
   const [availableCollections, setAvailableCollections] = useState<CustomCategory[]>([]);
   const [tcgName, setTcgName] = useState(tcg.toUpperCase());
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [filters, setFilters] = useState<FiltersState>({
     search: '',
     foil: [],
@@ -83,7 +84,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
     tcg: tcg !== 'all' ? tcg : undefined,
     category,
     page,
-    page_size: 20,
+    page_size: pageSize,
     search: debouncedSearch || undefined,
     foil: filters.foil.join(',') || undefined,
     treatment: filters.treatment.join(',') || undefined,
@@ -102,7 +103,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
     is_historic: filters.isHistoric || undefined,
     format: filters.format.join(',') || undefined,
     card_types: filters.cardTypes.join(',') || undefined,
-  }), [tcg, category, page, debouncedSearch, filters, sortBy, sortDir, logic]);
+  }), [tcg, category, page, pageSize, debouncedSearch, filters, sortBy, sortDir, logic]);
 
   const { data: res, isLoading: loadingResult } = useSWR(
     ['/api/products', fetcherArgs],
@@ -164,7 +165,7 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
     toggleFilter(key, value);
   };
 
-  const totalPages = Math.ceil(total / 20);
+  const totalPages = Math.ceil(total / pageSize);
 
   const setNameCounts = useMemo(() => {
     const c: Record<string, number> = {};
@@ -562,22 +563,40 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex justify-center gap-2 mt-8">
-              <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="btn-secondary"
-                style={{ padding: '0.4rem 1rem', fontSize: '0.85rem', opacity: page === 1 ? 0.4 : 1 }}
-              >{t('pages.inventory.grid.pagination.prev', '← Prev')}</button>
-              <span className="flex items-center px-3 text-sm font-mono-stack" style={{ color: 'var(--text-secondary)' }}>
-                {page} / {totalPages}
-              </span>
-              <button
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="btn-secondary"
-                style={{ padding: '0.4rem 1rem', fontSize: '0.85rem', opacity: page === totalPages ? 0.4 : 1 }}
-              >{t('pages.inventory.grid.pagination.next', 'Next →')}</button>
+            <div className="flex flex-col items-center gap-4 mt-8">
+              <div className="flex justify-center gap-2">
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="btn-secondary"
+                  style={{ padding: '0.4rem 1rem', fontSize: '0.85rem', opacity: page === 1 ? 0.4 : 1 }}
+                >{t('pages.inventory.grid.pagination.prev', '← Prev')}</button>
+                <span className="flex items-center px-3 text-sm font-mono-stack" style={{ color: 'var(--text-secondary)' }}>
+                  {page} / {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="btn-secondary"
+                  style={{ padding: '0.4rem 1rem', fontSize: '0.85rem', opacity: page === totalPages ? 0.4 : 1 }}
+                >{t('pages.inventory.grid.pagination.next', 'Next →')}</button>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-[10px] font-mono-stack font-bold uppercase" style={{ color: 'var(--text-muted)' }}>{t('pages.inventory.grid.pagination.per_page', 'Items per page:')}</label>
+                <select
+                  value={pageSize}
+                  onChange={e => {
+                    setPageSize(Number(e.target.value));
+                    setPage(1);
+                  }}
+                  className="text-xs font-mono-stack px-2 py-1 rounded-sm border-2 border-border-main cursor-pointer"
+                  style={{ background: 'var(--bg-page)', color: 'var(--text-main)' }}
+                >
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
             </div>
           )}
         </div>
