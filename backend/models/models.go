@@ -145,7 +145,9 @@ type Product struct {
 	PriceReference   *float64    `db:"price_reference"    json:"price_reference,omitempty"`
 	PriceSource      PriceSource `db:"price_source"       json:"price_source,omitempty"`
 	PriceCOPOverride *float64    `db:"price_cop_override" json:"price_cop_override,omitempty"`
-	// Price is the computed COP value injected by the handler (not a DB column)
+	// PriceCOP is the materialized value from the DB
+	PriceCOP float64 `db:"price_cop"         json:"-"`
+	// Price is the value returned to the client (usually maps to PriceCOP)
 	Price float64 `db:"-"                  json:"price"`
 
 	Stock        int               `db:"stock"              json:"stock"`

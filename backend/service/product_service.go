@@ -215,7 +215,7 @@ func (s *ProductService) EnrichProducts(ctx context.Context, products []models.P
 
 func (s *ProductService) CalculatePrices(products []models.Product, settings models.Settings) error {
 	for i := range products {
-		products[i].Price = products[i].ComputePrice(settings.USDToCOPRate, settings.EURToCOPRate, settings.CKToCOPRate)
+		products[i].Price = products[i].PriceCOP
 	}
 	return nil
 }
