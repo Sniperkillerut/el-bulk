@@ -33,12 +33,23 @@ export default function ProductDetails({ product, idPrefix, showViewFullPage, on
   };
 
   const renderManaIcons = (identity?: string) => {
-    if (!identity || identity === 'C') return <i className="ms ms-c ms-cost ms-shadow text-[1.1rem]" />;
-    const colors = identity.split(',').map(c => c.trim().toLowerCase());
+    if (!identity) return <i className="ms ms-c ms-cost ms-shadow text-[1.1rem]" />;
+    
+    // Handle both "W,U" (new standard) and "WU" (legacy/compact)
+    const symbols = identity.includes(',') 
+      ? identity.split(',').map(c => c.trim().toLowerCase())
+      : identity.split('').map(c => c.toLowerCase());
+    
+    const filtered = symbols.filter(s => s && s !== 'c');
+    if (filtered.length === 0) return <i className="ms ms-c ms-cost ms-shadow text-[1.1rem]" />;
+
     return (
       <div className="flex gap-1 items-center justify-center">
-        {colors.map(c => (
-          <i key={c} className={`ms ms-${c} ms-cost ms-shadow text-[1.1rem]`} />
+        {filtered.map((c, idx) => (
+          <span key={`${c}-${idx}`} className="flex flex-col items-center gap-0">
+            <i className={`ms ms-${c} ms-cost ms-shadow text-[1.1rem]`} />
+            <span className="text-[7px] font-bold opacity-100 mt-[-2px]">{c.toUpperCase()}</span>
+          </span>
         ))}
       </div>
     );
@@ -108,7 +119,7 @@ export default function ProductDetails({ product, idPrefix, showViewFullPage, on
           )}
           {filterPromoTags(product.promo_type, product.foil_treatment, product.card_treatment).map(t => (
             <span key={t} className="badge bg-ink-surface text-text-secondary border border-kraft-dark uppercase">
-              {resolveLabel(t, {})}
+              {resolveLabel(t, TREATMENT_LABELS)}
             </span>
           ))}
           {product.foil_treatment !== 'non_foil' && (
@@ -116,7 +127,7 @@ export default function ProductDetails({ product, idPrefix, showViewFullPage, on
           )}
           {product.card_treatment !== 'normal' && (
             <span className="badge bg-ink-surface text-text-secondary border border-kraft-dark">
-              {t(`pages.product.version.${product.card_treatment}`, TREATMENT_LABELS[product.card_treatment] || product.card_treatment)}
+              {resolveLabel(product.card_treatment, TREATMENT_LABELS)}
             </span>
           )}
           {product.textless && (
@@ -129,7 +140,7 @@ export default function ProductDetails({ product, idPrefix, showViewFullPage, on
               {t('pages.product.details.full_art', 'FULL ART')}
             </span>
           )}
-          {/* Frame Effects (Storybook, etc.) */}
+          {/* Frame Effects */}
           {product.frame_effects?.filter(fe => {
             const normalized = fe.toLowerCase().replace(/[^a-z0-9]/g, '');
             if (normalized === 'showcase' && product.card_treatment === 'showcase') return false;

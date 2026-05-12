@@ -64,7 +64,7 @@ describe('ProductCard', () => {
       categories: [{ id: 'cat1', name: 'Commander Staples', slug: 'commander', is_active: true, show_badge: true, searchable: true }]
     }
     render(<ProductCard product={product} />)
-    expect(screen.getByText('TEXTLESS')).toBeInTheDocument()
+    expect(screen.getByText(/textless/i)).toBeInTheDocument()
     expect(screen.getByText(/Commander Staples/i)).toBeInTheDocument()
   })
 
