@@ -210,8 +210,25 @@ func (h *OrderHandler) DownloadReceipt(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Create a safe, sortable filename including the customer's name
+	customerName := strings.TrimSpace(detail.Customer.FirstName + " " + detail.Customer.LastName)
+	safeCustomerName := strings.ReplaceAll(customerName, " ", "_")
+	// Remove any remaining potentially problematic characters for file systems
+	safeCustomerName = strings.Map(func(r rune) rune {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '_' || r == '-' {
+			return r
+		}
+		return -1
+	}, safeCustomerName)
+
+	filename := fmt.Sprintf("%s_%s_Order_%s.pdf", 
+		detail.Order.CreatedAt.Format("2006-01-02"),
+		safeCustomerName,
+		detail.Order.OrderNumber,
+	)
+
 	w.Header().Set("Content-Type", "application/pdf")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s_Order_%s.pdf\"", detail.Order.CreatedAt.Format("2006-01-02"), detail.Order.OrderNumber))
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
 	w.Write(pdfBytes)
 }
 
