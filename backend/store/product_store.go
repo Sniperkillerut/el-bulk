@@ -659,6 +659,8 @@ func (s *ProductStore) BuildFilters(params ProductFilterParams, baseFrom ...stri
 		vals := strings.Split(params.Foil, ",")
 		var conds []string
 		for _, v := range vals {
+			v = strings.TrimSpace(v)
+			if v == "" { continue }
 			placeholder := fmt.Sprintf("$%d", len(args)+1)
 			conds = append(conds, "LOWER(p.foil_treatment) = "+placeholder)
 			args = append(args, strings.ToLower(v))
@@ -669,6 +671,8 @@ func (s *ProductStore) BuildFilters(params ProductFilterParams, baseFrom ...stri
 		vals := strings.Split(params.Treatment, ",")
 		var conds []string
 		for _, v := range vals {
+			v = strings.TrimSpace(v)
+			if v == "" { continue }
 			lv := strings.ToLower(v)
 			placeholder := fmt.Sprintf("$%d", len(args)+1)
 			cond := "LOWER(p.card_treatment) = " + placeholder
@@ -687,6 +691,8 @@ func (s *ProductStore) BuildFilters(params ProductFilterParams, baseFrom ...stri
 		vals := strings.Split(params.Condition, ",")
 		var conds []string
 		for _, v := range vals {
+			v = strings.TrimSpace(v)
+			if v == "" { continue }
 			placeholder := fmt.Sprintf("$%d", len(args)+1)
 			conds = append(conds, "p.condition = "+placeholder)
 			args = append(args, strings.ToUpper(v))
@@ -697,6 +703,8 @@ func (s *ProductStore) BuildFilters(params ProductFilterParams, baseFrom ...stri
 		vals := strings.Split(params.Rarity, ",")
 		var conds []string
 		for _, v := range vals {
+			v = strings.TrimSpace(v)
+			if v == "" { continue }
 			placeholder := fmt.Sprintf("$%d", len(args)+1)
 			conds = append(conds, "LOWER(p.rarity) = "+placeholder)
 			args = append(args, strings.ToLower(v))
@@ -707,6 +715,8 @@ func (s *ProductStore) BuildFilters(params ProductFilterParams, baseFrom ...stri
 		vals := strings.Split(params.Language, ",")
 		var conds []string
 		for _, v := range vals {
+			v = strings.TrimSpace(v)
+			if v == "" { continue }
 			placeholder := fmt.Sprintf("$%d", len(args)+1)
 			conds = append(conds, "LOWER(p.language) = "+placeholder)
 			args = append(args, strings.ToLower(v))
@@ -717,6 +727,8 @@ func (s *ProductStore) BuildFilters(params ProductFilterParams, baseFrom ...stri
 		vals := strings.Split(params.SetName, ",")
 		var conds []string
 		for _, v := range vals {
+			v = strings.TrimSpace(v)
+			if v == "" { continue }
 			placeholder := fmt.Sprintf("$%d", len(args)+1)
 			conds = append(conds, "p.set_name = "+placeholder)
 			args = append(args, v)
@@ -753,6 +765,8 @@ func (s *ProductStore) BuildFilters(params ProductFilterParams, baseFrom ...stri
 		vals := strings.Split(params.Format, ",")
 		var conds []string
 		for _, v := range vals {
+			v = strings.TrimSpace(v)
+			if v == "" { continue }
 			placeholder := fmt.Sprintf("$%d", len(args)+1)
 			args = append(args, v)
 			conds = append(conds, fmt.Sprintf("p.legalities->>%s = 'legal'", placeholder))
@@ -767,6 +781,8 @@ func (s *ProductStore) BuildFilters(params ProductFilterParams, baseFrom ...stri
 		vals := strings.Split(params.Collection, ",")
 		if isAndMode {
 			for _, v := range vals {
+				v = strings.TrimSpace(v)
+				if v == "" { continue }
 				placeholder := fmt.Sprintf("$%d", len(args)+1)
 				cond := fmt.Sprintf("p.id IN (SELECT pc_col.product_id FROM product_category pc_col JOIN custom_category c_col ON pc_col.category_id = c_col.id WHERE c_col.slug = %s)", placeholder)
 				facetConditions = append(facetConditions, cond)
@@ -775,6 +791,8 @@ func (s *ProductStore) BuildFilters(params ProductFilterParams, baseFrom ...stri
 		} else {
 			var conds []string
 			for _, v := range vals {
+				v = strings.TrimSpace(v)
+				if v == "" { continue }
 				placeholder := fmt.Sprintf("$%d", len(args)+1)
 				cond := fmt.Sprintf("p.id IN (SELECT pc_col.product_id FROM product_category pc_col JOIN custom_category c_col ON pc_col.category_id = c_col.id WHERE c_col.slug = %s)", placeholder)
 				conds = append(conds, cond)
@@ -787,6 +805,8 @@ func (s *ProductStore) BuildFilters(params ProductFilterParams, baseFrom ...stri
 		vals := strings.Split(params.Color, ",")
 		var conds []string
 		for _, v := range vals {
+			v = strings.TrimSpace(v)
+			if v == "" { continue }
 			placeholder := fmt.Sprintf("$%d", len(args)+1)
 			conds = append(conds, "p.color_identity ILIKE "+placeholder)
 			args = append(args, "%"+strings.ToUpper(v)+"%")
@@ -802,6 +822,8 @@ func (s *ProductStore) BuildFilters(params ProductFilterParams, baseFrom ...stri
 		vals := strings.Split(params.FrameEffects, ",")
 		var conds []string
 		for _, v := range vals {
+			v = strings.TrimSpace(v)
+			if v == "" { continue }
 			placeholder := fmt.Sprintf("$%d", len(args)+1)
 			conds = append(conds, "p.frame_effects ? "+placeholder)
 			args = append(args, strings.ToLower(v))
@@ -817,6 +839,8 @@ func (s *ProductStore) BuildFilters(params ProductFilterParams, baseFrom ...stri
 		vals := strings.Split(params.CardTypes, ",")
 		var conds []string
 		for _, v := range vals {
+			v = strings.TrimSpace(v)
+			if v == "" { continue }
 			placeholder := fmt.Sprintf("$%d", len(args)+1)
 			conds = append(conds, "p.card_types ? "+placeholder)
 			args = append(args, v)

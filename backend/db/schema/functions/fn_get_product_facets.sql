@@ -39,18 +39,18 @@ DECLARE
     v_frame_effects_arr TEXT[];
     v_card_types_arr TEXT[];
 BEGIN
-    -- Pre-parse filters into arrays for faster matching
-    v_foil_arr := CASE WHEN p_foil = '' THEN NULL ELSE string_to_array(LOWER(p_foil), ',') END;
-    v_treatment_arr := CASE WHEN p_treatment = '' THEN NULL ELSE string_to_array(LOWER(p_treatment), ',') END;
-    v_condition_arr := CASE WHEN p_condition = '' THEN NULL ELSE string_to_array(UPPER(p_condition), ',') END;
-    v_rarity_arr := CASE WHEN p_rarity = '' THEN NULL ELSE string_to_array(LOWER(p_rarity), ',') END;
-    v_language_arr := CASE WHEN p_language = '' THEN NULL ELSE string_to_array(LOWER(p_language), ',') END;
-    v_color_arr := CASE WHEN p_color = '' THEN NULL ELSE string_to_array(UPPER(p_color), ',') END;
-    v_collection_arr := CASE WHEN p_collection = '' THEN NULL ELSE string_to_array(LOWER(p_collection), ',') END;
-    v_set_name_arr := CASE WHEN p_set_name = '' THEN NULL ELSE string_to_array(p_set_name, ',') END;
-    v_format_arr := CASE WHEN p_format = '' THEN NULL ELSE string_to_array(LOWER(p_format), ',') END;
-    v_frame_effects_arr := CASE WHEN p_frame_effects = '' THEN NULL ELSE string_to_array(LOWER(p_frame_effects), ',') END;
-    v_card_types_arr := CASE WHEN p_card_types = '' THEN NULL ELSE string_to_array(p_card_types, ',') END;
+    -- Pre-parse filters into arrays for faster matching (handling potential spaces after commas)
+    v_foil_arr := CASE WHEN p_foil = '' THEN NULL ELSE regexp_split_to_array(LOWER(p_foil), '\s*,\s*') END;
+    v_treatment_arr := CASE WHEN p_treatment = '' THEN NULL ELSE regexp_split_to_array(LOWER(p_treatment), '\s*,\s*') END;
+    v_condition_arr := CASE WHEN p_condition = '' THEN NULL ELSE regexp_split_to_array(UPPER(p_condition), '\s*,\s*') END;
+    v_rarity_arr := CASE WHEN p_rarity = '' THEN NULL ELSE regexp_split_to_array(LOWER(p_rarity), '\s*,\s*') END;
+    v_language_arr := CASE WHEN p_language = '' THEN NULL ELSE regexp_split_to_array(LOWER(p_language), '\s*,\s*') END;
+    v_color_arr := CASE WHEN p_color = '' THEN NULL ELSE regexp_split_to_array(UPPER(p_color), '\s*,\s*') END;
+    v_collection_arr := CASE WHEN p_collection = '' THEN NULL ELSE regexp_split_to_array(LOWER(p_collection), '\s*,\s*') END;
+    v_set_name_arr := CASE WHEN p_set_name = '' THEN NULL ELSE regexp_split_to_array(p_set_name, '\s*,\s*') END;
+    v_format_arr := CASE WHEN p_format = '' THEN NULL ELSE regexp_split_to_array(LOWER(p_format), '\s*,\s*') END;
+    v_frame_effects_arr := CASE WHEN p_frame_effects = '' THEN NULL ELSE regexp_split_to_array(LOWER(p_frame_effects), '\s*,\s*') END;
+    v_card_types_arr := CASE WHEN p_card_types = '' THEN NULL ELSE regexp_split_to_array(p_card_types, '\s*,\s*') END;
 
     WITH base_products AS MATERIALIZED (
         SELECT p.*
