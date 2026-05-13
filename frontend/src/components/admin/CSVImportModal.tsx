@@ -94,6 +94,7 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
   const [loading, setLoading] = useState(false);
   const [processedCount, setProcessedCount] = useState(0);
   const [error, setError] = useState('');
+  const [validationErrors, setValidationErrors] = useState<Record<number, string>>({});
   const [importResults, setImportResults] = useState<{ message: string; count: number } | null>(null);
 
   // Global settings for the import
@@ -391,8 +392,32 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
   };
 
   const handleImport = async () => {
+    // 1. Validation Pre-flight
+    const errors: Record<number, string> = {};
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    previewData.forEach((item, idx) => {
+      if (!item.name?.trim() && !item.scryfall_id?.trim()) {
+        errors[idx] = t('components.admin.csv_import.errors.missing_identity', 'Missing both Name and ID');
+      }
+      if (item.scryfall_id?.trim() && !uuidRegex.test(item.scryfall_id.trim())) {
+        errors[idx] = t('components.admin.csv_import.errors.invalid_uuid', 'Invalid UUID format');
+      }
+      if ((item.stock || 0) <= 0 && importDestination === 'singles') {
+        errors[idx] = t('components.admin.csv_import.errors.invalid_qty', 'Quantity must be at least 1');
+      }
+    });
+
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      setError(t('components.admin.csv_import.errors.validation_failed', 'Found {count} cards with data issues. Please fix highlighted rows.').replace('{count}', Object.keys(errors).length.toString()));
+      return;
+    }
+
     setLoading(true);
     setStep('importing');
+    setValidationErrors({});
+    
     try {
       let dataToImport = previewData;
 
@@ -430,7 +455,11 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
       setImportResults(res);
       setStep('summary');
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(msg);
+      
+      // If it's a specific DB error like the UUID one, we might not know which row failed,
+      // but we can at least keep the user in the preview step.
       setStep('preview');
     } finally {
       setLoading(false);
@@ -443,6 +472,13 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
       next[index] = { ...next[index], ...updates };
       return next;
     });
+    if (validationErrors[index]) {
+      setValidationErrors(prev => {
+        const next = { ...prev };
+        delete next[index];
+        return next;
+      });
+    }
   };
 
   const toggleCategory = (index: number, catId: string) => {
@@ -718,7 +754,14 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                   </thead>
                   <tbody className="divide-y divide-border-main/10">
                     {previewData.map((item, idx) => (
-                      <tr key={idx} className="hover:bg-accent-primary/5 transition-colors group/row italic-rows">
+                      <tr 
+                        key={idx} 
+                        className={`transition-all group/row italic-rows ${
+                          validationErrors[idx] 
+                            ? 'bg-hp-color/5 border-l-4 border-l-hp-color shadow-[inset_0_0_10px_rgba(198,40,40,0.15)] animate-pulse-subtle' 
+                            : 'hover:bg-accent-primary/5'
+                        }`}
+                      >
                         <td className="p-4 border-r border-border-main/10 relative">
                           <div className="w-14 h-20 mx-auto overflow-hidden bg-bg-page border border-border-main shadow-sm transition-transform group-hover/row:scale-110">
                             {item.image_url ? (
@@ -779,6 +822,11 @@ export default function CSVImportModal({ storageLocations, categories, onClose, 
                               />
                             </div>
                           </div>
+                          {validationErrors[idx] && (
+                            <div className="mt-2 text-[10px] font-black uppercase text-hp-color flex items-center gap-1 animate-fade-in px-1">
+                              <span>⚠️</span> {validationErrors[idx]}
+                            </div>
+                          )}
                         </td>
                         <td className="p-4 border-r border-border-main/10 w-16 text-center">
                           <select
