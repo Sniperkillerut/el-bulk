@@ -11,8 +11,13 @@ DECLARE
 BEGIN
     FOR item IN SELECT * FROM jsonb_array_elements(data)
     LOOP
-        is_import := (item->>'id' IS NULL);
-        p_id := NULLIF(item->>'id', '')::uuid;
+        is_import := (item->>'id' IS NULL OR item->>'id' = '');
+        
+        -- Strict Validation for external IDs
+        IF item->>'tcg' = 'mtg' AND (item->>'scryfall_id' IS NULL OR item->>'scryfall_id' = '') THEN
+            RAISE EXCEPTION 'Card "%" is missing a required Scryfall ID. External UUIDs are mandatory for MTG products.', (item->>'name');
+        END IF;
+        p_id := (item->>'id')::uuid;
 
         -- 1. Variant Matching for Imports
         -- If no ID is provided, try to find an exact variant match to avoid duplicates.
@@ -75,7 +80,7 @@ BEGIN
             item->>'frame',
             COALESCE((item->>'full_art')::boolean, false),
             COALESCE((item->>'textless')::boolean, false),
-            NULLIF(item->>'scryfall_id', '')::uuid,
+            (item->>'scryfall_id')::uuid,
             item->'legalities',
             COALESCE((COALESCE(item->>'cost_basis_cop', item->>'cost_basis'))::numeric, 0),
             item->'frame_effects',
@@ -129,7 +134,7 @@ BEGIN
 
         IF item ? 'category_ids' THEN
             INSERT INTO product_category (product_id, category_id)
-            SELECT p_id, NULLIF(cat::text, '')::uuid
+            SELECT p_id, (cat::text)::uuid
             FROM jsonb_array_elements_text(item->'category_ids') AS cat
             ON CONFLICT DO NOTHING;
         END IF;
@@ -144,28 +149,28 @@ BEGIN
             -- Priority 1: storage_items array
             IF item ? 'storage_items' THEN
                 INSERT INTO product_storage (product_id, storage_id, quantity)
-                SELECT p_id, NULLIF(si->>'stored_in_id', '')::uuid, (si->>'quantity')::int
+                SELECT p_id, (si->>'stored_in_id')::uuid, (si->>'quantity')::int
                 FROM jsonb_array_elements(item->'storage_items') AS si
                 WHERE (si->>'quantity')::int > 0
                 ON CONFLICT (product_id, storage_id) DO UPDATE SET quantity = EXCLUDED.quantity;
             -- Priority 2: top-level stored_in_id + stock/quantity
             ELSIF item ? 'stored_in_id' THEN
                 INSERT INTO product_storage (product_id, storage_id, quantity)
-                VALUES (p_id, NULLIF(item->>'stored_in_id', '')::uuid, COALESCE((item->>'stock')::int, (item->>'quantity')::int, 0))
+                VALUES (p_id, (item->>'stored_in_id')::uuid, COALESCE((item->>'stock')::int, (item->>'quantity')::int, 0))
                 ON CONFLICT (product_id, storage_id) DO UPDATE SET quantity = EXCLUDED.quantity;
             END IF;
         ELSE
             -- Priority 1: storage_items array
             IF item ? 'storage_items' THEN
                 INSERT INTO product_storage (product_id, storage_id, quantity)
-                SELECT p_id, NULLIF(si->>'stored_in_id', '')::uuid, (si->>'quantity')::int
+                SELECT p_id, (si->>'stored_in_id')::uuid, (si->>'quantity')::int
                 FROM jsonb_array_elements(item->'storage_items') AS si
                 WHERE (si->>'quantity')::int > 0
                 ON CONFLICT (product_id, storage_id) DO UPDATE SET quantity = product_storage.quantity + EXCLUDED.quantity;
             -- Priority 2: top-level stored_in_id + stock/quantity
             ELSIF item ? 'stored_in_id' THEN
                 INSERT INTO product_storage (product_id, storage_id, quantity)
-                VALUES (p_id, NULLIF(item->>'stored_in_id', '')::uuid, COALESCE((item->>'stock')::int, (item->>'quantity')::int, 0))
+                VALUES (p_id, (item->>'stored_in_id')::uuid, COALESCE((item->>'stock')::int, (item->>'quantity')::int, 0))
                 ON CONFLICT (product_id, storage_id) DO UPDATE SET quantity = product_storage.quantity + EXCLUDED.quantity;
             END IF;
         END IF;
@@ -208,7 +213,7 @@ BEGIN
                 dc->'legalities',
                 COALESCE(dc->>'foil_treatment', 'non_foil'),
                 COALESCE(dc->>'card_treatment', 'normal'),
-                NULLIF(dc->>'scryfall_id', '')::uuid,
+                (dc->>'scryfall_id')::uuid,
                 dc->'frame_effects'
             FROM jsonb_array_elements(item->'deck_cards') AS dc;
         END IF;
