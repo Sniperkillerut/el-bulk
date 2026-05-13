@@ -5,6 +5,7 @@ import { useCart } from '@/lib/CartContext';
 import { fetchRecommendations } from '@/lib/api';
 import { Product } from '@/lib/types';
 import { useLanguage } from '@/context/LanguageContext';
+import { openProductModal } from './ProductModalManager';
 import CardImage from './CardImage';
 
 const SynergyScout: React.FC = () => {
@@ -12,6 +13,12 @@ const SynergyScout: React.FC = () => {
   const { t } = useLanguage();
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const handleOpenModal = (e: React.MouseEvent, product: Product) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openProductModal(product);
+  };
 
   useEffect(() => {
     if (items.length === 0) {
@@ -76,17 +83,33 @@ const SynergyScout: React.FC = () => {
             <div key={product.id} className="group flex flex-col gap-3">
               <button
                 onClick={() => addItem(product)}
-                className="relative aspect-[3/4] w-full rounded-sm overflow-hidden bg-ink-deep border border-ink-border/10 group-hover:border-gold/30 transition-all duration-300"
+                className="relative aspect-[3/4] w-full rounded-sm overflow-hidden bg-ink-deep border border-ink-border/10 group-hover:border-gold/30 transition-all duration-500"
               >
-                <CardImage 
-                  imageUrl={product.image_url} 
-                  name={product.name}
-                  enableHover={false}
-                />
+                <div className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-110">
+                  <CardImage 
+                    imageUrl={product.image_url} 
+                    name={product.name}
+                    enableHover={true}
+                  />
+                </div>
                 
-                <div className="absolute inset-0 bg-ink-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-[2px]">
-                  <div className="px-3 py-1.5 bg-gold text-ink-black text-[9px] font-bold rounded-sm transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                    + {t('common.add_to_cart', 'ADD')}
+                {/* Overlay with split actions */}
+                <div className="absolute inset-0 bg-ink-black/40 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center backdrop-blur-[1px] z-10">
+                  {/* Zoom Action - Top Right */}
+                  <div 
+                    onClick={(e) => handleOpenModal(e, product)}
+                    className="absolute top-2 right-2 p-2 bg-ink-black/60 hover:bg-gold hover:text-ink-black text-white rounded-full transition-all duration-300 cursor-pointer backdrop-blur-md border border-white/10"
+                    title={t('common.zoom', 'Zoom')}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                  </div>
+
+                  {/* Main Add Action */}
+                  <div className="px-4 py-2 bg-gold text-ink-black text-[10px] font-bold rounded-sm transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-lg pointer-events-none">
+                    + {t('common.add_to_cart', 'ADD TO CART')}
                   </div>
                 </div>
               </button>
