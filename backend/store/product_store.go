@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/el-bulk/backend/models"
@@ -102,10 +103,27 @@ func (s *ProductStore) SelectEnriched(ctx context.Context, query string, args ..
 	}
 
 	if len(products) > 0 {
-		s.PopulateStorage(ctx, products)
-		s.PopulateCategories(ctx, products)
-		s.PopulateCartCounts(ctx, products)
-		s.PopulateDeckCards(ctx, products)
+		var wg sync.WaitGroup
+		wg.Add(4)
+
+		go func() {
+			defer wg.Done()
+			s.PopulateStorage(ctx, products)
+		}()
+		go func() {
+			defer wg.Done()
+			s.PopulateCategories(ctx, products)
+		}()
+		go func() {
+			defer wg.Done()
+			s.PopulateCartCounts(ctx, products)
+		}()
+		go func() {
+			defer wg.Done()
+			s.PopulateDeckCards(ctx, products)
+		}()
+
+		wg.Wait()
 	}
 
 	return products, len(products), nil
