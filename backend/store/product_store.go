@@ -118,11 +118,9 @@ func (s *ProductStore) GetFacets(ctx context.Context, params ProductFilterParams
 		params.Rarity, params.Language, params.Color, params.Collection, params.SetName, params.InStock, params.FilterLogic, isAdmin,
 		params.IsLegendary, params.IsLand, params.IsHistoric, params.IsPrepared, params.Format, params.FrameEffects, params.CardTypes)
 
-	if !isAdmin {
-		if cached, ok := s.facetCache.Get(cacheKey); ok {
-			logger.TraceCtx(ctx, "[CACHE] Facet hit for key: %s", cacheKey)
-			return cached, nil
-		}
+	if cached, ok := s.facetCache.Get(cacheKey); ok {
+		logger.TraceCtx(ctx, "[CACHE] Facet hit for key: %s", cacheKey)
+		return cached, nil
 	}
 
 	var result []byte
@@ -145,10 +143,8 @@ func (s *ProductStore) GetFacets(ctx context.Context, params ProductFilterParams
 		return models.Facets{}, err
 	}
 
-	// Cache the result for 2 minutes (public users only)
-	if !isAdmin {
-		s.facetCache.Set(cacheKey, facets, 2*time.Minute)
-	}
+	// Cache the result (shared across all users with same filter set)
+	s.facetCache.Set(cacheKey, facets, 5*time.Minute)
 
 	return facets, nil
 }

@@ -209,9 +209,7 @@ func (s *ProductService) EnrichProducts(ctx context.Context, products []models.P
 	// Storage and Categories are now pre-populated by view_product_enriched
 	// or fn_get_product_detail in the Store layer.
 
-	if err := s.Store.PopulateCartCounts(ctx, products); err != nil {
-		logger.ErrorCtx(ctx, "Failed to populate cart counts for %d products: %v", len(products), err)
-	}
+	// Cart counts are now pre-populated in the Store layer (SelectEnriched)
 
 	if err := s.IdentifyHotNew(ctx, products, settings); err != nil {
 		logger.ErrorCtx(ctx, "Failed to identify hot/new status for %d products: %v", len(products), err)
