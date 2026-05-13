@@ -41,6 +41,8 @@ CREATE TABLE IF NOT EXISTS product (
   full_art          BOOLEAN NOT NULL DEFAULT false,
   textless          BOOLEAN NOT NULL DEFAULT false,
   scryfall_id       UUID,
+  oracle_id         UUID,
+  is_prepared       BOOLEAN NOT NULL DEFAULT false,
   frame_effects     JSONB,
   card_types        JSONB,
   legalities        JSONB, -- { "commander": "legal", "modern": "banned", ... }

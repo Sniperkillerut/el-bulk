@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS client_request (
   scryfall_id       TEXT,
   frame_effects     JSONB,
   oracle_id         UUID,
+  is_prepared       BOOLEAN NOT NULL DEFAULT false,
   cancellation_reason TEXT,
   
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
