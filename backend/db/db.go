@@ -16,9 +16,8 @@ import (
 	_ "github.com/lib/pq"
 
 	// Cloud SQL Connector imports
-	"cloud.google.com/go/cloudsqlconn"
-	"cloud.google.com/go/cloudsqlconn/postgres/pgxv5"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"golang.org/x/oauth2/google"
 )
 
 func init() {
@@ -67,85 +66,49 @@ func ConnectResilient() (*sqlx.DB, error) {
 	logger.InfoCtx(ctx, "🔍 [DB] Diagnostics: INSTANCE_CONNECTION_NAME=%q | DATABASE_URL_SET=%v (len=%d) | DB_IAM_AUTH=%q",
 		instanceName, dsn != "", len(dsn), os.Getenv("DB_IAM_AUTH"))
 
-	// 0. Cloud SQL Connector (Recommended for GCP)
-	// If INSTANCE_CONNECTION_NAME is provided, we use the official connector.
+	// 0. Cloud SQL Connector (Recommended for local/complex setups)
+	// OR Unix Domain Sockets (Recommended for Cloud Run)
 	if instanceName != "" {
-		logger.InfoCtx(ctx, "☁️ Using Cloud SQL Go Connector for instance: %s", instanceName)
+		logger.InfoCtx(ctx, "🔌 Cloud SQL: Using native connection via Unix Socket: /cloudsql/%s", instanceName)
 
-		var opts []cloudsqlconn.Option
-		if os.Getenv("DB_IAM_AUTH") == "true" {
-			logger.InfoCtx(ctx, "🔐 Cloud SQL: Using IAM-based authentication")
-			opts = append(opts, cloudsqlconn.WithIAMAuthN())
+		// Extract DB name from DSN or fallback to elbulk
+		dbName := "elbulk"
+		if dsn != "" && strings.Contains(dsn, "/") {
+			parts := strings.Split(dsn, "/")
+			dbName = strings.Split(parts[len(parts)-1], "?")[0]
 		}
 
-		// Register the driver with pgxv5 (once only)
-		cleanup, err := pgxv5.RegisterDriver("cloudsql-postgres", opts...)
-		if err != nil {
-			// Check if it's just already registered
-			if !strings.Contains(err.Error(), "already registered") {
-				return nil, fmt.Errorf("failed to register cloudsql-postgres driver: %v", err)
-			}
-			logger.DebugCtx(ctx, "Cloud SQL driver already registered, continuing...")
-		} else {
-			// Register with sqlx so Rebind() works correctly with this custom driver name
-			sqlx.BindDriver("cloudsql-postgres", sqlx.DOLLAR)
-		}
-		_ = cleanup // cleanup is managed globally by the driver
-
-		// Construct a clean DSN that the Cloud SQL connector expects.
-		// We extract the credentials from the DATABASE_URL secret.
 		user := "elbulk"
 		pass := ""
-		dbName := "elbulk"
-
-		if dsn != "" {
-			if strings.HasPrefix(dsn, "postgres://") {
-				noScheme := strings.TrimPrefix(dsn, "postgres://")
-				atSplit := strings.Split(noScheme, "@")
-				if len(atSplit) > 1 {
-					credentials := atSplit[0]
-					credSplit := strings.Split(credentials, ":")
-					user = credSplit[0]
-					if len(credSplit) > 1 {
-						pass = credSplit[1]
-					}
-
-					remaining := atSplit[1]
-					pathSplit := strings.Split(remaining, "/")
-					if len(pathSplit) > 1 {
-						dbName = strings.Split(pathSplit[1], "?")[0]
-					}
-				}
-			}
-		}
-
-		// Build the DSN for pgx/cloudsqlconn
-		connectorDsn := fmt.Sprintf("host=%s dbname=%s sslmode=disable", instanceName, dbName)
 
 		if os.Getenv("DB_IAM_AUTH") == "true" {
 			iamUser := os.Getenv("DB_IAM_USER")
-			if iamUser == "" {
-				iamUser = user
+			if iamUser != "" {
+				// For Cloud SQL Postgres, the IAM username must exclude the .gserviceaccount.com suffix.
+				// However, it MUST include the @developer part for default compute service accounts.
+				user = strings.TrimSuffix(iamUser, ".gserviceaccount.com")
 			}
-
-			// For Cloud SQL Postgres, the IAM username must exclude the .gserviceaccount.com suffix.
-			// However, it MUST include the @developer part for default compute service accounts.
-			iamUser = strings.TrimSuffix(iamUser, ".gserviceaccount.com")
-
-			logger.InfoCtx(ctx, "🔐 Cloud SQL: Using IAM-based auth for user: %s", iamUser)
-			connectorDsn += fmt.Sprintf(" user=%s", iamUser)
-		} else {
-			if user != "" {
-				connectorDsn += fmt.Sprintf(" user=%s", user)
-			}
-			if pass != "" {
-				connectorDsn += fmt.Sprintf(" password=%s", pass)
+			
+			token, err := getIAMToken()
+			if err != nil {
+				logger.ErrorCtx(ctx, "❌ [DB] Failed to fetch IAM token: %v", err)
+				// We continue, maybe it works without it? Unlikely, but let driver handle it
+			} else {
+				pass = token
+				logger.InfoCtx(ctx, "🔐 Cloud SQL: Using IAM-based authentication for user: %s", user)
 			}
 		}
 
-		db, err := sqlx.Open("cloudsql-postgres", connectorDsn)
+		// Build Unix Socket DSN
+		// format: host=/cloudsql/INSTANCE user=USER password=PASS dbname=DB sslmode=disable
+		connectorDsn := fmt.Sprintf("host=/cloudsql/%s user=%s dbname=%s sslmode=disable", instanceName, user, dbName)
+		if pass != "" {
+			connectorDsn += fmt.Sprintf(" password=%s", pass)
+		}
+
+		db, err := sqlx.Open("postgres", connectorDsn)
 		if err != nil {
-			return nil, fmt.Errorf("failed to open database via Cloud SQL Connector: %v", err)
+			return nil, fmt.Errorf("failed to open database via Unix socket: %v", err)
 		}
 
 		maxOpen := getEnvInt("DB_MAX_OPEN_CONNS", 25)
@@ -392,4 +355,23 @@ func getEnvInt(key string, fallback int) int {
 		}
 	}
 	return fallback
+}
+
+// getIAMToken fetches a fresh Google OAuth2 access token for IAM database authentication.
+func getIAMToken() (string, error) {
+	ctx := context.Background()
+	// Scopes required for Cloud SQL IAM Auth
+	scopes := []string{
+		"https://www.googleapis.com/auth/sqlservice.admin",
+		"https://www.googleapis.com/auth/cloud-platform",
+	}
+	creds, err := google.FindDefaultCredentials(ctx, scopes...)
+	if err != nil {
+		return "", err
+	}
+	token, err := creds.TokenSource.Token()
+	if err != nil {
+		return "", err
+	}
+	return token.AccessToken, nil
 }
