@@ -31,6 +31,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w -X main.Version=${APP_VERS
 # Build seed binary separately so it can be run via Cloud Run Jobs
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /el-bulk-seed ./seed/
 
+# Build backfill script
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /backfill-treatments ./scripts/backfill_treatments.go
+
 ## =======================================
 ## Stage: runner (minimal production image)
 ## =======================================
@@ -43,6 +46,7 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 WORKDIR /app
 COPY --from=builder /el-bulk-api .
 COPY --from=builder /el-bulk-seed .
+COPY --from=builder /backfill-treatments .
 COPY --from=builder /app/db/schema ./db/schema
 COPY --from=builder /app/db/migrations ./db/migrations
 COPY --from=builder /app/seed/data ./seed/data
