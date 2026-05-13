@@ -70,20 +70,9 @@ func (s *RefreshStore) BulkUpdateMetadata(ctx context.Context, updates []Metadat
 		}
 		chunk := updates[i:end]
 
-		query := `
-			UPDATE product AS p SET 
-				price_reference = COALESCE(v.price_reference, p.price_reference),
-				price_source = COALESCE(v.price_source, p.price_source),
-				legalities = COALESCE(v.legalities, p.legalities),
-				oracle_text = COALESCE(NULLIF(v.oracle_text, ''), p.oracle_text),
-				scryfall_id = COALESCE(v.scryfall_id, p.scryfall_id),
-				type_line = COALESCE(NULLIF(v.type_line, ''), p.type_line),
-				image_url = COALESCE(NULLIF(v.image_url, ''), p.image_url),
-				updated_at = now()
-			FROM (VALUES 
-		`
 		placeholders := make([]string, len(chunk))
 		args := make([]interface{}, len(chunk)*8)
+		var query string
 
 		for j, u := range chunk {
 			base := j * 8
@@ -104,8 +93,33 @@ func (s *RefreshStore) BulkUpdateMetadata(ctx context.Context, updates []Metadat
 			args[base+7] = u.PriceSource
 		}
 
+		totalArgs := len(chunk) * 8
+		query = fmt.Sprintf(`
+			UPDATE product AS p SET 
+				price_reference = COALESCE(v.price_reference, p.price_reference),
+				price_source = COALESCE(v.price_source, p.price_source),
+				price_cop = COALESCE(p.price_cop_override, 
+					CASE COALESCE(v.price_source, p.price_source)
+						WHEN 'cardkingdom' THEN COALESCE(v.price_reference, p.price_reference) * $%d
+						WHEN 'tcgplayer'   THEN COALESCE(v.price_reference, p.price_reference) * $%d
+						WHEN 'cardmarket'  THEN COALESCE(v.price_reference, p.price_reference) * $%d
+						ELSE COALESCE(v.price_reference, p.price_reference)
+					END
+				),
+				legalities = COALESCE(v.legalities, p.legalities),
+				oracle_text = COALESCE(NULLIF(v.oracle_text, ''), p.oracle_text),
+				scryfall_id = COALESCE(v.scryfall_id, p.scryfall_id),
+				type_line = COALESCE(NULLIF(v.type_line, ''), p.type_line),
+				image_url = COALESCE(NULLIF(v.image_url, ''), p.image_url),
+				updated_at = now()
+			FROM (VALUES 
+		`, totalArgs+1, totalArgs+2, totalArgs+3)
+
 		query += strings.Join(placeholders, ", ")
 		query += ") AS v(id, price_reference, legalities, oracle_text, scryfall_id, type_line, image_url, price_source) WHERE p.id = v.id"
+
+		// Append rates to the args slice
+		args = append(args, ckRate, usdRate, eurRate)
 
 		res, err := s.DB.ExecContext(ctx, query, args...)
 		if err != nil {
@@ -118,6 +132,23 @@ func (s *RefreshStore) BulkUpdateMetadata(ctx context.Context, updates []Metadat
 	}
 
 	return totalUpdated, totalErrors
+}
+
+func (s *RefreshStore) RecalculateAllPrices(ctx context.Context, usdRate, eurRate, ckRate float64) error {
+	query := `
+		UPDATE product SET 
+			price_cop = COALESCE(price_cop_override, 
+				CASE price_source 
+					WHEN 'cardkingdom' THEN price_reference * $1
+					WHEN 'tcgplayer'   THEN price_reference * $2
+					WHEN 'cardmarket'  THEN price_reference * $3
+					ELSE price_reference 
+				END
+			),
+			updated_at = now()
+	`
+	_, err := s.DB.ExecContext(ctx, query, ckRate, usdRate, eurRate)
+	return err
 }
 
 // BuildPriceUpdates resolves prices from Scryfall and CardKingdom price maps.

@@ -1,10 +1,10 @@
 package handlers
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"time"
-
-	"context"
 	"github.com/el-bulk/backend/service"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/el-bulk/backend/utils/render"
@@ -27,6 +27,16 @@ func (h *RefreshHandler) Trigger(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, map[string]int{"updated": updated, "errors": errs})
 }
 
+// POST /api/admin/currency/sync
+func (h *RefreshHandler) SyncCurrency(w http.ResponseWriter, r *http.Request) {
+	logger.TraceCtx(r.Context(), "Entering RefreshHandler.SyncCurrency")
+	if err := h.Service.SyncCurrencyRates(r.Context()); err != nil {
+		render.Error(w, fmt.Sprintf("failed to sync currency rates: %v", err), http.StatusInternalServerError)
+		return
+	}
+	render.Success(w, map[string]string{"status": "ok"})
+}
+
 // StartMidnightScheduler launches a goroutine that runs RunPriceRefresh
 // once per day at midnight (server local time).
 func StartMidnightScheduler(svc *service.RefreshService) {
@@ -38,6 +48,13 @@ func StartMidnightScheduler(svc *service.RefreshService) {
 			logger.Info("⏰ Next price refresh in %s (at %s)",
 				sleepDur.Round(time.Minute), next.Format("2006-01-02 15:04"))
 			time.Sleep(sleepDur)
+
+			logger.Info("[currency-sync] Starting scheduled midnight sync...")
+			if err := svc.SyncCurrencyRates(context.Background()); err != nil {
+				logger.Error("[currency-sync] Failed: %v", err)
+			} else {
+				logger.Info("[currency-sync] Done. Rates updated and prices materialized.")
+			}
 
 			logger.Info("[price-refresh] Starting scheduled midnight refresh...")
 			updated, errs := svc.RunPriceRefresh(context.Background(), "")

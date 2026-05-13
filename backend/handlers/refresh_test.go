@@ -84,7 +84,7 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 				AddRow("ck_to_cop_rate", "3800"))
 
 		mock.ExpectExec("(?i)UPDATE product AS p SET.*").
-			WithArgs("550e8400-e29b-41d4-a716-446655440000", 50000.0, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WithArgs("550e8400-e29b-41d4-a716-446655440000", 50000.0, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), 3800.0, 4000.0, 4500.0).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
 		updated, errs := svc.RunPriceRefresh(context.Background(), "")

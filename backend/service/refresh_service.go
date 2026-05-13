@@ -114,6 +114,39 @@ func (s *RefreshService) RunPriceRefresh(ctx context.Context, tcgID string) (upd
 	return 0, 0
 }
 
+func (s *RefreshService) SyncCurrencyRates(ctx context.Context) error {
+	rates, err := external.FetchExchangeRates(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to fetch rates: %w", err)
+	}
+
+	usdToCop, okUSD := rates["COP"]
+	eurToUSD, okEUR := rates["EUR"]
+	if !okUSD || !okEUR {
+		return fmt.Errorf("COP or EUR rates missing from response")
+	}
+
+	// EUR -> COP = (1 / EUR_to_USD) * USD_to_COP
+	eurToCop := (1.0 / eurToUSD) * usdToCop
+
+	// Update settings
+	if err := s.Settings.Upsert(ctx, "usd_to_cop_rate", fmt.Sprintf("%.2f", usdToCop)); err != nil {
+		return err
+	}
+	if err := s.Settings.Upsert(ctx, "eur_to_cop_rate", fmt.Sprintf("%.2f", eurToCop)); err != nil {
+		return err
+	}
+
+	// Fetch current CK rate and other settings for recomputation
+	settings, err := s.Settings.GetSettings(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Recompute all prices in the database to keep materialized column in sync
+	return s.Store.RecalculateAllPrices(ctx, usdToCop, eurToCop, settings.CKToCOPRate)
+}
+
 func (s *RefreshService) GetSuggestedPrice(ctx context.Context, scryfallID, name, set, setName, collector, foil, treatment, source, ckEdition string) (*float64, error) {
 	foil = strings.ToLower(foil)
 

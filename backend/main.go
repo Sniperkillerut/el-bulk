@@ -319,6 +319,7 @@ func main() {
 				r.Get("/lookup/external/prices", tcgHandler.GetExternalPrice)
 
 				// Price refresh (manual trigger + scheduled nightly)
+				r.Post("/currency/sync", refreshHandler.SyncCurrency)
 				r.Post("/prices/refresh", refreshHandler.Trigger)
 
 				// Order Management
