@@ -171,99 +171,91 @@ func seedMTGSingles(db *sqlx.DB, cats CategoryMap, storage StorageMap) ([]string
 	}
 
 	var productIDs []string
-	for i, res := range results {
-		foil := foilTreatments[i%len(foilTreatments)]
-		treat := cardTreatments[i%len(cardTreatments)]
-		cond := conditions[i%len(conditions)]
-		lang := languages[i%len(languages)]
-		ps := priceSources[i%len(priceSources)]
-		stock := randInt(1, 12)
-		createdAt := daysAgo(randInt(1, 90))
-		costBasis := float64(randInt(5, 50)) * 1000.0
-
-		// Determine pricing
-		var priceRef *float64
-		var priceCOPOverride *float64
-		if ps.source == "manual" {
-			v := float64(randInt(10, 800)) * 1000.0
-			priceCOPOverride = &v
-		} else {
-			ref := ps.ref * (0.8 + rand.Float64()*0.6) // ±20% variance
-			priceRef = &ref
-		}
-
-		var pID string
-		err := db.Get(&pID, `
-			INSERT INTO product (
-				name, tcg, category, set_name, set_code, collector_number, condition,
-				foil_treatment, card_treatment, language, price_source, price_reference,
-				price_cop_override, image_url, stock, cost_basis_cop,
-				rarity, is_legendary, is_historic, is_land, is_basic_land,
-				art_variation, oracle_text, artist, type_line, border_color, frame,
-				full_art, textless, promo_type, cmc, color_identity, scryfall_id, legalities,
-				card_types, created_at
-			) VALUES (
-				$1, 'mtg', 'singles', $2, $3, $4, $5, $6, $7, $8, $9, $10,
-				$11, $12, $13, $14,
-				$15, $16, $17, $18, $19,
-				$20, $21, $22, $23, $24, $25,
-				$26, $27, $28, $29, $30, $31, $32,
-				$33, $34
-			) RETURNING id
-		`,
-			res.Name, res.SetName, res.SetCode, res.CollectorNumber, cond,
-			foil, treat, lang, ps.source, priceRef,
-			priceCOPOverride, res.ImageURL, stock, costBasis,
-			res.Rarity, res.IsLegendary, res.IsHistoric, res.IsLand, res.IsBasicLand,
-			res.ArtVariation, res.OracleText, res.Artist, res.TypeLine, res.BorderColor, res.Frame,
-			res.FullArt, res.Textless, res.PromoType, res.CMC, res.ColorIdentity, res.ScryfallID, res.Legalities,
-			res.CardTypes, createdAt,
-		)
-
-		if err != nil {
-			return nil, fmt.Errorf("insert failed for '%s': %w", res.Name, err)
-		}
-		productIDs = append(productIDs, pID)
-
-		// Distribute stock across 1-2 storage locations
-		loc1 := storageLocs[i%len(storageLocs)]
-		qty1 := randInt(1, stock)
-		if sid, ok := storage[loc1]; ok {
-			db.Exec(`
-				INSERT INTO product_storage (product_id, storage_id, quantity)
-				VALUES ($1, $2, $3)
-				ON CONFLICT (product_id, storage_id) DO UPDATE SET quantity = EXCLUDED.quantity
-			`, pID, sid, qty1)
-		}
-		// Some products split across 2 locations
-		if i%3 == 0 && stock > qty1 {
-			loc2 := storageLocs[(i+2)%len(storageLocs)]
-			if loc2 != loc1 {
-				if sid, ok := storage[loc2]; ok {
+	logger.Info("🌱 Generating 1000+ variations from %d unique cards...", len(results))
+	
+	variantCount := 0
+	for _, res := range results {
+		// Create 8-15 variations for every unique card to hit the 1000+ target
+		numVariants := randInt(8, 15)
+		
+		for v := 0; v < numVariants; v++ {
+			variantCount++
+			foil := foilTreatments[randInt(0, len(foilTreatments)-1)]
+			treat := cardTreatments[randInt(0, len(cardTreatments)-1)]
+			cond := conditions[randInt(0, len(conditions)-1)]
+			lang := languages[randInt(0, len(languages)-1)]
+			ps := priceSources[randInt(0, len(priceSources)-1)]
+			
+			stock := randInt(0, 15) // Include some out of stock for filter testing
+			createdAt := daysAgo(randInt(1, 120))
+			costBasis := float64(randInt(5, 50)) * 1000.0
+	
+			// Determine pricing
+			var priceRef *float64
+			var priceCOPOverride *float64
+			if ps.source == "manual" {
+				val := float64(randInt(5, 1200)) * 1000.0
+				priceCOPOverride = &val
+			} else {
+				ref := ps.ref * (0.7 + rand.Float64()*0.8) // High variance for price sorting test
+				priceRef = &ref
+			}
+	
+			var pID string
+			err := db.Get(&pID, `
+				INSERT INTO product (
+					name, tcg, category, set_name, set_code, collector_number, condition,
+					foil_treatment, card_treatment, language, price_source, price_reference,
+					price_cop_override, image_url, stock, cost_basis_cop,
+					rarity, is_legendary, is_historic, is_land, is_basic_land,
+					art_variation, oracle_text, artist, type_line, border_color, frame,
+					full_art, textless, promo_type, cmc, color_identity, scryfall_id, legalities,
+					card_types, created_at
+				) VALUES (
+					$1, 'mtg', 'singles', $2, $3, $4, $5, $6, $7, $8, $9, $10,
+					$11, $12, $13, $14,
+					$15, $16, $17, $18, $19,
+					$20, $21, $22, $23, $24, $25,
+					$26, $27, $28, $29, $30, $31, $32,
+					$33, $34
+				) RETURNING id
+			`,
+				res.Name, res.SetName, res.SetCode, res.CollectorNumber, cond,
+				foil, treat, lang, ps.source, priceRef,
+				priceCOPOverride, res.ImageURL, stock, costBasis,
+				res.Rarity, res.IsLegendary, res.IsHistoric, res.IsLand, res.IsBasicLand,
+				res.ArtVariation, res.OracleText, res.Artist, res.TypeLine, res.BorderColor, res.Frame,
+				res.FullArt, res.Textless, res.PromoType, res.CMC, res.ColorIdentity, res.ScryfallID, res.Legalities,
+				res.CardTypes, createdAt,
+			)
+	
+			if err != nil {
+				logger.Warn("  ⚠️ Variation insert failed for '%s': %v", res.Name, err)
+				continue
+			}
+			productIDs = append(productIDs, pID)
+	
+			// Distribute stock across storage locations
+			if stock > 0 {
+				loc1 := storageLocs[randInt(0, len(storageLocs)-1)]
+				if sid, ok := storage[loc1]; ok {
 					db.Exec(`
 						INSERT INTO product_storage (product_id, storage_id, quantity)
 						VALUES ($1, $2, $3)
 						ON CONFLICT (product_id, storage_id) DO UPDATE SET quantity = EXCLUDED.quantity
-					`, pID, sid, stock-qty1)
+					`, pID, sid, stock)
 				}
 			}
-		}
-
-		// Assign 1 primary category, some get 2
-		primaryCat := catKeys[i%len(catKeys)]
-		if catID, ok := cats[primaryCat]; ok {
-			db.Exec(`
-				INSERT INTO product_category (product_id, category_id) VALUES ($1, $2)
-				ON CONFLICT DO NOTHING
-			`, pID, catID)
-		}
-		// Every 4th card also gets "featured"
-		if i%4 == 0 {
-			if catID, ok := cats["featured"]; ok {
-				db.Exec(`
-					INSERT INTO product_category (product_id, category_id) VALUES ($1, $2)
-					ON CONFLICT DO NOTHING
-				`, pID, catID)
+	
+			// Assign categories
+			primaryCat := catKeys[randInt(0, len(catKeys)-1)]
+			if catID, ok := cats[primaryCat]; ok {
+				db.Exec(`INSERT INTO product_category (product_id, category_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, pID, catID)
+			}
+			if variantCount%5 == 0 {
+				if catID, ok := cats["featured"]; ok {
+					db.Exec(`INSERT INTO product_category (product_id, category_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, pID, catID)
+				}
 			}
 		}
 	}

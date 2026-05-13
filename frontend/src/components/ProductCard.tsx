@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Product } from '@/lib/types';
 import { useCart } from '@/lib/CartContext';
@@ -27,12 +27,15 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const displayCartCount = product.cart_count || 0;
 
-  let href = `/product/${product.id}`;
-  if (pathname && searchParams) {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('productId', product.id);
-    href = `${pathname}?${params.toString()}`;
-  }
+  const href = useMemo(() => {
+    let base = `/product/${product.id}`;
+    if (pathname && searchParams) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('productId', product.id);
+      base = `${pathname}?${params.toString()}`;
+    }
+    return base;
+  }, [product.id, pathname, searchParams]);
 
   const handleOpenModal = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -50,7 +53,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <div className="card flex flex-col overflow-hidden relative" data-theme-area="product-card">
+    <div className="card flex flex-col h-full overflow-hidden relative" data-theme-area="product-card">
       {/* Stamping Overlay */}
       {isAdding && (
         <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none overflow-hidden">

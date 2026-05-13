@@ -588,7 +588,11 @@ export default function ProductGrid({ tcg, category, title, subtitle, titleKey, 
           ) : (
             <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {products.map((p, i) => (
-                <div key={p.id} style={{ animationDelay: `${i * 0.05}s` }} className="animate-fade-up">
+                <div 
+                  key={p.id} 
+                  style={{ animationDelay: `${Math.min(i, 12) * 0.05}s` }} 
+                  className="animate-fade-up h-full"
+                >
                   <ProductCard product={p} />
                 </div>
               ))}
@@ -659,6 +663,7 @@ function FilterSection({
 }) {
   const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(initialOpen);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   if (items.length === 0) return null;
 
@@ -685,7 +690,7 @@ function FilterSection({
 
       {isOpen && (
         <div className="mt-3 flex flex-col gap-2 max-h-[280px] overflow-y-auto pr-1">
-          {visibleItems.map(item => (
+          {visibleItems.slice(0, isExpanded ? 500 : 12).map(item => (
             <label key={item.id} className="flex items-center justify-between cursor-pointer group py-0.5">
               <div className="flex items-center gap-2.5 min-w-0">
                 <input
@@ -713,6 +718,14 @@ function FilterSection({
               )}
             </label>
           ))}
+          {visibleItems.length > 12 && (
+            <button 
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-[10px] font-bold text-accent-primary uppercase mt-1 hover:underline"
+            >
+              {isExpanded ? t('pages.inventory.grid.filters.show_less', 'Show Less') : t('pages.inventory.grid.filters.show_more_count', 'Show More ({count})', { count: visibleItems.length - 12 })}
+            </button>
+          )}
         </div>
       )}
     </div>
