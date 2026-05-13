@@ -1,6 +1,6 @@
--- Restore fn_get_product_facets which was dropped by CASCADE in the previous migration
--- This function is critical for the product listing display.
-
+-- fn_get_product_facets
+-- Returns a JSONB object containing counts for Condition, Foil, Treatment, Rarity, Language, Color, Collection, and Set.
+-- Filter logic: always AND across dimensions in NARROW mode. OR across dimensions in BROAD mode.
 CREATE OR REPLACE FUNCTION fn_get_product_facets(
     p_tcg TEXT DEFAULT '',
     p_category TEXT DEFAULT '',
@@ -211,19 +211,19 @@ BEGIN
         FROM filter_matches
     ),
     f_condition AS (
-        SELECT condition as val, COUNT(*) as c FROM dimension_matches WHERE others_condition GROUP BY val
+        SELECT condition as val, COUNT(*) as c FROM dimension_matches WHERE others_condition AND condition IS NOT NULL GROUP BY val
     ),
     f_foil AS (
-        SELECT foil_treatment as val, COUNT(*) as c FROM dimension_matches WHERE others_foil GROUP BY val
+        SELECT foil_treatment as val, COUNT(*) as c FROM dimension_matches WHERE others_foil AND foil_treatment IS NOT NULL GROUP BY val
     ),
     f_treatment AS (
-        SELECT card_treatment as val, COUNT(*) as c FROM dimension_matches WHERE others_treatment GROUP BY val
+        SELECT card_treatment as val, COUNT(*) as c FROM dimension_matches WHERE others_treatment AND card_treatment IS NOT NULL GROUP BY val
     ),
     f_rarity AS (
-        SELECT rarity as val, COUNT(*) as c FROM dimension_matches WHERE others_rarity GROUP BY val
+        SELECT rarity as val, COUNT(*) as c FROM dimension_matches WHERE others_rarity AND rarity IS NOT NULL GROUP BY val
     ),
     f_language AS (
-        SELECT language as val, COUNT(*) as c FROM dimension_matches WHERE others_language GROUP BY val
+        SELECT language as val, COUNT(*) as c FROM dimension_matches WHERE others_language AND language IS NOT NULL GROUP BY val
     ),
     f_color AS (
         SELECT 
@@ -241,7 +241,7 @@ BEGIN
         FROM dimension_matches p
         JOIN product_category pc ON p.id = pc.product_id
         JOIN custom_category cc ON pc.category_id = cc.id
-        WHERE others_collection GROUP BY val
+        WHERE others_collection AND cc.slug IS NOT NULL GROUP BY val
     ),
     f_set_name AS (
         SELECT COALESCE(p.set_name, 'Unknown') as val, COUNT(*) as c, MAX(s.released_at) as release_date
@@ -282,12 +282,12 @@ BEGIN
         SELECT val, SUM(c) as c FROM (
             SELECT jsonb_array_elements_text(card_types) as val, COUNT(*) as c 
             FROM dimension_matches 
-            WHERE others_card_types 
+            WHERE others_card_types AND card_types IS NOT NULL
             GROUP BY val
-        ) t GROUP BY val
+        ) t WHERE val IS NOT NULL GROUP BY val
     ),
     f_frame_effects AS (
-        SELECT fe as val, COUNT(*) as c FROM dimension_matches, jsonb_array_elements_text(frame_effects) fe WHERE others_frame_effects GROUP BY val
+        SELECT fe as val, COUNT(*) as c FROM dimension_matches, jsonb_array_elements_text(frame_effects) fe WHERE others_frame_effects AND fe IS NOT NULL GROUP BY val
     )
     SELECT jsonb_build_object(
         'condition', (SELECT COALESCE(jsonb_object_agg(val, c), '{}'::jsonb) FROM f_condition),
