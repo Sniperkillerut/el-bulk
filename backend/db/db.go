@@ -17,6 +17,7 @@ import (
 
 	// Cloud SQL Connector imports
 	_ "github.com/jackc/pgx/v5/stdlib"
+	_ "cloud.google.com/go/cloudsqlconn/postgres/pgxv5"
 	"golang.org/x/oauth2/google"
 )
 
@@ -81,18 +82,24 @@ func ConnectResilient() (*sqlx.DB, error) {
 		user := "elbulk"
 		pass := ""
 
-		if os.Getenv("DB_IAM_AUTH") == "true" {
-			iamUser := os.Getenv("DB_IAM_USER")
+		// Auto-detect IAM user from environment or DSN
+		iamUser := os.Getenv("DB_IAM_USER")
+		if iamUser == "" && dsn != "" && strings.Contains(dsn, "@") {
+			// Extract user from postgres://user:pass@host/db
+			uPart := strings.Split(strings.TrimPrefix(dsn, "postgres://"), ":")[0]
+			if strings.Contains(uPart, "@") {
+				iamUser = uPart
+			}
+		}
+
+		if os.Getenv("DB_IAM_AUTH") == "true" || (iamUser != "" && strings.Contains(iamUser, "@")) {
 			if iamUser != "" {
-				// For Cloud SQL Postgres, the IAM username must exclude the .gserviceaccount.com suffix.
-				// However, it MUST include the @developer part for default compute service accounts.
 				user = strings.TrimSuffix(iamUser, ".gserviceaccount.com")
 			}
 			
 			token, err := getIAMToken()
 			if err != nil {
 				logger.ErrorCtx(ctx, "❌ [DB] Failed to fetch IAM token: %v", err)
-				// We continue, maybe it works without it? Unlikely, but let driver handle it
 			} else {
 				pass = token
 				logger.InfoCtx(ctx, "🔐 Cloud SQL: Using IAM-based authentication for user: %s", user)
@@ -101,9 +108,10 @@ func ConnectResilient() (*sqlx.DB, error) {
 
 		// Build Unix Socket DSN
 		// format: host=/cloudsql/INSTANCE user=USER password=PASS dbname=DB sslmode=disable
-		connectorDsn := fmt.Sprintf("host=/cloudsql/%s user=%s dbname=%s sslmode=disable", instanceName, user, dbName)
+		// Important: Password (token) can contain special chars, so we use the key=value format which is safer
+		connectorDsn := fmt.Sprintf("host='/cloudsql/%s' user='%s' dbname='%s' sslmode='disable'", instanceName, user, dbName)
 		if pass != "" {
-			connectorDsn += fmt.Sprintf(" password=%s", pass)
+			connectorDsn += fmt.Sprintf(" password='%s'", pass)
 		}
 
 		db, err := sqlx.Open("postgres", connectorDsn)
