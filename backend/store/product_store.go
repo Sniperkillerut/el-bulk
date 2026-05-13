@@ -69,7 +69,7 @@ type ProductFilterParams struct {
 
 func (s *ProductStore) ListWithFilters(ctx context.Context, params ProductFilterParams) ([]models.Product, int, error) {
 	start := time.Now()
-	fromClause, where, args := s.buildFilters(params)
+	fromClause, where, args := s.BuildFilters(params)
 
 	var total int
 	countQuery := fmt.Sprintf("SELECT COUNT(*) %s %s", fromClause, where)
@@ -77,8 +77,8 @@ func (s *ProductStore) ListWithFilters(ctx context.Context, params ProductFilter
 		return nil, 0, err
 	}
 
-	orderBy := s.buildOrderBy(params, len(args))
-	viewFrom, where, args := s.buildFilters(params) // Switched from view_product_enriched to base product table
+	orderBy := s.BuildOrderBy(params, len(args))
+	viewFrom, where, args := s.BuildFilters(params) // Switched from view_product_enriched to base product table
 
 	listQuery := fmt.Sprintf("SELECT p.* %s %s ORDER BY %s LIMIT $%d OFFSET $%d",
 		viewFrom, where, orderBy, len(args)+1, len(args)+2)
@@ -598,7 +598,7 @@ func (s *ProductStore) BulkUpsert(ctx context.Context, jsonData string) ([]strin
 	return result, nil
 }
 
-func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...string) (string, string, []interface{}) {
+func (s *ProductStore) BuildFilters(params ProductFilterParams, baseFrom ...string) (string, string, []interface{}) {
 	table := "product"
 	if len(baseFrom) > 0 {
 		table = baseFrom[0]
@@ -849,7 +849,7 @@ func (s *ProductStore) buildFilters(params ProductFilterParams, baseFrom ...stri
 	return fromClause, whereClause, args
 }
 
-func (s *ProductStore) buildOrderBy(params ProductFilterParams, argsLen int) string {
+func (s *ProductStore) BuildOrderBy(params ProductFilterParams, argsLen int) string {
 	dir := "DESC"
 	if strings.EqualFold(params.SortDir, "asc") {
 		dir = "ASC"
