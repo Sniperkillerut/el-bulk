@@ -52,6 +52,22 @@ BEGIN
     v_frame_effects_arr := CASE WHEN p_frame_effects = '' THEN NULL ELSE regexp_split_to_array(LOWER(p_frame_effects), '\s*,\s*') END;
     v_card_types_arr := CASE WHEN p_card_types = '' THEN NULL ELSE regexp_split_to_array(p_card_types, '\s*,\s*') END;
 
+    -- Hoist active filter checks into variables for performance
+    DECLARE
+        has_foil BOOLEAN := v_foil_arr IS NOT NULL;
+        has_treatment BOOLEAN := v_treatment_arr IS NOT NULL;
+        has_condition BOOLEAN := v_condition_arr IS NOT NULL;
+        has_rarity BOOLEAN := v_rarity_arr IS NOT NULL;
+        has_language BOOLEAN := v_language_arr IS NOT NULL;
+        has_color BOOLEAN := v_color_arr IS NOT NULL;
+        has_collection BOOLEAN := v_collection_arr IS NOT NULL;
+        has_set BOOLEAN := v_set_name_arr IS NOT NULL;
+        has_properties BOOLEAN := (p_is_legendary != '' OR p_is_land != '' OR p_is_historic != '' OR p_is_prepared != '');
+        has_format BOOLEAN := v_format_arr IS NOT NULL;
+        has_frame_effects BOOLEAN := v_frame_effects_arr IS NOT NULL;
+        has_card_types BOOLEAN := v_card_types_arr IS NOT NULL;
+    BEGIN
+
     WITH base_products AS MATERIALIZED (
         SELECT p.*
         FROM product p
@@ -66,21 +82,6 @@ BEGIN
             ))
             AND (NOT p_in_stock OR p.stock > 0)
             AND (p_is_admin OR (t.is_active IS NULL OR t.is_active = true))
-    ),
-    active_filters AS (
-        SELECT 
-            v_foil_arr IS NOT NULL as has_foil,
-            v_treatment_arr IS NOT NULL as has_treatment,
-            v_condition_arr IS NOT NULL as has_condition,
-            v_rarity_arr IS NOT NULL as has_rarity,
-            v_language_arr IS NOT NULL as has_language,
-            v_color_arr IS NOT NULL as has_color,
-            v_collection_arr IS NOT NULL as has_collection,
-            v_set_name_arr IS NOT NULL as has_set,
-            (p_is_legendary != '' OR p_is_land != '' OR p_is_historic != '' OR p_is_prepared != '') as has_properties,
-            v_format_arr IS NOT NULL as has_format,
-            v_frame_effects_arr IS NOT NULL as has_frame_effects,
-            v_card_types_arr IS NOT NULL as has_card_types
     ),
     -- Optimization: Pre-calculate product-to-category mappings for faster collection matching
     categories_map AS (
@@ -153,72 +154,72 @@ BEGIN
     filter_matches AS (
         SELECT *,
                CASE WHEN p_filter_logic = 'and' THEN
-                   ((NOT (SELECT has_foil FROM active_filters) OR match_foil) AND
-                    (NOT (SELECT has_treatment FROM active_filters) OR match_treatment) AND
-                    (NOT (SELECT has_condition FROM active_filters) OR match_condition) AND
-                    (NOT (SELECT has_rarity FROM active_filters) OR match_rarity) AND
-                    (NOT (SELECT has_language FROM active_filters) OR match_language) AND
-                    (NOT (SELECT has_color FROM active_filters) OR match_color) AND
-                    (NOT (SELECT has_collection FROM active_filters) OR match_collection) AND
-                    (NOT (SELECT has_set FROM active_filters) OR match_set) AND
-                    (NOT (SELECT has_properties FROM active_filters) OR match_properties) AND
-                    (NOT (SELECT has_format FROM active_filters) OR match_format) AND
-                    (NOT (SELECT has_frame_effects FROM active_filters) OR match_frame_effects) AND
-                    (NOT (SELECT has_card_types FROM active_filters) OR match_card_types))
+                   ((NOT has_foil OR match_foil) AND
+                    (NOT has_treatment OR match_treatment) AND
+                    (NOT has_condition OR match_condition) AND
+                    (NOT has_rarity OR match_rarity) AND
+                    (NOT has_language OR match_language) AND
+                    (NOT has_color OR match_color) AND
+                    (NOT has_collection OR match_collection) AND
+                    (NOT has_set OR match_set) AND
+                    (NOT has_properties OR match_properties) AND
+                    (NOT has_format OR match_format) AND
+                    (NOT has_frame_effects OR match_frame_effects) AND
+                    (NOT has_card_types OR match_card_types))
                ELSE
-                   ((match_foil AND (SELECT has_foil FROM active_filters)) OR
-                    (match_treatment AND (SELECT has_treatment FROM active_filters)) OR
-                    (match_condition AND (SELECT has_condition FROM active_filters)) OR
-                    (match_rarity AND (SELECT has_rarity FROM active_filters)) OR
-                    (match_language AND (SELECT has_language FROM active_filters)) OR
-                    (match_color AND (SELECT has_color FROM active_filters)) OR
-                    (match_collection AND (SELECT has_collection FROM active_filters)) OR
-                    (match_set AND (SELECT has_set FROM active_filters)) OR
-                    (match_properties AND (SELECT has_properties FROM active_filters)) OR
-                    (match_format AND (SELECT has_format FROM active_filters)) OR
-                    (match_frame_effects AND (SELECT has_frame_effects FROM active_filters)) OR
-                    (match_card_types AND (SELECT has_card_types FROM active_filters)) OR
-                    (NOT (SELECT has_foil FROM active_filters) AND NOT (SELECT has_treatment FROM active_filters) AND NOT (SELECT has_condition FROM active_filters) AND NOT (SELECT has_rarity FROM active_filters) AND NOT (SELECT has_language FROM active_filters) AND NOT (SELECT has_color FROM active_filters) AND NOT (SELECT has_collection FROM active_filters) AND NOT (SELECT has_set FROM active_filters) AND NOT (SELECT has_properties FROM active_filters) AND NOT (SELECT has_format FROM active_filters) AND NOT (SELECT has_frame_effects FROM active_filters) AND NOT (SELECT has_card_types FROM active_filters)))
+                   ((match_foil AND has_foil) OR
+                    (match_treatment AND has_treatment) OR
+                    (match_condition AND has_condition) OR
+                    (match_rarity AND has_rarity) OR
+                    (match_language AND has_language) OR
+                    (match_color AND has_color) OR
+                    (match_collection AND has_collection) OR
+                    (match_set AND has_set) OR
+                    (match_properties AND has_properties) OR
+                    (match_format AND has_format) OR
+                    (match_frame_effects AND has_frame_effects) OR
+                    (match_card_types AND has_card_types) OR
+                    (NOT has_foil AND NOT has_treatment AND NOT has_condition AND NOT has_rarity AND NOT has_language AND NOT has_color AND NOT has_collection AND NOT has_set AND NOT has_properties AND NOT has_format AND NOT has_frame_effects AND NOT has_card_types))
                END as match_all_filters
         FROM all_filtered
     ),
     dimension_matches AS (
         SELECT *,
-               CASE WHEN p_filter_logic = 'and' THEN match_all_filters
-               ELSE (NOT (SELECT has_condition FROM active_filters) OR match_condition) AND (NOT (SELECT has_treatment FROM active_filters) OR match_treatment) AND (NOT (SELECT has_rarity FROM active_filters) OR match_rarity) AND (NOT (SELECT has_language FROM active_filters) OR match_language) AND (NOT (SELECT has_color FROM active_filters) OR match_color) AND (NOT (SELECT has_collection FROM active_filters) OR match_collection) AND (NOT (SELECT has_set FROM active_filters) OR match_set) AND (NOT (SELECT has_properties FROM active_filters) OR match_properties) AND (NOT (SELECT has_format FROM active_filters) OR match_format) AND (NOT (SELECT has_frame_effects FROM active_filters) OR match_frame_effects) AND (NOT (SELECT has_card_types FROM active_filters) OR match_card_types)
+               CASE WHEN p_filter_logic = 'and' THEN (NOT has_condition OR match_condition) AND (NOT has_treatment OR match_treatment) AND (NOT has_rarity OR match_rarity) AND (NOT has_language OR match_language) AND (NOT has_color OR match_color) AND (NOT has_collection OR match_collection) AND (NOT has_set OR match_set) AND (NOT has_properties OR match_properties) AND (NOT has_format OR match_format) AND (NOT has_frame_effects OR match_frame_effects) AND (NOT has_card_types OR match_card_types)
+               ELSE TRUE
                END as others_foil,
-               CASE WHEN p_filter_logic = 'and' THEN match_all_filters
-               ELSE (NOT (SELECT has_foil FROM active_filters) OR match_foil) AND (NOT (SELECT has_condition FROM active_filters) OR match_condition) AND (NOT (SELECT has_rarity FROM active_filters) OR match_rarity) AND (NOT (SELECT has_language FROM active_filters) OR match_language) AND (NOT (SELECT has_color FROM active_filters) OR match_color) AND (NOT (SELECT has_collection FROM active_filters) OR match_collection) AND (NOT (SELECT has_set FROM active_filters) OR match_set) AND (NOT (SELECT has_properties FROM active_filters) OR match_properties) AND (NOT (SELECT has_format FROM active_filters) OR match_format) AND (NOT (SELECT has_frame_effects FROM active_filters) OR match_frame_effects) AND (NOT (SELECT has_card_types FROM active_filters) OR match_card_types)
+               CASE WHEN p_filter_logic = 'and' THEN (NOT has_foil OR match_foil) AND (NOT has_condition OR match_condition) AND (NOT has_rarity OR match_rarity) AND (NOT has_language OR match_language) AND (NOT has_color OR match_color) AND (NOT has_collection OR match_collection) AND (NOT has_set OR match_set) AND (NOT has_properties OR match_properties) AND (NOT has_format OR match_format) AND (NOT has_frame_effects OR match_frame_effects) AND (NOT has_card_types OR match_card_types)
+               ELSE TRUE
                END as others_treatment,
-               CASE WHEN p_filter_logic = 'and' THEN match_all_filters
-               ELSE (NOT (SELECT has_foil FROM active_filters) OR match_foil) AND (NOT (SELECT has_treatment FROM active_filters) OR match_treatment) AND (NOT (SELECT has_rarity FROM active_filters) OR match_rarity) AND (NOT (SELECT has_language FROM active_filters) OR match_language) AND (NOT (SELECT has_color FROM active_filters) OR match_color) AND (NOT (SELECT has_collection FROM active_filters) OR match_collection) AND (NOT (SELECT has_set FROM active_filters) OR match_set) AND (NOT (SELECT has_properties FROM active_filters) OR match_properties) AND (NOT (SELECT has_format FROM active_filters) OR match_format) AND (NOT (SELECT has_frame_effects FROM active_filters) OR match_frame_effects) AND (NOT (SELECT has_card_types FROM active_filters) OR match_card_types)
+               CASE WHEN p_filter_logic = 'and' THEN (NOT has_foil OR match_foil) AND (NOT has_treatment OR match_treatment) AND (NOT has_rarity OR match_rarity) AND (NOT has_language OR match_language) AND (NOT has_color OR match_color) AND (NOT has_collection OR match_collection) AND (NOT has_set OR match_set) AND (NOT has_properties OR match_properties) AND (NOT has_format OR match_format) AND (NOT has_frame_effects OR match_frame_effects) AND (NOT has_card_types OR match_card_types)
+               ELSE TRUE
                END as others_condition,
-               CASE WHEN p_filter_logic = 'and' THEN match_all_filters
-               ELSE (NOT (SELECT has_foil FROM active_filters) OR match_foil) AND (NOT (SELECT has_treatment FROM active_filters) OR match_treatment) AND (NOT (SELECT has_condition FROM active_filters) OR match_condition) AND (NOT (SELECT has_language FROM active_filters) OR match_language) AND (NOT (SELECT has_color FROM active_filters) OR match_color) AND (NOT (SELECT has_collection FROM active_filters) OR match_collection) AND (NOT (SELECT has_set FROM active_filters) OR match_set) AND (NOT (SELECT has_properties FROM active_filters) OR match_properties) AND (NOT (SELECT has_format FROM active_filters) OR match_format) AND (NOT (SELECT has_frame_effects FROM active_filters) OR match_frame_effects) AND (NOT (SELECT has_card_types FROM active_filters) OR match_card_types)
+               CASE WHEN p_filter_logic = 'and' THEN (NOT has_foil OR match_foil) AND (NOT has_treatment OR match_treatment) AND (NOT has_condition OR match_condition) AND (NOT has_language OR match_language) AND (NOT has_color OR match_color) AND (NOT has_collection OR match_collection) AND (NOT has_set OR match_set) AND (NOT has_properties OR match_properties) AND (NOT has_format OR match_format) AND (NOT has_frame_effects OR match_frame_effects) AND (NOT has_card_types OR match_card_types)
+               ELSE TRUE
                END as others_rarity,
-               CASE WHEN p_filter_logic = 'and' THEN match_all_filters
-               ELSE (NOT (SELECT has_foil FROM active_filters) OR match_foil) AND (NOT (SELECT has_treatment FROM active_filters) OR match_treatment) AND (NOT (SELECT has_condition FROM active_filters) OR match_condition) AND (NOT (SELECT has_rarity FROM active_filters) OR match_rarity) AND (NOT (SELECT has_color FROM active_filters) OR match_color) AND (NOT (SELECT has_collection FROM active_filters) OR match_collection) AND (NOT (SELECT has_set FROM active_filters) OR match_set) AND (NOT (SELECT has_properties FROM active_filters) OR match_properties) AND (NOT (SELECT has_format FROM active_filters) OR match_format) AND (NOT (SELECT has_frame_effects FROM active_filters) OR match_frame_effects) AND (NOT (SELECT has_card_types FROM active_filters) OR match_card_types)
+               CASE WHEN p_filter_logic = 'and' THEN (NOT has_foil OR match_foil) AND (NOT has_treatment OR match_treatment) AND (NOT has_condition OR match_condition) AND (NOT has_rarity OR match_rarity) AND (NOT has_color OR match_color) AND (NOT has_collection OR match_collection) AND (NOT has_set OR match_set) AND (NOT has_properties OR match_properties) AND (NOT has_format OR match_format) AND (NOT has_frame_effects OR match_frame_effects) AND (NOT has_card_types OR match_card_types)
+               ELSE TRUE
                END as others_language,
-               CASE WHEN p_filter_logic = 'and' THEN match_all_filters
-               ELSE (NOT (SELECT has_foil FROM active_filters) OR match_foil) AND (NOT (SELECT has_treatment FROM active_filters) OR match_treatment) AND (NOT (SELECT has_condition FROM active_filters) OR match_condition) AND (NOT (SELECT has_rarity FROM active_filters) OR match_rarity) AND (NOT (SELECT has_language FROM active_filters) OR match_language) AND (NOT (SELECT has_collection FROM active_filters) OR match_collection) AND (NOT (SELECT has_set FROM active_filters) OR match_set) AND (NOT (SELECT has_properties FROM active_filters) OR match_properties) AND (NOT (SELECT has_format FROM active_filters) OR match_format) AND (NOT (SELECT has_frame_effects FROM active_filters) OR match_frame_effects) AND (NOT (SELECT has_card_types FROM active_filters) OR match_card_types)
+               CASE WHEN p_filter_logic = 'and' THEN (NOT has_foil OR match_foil) AND (NOT has_treatment OR match_treatment) AND (NOT has_condition OR match_condition) AND (NOT has_rarity OR match_rarity) AND (NOT has_language OR match_language) AND (NOT has_collection OR match_collection) AND (NOT has_set OR match_set) AND (NOT has_properties OR match_properties) AND (NOT has_format OR match_format) AND (NOT has_frame_effects OR match_frame_effects) AND (NOT has_card_types OR match_card_types)
+               ELSE TRUE
                END as others_color,
-               CASE WHEN p_filter_logic = 'and' THEN match_all_filters
-               ELSE (NOT (SELECT has_foil FROM active_filters) OR match_foil) AND (NOT (SELECT has_treatment FROM active_filters) OR match_treatment) AND (NOT (SELECT has_condition FROM active_filters) OR match_condition) AND (NOT (SELECT has_rarity FROM active_filters) OR match_rarity) AND (NOT (SELECT has_language FROM active_filters) OR match_language) AND (NOT (SELECT has_color FROM active_filters) OR match_color) AND (NOT (SELECT has_set FROM active_filters) OR match_set) AND (NOT (SELECT has_properties FROM active_filters) OR match_properties) AND (NOT (SELECT has_format FROM active_filters) OR match_format) AND (NOT (SELECT has_frame_effects FROM active_filters) OR match_frame_effects) AND (NOT (SELECT has_card_types FROM active_filters) OR match_card_types)
+               CASE WHEN p_filter_logic = 'and' THEN (NOT has_foil OR match_foil) AND (NOT has_treatment OR match_treatment) AND (NOT has_condition OR match_condition) AND (NOT has_rarity OR match_rarity) AND (NOT has_language OR match_language) AND (NOT has_color OR match_color) AND (NOT has_set OR match_set) AND (NOT has_properties OR match_properties) AND (NOT has_format OR match_format) AND (NOT has_frame_effects OR match_frame_effects) AND (NOT has_card_types OR match_card_types)
+               ELSE TRUE
                END as others_collection,
-               CASE WHEN p_filter_logic = 'and' THEN match_all_filters
-               ELSE (NOT (SELECT has_foil FROM active_filters) OR match_foil) AND (NOT (SELECT has_treatment FROM active_filters) OR match_treatment) AND (NOT (SELECT has_condition FROM active_filters) OR match_condition) AND (NOT (SELECT has_rarity FROM active_filters) OR match_rarity) AND (NOT (SELECT has_language FROM active_filters) OR match_language) AND (NOT (SELECT has_color FROM active_filters) OR match_color) AND (NOT (SELECT has_collection FROM active_filters) OR match_collection) AND (NOT (SELECT has_properties FROM active_filters) OR match_properties) AND (NOT (SELECT has_format FROM active_filters) OR match_format) AND (NOT (SELECT has_frame_effects FROM active_filters) OR match_frame_effects) AND (NOT (SELECT has_card_types FROM active_filters) OR match_card_types)
+               CASE WHEN p_filter_logic = 'and' THEN (NOT has_foil OR match_foil) AND (NOT has_treatment OR match_treatment) AND (NOT has_condition OR match_condition) AND (NOT has_rarity OR match_rarity) AND (NOT has_language OR match_language) AND (NOT has_color OR match_color) AND (NOT has_collection OR match_collection) AND (NOT has_properties OR match_properties) AND (NOT has_format OR match_format) AND (NOT has_frame_effects OR match_frame_effects) AND (NOT has_card_types OR match_card_types)
+               ELSE TRUE
                END as others_set,
-               CASE WHEN p_filter_logic = 'and' THEN match_all_filters
-               ELSE (NOT (SELECT has_foil FROM active_filters) OR match_foil) AND (NOT (SELECT has_treatment FROM active_filters) OR match_treatment) AND (NOT (SELECT has_condition FROM active_filters) OR match_condition) AND (NOT (SELECT has_rarity FROM active_filters) OR match_rarity) AND (NOT (SELECT has_language FROM active_filters) OR match_language) AND (NOT (SELECT has_color FROM active_filters) OR match_color) AND (NOT (SELECT has_collection FROM active_filters) OR match_collection) AND (NOT (SELECT has_set FROM active_filters) OR match_set) AND (NOT (SELECT has_format FROM active_filters) OR match_format) AND (NOT (SELECT has_frame_effects FROM active_filters) OR match_frame_effects) AND (NOT (SELECT has_card_types FROM active_filters) OR match_card_types)
+               CASE WHEN p_filter_logic = 'and' THEN (NOT has_foil OR match_foil) AND (NOT has_treatment OR match_treatment) AND (NOT has_condition OR match_condition) AND (NOT has_rarity OR match_rarity) AND (NOT has_language OR match_language) AND (NOT has_color OR match_color) AND (NOT has_collection OR match_collection) AND (NOT has_set OR match_set) AND (NOT has_format OR match_format) AND (NOT has_frame_effects OR match_frame_effects) AND (NOT has_card_types OR match_card_types)
+               ELSE TRUE
                END as others_properties,
-               CASE WHEN p_filter_logic = 'and' THEN match_all_filters
-               ELSE (NOT (SELECT has_foil FROM active_filters) OR match_foil) AND (NOT (SELECT has_treatment FROM active_filters) OR match_treatment) AND (NOT (SELECT has_condition FROM active_filters) OR match_condition) AND (NOT (SELECT has_rarity FROM active_filters) OR match_rarity) AND (NOT (SELECT has_language FROM active_filters) OR match_language) AND (NOT (SELECT has_color FROM active_filters) OR match_color) AND (NOT (SELECT has_collection FROM active_filters) OR match_collection) AND (NOT (SELECT has_set FROM active_filters) OR match_set) AND (NOT (SELECT has_properties FROM active_filters) OR match_properties) AND (NOT (SELECT has_frame_effects FROM active_filters) OR match_frame_effects) AND (NOT (SELECT has_card_types FROM active_filters) OR match_card_types)
+               CASE WHEN p_filter_logic = 'and' THEN (NOT has_foil OR match_foil) AND (NOT has_treatment OR match_treatment) AND (NOT has_condition OR match_condition) AND (NOT has_rarity OR match_rarity) AND (NOT has_language OR match_language) AND (NOT has_color OR match_color) AND (NOT has_collection OR match_collection) AND (NOT has_set OR match_set) AND (NOT has_properties OR match_properties) AND (NOT has_frame_effects OR match_frame_effects) AND (NOT has_card_types OR match_card_types)
+               ELSE TRUE
                END as others_format,
-               CASE WHEN p_filter_logic = 'and' THEN match_all_filters
-               ELSE (NOT (SELECT has_foil FROM active_filters) OR match_foil) AND (NOT (SELECT has_treatment FROM active_filters) OR match_treatment) AND (NOT (SELECT has_condition FROM active_filters) OR match_condition) AND (NOT (SELECT has_rarity FROM active_filters) OR match_rarity) AND (NOT (SELECT has_language FROM active_filters) OR match_language) AND (NOT (SELECT has_color FROM active_filters) OR match_color) AND (NOT (SELECT has_collection FROM active_filters) OR match_collection) AND (NOT (SELECT has_set FROM active_filters) OR match_set) AND (NOT (SELECT has_properties FROM active_filters) OR match_properties) AND (NOT (SELECT has_format FROM active_filters) OR match_format) AND (NOT (SELECT has_card_types FROM active_filters) OR match_card_types)
+               CASE WHEN p_filter_logic = 'and' THEN (NOT has_foil OR match_foil) AND (NOT has_treatment OR match_treatment) AND (NOT has_condition OR match_condition) AND (NOT has_rarity OR match_rarity) AND (NOT has_language OR match_language) AND (NOT has_color OR match_color) AND (NOT has_collection OR match_collection) AND (NOT has_set OR match_set) AND (NOT has_properties OR match_properties) AND (NOT has_format OR match_format) AND (NOT has_card_types OR match_card_types)
+               ELSE TRUE
                END as others_frame_effects,
-               CASE WHEN p_filter_logic = 'and' THEN match_all_filters
-               ELSE (NOT (SELECT has_foil FROM active_filters) OR match_foil) AND (NOT (SELECT has_treatment FROM active_filters) OR match_treatment) AND (NOT (SELECT has_condition FROM active_filters) OR match_condition) AND (NOT (SELECT has_rarity FROM active_filters) OR match_rarity) AND (NOT (SELECT has_language FROM active_filters) OR match_language) AND (NOT (SELECT has_color FROM active_filters) OR match_color) AND (NOT (SELECT has_collection FROM active_filters) OR match_collection) AND (NOT (SELECT has_set FROM active_filters) OR match_set) AND (NOT (SELECT has_properties FROM active_filters) OR match_properties) AND (NOT (SELECT has_format FROM active_filters) OR match_format) AND (NOT (SELECT has_frame_effects FROM active_filters) OR match_frame_effects)
+               CASE WHEN p_filter_logic = 'and' THEN (NOT has_foil OR match_foil) AND (NOT has_treatment OR match_treatment) AND (NOT has_condition OR match_condition) AND (NOT has_rarity OR match_rarity) AND (NOT has_language OR match_language) AND (NOT has_color OR match_color) AND (NOT has_collection OR match_collection) AND (NOT has_set OR match_set) AND (NOT has_properties OR match_properties) AND (NOT has_format OR match_format) AND (NOT has_frame_effects OR match_frame_effects)
+               ELSE TRUE
                END as others_card_types
         FROM filter_matches
     ),
@@ -255,12 +256,17 @@ BEGIN
         JOIN custom_category cc ON pc.category_id = cc.id
         WHERE others_collection AND cc.slug IS NOT NULL GROUP BY val
     ),
-    f_set_name AS (
-        SELECT COALESCE(p.set_name, 'Unknown') as val, COUNT(*) as c, MAX(s.released_at) as release_date
+    f_set_counts AS (
+        SELECT COALESCE(p.set_name, 'Unknown') as val, COUNT(*) as c, MAX(p.set_code) as set_code, MAX(p.tcg) as tcg
         FROM dimension_matches p
-        LEFT JOIN tcg_set s ON (LOWER(p.set_name) = LOWER(s.name) AND p.tcg = s.tcg) OR (LOWER(p.set_code) = LOWER(s.code) AND p.tcg = s.tcg)
         WHERE others_set GROUP BY val HAVING COUNT(*) > 0
-        ORDER BY release_date DESC NULLS LAST, val ASC
+    ),
+    f_set_name AS (
+        SELECT f.val, f.c, MAX(s.released_at) as release_date
+        FROM f_set_counts f
+        LEFT JOIN tcg_set s ON (LOWER(f.val) = LOWER(s.name) AND f.tcg = s.tcg) OR (LOWER(f.set_code) = LOWER(s.code) AND f.tcg = s.tcg)
+        GROUP BY f.val, f.c
+        ORDER BY release_date DESC NULLS LAST, f.val ASC
         LIMIT 50
     ),
     f_legendary AS (
@@ -323,5 +329,6 @@ BEGIN
     ) INTO result;
 
     RETURN result;
-END;
+END; -- End of performance-optimization block
+END; -- End of function
 $$ LANGUAGE plpgsql STABLE;
