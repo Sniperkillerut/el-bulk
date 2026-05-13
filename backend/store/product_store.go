@@ -78,7 +78,7 @@ func (s *ProductStore) ListWithFilters(ctx context.Context, params ProductFilter
 	}
 
 	orderBy := s.buildOrderBy(params, len(args))
-	viewFrom, where, args := s.buildFilters(params, "view_product_enriched")
+	viewFrom, where, args := s.buildFilters(params) // Switched from view_product_enriched to base product table
 
 	listQuery := fmt.Sprintf("SELECT p.* %s %s ORDER BY %s LIMIT $%d OFFSET $%d",
 		viewFrom, where, orderBy, len(args)+1, len(args)+2)
@@ -96,29 +96,16 @@ func (s *ProductStore) ListWithFilters(ctx context.Context, params ProductFilter
 }
 
 func (s *ProductStore) SelectEnriched(ctx context.Context, query string, args ...interface{}) ([]models.Product, int, error) {
-	var rows []struct {
-		models.Product
-		StoredInJSON   []byte `db:"stored_in_json"`
-		CategoriesJSON []byte `db:"categories_json"`
-		DeckCardsJSON  []byte `db:"deck_cards_json"`
-	}
-
-	if err := s.DB.Unsafe().SelectContext(ctx, &rows, query, args...); err != nil {
+	var products []models.Product
+	if err := s.DB.Unsafe().SelectContext(ctx, &products, query, args...); err != nil {
 		return nil, 0, err
 	}
 
-	products := make([]models.Product, len(rows))
-	for i, r := range rows {
-		products[i] = r.Product
-		if r.StoredInJSON != nil {
-			json.Unmarshal(r.StoredInJSON, &products[i].StoredIn)
-		}
-		if r.CategoriesJSON != nil {
-			json.Unmarshal(r.CategoriesJSON, &products[i].Categories)
-		}
-		if r.DeckCardsJSON != nil {
-			json.Unmarshal(r.DeckCardsJSON, &products[i].DeckCards)
-		}
+	if len(products) > 0 {
+		s.PopulateStorage(ctx, products)
+		s.PopulateCategories(ctx, products)
+		s.PopulateCartCounts(ctx, products)
+		s.PopulateDeckCards(ctx, products)
 	}
 
 	return products, len(products), nil
@@ -288,6 +275,54 @@ func (s *ProductStore) PopulateCategories(ctx context.Context, products []models
 			products[i].Categories = cats
 		} else {
 			products[i].Categories = emptyCats
+		}
+	}
+	return nil
+}
+
+func (s *ProductStore) PopulateDeckCards(ctx context.Context, products []models.Product) error {
+	if len(products) == 0 {
+		return nil
+	}
+	pids := make([]string, 0, len(products))
+	for _, p := range products {
+		if p.ID != "" {
+			pids = append(pids, p.ID)
+		}
+	}
+
+	if len(pids) == 0 {
+		return nil
+	}
+
+	query, args, err := sqlx.In(`
+		SELECT product_id, id, name, set_code, collector_number, quantity, type_line, image_url, foil_treatment, card_treatment, rarity, art_variation, scryfall_id, frame_effects
+		FROM deck_card 
+		WHERE product_id IN (?)
+	`, pids)
+	if err != nil {
+		return err
+	}
+
+	query = s.DB.Rebind(query)
+	var deckRows []struct {
+		models.DeckCard
+		ProductID string `db:"product_id"`
+	}
+	if err := s.DB.SelectContext(ctx, &deckRows, query, args...); err != nil {
+		return err
+	}
+
+	deckMap := make(map[string][]models.DeckCard)
+	for _, r := range deckRows {
+		deckMap[r.ProductID] = append(deckMap[r.ProductID], r.DeckCard)
+	}
+
+	for i := range products {
+		if cards, ok := deckMap[products[i].ID]; ok {
+			products[i].DeckCards = cards
+		} else {
+			products[i].DeckCards = []models.DeckCard{}
 		}
 	}
 	return nil
@@ -890,7 +925,7 @@ func (s *ProductStore) GetRecommendations(ctx context.Context, cartIDs []string,
 			WHERE id = ANY(:cart_ids)
 		)
 		SELECT p.*
-		FROM view_product_enriched p, cart_metadata cm
+		FROM product p, cart_metadata cm
 		WHERE p.id != ALL(:cart_ids)
 		  AND p.stock >= 1
 		  AND (
@@ -936,30 +971,17 @@ func (s *ProductStore) GetRecommendations(ctx context.Context, cartIDs []string,
 	}
 	nQuery = s.DB.Rebind(nQuery)
 
-	var rows []struct {
-		models.Product
-		StoredInJSON   []byte `db:"stored_in_json"`
-		CategoriesJSON []byte `db:"categories_json"`
-		DeckCardsJSON  []byte `db:"deck_cards_json"`
-	}
-
-	if err := s.DB.Unsafe().SelectContext(ctx, &rows, nQuery, nArgs...); err != nil {
+	var products []models.Product
+	if err := s.DB.Unsafe().SelectContext(ctx, &products, nQuery, nArgs...); err != nil {
 		logger.ErrorCtx(ctx, "[DB] GetRecommendations query failed: %v", err)
 		return nil, err
 	}
 
-	products := make([]models.Product, len(rows))
-	for i, r := range rows {
-		products[i] = r.Product
-		if r.StoredInJSON != nil {
-			json.Unmarshal(r.StoredInJSON, &products[i].StoredIn)
-		}
-		if r.CategoriesJSON != nil {
-			json.Unmarshal(r.CategoriesJSON, &products[i].Categories)
-		}
-		if r.DeckCardsJSON != nil {
-			json.Unmarshal(r.DeckCardsJSON, &products[i].DeckCards)
-		}
+	if len(products) > 0 {
+		s.PopulateStorage(ctx, products)
+		s.PopulateCategories(ctx, products)
+		s.PopulateCartCounts(ctx, products)
+		s.PopulateDeckCards(ctx, products)
 	}
 
 	return products, nil
@@ -972,7 +994,7 @@ func (s *ProductStore) GetByNames(ctx context.Context, names []string) ([]models
 
 	query, args, err := sqlx.In(`
 		SELECT p.* 
-		FROM view_product_enriched p
+		FROM product p
 		WHERE p.name IN (?) AND p.stock >= 1
 		LIMIT 20
 	`, names)
@@ -981,29 +1003,16 @@ func (s *ProductStore) GetByNames(ctx context.Context, names []string) ([]models
 	}
 	query = s.DB.Rebind(query)
 
-	var rows []struct {
-		models.Product
-		StoredInJSON   []byte `db:"stored_in_json"`
-		CategoriesJSON []byte `db:"categories_json"`
-		DeckCardsJSON  []byte `db:"deck_cards_json"`
-	}
-
-	if err := s.DB.Unsafe().SelectContext(ctx, &rows, query, args...); err != nil {
+	var products []models.Product
+	if err := s.DB.Unsafe().SelectContext(ctx, &products, query, args...); err != nil {
 		return nil, err
 	}
 
-	products := make([]models.Product, len(rows))
-	for i, r := range rows {
-		products[i] = r.Product
-		if r.StoredInJSON != nil {
-			json.Unmarshal(r.StoredInJSON, &products[i].StoredIn)
-		}
-		if r.CategoriesJSON != nil {
-			json.Unmarshal(r.CategoriesJSON, &products[i].Categories)
-		}
-		if r.DeckCardsJSON != nil {
-			json.Unmarshal(r.DeckCardsJSON, &products[i].DeckCards)
-		}
+	if len(products) > 0 {
+		s.PopulateStorage(ctx, products)
+		s.PopulateCategories(ctx, products)
+		s.PopulateCartCounts(ctx, products)
+		s.PopulateDeckCards(ctx, products)
 	}
 
 	return products, nil
@@ -1016,7 +1025,7 @@ func (s *ProductStore) GetByIDs(ctx context.Context, ids []string) ([]models.Pro
 
 	query, args, err := sqlx.In(`
 		SELECT p.* 
-		FROM view_product_enriched p
+		FROM product p
 		WHERE p.id IN (?)
 	`, ids)
 	if err != nil {
@@ -1024,29 +1033,16 @@ func (s *ProductStore) GetByIDs(ctx context.Context, ids []string) ([]models.Pro
 	}
 	query = s.DB.Rebind(query)
 
-	var rows []struct {
-		models.Product
-		StoredInJSON   []byte `db:"stored_in_json"`
-		CategoriesJSON []byte `db:"categories_json"`
-		DeckCardsJSON  []byte `db:"deck_cards_json"`
-	}
-
-	if err := s.DB.Unsafe().SelectContext(ctx, &rows, query, args...); err != nil {
+	var products []models.Product
+	if err := s.DB.Unsafe().SelectContext(ctx, &products, query, args...); err != nil {
 		return nil, err
 	}
 
-	products := make([]models.Product, len(rows))
-	for i, r := range rows {
-		products[i] = r.Product
-		if r.StoredInJSON != nil {
-			json.Unmarshal(r.StoredInJSON, &products[i].StoredIn)
-		}
-		if r.CategoriesJSON != nil {
-			json.Unmarshal(r.CategoriesJSON, &products[i].Categories)
-		}
-		if r.DeckCardsJSON != nil {
-			json.Unmarshal(r.DeckCardsJSON, &products[i].DeckCards)
-		}
+	if len(products) > 0 {
+		s.PopulateStorage(ctx, products)
+		s.PopulateCategories(ctx, products)
+		s.PopulateCartCounts(ctx, products)
+		s.PopulateDeckCards(ctx, products)
 	}
 
 	return products, nil
