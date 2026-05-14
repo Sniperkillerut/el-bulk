@@ -73,6 +73,11 @@ func (c *Cache[T]) Flush() {
 	c.items = make(map[string]Item[T])
 }
 
+// Clear is an alias for Flush to support existing code.
+func (c *Cache[T]) Clear() {
+	c.Flush()
+}
+
 // TTLMap is a wrapper around Cache that uses a default TTL.
 type TTLMap[T any] struct {
 	*Cache[T]
