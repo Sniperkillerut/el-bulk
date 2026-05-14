@@ -89,7 +89,7 @@ func (s *ProductStore) ListWithFilters(ctx context.Context, params ProductFilter
 	}
 
 	start := time.Now()
-	fromClause, where, args := s.BuildFilters(params)
+	fromClause, where, args := s.BuildFilters(ctx, params)
 
 	var total int
 	countQuery := fmt.Sprintf("SELECT COUNT(*) %s %s", fromClause, where)
@@ -98,7 +98,7 @@ func (s *ProductStore) ListWithFilters(ctx context.Context, params ProductFilter
 	}
 
 	orderBy := s.BuildOrderBy(params, len(args))
-	viewFrom, where, args := s.BuildFilters(params)
+	viewFrom, where, args := s.BuildFilters(ctx, params)
 
 	listQuery := fmt.Sprintf("SELECT p.* %s %s ORDER BY %s LIMIT $%d OFFSET $%d",
 		viewFrom, where, orderBy, len(args)+1, len(args)+2)
@@ -689,7 +689,7 @@ func (s *ProductStore) BulkUpsert(ctx context.Context, jsonData string) ([]strin
 	return result, nil
 }
 
-func (s *ProductStore) BuildFilters(params ProductFilterParams, baseFrom ...string) (string, string, []interface{}) {
+func (s *ProductStore) BuildFilters(ctx context.Context, params ProductFilterParams, baseFrom ...string) (string, string, []interface{}) {
 	table := "product"
 	if len(baseFrom) > 0 {
 		table = baseFrom[0]
