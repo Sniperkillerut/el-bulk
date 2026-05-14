@@ -489,9 +489,10 @@ func (s *ProductStore) SaveCategories(ctx context.Context, productID string, cat
 		return err
 	}
 	for _, cid := range categoryIDs {
-		_, err := s.DB.ExecContext(ctx, "INSERT INTO product_category (product_id, category_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", productID, cid)
+		_, err = s.DB.ExecContext(ctx, "INSERT INTO product_category (product_id, category_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", productID, cid)
 		if err != nil {
 			logger.ErrorCtx(ctx, "Error inserting product_category (product=%s, cat=%s): %v", productID, cid, err)
+			return err
 		}
 	}
 	if err == nil {
@@ -686,7 +687,7 @@ func (s *ProductStore) BulkUpsert(ctx context.Context, jsonData string) ([]strin
 	if err == nil {
 		s.InvalidateCaches()
 	}
-	return result, nil
+	return result, err
 }
 
 func (s *ProductStore) BuildFilters(ctx context.Context, params ProductFilterParams, baseFrom ...string) (string, string, []interface{}) {
