@@ -23,7 +23,10 @@ CREATE OR REPLACE FUNCTION fn_get_product_facets(
     p_is_prepared TEXT DEFAULT '',
     p_format TEXT DEFAULT '',
     p_frame_effects TEXT DEFAULT '',
-    p_card_types TEXT DEFAULT ''
+    p_card_types TEXT DEFAULT '',
+    p_land_type TEXT DEFAULT '',
+    p_full_art TEXT DEFAULT '',
+    p_textless TEXT DEFAULT ''
 ) RETURNS JSONB AS $$
 DECLARE
     result JSONB;
@@ -62,7 +65,7 @@ BEGIN
         has_color BOOLEAN := v_color_arr IS NOT NULL;
         has_collection BOOLEAN := v_collection_arr IS NOT NULL;
         has_set BOOLEAN := v_set_name_arr IS NOT NULL;
-        has_properties BOOLEAN := (p_is_legendary != '' OR p_is_land != '' OR p_is_historic != '' OR p_is_prepared != '');
+        has_properties BOOLEAN := (p_is_legendary != '' OR p_is_land != '' OR p_is_historic != '' OR p_is_prepared != '' OR p_land_type != '' OR p_full_art != '' OR p_textless != '');
         has_format BOOLEAN := v_format_arr IS NOT NULL;
         has_frame_effects BOOLEAN := v_frame_effects_arr IS NOT NULL;
         has_card_types BOOLEAN := v_card_types_arr IS NOT NULL;
@@ -109,41 +112,48 @@ BEGIN
                  THEN (p_is_legendary = '' OR (p_is_legendary = 'true' AND p.is_legendary = true) OR (p_is_legendary = 'false' AND p.is_legendary = false)) AND
                       (p_is_land = '' OR (p_is_land = 'true' AND p.is_land = true) OR (p_is_land = 'false' AND p.is_land = false)) AND
                       (p_is_historic = '' OR (p_is_historic = 'true' AND p.is_historic = true) OR (p_is_historic = 'false' AND p.is_historic = false)) AND
-                      (p_is_prepared = '' OR (p_is_prepared = 'true' AND p.is_prepared = true))
+                      (p_is_prepared = '' OR (p_is_prepared = 'true' AND p.is_prepared = true)) AND
+                      (p_full_art = '' OR (p_full_art = 'true' AND p.full_art = true) OR (p_full_art = 'false' AND p.full_art = false)) AND
+                      (p_textless = '' OR (p_textless = 'true' AND p.textless = true) OR (p_textless = 'false' AND p.textless = false)) AND
+                      (p_land_type = '' OR (p_land_type = 'basic' AND p.is_basic_land = true) OR (p_land_type = 'non-basic' AND p.is_land = true AND p.is_basic_land = false))
                  ELSE (p_is_legendary = 'true' AND p.is_legendary = true) OR
                       (p_is_land = 'true' AND p.is_land = true) OR
                       (p_is_historic = 'true' AND p.is_historic = true) OR
                       (p_is_prepared = 'true' AND p.is_prepared = true) OR
-                      (p_is_legendary = '' AND p_is_land = '' AND p_is_historic = '' AND p_is_prepared = '')
+                      (p_full_art = 'true' AND p.full_art = true) OR
+                      (p_textless = 'true' AND p.textless = true) OR
+                      (p_land_type = 'basic' AND p.is_basic_land = true) OR
+                      (p_land_type = 'non-basic' AND p.is_land = true AND p.is_basic_land = false) OR
+                      (p_is_legendary = '' AND p_is_land = '' AND p_is_historic = '' AND p_is_prepared = '' AND p_full_art = '' AND p_textless = '' AND p_land_type = '')
                  END
                ) as match_properties,
                -- Multi-value fields: Optimized with array/JSONB operators
                (v_color_arr IS NULL OR (
-                    CASE WHEN p_filter_logic = 'and' 
+                    CASE WHEN LOWER(p_filter_logic) = 'and' 
                     THEN (string_to_array(p.color_identity, ',') @> v_color_arr)
                     ELSE (string_to_array(p.color_identity, ',') && v_color_arr)
                     END
                 )) as match_color,
                (v_collection_arr IS NULL OR (
-                   CASE WHEN p_filter_logic = 'and'
+                   CASE WHEN LOWER(p_filter_logic) = 'and'
                    THEN (COALESCE(cm.slugs, ARRAY[]::TEXT[]) @> v_collection_arr)
                    ELSE (COALESCE(cm.slugs, ARRAY[]::TEXT[]) && v_collection_arr)
                    END
                )) as match_collection,
                (v_format_arr IS NULL OR (
-                   CASE WHEN p_filter_logic = 'and'
-                   THEN (SELECT bool_and(p.legalities->>f = 'legal') FROM unnest(v_format_arr) f) -- Still needed for logic but limited rows
+                   CASE WHEN LOWER(p_filter_logic) = 'and'
+                   THEN (SELECT bool_and(p.legalities->>f = 'legal') FROM unnest(v_format_arr) f)
                    ELSE (p.legalities ?| v_format_arr)
                    END
                )) as match_format,
                (v_frame_effects_arr IS NULL OR (
-                   CASE WHEN p_filter_logic = 'and'
+                   CASE WHEN LOWER(p_filter_logic) = 'and'
                    THEN (p.frame_effects @> to_jsonb(v_frame_effects_arr)) 
                    ELSE (p.frame_effects ?| v_frame_effects_arr)
                    END
                )) as match_frame_effects,
                (v_card_types_arr IS NULL OR (
-                   CASE WHEN p_filter_logic = 'and'
+                   CASE WHEN LOWER(p_filter_logic) = 'and'
                    THEN (p.card_types @> to_jsonb(v_card_types_arr))
                    ELSE (p.card_types ?| v_card_types_arr)
                    END
@@ -153,7 +163,7 @@ BEGIN
     ),
     filter_matches AS (
         SELECT *,
-               CASE WHEN p_filter_logic = 'and' THEN
+               CASE WHEN LOWER(p_filter_logic) = 'and' THEN
                    ((NOT has_foil OR match_foil) AND
                     (NOT has_treatment OR match_treatment) AND
                     (NOT has_condition OR match_condition) AND
@@ -185,42 +195,18 @@ BEGIN
     ),
     dimension_matches AS (
         SELECT *,
-               CASE WHEN LOWER(p_filter_logic) = 'and' THEN (NOT has_condition OR match_condition) AND (NOT has_treatment OR match_treatment) AND (NOT has_rarity OR match_rarity) AND (NOT has_language OR match_language) AND (NOT has_color OR match_color) AND (NOT has_collection OR match_collection) AND (NOT has_set OR match_set) AND (NOT has_properties OR match_properties) AND (NOT has_format OR match_format) AND (NOT has_frame_effects OR match_frame_effects) AND (NOT has_card_types OR match_card_types)
-               ELSE TRUE
-               END as others_foil,
-               CASE WHEN LOWER(p_filter_logic) = 'and' THEN (NOT has_foil OR match_foil) AND (NOT has_condition OR match_condition) AND (NOT has_rarity OR match_rarity) AND (NOT has_language OR match_language) AND (NOT has_color OR match_color) AND (NOT has_collection OR match_collection) AND (NOT has_set OR match_set) AND (NOT has_properties OR match_properties) AND (NOT has_format OR match_format) AND (NOT has_frame_effects OR match_frame_effects) AND (NOT has_card_types OR match_card_types)
-               ELSE TRUE
-               END as others_treatment,
-               CASE WHEN LOWER(p_filter_logic) = 'and' THEN (NOT has_foil OR match_foil) AND (NOT has_treatment OR match_treatment) AND (NOT has_rarity OR match_rarity) AND (NOT has_language OR match_language) AND (NOT has_color OR match_color) AND (NOT has_collection OR match_collection) AND (NOT has_set OR match_set) AND (NOT has_properties OR match_properties) AND (NOT has_format OR match_format) AND (NOT has_frame_effects OR match_frame_effects) AND (NOT has_card_types OR match_card_types)
-               ELSE TRUE
-               END as others_condition,
-               CASE WHEN LOWER(p_filter_logic) = 'and' THEN (NOT has_foil OR match_foil) AND (NOT has_treatment OR match_treatment) AND (NOT has_condition OR match_condition) AND (NOT has_language OR match_language) AND (NOT has_color OR match_color) AND (NOT has_collection OR match_collection) AND (NOT has_set OR match_set) AND (NOT has_properties OR match_properties) AND (NOT has_format OR match_format) AND (NOT has_frame_effects OR match_frame_effects) AND (NOT has_card_types OR match_card_types)
-               ELSE TRUE
-               END as others_rarity,
-               CASE WHEN LOWER(p_filter_logic) = 'and' THEN (NOT has_foil OR match_foil) AND (NOT has_treatment OR match_treatment) AND (NOT has_condition OR match_condition) AND (NOT has_rarity OR match_rarity) AND (NOT has_color OR match_color) AND (NOT has_collection OR match_collection) AND (NOT has_set OR match_set) AND (NOT has_properties OR match_properties) AND (NOT has_format OR match_format) AND (NOT has_frame_effects OR match_frame_effects) AND (NOT has_card_types OR match_card_types)
-               ELSE TRUE
-               END as others_language,
-               CASE WHEN LOWER(p_filter_logic) = 'and' THEN (NOT has_foil OR match_foil) AND (NOT has_treatment OR match_treatment) AND (NOT has_condition OR match_condition) AND (NOT has_rarity OR match_rarity) AND (NOT has_language OR match_language) AND (NOT has_collection OR match_collection) AND (NOT has_set OR match_set) AND (NOT has_properties OR match_properties) AND (NOT has_format OR match_format) AND (NOT has_frame_effects OR match_frame_effects) AND (NOT has_card_types OR match_card_types)
-               ELSE TRUE
-               END as others_color,
-               CASE WHEN LOWER(p_filter_logic) = 'and' THEN (NOT has_foil OR match_foil) AND (NOT has_treatment OR match_treatment) AND (NOT has_condition OR match_condition) AND (NOT has_rarity OR match_rarity) AND (NOT has_language OR match_language) AND (NOT has_color OR match_color) AND (NOT has_set OR match_set) AND (NOT has_properties OR match_properties) AND (NOT has_format OR match_format) AND (NOT has_frame_effects OR match_frame_effects) AND (NOT has_card_types OR match_card_types)
-               ELSE TRUE
-               END as others_collection,
-               CASE WHEN LOWER(p_filter_logic) = 'and' THEN (NOT has_foil OR match_foil) AND (NOT has_treatment OR match_treatment) AND (NOT has_condition OR match_condition) AND (NOT has_rarity OR match_rarity) AND (NOT has_language OR match_language) AND (NOT has_color OR match_color) AND (NOT has_collection OR match_collection) AND (NOT has_properties OR match_properties) AND (NOT has_format OR match_format) AND (NOT has_frame_effects OR match_frame_effects) AND (NOT has_card_types OR match_card_types)
-               ELSE TRUE
-               END as others_set,
-               CASE WHEN LOWER(p_filter_logic) = 'and' THEN (NOT has_foil OR match_foil) AND (NOT has_treatment OR match_treatment) AND (NOT has_condition OR match_condition) AND (NOT has_rarity OR match_rarity) AND (NOT has_language OR match_language) AND (NOT has_color OR match_color) AND (NOT has_collection OR match_collection) AND (NOT has_set OR match_set) AND (NOT has_format OR match_format) AND (NOT has_frame_effects OR match_frame_effects) AND (NOT has_card_types OR match_card_types)
-               ELSE TRUE
-               END as others_properties,
-               CASE WHEN LOWER(p_filter_logic) = 'and' THEN (NOT has_foil OR match_foil) AND (NOT has_treatment OR match_treatment) AND (NOT has_condition OR match_condition) AND (NOT has_rarity OR match_rarity) AND (NOT has_language OR match_language) AND (NOT has_color OR match_color) AND (NOT has_collection OR match_collection) AND (NOT has_set OR match_set) AND (NOT has_properties OR match_properties) AND (NOT has_frame_effects OR match_frame_effects) AND (NOT has_card_types OR match_card_types)
-               ELSE TRUE
-               END as others_format,
-               CASE WHEN LOWER(p_filter_logic) = 'and' THEN (NOT has_foil OR match_foil) AND (NOT has_treatment OR match_treatment) AND (NOT has_condition OR match_condition) AND (NOT has_rarity OR match_rarity) AND (NOT has_language OR match_language) AND (NOT has_color OR match_color) AND (NOT has_collection OR match_collection) AND (NOT has_set OR match_set) AND (NOT has_properties OR match_properties) AND (NOT has_format OR match_format) AND (NOT has_card_types OR match_card_types)
-               ELSE TRUE
-               END as others_frame_effects,
-               CASE WHEN LOWER(p_filter_logic) = 'and' THEN (NOT has_foil OR match_foil) AND (NOT has_treatment OR match_treatment) AND (NOT has_condition OR match_condition) AND (NOT has_rarity OR match_rarity) AND (NOT has_language OR match_language) AND (NOT has_color OR match_color) AND (NOT has_collection OR match_collection) AND (NOT has_set OR match_set) AND (NOT has_properties OR match_properties) AND (NOT has_format OR match_format) AND (NOT has_frame_effects OR match_frame_effects)
-               ELSE TRUE
-               END as others_card_types
+               CASE WHEN LOWER(p_filter_logic) = 'and' THEN match_all_filters ELSE TRUE END as others_foil,
+               CASE WHEN LOWER(p_filter_logic) = 'and' THEN match_all_filters ELSE TRUE END as others_treatment,
+               CASE WHEN LOWER(p_filter_logic) = 'and' THEN match_all_filters ELSE TRUE END as others_condition,
+               CASE WHEN LOWER(p_filter_logic) = 'and' THEN match_all_filters ELSE TRUE END as others_rarity,
+               CASE WHEN LOWER(p_filter_logic) = 'and' THEN match_all_filters ELSE TRUE END as others_language,
+               CASE WHEN LOWER(p_filter_logic) = 'and' THEN match_all_filters ELSE TRUE END as others_color,
+               CASE WHEN LOWER(p_filter_logic) = 'and' THEN match_all_filters ELSE TRUE END as others_collection,
+               CASE WHEN LOWER(p_filter_logic) = 'and' THEN match_all_filters ELSE TRUE END as others_set,
+               CASE WHEN LOWER(p_filter_logic) = 'and' THEN match_all_filters ELSE TRUE END as others_properties,
+               CASE WHEN LOWER(p_filter_logic) = 'and' THEN match_all_filters ELSE TRUE END as others_format,
+               CASE WHEN LOWER(p_filter_logic) = 'and' THEN match_all_filters ELSE TRUE END as others_frame_effects,
+               CASE WHEN LOWER(p_filter_logic) = 'and' THEN match_all_filters ELSE TRUE END as others_card_types
         FROM filter_matches
     ),
     f_condition AS (

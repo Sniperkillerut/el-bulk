@@ -201,12 +201,13 @@ func (s *ProductStore) GetFacets(ctx context.Context, params ProductFilterParams
 
 	var result []byte
 	start := time.Now()
-	query := "SELECT fn_get_product_facets($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)"
+	query := "SELECT fn_get_product_facets($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)"
 	logger.TraceCtx(ctx, "[DB] Executing GetFacets: %s", query)
 	err := s.DB.GetContext(ctx, &result, query,
 		params.TCG, params.Category, params.Search, params.StorageID, params.Foil, params.Treatment, params.Condition,
 		params.Rarity, params.Language, params.Color, params.Collection, params.SetName, params.InStock, params.FilterLogic, isAdmin,
-		params.IsLegendary, params.IsLand, params.IsHistoric, params.IsPrepared, params.Format, params.FrameEffects, params.CardTypes)
+		params.IsLegendary, params.IsLand, params.IsHistoric, params.IsPrepared, params.Format, params.FrameEffects, params.CardTypes,
+		params.LandType, params.FullArt, params.Textless)
 
 	if err != nil {
 		logger.ErrorCtx(ctx, "[DB] GetFacets failed: %v", err)
