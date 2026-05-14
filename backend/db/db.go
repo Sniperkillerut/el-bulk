@@ -83,34 +83,29 @@ func ConnectResilient() (*sqlx.DB, error) {
 		iamUser := os.Getenv("DB_IAM_USER")
 		isIAM := os.Getenv("DB_IAM_AUTH") == "true" || (iamUser != "" && strings.Contains(iamUser, "@"))
 
-		var connectorDsn string
 		if isIAM {
 			if iamUser == "" {
-				// Fallback to auto-detecting from credentials if not provided
 				creds, err := google.FindDefaultCredentials(ctx)
 				if err == nil && creds.ProjectID != "" {
-					// Most common pattern for default compute SA
 					iamUser = fmt.Sprintf("%s-compute@developer.gserviceaccount.com", creds.ProjectID)
 				}
 			}
-
-			// Cloud SQL IAM users are the email address without the .gserviceaccount.com suffix
 			user = strings.TrimSuffix(iamUser, ".gserviceaccount.com")
 			logger.InfoCtx(ctx, "🔐 Cloud SQL: Enabling IAM-based authentication for user: %s", user)
-			
-			// Format for pgxv5 with cloudsqlconn and IAM:
-			// "host=PROJECT:REGION:INSTANCE user=USER dbname=DB sslmode=disable"
-			// The driver handles the token generation and refresh.
-			connectorDsn = fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable", instanceName, user, dbName)
-		} else {
-			// Legacy password-based connection via Unix Socket
-			pass := os.Getenv("DB_PASS")
-			connectorDsn = fmt.Sprintf("host='/cloudsql/%s' user='%s' password='%s' dbname='%s' sslmode='disable'", instanceName, user, pass, dbName)
 		}
 
-		// Use 'pgxv5' driver (registered by cloud.google.com/go/cloudsqlconn/postgres/pgxv5)
-		// which natively supports the Cloud SQL Connector
-		db, err := sqlx.Open("pgxv5", connectorDsn)
+		// Configure pgx for the connection
+		connStr := fmt.Sprintf("user=%s dbname=%s sslmode=disable", user, dbName)
+		if !isIAM {
+			if pass := os.Getenv("DB_PASS"); pass != "" {
+				connStr += fmt.Sprintf(" password=%s", pass)
+			}
+		}
+
+		// Use the cloudsqlconn driver name 'cloudsqlpostgres' if available, 
+		// or use the more direct method of registering a custom dialer if needed.
+		// For simplicity and compatibility, we'll use the 'cloudsqlpostgres' driver name.
+		db, err := sqlx.Open("cloudsqlpostgres", fmt.Sprintf("%s host=%s", connStr, instanceName))
 		if err != nil {
 			return nil, fmt.Errorf("failed to open database via Cloud SQL Connector: %v", err)
 		}
