@@ -195,7 +195,7 @@ func main() {
 
 	// Public API
 	r.Route("/api", func(r chi.Router) {
-		r.Use(middleware.RateLimit(60, time.Minute))
+		r.Use(middleware.RateLimit(120, time.Minute))
 
 		r.With(middleware.OptionalAdminAuth).Get("/products", productHandler.List)
 		r.Get("/products/recommendations", productHandler.GetRecommendations)
@@ -248,7 +248,7 @@ func main() {
 
 		// Admin routes (protected)
 		r.Route("/admin", func(r chi.Router) {
-			r.With(middleware.RateLimit(5, 15*time.Minute)).Post("/login", adminHandler.Login)
+			r.With(middleware.RateLimit(10, 5*time.Minute)).Post("/login", adminHandler.Login)
 			r.Get("/auth/google", func(w http.ResponseWriter, r *http.Request) {
 				http.Redirect(w, r, r.URL.Path+"/login", http.StatusMovedPermanently)
 			})
