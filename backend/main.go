@@ -65,11 +65,12 @@ func main() {
 
 	database, err := db.ConnectResilient()
 	if err != nil {
-		logger.Warn("Could not connect to database on startup: %v", err)
-		logger.Warn("Server starting in degraded mode (some features will be unavailable)")
-	} else {
-		defer database.Close()
+		// In production, we cannot function without the DB. 
+		// Failing here prevents the nil-pointer panics in handlers.
+		logger.Error("FATAL: Could not connect to database on startup: %v", err)
+		os.Exit(1)
 	}
+	defer database.Close()
 
 	// Initialize Stores
 	categoryStore := store.NewCategoryStore(database)

@@ -69,6 +69,9 @@ type ProductFilterParams struct {
 }
 
 func (s *ProductStore) ListWithFilters(ctx context.Context, params ProductFilterParams) ([]models.Product, int, error) {
+	if s.DB == nil {
+		return nil, 0, fmt.Errorf("database connection is not initialized")
+	}
 	start := time.Now()
 	fromClause, where, args := s.BuildFilters(params)
 
@@ -130,6 +133,9 @@ func (s *ProductStore) SelectEnriched(ctx context.Context, query string, args ..
 }
 
 func (s *ProductStore) GetFacets(ctx context.Context, params ProductFilterParams, isAdmin bool) (models.Facets, error) {
+	if s.DB == nil {
+		return models.Facets{}, fmt.Errorf("database connection is not initialized")
+	}
 	// Generate cache key from params
 	cacheKey := fmt.Sprintf("facets:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v",
 		params.TCG, params.Category, params.Search, params.StorageID, params.Foil, params.Treatment, params.Condition,

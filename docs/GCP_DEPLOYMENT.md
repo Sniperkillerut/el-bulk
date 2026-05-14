@@ -230,14 +230,29 @@ Then grant the IAM user access to the database by running this block (it uses th
 gcloud sql databases create elbulk --instance=el-bulk-db 2>/dev/null || echo "Database exists"
 
 gcloud sql connect el-bulk-db --user=postgres --database=elbulk <<EOF
-GRANT cloudsql_iam_user TO "$IAM_USER";
+-- Correct role name for PG16 is cloudsqliamuser
+GRANT cloudsqliamuser TO "$IAM_USER";
 GRANT ALL PRIVILEGES ON DATABASE elbulk TO "$IAM_USER";
+
+-- Essential for PG15+ migrations/temp tables
+GRANT USAGE, CREATE ON SCHEMA public TO "$IAM_USER";
+
+-- Grant on existing objects
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO "$IAM_USER";
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO "$IAM_USER";
+GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO "$IAM_USER";
+
+-- Ensure future objects (migrations) are accessible
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "$IAM_USER";
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "$IAM_USER";
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON FUNCTIONS TO "$IAM_USER";
 EOF
 ```
+
+> [!IMPORTANT]
+> **Connection Limits**: If using a `db-f1-micro` instance, you must limit the backend connection pool to prevent `53300` errors. Set these environment variables in Cloud Run:
+> `DB_MAX_OPEN_CONNS=10`
+> `DB_MAX_IDLE_CONNS=2`
 
 
 

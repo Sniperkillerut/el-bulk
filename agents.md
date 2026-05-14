@@ -9,7 +9,7 @@
 ## TECHNICAL DISCIPLINE
 
 - **Environment Integrity**: Always detect + respect host OS (Windows/PowerShell). No Linux syntax (`rm -rf`, `&&`) unless confirmed.
-- **Production Guardrails**: Never modify infra files (`go.mod`, `Dockerfile`, `db/db.go`) without "Production Impact Audit". Protect IAM auth + Cloud SQL logic.
+- **Production Guardrails**: Never modify infra files (`go.mod`, `Dockerfile`, `db/db.go`) without "Production Impact Audit". Protect IAM auth + Cloud SQL logic. when needed, ask for permission.
 - **Verification First**: Never claim task fixed/complete on theory. Run verification (`go build`, `go test`, audit scripts) + show output as evidence.
 - **Zero-Noise Workflow**: Clean scratch files, temporary audits, JSON artifacts immediately. If files deleted, remind to close IDE tabs to clear "ghost" errors.
 - **Git Safety**: No `git add`, `commit`, `push` without explicit permission per change.
