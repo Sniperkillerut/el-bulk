@@ -25,6 +25,10 @@ func NewTCGStore(db *sqlx.DB) *TCGStore {
 	}
 }
 
+func (s *TCGStore) InvalidateCache() {
+	s.cache.Flush()
+}
+
 func (s *TCGStore) ListWithCount(ctx context.Context, activeOnly bool) ([]models.TCG, error) {
 	cacheKey := tcgCacheKeyPrefix + fmt.Sprint(activeOnly)
 	if cached, found := s.cache.Get(cacheKey); found {

@@ -24,6 +24,10 @@ func NewTCGService(s *store.TCGStore, refresh *RefreshService) *TCGService {
 	}
 }
 
+func (s *TCGService) ResetCache() {
+	s.Store.InvalidateCache()
+}
+
 func (s *TCGService) List(ctx context.Context, isAdmin bool) ([]models.TCG, error) {
 	logger.TraceCtx(ctx, "TCGService.List | Admin: %v", isAdmin)
 	// If not admin, only show active TCGs
@@ -147,6 +151,6 @@ func (s *TCGService) SyncPrices(ctx context.Context, tcgID string) (int, int, er
 		return 0, 0, fmt.Errorf("price sync currently only supported for MTG")
 	}
 
-	updated, errs := s.RefreshService.RunPriceRefresh(ctx, tcgID)
+	updated, errs := s.RefreshService.RunPriceRefresh(ctx, tcgID, nil)
 	return updated, errs, nil
 }

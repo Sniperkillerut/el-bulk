@@ -192,4 +192,5 @@ func (s *SettingsService) ResetCache() {
 	s.mu.Lock()
 	s.cacheTime = time.Now().Add(-2 * time.Minute) // Force expiration
 	s.mu.Unlock()
+	s.Store.InvalidateCache()
 }

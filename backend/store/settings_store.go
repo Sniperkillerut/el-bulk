@@ -54,6 +54,10 @@ func (s *SettingsStore) GetAll(ctx context.Context) (map[string]string, error) {
 	return settings, rows.Err()
 }
 
+func (s *SettingsStore) InvalidateCache() {
+	s.cache.Delete(settingsCacheKey)
+}
+
 func (s *SettingsStore) Upsert(ctx context.Context, key, value string) error {
 	query := "INSERT INTO setting(key, value) VALUES($1, $2) ON CONFLICT(key) DO UPDATE SET value = $2"
 	logger.TraceCtx(ctx, "[DB] Executing Upsert Setting: %s | Key: %s", query, key)
