@@ -26,7 +26,7 @@ This document tracks planned performance and stability improvements for the `el-
 ### 2.2 Database Indexing Audit
 - **Goal**: Ensure columns used in `GetFacets` and `ListWithFilters` have optimal composite indexes.
 - **Impact**: Lower DB CPU usage and faster search results.
-- **Status**: [ ] Pending
+- **Status**: [x] Completed
 
 ## 📊 Priority 3: Long-term Scalability
 
