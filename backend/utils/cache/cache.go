@@ -5,72 +5,70 @@ import (
 	"time"
 )
 
-type item[T any] struct {
-	value      T
-	expiration int64
+// Item represents a cached item with an optional expiration time.
+type Item[T any] struct {
+	Value      T
+	Expiration int64
 }
 
-type TTLMap[T any] struct {
-	sync.RWMutex
-	items map[string]item[T]
+// Cache is a simple thread-safe in-memory cache.
+type Cache[T any] struct {
+	items map[string]Item[T]
+	mu    sync.RWMutex
 }
 
-func NewTTLMap[T any](cleaningInterval time.Duration) *TTLMap[T] {
-	tm := &TTLMap[T]{
-		items: make(map[string]item[T]),
-	}
-	if cleaningInterval > 0 {
-		go tm.startCleaning(cleaningInterval)
-	}
-	return tm
-}
-
-func (tm *TTLMap[T]) Set(key string, value T, ttl time.Duration) {
-	tm.Lock()
-	defer tm.Unlock()
-	tm.items[key] = item[T]{
-		value:      value,
-		expiration: time.Now().Add(ttl).UnixNano(),
+// New creates a new Cache.
+func New[T any]() *Cache[T] {
+	return &Cache[T]{
+		items: make(map[string]Item[T]),
 	}
 }
 
-func (tm *TTLMap[T]) Get(key string) (T, bool) {
-	tm.RLock()
-	defer tm.RUnlock()
-	it, ok := tm.items[key]
-	if !ok {
+// Set adds an item to the cache. If duration is 0, the item never expires.
+func (c *Cache[T]) Set(key string, value T, duration time.Duration) {
+	var expiration int64
+	if duration > 0 {
+		expiration = time.Now().Add(duration).UnixNano()
+	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.items[key] = Item[T]{
+		Value:      value,
+		Expiration: expiration,
+	}
+}
+
+// Get retrieves an item from the cache.
+func (c *Cache[T]) Get(key string) (T, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	item, found := c.items[key]
+	if !found {
 		var zero T
 		return zero, false
 	}
-	if time.Now().UnixNano() > it.expiration {
+
+	if item.Expiration > 0 && time.Now().UnixNano() > item.Expiration {
 		var zero T
 		return zero, false
 	}
-	return it.value, true
+
+	return item.Value, true
 }
 
-func (tm *TTLMap[T]) Delete(key string) {
-	tm.Lock()
-	defer tm.Unlock()
-	delete(tm.items, key)
+// Delete removes an item from the cache.
+func (c *Cache[T]) Delete(key string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	delete(c.items, key)
 }
 
-func (tm *TTLMap[T]) Clear() {
-	tm.Lock()
-	defer tm.Unlock()
-	tm.items = make(map[string]item[T])
-}
-
-func (tm *TTLMap[T]) startCleaning(interval time.Duration) {
-	ticker := time.NewTicker(interval)
-	for range ticker.C {
-		tm.Lock()
-		now := time.Now().UnixNano()
-		for k, v := range tm.items {
-			if now > v.expiration {
-				delete(tm.items, k)
-			}
-		}
-		tm.Unlock()
-	}
+// Flush clears all items from the cache.
+func (c *Cache[T]) Flush() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.items = make(map[string]Item[T])
 }

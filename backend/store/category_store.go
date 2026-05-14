@@ -5,17 +5,22 @@ import (
 	"time"
 
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/utils/cache"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
 )
 
+const categoryCacheKeyPrefix = "categories_admin_"
+
 type CategoryStore struct {
 	*BaseStore[models.CustomCategory]
+	cache *cache.Cache[[]models.CustomCategory]
 }
 
 func NewCategoryStore(db *sqlx.DB) *CategoryStore {
 	return &CategoryStore{
 		BaseStore: NewBaseStore[models.CustomCategory](db, "custom_category"),
+		cache:     cache.New[[]models.CustomCategory](),
 	}
 }
 
@@ -49,11 +54,18 @@ func (s *CategoryStore) Create(ctx context.Context, input models.CustomCategoryI
 
 	if err != nil {
 		logger.ErrorCtx(ctx, "[DB] CreateCategory failed: %v", err)
+	} else {
+		s.cache.Flush()
 	}
 	return &cat, err
 }
 
 func (s *CategoryStore) ListWithCount(ctx context.Context, isAdmin bool) ([]models.CustomCategory, error) {
+	cacheKey := categoryCacheKeyPrefix + fmt.Sprint(isAdmin)
+	if cached, found := s.cache.Get(cacheKey); found {
+		return cached, nil
+	}
+
 	categories := []models.CustomCategory{}
 
 	query := `
@@ -73,13 +85,17 @@ func (s *CategoryStore) ListWithCount(ctx context.Context, isAdmin bool) ([]mode
 	query += ` ORDER BY c.name `
 
 	start := time.Now()
-	logger.TraceCtx(ctx, "[DB] Executing ListWithCount (isAdmin=%v): %s", isAdmin, query)
+	logger.TraceCtx(ctx, "[DB] Executing ListWithCount (isAdmin=%v) (Cache Miss): %s", isAdmin, query)
 	err := s.DB.SelectContext(ctx, &categories, query)
 	if err != nil {
 		logger.ErrorCtx(ctx, "[DB] ListWithCount failed: %v", err)
+		return nil, err
 	}
+
+	s.cache.Set(cacheKey, categories, 5*time.Minute)
+
 	logger.DebugCtx(ctx, "[DB] ListWithCount took %v", time.Since(start))
-	return categories, err
+	return categories, nil
 }
 
 func (s *CategoryStore) GetProductMappings(ctx context.Context, categoryID string) ([]string, error) {
@@ -114,5 +130,9 @@ func (s *CategoryStore) BatchAddProducts(ctx context.Context, categoryID string,
 		}
 	}
 
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	s.cache.Flush()
+	return nil
 }

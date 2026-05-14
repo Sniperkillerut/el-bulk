@@ -6,21 +6,31 @@ import (
 	"time"
 
 	"github.com/el-bulk/backend/models"
+	"github.com/el-bulk/backend/utils/cache"
 	"github.com/el-bulk/backend/utils/logger"
 	"github.com/jmoiron/sqlx"
 )
 
+const tcgCacheKeyPrefix = "tcgs_active_"
+
 type TCGStore struct {
 	*BaseStore[models.TCG]
+	cache *cache.Cache[[]models.TCG]
 }
 
 func NewTCGStore(db *sqlx.DB) *TCGStore {
 	return &TCGStore{
 		BaseStore: NewBaseStore[models.TCG](db, "tcg"),
+		cache:     cache.New[[]models.TCG](),
 	}
 }
 
 func (s *TCGStore) ListWithCount(ctx context.Context, activeOnly bool) ([]models.TCG, error) {
+	cacheKey := tcgCacheKeyPrefix + fmt.Sprint(activeOnly)
+	if cached, found := s.cache.Get(cacheKey); found {
+		return cached, nil
+	}
+
 	start := time.Now()
 	var tcgs []models.TCG
 
@@ -38,7 +48,7 @@ func (s *TCGStore) ListWithCount(ctx context.Context, activeOnly bool) ([]models
 		ORDER BY t.name
 	`, where)
 
-	logger.TraceCtx(ctx, "[DB] Executing ListWithCount (TCG): %s", query)
+	logger.TraceCtx(ctx, "[DB] Executing ListWithCount (TCG) (Cache Miss): %s", query)
 	err := s.DB.Unsafe().SelectContext(ctx, &tcgs, query)
 	if err != nil {
 		logger.ErrorCtx(ctx, "[DB] ListWithCount (TCG) failed: %v", err)
@@ -47,6 +57,9 @@ func (s *TCGStore) ListWithCount(ctx context.Context, activeOnly bool) ([]models
 	if tcgs == nil {
 		tcgs = []models.TCG{}
 	}
+
+	s.cache.Set(cacheKey, tcgs, 5*time.Minute)
+
 	logger.DebugCtx(ctx, "[DB] ListWithCount (TCG) took %v", time.Since(start))
 	return tcgs, nil
 }
@@ -62,6 +75,8 @@ func (s *TCGStore) Create(ctx context.Context, input models.TCGInput) (*models.T
 	err := s.DB.QueryRowxContext(ctx, query, input.ID, input.Name, true).StructScan(&tcg)
 	if err != nil {
 		logger.ErrorCtx(ctx, "[DB] CreateTCG failed for %s: %v", input.ID, err)
+	} else {
+		s.cache.Flush()
 	}
 	return &tcg, err
 }
@@ -74,6 +89,9 @@ func (s *TCGStore) Update(ctx context.Context, id string, input models.TCGInput)
 		WHERE id = $3
 		RETURNING *
 	`, input.Name, input.IsActive, id).StructScan(&tcg)
+	if err == nil {
+		s.cache.Flush()
+	}
 	return &tcg, err
 }
 
