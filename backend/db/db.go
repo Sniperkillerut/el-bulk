@@ -119,13 +119,15 @@ func ConnectResilient() (*sqlx.DB, error) {
 			return nil, fmt.Errorf("failed to open database via Unix socket: %v", err)
 		}
 
-		maxOpen := getEnvInt("DB_MAX_OPEN_CONNS", 25)
-		maxIdle := getEnvInt("DB_MAX_IDLE_CONNS", 5)
+		maxOpen := getEnvInt("DB_MAX_OPEN_CONNS", 10)
+		maxIdle := getEnvInt("DB_MAX_IDLE_CONNS", 2)
+		maxLifetime := getEnvDuration("DB_CONN_MAX_LIFETIME", 5*time.Minute)
+		
 		db.SetMaxOpenConns(maxOpen)
 		db.SetMaxIdleConns(maxIdle)
-		db.SetConnMaxLifetime(time.Hour)
+		db.SetConnMaxLifetime(maxLifetime)
 
-		logger.InfoCtx(ctx, "⚙️ DB Pooling: MaxOpen=%d, MaxIdle=%d", maxOpen, maxIdle)
+		logger.InfoCtx(ctx, "⚙️ DB Pooling (Unix): MaxOpen=%d, MaxIdle=%d, MaxLifetime=%v", maxOpen, maxIdle, maxLifetime)
 
 		if err := Initialize(db); err != nil {
 			logger.ErrorCtx(ctx, "Schema initialization failure: %v", err)
@@ -182,13 +184,15 @@ func ConnectResilient() (*sqlx.DB, error) {
 		return nil, fmt.Errorf("failed to connect to database: %v", err)
 	}
 
-	maxOpen := getEnvInt("DB_MAX_OPEN_CONNS", 25)
-	maxIdle := getEnvInt("DB_MAX_IDLE_CONNS", 5)
+	maxOpen := getEnvInt("DB_MAX_OPEN_CONNS", 10)
+	maxIdle := getEnvInt("DB_MAX_IDLE_CONNS", 2)
+	maxLifetime := getEnvDuration("DB_CONN_MAX_LIFETIME", 5*time.Minute)
+	
 	db.SetMaxOpenConns(maxOpen)
 	db.SetMaxIdleConns(maxIdle)
-	db.SetConnMaxLifetime(time.Hour)
+	db.SetConnMaxLifetime(maxLifetime)
 
-	logger.InfoCtx(ctx, "⚙️ DB Pooling: MaxOpen=%d, MaxIdle=%d", maxOpen, maxIdle)
+	logger.InfoCtx(ctx, "⚙️ DB Pooling (DSN): MaxOpen=%d, MaxIdle=%d, MaxLifetime=%v", maxOpen, maxIdle, maxLifetime)
 
 	logger.InfoCtx(ctx, "Database connected successfully")
 
@@ -360,6 +364,15 @@ func getEnvInt(key string, fallback int) int {
 	if val := os.Getenv(key); val != "" {
 		if i, err := strconv.Atoi(val); err == nil {
 			return i
+		}
+	}
+	return fallback
+}
+
+func getEnvDuration(key string, fallback time.Duration) time.Duration {
+	if val := os.Getenv(key); val != "" {
+		if d, err := time.ParseDuration(val); err == nil {
+			return d
 		}
 	}
 	return fallback
