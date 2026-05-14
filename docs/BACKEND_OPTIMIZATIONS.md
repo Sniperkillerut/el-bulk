@@ -35,7 +35,22 @@ This document tracks planned performance and stability improvements for the `el-
 
 ## 📊 Priority 3: Long-term Scalability
 
-### 3.1 Background Task Processing
-- **Goal**: Move heavy work (like image processing or price updates) to background workers.
-- **Impact**: Improved API responsiveness for users.
+### 3.1 Background Worker Pool
+- **Goal**: Implement a managed worker pool (e.g., using a library like `River` or a robust internal queue).
+- **Impact**: Offloads CSV imports, image processing, and price syncing from the API request lifecycle.
+- **Status**: [ ] Pending
+
+### 3.2 Asset CDN Migration (Cloudflare R2 / GCP Buckets)
+- **Goal**: Offload image serving from the Go backend to a dedicated CDN.
+- **Impact**: Dramatically reduces server egress bandwidth and improves image load times globally.
+- **Status**: [ ] Pending
+
+### 3.3 Advanced Monitoring & Alerting
+- **Goal**: Integrate Sentry and Google Cloud Monitoring (Cloud Trace/Metrics).
+- **Impact**: Real-time visibility into database connection saturation and automatic alerts for API errors.
+- **Status**: [ ] Pending
+
+### 3.4 API Versioning & Breaking Change Shield
+- **Goal**: Transition to `/api/v1` and implement strict schema validation for bulk imports.
+- **Impact**: Prevents invalid data from entering the database during large-scale imports.
 - **Status**: [ ] Pending
