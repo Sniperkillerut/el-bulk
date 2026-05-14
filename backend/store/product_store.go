@@ -121,10 +121,12 @@ func (s *ProductStore) ListWithFilters(ctx context.Context, params ProductFilter
 }
 
 func (s *ProductStore) GetSearchCacheKey(p ProductFilterParams) string {
-	// Simple string key for performance
-	return fmt.Sprintf("search:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%v:%s:%s:%d:%d:%s:%s:%s:%s:%s",
-		p.TCG, p.Category, p.Search, p.Foil, p.Treatment, p.Condition, p.Rarity, p.Language, p.Color, p.SetName,
-		p.InStock, p.SortBy, p.SortDir, p.Page, p.PageSize, p.IsLegendary, p.IsLand, p.IsHistoric, p.IsPrepared, p.CardTypes)
+	// Simple string key for performance, including all parameters that affect the query
+	return fmt.Sprintf("search:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%v:%v:%s:%s:%d:%d:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s",
+		p.TCG, p.Category, p.Search, p.StorageID, p.Foil, p.Treatment, p.Condition, p.Collection, p.Rarity, p.Language,
+		p.Color, p.SetName, p.InStock, p.OnlyDuplicates, p.SortBy, p.SortDir, p.Page, p.PageSize,
+		p.IsLegendary, p.IsLand, p.IsHistoric, p.IsPrepared, p.LandType, p.Format, p.FrameEffects, p.CardTypes,
+		p.FullArt, p.Textless, p.FilterLogic)
 }
 
 func (s *ProductStore) InvalidateCaches() {
