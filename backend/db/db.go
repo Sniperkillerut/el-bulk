@@ -70,9 +70,9 @@ func ConnectResilient() (*sqlx.DB, error) {
 	// 0. Cloud SQL Connector (Recommended for local/complex setups)
 	// OR Unix Domain Sockets (Recommended for Cloud Run)
 	if instanceName != "" {
-		logger.InfoCtx(ctx, "🔌 Cloud SQL: Using native connection via Unix Socket: /cloudsql/%s", instanceName)
+		// Use Cloud SQL Go Connector for automatic IAM token refreshing
+		logger.InfoCtx(ctx, "🔌 Cloud SQL: Using native connection via Cloud SQL Connector: %s", instanceName)
 
-		// Extract DB name from DSN or fallback to elbulk
 		dbName := "elbulk"
 		if dsn != "" && strings.Contains(dsn, "/") {
 			parts := strings.Split(dsn, "/")
@@ -80,54 +80,50 @@ func ConnectResilient() (*sqlx.DB, error) {
 		}
 
 		user := "elbulk"
-		pass := ""
-
-		// Auto-detect IAM user from environment or DSN
 		iamUser := os.Getenv("DB_IAM_USER")
-		if iamUser == "" && dsn != "" && strings.Contains(dsn, "@") {
-			// Extract user from postgres://user:pass@host/db
-			uPart := strings.Split(strings.TrimPrefix(dsn, "postgres://"), ":")[0]
-			if strings.Contains(uPart, "@") {
-				iamUser = uPart
-			}
-		}
+		isIAM := os.Getenv("DB_IAM_AUTH") == "true" || (iamUser != "" && strings.Contains(iamUser, "@"))
 
-		if os.Getenv("DB_IAM_AUTH") == "true" || (iamUser != "" && strings.Contains(iamUser, "@")) {
-			if iamUser != "" {
-				user = strings.TrimSuffix(iamUser, ".gserviceaccount.com")
+		var connectorDsn string
+		if isIAM {
+			if iamUser == "" {
+				// Fallback to auto-detecting from credentials if not provided
+				creds, err := google.FindDefaultCredentials(ctx)
+				if err == nil && creds.ProjectID != "" {
+					// Most common pattern for default compute SA
+					iamUser = fmt.Sprintf("%s-compute@developer.gserviceaccount.com", creds.ProjectID)
+				}
 			}
+
+			// Cloud SQL IAM users are the email address without the .gserviceaccount.com suffix
+			user = strings.TrimSuffix(iamUser, ".gserviceaccount.com")
+			logger.InfoCtx(ctx, "🔐 Cloud SQL: Enabling IAM-based authentication for user: %s", user)
 			
-			token, err := getIAMToken()
-			if err != nil {
-				logger.ErrorCtx(ctx, "❌ [DB] Failed to fetch IAM token: %v", err)
-			} else {
-				pass = token
-				logger.InfoCtx(ctx, "🔐 Cloud SQL: Using IAM-based authentication for user: %s", user)
-			}
+			// Format for pgxv5 with cloudsqlconn and IAM:
+			// "host=PROJECT:REGION:INSTANCE user=USER dbname=DB sslmode=disable"
+			// The driver handles the token generation and refresh.
+			connectorDsn = fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable", instanceName, user, dbName)
+		} else {
+			// Legacy password-based connection via Unix Socket
+			pass := os.Getenv("DB_PASS")
+			connectorDsn = fmt.Sprintf("host='/cloudsql/%s' user='%s' password='%s' dbname='%s' sslmode='disable'", instanceName, user, pass, dbName)
 		}
 
-		// Build Unix Socket DSN
-		// format: host=/cloudsql/INSTANCE user=USER password=PASS dbname=DB sslmode=disable
-		// Important: Password (token) can contain special chars, so we use the key=value format which is safer
-		connectorDsn := fmt.Sprintf("host='/cloudsql/%s' user='%s' dbname='%s' sslmode='disable'", instanceName, user, dbName)
-		if pass != "" {
-			connectorDsn += fmt.Sprintf(" password='%s'", pass)
-		}
-
-		db, err := sqlx.Open("postgres", connectorDsn)
+		// Use 'pgxv5' driver (registered by cloud.google.com/go/cloudsqlconn/postgres/pgxv5)
+		// which natively supports the Cloud SQL Connector
+		db, err := sqlx.Open("pgxv5", connectorDsn)
 		if err != nil {
-			return nil, fmt.Errorf("failed to open database via Unix socket: %v", err)
+			return nil, fmt.Errorf("failed to open database via Cloud SQL Connector: %v", err)
 		}
 
-		maxOpen := getEnvInt("DB_MAX_OPEN_CONNS", 10)
-		maxIdle := getEnvInt("DB_MAX_IDLE_CONNS", 2)
-		maxLifetime := getEnvDuration("DB_CONN_MAX_LIFETIME", 5*time.Minute)
+		maxOpen := getEnvInt("DB_MAX_OPEN_CONNS", 25)
+		maxIdle := getEnvInt("DB_MAX_IDLE_CONNS", 5)
+		maxLifetime := getEnvDuration("DB_CONN_MAX_LIFETIME", 10*time.Minute)
 		
 		db.SetMaxOpenConns(maxOpen)
 		db.SetMaxIdleConns(maxIdle)
 		db.SetConnMaxLifetime(maxLifetime)
 
-		logger.InfoCtx(ctx, "⚙️ DB Pooling (Unix): MaxOpen=%d, MaxIdle=%d, MaxLifetime=%v", maxOpen, maxIdle, maxLifetime)
+		logger.InfoCtx(ctx, "⚙️ DB Pooling (Cloud SQL): MaxOpen=%d, MaxIdle=%d, MaxLifetime=%v", maxOpen, maxIdle, maxLifetime)
 
 		if err := Initialize(db); err != nil {
 			logger.ErrorCtx(ctx, "Schema initialization failure: %v", err)
@@ -378,22 +374,3 @@ func getEnvDuration(key string, fallback time.Duration) time.Duration {
 	return fallback
 }
 
-// getIAMToken fetches a fresh Google OAuth2 access token for IAM database authentication.
-func getIAMToken() (string, error) {
-	ctx := context.Background()
-	// Scopes required for Cloud SQL IAM Auth
-	scopes := []string{
-		"https://www.googleapis.com/auth/sqlservice.admin",
-		"https://www.googleapis.com/auth/sqlservice.login",
-		"https://www.googleapis.com/auth/cloud-platform",
-	}
-	creds, err := google.FindDefaultCredentials(ctx, scopes...)
-	if err != nil {
-		return "", err
-	}
-	token, err := creds.TokenSource.Token()
-	if err != nil {
-		return "", err
-	}
-	return token.AccessToken, nil
-}
