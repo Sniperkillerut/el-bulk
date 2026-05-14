@@ -495,9 +495,7 @@ func (s *ProductStore) SaveCategories(ctx context.Context, productID string, cat
 			return err
 		}
 	}
-	if err == nil {
-		s.InvalidateCaches()
-	}
+	s.InvalidateCaches()
 	return nil
 }
 
@@ -684,10 +682,8 @@ func (s *ProductStore) BulkUpsert(ctx context.Context, jsonData string) ([]strin
 	for i, id := range ids {
 		result[i] = id.ID
 	}
-	if err == nil {
-		s.InvalidateCaches()
-	}
-	return result, err
+	s.InvalidateCaches()
+	return result, nil
 }
 
 func (s *ProductStore) BuildFilters(ctx context.Context, params ProductFilterParams, baseFrom ...string) (string, string, []interface{}) {
