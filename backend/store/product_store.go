@@ -14,15 +14,22 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type SearchResponse struct {
+	Products []models.Product
+	Total    int
+}
+
 type ProductStore struct {
 	*BaseStore[models.Product]
-	facetCache *cache.TTLMap[models.Facets]
+	facetCache  *cache.TTLMap[models.Facets]
+	searchCache *cache.TTLMap[SearchResponse]
 }
 
 func NewProductStore(db *sqlx.DB) *ProductStore {
 	return &ProductStore{
-		BaseStore:  NewBaseStore[models.Product](db, "product"),
-		facetCache: cache.NewTTLMap[models.Facets](5 * time.Minute),
+		BaseStore:   NewBaseStore[models.Product](db, "product"),
+		facetCache:  cache.NewTTLMap[models.Facets](5 * time.Minute),
+		searchCache: cache.NewTTLMap[SearchResponse](2 * time.Minute),
 	}
 }
 
@@ -72,6 +79,15 @@ func (s *ProductStore) ListWithFilters(ctx context.Context, params ProductFilter
 	if s.DB == nil {
 		return nil, 0, fmt.Errorf("database connection is not initialized")
 	}
+
+	// Try cache for common pages (head of the catalog)
+	cacheKey := s.GetSearchCacheKey(params)
+	if params.Page <= 5 {
+		if cached, found := s.searchCache.Get(cacheKey); found {
+			return cached.Products, cached.Total, nil
+		}
+	}
+
 	start := time.Now()
 	fromClause, where, args := s.BuildFilters(params)
 
@@ -82,7 +98,7 @@ func (s *ProductStore) ListWithFilters(ctx context.Context, params ProductFilter
 	}
 
 	orderBy := s.BuildOrderBy(params, len(args))
-	viewFrom, where, args := s.BuildFilters(params) // Switched from view_product_enriched to base product table
+	viewFrom, where, args := s.BuildFilters(params)
 
 	listQuery := fmt.Sprintf("SELECT p.* %s %s ORDER BY %s LIMIT $%d OFFSET $%d",
 		viewFrom, where, orderBy, len(args)+1, len(args)+2)
@@ -94,9 +110,42 @@ func (s *ProductStore) ListWithFilters(ctx context.Context, params ProductFilter
 	if err != nil {
 		return nil, 0, err
 	}
-	logger.DebugCtx(ctx, "[DB] ListWithFilters (count+list) took %v", time.Since(start))
 
+	// Cache common pages
+	if params.Page <= 5 {
+		s.searchCache.Set(cacheKey, SearchResponse{Products: products, Total: total})
+	}
+
+	logger.DebugCtx(ctx, "[DB] ListWithFilters (count+list) took %v", time.Since(start))
 	return products, total, nil
+}
+
+func (s *ProductStore) GetSearchCacheKey(p ProductFilterParams) string {
+	// Simple string key for performance
+	return fmt.Sprintf("search:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%v:%s:%s:%d:%d:%s:%s:%s:%s:%s",
+		p.TCG, p.Category, p.Search, p.Foil, p.Treatment, p.Condition, p.Rarity, p.Language, p.Color, p.SetName,
+		p.InStock, p.SortBy, p.SortDir, p.Page, p.PageSize, p.IsLegendary, p.IsLand, p.IsHistoric, p.IsPrepared, p.CardTypes)
+}
+
+func (s *ProductStore) InvalidateCaches() {
+	s.facetCache.Flush()
+	s.searchCache.Flush()
+}
+
+func (s *ProductStore) Update(ctx context.Context, id string, updates map[string]interface{}) (*models.Product, error) {
+	p, err := s.BaseStore.Update(ctx, id, updates)
+	if err == nil {
+		s.InvalidateCaches()
+	}
+	return p, err
+}
+
+func (s *ProductStore) Delete(ctx context.Context, id string) error {
+	err := s.BaseStore.Delete(ctx, id)
+	if err == nil {
+		s.InvalidateCaches()
+	}
+	return err
 }
 
 func (s *ProductStore) SelectEnriched(ctx context.Context, query string, args ...interface{}) ([]models.Product, int, error) {
@@ -442,6 +491,9 @@ func (s *ProductStore) SaveCategories(ctx context.Context, productID string, cat
 			logger.ErrorCtx(ctx, "Error inserting product_category (product=%s, cat=%s): %v", productID, cid, err)
 		}
 	}
+	if err == nil {
+		s.InvalidateCaches()
+	}
 	return nil
 }
 
@@ -470,6 +522,9 @@ func (s *ProductStore) SaveDeckCards(ctx context.Context, productID string, card
 	_, err = s.DB.ExecContext(ctx, query, values...)
 	if err != nil {
 		logger.ErrorCtx(ctx, "[DB] SaveDeckCards failed for product %s: %v", productID, err)
+	}
+	if err == nil {
+		s.InvalidateCaches()
 	}
 	return err
 }
@@ -506,6 +561,9 @@ func (s *ProductStore) SaveStorage(ctx context.Context, productID string, items 
 	_, err = s.DB.ExecContext(ctx, query, values...)
 	if err != nil {
 		logger.ErrorCtx(ctx, "[DB] SaveStorage failed for product %s: %v", productID, err)
+	}
+	if err == nil {
+		s.InvalidateCaches()
 	}
 	return err
 }
@@ -545,6 +603,10 @@ func (s *ProductStore) CreateProduct(ctx context.Context, input models.ProductIn
 
 	logger.DebugCtx(ctx, "[DB] CreateProduct result: %+v | Error: %v", product.ID, err)
 
+	if err == nil {
+		s.InvalidateCaches()
+	}
+
 	return &product, err
 }
 
@@ -575,6 +637,9 @@ func (s *ProductStore) UpdateProduct(ctx context.Context, id string, input model
 	).StructScan(&product)
 
 	logger.DebugCtx(ctx, "[DB] UpdateProduct result: %+v | Error: %v", product.ID, err)
+	if err == nil {
+		s.InvalidateCaches()
+	}
 	return &product, err
 }
 
@@ -614,6 +679,9 @@ func (s *ProductStore) BulkUpsert(ctx context.Context, jsonData string) ([]strin
 	result := make([]string, len(ids))
 	for i, id := range ids {
 		result[i] = id.ID
+	}
+	if err == nil {
+		s.InvalidateCaches()
 	}
 	return result, nil
 }

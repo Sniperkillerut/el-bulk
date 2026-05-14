@@ -28,6 +28,11 @@ This document tracks planned performance and stability improvements for the `el-
 - **Impact**: Lower DB CPU usage and faster search results.
 - **Status**: [x] Completed
 
+### 2.3 Search Result Caching
+- **Goal**: Cache the first few pages of common search queries (e.g., TCG front pages).
+- **Impact**: Dramatically reduces DB load during high-traffic browsing sessions.
+- **Status**: [ ] Pending
+
 ## 📊 Priority 3: Long-term Scalability
 
 ### 3.1 Background Task Processing

@@ -72,3 +72,26 @@ func (c *Cache[T]) Flush() {
 	defer c.mu.Unlock()
 	c.items = make(map[string]Item[T])
 }
+
+// TTLMap is a wrapper around Cache that uses a default TTL.
+type TTLMap[T any] struct {
+	*Cache[T]
+	DefaultTTL time.Duration
+}
+
+// NewTTLMap creates a new TTLMap with a default expiration.
+func NewTTLMap[T any](defaultTTL time.Duration) *TTLMap[T] {
+	return &TTLMap[T]{
+		Cache:      New[T](),
+		DefaultTTL: defaultTTL,
+	}
+}
+
+// Set adds an item to the cache using the default TTL.
+func (m *TTLMap[T]) Set(key string, value T, duration ...time.Duration) {
+	d := m.DefaultTTL
+	if len(duration) > 0 {
+		d = duration[0]
+	}
+	m.Cache.Set(key, value, d)
+}
