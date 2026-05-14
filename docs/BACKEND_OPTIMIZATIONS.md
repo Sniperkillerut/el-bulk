@@ -21,7 +21,7 @@ This document tracks planned performance and stability improvements for the `el-
 ### 2.1 In-Memory Caching (Static Entities)
 - **Goal**: Cache `Settings`, `TCGs`, `Categories`, and `Translations`.
 - **Impact**: Significant reduction in DB query volume (20-30%), sub-millisecond response times for core data.
-- **Status**: [ ] Pending
+- **Status**: [x] Completed
 
 ### 2.2 Database Indexing Audit
 - **Goal**: Ensure columns used in `GetFacets` and `ListWithFilters` have optimal composite indexes.
