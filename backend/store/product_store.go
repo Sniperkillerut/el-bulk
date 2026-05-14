@@ -187,11 +187,12 @@ func (s *ProductStore) GetFacets(ctx context.Context, params ProductFilterParams
 	if s.DB == nil {
 		return models.Facets{}, fmt.Errorf("database connection is not initialized")
 	}
-	// Generate cache key from params
-	cacheKey := fmt.Sprintf("facets:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v",
+	// Generate cache key from params - must include ALL fields that affect the query
+	cacheKey := fmt.Sprintf("facets:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v:%v",
 		params.TCG, params.Category, params.Search, params.StorageID, params.Foil, params.Treatment, params.Condition,
-		params.Rarity, params.Language, params.Color, params.Collection, params.SetName, params.InStock, params.FilterLogic, isAdmin,
-		params.IsLegendary, params.IsLand, params.IsHistoric, params.IsPrepared, params.Format, params.FrameEffects, params.CardTypes)
+		params.Collection, params.Rarity, params.Language, params.Color, params.SetName, params.InStock, params.OnlyDuplicates,
+		params.FilterLogic, isAdmin, params.IsLegendary, params.IsLand, params.IsHistoric, params.IsPrepared,
+		params.LandType, params.Format, params.FrameEffects, params.CardTypes, params.FullArt, params.Textless)
 
 	if cached, ok := s.facetCache.Get(cacheKey); ok {
 		logger.TraceCtx(ctx, "[CACHE] Facet hit for key: %s", cacheKey)
