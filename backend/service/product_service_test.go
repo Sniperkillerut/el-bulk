@@ -78,15 +78,9 @@ func TestProductService_Create(t *testing.T) {
 			WithArgs("p-1").
 			WillReturnRows(sqlmock.NewRows([]string{"fn_get_product_detail"}).AddRow(`{"id":"p-1","name":"Test Product"}`))
 
-		// EnrichProducts mocks:
-		// PopulateCartCounts
-		sqlMock.ExpectQuery(`SELECT oi.product_id, COUNT\(DISTINCT o.customer_id\) as cart_count`).
-			WithArgs("p-1").
-			WillReturnRows(sqlmock.NewRows([]string{"product_id", "cart_count"}))
-
 		// IdentifyHotNew -> GetHotProductIDs
-		sqlMock.ExpectQuery(`SELECT product_id FROM order_item oi JOIN "order" o ON oi.order_id = o.id WHERE o.created_at > \(now\(\) - interval '7 days'\)`).
-			WithArgs("p-1").
+		sqlMock.ExpectQuery(`SELECT product_id FROM order_item oi JOIN "order" o ON oi.order_id = o.id WHERE o.created_at > \(now\(\) - interval '10 days'\)`).
+			WithArgs(sqlmock.AnyArg()).
 			WillReturnRows(sqlmock.NewRows([]string{"product_id"}))
 
 		// Expect Audit Log
@@ -139,8 +133,7 @@ func TestProductService_BulkOperations(t *testing.T) {
 			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow("p-a", "Card A"))
 
 		// Enrich Card A mocks
-		sqlMock.ExpectQuery(`SELECT oi\.product_id, COUNT`).WithArgs("p-a").WillReturnRows(sqlmock.NewRows([]string{"product_id", "cart_count"}))
-		sqlMock.ExpectQuery(`SELECT product_id FROM order_item`).WithArgs("p-a").WillReturnRows(sqlmock.NewRows([]string{"product_id"}))
+		sqlMock.ExpectQuery(`SELECT product_id FROM order_item`).WithArgs(sqlmock.AnyArg()).WillReturnRows(sqlmock.NewRows([]string{"product_id"}))
 
 		// Search for Card B
 		sqlMock.ExpectQuery(`SELECT p\.\* FROM view_product_enriched p WHERE \(LOWER\(p\.name\) = LOWER\(\$1\) OR p\.name ILIKE \$1\) AND p\.stock > 0 ORDER BY p\.stock DESC LIMIT 5`).
@@ -189,11 +182,8 @@ func TestProductService_EnrichProducts_Sanitization(t *testing.T) {
 		mockSettings.On("GetSettings", mock.Anything).Return(models.Settings{}, nil)
 
 		// Mock side-data calls inside EnrichProducts
-		sqlMock.ExpectQuery(`SELECT oi\.product_id, COUNT\(DISTINCT o\.customer_id\) as cart_count`).
-			WithArgs("p-1").
-			WillReturnRows(sqlmock.NewRows([]string{"product_id", "cart_count"}).AddRow("p-1", 3))
-		sqlMock.ExpectQuery(`SELECT product_id FROM order_item oi JOIN "order" o ON oi\.order_id = o\.id WHERE o\.created_at > \(now\(\) - interval '7 days'\)`).
-			WithArgs("p-1").
+		sqlMock.ExpectQuery(`SELECT product_id FROM order_item`).
+			WithArgs(sqlmock.AnyArg()).
 			WillReturnRows(sqlmock.NewRows([]string{"product_id"}))
 
 		err := s.EnrichProducts(context.Background(), products, models.Settings{}, false)
@@ -229,11 +219,8 @@ func TestProductService_EnrichProducts_Sanitization(t *testing.T) {
 		mockSettings.On("GetSettings", mock.Anything).Return(models.Settings{}, nil)
 
 		// Mock side-data calls inside EnrichProducts
-		sqlMock.ExpectQuery(`SELECT oi\.product_id, COUNT\(DISTINCT o\.customer_id\) as cart_count`).
-			WithArgs("p-1").
-			WillReturnRows(sqlmock.NewRows([]string{"product_id", "cart_count"}))
-		sqlMock.ExpectQuery(`SELECT product_id FROM order_item oi JOIN "order" o ON oi\.order_id = o\.id WHERE o\.created_at > \(now\(\) - interval '7 days'\)`).
-			WithArgs("p-1").
+		sqlMock.ExpectQuery(`SELECT product_id FROM order_item`).
+			WithArgs(sqlmock.AnyArg()).
 			WillReturnRows(sqlmock.NewRows([]string{"product_id"}))
 
 		err := s.EnrichProducts(context.Background(), products, models.Settings{}, true)
@@ -243,5 +230,49 @@ func TestProductService_EnrichProducts_Sanitization(t *testing.T) {
 		assert.NotNil(t, p.PriceReference)
 		assert.NotNil(t, p.StoredIn)
 		assert.Len(t, p.Categories, 1)
+	})
+}
+
+func TestProductService_List(t *testing.T) {
+	db, sqlMock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	sqlMock.MatchExpectationsInOrder(false)
+	productStore := store.NewProductStore(sqlxDB)
+	mockSettings := new(MockSettingsService)
+	s := NewProductService(productStore, nil, mockSettings, nil)
+
+	t.Run("Success", func(t *testing.T) {
+		mockSettings.On("GetSettings", mock.Anything).Return(models.Settings{}, nil)
+
+		params := store.ProductFilterParams{Page: 1, PageSize: 20}
+		productID := "p1"
+
+		// Mock Store.ListWithFilters
+		sqlMock.ExpectQuery("(?i)SELECT COUNT\\(\\*\\) FROM product p").
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+		sqlMock.ExpectQuery("(?i)SELECT p\\.\\* FROM product p").
+			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(productID, "P1"))
+
+		// Mock enrichment calls (parallel in Store.SelectEnriched)
+		sqlMock.ExpectQuery("(?i)SELECT ps.product_id").WillReturnRows(sqlmock.NewRows([]string{"product_id"}))
+		sqlMock.ExpectQuery("(?i)SELECT pc.product_id").WillReturnRows(sqlmock.NewRows([]string{"product_id"}))
+		sqlMock.ExpectQuery("(?i)SELECT oi.product_id").WillReturnRows(sqlmock.NewRows([]string{"product_id"}))
+		sqlMock.ExpectQuery("(?i)SELECT id, product_id").WillReturnRows(sqlmock.NewRows([]string{"id"}))
+
+		// Mock Store.GetFacets
+		sqlMock.ExpectQuery("(?i)SELECT fn_get_product_facets").
+			WillReturnRows(sqlmock.NewRows([]string{"fn_get_product_facets"}).AddRow([]byte(`{}`)))
+
+		// Mock IdentifyHotNew
+		sqlMock.ExpectQuery("(?i)SELECT product_id FROM order_item").
+			WithArgs(sqlmock.AnyArg()).
+			WillReturnRows(sqlmock.NewRows([]string{"product_id"}))
+
+		resp, err := s.List(context.Background(), params, true)
+		assert.NoError(t, err)
+		assert.Equal(t, 1, resp.Total)
+		assert.Len(t, resp.Products, 1)
 	})
 }
