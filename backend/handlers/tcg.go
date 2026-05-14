@@ -16,10 +16,12 @@ import (
 
 type TCGHandler struct {
 	Service *service.TCGService
+	Pool    *service.WorkerPool
+	Audit   service.Auditer
 }
 
-func NewTCGHandler(s *service.TCGService) *TCGHandler {
-	return &TCGHandler{Service: s}
+func NewTCGHandler(s *service.TCGService, p *service.WorkerPool, a service.Auditer) *TCGHandler {
+	return &TCGHandler{Service: s, Pool: p, Audit: a}
 }
 
 // GET /api/admin/tcgs
@@ -113,34 +115,35 @@ func (h *TCGHandler) SyncSets(w http.ResponseWriter, r *http.Request) {
 	if id == "" {
 		id = "mtg"
 	}
-	count, err := h.Service.SyncSets(r.Context(), id)
+
+	job, err := h.Pool.JobService.CreateJob(r.Context(), "scryfall_sync_sets", nil, models.JSONB{"tcg_id": id})
 	if err != nil {
-		logger.ErrorCtx(r.Context(), "Error syncing TCG %s: %v", id, err)
-		render.Error(w, "Sync failed: "+err.Error(), http.StatusInternalServerError)
+		render.Error(w, fmt.Sprintf("failed to create job: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	render.Success(w, map[string]interface{}{
-		"message": "Sync completed",
-		"count":   count,
-	})
+	h.Pool.Submit(job)
+	if h.Audit != nil {
+		h.Audit.LogAction(r.Context(), "TRIGGER_SET_SYNC", "job", job.ID, models.JSONB{"tcg_id": id})
+	}
+	render.Success(w, map[string]interface{}{"status": "queued", "job_id": job.ID})
 }
 
 // POST /api/admin/tcgs/{id}/sync-prices
 func (h *TCGHandler) SyncPrices(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	updated, errs, err := h.Service.SyncPrices(r.Context(), id)
+
+	job, err := h.Pool.JobService.CreateJob(r.Context(), "price_refresh", nil, models.JSONB{"tcg_id": id})
 	if err != nil {
-		logger.ErrorCtx(r.Context(), "Error syncing prices for TCG %s: %v", id, err)
-		render.Error(w, "Sync failed: "+err.Error(), http.StatusInternalServerError)
+		render.Error(w, fmt.Sprintf("failed to create job: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	render.Success(w, map[string]interface{}{
-		"message": "Sync completed",
-		"count":   updated,
-		"errors":  errs,
-	})
+	h.Pool.Submit(job)
+	if h.Audit != nil {
+		h.Audit.LogAction(r.Context(), "TRIGGER_PRICE_SYNC", "job", job.ID, models.JSONB{"tcg_id": id})
+	}
+	render.Success(w, map[string]interface{}{"status": "queued", "job_id": job.ID})
 }
 
 // GET /api/admin/external/prices/cardkingdom?name=...&set=...&collector=...&foil=...

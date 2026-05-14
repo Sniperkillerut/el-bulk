@@ -13,18 +13,30 @@ import (
 // RefreshHandler handles on-demand and scheduled price refreshes.
 type RefreshHandler struct {
 	Service *service.RefreshService
+	Pool    *service.WorkerPool
+	Audit   service.Auditer
 }
 
-func NewRefreshHandler(s *service.RefreshService) *RefreshHandler {
-	return &RefreshHandler{Service: s}
+func NewRefreshHandler(s *service.RefreshService, p *service.WorkerPool, a service.Auditer) *RefreshHandler {
+	return &RefreshHandler{Service: s, Pool: p, Audit: a}
 }
 
 // POST /api/admin/prices/refresh
 func (h *RefreshHandler) Trigger(w http.ResponseWriter, r *http.Request) {
 	logger.TraceCtx(r.Context(), "Entering RefreshHandler.Trigger")
-	// Manual trigger from price menu syncs everything
-	updated, errs := h.Service.RunPriceRefresh(r.Context(), "")
-	render.Success(w, map[string]int{"updated": updated, "errors": errs})
+
+	// Submit background job
+	job, err := h.Pool.JobService.CreateJob(r.Context(), "price_refresh", nil, nil)
+	if err != nil {
+		render.Error(w, fmt.Sprintf("failed to create job: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	h.Pool.Submit(job)
+	if h.Audit != nil {
+		h.Audit.LogAction(r.Context(), "TRIGGER_PRICE_REFRESH", "job", job.ID, nil)
+	}
+	render.Success(w, map[string]interface{}{"status": "queued", "job_id": job.ID})
 }
 
 // POST /api/admin/currency/sync
@@ -57,7 +69,7 @@ func StartMidnightScheduler(svc *service.RefreshService) {
 			}
 
 			logger.Info("[price-refresh] Starting scheduled midnight refresh...")
-			updated, errs := svc.RunPriceRefresh(context.Background(), "")
+			updated, errs := svc.RunPriceRefresh(context.Background(), "", nil)
 			logger.Info("[price-refresh] Done: %d updated, %d errors", updated, errs)
 		}
 	}()

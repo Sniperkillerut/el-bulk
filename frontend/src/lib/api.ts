@@ -478,10 +478,36 @@ export async function updateAdminSettings(
 // Admin: price refresh
 // ---------------------------------------------------------------------------
 
-export async function triggerPriceRefresh(): Promise<{ updated: number; errors: number }> {
-  return apiFetch<{ updated: number; errors: number }>('/api/admin/prices/refresh', {
+export async function triggerPriceRefresh(): Promise<{ status: string; job_id: string }> {
+  return apiFetch<{ status: string; job_id: string }>('/api/admin/prices/refresh', {
     method: 'POST',
   });
+}
+
+// ---------------------------------------------------------------------------
+// Admin: Background Jobs
+// ---------------------------------------------------------------------------
+
+export interface Job {
+  id: string;
+  type: string;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  progress: number;
+  payload?: any;
+  result?: any;
+  error?: string;
+  admin_id?: string;
+  started_at?: string;
+  completed_at?: string;
+  created_at: string;
+}
+
+export async function adminFetchJob(id: string): Promise<Job> {
+  return apiFetch<Job>(`/api/admin/jobs/${id}`, { cache: 'no-store' });
+}
+
+export async function adminListJobs(limit: number = 10): Promise<Job[]> {
+  return apiFetch<Job[]>('/api/admin/jobs', { params: { limit }, cache: 'no-store' });
 }
 
 // adminFetchStats removed from here to avoid duplication

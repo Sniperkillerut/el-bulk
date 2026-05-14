@@ -14,6 +14,7 @@ import (
 	"github.com/el-bulk/backend/db"
 	"github.com/el-bulk/backend/handlers"
 	"github.com/el-bulk/backend/middleware"
+	"github.com/el-bulk/backend/models"
 	"github.com/el-bulk/backend/service"
 	"github.com/el-bulk/backend/store"
 	"github.com/el-bulk/backend/utils/logger"
@@ -91,6 +92,7 @@ func main() {
 	accountingStore := store.NewAccountingStore(database)
 	translationStore := store.NewTranslationStore(database)
 	auditStore := store.NewAuditStore(database)
+	jobStore := store.NewJobStore(database)
 
 	translationService := service.NewTranslationService(translationStore)
 	auditService := service.NewAuditService(auditStore, adminStore)
@@ -112,6 +114,22 @@ func main() {
 	storageLocationService := service.NewStorageLocationService(storageLocationStore, auditService)
 	authService := service.NewAuthService(authStore)
 	healthService := service.NewHealthService(healthStore)
+	// Job and Worker Pool
+	jobService := service.NewJobService(jobStore)
+	workerPool := service.NewWorkerPool(jobService, 4) // 4 concurrent workers
+	workerPool.RegisterHandler("price_refresh", func(ctx context.Context, job *models.Job, updateProgress func(int)) (models.JSONB, error) {
+		tcgID, _ := job.Payload["tcg_id"].(string)
+		updated, errs := refreshService.RunPriceRefresh(ctx, tcgID, updateProgress)
+		return models.JSONB{"updated": updated, "errors": errs}, nil
+	})
+	workerPool.RegisterHandler("scryfall_sync_sets", func(ctx context.Context, job *models.Job, updateProgress func(int)) (models.JSONB, error) {
+		tcgID, _ := job.Payload["tcg_id"].(string)
+		count, err := tcgService.SyncSets(ctx, tcgID)
+		return models.JSONB{"count": count}, err
+	})
+	workerPool.Start()
+	defer workerPool.Stop()
+
 	// refreshService already initialized above
 	accountingService := service.NewAccountingService(accountingStore, settingsService)
 
@@ -125,9 +143,9 @@ func main() {
 	categoriesHandler := handlers.NewCategoriesHandler(categoryService)
 	lookupHandler := handlers.NewLookupHandler(productService)
 	settingsHandler := handlers.NewSettingsHandler(settingsService)
-	refreshHandler := handlers.NewRefreshHandler(refreshService)
+	refreshHandler := handlers.NewRefreshHandler(refreshService, workerPool, auditService)
 	orderHandler := handlers.NewOrderHandler(orderService)
-	tcgHandler := handlers.NewTCGHandler(tcgService)
+	tcgHandler := handlers.NewTCGHandler(tcgService, workerPool, auditService)
 	bountyHandler := handlers.NewBountyHandler(bountyService)
 	healthHandler := handlers.NewHealthHandler(healthService, Version)
 	accountingHandler := handlers.NewAccountingHandler(database, accountingService)
@@ -137,6 +155,7 @@ func main() {
 	userAuthHandler := handlers.NewUserAuthHandler(authService)
 	newsletterHandler := handlers.NewNewsletterHandler(newsletterService)
 	storageLocationHandler := handlers.NewStorageHandler(storageLocationService)
+	jobHandler := handlers.NewJobHandler(jobService)
 	seoHandler := handlers.NewSeoHandler(seoService)
 	proxyHandler := handlers.NewProxyHandler()
 
@@ -196,6 +215,7 @@ func main() {
 	// Public API
 	r.Route("/api", func(r chi.Router) {
 		r.Use(middleware.Blacklist(settingsService))
+		r.Use(middleware.OptionalAdminAuth)
 		r.Use(middleware.RateLimit(120, time.Minute))
 
 		r.With(middleware.OptionalAdminAuth).Get("/products", productHandler.List)
@@ -373,6 +393,10 @@ func main() {
 				// Audit Logs
 				r.Get("/audit-logs", adminHandler.ListAuditLogs)
 				r.Post("/audit-logs/{id}/undo", adminHandler.UndoAuditAction)
+
+				// Background Jobs
+				r.Get("/jobs", jobHandler.List)
+				r.Get("/jobs/{id}", jobHandler.Get)
 			})
 		})
 

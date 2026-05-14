@@ -50,7 +50,7 @@ func syncScryfall(ctx context.Context, db *sqlx.DB) error {
 	defer body.Close()
 
 	// Step 2: Sync to DB
-	return external.SyncScryfallToDB(ctx, db, body)
+	return external.SyncScryfallToDB(ctx, db, body, nil)
 }
 
 func syncCardKingdom(ctx context.Context, db *sqlx.DB) error {
@@ -66,5 +66,5 @@ func syncCardKingdom(ctx context.Context, db *sqlx.DB) error {
 	}
 
 	// Step 2: Sync to DB
-	return external.SyncCardKingdomToDB(ctx, db, resp.Body)
+	return external.SyncCardKingdomToDB(ctx, db, resp.Body, nil)
 }

@@ -48,7 +48,7 @@ func main() {
 	// 1. Optional Sync
 	if *syncFlag {
 		fmt.Println("Syncing Scryfall bulk data to local cache...")
-		if err := external.SyncScryfallToDB(ctx, sqlxDB, nil); err != nil {
+		if err := external.SyncScryfallToDB(ctx, sqlxDB, nil, nil); err != nil {
 			log.Fatalf("Sync failed: %v", err)
 		}
 		fmt.Println("Sync completed.")

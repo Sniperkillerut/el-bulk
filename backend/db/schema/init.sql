@@ -17,6 +17,7 @@
 \i tables/customer_auth.sql
 \i tables/admin.sql
 \i tables/admin_audit_log.sql
+\i tables/job.sql
 \i tables/custom_category.sql
 \i tables/bounty.sql
 \i tables/client_request.sql

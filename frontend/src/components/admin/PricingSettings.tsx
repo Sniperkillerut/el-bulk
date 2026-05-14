@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Settings } from '@/lib/types';
-import { getAdminSettings, updateAdminSettings, triggerPriceRefresh } from '@/lib/api';
+import { getAdminSettings, updateAdminSettings, triggerPriceRefresh, adminFetchJob, Job } from '@/lib/api';
 
 type PricingSettingsProps = Record<string, never>;
 
@@ -28,6 +28,7 @@ export default function PricingSettings({ }: PricingSettingsProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [jobProgress, setJobProgress] = useState<{ status: string; progress: number; updated?: number; errors?: number } | null>(null);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
 
   useEffect(() => {
@@ -58,13 +59,42 @@ export default function PricingSettings({ }: PricingSettingsProps) {
   async function handleRefresh() {
     if (!confirm('Fetch fresh prices from Scryfall for all non-manual products?')) return;
     setRefreshing(true);
+    setJobProgress({ status: 'queued', progress: 0 });
+    
     try {
-      const result = await triggerPriceRefresh();
-      showToast(`Price refresh complete — ${result.updated} updated, ${result.errors} errors`);
+      const { job_id } = await triggerPriceRefresh();
+      
+      // Poll for job status
+      const pollInterval = setInterval(async () => {
+        try {
+          const job: Job = await adminFetchJob(job_id);
+          setJobProgress({ 
+            status: job.status, 
+            progress: job.progress,
+            updated: job.result?.updated,
+            errors: job.result?.errors
+          });
+
+          if (job.status === 'completed') {
+            clearInterval(pollInterval);
+            setRefreshing(false);
+            showToast(`Price refresh complete — ${job.result?.updated || 0} updated, ${job.result?.errors || 0} errors`);
+            setTimeout(() => setJobProgress(null), 5000);
+          } else if (job.status === 'failed') {
+            clearInterval(pollInterval);
+            setRefreshing(false);
+            showToast(`Price refresh failed: ${job.error || 'Unknown error'}`, false);
+            setTimeout(() => setJobProgress(null), 5000);
+          }
+        } catch (e) {
+          console.error('Polling error:', e);
+        }
+      }, 2000);
+
     } catch (e) {
       showToast((e as Error).message, false);
-    } finally {
       setRefreshing(false);
+      setJobProgress(null);
     }
   }
 
@@ -180,7 +210,7 @@ export default function PricingSettings({ }: PricingSettingsProps) {
             border: '1px solid var(--ink-border)',
             borderRadius: 6,
             padding: '0.45rem 1rem',
-            color: 'var(--text-secondary)',
+            color: refreshing ? 'var(--gold)' : 'var(--text-secondary)',
             cursor: refreshing ? 'not-allowed' : 'pointer',
             fontSize: '0.8rem',
             fontFamily: 'Space Mono, monospace',
@@ -189,6 +219,31 @@ export default function PricingSettings({ }: PricingSettingsProps) {
         >
           {refreshing ? '⟳ REFRESHING…' : '⟳ REFRESH PRICES NOW'}
         </button>
+
+        {jobProgress && (
+          <div style={{ marginTop: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.3rem', fontFamily: 'Space Mono, monospace' }}>
+              <span className="uppercase tracking-wider">{jobProgress.status}</span>
+              <span>{jobProgress.progress}%</span>
+            </div>
+            <div style={{ height: 4, background: 'var(--ink-deep)', borderRadius: 2, overflow: 'hidden' }}>
+              <div 
+                style={{ 
+                  height: '100%', 
+                  background: 'var(--gold)', 
+                  width: `${jobProgress.progress}%`,
+                  transition: 'width 0.5s ease-out',
+                  boxShadow: '0 0 8px var(--gold)'
+                }} 
+              />
+            </div>
+            {jobProgress.updated !== undefined && (
+              <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.4rem', fontFamily: 'Space Mono, monospace' }}>
+                Processed: <span style={{ color: 'var(--gold)' }}>{jobProgress.updated}</span> updated, <span style={{ color: '#e07070' }}>{jobProgress.errors}</span> errors
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Toast */}

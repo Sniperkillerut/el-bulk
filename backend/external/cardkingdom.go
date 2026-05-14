@@ -249,7 +249,7 @@ func MapFoilTreatmentToCKVariation(foil models.FoilTreatment, treatment models.C
 }
 
 // SyncCardKingdomToDB streams the CK pricelist JSON into the external_cardkingdom table.
-func SyncCardKingdomToDB(ctx context.Context, db *sqlx.DB, r io.Reader) error {
+func SyncCardKingdomToDB(ctx context.Context, db *sqlx.DB, r io.Reader, onProgress func(int)) error {
 	logger.InfoCtx(ctx, "Syncing CardKingdom pricelist to database...")
 
 	if r == nil {

@@ -900,7 +900,7 @@ func BatchLookupMTG(ctx context.Context, scryfallIDs []string) (map[string]CardM
 
 // SyncScryfallToDB streams the Scryfall default_cards JSON into the external_scryfall table.
 // If r is nil, it will automatically download the bulk data.
-func SyncScryfallToDB(ctx context.Context, db *sqlx.DB, r io.Reader) error {
+func SyncScryfallToDB(ctx context.Context, db *sqlx.DB, r io.Reader, onProgress func(int)) error {
 	logger.InfoCtx(ctx, "Syncing Scryfall bulk data to database...")
 
 	if r == nil {

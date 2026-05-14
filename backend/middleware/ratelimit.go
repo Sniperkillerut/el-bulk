@@ -53,6 +53,12 @@ func RateLimit(limit int, window time.Duration) func(http.Handler) http.Handler 
 				ip = r.RemoteAddr
 			}
 
+			// Exempt admins from rate limiting
+			if IsAdmin(r.Context()) {
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			mu.Lock()
 			c, exists := clients[ip]
 			if !exists {

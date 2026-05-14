@@ -20,7 +20,8 @@ func NewRefreshService(s *store.RefreshStore, settings *SettingsService) *Refres
 	return &RefreshService{Store: s, Settings: settings}
 }
 
-func (s *RefreshService) RunPriceRefresh(ctx context.Context, tcgID string) (updated int, errs int) {
+func (s *RefreshService) RunPriceRefresh(ctx context.Context, tcgID string, onProgress func(int)) (updated int, errs int) {
+	if onProgress != nil { onProgress(5) }
 	rows, err := s.Store.ListRefreshableProducts(ctx)
 	if err != nil {
 		logger.ErrorCtx(ctx, "[price-refresh] failed to query products: %v", err)
@@ -73,7 +74,7 @@ func (s *RefreshService) RunPriceRefresh(ctx context.Context, tcgID string) (upd
 		var idMap map[string]external.CardMetadata
 		if needsScry {
 			logger.InfoCtx(ctx, "[price-refresh] triggering fresh Scryfall sync to DB...")
-			if err := external.SyncScryfallToDB(ctx, s.Store.DB, nil); err != nil {
+			if err := external.SyncScryfallToDB(ctx, s.Store.DB, nil, onProgress); err != nil {
 				logger.WarnCtx(ctx, "[price-refresh] Scryfall sync failed, falling back to existing DB data: %v", err)
 			}
 			scryPriceMap, idMap, err = external.BuildPriceMap(ctx, s.Store.DB)
@@ -85,7 +86,7 @@ func (s *RefreshService) RunPriceRefresh(ctx context.Context, tcgID string) (upd
 
 		if needsCK {
 			logger.InfoCtx(ctx, "[price-refresh] triggering fresh Card Kingdom sync to DB...")
-			if err := external.SyncCardKingdomToDB(ctx, s.Store.DB, nil); err != nil {
+			if err := external.SyncCardKingdomToDB(ctx, s.Store.DB, nil, onProgress); err != nil {
 				logger.WarnCtx(ctx, "[price-refresh] CK sync failed, falling back to existing DB data: %v", err)
 			}
 			ckPriceMap, err = external.BuildCardKingdomPriceMap(ctx, s.Store.DB)
