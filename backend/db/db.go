@@ -371,6 +371,7 @@ func getIAMToken() (string, error) {
 	// Scopes required for Cloud SQL IAM Auth
 	scopes := []string{
 		"https://www.googleapis.com/auth/sqlservice.admin",
+		"https://www.googleapis.com/auth/sqlservice.login",
 		"https://www.googleapis.com/auth/cloud-platform",
 	}
 	creds, err := google.FindDefaultCredentials(ctx, scopes...)

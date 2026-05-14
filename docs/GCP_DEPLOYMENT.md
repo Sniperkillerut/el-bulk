@@ -230,6 +230,7 @@ Then grant the IAM user access to the database by running this block (it uses th
 gcloud sql databases create elbulk --instance=el-bulk-db 2>/dev/null || echo "Database exists"
 
 gcloud sql connect el-bulk-db --user=postgres --database=elbulk <<EOF
+GRANT cloudsql_iam_user TO "$IAM_USER";
 GRANT ALL PRIVILEGES ON DATABASE elbulk TO "$IAM_USER";
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO "$IAM_USER";
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO "$IAM_USER";
