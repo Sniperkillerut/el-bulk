@@ -53,3 +53,13 @@ func GetStringParam(r *http.Request, key, defaultValue string) string {
 	}
 	return v
 }
+
+// FirstQueryParam returns the value of the first non-empty query parameter from a list of keys.
+func FirstQueryParam(q map[string][]string, keys ...string) string {
+	for _, k := range keys {
+		if v := q[k]; len(v) > 0 && v[0] != "" {
+			return v[0]
+		}
+	}
+	return ""
+}

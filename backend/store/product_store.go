@@ -961,6 +961,8 @@ func (s *ProductStore) BuildFilters(params ProductFilterParams, baseFrom ...stri
 		whereClause = "WHERE " + strings.Join(finalConditions, " AND ")
 	}
 
+	logger.DebugCtx(ctx, "[DB] BuildFilters: logic=%s, isAnd=%v, where=%s", params.FilterLogic, isAndMode, whereClause)
+
 	return fromClause, whereClause, args
 }
 

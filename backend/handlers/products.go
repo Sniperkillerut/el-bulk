@@ -66,7 +66,7 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 		SortBy:         q.Get("sort_by"),
 		SortDir:        q.Get("sort_dir"),
 		OnlyDuplicates: q.Get("only_duplicates") == "true",
-		FilterLogic:    q.Get("logic"),
+		FilterLogic:    httputil.FirstQueryParam(q, "logic", "filterLogic", "filter_logic"),
 		IsLegendary:    q.Get("is_legendary"),
 		IsLand:         q.Get("is_land"),
 		IsHistoric:     q.Get("is_historic"),
