@@ -42,6 +42,13 @@ func (h *ProductHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 	page, pageSize, offset := httputil.GetPagination(r, 20, maxPageSize)
 
+	// Safety check for deep pagination (DDoS/Scraping protection)
+	// Offset of 10k is reasonable for public users.
+	if !isAdmin && offset > 10000 {
+		render.Error(w, "Requested page is too deep. Please refine your search filters.", http.StatusBadRequest)
+		return
+	}
+
 	params := store.ProductFilterParams{
 		TCG:            q.Get("tcg"),
 		Category:       q.Get("category"),
