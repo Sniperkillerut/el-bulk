@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -16,8 +17,9 @@ import (
 	_ "github.com/lib/pq"
 
 	// Cloud SQL Connector imports
-	_ "github.com/jackc/pgx/v5/stdlib"
-	_ "cloud.google.com/go/cloudsqlconn/postgres/pgxv5"
+	"cloud.google.com/go/cloudsqlconn"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/stdlib"
 	"golang.org/x/oauth2/google"
 )
 
@@ -70,8 +72,7 @@ func ConnectResilient() (*sqlx.DB, error) {
 	// 0. Cloud SQL Connector (Recommended for local/complex setups)
 	// OR Unix Domain Sockets (Recommended for Cloud Run)
 	if instanceName != "" {
-		// Use Cloud SQL Go Connector for automatic IAM token refreshing
-		logger.InfoCtx(ctx, "🔌 Cloud SQL: Using native connection via Cloud SQL Connector: %s", instanceName)
+		logger.InfoCtx(ctx, "🔌 Cloud SQL: Using explicit Dialer via cloudsqlconn: %s", instanceName)
 
 		dbName := "elbulk"
 		if dsn != "" && strings.Contains(dsn, "/") {
@@ -94,21 +95,25 @@ func ConnectResilient() (*sqlx.DB, error) {
 			logger.InfoCtx(ctx, "🔐 Cloud SQL: Enabling IAM-based authentication for user: %s", user)
 		}
 
-		// Configure pgx for the connection
-		connStr := fmt.Sprintf("user=%s dbname=%s sslmode=disable", user, dbName)
-		if !isIAM {
-			if pass := os.Getenv("DB_PASS"); pass != "" {
-				connStr += fmt.Sprintf(" password=%s", pass)
-			}
+		// Initialize the Dialer once per application lifecycle (ideally)
+		d, err := cloudsqlconn.NewDialer(ctx, cloudsqlconn.WithIAMAuthN())
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize Cloud SQL dialer: %v", err)
 		}
 
-		// Use the cloudsqlconn driver name 'cloudsqlpostgres' if available, 
-		// or use the more direct method of registering a custom dialer if needed.
-		// For simplicity and compatibility, we'll use the 'cloudsqlpostgres' driver name.
-		db, err := sqlx.Open("cloudsqlpostgres", fmt.Sprintf("%s host=%s", connStr, instanceName))
+		// Configure pgx connection
+		config, err := pgx.ParseConfig(fmt.Sprintf("user=%s dbname=%s sslmode=disable", user, dbName))
 		if err != nil {
-			return nil, fmt.Errorf("failed to open database via Cloud SQL Connector: %v", err)
+			return nil, fmt.Errorf("failed to parse pgx config: %v", err)
 		}
+
+		// Set the dialer for the connection
+		config.DialFunc = func(ctx context.Context, network, addr string) (net.Conn, error) {
+			return d.Dial(ctx, instanceName)
+		}
+
+		// Open the database using pgx/stdlib
+		db := sqlx.NewDb(stdlib.OpenDB(*config), "postgres")
 
 		maxOpen := getEnvInt("DB_MAX_OPEN_CONNS", 25)
 		maxIdle := getEnvInt("DB_MAX_IDLE_CONNS", 5)
