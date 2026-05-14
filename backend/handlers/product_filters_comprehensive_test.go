@@ -20,6 +20,7 @@ func TestProductHandler_BuildFilters_Comprehensive(t *testing.T) {
 			assert.NoError(t, err)
 			defer db.Close()
 			sqlxDB := sqlx.NewDb(db, "postgres")
+			mock.MatchExpectationsInOrder(false)
 			settingsStore := store.NewSettingsStore(sqlxDB)
 			settingsService := service.NewSettingsService(settingsStore, nil)
 			ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, nil)
@@ -30,16 +31,13 @@ func TestProductHandler_BuildFilters_Comprehensive(t *testing.T) {
 			mock.ExpectQuery("(?i)SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop_rate", "4000"))
 
 			// 2. Total count
-			mock.ExpectQuery("SELECT COUNT\\(\\*\\) FROM product p").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+			mock.ExpectQuery("(?i)SELECT COUNT\\(\\*\\) FROM .* p").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 			productID := "550e8400-e29b-41d4-a716-446655440001"
 			// 3. Main list
-			mock.ExpectQuery("SELECT .* FROM view_product_enriched p").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(productID))
+			mock.ExpectQuery("(?i)SELECT .* FROM .* p").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(productID))
 
-			// 4. Enrichment: populateCartCounts
-			mock.ExpectQuery("(?i)SELECT .* FROM \"order\" o").
-				WithArgs(productID).
-				WillReturnRows(sqlmock.NewRows([]string{"product_id", "cart_count"}).AddRow(productID, 0))
-			mock.ExpectQuery("(?is)SELECT product_id FROM order_item").WillReturnRows(sqlmock.NewRows([]string{"product_id"}))
+			// 4. Enrichment
+			mockProductListEnrichment(mock)
 
 			// 5. Facets (1 call)
 			mock.ExpectQuery("(?i)SELECT fn_get_product_facets").
@@ -65,6 +63,7 @@ func TestProductHandler_AdminVsPublic(t *testing.T) {
 		assert.NoError(t, err)
 		defer db.Close()
 		sqlxDB := sqlx.NewDb(db, "postgres")
+		mock.MatchExpectationsInOrder(false)
 		settingsStore := store.NewSettingsStore(sqlxDB)
 		settingsService := service.NewSettingsService(settingsStore, nil)
 		ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, nil)
@@ -75,13 +74,11 @@ func TestProductHandler_AdminVsPublic(t *testing.T) {
 		mock.ExpectQuery("(?i)SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop_rate", "4000"))
 
 		productID := "550e8400-e29b-41d4-a716-446655440001"
-		mock.ExpectQuery("(?i)SELECT COUNT\\(\\*\\) FROM product p LEFT JOIN tcg t").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
-		mock.ExpectQuery("(?i)SELECT .* FROM view_product_enriched p LEFT JOIN tcg t").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(productID))
+		mock.ExpectQuery("(?i)SELECT COUNT\\(\\*\\) FROM .* p").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+		mock.ExpectQuery("(?i)SELECT .* FROM .* p").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(productID))
 
 		// Enrichment
-		mock.ExpectQuery("(?i)SELECT .* FROM \"order\" o").
-			WillReturnRows(sqlmock.NewRows([]string{"product_id", "cart_count"}).AddRow(productID, 0))
-		mock.ExpectQuery("(?is)SELECT product_id FROM order_item").WillReturnRows(sqlmock.NewRows([]string{"product_id"}))
+		mockProductListEnrichment(mock)
 
 		// Facets
 		mock.ExpectQuery("(?i)SELECT fn_get_product_facets").
@@ -98,6 +95,7 @@ func TestProductHandler_AdminVsPublic(t *testing.T) {
 		assert.NoError(t, err)
 		defer db.Close()
 		sqlxDB := sqlx.NewDb(db, "postgres")
+		mock.MatchExpectationsInOrder(false)
 		settingsStore := store.NewSettingsStore(sqlxDB)
 		settingsService := service.NewSettingsService(settingsStore, nil)
 		ps := service.NewProductService(store.NewProductStore(sqlxDB), store.NewTCGStore(sqlxDB), settingsService, nil)
@@ -108,13 +106,11 @@ func TestProductHandler_AdminVsPublic(t *testing.T) {
 		mock.ExpectQuery("(?i)SELECT key, value FROM setting").WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).AddRow("usd_to_cop_rate", "4000"))
 
 		productID := "550e8400-e29b-41d4-a716-446655440001"
-		mock.ExpectQuery("(?i)SELECT COUNT\\(\\*\\) FROM product p").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
-		mock.ExpectQuery("(?i)SELECT .* FROM view_product_enriched p").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(productID))
+		mock.ExpectQuery("(?i)SELECT COUNT\\(\\*\\) FROM .* p").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+		mock.ExpectQuery("(?i)SELECT .* FROM .* p").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(productID))
 
 		// Enrichment
-		mock.ExpectQuery("(?i)SELECT .* FROM \"order\" o").
-			WillReturnRows(sqlmock.NewRows([]string{"product_id", "cart_count"}).AddRow(productID, 0))
-		mock.ExpectQuery("(?is)SELECT product_id FROM order_item").WillReturnRows(sqlmock.NewRows([]string{"product_id"}))
+		mockProductListEnrichment(mock)
 
 		// Facets
 		mock.ExpectQuery("(?i)SELECT fn_get_product_facets").

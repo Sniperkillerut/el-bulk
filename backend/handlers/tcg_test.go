@@ -38,6 +38,7 @@ func TestTCGHandler_List(t *testing.T) {
 	})
 
 	t.Run("Error", func(t *testing.T) {
+		h.Service.ResetCache()
 		mock.ExpectQuery("(?i)SELECT t.*, COUNT").WillReturnError(fmt.Errorf("db error"))
 		req, _ := http.NewRequest("GET", "/api/admin/tcgs", nil)
 		rr := httptest.NewRecorder()
@@ -188,5 +189,34 @@ func TestTCGHandler_Delete(t *testing.T) {
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	})
+}
+
+func TestTCGHandler_Sync(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	h := NewTCGHandler(service.NewTCGService(store.NewTCGStore(sqlxDB), nil), testWorkerPool(sqlxDB), &NopAuditer{})
+
+	t.Run("SyncSets", func(t *testing.T) {
+		mock.ExpectQuery("(?i)INSERT INTO job").WillReturnRows(sqlmock.NewRows([]string{"created_at"}).AddRow(time.Now()))
+
+		req, _ := http.NewRequest("POST", "/api/admin/tcgs/mtg/sync-sets", nil)
+		rr := httptest.NewRecorder()
+		h.SyncSets(rr, req)
+		assert.Equal(t, http.StatusOK, rr.Code, rr.Body.String())
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("SyncPrices", func(t *testing.T) {
+		mock.ExpectQuery("(?i)INSERT INTO job").WillReturnRows(sqlmock.NewRows([]string{"created_at"}).AddRow(time.Now()))
+
+		req, _ := http.NewRequest("POST", "/api/admin/tcgs/mtg/sync-prices", nil)
+		rr := httptest.NewRecorder()
+		h.SyncPrices(rr, req)
+		assert.Equal(t, http.StatusOK, rr.Code, rr.Body.String())
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }

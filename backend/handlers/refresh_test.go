@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/el-bulk/backend/external"
@@ -87,7 +88,7 @@ func TestRefreshHandler_RunPriceRefresh(t *testing.T) {
 			WithArgs("550e8400-e29b-41d4-a716-446655440000", 50000.0, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), 3800.0, 4000.0, 4500.0).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
-		updated, errs := svc.RunPriceRefresh(context.Background(), "")
+		updated, errs := svc.RunPriceRefresh(context.Background(), "", nil)
 
 		assert.Equal(t, 1, updated)
 		assert.Equal(t, 0, errs)
@@ -121,29 +122,17 @@ func TestRefreshHandler_Trigger(t *testing.T) {
 	external.ResetScryfallCache()
 	external.ResetCardKingdomCache()
 
-	mock.ExpectQuery("(?i)SELECT .* FROM product p .*").
-		WillReturnRows(sqlmock.NewRows([]string{"id", "tcg", "name", "set_name", "set_code", "collector_number", "foil_treatment", "card_treatment", "price_source", "scryfall_id", "ck_set_name"}).
-			AddRow("550e8400-e29b-41d4-a716-446655440000", "mtg", "Black Lotus", "Limited Edition Alpha", "lea", "1", "non_foil", "normal", "tcgplayer", "std_id", ""))
-
-	// Mock SYNC calls after product list
-	mock.ExpectExec("(?i)TRUNCATE TABLE external_scryfall").WillReturnResult(sqlmock.NewResult(0, 0))
-	mock.ExpectExec("(?i)INSERT INTO external_scryfall").WillReturnResult(sqlmock.NewResult(0, 0))
-	mock.ExpectQuery("(?i)SELECT .* FROM external_scryfall").
-		WillReturnRows(sqlmock.NewRows([]string{"scryfall_id", "name", "set_code", "collector_number", "price_usd", "price_usd_foil", "price_eur", "image_url"}))
-
-	mock.ExpectQuery("(?i)SELECT .* FROM setting").
-		WillReturnRows(sqlmock.NewRows([]string{"key", "value"}).
-			AddRow("usd_to_cop_rate", "4000").
-			AddRow("eur_to_cop_rate", "4500").
-			AddRow("ck_to_cop_rate", "3800"))
+	mock.ExpectQuery("(?i)INSERT INTO job").
+		WillReturnRows(sqlmock.NewRows([]string{"created_at"}).AddRow(time.Now()))
 
 	req, _ := http.NewRequest("POST", "/api/admin/prices/refresh", nil)
 	rr := httptest.NewRecorder()
 	h.Trigger(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	var res map[string]int
+	var res map[string]interface{}
 	json.NewDecoder(rr.Body).Decode(&res)
-	assert.Equal(t, 0, res["updated"])
+	assert.Equal(t, "queued", res["status"])
+	assert.NotEmpty(t, res["job_id"])
 	assert.NoError(t, mock.ExpectationsWereMet())
 }

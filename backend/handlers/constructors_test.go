@@ -28,7 +28,7 @@ func TestConstructors(t *testing.T) {
 	assert.NotNil(t, testRefreshHandler(db))
 	assert.NotNil(t, NewSettingsHandler(settingsService))
 	assert.NotNil(t, testStorageHandler(db))
-	assert.NotNil(t, NewTCGHandler(service.NewTCGService(store.NewTCGStore(db), nil)))
+	assert.NotNil(t, NewTCGHandler(service.NewTCGService(store.NewTCGStore(db), nil), nil, &NopAuditer{}))
 	assert.NotNil(t, NewThemeHandler(service.NewThemeService(store.NewThemeStore(db))))
 	assert.NotNil(t, NewNoticeHandler(service.NewNoticeService(store.NewNoticeStore(db))))
 }
