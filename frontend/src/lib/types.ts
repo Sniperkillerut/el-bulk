@@ -106,6 +106,7 @@ export interface Settings extends PublicSettings {
   new_days_threshold: number;
   receipt_auto_email: boolean;
   receipt_footer_text: string;
+  blocked_ips: string;
 }
 
 export interface FacetItem {

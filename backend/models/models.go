@@ -347,6 +347,9 @@ type Settings struct {
 	ReceiptAutoEmail  bool   `json:"receipt_auto_email"`
 	ReceiptFooterText string `json:"receipt_footer_text"`
 	StoreLogoURL      string `json:"store_logo_url"`
+
+	// Security
+	BlockedIPs string `json:"blocked_ips"`
 }
 
 // PublicSettings is the safe subset of Settings returned by the public /api/settings endpoint.

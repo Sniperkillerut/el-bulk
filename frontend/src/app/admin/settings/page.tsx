@@ -445,6 +445,34 @@ export default function AdminSettingsPage() {
         </section>
       )}
 
+      {/* Security Section */}
+      {editingSettings && (
+        <section className="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-800">
+          <div className="flex items-center gap-4 border-b border-hp-color pb-3">
+            <span className="text-3xl">🛡️</span>
+            <h2 className="font-display text-3xl m-0 text-hp-color uppercase tracking-tighter">{t('pages.admin.settings.security.title', 'SECURITY & FIREWALL')}</h2>
+          </div>
+
+          <div className="card p-3 bg-white shadow-sm border-l-4 border-hp-color">
+            <label className="text-[10px] font-mono-stack mb-2 block uppercase font-bold text-text-muted">{t('pages.admin.settings.security.blocked_ips_label', 'IP BLACKLIST (COMMAS-SEPARATED)')}</label>
+            <div className="relative">
+              <textarea 
+                className="w-full bg-hp-color/5 p-4 font-mono-stack text-sm font-bold rounded-sm border border-hp-color/20 outline-none focus:bg-white focus:border-hp-color min-h-[80px]"
+                placeholder="190.68.53.148, 1.2.3.4, 5.6.7.8"
+                value={editingSettings.blocked_ips || ''} 
+                onChange={e => setEditingSettings({ ...editingSettings, blocked_ips: e.target.value })} 
+              />
+            </div>
+            <div className="flex items-start gap-2 mt-2">
+              <span className="text-hp-color mt-0.5 font-bold">⚠️</span>
+              <p className="text-[10px] text-hp-color italic leading-tight font-bold">
+                {t('pages.admin.settings.security.blocked_ips_desc', 'Requests from these IPs will be rejected immediately with a 403 Forbidden error. Great for blocking persistent scrapers or attackers.')}
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* System Maintenance & Diagnostics Section */}
       {editingSettings && (
         <section className="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-800">

@@ -22,7 +22,8 @@ export default function PricingSettings({ }: PricingSettingsProps) {
     new_days_threshold: 0,
     receipt_auto_email: true,
     receipt_footer_text: '',
-    store_logo_url: ''
+    store_logo_url: '',
+    blocked_ips: ''
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

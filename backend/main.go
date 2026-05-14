@@ -195,6 +195,7 @@ func main() {
 
 	// Public API
 	r.Route("/api", func(r chi.Router) {
+		r.Use(middleware.Blacklist(settingsService))
 		r.Use(middleware.RateLimit(120, time.Minute))
 
 		r.With(middleware.OptionalAdminAuth).Get("/products", productHandler.List)

@@ -145,6 +145,8 @@ func (s *SettingsService) GetSettings(ctx context.Context) (models.Settings, err
 			settings.ReceiptFooterText = val
 		case "store_logo_url":
 			settings.StoreLogoURL = val
+		case "blocked_ips":
+			settings.BlockedIPs = val
 		}
 	}
 
